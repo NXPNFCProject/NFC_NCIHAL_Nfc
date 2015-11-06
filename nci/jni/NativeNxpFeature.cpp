@@ -152,7 +152,7 @@ static void NxpResponse_SetSWPBitRate_Cb(UINT8 event, UINT16 param_len, UINT8 *p
     gnxpfeature_conf.NxpFeatureConfigEvt.notifyOne ();
 }
 
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
 #if (NFC_NXP_CHIP_TYPE == PN548C2)
 /*******************************************************************************
  **

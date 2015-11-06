@@ -71,7 +71,7 @@ int nfcManager_GetAppletsList(JNIEnv* e, jobject o, jobjectArray list)
     (void)e;
     (void)o;
     (void)list;
-#if (NFC_NXP_ESE == TRUE && ALA_VERSION_2 == FALSE)
+#if (NFC_NXP_ESE == TRUE && NXP_LDR_SVC_VER_2 == FALSE)
     char *name[10];
     UINT8 num =0, xx=0;
     UINT8 list_len = e->GetArrayLength(list);
@@ -132,7 +132,7 @@ int nfcManager_doAppletLoadApplet(JNIEnv* e, jobject o, jstring name, jbyteArray
     (void)e;
     (void)o;
     (void)name;
-#if (NFC_NXP_ESE == TRUE && ALA_VERSION_2 == FALSE)
+#if (NFC_NXP_ESE == TRUE && NXP_LDR_SVC_VER_2 == FALSE)
     ALOGD ("%s: enter", __FUNCTION__);
     tNFA_STATUS wStatus, status;
     IChannel_t Dwp;
@@ -205,7 +205,7 @@ jbyteArray nfcManager_lsExecuteScript(JNIEnv* e, jobject o, jstring name, jstrin
     const UINT8 lsExecuteResponseSize = 4;
     uint8_t resSW [4]={0x4e,0x02,0x69,0x87};
     jbyteArray result = e->NewByteArray(0);
-#if (NFC_NXP_ESE == TRUE && ALA_VERSION_2 == TRUE)
+#if (NFC_NXP_ESE == TRUE && NXP_LDR_SVC_VER_2 == TRUE)
     ALOGD ("%s: enter", __FUNCTION__);
     tNFA_STATUS wStatus, status;
     IChannel_t Dwp;
@@ -302,7 +302,7 @@ jbyteArray nfcManager_lsExecuteScript(JNIEnv* e, jobject o, jstring name, jstrin
 
 jbyteArray nfcManager_GetCertificateKey(JNIEnv* e, jobject)
 {
-#if (NFC_NXP_ESE == TRUE && ALA_VERSION_2 == FALSE)
+#if (NFC_NXP_ESE == TRUE && NXP_LDR_SVC_VER_2 == FALSE)
     ALOGD ("%s: enter", __FUNCTION__);
     tNFA_STATUS wStatus = NFA_STATUS_FAILED;
     IChannel_t Dwp;
@@ -361,7 +361,7 @@ jbyteArray nfcManager_GetCertificateKey(JNIEnv* e, jobject)
 jbyteArray nfcManager_lsGetVersion(JNIEnv* e, jobject)
 {
 
-#if (NFC_NXP_ESE == TRUE && ALA_VERSION_2 == TRUE)
+#if (NFC_NXP_ESE == TRUE && NXP_LDR_SVC_VER_2 == TRUE)
     ALOGD ("%s: enter", __FUNCTION__);
     tNFA_STATUS wStatus = NFA_STATUS_FAILED;
     IChannel_t Dwp;
@@ -423,7 +423,7 @@ jbyteArray nfcManager_lsGetVersion(JNIEnv* e, jobject)
 jbyteArray nfcManager_lsGetAppletStatus(JNIEnv* e, jobject)
 {
 
-#if ((NFC_NXP_ESE == TRUE) && (ALA_VERSION_2 == TRUE))
+#if ((NFC_NXP_ESE == TRUE) && (NXP_LDR_SVC_VER_2 == TRUE))
     ALOGD ("%s: enter", __FUNCTION__);
     tNFA_STATUS wStatus = NFA_STATUS_FAILED;
     bool stat = false;
@@ -482,7 +482,7 @@ jbyteArray nfcManager_lsGetAppletStatus(JNIEnv* e, jobject)
 jbyteArray nfcManager_lsGetStatus(JNIEnv* e, jobject)
 {
 
-#if ((NFC_NXP_ESE == TRUE) && (ALA_VERSION_2 == TRUE))
+#if ((NFC_NXP_ESE == TRUE) && (NXP_LDR_SVC_VER_2 == TRUE))
     ALOGD ("%s: enter", __FUNCTION__);
     tNFA_STATUS wStatus = NFA_STATUS_FAILED;
     const INT32 recvBufferMaxSize = 2;
@@ -521,7 +521,7 @@ int nfcManager_getLoaderServiceConfVersion(JNIEnv* e, jobject o)
     unsigned long num = 0;
     UINT8 ls_version = LS_DEFAULT_VERSION;
     ALOGD ("%s: enter", __FUNCTION__);
-#if ((NFC_NXP_ESE == TRUE) && (ALA_VERSION_2 == TRUE))
+#if ((NFC_NXP_ESE == TRUE) && (NXP_LDR_SVC_VER_2 == TRUE))
     if(GetNxpNumValue (NAME_NXP_LOADER_SERICE_VERSION, (void*)&num, sizeof(num))==false)
     {
         ALOGD ("LOADER_SERVICE_VERSION not found");

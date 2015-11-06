@@ -113,11 +113,13 @@ INT16 open()
     SecureElement &se = SecureElement::getInstance();
 
     ALOGE("DwpChannel: Sec Element open Enter");
+
     if (se.isBusy())
     {
         ALOGE("DwpChannel: SE is busy");
         return EE_ERROR_OPEN_FAIL;
     }
+
     eSE_connected = IsWiredMode_Enable();
     if(eSE_connected != true)
     {
@@ -126,7 +128,7 @@ INT16 open()
     }
 
     /*turn on the sec elem*/
-        stat = se.activate(SecureElement::ESE_ID);
+    stat = se.activate(SecureElement::ESE_ID);
 
     if (stat)
     {
@@ -166,7 +168,6 @@ bool close(INT16 mHandle)
         ALOGD("%s: Channel access denied. Returning", fn);
         return stat;
     }
-
     if(eSE_connected != true)
         return true;
 

@@ -359,6 +359,9 @@ void PeerToPeer::llcpActivatedHandler (nfc_jni_native_data* nat, tNFA_LLCP_ACTIV
         ALOGD ("%s: p2p target", fn);
         e->SetIntField(tag.get(), f, (jint) MODE_P2P_TARGET);
     }
+    /* Set LLCP version */
+    f = e->GetFieldID(tag_cls.get(), "mLlcpVersion", "B");
+    e->SetByteField(tag.get(), f, (jbyte) activated.remote_version);
 
     /* Set tag handle */
     f = e->GetFieldID(tag_cls.get(), "mHandle", "I");

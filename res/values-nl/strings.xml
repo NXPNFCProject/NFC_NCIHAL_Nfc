@@ -18,13 +18,15 @@
     <string name="beam_touch_to_view" msgid="7853129156831642630">"Raak aan om te bekijken"</string>
     <string name="beam_handover_not_supported" msgid="4083165921751489015">"Het apparaat van de ontvanger ondersteunt de overdracht van grote bestanden via beam niet."</string>
     <string name="beam_try_again" msgid="3364677301009783455">"Houd de apparaten nogmaals tegen elkaar"</string>
-    <string name="connecting_peripheral" msgid="3957490448472434505">"Verbinding maken"</string>
-    <string name="connected_peripheral" msgid="5777997713940423952">"Verbonden"</string>
-    <string name="connect_peripheral_failed" msgid="7173159351147270788">"Kan niet verbinden"</string>
-    <string name="disconnecting_peripheral" msgid="5320432304947519207">"Verbinding verbreken"</string>
-    <string name="disconnected_peripheral" msgid="2768150931245385916">"Verbinding verbroken"</string>
-    <string name="pairing_peripheral" msgid="5618129595426303236">"Koppelen"</string>
-    <string name="pairing_peripheral_failed" msgid="976004756112808526">"Kan niet koppelen"</string>
+    <string name="beam_busy" msgid="5253335587620612576">"Beam is momenteel bezet. Probeer het opnieuw zodra de huidige overdracht is voltooid."</string>
+    <string name="device" msgid="4459621591392478151">"apparaat"</string>
+    <string name="connecting_peripheral" msgid="1296182660525660935">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g> verbinden"</string>
+    <string name="connected_peripheral" msgid="20748648543160091">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g> verbonden"</string>
+    <string name="connect_peripheral_failed" msgid="7925702596242839275">"Kan <xliff:g id="DEVICE_NAME">%1$s</xliff:g> niet verbinden"</string>
+    <string name="disconnecting_peripheral" msgid="1443699384809097200">"Verbinding met <xliff:g id="DEVICE_NAME">%1$s</xliff:g> verbreken"</string>
+    <string name="disconnected_peripheral" msgid="4470578100296504366">"Verbinding met <xliff:g id="DEVICE_NAME">%1$s</xliff:g> verbroken"</string>
+    <string name="pairing_peripheral" msgid="6983626861540899365">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g> koppelen"</string>
+    <string name="pairing_peripheral_failed" msgid="6087643307743264679">"Kan <xliff:g id="DEVICE_NAME">%1$s</xliff:g> niet koppelen"</string>
     <string name="failed_to_enable_bt" msgid="7229153323594758077">"Kan Bluetooth niet inschakelen"</string>
     <string name="confirm_pairing" msgid="4112568077038265363">"Weet u zeker dat u het Bluetooth-apparaat <xliff:g id="DEVICE_NAME">%1$s</xliff:g> wilt koppelen?"</string>
     <string name="pair_yes" msgid="3525614878559994448">"Ja"</string>

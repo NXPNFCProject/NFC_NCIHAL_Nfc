@@ -67,12 +67,10 @@ public class P2pEventManager implements P2pEventListener, SendUi.Callback {
 
     @Override
     public void onP2pInRange() {
-        mNfcService.playSound(NfcService.SOUND_START);
         mNdefSent = false;
         mNdefReceived = false;
         mInDebounce = false;
 
-        mVibrator.vibrate(VIBRATION_PATTERN, -1);
         if (mSendUi != null) {
             mSendUi.takeScreenshot();
         }
@@ -101,6 +99,8 @@ public class P2pEventManager implements P2pEventListener, SendUi.Callback {
 
     @Override
     public void onP2pSendConfirmationRequested() {
+        mNfcService.playSound(NfcService.SOUND_START);
+        mVibrator.vibrate(VIBRATION_PATTERN, -1);
         if (mSendUi != null) {
             mSendUi.showPreSend(false);
         } else {
@@ -196,9 +196,9 @@ public class P2pEventManager implements P2pEventListener, SendUi.Callback {
 
     @Override
     public void onP2pResumeSend() {
+        mVibrator.vibrate(VIBRATION_PATTERN, -1);
+        mNfcService.playSound(NfcService.SOUND_START);
         if (mInDebounce) {
-            mVibrator.vibrate(VIBRATION_PATTERN, -1);
-            mNfcService.playSound(NfcService.SOUND_START);
             if (mSendUi != null) {
                 mSendUi.showStartSend();
             }

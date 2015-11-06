@@ -194,7 +194,7 @@ public class RegisteredAidCache {
                     String entryAid = isPrefix ? entry.getKey().substring(0,
                             entry.getKey().length() - 1) : entry.getKey(); // Cut off '*' if prefix
                     if (entryAid.equalsIgnoreCase(aid) || (isPrefix && aid.startsWith(entryAid))) {
-                        if (DBG) Log.d(TAG, "resolveAid: AID " + entryAid + " matches.");
+                        if (DBG) Log.d(TAG, "resolveAid: AID " + entry.getKey() + " matches.");
                         AidResolveInfo entryResolveInfo = entry.getValue();
                         if (entryResolveInfo.defaultService != null) {
                             if (resolveInfo.defaultService != null) {
@@ -395,6 +395,7 @@ public class RegisteredAidCache {
         mAidServices.clear();
         for (ApduServiceInfo service : services) {
             if (DBG) Log.d(TAG, "generateServiceMap component: " + service.getComponent());
+            List<String> prefixAids = service.getPrefixAids();
             for (String aid : service.getAids()) {
                 if (!CardEmulation.isValidAid(aid)) {
                     Log.e(TAG, "Aid " + aid + " is not valid.");
@@ -403,6 +404,21 @@ public class RegisteredAidCache {
                 if (aid.endsWith("*") && !supportsAidPrefixRegistration()) {
                     Log.e(TAG, "Prefix AID " + aid + " ignored on device that doesn't support it.");
                     continue;
+                } else if (supportsAidPrefixRegistration() && prefixAids.size() > 0 && !isPrefix(aid)) {
+                    // Check if we already have an overlapping prefix registered for this AID
+                    boolean foundPrefix = false;
+                    for (String prefixAid : prefixAids) {
+                        String prefix = prefixAid.substring(0, prefixAid.length() - 1);
+                        if (aid.startsWith(prefix)) {
+                            Log.e(TAG, "Ignoring exact AID " + aid + " because prefix AID " + prefixAid +
+                                    " is already registered");
+                            foundPrefix = true;
+                            break;
+                        }
+                    }
+                    if (foundPrefix) {
+                        continue;
+                    }
                 }
 
                 ServiceAidInfo serviceAidInfo = new ServiceAidInfo();

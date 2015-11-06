@@ -45,6 +45,9 @@ CondVar::CondVar ()
     {
         ALOGE ("CondVar::CondVar: fail init; error=0x%X", res);
     }
+#if (NXP_EXTNS == TRUE)
+    pthread_condattr_destroy(&attr);
+#endif
 }
 
 

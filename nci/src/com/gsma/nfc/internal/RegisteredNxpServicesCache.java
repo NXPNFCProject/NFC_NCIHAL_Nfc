@@ -284,7 +284,7 @@ public class RegisteredNxpServicesCache {
                             ApduServiceInfo.ESeInfo mEseInfo = new ApduServiceInfo.ESeInfo(seId,powerstate);
                             ArrayList<android.nfc.cardemulation.AidGroup> staticAidGroups = null;
                             apduService = new ApduServiceInfo(resolveInfo,onHost,description,staticAidGroups, dynamicAidGroup,
-                                                               requiresUnlock,bannerId,userId,mEseInfo,null, DrawableResource, modifiable);
+                                                               requiresUnlock,bannerId,userId, "Fixme: NXP:<Activity Name>", mEseInfo,null, DrawableResource, modifiable);
                             mApduServices.put(currentComponent, apduService);
                             Log.d(TAG,"mApduServices size= "+ mApduServices.size());
                             dynamicAidGroup.clear();

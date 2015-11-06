@@ -49,7 +49,9 @@
     <uses-permission android:name="android.permission.SET_ACTIVITY_WATCHER" />
     <uses-permission android:name="android.permission.CONNECTIVITY_INTERNAL" />
     <uses-permission android:name="android.permission.NFC_HANDOVER_STATUS" />
+    <uses-permission android:name="android.permission.LOCAL_MAC_ADDRESS" />
     <uses-permission android:name="com.android.permission.WHITELIST_BLUETOOTH_DEVICE" />
+    <uses-permission android:name="android.permission.DISPATCH_NFC_MESSAGE" />
     <uses-permission android:name="android.permission.DEVICE_POWER" />
 
     <permission android:name="com.gsma.service.nfc.permission.TRANSACTION_EVENT"
@@ -65,6 +67,7 @@
                  android:persistent="true"
                  android:backupAgent="com.android.nfc.NfcBackupAgent"
                  android:killAfterRestore="false"
+                 android:usesCleartextTraffic="false"
     >
         <meta-data android:name="com.google.android.backup.api_key"
             android:value="AEdPqrEAAAAIbiKKs0wlimxeJ9y8iRIaBOH6aeb2IurmZyBHvg" />
@@ -118,7 +121,7 @@
 
         <activity android:name=".BeamShareActivity"
             android:finishOnCloseSystemDialogs="true"
-            android:theme="@android:style/Theme.NoDisplay"
+            android:theme="@android:style/Theme.Translucent"
             android:label="@string/android_beam"
             android:noHistory="true"
             android:excludeFromRecents="true">

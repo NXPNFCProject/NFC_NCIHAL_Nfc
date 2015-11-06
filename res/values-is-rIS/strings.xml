@@ -18,13 +18,15 @@
     <string name="beam_touch_to_view" msgid="7853129156831642630">"Snertu til að skoða"</string>
     <string name="beam_handover_not_supported" msgid="4083165921751489015">"Tæki viðtakandans styður ekki flutning stórra skráa með NFC."</string>
     <string name="beam_try_again" msgid="3364677301009783455">"Settu tækin hvort upp að öðru aftur"</string>
-    <string name="connecting_peripheral" msgid="3957490448472434505">"Tengist"</string>
-    <string name="connected_peripheral" msgid="5777997713940423952">"Tengt"</string>
-    <string name="connect_peripheral_failed" msgid="7173159351147270788">"Tenging mistókst"</string>
-    <string name="disconnecting_peripheral" msgid="5320432304947519207">"Aftengist"</string>
-    <string name="disconnected_peripheral" msgid="2768150931245385916">"Aftengt"</string>
-    <string name="pairing_peripheral" msgid="5618129595426303236">"Parar"</string>
-    <string name="pairing_peripheral_failed" msgid="976004756112808526">"Ekki var hægt að para"</string>
+    <string name="beam_busy" msgid="5253335587620612576">"Beam er upptekið. Reyndu aftur þegar fyrri flutningi er lokið."</string>
+    <string name="device" msgid="4459621591392478151">"tæki"</string>
+    <string name="connecting_peripheral" msgid="1296182660525660935">"Tengist <xliff:g id="DEVICE_NAME">%1$s</xliff:g>"</string>
+    <string name="connected_peripheral" msgid="20748648543160091">"Tengt við <xliff:g id="DEVICE_NAME">%1$s</xliff:g>"</string>
+    <string name="connect_peripheral_failed" msgid="7925702596242839275">"Ekki var hægt að tengjast <xliff:g id="DEVICE_NAME">%1$s</xliff:g>"</string>
+    <string name="disconnecting_peripheral" msgid="1443699384809097200">"Aftengist frá <xliff:g id="DEVICE_NAME">%1$s</xliff:g>"</string>
+    <string name="disconnected_peripheral" msgid="4470578100296504366">"Aftengt frá <xliff:g id="DEVICE_NAME">%1$s</xliff:g>"</string>
+    <string name="pairing_peripheral" msgid="6983626861540899365">"Parast við <xliff:g id="DEVICE_NAME">%1$s</xliff:g>"</string>
+    <string name="pairing_peripheral_failed" msgid="6087643307743264679">"Ekki var hægt að parast við <xliff:g id="DEVICE_NAME">%1$s</xliff:g>"</string>
     <string name="failed_to_enable_bt" msgid="7229153323594758077">"Ekki var hægt að kveikja á Bluetooth"</string>
     <string name="confirm_pairing" msgid="4112568077038265363">"Ertu viss um að þú viljir para Bluetooth-tækið <xliff:g id="DEVICE_NAME">%1$s</xliff:g>?"</string>
     <string name="pair_yes" msgid="3525614878559994448">"Já"</string>

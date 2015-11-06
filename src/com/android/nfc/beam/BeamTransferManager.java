@@ -471,7 +471,7 @@ public class BeamTransferManager implements Handler.Callback,
         Uri uri =  mediaUri != null ? mediaUri :
             Uri.parse(ContentResolver.SCHEME_FILE + "://" + filePath);
         viewIntent.setDataAndTypeAndNormalize(uri, mMimeTypes.get(filePath));
-        viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         return viewIntent;
    }
 

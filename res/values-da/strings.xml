@@ -18,13 +18,15 @@
     <string name="beam_touch_to_view" msgid="7853129156831642630">"Tryk for at se"</string>
     <string name="beam_handover_not_supported" msgid="4083165921751489015">"Modtagerens enhed understøtter ikke overførsel af store filer via Beam."</string>
     <string name="beam_try_again" msgid="3364677301009783455">"Før enhederne sammen igen"</string>
-    <string name="connecting_peripheral" msgid="3957490448472434505">"Opretter forbindelse"</string>
-    <string name="connected_peripheral" msgid="5777997713940423952">"Tilsluttet"</string>
-    <string name="connect_peripheral_failed" msgid="7173159351147270788">"Der kunne ikke oprettes forbindelse"</string>
-    <string name="disconnecting_peripheral" msgid="5320432304947519207">"Afbryder forbindelse"</string>
-    <string name="disconnected_peripheral" msgid="2768150931245385916">"Afbrudt"</string>
-    <string name="pairing_peripheral" msgid="5618129595426303236">"Parrer"</string>
-    <string name="pairing_peripheral_failed" msgid="976004756112808526">"Kunne ikke parres"</string>
+    <string name="beam_busy" msgid="5253335587620612576">"Beam er optaget i øjeblikket. Prøv igen, når den forrige overførsel er gennemført."</string>
+    <string name="device" msgid="4459621591392478151">"enhed"</string>
+    <string name="connecting_peripheral" msgid="1296182660525660935">"Opretter forbindelse til <xliff:g id="DEVICE_NAME">%1$s</xliff:g>"</string>
+    <string name="connected_peripheral" msgid="20748648543160091">"Forbundet med <xliff:g id="DEVICE_NAME">%1$s</xliff:g>"</string>
+    <string name="connect_peripheral_failed" msgid="7925702596242839275">"Kunne ikke oprette forbindelse til <xliff:g id="DEVICE_NAME">%1$s</xliff:g>"</string>
+    <string name="disconnecting_peripheral" msgid="1443699384809097200">"Forbindelsen til <xliff:g id="DEVICE_NAME">%1$s</xliff:g> afbrydes"</string>
+    <string name="disconnected_peripheral" msgid="4470578100296504366">"Forbindelsen til <xliff:g id="DEVICE_NAME">%1$s</xliff:g> er afbrudt"</string>
+    <string name="pairing_peripheral" msgid="6983626861540899365">"Parrer med <xliff:g id="DEVICE_NAME">%1$s</xliff:g>"</string>
+    <string name="pairing_peripheral_failed" msgid="6087643307743264679">"Parring med <xliff:g id="DEVICE_NAME">%1$s</xliff:g> mislykkedes"</string>
     <string name="failed_to_enable_bt" msgid="7229153323594758077">"Bluetooth kunne ikke aktiveres"</string>
     <string name="confirm_pairing" msgid="4112568077038265363">"Er du sikker på du vil parre Bluetooth-enheden <xliff:g id="DEVICE_NAME">%1$s</xliff:g>?"</string>
     <string name="pair_yes" msgid="3525614878559994448">"Ja"</string>

@@ -42,9 +42,6 @@
 #include <vector>
 extern "C"
 {
-#if((ESE_NFC_POWER_MANAGEMENT == TRUE)&&(NFC_NXP_NOT_OPEN_INCLUDED == TRUE))
-   #include "phNfcStatus.h"
-#endif
     #include "nfa_rw_api.h"
 }
 

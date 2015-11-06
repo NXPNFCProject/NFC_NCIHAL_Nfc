@@ -199,7 +199,7 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
                     setDefaultServiceForCategoryChecked(userId, null,
                             CardEmulation.CATEGORY_PAYMENT);
                     Intent intent = new Intent(mContext, DefaultRemovedActivity.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     mContext.startActivityAsUser(intent, UserHandle.CURRENT);
                 }
             } else {

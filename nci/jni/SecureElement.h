@@ -49,11 +49,11 @@ extern "C"
     #include "nfa_hci_defs.h"
     #include "nfa_ce_api.h"
     #include "phNxpExtns.h"
-#if((ESE_NFC_POWER_MANAGEMENT == TRUE)&&(NFC_NXP_NOT_OPEN_INCLUDED == TRUE))
+#if((NFC_POWER_MANAGEMENT == TRUE)&&(NXP_EXTNS == TRUE))
     #include "phNfcTypes.h"
 #endif
 }
-#if((ESE_NFC_POWER_MANAGEMENT == TRUE)&&(NFC_NXP_NOT_OPEN_INCLUDED == TRUE))
+#if((NFC_POWER_MANAGEMENT == TRUE)&&(NXP_EXTNS == TRUE))
 #define SIG_NFC 44
 #endif
 typedef enum dual_mode{
@@ -97,7 +97,7 @@ typedef struct{
     Mutex mMutex;
 }Rdr_req_ntf_info_t;
 
-#if((ESE_NFC_POWER_MANAGEMENT == TRUE)&&(NFC_NXP_NOT_OPEN_INCLUDED == TRUE))
+#if((NFC_POWER_MANAGEMENT == TRUE)&&(NXP_EXTNS == TRUE))
 void spi_prio_signal_handler (int signum, siginfo_t *info, void *unused);
 #endif
 
@@ -111,7 +111,7 @@ class SecureElement
 {
 public:
     tNFA_HANDLE  mActiveEeHandle;
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
 #define MAX_NFCEE 5
 
     struct mNfceeData{
@@ -286,7 +286,7 @@ public:
     *******************************************************************************/
     void notifyRfFieldEvent (bool isActive);
 
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
     /*******************************************************************************
     **
     ** Function:        notifyEEReaderEvent
@@ -545,7 +545,7 @@ public:
     jint getGenericEseId(tNFA_HANDLE handle);
 
     tNFA_STATUS reconfigureEseHciInit();
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
     void setCPTimeout();
 #endif
     bool isWiredModeAllowedInRfState();
@@ -556,12 +556,12 @@ public:
     SyncEvent       mAidAddRemoveEvent;
     SyncEvent       mUiccListenEvent;
     SyncEvent       mEseListenEvent;
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
     SyncEvent       mEEdatapacketEvent;
 #endif
     SyncEvent       mAllowWiredModeEvent;
 
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
     static const UINT8 EVT_END_OF_APDU_TRANSFER = 0x21;    //NXP Propritory
     void setCLState(bool mState);
 #endif
@@ -576,12 +576,12 @@ private:
 #endif
     static const UINT8 STATIC_PIPE_0x71 = 0x71; //Broadcom's proprietary static pipe
     static const UINT8 EVT_SEND_DATA = 0x10;    //see specification ETSI TS 102 622 v9.0.0 (Host Controller Interface); section 9.3.3.3
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
     static const tNFA_HANDLE EE_HANDLE_0xF3 = 0x4C0;//0x401; //handle to secure element in slot 0
 #else
     static const tNFA_HANDLE EE_HANDLE_0xF3 = 0x4F3; //handle to secure element in slot 0
 #endif
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
 #ifdef NXP_UICC_ENABLE
     static const tNFA_HANDLE EE_HANDLE_0xF4 = 0x402; //handle to secure element in slot 1
 #else

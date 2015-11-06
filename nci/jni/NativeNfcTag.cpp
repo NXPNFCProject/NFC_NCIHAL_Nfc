@@ -140,7 +140,7 @@ static jboolean     sWriteOk = JNI_FALSE;
 static jboolean     sWriteWaitingForComplete = JNI_FALSE;
 static bool         sFormatOk = false;
 static bool         sReadOnlyOk = false;
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE && NFC_NXP_NON_STD_CARD == TRUE)
+#if(NXP_EXTNS == TRUE && NFC_NXP_NON_STD_CARD == TRUE)
 static bool         sNeedToSwitchRf = false;
 #endif
 static jboolean     sConnectOk = JNI_FALSE;
@@ -164,13 +164,13 @@ static bool switchRfInterface(tNFA_INTF_TYPE rfInterface);
 static bool setNdefDetectionTimeoutIfTagAbsent (JNIEnv *e, jobject o, tNFC_PROTOCOL protocol);
 static void setNdefDetectionTimeout ();
 static jboolean nativeNfcTag_doPresenceCheck (JNIEnv*, jobject);
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
 uint8_t key1[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 uint8_t key2[6] = {0xD3, 0xF7, 0xD3, 0xF7, 0xD3, 0xF7};
 bool isMifare = false;
 static uint8_t Presence_check_TypeB[] =  {0xB2};
 #if(NFC_NXP_NON_STD_CARD == TRUE)
-static UINT16 NON_NCI_CARD_TIMER_OFFSET =500;
+static UINT16 NON_NCI_CARD_TIMER_OFFSET =700;
 static IntervalTimer sNonNciCardDetectionTimer;
 static IntervalTimer sNonNciMultiCardDetectionTimer;
 struct sNonNciCard{
@@ -451,7 +451,7 @@ void nativeNfcTag_doWriteStatus (jboolean isWriteOk)
         sem_post (&sWriteSem);
     }
 }
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE && NFC_NXP_NON_STD_CARD == TRUE)
+#if(NXP_EXTNS == TRUE && NFC_NXP_NON_STD_CARD == TRUE)
 /*******************************************************************************
 **
 ** Function:        nonNciCardTimerProc
@@ -656,7 +656,7 @@ static jboolean nativeNfcTag_doWrite (JNIEnv* e, jobject, jbyteArray buf)
         //and tag is capable of storing NDEF message
         if (sCheckNdefCapable)
         {
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
             isMifare = false;
 #endif
             ALOGD ("%s: try format", __FUNCTION__);
@@ -664,7 +664,7 @@ static jboolean nativeNfcTag_doWrite (JNIEnv* e, jobject, jbyteArray buf)
             sFormatOk = false;
             if (NfcTag::getInstance ().mTechLibNfcTypes[handle] == NFA_PROTOCOL_MIFARE)
             {
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
                 isMifare = true;
                 status = EXTNS_MfcFormatTag(key1,sizeof(key1));
 #endif
@@ -676,7 +676,7 @@ static jboolean nativeNfcTag_doWrite (JNIEnv* e, jobject, jbyteArray buf)
             sem_wait (&sFormatSem);
             sem_destroy (&sFormatSem);
 
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
             if(isMifare == true && sFormatOk != true)
             {
             sem_init (&sFormatSem, 0, 0);
@@ -873,7 +873,7 @@ static jint nativeNfcTag_doConnect (JNIEnv*, jobject, jint targetHandle)
         retCode = NFCSTATUS_FAILED;
         goto TheEnd;
     }
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE && NFC_NXP_NON_STD_CARD == TRUE)
+#if(NXP_EXTNS == TRUE && NFC_NXP_NON_STD_CARD == TRUE)
     sNeedToSwitchRf = false;
 #endif
     if (natTag.getActivationState() != NfcTag::Active)
@@ -882,7 +882,7 @@ static jint nativeNfcTag_doConnect (JNIEnv*, jobject, jint targetHandle)
         retCode = NFCSTATUS_FAILED;
         goto TheEnd;
     }
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
     if(natTag.mTechLibNfcTypes[i] == NFC_PROTOCOL_T3BT)
     {
         goto TheEnd;
@@ -900,7 +900,7 @@ static jint nativeNfcTag_doConnect (JNIEnv*, jobject, jint targetHandle)
     if (natTag.mTechList[i] == TARGET_TYPE_ISO14443_3A || natTag.mTechList[i] == TARGET_TYPE_ISO14443_3B)
     {
         ALOGD ("%s: switching to tech: %d need to switch rf intf to frame", __FUNCTION__, natTag.mTechList[i]);
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE && NFC_NXP_NON_STD_CARD == TRUE)
+#if(NXP_EXTNS == TRUE && NFC_NXP_NON_STD_CARD == TRUE)
         if(sNonNciCard_t.Changan_Card == true)
             sNeedToSwitchRf = true;
         else
@@ -973,7 +973,7 @@ static int reSelect (tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded)
             setReconnectState(false);
             NFA_SetReconnectState(TRUE);
             if (NfcTag::getInstance ().isCashBeeActivated() == true || NfcTag::getInstance ().isEzLinkTagActivated() == true
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE && NFC_NXP_NON_STD_CARD == TRUE)
+#if(NXP_EXTNS == TRUE && NFC_NXP_NON_STD_CARD == TRUE)
             || sNonNciCard_t.chinaTransp_Card == true
 #endif
             )
@@ -1025,7 +1025,7 @@ static int reSelect (tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded)
 
 
         if (!(NfcTag::getInstance ().isCashBeeActivated() == true || NfcTag::getInstance ().isEzLinkTagActivated() == true
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE && NFC_NXP_NON_STD_CARD == TRUE)
+#if(NXP_EXTNS == TRUE && NFC_NXP_NON_STD_CARD == TRUE)
            || sNonNciCard_t.chinaTransp_Card == true
 #endif
         ))
@@ -1048,7 +1048,7 @@ static int reSelect (tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded)
             gIsSelectingRfInterface = true;
             sConnectWaitingForComplete = JNI_TRUE;
             if (NfcTag::getInstance ().isCashBeeActivated() == true || NfcTag::getInstance ().isEzLinkTagActivated() == true
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE && NFC_NXP_NON_STD_CARD == TRUE)
+#if(NXP_EXTNS == TRUE && NFC_NXP_NON_STD_CARD == TRUE)
                || sNonNciCard_t.chinaTransp_Card == true
 #endif
             )
@@ -1332,7 +1332,7 @@ static jboolean nativeNfcTag_doDisconnect (JNIEnv*, jobject)
     tNFA_STATUS nfaStat = NFA_STATUS_OK;
 
     NfcTag::getInstance().resetAllTransceiveTimeouts ();
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE && NFC_NXP_NON_STD_CARD == TRUE)
+#if(NXP_EXTNS == TRUE && NFC_NXP_NON_STD_CARD == TRUE)
     if(sNonNciCard_t.Changan_Card == true || sNonNciCard_t.chinaTransp_Card == true)
     {
         memset(&sNonNciCard_t,0,sizeof(sNonNciCard));
@@ -1432,7 +1432,7 @@ static jbyteArray nativeNfcTag_doTransceive (JNIEnv* e, jobject o, jbyteArray da
     bool isNack = false;
     jint *targetLost = NULL;
     tNFA_STATUS status;
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE && NFC_NXP_NON_STD_CARD == TRUE)
+#if(NXP_EXTNS == TRUE && NFC_NXP_NON_STD_CARD == TRUE)
     bool fNeedToSwitchBack = false;
 #endif
     if (NfcTag::getInstance ().mTechLibNfcTypes[handle] == NFA_PROTOCOL_MIFARE)
@@ -1476,7 +1476,7 @@ static jbyteArray nativeNfcTag_doTransceive (JNIEnv* e, jobject o, jbyteArray da
     ScopedLocalRef<jbyteArray> result(e, NULL);
     do
     {
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE && NFC_NXP_NON_STD_CARD == TRUE)
+#if(NXP_EXTNS == TRUE && NFC_NXP_NON_STD_CARD == TRUE)
         if (sNeedToSwitchRf)
         {
             if (!switchRfInterface (NFA_INTERFACE_FRAME)) //NFA_INTERFACE_ISO_DEP
@@ -1587,7 +1587,7 @@ static jbyteArray nativeNfcTag_doTransceive (JNIEnv* e, jobject o, jbyteArray da
     sWaitingForTransceive = false;
     if (targetLost)
         e->ReleaseIntArrayElements (statusTargetLost, targetLost, 0);
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE && NFC_NXP_NON_STD_CARD == TRUE)
+#if(NXP_EXTNS == TRUE && NFC_NXP_NON_STD_CARD == TRUE)
     if (fNeedToSwitchBack)
     {
         sSwitchBackTimer.set (1500, switchBackTimerProc);
@@ -1755,7 +1755,7 @@ static jint nativeNfcTag_doCheckNdef (JNIEnv* e, jobject o, jintArray ndefInfo)
 
     ALOGD ("%s: enter", __FUNCTION__);
     sIsCheckingNDef = true;
-#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if (NXP_EXTNS == TRUE)
     if (NfcTag::getInstance ().mTechLibNfcTypes[handle] == NFA_PROTOCOL_T3BT)
     {
         ndef = e->GetIntArrayElements (ndefInfo, 0);
@@ -2050,7 +2050,7 @@ static jboolean nativeNfcTag_doPresenceCheck (JNIEnv*, jobject)
         goto TheEnd;
     }
 
-#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if (NXP_EXTNS == TRUE)
     if(NfcTag::getInstance ().mTechLibNfcTypes[handle] == NFA_PROTOCOL_T3BT)
     {
         UINT8 *pbuf = NULL;
@@ -2238,7 +2238,7 @@ static jboolean nativeNfcTag_doNdefFormat (JNIEnv *e, jobject o, jbyteArray)
     ALOGD ("%s: enter", __FUNCTION__);
     tNFA_STATUS status = NFA_STATUS_OK;
     int handle = sCurrentConnectedHandle;
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
     isMifare = false;
 #endif
 
@@ -2254,7 +2254,7 @@ static jboolean nativeNfcTag_doNdefFormat (JNIEnv *e, jobject o, jbyteArray)
     if (NfcTag::getInstance ().mTechLibNfcTypes[handle] == NFA_PROTOCOL_MIFARE)
     {
         status = nativeNfcTag_doReconnect (e, o);
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
         isMifare = true;
         ALOGD("Format with First Key");
         status = EXTNS_MfcFormatTag(key1,sizeof(key1));
@@ -2269,7 +2269,7 @@ static jboolean nativeNfcTag_doNdefFormat (JNIEnv *e, jobject o, jbyteArray)
         ALOGD ("%s: wait for completion", __FUNCTION__);
         sem_wait (&sFormatSem);
         status = sFormatOk ? NFA_STATUS_OK : NFA_STATUS_FAILED;
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
         if(sFormatOk == true && isMifare == true)
             ALOGD ("Formay with First Key Success");
 #endif
@@ -2278,7 +2278,7 @@ static jboolean nativeNfcTag_doNdefFormat (JNIEnv *e, jobject o, jbyteArray)
         ALOGE ("%s: error status=%u", __FUNCTION__, status);
     sem_destroy (&sFormatSem);
 
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
     if(isMifare == true && sFormatOk != true)
     {
     ALOGD ("Format with First Key Failed");

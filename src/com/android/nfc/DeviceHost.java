@@ -183,6 +183,8 @@ public interface DeviceHost {
         public int getMode();
 
         public byte[] getGeneralBytes();
+
+        public byte getLlcpVersion();
     }
 
     public interface LlcpSocket {
@@ -248,6 +250,8 @@ public interface DeviceHost {
 
     public void doSetScreenState(int mScreenState);
 
+    public void doEnablep2p(boolean p2pFlag);
+
     public void disableDiscovery();
 
     //public void enableRoutingToHost();
@@ -277,6 +281,7 @@ public interface DeviceHost {
 
     public void setDefaultProtoRoute(int seID, int proto_switchon, int proto_switchoff);
 
+    public void doSetProvisionMode(boolean provisionMode);
 
     public boolean sendRawFrame(byte[] data);
 

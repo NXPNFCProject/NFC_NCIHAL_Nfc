@@ -90,7 +90,7 @@
 #define NDEF_MODE_READ_WRITE             2
 #define NDEF_MODE_UNKNOWN                3
 
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
 #define VEN_POWER_STATE_ON                   6
 #define VEN_POWER_STATE_OFF                  7
 #endif
@@ -113,7 +113,7 @@
 #define VEN_CFG_NFC_ON_POWER_ON           3
 #define VEN_CFG_NFC_OFF_POWER_OFF         2
 
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
 // ESE Suppored Technologies
 #define TARGET_TYPE_ISO14443_3A_3B        11
 #endif

@@ -22,6 +22,7 @@
 #include "NfcJniUtil.h"
 #include "gki.h"
 #include "Mutex.h"
+#include <cstdlib>
 #include <list>
 
 

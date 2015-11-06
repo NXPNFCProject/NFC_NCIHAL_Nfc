@@ -16,7 +16,8 @@
 
 #include "OverrideLog.h"
 #include "SyncEvent.h"
-
+#include <cstdlib>
+#include <cstring>
 
 extern "C"
 {

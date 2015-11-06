@@ -47,9 +47,9 @@
 #include "nfc_api.h"
 #include "phNxpConfig.h"
 #include "PeerToPeer.h"
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
 #include "RoutingManager.h"
-#if((ESE_NFC_POWER_MANAGEMENT == TRUE)&&(NFC_NXP_NOT_OPEN_INCLUDED == TRUE))
+#if((NFC_POWER_MANAGEMENT == TRUE)&&(NXP_EXTNS == TRUE))
 #include <signal.h>
 #include <sys/types.h>
 #endif
@@ -59,9 +59,9 @@
 ** public variables
 **
 *****************************************************************************/
-int gSEId = -1;     // secure element ID to use in connectEE(), -1 means not set
-int gGatePipe = -1; // gate id or static pipe id to use in connectEE(), -1 means not set
-bool gUseStaticPipe = false;    // if true, use gGatePipe as static pipe id.  if false, use as gate id
+static int gSEId = -1;     // secure element ID to use in connectEE(), -1 means not set
+static int gGatePipe = -1; // gate id or static pipe id to use in connectEE(), -1 means not set
+static bool gUseStaticPipe = false;    // if true, use gGatePipe as static pipe id.  if false, use as gate id
 extern bool gTypeB_listen;
 bool gReaderNotificationflag = false;
 bool hold_the_transceive = false;
@@ -81,7 +81,7 @@ namespace android
     extern void config_swp_reader_mode(bool mode);
     extern void set_transcation_stat(bool result);
 }
-#if((ESE_NFC_POWER_MANAGEMENT == TRUE)&&(NFC_NXP_NOT_OPEN_INCLUDED == TRUE))
+#if((NFC_POWER_MANAGEMENT == TRUE)&&(NXP_EXTNS == TRUE))
 /* hold the transceive flag should be set when the prio session is actrive/about to active*/
 /* Event used to inform the prio session end and transceive resume*/
 SyncEvent sSPIPrioSessionEndEvent;
@@ -93,12 +93,12 @@ SyncEvent sSPIPrioSessionEndEvent;
     static void setSPIState(bool mState);
 //////////////////////////////////////////////
 //////////////////////////////////////////////
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
 #define NFC_NUM_INTERFACE_MAP 3
 #define NFC_SWP_RD_NUM_INTERFACE_MAP 1
 #endif
 
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
 static const tNCI_DISCOVER_MAPS nfc_interface_mapping_default[NFC_NUM_INTERFACE_MAP] =
 {
         /* Protocols that use Frame Interface do not need to be included in the interface mapping */
@@ -184,8 +184,8 @@ void SecureElement::discovery_map_cb (tNFC_DISCOVER_EVT event, tNFC_DISCOVER *p_
 SecureElement SecureElement::sSecElem;
 const char* SecureElement::APP_NAME = "nfc_jni";
 const UINT16 ACTIVE_SE_USE_ANY = 0xFFFF;
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
-char bcm_nfc_location[]="/etc";
+#if(NXP_EXTNS == TRUE)
+char bcm_nfc_location_jni[]="/etc";
 #endif
 
 /*******************************************************************************
@@ -316,7 +316,7 @@ bool SecureElement::initialize (nfc_jni_native_data* native)
         mWiredModeRfFiledEnable = num;
     }
 #endif
-#if((ESE_NFC_POWER_MANAGEMENT == TRUE)&&(NFC_NXP_NOT_OPEN_INCLUDED == TRUE))
+#if((NFC_POWER_MANAGEMENT == TRUE)&&(NXP_EXTNS == TRUE))
     if (GetNxpNumValue(NAME_NXP_NFCC_STANDBY_TIMEOUT, &nfccStandbytimeout, sizeof(nfccStandbytimeout)) == false)
     {
         nfccStandbytimeout = 20000;
@@ -450,7 +450,7 @@ bool SecureElement::getEeInfo()
     tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
 
     /*Reading latest eEinfo  incase it is updated*/
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
     mbNewEE = true;
     mNumEePresent = 0;
 #endif
@@ -458,7 +458,7 @@ bool SecureElement::getEeInfo()
     if (mbNewEE)
     {
 
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
         memset (&mNfceeData_t, 0, sizeof (mNfceeData_t));
 #endif
 
@@ -486,7 +486,7 @@ bool SecureElement::getEeInfo()
                             mEeInfo[xx].num_interface, mEeInfo[xx].ee_interface[0], mEeInfo[xx].ee_interface[1], mEeInfo[xx].num_tlvs,
                             mEeInfo[xx].la_protocol, mEeInfo[xx].lb_protocol, mEeInfo[xx].lf_protocol, mEeInfo[xx].lbp_protocol);
 
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
                     mNfceeData_t.mNfceeHandle[xx] = mEeInfo[xx].ee_handle;
                     mNfceeData_t.mNfceeStatus[xx] = mEeInfo[xx].ee_status;
 #endif
@@ -502,7 +502,7 @@ bool SecureElement::getEeInfo()
     }
     ALOGD ("%s: exit; mActualNumEe=%d, mNumEePresent=%d", fn, mActualNumEe,mNumEePresent);
 
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
     mNfceeData_t.mNfceePresent = mNumEePresent;
 #endif
 
@@ -1191,7 +1191,7 @@ bool SecureElement::connectEE ()
     // If the .conf file had a static pipe to use, just use it.
     if (mNewPipeId != 0)
     {
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
         UINT8 host = (mNewPipeId == STATIC_PIPE_0x70) ? 0xC0 : 0x03;
 #else
         UINT8 host = (mNewPipeId == STATIC_PIPE_0x70) ? 0x02 : 0x03;
@@ -1210,7 +1210,7 @@ bool SecureElement::connectEE ()
         if ( (pEE->num_tlvs >= 1) && (pEE->ee_tlv[0].tag == NFA_EE_TAG_HCI_HOST_ID) )
             destHost = pEE->ee_tlv[0].info[0];
         else
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
             destHost = 0xC0;
 #else
             destHost = 2;
@@ -1391,7 +1391,7 @@ bool SecureElement::transceive (UINT8* xmitBuffer, INT32 xmitBufferSize, UINT8* 
     bool isSuccess = false;
     mTransceiveWaitOk = false;
     UINT8 newSelectCmd[NCI_MAX_AID_LEN + 10];
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
     bool recovery;
 #endif
     ALOGD ("%s: enter; xmitBufferSize=%ld; recvBufferMaxSize=%ld; timeout=%ld", fn, xmitBufferSize, recvBufferMaxSize, timeoutMillisec);
@@ -1437,14 +1437,14 @@ bool SecureElement::transceive (UINT8* xmitBuffer, INT32 xmitBufferSize, UINT8* 
         ALOGD ("%s: Empty AID SELECT cmd detected, substituting AID from config file, new length=%d", fn, idx);
     }
 
-#if((ESE_NFC_POWER_MANAGEMENT == TRUE)&&(NFC_NXP_NOT_OPEN_INCLUDED == TRUE))
+#if((NFC_POWER_MANAGEMENT == TRUE)&&(NXP_EXTNS == TRUE))
     mNFCCStandbyModeTimer.kill();
 #endif
     {
         SyncEventGuard guard (mTransceiveEvent);
         mActualResponseSize = 0;
         memset (mResponseData, 0, sizeof(mResponseData));
-#if((ESE_NFC_POWER_MANAGEMENT == TRUE)&&(NFC_NXP_NOT_OPEN_INCLUDED == TRUE))
+#if((NFC_POWER_MANAGEMENT == TRUE)&&(NXP_EXTNS == TRUE))
         if(hold_the_transceive == true){
             ALOGD("%s: holding the transceive\n", fn);
             sSPIPrioSessionEndEvent.wait(timeoutMillisec);
@@ -1456,7 +1456,7 @@ bool SecureElement::transceive (UINT8* xmitBuffer, INT32 xmitBufferSize, UINT8* 
         }
 #endif
         if ((mNewPipeId == STATIC_PIPE_0x70) || (mNewPipeId == STATIC_PIPE_0x71))
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
         {
             if((RoutingManager::getInstance().is_ee_recovery_ongoing()))
             {
@@ -1485,7 +1485,7 @@ bool SecureElement::transceive (UINT8* xmitBuffer, INT32 xmitBufferSize, UINT8* 
 #endif
 #endif
             nfaStat = NFA_HciSendEvent (mNfaHciHandle, mNewPipeId, EVT_SEND_DATA, xmitBufferSize, xmitBuffer, sizeof(mResponseData), mResponseData, timeoutMillisec);
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
         }
 #endif
         else
@@ -1570,7 +1570,7 @@ void SecureElement::notifyModeSet (tNFA_HANDLE eeHandle, bool success, tNFA_EE_S
     sSecElem.mEeSetModeEvent.notifyOne();
 }
 
-#if((ESE_NFC_POWER_MANAGEMENT == TRUE)&&(NFC_NXP_NOT_OPEN_INCLUDED == TRUE))
+#if((NFC_POWER_MANAGEMENT == TRUE)&&(NXP_EXTNS == TRUE))
 static void NFCC_StandbyModeTimerCallBack (union sigval)
 {
     ALOGD ("%s timer timedout , sending standby mode cmd", __FUNCTION__);
@@ -2070,7 +2070,7 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
             if(eventData->rcvd_evt.evt_len > 0)
             {
                 sSecElem.mTransceiveWaitOk = true;
-#if((ESE_NFC_POWER_MANAGEMENT == TRUE)&&(NFC_NXP_NOT_OPEN_INCLUDED == TRUE))
+#if((NFC_POWER_MANAGEMENT == TRUE)&&(NXP_EXTNS == TRUE))
                 if(nfccStandbytimeout > 0)
                 {
                     mNFCCStandbyModeTimer.set(nfccStandbytimeout , NFCC_StandbyModeTimerCallBack );
@@ -2849,7 +2849,7 @@ TheEnd:
 
     return decoded_length;
 }
-#if((ESE_NFC_POWER_MANAGEMENT == TRUE)&&(NFC_NXP_NOT_OPEN_INCLUDED == TRUE))
+#if((NFC_POWER_MANAGEMENT == TRUE)&&(NXP_EXTNS == TRUE))
 void spi_prio_signal_handler (int signum, siginfo_t *info, void *unused)
 {
     ALOGD ("%s: Inside the Signal Handler %d\n", __FUNCTION__, SIG_NFC);
@@ -2884,7 +2884,7 @@ void spi_prio_signal_handler (int signum, siginfo_t *info, void *unused)
 }
 #endif
 
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
 /*******************************************************************************
 **
 ** Function:        setCPTimeout

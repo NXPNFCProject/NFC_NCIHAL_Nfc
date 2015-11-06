@@ -51,6 +51,8 @@ public class PeripheralHandoverService extends Service implements BluetoothPerip
     private static final int PAUSE_POLLING_TIMEOUT_MS = 35000;
     private static final int PAUSE_DELAY_MILLIS = 300;
 
+    private static final Object sLock = new Object();
+
     // Variables below only accessed on main thread
     final Messenger mMessenger;
 
@@ -97,12 +99,14 @@ public class PeripheralHandoverService extends Service implements BluetoothPerip
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (mStartId != 0) {
-            // already running
-            return START_STICKY;
+        synchronized (sLock) {
+            if (mStartId != 0) {
+                mStartId = startId;
+                // already running
+                return START_STICKY;
+            }
+            mStartId = startId;
         }
-
-        mStartId = startId;
 
         if (intent == null) {
             if (DBG) Log.e(TAG, "Intent is null, can't do peripheral handover.");
@@ -216,7 +220,11 @@ public class PeripheralHandoverService extends Service implements BluetoothPerip
             mNfcAdapter.resumePolling();
         }
         disableBluetoothIfNeeded();
-        stopSelf(mStartId);
+
+        synchronized (sLock) {
+            stopSelf(mStartId);
+            mStartId = 0;
+        }
     }
 
 

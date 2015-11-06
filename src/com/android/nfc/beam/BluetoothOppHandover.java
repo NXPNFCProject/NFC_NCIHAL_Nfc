@@ -117,6 +117,7 @@ public class BluetoothOppHandover implements Handler.Callback {
             intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, mUris);
         }
         if (DBG) Log.d(TAG, "Handing off outging transfer to BT");
+        intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         mContext.sendBroadcast(intent);
 
         complete();

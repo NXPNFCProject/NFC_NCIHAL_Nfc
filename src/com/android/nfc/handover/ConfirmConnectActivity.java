@@ -28,6 +28,7 @@ import com.android.nfc.R;
 
 public class ConfirmConnectActivity extends Activity {
     BluetoothDevice mDevice;
+    AlertDialog mAlert = null;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,6 +48,7 @@ public class ConfirmConnectActivity extends Activity {
                         Intent allowIntent = new Intent(BluetoothPeripheralHandover.ACTION_ALLOW_CONNECT);
                         allowIntent.putExtra(BluetoothDevice.EXTRA_DEVICE, mDevice);
                         sendBroadcast(allowIntent);
+                        ConfirmConnectActivity.this.mAlert = null;
                         ConfirmConnectActivity.this.finish();
                    }
                })
@@ -56,10 +58,22 @@ public class ConfirmConnectActivity extends Activity {
                        Intent denyIntent = new Intent(BluetoothPeripheralHandover.ACTION_DENY_CONNECT);
                        denyIntent.putExtra(BluetoothDevice.EXTRA_DEVICE, mDevice);
                        sendBroadcast(denyIntent);
+                       ConfirmConnectActivity.this.mAlert = null;
                        ConfirmConnectActivity.this.finish();
                    }
                });
-        AlertDialog alert = builder.create();
-        alert.show();
+        mAlert = builder.create();
+        mAlert.show();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (mAlert != null) {
+            mAlert.dismiss();
+            Intent denyIntent = new Intent(BluetoothPeripheralHandover.ACTION_DENY_CONNECT);
+            denyIntent.putExtra(BluetoothDevice.EXTRA_DEVICE, mDevice);
+            sendBroadcast(denyIntent);
+        }
     }
 }

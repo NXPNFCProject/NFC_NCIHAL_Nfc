@@ -18,6 +18,7 @@
 #define NXPLOG__H_INCLUDED
 
 #include <cutils/log.h>
+#include <string.h>
 
 typedef struct nci_log_level
 {

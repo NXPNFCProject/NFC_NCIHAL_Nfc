@@ -34,4 +34,8 @@ LOCAL_SHARED_LIBRARIES := \
 LOCAL_MODULE := libnfc_jni
 LOCAL_MODULE_TAGS := optional
 
-#include $(BUILD_SHARED_LIBRARY)
+# !!! Intentionally commented out, we'll stop building
+# the NXP stack in M, code will be removed in the
+# next release.
+# include $(BUILD_SHARED_LIBRARY)
+# !!!

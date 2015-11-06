@@ -337,7 +337,7 @@ void NfcTag::discoverTechnologies (tNFA_ACTIVATED& activationData)
 
     mNumTechList = mTechListIndex;
     ALOGE ("mNumTechList =%d, mTechListIndex=%d", mNumTechList, mTechListIndex);
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
     if (mNumTechList >= MAX_NUM_TECHNOLOGY)
     {
         ALOGE ("%s: exceed max=%d", fn, MAX_NUM_TECHNOLOGY);
@@ -369,7 +369,7 @@ void NfcTag::discoverTechnologies (tNFA_ACTIVATED& activationData)
                 rfDetail.rf_tech_param.param.pa.sel_rsp == 0x08 ||
                 rfDetail.rf_tech_param.param.pa.sel_rsp == 0x01)
             {
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
                 if ((rfDetail.rf_tech_param.param.pa.sel_rsp == 0) &&
                      (mNumTechList < (MAX_NUM_TECHNOLOGY-1)))
 #else
@@ -383,7 +383,7 @@ void NfcTag::discoverTechnologies (tNFA_ACTIVATED& activationData)
                     memcpy (&(mTechParams[mNumTechList]), &(rfDetail.rf_tech_param), sizeof(rfDetail.rf_tech_param));
                     mTechList [mNumTechList] = TARGET_TYPE_MIFARE_UL; //is TagTechnology.MIFARE_ULTRALIGHT by Java API
                 }
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
                               //To support skylander tag.
                 else if (rfDetail.rf_tech_param.param.pa.sel_rsp == 0x01)
                 {
@@ -426,7 +426,7 @@ void NfcTag::discoverTechnologies (tNFA_ACTIVATED& activationData)
 
     case NFC_PROTOCOL_ISO_DEP: //type-4 tag uses technology ISO-DEP and technology A or B
         mTechList [mNumTechList] = TARGET_TYPE_ISO14443_4; //is TagTechnology.ISO_DEP by Java API
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
         if ( ( (rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_POLL_A) ||
                 (rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_POLL_A_ACTIVE) ||
                 (rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_LISTEN_A) ||
@@ -445,7 +445,7 @@ void NfcTag::discoverTechnologies (tNFA_ACTIVATED& activationData)
             //save the stack's data structure for interpretation later
             memcpy (&(mTechParams[mNumTechList]), &(rfDetail.rf_tech_param), sizeof(rfDetail.rf_tech_param));
         }
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
             else if ( ((rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_POLL_B) ||
                     (rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_POLL_B_PRIME) ||
                     (rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_LISTEN_B) ||
@@ -475,7 +475,7 @@ void NfcTag::discoverTechnologies (tNFA_ACTIVATED& activationData)
         mTechList [mNumTechList] = TARGET_TYPE_KOVIO_BARCODE;
         break;
 
-#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if (NXP_EXTNS == TRUE)
     case NFC_PROTOCOL_MIFARE:
         ALOGE ("Mifare Classic detected");
         EXTNS_MfcInit(activationData);
@@ -515,7 +515,7 @@ void NfcTag::discoverTechnologies (tNFA_ACTIVATED& activationData)
     }
 
     mNumTechList++;
-#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if (NXP_EXTNS == TRUE)
         for (int i=0; (i < mNumTechList) && (mNumTechList < MAX_NUM_TECHNOLOGY); i++)
 #else
     for (int i=0; i < mNumTechList; i++)
@@ -524,7 +524,7 @@ void NfcTag::discoverTechnologies (tNFA_ACTIVATED& activationData)
         ALOGD ("%s: index=%d; tech=%d; handle=%d; nfc type=%d", fn,
                 i, mTechList[i], mTechHandles[i], mTechLibNfcTypes[i]);
     }
-#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if (NXP_EXTNS == TRUE)
 TheEnd:
 #endif
     ALOGD ("%s: exit", fn);
@@ -624,7 +624,7 @@ void NfcTag::discoverTechnologies (tNFA_DISC_RESULT& discoveryData)
         mTechList [mNumTechList] = TARGET_TYPE_ISO15693;
         break;
 
-#if (NFC_NXP_NOT_OPEN_INCLUDED ==TRUE)
+#if (NXP_EXTNS ==TRUE)
     case NFC_PROTOCOL_MIFARE:
         mTechHandles [mNumTechList] = discovery_ntf.rf_disc_id;
         mTechLibNfcTypes [mNumTechList] = discovery_ntf.protocol;
@@ -647,11 +647,11 @@ void NfcTag::discoverTechnologies (tNFA_DISC_RESULT& discoveryData)
 
     mNumTechList++;
 
-#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if (NXP_EXTNS == TRUE)
     if(discovery_ntf.more != NCI_DISCOVER_NTF_MORE)
 #endif
     {
-#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if (NXP_EXTNS == TRUE)
         for (int i=0; (i < mNumTechList) && (mNumTechList < MAX_NUM_TECHNOLOGY); i++)
 #else
         for (int i=0; i < mNumTechList; i++)
@@ -1068,7 +1068,7 @@ void NfcTag::fillNativeNfcTagMembers4 (JNIEnv* e, jclass tag_cls, jobject tag, t
             }
             break;
 
-#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if (NXP_EXTNS == TRUE)
          case NFC_PROTOCOL_MIFARE:
             {
                 ALOGD ("%s: Mifare Classic; tech A", fn);
@@ -1237,7 +1237,7 @@ void NfcTag::fillNativeNfcTagMembers5 (JNIEnv* e, jclass tag_cls, jobject tag, t
     case NFC_DISCOVERY_TYPE_POLL_B_PRIME:
     case NFC_DISCOVERY_TYPE_LISTEN_B:
     case NFC_DISCOVERY_TYPE_LISTEN_B_PRIME:
-#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if (NXP_EXTNS == TRUE)
         if(activationData.activate_ntf.protocol != NFA_PROTOCOL_T3BT)
 #endif
         {
@@ -1246,7 +1246,7 @@ void NfcTag::fillNativeNfcTagMembers5 (JNIEnv* e, jclass tag_cls, jobject tag, t
             e->SetByteArrayRegion(uid.get(), 0, NFC_NFCID0_MAX_LEN,
                     (jbyte*) &mTechParams [0].param.pb.nfcid0);
         }
-#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if (NXP_EXTNS == TRUE)
         else
         {
             ALOGD ("%s: chinaId card", fn);
@@ -1445,7 +1445,7 @@ void NfcTag::selectFirstTag ()
         {
             rf_intf = NFA_INTERFACE_ISO_DEP;
         }
-#if (NFC_NXP_NOT_OPEN_INCLUDED ==TRUE)
+#if (NXP_EXTNS ==TRUE)
         else if(mTechLibNfcTypes [foundIdx] == NFA_PROTOCOL_MIFARE)
         {
             rf_intf = NFA_INTERFACE_MIFARE;

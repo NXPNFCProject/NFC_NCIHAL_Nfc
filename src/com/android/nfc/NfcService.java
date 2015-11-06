@@ -810,6 +810,12 @@ public class NfcService implements DeviceHostListener {
             mInProvisionMode = false;
         }
 
+        if(mInProvisionMode)
+        {
+            /* if device is in provision mode, set this mode at lower layers */
+            mDeviceHost.doSetProvisionMode(mInProvisionMode);
+        }
+
         mNfcDispatcher = new NfcDispatcher(mContext, mHandoverDataParser, mInProvisionMode);
         mP2pLinkManager = new P2pLinkManager(mContext, mHandoverDataParser,
                 mDeviceHost.getDefaultLlcpMiu(), mDeviceHost.getDefaultLlcpRwSize());
@@ -1607,6 +1613,7 @@ public class NfcService implements DeviceHostListener {
                 mPrefsEditor.putBoolean(PREF_NDEF_PUSH_ON, true);
                 mPrefsEditor.apply();
                 mIsNdefPushEnabled = true;
+                mDeviceHost.doEnablep2p(mIsNdefPushEnabled);
                 setBeamShareActivityState(true);
                 if (isNfcEnabled()) {
                     mP2pLinkManager.enableDisable(true, true);
@@ -3136,7 +3143,7 @@ public class NfcService implements DeviceHostListener {
             } else if(cmdType.equals("enableserver")) {
                 if(serviceName.equals(null))
                     return false;
-                mP2pLinkManager.enableExtDtaSnepServer(serviceName, serviceSap, miu, rwSize,testCaseId);
+                mP2pLinkManager.enableExtDtaSnepServer(serviceName, serviceSap, miu, rwSize);
             } else if(cmdType.equals("disableserver")) {
                 mP2pLinkManager.disableExtDtaSnepServer();
             } else if(cmdType.equals("enableclient")) {
@@ -3768,6 +3775,8 @@ public class NfcService implements DeviceHostListener {
                     // Notify dispatcher it's fine to dispatch to any package now
                     // and allow handover transfers.
                     mNfcDispatcher.disableProvisioningMode();
+                    /* if provision mode is disabled, then send this info to lower layers as well */
+                    mDeviceHost.doSetProvisionMode(mInProvisionMode);
                 }
             }
             // Special case: if we're transitioning to unlocked state while
@@ -4803,7 +4812,7 @@ public class NfcService implements DeviceHostListener {
                                 // Register P2P device
                                 mObjectMap.put(device.getHandle(), device);
                             }
-                            mP2pLinkManager.onLlcpActivated();
+                            mP2pLinkManager.onLlcpActivated(device.getLlcpVersion());
                             return true;
                         } else {
                             /* should not happen */
@@ -4832,7 +4841,7 @@ public class NfcService implements DeviceHostListener {
                             // Register P2P device
                             mObjectMap.put(device.getHandle(), device);
                         }
-                        mP2pLinkManager.onLlcpActivated();
+                        mP2pLinkManager.onLlcpActivated(device.getLlcpVersion());
                         return true;
                     }
                 } else {

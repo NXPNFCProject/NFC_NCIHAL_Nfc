@@ -18,6 +18,7 @@ package com.android.nfc.cardemulation;
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.List;
 
 import com.android.nfc.ForegroundUtils;
 
@@ -242,7 +243,7 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
             // foreground app says it was not. In this case we'll still prefer the payment
             // app, since that is the one that the user has explicitly selected (and said
             // it's not allowed to be overridden).
-            final ArrayList<String> otherAids = serviceInfo.getAids();
+            final List<String> otherAids = serviceInfo.getAids();
             ApduServiceInfo paymentServiceInfo = mServiceCache.getService(
                     ActivityManager.getCurrentUser(), mPaymentDefaults.currentPreferred);
             if (paymentServiceInfo != null && otherAids != null && otherAids.size() > 0) {

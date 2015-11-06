@@ -88,7 +88,7 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection (JNIEnv*, jobje
     ALOGD("%s: enter", __FUNCTION__);
     bool stat = false;
     jint secElemHandle = EE_ERROR_INIT;
-#if((ESE_NFC_POWER_MANAGEMENT == TRUE)&&(NFC_NXP_NOT_OPEN_INCLUDED == TRUE))
+#if((NFC_POWER_MANAGEMENT == TRUE)&&(NXP_EXTNS == TRUE))
     long ret_val = -1;
     NFCSTATUS status = NFCSTATUS_FAILED;
     p61_access_state_t p61_current_state = P61_STATE_INVALID;
@@ -120,7 +120,7 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection (JNIEnv*, jobje
     }
 #endif
 
-#if((ESE_NFC_POWER_MANAGEMENT == TRUE)&&(NFC_NXP_NOT_OPEN_INCLUDED == TRUE))
+#if((NFC_POWER_MANAGEMENT == TRUE)&&(NXP_EXTNS == TRUE))
     ret_val = NFC_GetP61Status ((void *)&p61_current_state);
     if (ret_val < 0)
     {
@@ -244,7 +244,7 @@ static jboolean nativeNfcSecureElement_doDisconnectSecureElementConnection (JNIE
 {
     ALOGD("%s: enter; handle=0x%04x", __FUNCTION__, handle);
     bool stat = false;
-#if((ESE_NFC_POWER_MANAGEMENT == TRUE)&&(NFC_NXP_NOT_OPEN_INCLUDED == TRUE))
+#if((NFC_POWER_MANAGEMENT == TRUE)&&(NXP_EXTNS == TRUE))
     long ret_val = -1;
     NFCSTATUS status = NFCSTATUS_FAILED;
 #endif
@@ -287,7 +287,7 @@ static jboolean nativeNfcSecureElement_doDisconnectSecureElementConnection (JNIE
     //if nothing is active after this, then tell the controller to power down
     if (! PowerSwitch::getInstance ().setModeOff (PowerSwitch::SE_CONNECTED))
         PowerSwitch::getInstance ().setLevel (PowerSwitch::LOW_POWER);
-#if((ESE_NFC_POWER_MANAGEMENT == TRUE)&&(NFC_NXP_NOT_OPEN_INCLUDED == TRUE))
+#if((NFC_POWER_MANAGEMENT == TRUE)&&(NXP_EXTNS == TRUE))
     ret_val = NFC_RelWiredAccess ((void *)&status);
     if (ret_val < 0)
     {
@@ -304,7 +304,7 @@ static jboolean nativeNfcSecureElement_doDisconnectSecureElementConnection (JNIE
     }
 #endif
 TheEnd:
-#if((ESE_NFC_POWER_MANAGEMENT == TRUE)&&(NFC_NXP_NOT_OPEN_INCLUDED == TRUE))
+#if((NFC_POWER_MANAGEMENT == TRUE)&&(NXP_EXTNS == TRUE))
     ALOGD("%s: exit stat = %d", __FUNCTION__, stat);
 #else
     ALOGD("%s: exit", __FUNCTION__);

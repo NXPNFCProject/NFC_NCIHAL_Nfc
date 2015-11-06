@@ -228,5 +228,6 @@ void Mfc_DeactivateCbackSelect(void);
 void Mfc_ActivateCback(void);
 NFCSTATUS Mfc_RecvPacket(uint8_t *buff, uint8_t buffSz);
 NFCSTATUS phNxNciExtns_MifareStd_Reconnect(void);
+NFCSTATUS Mfc_PresenceCheck(void);
 
 #endif /* _PHNXPEXTNS_MFCRF_H_ */

@@ -30,7 +30,7 @@ LOCAL_CFLAGS += -DPN548C2=2
 endif
 
 #NXP PN547 Enable
-LOCAL_CFLAGS += -DNFC_NXP_NOT_OPEN_INCLUDED=TRUE
+LOCAL_CFLAGS += -DNXP_EXTNS=TRUE
 LOCAL_CFLAGS += -DNFC_NXP_NON_STD_CARD=FALSE
 LOCAL_CFLAGS += -DNFC_NXP_HFO_SETTINGS=FALSE
 
@@ -64,18 +64,18 @@ else ifeq ($(NXP_CHIP_TYPE),$(PN548C2))
 LOCAL_CFLAGS += -DNFC_NXP_CHIP_TYPE=PN548C2
 endif
 
-ESE_NFC_POWER_MANAGEMENT:= FALSE
-ifeq ($(ESE_NFC_POWER_MANAGEMENT),TRUE)
-LOCAL_CFLAGS += -DESE_NFC_POWER_MANAGEMENT=TRUE
+NFC_POWER_MANAGEMENT:= FALSE
+ifeq ($(NFC_POWER_MANAGEMENT),TRUE)
+LOCAL_CFLAGS += -DNFC_POWER_MANAGEMENT=TRUE
 LOCAL_CFLAGS += -DNFC_NXP_TRIPLE_MODE_PROTECTION=TRUE
 else
-LOCAL_CFLAGS += -DESE_NFC_POWER_MANAGEMENT=FALSE
+LOCAL_CFLAGS += -DNFC_POWER_MANAGEMENT=FALSE
 endif
 
 ifeq ($(NFC_NXP_ESE),TRUE)
-LOCAL_CFLAGS += -DALA_VERSION_2=TRUE
+LOCAL_CFLAGS += -DNXP_LDR_SVC_VER_2=TRUE
 else
-LOCAL_CFLAGS += -DALA_VERSION_2=FALSE
+LOCAL_CFLAGS += -DNXP_LDR_SVC_VER_2=FALSE
 endif
 
 
@@ -92,10 +92,6 @@ endef
 LOCAL_SRC_FILES += $(call all-cpp-files-under, .) $(call all-c-files-under, .)
 
 LOCAL_C_INCLUDES += \
-    bionic \
-    bionic/libstdc++ \
-    external/stlport/stlport \
-    external/icu4c/common \
     frameworks/native/include \
     libcore/include \
     $(NFA)/include \
@@ -120,8 +116,7 @@ LOCAL_SHARED_LIBRARIES := \
     libcutils \
     libutils \
     liblog \
-    libnfc-nci \
-    libstlport
+    libnfc-nci
 
 ifeq ($(NFC_NXP_ESE),TRUE)
 LOCAL_SHARED_LIBRARIES += libp61-jcop-kit

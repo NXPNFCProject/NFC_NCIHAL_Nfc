@@ -42,6 +42,7 @@ import android.nfc.NdefRecord;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.nfc.tech.Ndef;
+import android.nfc.tech.NfcBarcode;
 import android.os.RemoteException;
 import android.os.UserHandle;
 import android.util.Log;
@@ -248,6 +249,11 @@ class NfcDispatcher {
         Ndef ndef = Ndef.get(tag);
         if (ndef != null) {
             message = ndef.getCachedNdefMessage();
+        }else {
+            NfcBarcode nfcBarcode = NfcBarcode.get(tag);
+            if (nfcBarcode != null && nfcBarcode.getType() == NfcBarcode.TYPE_KOVIO) {
+                message = decodeNfcBarcodeUri(nfcBarcode);
+            }
         }
 
         if (DBG) Log.d(TAG, "dispatch tag: " + tag.toString() + " message: " + message);
@@ -302,6 +308,69 @@ class NfcDispatcher {
 
     private boolean handleNfcUnlock(Tag tag) {
         return mNfcUnlockManager.tryUnlock(tag);
+    }
+
+    /**
+     * Checks for the presence of a URL stored in a tag with tech NfcBarcode.
+     * If found, decodes URL and returns NdefMessage message containing an
+     * NdefRecord containing the decoded URL. If not found, returns null.
+     *
+     * URLs are decoded as follows:
+     *
+     * Ignore first byte (which is 0x80 ORd with a manufacturer ID, corresponding
+     * to ISO/IEC 7816-6).
+     * The second byte describes the payload data format. There are four defined data
+     * format values that identify URL data. Depending on the data format value, the
+     * associated prefix is appended to the URL data:
+     *
+     * 0x01: URL with "http://www." prefix
+     * 0x02: URL with "https://www." prefix
+     * 0x03: URL with "http://" prefix
+     * 0x04: URL with "https://" prefix
+     *
+     * Other data format values do not identify URL data and are not handled by this function.
+     * URL payload is encoded in US-ASCII, following the limitations defined in RFC3987.
+     * see http://www.ietf.org/rfc/rfc3987.txt
+     *
+     * The final two bytes of a tag with tech NfcBarcode are always reserved for CRC data,
+     * and are therefore not part of the payload. They are ignored in the decoding of a URL.
+     *
+     * The default assumption is that the URL occupies the entire payload of the NfcBarcode
+     * ID and all bytes of the NfcBarcode payload are decoded until the CRC (final two bytes)
+     * is reached. However, the OPTIONAL early terminator byte 0xfe can be used to signal
+     * an early end of the URL. Once this function reaches an early terminator byte 0xfe,
+     * URL decoding stops and the NdefMessage is created and returned. Any payload data after
+     * the first early terminator byte is ignored for the purposes of URL decoding.
+     */
+    private NdefMessage decodeNfcBarcodeUri(NfcBarcode nfcBarcode) {
+        final byte URI_PREFIX_HTTP_WWW  = (byte) 0x01; // "http://www."
+        final byte URI_PREFIX_HTTPS_WWW = (byte) 0x02; // "https://www."
+        final byte URI_PREFIX_HTTP      = (byte) 0x03; // "http://"
+        final byte URI_PREFIX_HTTPS     = (byte) 0x04; // "https://"
+
+        NdefMessage message = null;
+        byte[] tagId = nfcBarcode.getTag().getId();
+        // All tags of NfcBarcode technology and Kovio type have lengths of a multiple of 16 bytes
+        if (tagId.length >= 4
+                && (tagId[1] == URI_PREFIX_HTTP_WWW || tagId[1] == URI_PREFIX_HTTPS_WWW
+                || tagId[1] == URI_PREFIX_HTTP || tagId[1] == URI_PREFIX_HTTPS)) {
+            // Look for optional URI terminator (0xfe), used to indicate the end of a URI prior to
+            // the end of the full NfcBarcode payload. No terminator means that the URI occupies the
+            // entire length of the payload field. Exclude checking the CRC in the final two bytes
+            // of the NfcBarcode tagId.
+            int end = 2;
+            for (; end < tagId.length - 2; end++) {
+                if (tagId[end] == (byte) 0xfe) {
+                    break;
+                }
+            }
+            byte[] payload = new byte[end - 1]; // Skip also first byte (manufacturer ID)
+            System.arraycopy(tagId, 1, payload, 0, payload.length);
+            NdefRecord uriRecord = new NdefRecord(
+                    NdefRecord.TNF_WELL_KNOWN, NdefRecord.RTD_URI, tagId, payload);
+            message = new NdefMessage(uriRecord);
+        }
+        return message;
     }
 
     boolean tryOverrides(DispatchInfo dispatch, Tag tag, NdefMessage message, PendingIntent overrideIntent,

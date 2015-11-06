@@ -46,7 +46,7 @@ extern "C"
     #include "nfa_api.h"
     #include "nfa_ee_api.h"
 }
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
 #define TECHNOLOGY_BASED_ROUTING        0x00
 #define PROTOCOL_BASED_ROUTING          0x01
 #define AID_BASED_ROUTING               0x02
@@ -90,7 +90,7 @@ typedef struct{
 class RoutingManager
 {
 public:
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
     static const int NFA_SET_AID_ROUTING = 4;
     static const int NFA_SET_TECHNOLOGY_ROUTING = 1;
     static const int NFA_SET_PROTOCOL_ROUTING = 2;
@@ -105,7 +105,7 @@ public:
     bool initialize(nfc_jni_native_data* native);
     void enableRoutingToHost();
     void disableRoutingToHost();
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
     void setDefaultTechRouting (int seId, int tech_switchon,int tech_switchoff);
     void setDefaultProtoRouting (int seId, int proto_switchon,int proto_switchoff);
     int addNfcid2Routing(UINT8* nfcid2, UINT8 aidLen,const UINT8* syscode,
@@ -115,7 +115,7 @@ public:
     void getRouting();
     void processGetRoutingRsp(tNFA_DM_CBACK_DATA* eventData, UINT8* sRoutingBuff);
 #endif
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
     bool addAidRouting(const UINT8* aid, UINT8 aidLen, int route, int power, bool isprefix);
 #else
     bool addAidRouting(const UINT8* aid, UINT8 aidLen, int route);
@@ -124,7 +124,7 @@ public:
     bool commitRouting();
     void onNfccShutdown();
     int registerJniFunctions (JNIEnv* e);
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
     bool setRoutingEntry(int type, int value, int route, int power);
     bool clearRoutingEntry(int type);
     void setRouting(bool);
@@ -183,7 +183,7 @@ private:
     std::vector<UINT8> mRxDataBuffer;
 
     // Fields below are final after initialize()
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
     UINT32 mCeRouteStrictDisable;
 #endif
     //int mDefaultEe;
@@ -201,7 +201,7 @@ private:
     SyncEvent mRoutingEvent;
     SyncEvent mEeUpdateEvent;
     SyncEvent mEeSetModeEvent;
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
      int defaultSeID ;
      bool mIsDirty;
      int defaultPowerstate;

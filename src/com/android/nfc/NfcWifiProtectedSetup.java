@@ -83,7 +83,7 @@ public final class NfcWifiProtectedSetup {
             Intent configureNetworkIntent = new Intent()
                     .putExtra(EXTRA_WIFI_CONFIG, wifiConfiguration)
                     .setClass(context, ConfirmConnectToWifiNetworkActivity.class)
-                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
             context.startActivityAsUser(configureNetworkIntent, UserHandle.CURRENT);
             return true;

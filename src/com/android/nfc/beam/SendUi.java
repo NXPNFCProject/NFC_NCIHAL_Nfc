@@ -16,7 +16,6 @@
 
 package com.android.nfc.beam;
 
-import com.android.internal.policy.PolicyManager;
 import com.android.nfc.R;
 import com.android.nfc.beam.FireflyRenderer;
 
@@ -46,6 +45,8 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
+import com.android.internal.policy.PhoneWindow;
+import android.view.SearchEvent;
 import android.view.Surface;
 import android.view.SurfaceControl;
 import android.view.TextureView;
@@ -296,7 +297,7 @@ public class SendUi implements Animator.AnimatorListener, View.OnTouchListener,
         // Create a Window with a Decor view; creating a window allows us to get callbacks
         // on key events (which require a decor view to be dispatched).
         mContext.setTheme(android.R.style.Theme_Black_NoTitleBar_Fullscreen);
-        Window window = PolicyManager.makeNewWindow(mContext);
+        Window window = new PhoneWindow(mContext);
         window.setCallback(this);
         window.requestFeature(Window.FEATURE_NO_TITLE);
         mDecor = window.getDecorView();
@@ -556,6 +557,7 @@ public class SendUi implements Animator.AnimatorListener, View.OnTouchListener,
         protected void onPostExecute(Bitmap result) {
             if (mState == STATE_W4_SCREENSHOT) {
                 // Screenshot done, wait for request to start preSend anim
+                mScreenshotBitmap = result;
                 mState = STATE_W4_PRESEND;
             } else if (mState == STATE_W4_SCREENSHOT_THEN_STOP) {
                 // We were asked to finish, move to idle state and exit
@@ -855,6 +857,10 @@ public class SendUi implements Animator.AnimatorListener, View.OnTouchListener,
     public void onPanelClosed(int featureId, Menu menu) {
 
     }
+    @Override
+    public boolean onSearchRequested(SearchEvent searchEvent) {
+         return onSearchRequested();
+    }
 
     @Override
     public boolean onSearchRequested() {
@@ -864,6 +870,11 @@ public class SendUi implements Animator.AnimatorListener, View.OnTouchListener,
     @Override
     public ActionMode onWindowStartingActionMode(
             android.view.ActionMode.Callback callback) {
+        return null;
+    }
+
+    public ActionMode onWindowStartingActionMode(
+            android.view.ActionMode.Callback callback, int type) {
         return null;
     }
 

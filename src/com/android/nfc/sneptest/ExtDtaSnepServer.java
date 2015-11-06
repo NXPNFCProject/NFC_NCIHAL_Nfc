@@ -45,7 +45,6 @@ public final class ExtDtaSnepServer
     final int mDtaMiu;
     final int mDtaRwSize;
     public static Context mContext;
-    public static int mTestCaseId;
 
     /** Protected by 'this', null when stopped, non-null when running */
     ServerThread mServerThread = null;
@@ -59,7 +58,7 @@ public final class ExtDtaSnepServer
     }
 
     // for NFC Forum SNEP DTA
-    public ExtDtaSnepServer(String serviceName, int serviceSap, int miu, int rwSize, Callback callback,Context mContext,int testCaseId)
+    public ExtDtaSnepServer(String serviceName, int serviceSap, int miu, int rwSize, Callback callback,Context mContext)
     {
         mExtDtaSnepServerCallback = callback;
         mDtaServiceName = serviceName;
@@ -67,7 +66,6 @@ public final class ExtDtaSnepServer
         mDtaFragmentLength = -1; // to get remote MIU
         mDtaMiu = miu;
         mDtaRwSize = rwSize;
-        mTestCaseId = testCaseId;
         dtaServiceConnector=new DtaServiceConnector(mContext);
         dtaServiceConnector.bindService();
     }

@@ -24,5 +24,6 @@
          Mime-types must be lower case, wildcards are *not* accepted. -->
     <string-array name="provisioning_mime_types">
         <item>application/com.android.managedprovisioning</item>
+        <item>application/com.android.managedprovisioning.v2</item>
     </string-array>
 </resources>

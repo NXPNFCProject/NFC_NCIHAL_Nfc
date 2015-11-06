@@ -27,7 +27,7 @@ phNciNfc_TransceiveInfo_t  tNciTranscvInfo;
 phFriNfc_sNdefSmtCrdFmt_t  *NdefSmtCrdFmt = NULL;
 phFriNfc_NdefMap_t         *NdefMap = NULL;
 phLibNfc_NdefInfo_t        NdefInfo;
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
 pthread_mutex_t SharedDataMutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
 UINT8 current_key[6]={0};
@@ -145,7 +145,7 @@ NFCSTATUS phNxpExtns_MfcModuleDeInit(void)
         free(NdefSmtCrdFmt);
         NdefSmtCrdFmt = NULL;
     }
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
     pthread_mutex_lock(&SharedDataMutex);
 #endif
     if ( NULL != NdefInfo.psUpperNdefMsg )
@@ -158,7 +158,7 @@ NFCSTATUS phNxpExtns_MfcModuleDeInit(void)
         free(NdefInfo.psUpperNdefMsg);
         NdefInfo.psUpperNdefMsg = NULL;
     }
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
     pthread_mutex_unlock(&SharedDataMutex);
 #endif
     if (NULL != gAuthCmdBuf.pauth_cmd)
@@ -271,7 +271,7 @@ NFCSTATUS phNxpExtns_MfcModuleInit(void)
         goto clean_and_return;
     }
     memset( NdefSmtCrdFmt , 0, sizeof(phFriNfc_sNdefSmtCrdFmt_t) );
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
     pthread_mutex_lock(&SharedDataMutex);
 #endif
     NdefInfo.psUpperNdefMsg = malloc(sizeof(phNfc_sData_t));
@@ -294,7 +294,7 @@ NFCSTATUS phNxpExtns_MfcModuleInit(void)
     status = NFCSTATUS_SUCCESS;
 
 clean_and_return:
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
     pthread_mutex_unlock(&SharedDataMutex);
 #endif
     if(status != NFCSTATUS_SUCCESS)
@@ -434,7 +434,7 @@ STATIC void Mfc_ReadNdef_Completion_Routine(void *NdefCtxt, NFCSTATUS status)
     tNFA_NDEF_EVT_DATA p_data;
 
     conn_evt_data.status = status;
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
     pthread_mutex_lock(&SharedDataMutex);
 #endif
     if(NFCSTATUS_SUCCESS == status)
@@ -454,7 +454,7 @@ STATIC void Mfc_ReadNdef_Completion_Routine(void *NdefCtxt, NFCSTATUS status)
         free (NdefInfo.psUpperNdefMsg->buffer);
         NdefInfo.psUpperNdefMsg->buffer = NULL;
     }
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
     pthread_mutex_unlock(&SharedDataMutex);
 #endif
     return;
@@ -639,11 +639,11 @@ NFCSTATUS Mfc_SetReadOnly(uint8_t *secrtkey, uint8_t len)
     }
     else if( (NdefInfo.is_ndef == 1) && (NdefInfo.NdefActualSize == 0) )
     {
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
         pthread_mutex_lock(&SharedDataMutex);
 #endif
         NdefInfo.psUpperNdefMsg->length = NdefInfo.NdefActualSize;
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
         pthread_mutex_unlock(&SharedDataMutex);
 #endif
         status = NFCSTATUS_SUCCESS;
@@ -687,7 +687,7 @@ NFCSTATUS Mfc_ReadNdef(void)
 
     gphNxpExtns_Context.CallBackMifare = phFriNfc_MifareStdMap_Process;
     gphNxpExtns_Context.CallBackCtxt   = NdefMap;
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
     pthread_mutex_lock(&SharedDataMutex);
 #endif
     if(NdefInfo.is_ndef == 0)
@@ -749,7 +749,7 @@ Mfc_RdNdefEnd:
         }
         status = NFCSTATUS_FAILED;
     }
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
     pthread_mutex_unlock(&SharedDataMutex);
 #endif
     return status;
@@ -822,7 +822,7 @@ NFCSTATUS Mfc_WriteNdef(uint8_t *p_data, uint32_t len)
     EXTNS_SetCallBackFlag(FALSE);
     gphNxpExtns_Context.CallBackMifare = phFriNfc_MifareStdMap_Process;
     gphNxpExtns_Context.CallBackCtxt   = NdefMap;
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
     pthread_mutex_lock(&SharedDataMutex);
 #endif
     if( NdefInfo.is_ndef == PH_LIBNFC_INTERNAL_CHK_NDEF_NOT_DONE )
@@ -876,7 +876,7 @@ NFCSTATUS Mfc_WriteNdef(uint8_t *p_data, uint32_t len)
     }
 
 Mfc_WrNdefEnd:
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
     pthread_mutex_unlock(&SharedDataMutex);
 #endif
     if( status != NFCSTATUS_SUCCESS )

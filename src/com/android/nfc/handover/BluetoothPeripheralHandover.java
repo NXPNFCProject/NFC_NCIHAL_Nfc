@@ -489,7 +489,7 @@ public class BluetoothPeripheralHandover implements BluetoothProfile.ServiceList
 
     void requestPairConfirmation() {
         Intent dialogIntent = new Intent(mContext, ConfirmConnectActivity.class);
-        dialogIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        dialogIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         dialogIntent.putExtra(BluetoothDevice.EXTRA_DEVICE, mDevice);
 
         mContext.startActivity(dialogIntent);

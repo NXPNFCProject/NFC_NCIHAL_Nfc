@@ -43,7 +43,7 @@
 #include "JavaClassConstants.h"
 #include "RoutingManager.h"
 #include "SecureElement.h"
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
 extern "C"{
 #include "phNxpConfig.h"
 #include "nfc_api.h"
@@ -52,7 +52,7 @@ extern "C"{
 #endif
 extern bool sHCEEnabled;
 
-#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if (NXP_EXTNS == TRUE)
 extern INT32 gSeDiscoverycount;
 extern SyncEvent gNfceeDiscCbEvent;
 extern INT32 gActualSeCount;
@@ -83,7 +83,7 @@ NfcID2_rmv_req_info_t NfcId2_rmv_req;
 namespace android
 {
     extern  void  checkforTranscation(UINT8 connEvent, void* eventData );
-#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if (NXP_EXTNS == TRUE)
     extern UINT16 sRoutingBuffLen;
     extern void startRfDiscovery (bool isStart);
     extern bool isDiscoveryStarted();
@@ -143,7 +143,7 @@ void NfcID2_req_timoutHandler (union sigval);
 void NfcID2_rmv_timoutHandler (union sigval);
 
 int RoutingManager::mChipId = 0;
-#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if (NXP_EXTNS == TRUE)
 bool recovery;
 #endif
 
@@ -163,7 +163,7 @@ bool RoutingManager::initialize (nfc_jni_native_data* native)
     UINT8 mActualNumEe = SecureElement::MAX_NUM_EE;
     tNFA_EE_INFO mEeInfo [mActualNumEe];
 
-#if (NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if (NXP_EXTNS == TRUE)
     if ((GetNumValue(NAME_HOST_LISTEN_ENABLE, &tech, sizeof(tech))))
     {
         mHostListnEnable = tech;
@@ -223,7 +223,7 @@ bool RoutingManager::initialize (nfc_jni_native_data* native)
         mEeRegisterEvent.wait ();
     }
 
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
     if(mHostListnEnable)
     {
         // Tell the host-routing to only listen on Nfc-A/Nfc-B
@@ -303,7 +303,7 @@ void RoutingManager::cleanRouting()
     }
     for ( i = 0; i < count; i++)
     {
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
         nfaStat =  NFA_EeSetDefaultTechRouting(ee_handleList[i],0,0,0,0,0);
 #else
         nfaStat =  NFA_EeSetDefaultTechRouting(ee_handleList[i],0,0,0);
@@ -312,7 +312,7 @@ void RoutingManager::cleanRouting()
         {
             mRoutingEvent.wait ();
         }
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
         nfaStat =  NFA_EeSetDefaultProtoRouting(ee_handleList[i],0,0,0,0,0);
 #else
         nfaStat =  NFA_EeSetDefaultProtoRouting(ee_handleList[i],0,0,0);
@@ -323,7 +323,7 @@ void RoutingManager::cleanRouting()
         }
     }
     //clean HOST
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
     nfaStat =  NFA_EeSetDefaultTechRouting(NFA_EE_HANDLE_DH,0,0,0,0,0);
 #else
     nfaStat =  NFA_EeSetDefaultTechRouting(NFA_EE_HANDLE_DH,0,0,0);
@@ -332,7 +332,7 @@ void RoutingManager::cleanRouting()
     {
         mRoutingEvent.wait ();
     }
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
     nfaStat =  NFA_EeSetDefaultProtoRouting(NFA_EE_HANDLE_DH,0,0,0,0,0);
 #else
     nfaStat =  NFA_EeSetDefaultProtoRouting(NFA_EE_HANDLE_DH,0,0,0);
@@ -349,7 +349,7 @@ void RoutingManager::cleanRouting()
 #endif
 }
 
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
 void RoutingManager::setRouting(bool isHCEEnabled)
 {
     tNFA_STATUS nfaStat;
@@ -1049,7 +1049,7 @@ void RoutingManager::enableRoutingToHost()
         // Route Nfc-A to host if we don't have a SE
         if (mSeTechMask == 0)
         {
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
             if(mCeRouteStrictDisable == 0x01)
             {
                 nfaStat = NFA_EeSetDefaultTechRouting (mDefaultEe, NFA_TECHNOLOGY_MASK_A, 0, 0, NFA_TECHNOLOGY_MASK_A, 0);
@@ -1067,7 +1067,7 @@ void RoutingManager::enableRoutingToHost()
         }
 
         // Default routing for IsoDep protocol
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
         if(mCeRouteStrictDisable == 0x01)
         {
             nfaStat = NFA_EeSetDefaultProtoRouting(mDefaultEe,
@@ -1107,7 +1107,7 @@ void RoutingManager::disableRoutingToHost()
         // Default routing for NFC-A technology if we don't have a SE
         if (mSeTechMask == 0)
         {
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
             nfaStat = NFA_EeSetDefaultTechRouting (mDefaultEe, 0, 0, 0, 0, 0);
 #else
             nfaStat = NFA_EeSetDefaultTechRouting (mDefaultEe, 0, 0, 0);
@@ -1119,7 +1119,7 @@ void RoutingManager::disableRoutingToHost()
         }
 
         // Default routing for IsoDep protocol
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
         nfaStat = NFA_EeSetDefaultProtoRouting(mDefaultEe, 0, 0, 0, 0, 0);
 #else
         nfaStat = NFA_EeSetDefaultProtoRouting(mDefaultEe, 0, 0, 0);
@@ -1130,7 +1130,7 @@ void RoutingManager::disableRoutingToHost()
             ALOGE ("Fail to set default proto routing");
     }
 }
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
 bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
 {
     static const char fn [] = "RoutingManager::setRoutingEntry";
@@ -1385,7 +1385,7 @@ bool RoutingManager::clearRoutingEntry(int type)
     return nfaStat;
 }
 #endif
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
 bool RoutingManager::addAidRouting(const UINT8* aid, UINT8 aidLen, int route, int power, bool isprefix)
 #else
 bool RoutingManager::addAidRouting(const UINT8* aid, UINT8 aidLen, int route)
@@ -1393,7 +1393,7 @@ bool RoutingManager::addAidRouting(const UINT8* aid, UINT8 aidLen, int route)
 {
     static const char fn [] = "RoutingManager::addAidRouting";
     ALOGD ("%s: enter", fn);
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
     tNFA_HANDLE handle;
     tNFA_HANDLE current_handle;
     unsigned long num = 0;
@@ -1430,7 +1430,7 @@ bool RoutingManager::addAidRouting(const UINT8* aid, UINT8 aidLen, int route)
     if (nfaStat == NFA_STATUS_OK)
     {
 //        ALOGD ("%s: routed AID", fn);
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
         SecureElement::getInstance().mAidAddRemoveEvent.wait();
 #endif
         return true;
@@ -1459,7 +1459,7 @@ bool RoutingManager::removeAidRouting(const UINT8* aid, UINT8 aidLen)
     }
 }
 
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
 //FelicaOnHost
 
 
@@ -2218,7 +2218,7 @@ void RoutingManager::nfaEeCallback (tNFA_EE_EVT event, tNFA_EE_CBACK_DATA* event
             else
                 ALOGE ("%s: NFA_EE_ACTION_EVT; h=0x%X; unknown trigger (0x%X)", fn, action.ee_handle, action.trigger);
 
-#if((NFC_NXP_NOT_OPEN_INCLUDED == TRUE)&&(NFC_NXP_ESE == TRUE) && (NFC_NXP_CHIP_TYPE == PN548C2))
+#if((NXP_EXTNS == TRUE)&&(NFC_NXP_ESE == TRUE) && (NFC_NXP_CHIP_TYPE == PN548C2))
             if((action.ee_handle == 0x4C0))
             {
                 ALOGE ("%s: NFA_EE_ACTION_EVT; h=0x%X;DWP CL activated (0x%X)", fn, action.ee_handle, action.trigger);
@@ -2294,7 +2294,7 @@ void RoutingManager::nfaEeCallback (tNFA_EE_EVT event, tNFA_EE_CBACK_DATA* event
                     if ((ee_disc_info.ee_info[xx].ee_handle == 0x4C0) &&
                             (ee_disc_info.ee_info[xx].ee_status == 0x02))
                     {
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
                         recovery=TRUE;
 #endif
                         routingManager.ee_removed_disc_ntf_handler(ee_disc_info.ee_info[xx].ee_handle, ee_disc_info.ee_info[xx].ee_status);
@@ -2315,7 +2315,7 @@ void RoutingManager::nfaEeCallback (tNFA_EE_EVT event, tNFA_EE_CBACK_DATA* event
     case NFA_EE_DISCOVER_REQ_EVT:
         ALOGD ("%s: NFA_EE_DISCOVER_REQ_EVT; status=0x%X; num ee=%u", __FUNCTION__,
                 eventData->discover_req.status, eventData->discover_req.num_ee);
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
 #if(NFC_NXP_ESE == TRUE && NFC_NXP_CHIP_TYPE != PN547C2)
         /* Handle Reader over SWP.
          * 1. Check if the event is for Reader over SWP.
@@ -2568,7 +2568,7 @@ void *ee_removed_ntf_handler_thread(void *data)
     se.SecEle_Modeset(0x01);
     usleep(10*1000);
     NFA_HciW4eSETransaction_Complete(Release);
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
     SyncEventGuard guard(se.mEEdatapacketEvent);
     recovery=FALSE;
     se.mEEdatapacketEvent.notifyOne();
@@ -2650,7 +2650,7 @@ Rdr_req_ntf_info_t RoutingManager::getSwpRrdReqInfo()
 }
 #endif
 
-#if(NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if(NXP_EXTNS == TRUE)
 bool RoutingManager::is_ee_recovery_ongoing()
 {
     ALOGD("is_ee_recovery_ongoing : recovery");

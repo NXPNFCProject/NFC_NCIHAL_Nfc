@@ -288,6 +288,9 @@ public class NativeNfcManager implements DeviceHost {
     public native boolean clearAidTable();
 
     @Override
+    public native void doSetProvisionMode(boolean provisionMode);
+
+    @Override
     public native int getRemainingAidTableSize();
 
     @Override
@@ -307,6 +310,9 @@ public class NativeNfcManager implements DeviceHost {
 
     @Override
     public native void doSetScreenState(int mScreenState);
+
+    @Override
+    public native void doEnablep2p(boolean p2pFlag);
 
     public native boolean doSetRoutingEntry(int type, int value, int route, int power);
     @Override
