@@ -6,6 +6,11 @@
 | :-------------: |:-------------:| 
 | NFC_NCIHAL_Nfc    |  git clone https://github.com/NXPNFCProject/NFC_NCIHAL_Nfc.git |
 
+| DESCRIPTION        | BRANCH          |
+|:-------------:|:-------------:| 
+| Android_L     |  master |
+| Android_M     |  br_android_ncihalx_m |
+
 ####Supported Android Versions
 
 | Android Version        | NXP Release          | NXP Tag  |
