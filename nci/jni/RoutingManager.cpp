@@ -49,10 +49,7 @@ extern "C"{
 #include "nfc_api.h"
 #include "nfa_api.h"
 }
-#endif
-extern bool sHCEEnabled;
 
-#if (NXP_EXTNS == TRUE)
 extern INT32 gSeDiscoverycount;
 extern SyncEvent gNfceeDiscCbEvent;
 extern INT32 gActualSeCount;
@@ -61,6 +58,7 @@ int gUICCVirtualWiredProtectMask = 0;
 int gEseVirtualWiredProtectMask = 0;
 int gWiredModeRfFieldEnable = 0;
 #endif
+extern bool sHCEEnabled;
 
 const JNINativeMethod RoutingManager::sMethods [] =
 {
@@ -85,6 +83,7 @@ namespace android
     extern  void  checkforTranscation(UINT8 connEvent, void* eventData );
 #if (NXP_EXTNS == TRUE)
     extern UINT16 sRoutingBuffLen;
+    extern bool isNfcInitializationDone();
     extern void startRfDiscovery (bool isStart);
     extern bool isDiscoveryStarted();
     extern int getScreenState();
@@ -564,7 +563,7 @@ bool RoutingManager::setDefaultRoute(const UINT8 defaultRoute, const UINT8 proto
 
     tNFA_STATUS nfaStat;
     static const char fn [] = "RoutingManager::setDefaultRoute";   /*commented to eliminate unused variable warning*/
-    unsigned long uiccListenTech = 0;
+    unsigned long uiccListenTech = 0,check_default_proto_se_id_req = 0;
     tNFA_HANDLE defaultHandle = NFA_HANDLE_INVALID;
     tNFA_HANDLE ActDevHandle = NFA_HANDLE_INVALID;
     tNFA_HANDLE preferred_defaultHandle = 0x402;
@@ -582,18 +581,18 @@ bool RoutingManager::setDefaultRoute(const UINT8 defaultRoute, const UINT8 proto
        uiccListenTech = NFA_TECHNOLOGY_MASK_A | NFA_TECHNOLOGY_MASK_B;
 
        ALOGD ("%s: enter, defaultRoute:%x protoRoute:0x%x TechRoute:0x%x ", fn, defaultRoute, protoRoute, techRoute);
-       defaultSeID = (((defaultRoute & 0x18) >> 3) == 0x00)  ? 0x400 :  ((((defaultRoute & 0x18)>>3 )== 0x01 ) ? 0x4C0 : 0x402);
-       defaultPowerstate=defaultRoute & 0x07;
+       defaultSeID = (((defaultRoute & 0x60) >> 5) == 0x00)  ? 0x400 :  ((((defaultRoute & 0x60)>>5 )== 0x01 ) ? 0x4C0 : 0x402);
+       defaultPowerstate=defaultRoute & 0x1F;
 
        ALOGD ("%s: enter, defaultSeID:%x defaultPowerstate:0x%x", fn, defaultSeID,defaultPowerstate);
-       defaultProtoSeID = (((protoRoute & 0x18) >> 3) == 0x00)  ? 0x400 :  ((((protoRoute & 0x18)>>3 )== 0x01 ) ? 0x4C0 : 0x402);
-       defaultProtoPowerstate = protoRoute & 0x07;
+       defaultProtoSeID = (((protoRoute & 0x60) >> 5) == 0x00)  ? 0x400 :  ((((protoRoute & 0x60)>>5 )== 0x01 ) ? 0x4C0 : 0x402);
+       defaultProtoPowerstate = protoRoute & 0x1F;
 
        ALOGD ("%s: enter, defaultProtoSeID:%x defaultProtoPowerstate:0x%x", fn, defaultProtoSeID,defaultProtoPowerstate);
 
-       defaultTechSeID = (((techRoute & 0x18) >> 3) == 0x00)  ? 0x400 :  ((((techRoute & 0x18)>>3 )== 0x01 ) ? 0x4C0 : 0x402);
-       defaultTechAPowerstate = techRoute & 0x07;
-       DefaultTechType = (techRoute & 0x20) >> 5;
+       defaultTechSeID = (((techRoute & 0x60) >> 5) == 0x00)  ? 0x400 :  ((((techRoute & 0x60)>>5 )== 0x01 ) ? 0x4C0 : 0x402);
+       defaultTechAPowerstate = techRoute & 0x1F;
+       DefaultTechType = (techRoute & 0x80) >> 7;
 
        ALOGD ("%s: enter, defaultTechSeID:%x defaultTechAPowerstate:0x%x,defaultTechType:0x%x", fn, defaultTechSeID,defaultTechAPowerstate,DefaultTechType);
 
@@ -604,6 +603,16 @@ bool RoutingManager::setDefaultRoute(const UINT8 defaultRoute, const UINT8 proto
            if (nfaStat != NFA_STATUS_OK)
                ALOGE("Failed to register wildcard AID for DH");
        }
+
+       if (GetNxpNumValue(NAME_CHECK_DEFAULT_PROTO_SE_ID, &check_default_proto_se_id_req, sizeof(check_default_proto_se_id_req)))
+       {
+           ALOGE("%s : CHECK_DEFAULT_PROTO_SE_ID - 0x%02x ",fn,check_default_proto_se_id_req);
+       }
+       else
+       {
+           ALOGE("%s : CHECK_DEFAULT_PROTO_SE_ID not defined. Taking default value - 0x%02x ",fn,check_default_proto_se_id_req);
+       }
+       if(check_default_proto_se_id_req == 0x01)
        {
            UINT8 count,seId=0;
            tNFA_HANDLE ee_handleList[SecureElement::MAX_NUM_EE];
@@ -611,40 +620,41 @@ bool RoutingManager::setDefaultRoute(const UINT8 defaultRoute, const UINT8 proto
 
            for (int  i = 0; ((count != 0 ) && (i < count)); i++)
            {
-                seId = SecureElement::getInstance().getGenericEseId(ee_handleList[i]);
-                defaultHandle = SecureElement::getInstance().getEseHandleFromGenericId(seId);
-                ALOGD ("%s: enter, ee_handleList[%d]:%x", fn, i,ee_handleList[i]);
-                //defaultHandle = ee_handleList[i];
-                if (preferred_defaultHandle == defaultHandle)
-                {
-                     //ActSEhandle = defaultHandle;
-                     break;
-                }
-            }
+               seId = SecureElement::getInstance().getGenericEseId(ee_handleList[i]);
+               defaultHandle = SecureElement::getInstance().getEseHandleFromGenericId(seId);
+               ALOGD ("%s: enter, ee_handleList[%d]:%x", fn, i,ee_handleList[i]);
+               //defaultHandle = ee_handleList[i];
+               if (preferred_defaultHandle == defaultHandle)
+               {
+                   //ActSEhandle = defaultHandle;
+                   break;
+               }
+           }
            for (int  i = 0; ((count != 0 ) && (i < count)); i++)
            {
-                seId = SecureElement::getInstance().getGenericEseId(ee_handleList[i]);
-                ActDevHandle = SecureElement::getInstance().getEseHandleFromGenericId(seId);
-                ALOGD ("%s: enter, ee_handleList[%d]:%x", fn, i,ee_handleList[i]);
-                if (defaultProtoSeID == ActDevHandle)
-                {
-                     isDefaultProtoSeIDPresent =1;
-                     break;
-                }
+               seId = SecureElement::getInstance().getGenericEseId(ee_handleList[i]);
+               ActDevHandle = SecureElement::getInstance().getEseHandleFromGenericId(seId);
+               ALOGD ("%s: enter, ee_handleList[%d]:%x", fn, i,ee_handleList[i]);
+               if (defaultProtoSeID == ActDevHandle)
+               {
+                   isDefaultProtoSeIDPresent =1;
+                   break;
+               }
            }
-       }
 
-       if(!isDefaultProtoSeIDPresent)
-       {
-            defaultProtoSeID = 0x400;
-            defaultProtoPowerstate = 0x01;
+
+           if(!isDefaultProtoSeIDPresent)
+           {
+               defaultProtoSeID = 0x400;
+               defaultProtoPowerstate = 0x01;
+           }
+           ALOGD ("%s: enter, isDefaultProtoSeIDPresent:%x", fn, isDefaultProtoSeIDPresent);
        }
-       ALOGD ("%s: enter, isDefaultProtoSeIDPresent:%x", fn, isDefaultProtoSeIDPresent);
 
        if( defaultProtoSeID == defaultSeID)
        {
-             unsigned int default_proto_power_mask[3] = {0,};
-             for(int pCount=0 ; pCount< 3 ;pCount++)
+             unsigned int default_proto_power_mask[5] = {0,};
+             for(int pCount=0 ; pCount< 5 ;pCount++)
              {
                   if((defaultPowerstate >> pCount)&0x01)
                   {
@@ -674,8 +684,8 @@ bool RoutingManager::setDefaultRoute(const UINT8 defaultRoute, const UINT8 proto
                                                             default_proto_power_mask[0],
                                                             default_proto_power_mask[1],
                                                             default_proto_power_mask[2],
-                                                            NFC_PROTOCOL_MASK_ISO7816|NFA_PROTOCOL_MASK_ISO_DEP,
-                                                            NFC_PROTOCOL_MASK_ISO7816|NFA_PROTOCOL_MASK_ISO_DEP);
+                                                            default_proto_power_mask[3],
+                                                            default_proto_power_mask[4]);
                  }
                  else
                  {
@@ -715,8 +725,8 @@ bool RoutingManager::setDefaultRoute(const UINT8 defaultRoute, const UINT8 proto
                                                             (defaultPowerstate & 01) ? (NFC_PROTOCOL_MASK_ISO7816 | t3t_protocol_mask) :0,
                                                             (defaultPowerstate & 02) ? (NFC_PROTOCOL_MASK_ISO7816) :0,
                                                             (defaultPowerstate & 04) ? (NFC_PROTOCOL_MASK_ISO7816) :0,
-                                                            NFC_PROTOCOL_MASK_ISO7816 ,
-                                                            NFC_PROTOCOL_MASK_ISO7816 );
+                                                            (defaultPowerstate & 0x08) ? NFC_PROTOCOL_MASK_ISO7816 :0,
+                                                            (defaultPowerstate & 0x10) ? NFC_PROTOCOL_MASK_ISO7816 :0);
                   }else
                   {
                       nfaStat = NFA_EeSetDefaultProtoRouting(defaultSeID ,
@@ -754,8 +764,8 @@ bool RoutingManager::setDefaultRoute(const UINT8 defaultRoute, const UINT8 proto
                                                             (defaultProtoPowerstate& 01) ? (NFA_PROTOCOL_MASK_ISO_DEP | t3t_protocol_mask): 0,
                                                             (defaultProtoPowerstate & 02) ? (NFA_PROTOCOL_MASK_ISO_DEP) :0,
                                                             (defaultProtoPowerstate & 04) ? (NFA_PROTOCOL_MASK_ISO_DEP) :0,
-                                                            NFA_PROTOCOL_MASK_ISO_DEP,
-                                                            NFA_PROTOCOL_MASK_ISO_DEP );
+                                                            (defaultProtoPowerstate & 0x08) ? NFA_PROTOCOL_MASK_ISO_DEP :0,
+                                                            (defaultProtoPowerstate & 0x10) ? NFA_PROTOCOL_MASK_ISO_DEP :0);
                   }else{
                       nfaStat = NFA_EeSetDefaultProtoRouting(defaultProtoSeID,
                                                              (defaultProtoPowerstate& 01) ? NFA_PROTOCOL_MASK_ISO_DEP: 0,
@@ -811,13 +821,13 @@ bool RoutingManager::setDefaultRoute(const UINT8 defaultRoute, const UINT8 proto
         unsigned long max_tech_mask = 0x03;
         max_tech_mask = SecureElement::getInstance().getSETechnology(defaultTechSeID);
         ALOGD ("%s: enter,max_tech_mask :%x", fn, max_tech_mask);
-        unsigned int default_tech_power_mask[3]={0,};
-        unsigned int defaultTechFPowerstate=0x07;
+        unsigned int default_tech_power_mask[5]={0,};
+        unsigned int defaultTechFPowerstate=0x1F;
 
         ALOGD ("%s: enter, defaultTechSeID:%x", fn, defaultTechSeID);
         if(defaultTechSeID == 0x402)
         {
-               for(int pCount=0 ; pCount< 3 ;pCount++)
+               for(int pCount=0 ; pCount< 5 ;pCount++)
                {
                     if((defaultTechAPowerstate >> pCount)&0x01)
                     {
@@ -884,8 +894,8 @@ bool RoutingManager::setDefaultRoute(const UINT8 defaultRoute, const UINT8 proto
                                                       (max_tech_mask & default_tech_power_mask[0]),
                                                       (max_tech_mask & default_tech_power_mask[1]),
                                                       (max_tech_mask & default_tech_power_mask[2]),
-                                                      (max_tech_mask & (NFA_TECHNOLOGY_MASK_A| NFA_TECHNOLOGY_MASK_B| NFA_TECHNOLOGY_MASK_F)),
-                                                      (max_tech_mask & (NFA_TECHNOLOGY_MASK_A| NFA_TECHNOLOGY_MASK_B| NFA_TECHNOLOGY_MASK_F)));
+                                                      (max_tech_mask & default_tech_power_mask[3]),
+                                                      (max_tech_mask & default_tech_power_mask[4]));
                }else{
                    nfaStat =  NFA_EeSetDefaultTechRouting (defaultTechSeID,
                                                       (max_tech_mask & default_tech_power_mask[0]),
@@ -911,8 +921,8 @@ bool RoutingManager::setDefaultRoute(const UINT8 defaultRoute, const UINT8 proto
                                                          (defaultTechAPowerstate& 01) ?  (max_tech_mask & DefaultTechType): 0,
                                                          (defaultTechAPowerstate & 02) ? (max_tech_mask & DefaultTechType) :0,
                                                          (defaultTechAPowerstate & 04) ? (max_tech_mask & DefaultTechType) :0,
-                                                         (max_tech_mask & DefaultTechType),
-                                                         (max_tech_mask & DefaultTechType));
+                                                         (defaultTechAPowerstate & 0x08) ? (max_tech_mask & DefaultTechType) :0,
+                                                         (defaultTechAPowerstate & 0x10) ? (max_tech_mask & DefaultTechType) :0);
               }else{
                    nfaStat =  NFA_EeSetDefaultTechRouting (defaultTechSeID,
                                                           (defaultTechAPowerstate& 01) ?  (max_tech_mask & DefaultTechType): 0,
@@ -933,8 +943,8 @@ bool RoutingManager::setDefaultRoute(const UINT8 defaultRoute, const UINT8 proto
                                                          (defaultTechFPowerstate& 01) ?  (max_tech_mask & NFA_TECHNOLOGY_MASK_F): 0,
                                                          (defaultTechFPowerstate & 02) ? (max_tech_mask & NFA_TECHNOLOGY_MASK_F) :0,
                                                          (defaultTechFPowerstate & 04) ? (max_tech_mask & NFA_TECHNOLOGY_MASK_F) :0,
-                                                         (max_tech_mask & NFA_TECHNOLOGY_MASK_F),
-                                                         (max_tech_mask & NFA_TECHNOLOGY_MASK_F));
+                                                         (defaultTechFPowerstate & 0x08) ? (max_tech_mask & NFA_TECHNOLOGY_MASK_F) :0,
+                                                         (defaultTechFPowerstate & 0x10) ? (max_tech_mask & NFA_TECHNOLOGY_MASK_F) :0);
               }else{
                   nfaStat =  NFA_EeSetDefaultTechRouting (0x402,
                                                           (defaultTechFPowerstate& 01) ?  (max_tech_mask & NFA_TECHNOLOGY_MASK_F): 0,
@@ -1929,12 +1939,7 @@ void RoutingManager::onNfccShutdown ()
                 && (eeInfo[xx].ee_status == NFA_EE_STATUS_ACTIVE))
             {
                 ALOGD ("%s: Handle: 0x%04x Change Status Active to Inactive", fn, eeInfo[xx].ee_handle);
-                SyncEventGuard guard (mEeSetModeEvent);
-                if ((nfaStat = NFA_EeModeSet (eeInfo[xx].ee_handle, NFA_EE_MD_DEACTIVATE)) == NFA_STATUS_OK)
-                {
-                    mEeSetModeEvent.wait (); //wait for NFA_EE_MODE_SET_EVT
-                }
-                else
+                if ((nfaStat = SecureElement::getInstance().SecElem_EeModeSet (eeInfo[xx].ee_handle, NFA_EE_MD_DEACTIVATE)) != NFA_STATUS_OK)
                 {
                     ALOGE ("Failed to set EE inactive");
                 }
@@ -2285,20 +2290,22 @@ void RoutingManager::nfaEeCallback (tNFA_EE_EVT event, tNFA_EE_CBACK_DATA* event
             UINT8 num_ee = eventData->ee_discover.num_ee;
             tNFA_EE_DISCOVER ee_disc_info = eventData->ee_discover;
             ALOGD ("%s: NFA_EE_DISCOVER_EVT; status=0x%X; num ee=%u", __FUNCTION__,eventData->status, eventData->ee_discover.num_ee);
-
-            if(mChipId == 0x02 || mChipId == 0x04)
+            if(android::isNfcInitializationDone() == true)
             {
-                for(int xx = 0; xx <  num_ee; xx++)
+                if(mChipId == 0x02 || mChipId == 0x04)
                 {
-                    ALOGE("xx=%d, ee_handle=0x0%x, status=0x0%x", xx, ee_disc_info.ee_info[xx].ee_handle,ee_disc_info.ee_info[xx].ee_status);
-                    if ((ee_disc_info.ee_info[xx].ee_handle == 0x4C0) &&
-                            (ee_disc_info.ee_info[xx].ee_status == 0x02))
+                    for(int xx = 0; xx <  num_ee; xx++)
                     {
+                        ALOGE("xx=%d, ee_handle=0x0%x, status=0x0%x", xx, ee_disc_info.ee_info[xx].ee_handle,ee_disc_info.ee_info[xx].ee_status);
+                        if ((ee_disc_info.ee_info[xx].ee_handle == 0x4C0) &&
+                            (ee_disc_info.ee_info[xx].ee_status == 0x02))
+                        {
 #if(NXP_EXTNS == TRUE)
-                        recovery=TRUE;
+                            recovery=TRUE;
 #endif
-                        routingManager.ee_removed_disc_ntf_handler(ee_disc_info.ee_info[xx].ee_handle, ee_disc_info.ee_info[xx].ee_status);
-                        break;
+                            routingManager.ee_removed_disc_ntf_handler(ee_disc_info.ee_info[xx].ee_handle, ee_disc_info.ee_info[xx].ee_status);
+                            break;
+                        }
                     }
                 }
             }
@@ -2561,18 +2568,36 @@ void reader_req_event_ntf (union sigval)
 void *ee_removed_ntf_handler_thread(void *data)
 {
     static const char fn [] = "ee_removed_ntf_handler_thread";
+    tNFA_STATUS stat = NFA_STATUS_FAILED;
     SecureElement &se = SecureElement::getInstance();
-    ALOGD ("%s:  ", fn);
-    se.SecEle_Modeset(0x00);
+    RoutingManager &rm = RoutingManager::getInstance();
+    ALOGD ("%s: Enter: ", fn);
+    rm.mResetHandlerMutex.lock();
+    ALOGD ("%s: enter sEseRemovedHandlerMutex lock", fn);
+    stat = NFA_EeModeSet(0x4c0, NFA_EE_MD_DEACTIVATE);
+
+    if(stat == NFA_STATUS_OK)
+    {
+        SyncEventGuard guard (se.mEeSetModeEvent);
+        se.mEeSetModeEvent.wait ();
+    }
+    se.NfccStandByOperation(STANDBY_GPIO_LOW);
     usleep(10*1000);
-    se.SecEle_Modeset(0x01);
-    usleep(10*1000);
+    se.NfccStandByOperation(STANDBY_GPIO_HIGH);
+    stat = NFA_EeModeSet(0x4c0, NFA_EE_MD_ACTIVATE);
+
+    if(stat == NFA_STATUS_OK)
+    {
+        SyncEventGuard guard(se.mEeSetModeEvent);
+        se.mEeSetModeEvent.wait ();
+    }
     NFA_HciW4eSETransaction_Complete(Release);
-#if(NXP_EXTNS == TRUE)
     SyncEventGuard guard(se.mEEdatapacketEvent);
     recovery=FALSE;
     se.mEEdatapacketEvent.notifyOne();
-#endif
+    rm.mResetHandlerMutex.unlock();
+    ALOGD ("%s: exit sEseRemovedHandlerMutex lock ", fn);
+    ALOGD ("%s: exit ", fn);
     return NULL;
 }
 
@@ -2718,6 +2743,45 @@ void RoutingManager::processGetRoutingRsp(tNFA_DM_CBACK_DATA* eventData, UINT8* 
             android::sRoutingBuffLen = android::sRoutingBuffLen + curTLVLen+TYPE_LENGTH_SIZE;
         }
         xx++;
+    }
+}
+/*******************************************************************************
+**
+** Function:        handleSERemovedNtf()
+**
+** Description:     The Function checks whether eSE is Removed Ntf
+**
+** Returns:         None
+**
+*******************************************************************************/
+void RoutingManager::handleSERemovedNtf()
+{
+    static const char fn [] = "RoutingManager::handleSERemovedNtf()";
+    UINT8 mActualNumEe = SecureElement::MAX_NUM_EE;
+    tNFA_EE_INFO mEeInfo [mActualNumEe];
+    tNFA_STATUS nfaStat;
+    ALOGE ("%s:Enter", __FUNCTION__);
+    if ((nfaStat = NFA_AllEeGetInfo (&mActualNumEe, mEeInfo)) != NFA_STATUS_OK)
+    {
+        ALOGE ("%s: fail get info; error=0x%X", fn, nfaStat);
+        mActualNumEe = 0;
+    }
+    else
+    {
+        if(mChipId == 0x02 || mChipId == 0x04)
+        {
+            for(int xx = 0; xx <  mActualNumEe; xx++)
+            {
+               ALOGE("xx=%d, ee_handle=0x0%x, status=0x0%x", xx, mEeInfo[xx].ee_handle,mEeInfo[xx].ee_status);
+                if ((mEeInfo[xx].ee_handle == 0x4C0) &&
+                    (mEeInfo[xx].ee_status == 0x02))
+                {
+                    recovery = TRUE;
+                    ee_removed_disc_ntf_handler(mEeInfo[xx].ee_handle, mEeInfo[xx].ee_status);
+                    break;
+                }
+            }
+        }
     }
 }
 #endif

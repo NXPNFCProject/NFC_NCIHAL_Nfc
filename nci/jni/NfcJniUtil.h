@@ -93,6 +93,8 @@
 #if(NXP_EXTNS == TRUE)
 #define VEN_POWER_STATE_ON                   6
 #define VEN_POWER_STATE_OFF                  7
+// ESE Suppored Technologies
+#define TARGET_TYPE_ISO14443_3A_3B        11
 #endif
 /* Name strings for target types. These *must* match the values in TagTechnology.java */
 #define TARGET_TYPE_UNKNOWN               -1
@@ -110,14 +112,8 @@
 #define TARGET_TYPE_ISO14443_4B           12
 
 /* Setting VEN_CFG  */
-#define VEN_CFG_NFC_ON_POWER_ON           3
-#define VEN_CFG_NFC_OFF_POWER_OFF         2
-
-#if(NXP_EXTNS == TRUE)
-// ESE Suppored Technologies
-#define TARGET_TYPE_ISO14443_3A_3B        11
-#endif
-
+#define NFC_MODE_ON           3
+#define NFC_MODE_OFF          2
 
 //define a few NXP error codes that NFC service expects;
 //see external/libnfc-nxp/src/phLibNfcStatus.h;

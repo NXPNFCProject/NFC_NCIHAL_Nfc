@@ -822,13 +822,13 @@ CNfcParam::CNfcParam(const char* name,  unsigned long value) :
 ** Returns:     0 if not modified, 1 otherwise.
 **
 *******************************************************************************/
-
 int CNfcConfig::updateTimestamp()
 {
     FILE*   fd;
     struct stat st;
     unsigned long value = 0;
     int ret = 0;
+
     if(stat(config_timestamp_path, &st) != 0)
     {
         ALOGD("%s file %s not exist, creat it.\n", __func__, config_timestamp_path);
@@ -847,6 +847,7 @@ int CNfcConfig::updateTimestamp()
             ALOGE("%s Cannot open file %s\n", __func__, config_timestamp_path);
             return 1;
         }
+
         fread(&value, sizeof(unsigned long), 1, fd);
         ret = (value != m_timeStamp);
         if(ret)
@@ -1013,3 +1014,4 @@ extern "C" int updateNxpConfigTimestamp()
     nxp::CNfcConfig& rConfig = nxp::CNfcConfig::GetInstance();
     return rConfig.updateTimestamp();
 }
+

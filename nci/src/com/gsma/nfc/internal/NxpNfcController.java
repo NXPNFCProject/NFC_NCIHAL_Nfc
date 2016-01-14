@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import android.content.BroadcastReceiver;
+import android.content.pm.ResolveInfo;
+import android.content.pm.PackageInfo;
 
 import android.util.Log;
 import com.nxp.nfc.gsma.internal.INxpNfcController;
@@ -31,7 +33,8 @@ import com.android.nfc.cardemulation.RegisteredAidCache;
 import android.nfc.cardemulation.ApduServiceInfo;
 import android.os.Binder;
 import android.content.ComponentName;
-
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import com.android.nfc.NfcPermissions;
 import com.android.nfc.NfcService;
 import com.nxp.nfc.NxpConstants;
@@ -58,7 +61,7 @@ public class NxpNfcController {
     private boolean mHasCert = false;
     private Object mWaitOMACheckCert = null;
     private boolean mHasOMACert = false;
-
+    private ComponentName unicastPkg = null;
 
     public NxpNfcController(Context context, CardEmulationManager cardEmulationManager) {
         mContext = context;
@@ -76,6 +79,10 @@ public class NxpNfcController {
     }
 
     public ArrayList<String> getEnabledMultiEvtsPackageList() {
+        if(mEnabledMultiEvts.size() == 0x00) {
+            Log.d(TAG, " check for unicast mode service resolution");
+            getPackageListUnicastMode();
+        }
         return mEnabledMultiEvts;
     }
 
@@ -180,6 +187,92 @@ public class NxpNfcController {
         return data;
     }
 
+    private long getApplicationInstallTime(String packageName) {
+        PackageManager pm = mContext.getPackageManager();
+        try {
+            PackageInfo pInfo = pm.getPackageInfo(packageName ,0);
+            return pInfo.firstInstallTime;
+        }catch(NameNotFoundException exception) {
+            Log.e(TAG, "Application install time not retrieved");
+            return 0;
+        }
+    }
+
+    private void getPackageListUnicastMode () {
+        unicastPkg = null;
+        ArrayList<ApduServiceInfo> regApduServices = mServiceCache.getApduservicesList();
+        PackageManager pm = mContext.getPackageManager();
+        List<ResolveInfo> intentServices = pm.queryIntentActivities(
+                new Intent(NxpConstants.ACTION_MULTI_EVT_TRANSACTION),
+                PackageManager.GET_INTENT_FILTERS| PackageManager.GET_RESOLVED_FILTER);
+        ArrayList<String> apduResolvedServices = new ArrayList<String>();
+        String packageName = null;
+        String resolvedApduService = null;
+        int highestPriority = -1000;
+        long minInstallTime;
+        ResolveInfo resolveInfoService = null;
+
+        for(ApduServiceInfo service : regApduServices) {
+            packageName = service.getComponent().getPackageName();
+            for(ResolveInfo resInfo : intentServices){
+                resolveInfoService = null;
+                Log.e(TAG, " Registered Service in resolved cache"+resInfo.activityInfo.packageName);
+                if(resInfo.activityInfo.packageName.equals(packageName)) {
+                    resolveInfoService = resInfo;
+                    break;
+                }
+            }
+            if(resolveInfoService == null) {
+                Log.e(TAG, " Registered Service is not found in cache");
+                continue;
+            }
+            int priority = resolveInfoService.priority;
+            if(pm.checkPermission(NxpConstants.PERMISSIONS_TRANSACTION_EVENT , packageName) ==
+                    PackageManager.PERMISSION_GRANTED)
+            {
+                if(checkCertificatesFromUICC(packageName, NxpConstants.UICC_ID) == true)
+                {
+                    if(priority == highestPriority) {
+                        apduResolvedServices.add(packageName);
+                    } else if(highestPriority < priority) {
+                        highestPriority = priority;
+                        apduResolvedServices.clear();
+                        apduResolvedServices.add(packageName);
+                    }
+                }
+            }
+        }
+        if(apduResolvedServices.size() == 0x00) {
+            Log.e(TAG, "No services to resolve, not starting the activity");
+            return;
+        }else if(apduResolvedServices.size() > 0x01) {
+            Log.e(TAG, " resolved"+apduResolvedServices.size());
+            minInstallTime = getApplicationInstallTime(apduResolvedServices.get(0));
+            for(String resolvedService : apduResolvedServices) {
+                if(getApplicationInstallTime(resolvedService) <= minInstallTime ) {
+                    minInstallTime = getApplicationInstallTime(resolvedService);
+                    resolvedApduService = resolvedService;
+                }
+                Log.e(TAG, " Install time  of application"+ minInstallTime);
+            }
+
+        } else  resolvedApduService = apduResolvedServices.get(0);
+
+        Log.e(TAG, " Final Resolved Service"+resolvedApduService);
+        if(resolvedApduService != null) {
+            for(ResolveInfo resolve : intentServices) {
+                if(resolve.activityInfo.packageName.equals(resolvedApduService)) {
+                    unicastPkg = new ComponentName(resolvedApduService ,resolve.activityInfo.name);
+                    break;
+                }
+            }
+        }
+    }
+
+    public ComponentName getUnicastPackage() {
+        return unicastPkg;
+    }
+
     final class NxpNfcControllerInterface extends INxpNfcController.Stub {
 
         @Override
@@ -197,6 +290,11 @@ public class NxpNfcController {
             HashMap<ComponentName, ApduServiceInfo> mapServices = mServiceCache.getApduservicesMaps();
             ComponentName preferredPaymentService = mRegisteredAidCache.getPreferredPaymentService();
             if(preferredPaymentService != null) {
+                if(preferredPaymentService.getPackageName() != null &&
+                    !preferredPaymentService.getPackageName().equals(packageName)) {
+                    Log.d(TAG, "getDefaultOffHostService unregistered package Name");
+                    return null;
+                }
                 String defaultservice = preferredPaymentService.getClassName();
 
                 //If Default is Dynamic Service

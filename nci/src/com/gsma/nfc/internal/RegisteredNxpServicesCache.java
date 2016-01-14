@@ -75,6 +75,7 @@ public class RegisteredNxpServicesCache {
 
     private RegisteredServicesCache mRegisteredServicesCache;
     final HashMap<ComponentName, ApduServiceInfo> mApduServices = Maps.newHashMap();
+    final HashMap<ComponentName , String> mApduBanner = Maps.newHashMap();
     AtomicFile mDynamicApduServiceFile = null;
     File dataDir = null;
 
@@ -91,6 +92,49 @@ public class RegisteredNxpServicesCache {
         mDynamicApduServiceFile = new AtomicFile(new File(dataDir, "dynamic_apduservice.xml"));
     }
 
+
+    private String writeDrawableAsBitMap(Drawable drawable , String path) {
+        File file = new File(dataDir, path);
+        Log.d(TAG, " input Path "+ path);
+        Bitmap bitmap = ((BitmapDrawable)drawable).getBitmap();
+        Log.d(TAG, "drawablePath: "+ file.getPath());
+        try {
+            FileOutputStream outStream = new FileOutputStream(file);
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outStream);
+            outStream.flush();
+            outStream.close();
+            return file.getPath();
+        } catch (IOException e) {
+            Log.d(TAG, " input Path Not found"+ e.getMessage());
+            return null;
+        }
+    }
+
+    private Drawable readDrawableFromBitMap(String drawablePath) {
+        Log.d(TAG, " input Path "+ drawablePath);
+        File filePath = new File(drawablePath);
+        try {
+            FileInputStream fi = new FileInputStream(filePath);
+            Bitmap bitmap = BitmapFactory.decodeStream(fi);
+            Drawable DrawableResource  = new BitmapDrawable(mContext.getResources(),bitmap);
+            return DrawableResource;
+        } catch (IOException e) {
+            Log.d(TAG, " input Path Not found"+ e.getMessage());
+            return null;
+        }
+    }
+
+    private boolean deleteBitMapfromFile(String drawablePath) {
+        Log.d(TAG, " delete Path "+ drawablePath);
+        boolean deleted = false;
+        File file = new File(drawablePath);
+        if (file.exists()) {
+            Log.d(TAG, " delete Path found"+ drawablePath);
+            deleted = file.delete();
+        }
+        Log.d(TAG, "deleted "+deleted);
+        return deleted;
+    }
     // Register APDU Service
     public boolean registerApduService(int userId, int uid, String packageName, String serviceName, ApduServiceInfo apduService) {
         ComponentName componentName = new ComponentName(packageName, serviceName);
@@ -143,6 +187,10 @@ public class RegisteredNxpServicesCache {
                 if(uninstalledpackageName.equals(entry.getKey().getPackageName())){
                     it.remove();
                     Log.d(TAG, "Removed packageName: "+ entry.getKey().getPackageName());
+                    if(mApduBanner.containsKey(entry.getKey())) {
+                        deleteBitMapfromFile(mApduBanner.get(entry.getKey()));
+                        mApduBanner.remove(entry.getKey());
+                    }
                 }
             }
         } else {
@@ -155,6 +203,10 @@ public class RegisteredNxpServicesCache {
          synchronized (mLock) {
              mApduServices.values().remove(apduService);
              writeDynamicApduService();
+             if(mApduBanner.containsKey(apduService.getComponent())) {
+                 deleteBitMapfromFile(mApduBanner.get(apduService.getComponent()));
+                 mApduBanner.remove(apduService.getComponent());
+             }
              mRegisteredServicesCache.invalidateCache(userId);
          }
          return true;
@@ -191,10 +243,21 @@ public class RegisteredNxpServicesCache {
 
             for(Iterator<Map.Entry<ComponentName, ApduServiceInfo>>it=mApduServices.entrySet().iterator(); it.hasNext();){
                 Map.Entry<ComponentName, ApduServiceInfo> service = it.next();
-                out.startTag(null, "service");
-                out.attribute(null, "component", service.getKey().flattenToString());
-                service.getValue().writeToXml(out);
-                out.endTag(null, "service");
+                if( null != service) {
+                    out.startTag(null, "service");
+                    out.attribute(null, "component", service.getKey().flattenToString());
+                    if(service.getValue().getBannerId() <= 0x00 && null != service.getValue().mBanner) {
+                        Log.e(TAG, "writeDynamicApduService "+service.getValue().getBannerId());
+                        String path = service.getKey().getPackageName() + "_"+ service.getKey().getClassName()+".png";
+                        path = writeDrawableAsBitMap(service.getValue().mBanner ,path);
+                        if(!mApduBanner.containsKey(service.getKey())) {
+                            mApduBanner.put(service.getKey(),path);
+                        }
+                        out.attribute(null, "drawableResourcepath", path);
+                    }
+                    service.getValue().writeToXml(out);
+                    out.endTag(null, "service");
+                }
             }
             out.endTag(null, "apduservices");
             out.endDocument();
@@ -250,6 +313,7 @@ public class RegisteredNxpServicesCache {
                             description = parser.getAttributeValue(null, "description");
                             bannerId  = Integer.parseInt(parser.getAttributeValue(null, "bannerId"));
                             String isModifiable = parser.getAttributeValue(null, "modifiable");
+                            drawbalePath = parser.getAttributeValue(null, "drawableResourcepath");
                             if(isModifiable.equals("true")) {
                                 modifiable = true;
                             } else {
@@ -259,6 +323,14 @@ public class RegisteredNxpServicesCache {
                             String seIdString = parser.getAttributeValue(null, "seId");
                             seId = Integer.parseInt(seIdString);
                             inService = true;
+                            Log.e(TAG, "readDynamicApduService "+bannerId);
+                            if(bannerId <= 0x00) {
+                                bannerId = -1;
+                                DrawableResource = readDrawableFromBitMap(drawbalePath);
+                                if(!mApduBanner.containsKey(currentComponent)) {
+                                    mApduBanner.put(currentComponent, drawbalePath);
+                                }
+                            }
                         }
 
                         if ("aid-group".equals(tagName) && parser.getDepth() == 3 && inService) {

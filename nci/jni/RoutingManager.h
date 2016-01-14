@@ -100,30 +100,10 @@ public:
     static const int ROUTE_HOST = 0;
     static const int ROUTE_ESE = 1;
 
-
     static RoutingManager& getInstance ();
     bool initialize(nfc_jni_native_data* native);
     void enableRoutingToHost();
     void disableRoutingToHost();
-#if(NXP_EXTNS == TRUE)
-    void setDefaultTechRouting (int seId, int tech_switchon,int tech_switchoff);
-    void setDefaultProtoRouting (int seId, int proto_switchon,int proto_switchoff);
-    int addNfcid2Routing(UINT8* nfcid2, UINT8 aidLen,const UINT8* syscode,
-            int syscodelen,const UINT8* optparam, int optparamlen);
-    bool removeNfcid2Routing(UINT8* nfcID2);
-
-    void getRouting();
-    void processGetRoutingRsp(tNFA_DM_CBACK_DATA* eventData, UINT8* sRoutingBuff);
-#endif
-#if(NXP_EXTNS == TRUE)
-    bool addAidRouting(const UINT8* aid, UINT8 aidLen, int route, int power, bool isprefix);
-#else
-    bool addAidRouting(const UINT8* aid, UINT8 aidLen, int route);
-#endif
-    bool removeAidRouting(const UINT8* aid, UINT8 aidLen);
-    bool commitRouting();
-    void onNfccShutdown();
-    int registerJniFunctions (JNIEnv* e);
 #if(NXP_EXTNS == TRUE)
     bool setRoutingEntry(int type, int value, int route, int power);
     bool clearRoutingEntry(int type);
@@ -137,11 +117,28 @@ public:
     se_rd_req_state_t getEtsiReaederState();
     Rdr_req_ntf_info_t getSwpRrdReqInfo();
     void setEtsiReaederState(se_rd_req_state_t newState);
+    void setDefaultTechRouting (int seId, int tech_switchon,int tech_switchoff);
+    void setDefaultProtoRouting (int seId, int proto_switchon,int proto_switchoff);
+    int addNfcid2Routing(UINT8* nfcid2, UINT8 aidLen,const UINT8* syscode,
+            int syscodelen,const UINT8* optparam, int optparamlen);
+    bool removeNfcid2Routing(UINT8* nfcID2);
+
+    void getRouting();
+    void handleSERemovedNtf();
+    void processGetRoutingRsp(tNFA_DM_CBACK_DATA* eventData, UINT8* sRoutingBuff);
+    bool addAidRouting(const UINT8* aid, UINT8 aidLen, int route, int power, bool isprefix);
+#else
+    bool addAidRouting(const UINT8* aid, UINT8 aidLen, int route);
 #endif
+    bool removeAidRouting(const UINT8* aid, UINT8 aidLen);
+    bool commitRouting();
+    void onNfccShutdown();
+    int registerJniFunctions (JNIEnv* e);
     void ee_removed_disc_ntf_handler(tNFA_HANDLE handle, tNFA_EE_STATUS status);
     SyncEvent mLmrtEvent;
     SyncEvent mCeRegisterEvent;//FelicaOnHost
     SyncEvent mCeDeRegisterEvent;
+    Mutex  mResetHandlerMutex;
 private:
     RoutingManager();
     ~RoutingManager();
@@ -183,9 +180,6 @@ private:
     std::vector<UINT8> mRxDataBuffer;
 
     // Fields below are final after initialize()
-#if(NXP_EXTNS == TRUE)
-    UINT32 mCeRouteStrictDisable;
-#endif
     //int mDefaultEe;
     int mOffHostEe;
     int mActiveSe;
@@ -202,6 +196,7 @@ private:
     SyncEvent mEeUpdateEvent;
     SyncEvent mEeSetModeEvent;
 #if(NXP_EXTNS == TRUE)
+     UINT32 mCeRouteStrictDisable;
      int defaultSeID ;
      bool mIsDirty;
      int defaultPowerstate;

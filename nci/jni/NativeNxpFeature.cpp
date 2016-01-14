@@ -484,17 +484,17 @@ tNFA_STATUS Nxp_SelfTest(uint8_t testcase, uint8_t* param)
  ** Returns:         success/failure
  **
  *******************************************************************************/
-tNFA_STATUS SetVenConfigValue(jint venconfig)
+tNFA_STATUS SetVenConfigValue(jint nfcMode)
 {
     tNFA_STATUS status = NFA_STATUS_FAILED;
     uint8_t cmd_buf[] = {0x20, 0x02, 0x05, 0x01, 0xA0, 0x07, 0x01, 0x03};
     ALOGD("%s: enter", __FUNCTION__);
-    if(venconfig == VEN_CFG_NFC_OFF_POWER_OFF)
+    if(nfcMode == NFC_MODE_OFF)
     {
         ALOGD("Setting the VEN_CFG to 2, Disable ESE events");
         cmd_buf[7] = 0x02;
     }
-    else if(venconfig == VEN_CFG_NFC_ON_POWER_ON)
+    else if(nfcMode == NFC_MODE_ON)
     {
         ALOGD("Setting the VEN_CFG to 3, Make ");
         cmd_buf[7] = 0x03;

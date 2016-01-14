@@ -538,7 +538,7 @@ bool PeerToPeer::deregisterServer (tJNI_HANDLE jniHandle)
      * conditional check is added to avoid multiple dicovery cmds
      * at the time of NFC OFF in progress
      */
-    if((gGeneralPowershutDown != VEN_CFG_NFC_OFF_POWER_OFF) && isDiscStopped == true)
+    if((gGeneralPowershutDown != NFC_MODE_OFF) && isDiscStopped == true)
     {
         startRfDiscovery(true);
     }

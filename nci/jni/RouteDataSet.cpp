@@ -42,7 +42,7 @@
 #include <errno.h>
 #include <sys/stat.h>
 
-extern char bcm_nfc_location_jni[];
+extern char bcm_nfc_location[];
 
 
 /*******************************************************************************
@@ -273,7 +273,7 @@ bool RouteDataSet::saveToFile (const char* routesXml)
     FILE* fh = NULL;
     size_t actualWritten = 0;
     bool retval = false;
-    std::string filename (bcm_nfc_location_jni);
+    std::string filename (bcm_nfc_location);
     int stat = 0;
 
     filename.append (sConfigFile);
@@ -316,7 +316,7 @@ bool RouteDataSet::loadFromFile (std::string& routesXml)
     FILE* fh = NULL;
     size_t actual = 0;
     char buffer [1024];
-    std::string filename (bcm_nfc_location_jni);
+    std::string filename (bcm_nfc_location);
 
     filename.append (sConfigFile);
     fh = fopen (filename.c_str (), "r");
@@ -496,7 +496,7 @@ void RouteDataSet::importTechnologyRoute (xmlNodePtr& element, Database& databas
 bool RouteDataSet::deleteFile ()
 {
     static const char fn [] = "RouteDataSet::deleteFile";
-    std::string filename (bcm_nfc_location_jni);
+    std::string filename (bcm_nfc_location);
     filename.append (sConfigFile);
     int stat = remove (filename.c_str());
     ALOGD ("%s: exit %u", fn, stat==0);

@@ -470,4 +470,11 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         //Add dynamic non-payment services
         return nonPaymentServiceAidCacheSize;
     }
+
+    public int updateServiceState(int userId ,
+            Map<String , Boolean> serviceState) {
+        NfcPermissions.validateUserId(userId);
+        NfcPermissions.enforceUserPermissions(mContext);
+        return mServiceCache.updateServiceState(userId ,Binder.getCallingUid() ,serviceState);
+    }
 }

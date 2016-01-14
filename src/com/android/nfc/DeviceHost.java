@@ -306,6 +306,12 @@ public interface DeviceHost {
 
     public int getDefaultMifareCLTRoute();
 
+    public int getDefaultAidPowerState();
+
+    public int getDefaultDesfirePowerState();
+
+    public int getDefaultMifareCLTPowerState();
+
     public boolean setRoutingEntry(int type, int value, int route, int power);
 
     public boolean clearRoutingEntry(int type);
@@ -359,7 +365,7 @@ public interface DeviceHost {
 
     int JCOSDownload();
 
-    void doSetVenConfigValue(int VenConfig);
+    void doSetNfcMode(int nfcMode);
 
     String dump();
 

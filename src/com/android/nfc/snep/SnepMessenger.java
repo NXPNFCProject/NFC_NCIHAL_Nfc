@@ -37,6 +37,7 @@ package com.android.nfc.snep;
 import com.android.nfc.DeviceHost.LlcpSocket;
 import com.android.nfc.NfcService;
 import com.android.nfc.sneptest.DtaSnepClient;
+import com.android.nfc.sneptest.ExtDtaSnepServer;
 
 import android.nfc.FormatException;
 import android.util.Log;
@@ -129,7 +130,7 @@ public class SnepMessenger {
             mSocket.send(tmpBuffer);
 
             if(NfcService.mIsDtaMode) {
-                if((!mIsClient)&&(DtaSnepClient.mTestCaseId == 0x01)){
+                if((!mIsClient)&&(ExtDtaSnepServer.mTestCaseId == 0x01)){
                     mSocket.receive(responseBytes);
                     try {
                         snepResponse = SnepMessage.fromByteArray(responseBytes);

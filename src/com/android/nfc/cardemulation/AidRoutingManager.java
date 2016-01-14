@@ -87,7 +87,8 @@ public class AidRoutingManager {
     // see AID_MATCHING constants
     final int mAidMatchingSupport;
     final int mAidMatchingPlatform;
-    final int mAidRoutingTableSize;
+    //Changed from final to private int to update RoutingtableSize later in configureRouting.
+    private int mAidRoutingTableSize;
     // Maximum AID routing table size
     final Object mLock = new Object();
 
@@ -118,8 +119,6 @@ public class AidRoutingManager {
         mAidMatchingSupport = doGetAidMatchingMode();
         if (DBG) Log.d(TAG, "mAidMatchingSupport=0x" + Integer.toHexString(mAidMatchingSupport));
         mAidMatchingPlatform = doGetAidMatchingPlatform();
-        if (DBG) Log.d(TAG, "mAidMatchingPlatform=0x" + Integer.toHexString(mAidMatchingPlatform));
-        mAidRoutingTableSize = NfcService.getInstance().getAidRoutingTableSize();
         if (DBG) Log.d(TAG, "mAidTableSize=0x" + Integer.toHexString(mAidRoutingTableSize));
         mVzwRoutingCache = new VzwRoutingCache();
     }
@@ -137,6 +136,8 @@ public class AidRoutingManager {
     public boolean configureRouting(HashMap<String, AidElement> aidMap) {
         mDefaultRoute = NfcService.getInstance().GetDefaultRouteLoc();
         boolean aidRouteResolved = false;
+        if (DBG) Log.d(TAG, "mAidMatchingPlatform=0x" + Integer.toHexString(mAidMatchingPlatform));
+        mAidRoutingTableSize = NfcService.getInstance().getAidRoutingTableSize();
         if (DBG) Log.d(TAG, "mDefaultRoute=0x" + Integer.toHexString(mDefaultRoute));
         Hashtable<String, AidElement> routeCache = new Hashtable<String, AidElement>(50);
         SparseArray<Set<String>> aidRoutingTable = new SparseArray<Set<String>>(aidMap.size());

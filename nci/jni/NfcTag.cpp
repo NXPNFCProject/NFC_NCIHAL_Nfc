@@ -41,18 +41,20 @@
 #include "config.h"
 #include <ScopedLocalRef.h>
 #include <ScopedPrimitiveArray.h>
-
+#include "IntervalTimer.h"
 extern "C"
 {
     #include "rw_int.h"
     #include "phNxpExtns.h"
 }
-
+#if(NXP_EXTNS == TRUE)
 static void deleteglobaldata(JNIEnv* e);
+static void selectCompleteCallBack(union sigval);
 static jobjectArray techActBytes1;
 int selectedId = 0;
 static jobjectArray techPollBytes2;
-
+IntervalTimer gSelectCompleteTimer;
+#endif
 /*******************************************************************************
 **
 ** Function:        NfcTag
@@ -81,6 +83,9 @@ NfcTag::NfcTag ()
     mIsFelicaLite(false),
     mCashbeeDetected(false),
     mEzLinkTypeTag(false)
+#if(NXP_EXTNS == TRUE)
+    ,mWaitingForSelect(false)
+#endif
 {
     memset (mTechList, 0, sizeof(mTechList));
     memset (mTechHandles, 0, sizeof(mTechHandles));
@@ -1380,6 +1385,14 @@ void NfcTag::selectP2p()
         tNFA_STATUS stat = NFA_Select (rfDiscoveryId, NFA_PROTOCOL_NFC_DEP, NFA_INTERFACE_NFC_DEP);
         if (stat != NFA_STATUS_OK)
             ALOGE ("%s: fail select P2P; error=0x%X", fn, stat);
+#if(NXP_EXTNS == TRUE)
+        else
+        {
+            mWaitingForSelect = true;
+            ALOGE ("%s: starting timer", fn);
+            gSelectCompleteTimer.set(1000, selectCompleteCallBack);
+        }
+#endif
     }
     else
         ALOGE ("%s: cannot find P2P", fn);
@@ -1409,6 +1422,9 @@ void NfcTag::resetTechnologies ()
     mIsDynamicTagId = false;
     mIsFelicaLite = false;
     resetAllTransceiveTimeouts ();
+#if(NXP_EXTNS == TRUE)
+    mNumDiscNtf = 0;
+#endif
 }
 
 
@@ -1457,6 +1473,14 @@ void NfcTag::selectFirstTag ()
         tNFA_STATUS stat = NFA_Select (mTechHandles [foundIdx], mTechLibNfcTypes [foundIdx], rf_intf);
         if (stat != NFA_STATUS_OK)
             ALOGE ("%s: fail select; error=0x%X", fn, stat);
+#if(NXP_EXTNS == TRUE)
+        else
+        {
+            mWaitingForSelect = true;
+            gSelectCompleteTimer.set(1000, selectCompleteCallBack);
+            ALOGE ("%s:starting timer", fn);
+        }
+#endif
     }
     else
         ALOGE ("%s: only found NFC-DEP technology.", fn);
@@ -1538,6 +1562,13 @@ void NfcTag::selectNextTag ()
         if (stat == NFA_STATUS_OK)
         {
             ALOGE ("%s: stat=%x; wait for activated ntf", fn, stat);
+#if(NXP_EXTNS == TRUE)
+            {
+                mWaitingForSelect = true;
+                ALOGE ("%s:starting timer", fn);
+                gSelectCompleteTimer.set(1000, selectCompleteCallBack);
+            }
+#endif
         }
         else
             ALOGE ("%s: fail select; error=0x%X", fn, stat);
@@ -2068,3 +2099,44 @@ void NfcTag::getTypeATagUID(UINT8 **uid, UINT32 *len)
     *len = 0;
     *uid = NULL;
 }
+#if(NXP_EXTNS == TRUE)
+/*******************************************************************************
+**
+** Function:        selectCompleteStatus
+**
+** Description:     Notify whether tag select is success/failure
+**
+** Returns:         None
+**
+*******************************************************************************/
+void NfcTag::selectCompleteStatus(bool status)
+{
+
+    if(mWaitingForSelect == true)
+    {
+        ALOGD ("selectCompleteStatus=%u", status);
+        gSelectCompleteTimer.kill();
+        mWaitingForSelect = false;
+    }
+}
+
+/*******************************************************************************
+**
+** Function:        selectCompleteCallBack
+**
+** Description:     CallBack called when tag select is timed out.
+**
+** Returns:         None
+**
+*******************************************************************************/
+void selectCompleteCallBack(union sigval)
+{
+
+    if(NfcTag::getInstance().mWaitingForSelect == true)
+    {
+        ALOGD ("selectCompleteCallBack");
+        NfcTag::getInstance().mWaitingForSelect = false;
+        NFA_Deactivate (FALSE);
+    }
+}
+#endif

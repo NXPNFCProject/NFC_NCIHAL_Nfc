@@ -59,6 +59,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import com.gsma.nfc.internal.RegisteredNxpServicesCache;
+import com.android.nfc.NfcService;
 
 /**
  * This class is inspired by android.content.pm.RegisteredServicesCache
@@ -82,7 +83,7 @@ public class RegisteredServicesCache {
     final SparseArray<UserServices> mUserServices = new SparseArray<UserServices>();
     final Callback mCallback;
     final AtomicFile mDynamicAidsFile;
-
+    final AtomicFile mServiceStateFile;
     //public ArrayList<ApduServiceInfo> mAllServices = new ArrayList<ApduServiceInfo>();
     final HashMap<ComponentName, ApduServiceInfo> mAllServices = Maps.newHashMap();
 
@@ -173,6 +174,7 @@ public class RegisteredServicesCache {
 
         File dataDir = mContext.getFilesDir();
         mDynamicAidsFile = new AtomicFile(new File(dataDir, "dynamic_aids.xml"));
+        mServiceStateFile = new AtomicFile(new File(dataDir, "service_state.xml"));
     }
 
     void initialize(RegisteredNxpServicesCache registeredNxpServicesCache) {
@@ -349,6 +351,8 @@ public class RegisteredServicesCache {
                 // Persist to filesystem
                 writeDynamicAidsLocked();
             }
+            updateServiceStateFromFile(userId);
+            writeServiceStateToFile(userId);
         }
 
         mCallback.onServicesUpdated(userId, Collections.unmodifiableList(validServices));
@@ -469,6 +473,183 @@ public class RegisteredServicesCache {
             }
             return false;
         }
+    }
+
+    private void updateServiceStateFromFile(int currUserId)
+    {
+        FileInputStream fis = null;
+        try {
+             if(NfcService.getInstance().getAidRoutingTableStatus() == 0x00) {
+                 Log.e(TAG, " Aid Routing Table still  availble , No need to disable services");
+                 return;
+             }
+             if(!mServiceStateFile.getBaseFile().exists()) {
+                 Log.d(TAG,"mServiceStateFile does not exist");
+                 return;
+             }
+             fis = mServiceStateFile.openRead();
+             XmlPullParser parser = Xml.newPullParser();
+             parser.setInput(fis , null);
+             int eventType = parser.getEventType();
+             int currUid = -1;
+             ComponentName currComponent = null;
+             HashMap<ComponentName ,ApduServiceInfo> nxpOffHostServiceMap = mRegisteredNxpServicesCache.getApduservicesMaps();
+             boolean state = true;
+             while (eventType != XmlPullParser.START_TAG &&
+                     eventType != XmlPullParser.END_DOCUMENT) {
+                 eventType = parser.next();
+             }
+             String tagName = parser.getName();
+             if ("services".equals(tagName)) {
+                 while (eventType != XmlPullParser.END_DOCUMENT) {
+                     tagName = parser.getName();
+                     if (eventType == XmlPullParser.START_TAG) {
+                         if("service".equals(tagName) && parser.getDepth() == 0x02) {
+                             String compString  = parser.getAttributeValue(null ,"component");
+                             String uidString   = parser.getAttributeValue(null ,"uid");
+                             String stateString = parser.getAttributeValue(null ,"serviceState");
+                             if(compString == null || uidString == null || stateString == null) {
+                                 Log.e(TAG, "Invalid service attributes");
+                             } else {
+                                try {
+                                    currUid       = Integer.parseInt(uidString);
+                                    currComponent = ComponentName.unflattenFromString(compString);
+                                    Log.d(TAG, " curr component "+compString);
+                                    Log.d(TAG, " curr uid "+uidString);
+                                    Log.d(TAG, " curr state "+stateString);
+                                    if(stateString.equalsIgnoreCase("false")) { state = false;}
+                                } catch (NumberFormatException e) {
+                                    Log.e(TAG, "could not parse the service attributes");
+                                }
+                             }
+                         }
+                     } else  if (eventType == XmlPullParser.END_TAG) {
+                         if("service".equals(tagName)) {
+                             final int userId = UserHandle.getUserId(currUid);
+                             if(currUserId == userId) {
+                                 UserServices serviceCache = findOrCreateUserLocked(userId);
+                                 ApduServiceInfo serviceInfo = serviceCache.services.get(currComponent);
+                                 if(serviceInfo == null) {
+                                 // CHECK for GSMA related services also.
+                                     serviceInfo = nxpOffHostServiceMap.get(currComponent);
+                                     if(serviceInfo == null) {
+                                         Log.e(TAG, "could not find the required serviceInfo");
+                                     } else serviceInfo.setServiceState(CardEmulation.CATEGORY_OTHER ,state);
+                                 } else   serviceInfo.setServiceState(CardEmulation.CATEGORY_OTHER ,state);
+                             }
+                         }
+                         currUid       = -1;
+                         currComponent = null;
+                         state         = true;
+                     }
+
+                     eventType = parser.next();
+                 }
+             }
+        } catch(Exception e) {
+            mServiceStateFile.delete();
+            Log.e(TAG, "could not parse the seriveState file , thrashing the file");
+        } finally {
+            try {
+                if(fis != null) {
+                    fis.close();
+                }
+            } catch ( Exception e) {
+            }
+        }
+    }
+
+    private boolean writeServiceStateToFile(int currUserId) {
+        FileOutputStream fos = null;
+        ArrayList<ApduServiceInfo> nxpOffHostServiceCache = mRegisteredNxpServicesCache.getApduservicesList();
+        if(NfcService.getInstance().getAidRoutingTableStatus() == 0x00) {
+            Log.e(TAG, " Aid Routing Table still  availble , No need to disable services");
+            return false;
+        }
+        if(currUserId != ActivityManager.getCurrentUser()) {
+            return false;
+        }
+        try {
+            fos = mServiceStateFile.startWrite();
+            XmlSerializer out = new FastXmlSerializer();
+            out.setOutput(fos, "utf-8");
+            out.startDocument(null , true);
+            out.setFeature(XML_INDENT_OUTPUT_FEATURE, true);
+            out.startTag(null ,"services");
+            for(int userId = 0; userId < mUserServices.size(); userId++) {
+                final UserServices userServices = mUserServices.valueAt(userId);
+                for (ApduServiceInfo serviceInfo : userServices.services.values()) {
+                    if(!serviceInfo.hasCategory(CardEmulation.CATEGORY_OTHER)) {
+                        continue;
+                    }
+                    out.startTag(null ,"service");
+                    out.attribute(null, "component", serviceInfo.getComponent().flattenToString());
+                    Log.d(TAG,"component name"+ serviceInfo.getComponent().flattenToString());
+                    out.attribute(null, "uid", Integer.toString(serviceInfo.getUid()));
+                    Log.d(TAG,"uid name"+ Integer.toString(serviceInfo.getUid()));
+                    out.attribute(null, "serviceState", Boolean.toString(serviceInfo.getServiceState(CardEmulation.CATEGORY_OTHER)));
+                    Log.d(TAG,"curr name"+ Boolean.toString(serviceInfo.getServiceState(CardEmulation.CATEGORY_OTHER)));
+                    out.endTag(null, "service");
+                }
+            }
+            dump(nxpOffHostServiceCache);
+            //ADD GSMA services Cache
+            for(ApduServiceInfo serviceInfo : nxpOffHostServiceCache) {
+                out.startTag(null ,"service");
+                out.attribute(null, "component", serviceInfo.getComponent().flattenToString());
+                Log.d(TAG,"component name"+ serviceInfo.getComponent().flattenToString());
+                out.attribute(null, "uid", Integer.toString(serviceInfo.getUid()));
+                Log.d(TAG,"uid name"+ Integer.toString(serviceInfo.getUid()));
+                out.attribute(null, "serviceState", Boolean.toString(serviceInfo.getServiceState(CardEmulation.CATEGORY_OTHER)));
+                Log.d(TAG,"curr name"+ Boolean.toString(serviceInfo.getServiceState(CardEmulation.CATEGORY_OTHER)));
+                out.endTag(null, "service");
+            }
+            out.endTag(null ,"services");
+            out.endDocument();
+            mServiceStateFile.finishWrite(fos);
+            return true;
+        } catch ( Exception e){
+            Log.e(TAG,"Failed to write serviceStateFile xml");
+            e.printStackTrace();
+            if (fos != null) {
+                mServiceStateFile.failWrite(fos);
+            }
+            return false;
+        }
+    }
+
+    public int updateServiceState(int userId , int uid,
+            Map<String , Boolean> serviceState) {
+        boolean success = false;
+        HashMap<ComponentName ,ApduServiceInfo> nxpOffHostServiceMap = mRegisteredNxpServicesCache.getApduservicesMaps();
+        if(NfcService.getInstance().getAidRoutingTableStatus() == 0x00) {
+            Log.e(TAG, " Aid Routing Table still  availble , No need to disable services");
+            return 0xFF;
+        }
+        synchronized(mLock) {
+            Iterator<Map.Entry<String , Boolean>> it =
+                    serviceState.entrySet().iterator();
+            while(it.hasNext()) {
+                Map.Entry<String , Boolean> entry =
+                        (Map.Entry<String , Boolean>) it.next();
+                ComponentName componentName = ComponentName.unflattenFromString(entry.getKey());
+                ApduServiceInfo serviceInfo = getService(userId, componentName);
+                Log.e(TAG, "updateServiceState " + entry.getKey());
+                Log.e(TAG, "updateServiceState  " + entry.getValue());
+                if (serviceInfo != null) {
+                    serviceInfo.setServiceState(CardEmulation.CATEGORY_OTHER, entry.getValue());
+                } else if ((serviceInfo = nxpOffHostServiceMap.get(componentName)) != null) {
+                      // CHECK for GSMA cache
+                      serviceInfo.setServiceState(CardEmulation.CATEGORY_OTHER, entry.getValue());
+                } else {
+                      Log.e(TAG, "Could not find service " + componentName);
+                      return 0xFF;
+                }
+            }
+            success = writeServiceStateToFile(userId);
+        }
+        invalidateCache(ActivityManager.getCurrentUser());
+        return (success?0x00:0xFF);
     }
 
     public boolean registerAidGroupForService(int userId, int uid,

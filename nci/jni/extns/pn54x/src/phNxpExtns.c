@@ -613,6 +613,8 @@ NFCSTATUS EXTNS_GetPresenceCheckStatus(void)
     if (sem_timedwait (&gAuthCmdBuf.semPresenceCheck, &ts))
     {
         ALOGE ("%s: failed to wait (errno=0x%08x)", __FUNCTION__, errno);
+        sem_destroy (&gAuthCmdBuf.semPresenceCheck);
+        gAuthCmdBuf.auth_sent = FALSE;
         return NFCSTATUS_FAILED;
     }
     if (sem_destroy (&gAuthCmdBuf.semPresenceCheck))

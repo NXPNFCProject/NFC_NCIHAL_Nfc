@@ -15,6 +15,7 @@
  */
 #include "DwpChannel.h"
 #include "SecureElement.h"
+#include "RoutingManager.h"
 #include <cutils/log.h>
 
 static const int EE_ERROR_OPEN_FAIL =  -1;
@@ -177,9 +178,10 @@ bool close(INT16 mHandle)
 
     //if controller is not routing AND there is no pipe connected,
     //then turn off the sec elem
+    #if((NFC_NXP_CHIP_TYPE == PN547C2)&&(NFC_NXP_ESE == TRUE))
     if (! se.isBusy())
         se.deactivate (SecureElement::ESE_ID);
-
+    #endif
      return stat;
 }
 
@@ -209,8 +211,10 @@ void doeSE_Reset(void)
 {
     static const char fn [] = "DwpChannel::doeSE_Reset";
     SecureElement &se = SecureElement::getInstance();
+    RoutingManager &rm = RoutingManager::getInstance();
     ALOGD("%s: enter:", fn);
 
+    rm.mResetHandlerMutex.lock();
     ALOGD("1st mode set calling");
     se.SecEle_Modeset(0x00);
     usleep(100 * 1000);
@@ -221,6 +225,17 @@ void doeSE_Reset(void)
     ALOGD("2nd mode set called");
 
     usleep(2000 * 1000);
+    rm.mResetHandlerMutex.unlock();
+    if((RoutingManager::getInstance().is_ee_recovery_ongoing()))
+    {
+        ALOGE ("%s: is_ee_recovery_ongoing ", fn);
+        SyncEventGuard guard (se.mEEdatapacketEvent);
+        se.mEEdatapacketEvent.wait();
+    }
+    else
+    {
+       ALOGE ("%s: Not in Recovery State", fn);
+    }
 }
 namespace android
 {

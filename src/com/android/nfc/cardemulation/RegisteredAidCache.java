@@ -424,6 +424,11 @@ public class RegisteredAidCache {
                 ServiceAidInfo serviceAidInfo = new ServiceAidInfo();
                 serviceAidInfo.service = service;
                 serviceAidInfo.category = service.getCategoryForAid(aid);
+                if( serviceAidInfo.category == CardEmulation.CATEGORY_OTHER &&
+                    service.getServiceState(CardEmulation.CATEGORY_OTHER) == false) {
+                    Log.e(TAG, "ignoring other category aid because service category disabled");
+                    continue;
+                }
                 //NXP specific, Adding prefix (*) to all off host aid for prefix match.
                 if (mRoutingManager.getAidMatchingPlatform() == AidRoutingManager.AID_MATCHING_K
                         && !service.isOnHost() && !aid.endsWith("*")) {

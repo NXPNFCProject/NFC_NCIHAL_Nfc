@@ -338,17 +338,17 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
      /**
      * To Enable DTA SNEP Server for NFC Forum testing
      */
-    public void enableExtDtaSnepServer(String serviceName, int serviceSap, int miu, int rwSize)
+    public void enableExtDtaSnepServer(String serviceName, int serviceSap, int miu, int rwSize,int testCaseId)
     {
         if (DBG) Log.d(TAG, "Enabling Extended DTA Server");
         mServiceName = serviceName;
         mServiceSap = serviceSap;
         mDtaMiu = miu;
         mDtaRwSize  = rwSize;
-        mTestCaseID = 0;
+        mTestCaseID = testCaseId;
         synchronized (this) {
             if(mExtDtaSnepServer == null)
-            mExtDtaSnepServer = new ExtDtaSnepServer(mServiceName, mServiceSap, mDtaMiu, mDtaRwSize, mExtDtaSnepServerCallback,mContext);
+            mExtDtaSnepServer = new ExtDtaSnepServer(mServiceName, mServiceSap, mDtaMiu, mDtaRwSize, mExtDtaSnepServerCallback,mContext, mTestCaseID);
             mExtDtaSnepServer.start();
             mExtDtaSnepServerRunning = true;
         }

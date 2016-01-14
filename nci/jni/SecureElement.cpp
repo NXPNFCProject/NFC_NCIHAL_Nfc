@@ -49,7 +49,7 @@
 #include "PeerToPeer.h"
 #if(NXP_EXTNS == TRUE)
 #include "RoutingManager.h"
-#if((NFC_POWER_MANAGEMENT == TRUE)&&(NXP_EXTNS == TRUE))
+#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
 #include <signal.h>
 #include <sys/types.h>
 #endif
@@ -75,19 +75,22 @@ namespace android
     extern void setUiccIdleTimeout (bool enable);
     extern bool isDiscoveryStarted();
     extern int getScreenState();
+#if((NFC_NXP_ESE == TRUE) && (NFC_NXP_CHIP_TYPE == PN548C2))
+    extern bool isp2pActivated();
+#endif
     extern SyncEvent sNfaSetConfigEvent;
     extern tNFA_STATUS EmvCo_dosetPoll(jboolean enable);
     extern tNFA_STATUS ResetEseSession();
     extern void config_swp_reader_mode(bool mode);
     extern void set_transcation_stat(bool result);
 }
-#if((NFC_POWER_MANAGEMENT == TRUE)&&(NXP_EXTNS == TRUE))
+#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
 /* hold the transceive flag should be set when the prio session is actrive/about to active*/
 /* Event used to inform the prio session end and transceive resume*/
 SyncEvent sSPIPrioSessionEndEvent;
-    static IntervalTimer   mNFCCStandbyModeTimer; // timer to enable standby mode for NFCC
     static UINT32          nfccStandbytimeout;        // timeout for secelem standby mode detection
     static void NFCC_StandbyModeTimerCallBack (union sigval);
+    int active_ese_reset_control = 0;
 #endif
     SyncEvent mDualModeEvent;
     static void setSPIState(bool mState);
@@ -96,9 +99,7 @@ SyncEvent sSPIPrioSessionEndEvent;
 #if(NXP_EXTNS == TRUE)
 #define NFC_NUM_INTERFACE_MAP 3
 #define NFC_SWP_RD_NUM_INTERFACE_MAP 1
-#endif
 
-#if(NXP_EXTNS == TRUE)
 static const tNCI_DISCOVER_MAPS nfc_interface_mapping_default[NFC_NUM_INTERFACE_MAP] =
 {
         /* Protocols that use Frame Interface do not need to be included in the interface mapping */
@@ -184,9 +185,6 @@ void SecureElement::discovery_map_cb (tNFC_DISCOVER_EVT event, tNFC_DISCOVER *p_
 SecureElement SecureElement::sSecElem;
 const char* SecureElement::APP_NAME = "nfc_jni";
 const UINT16 ACTIVE_SE_USE_ANY = 0xFFFF;
-#if(NXP_EXTNS == TRUE)
-char bcm_nfc_location_jni[]="/etc";
-#endif
 
 /*******************************************************************************
 **
@@ -316,7 +314,7 @@ bool SecureElement::initialize (nfc_jni_native_data* native)
         mWiredModeRfFiledEnable = num;
     }
 #endif
-#if((NFC_POWER_MANAGEMENT == TRUE)&&(NXP_EXTNS == TRUE))
+#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
     if (GetNxpNumValue(NAME_NXP_NFCC_STANDBY_TIMEOUT, &nfccStandbytimeout, sizeof(nfccStandbytimeout)) == false)
     {
         nfccStandbytimeout = 20000;
@@ -332,6 +330,7 @@ bool SecureElement::initialize (nfc_jni_native_data* native)
     }
     dual_mode_current_state = SPI_DWPCL_NOT_ACTIVE;
     hold_the_transceive = false;
+    active_ese_reset_control = 0;
 #endif
     /*
      * Since NXP doesn't support OBERTHUR RESET COMMAND, Hence commented
@@ -418,7 +417,7 @@ void SecureElement::finalize ()
 
 /*    if (mNfaHciHandle != NFA_HANDLE_INVALID)
         NFA_HciDeregister (const_cast<char*>(APP_NAME));*/
-
+    NfccStandByOperation(STANDBY_TIMER_STOP);
     mNfaHciHandle = NFA_HANDLE_INVALID;
     mNativeData   = NULL;
     mIsInit       = false;
@@ -807,11 +806,9 @@ bool SecureElement::activate (jint seID)
             }
 
             {
-                SyncEventGuard guard (mEeSetModeEvent);
                 ALOGD ("%s: set EE mode activate; h=0x%X", fn, eeItem.ee_handle);
-                if ((nfaStat = NFA_EeModeSet (eeItem.ee_handle, NFA_EE_MD_ACTIVATE)) == NFA_STATUS_OK)
+                if ((nfaStat = SecElem_EeModeSet (eeItem.ee_handle, NFA_EE_MD_ACTIVATE)) == NFA_STATUS_OK)
                 {
-                    mEeSetModeEvent.wait (); //wait for NFA_EE_MODE_SET_EVT
                     if (eeItem.ee_status == NFC_NFCEE_STATUS_ACTIVE)
                         numActivatedEe++;
                 }
@@ -896,11 +893,9 @@ bool SecureElement::deactivate (jint seID)
             }
 
             {
-                SyncEventGuard guard (mEeSetModeEvent);
                 ALOGD ("%s: set EE mode activate; h=0x%X", fn, eeItem.ee_handle);
-                if ((nfaStat = NFA_EeModeSet (eeItem.ee_handle, NFA_EE_MD_DEACTIVATE)) == NFA_STATUS_OK)
+                if ((nfaStat = SecElem_EeModeSet (eeItem.ee_handle, NFA_EE_MD_DEACTIVATE)) == NFA_STATUS_OK)
                 {
-                    mEeSetModeEvent.wait (); //wait for NFA_EE_MODE_SET_EVT
                     ALOGD ("%s: eeItem.ee_status =0x%X  NFC_NFCEE_STATUS_INACTIVE = %x", fn, eeItem.ee_status, NFC_NFCEE_STATUS_INACTIVE);
                     if (eeItem.ee_status == NFC_NFCEE_STATUS_INACTIVE)
                     {
@@ -1437,14 +1432,14 @@ bool SecureElement::transceive (UINT8* xmitBuffer, INT32 xmitBufferSize, UINT8* 
         ALOGD ("%s: Empty AID SELECT cmd detected, substituting AID from config file, new length=%d", fn, idx);
     }
 
-#if((NFC_POWER_MANAGEMENT == TRUE)&&(NXP_EXTNS == TRUE))
-    mNFCCStandbyModeTimer.kill();
+#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
+    NfccStandByOperation(STANDBY_TIMER_STOP);
 #endif
     {
         SyncEventGuard guard (mTransceiveEvent);
         mActualResponseSize = 0;
         memset (mResponseData, 0, sizeof(mResponseData));
-#if((NFC_POWER_MANAGEMENT == TRUE)&&(NXP_EXTNS == TRUE))
+#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
         if(hold_the_transceive == true){
             ALOGD("%s: holding the transceive\n", fn);
             sSPIPrioSessionEndEvent.wait(timeoutMillisec);
@@ -1483,17 +1478,48 @@ bool SecureElement::transceive (UINT8* xmitBuffer, INT32 xmitBufferSize, UINT8* 
                 mDualModeEvent.wait();
             }
 #endif
+#if(NFC_NXP_ESE == TRUE)
+            active_ese_reset_control |= TRANS_WIRED_ONGOING;
+#endif
 #endif
             nfaStat = NFA_HciSendEvent (mNfaHciHandle, mNewPipeId, EVT_SEND_DATA, xmitBufferSize, xmitBuffer, sizeof(mResponseData), mResponseData, timeoutMillisec);
 #if(NXP_EXTNS == TRUE)
         }
 #endif
         else
+#if(NXP_EXTNS == TRUE)
+        {
+#if(NFC_NXP_ESE == TRUE)
+            active_ese_reset_control |= TRANS_WIRED_ONGOING;
+#endif
+#endif
             nfaStat = NFA_HciSendEvent (mNfaHciHandle, mNewPipeId, NFA_HCI_EVT_POST_DATA, xmitBufferSize, xmitBuffer, sizeof(mResponseData), mResponseData, timeoutMillisec);
+#if(NXP_EXTNS == TRUE)
+        }
+#endif
         if (nfaStat == NFA_STATUS_OK)
         {
 //          waitOk = mTransceiveEvent.wait (timeoutMillisec);
             mTransceiveEvent.wait ();
+
+#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
+            if(active_ese_reset_control & TRANS_WIRED_ONGOING)
+            {
+                active_ese_reset_control ^= TRANS_WIRED_ONGOING;
+
+                /*If only reset event is pending*/
+                if((active_ese_reset_control&RESET_BLOCKED))
+                {
+                    SyncEventGuard guard (mResetOngoingEvent);
+                    mResetOngoingEvent.wait();
+                }
+                if(!(active_ese_reset_control&TRANS_CL_ONGOING) &&
+                (active_ese_reset_control&RESET_BLOCKED))
+                {
+                    active_ese_reset_control ^= RESET_BLOCKED;
+                }
+            }
+#endif
             if (mTransceiveWaitOk == false) //timeout occurs
             {
                 ALOGE ("%s: wait response timeout", fn);
@@ -1516,6 +1542,10 @@ bool SecureElement::transceive (UINT8* xmitBuffer, INT32 xmitBufferSize, UINT8* 
     isSuccess = true;
 
 TheEnd:
+#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
+    if((active_ese_reset_control&TRANS_WIRED_ONGOING))
+        active_ese_reset_control ^= TRANS_WIRED_ONGOING;
+#endif
     ALOGD ("%s: exit; isSuccess: %d; recvBufferActualSize: %ld", fn, isSuccess, recvBufferActualSize);
     return (isSuccess);
 }
@@ -1536,12 +1566,31 @@ void SecureElement::setCLState(bool mState)
     if(mState)
     {
        dual_mode_current_state |= CL_ACTIVE;
+#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
+       active_ese_reset_control |= TRANS_CL_ONGOING;
+#endif
     }
     else
     {
        if(dual_mode_current_state & CL_ACTIVE)
        {
            dual_mode_current_state ^= CL_ACTIVE;
+#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
+               if((active_ese_reset_control&TRANS_CL_ONGOING))
+               {
+                   active_ese_reset_control ^= TRANS_CL_ONGOING;
+
+                   /*If there is no pending wired rapdu or CL session*/
+                   if(((active_ese_reset_control&RESET_BLOCKED))&&
+                   (!(active_ese_reset_control &(TRANS_WIRED_ONGOING))))
+                   {
+                       /*unblock pending reset event*/
+                       SyncEventGuard guard (sSecElem.mResetEvent);
+                       sSecElem.mResetEvent.notifyOne();
+                       active_ese_reset_control ^= RESET_BLOCKED;
+                   }
+               }
+#endif
            if(inDualModeAlready)
            {
                SyncEventGuard guard (mDualModeEvent);
@@ -1570,17 +1619,11 @@ void SecureElement::notifyModeSet (tNFA_HANDLE eeHandle, bool success, tNFA_EE_S
     sSecElem.mEeSetModeEvent.notifyOne();
 }
 
-#if((NFC_POWER_MANAGEMENT == TRUE)&&(NXP_EXTNS == TRUE))
+#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
 static void NFCC_StandbyModeTimerCallBack (union sigval)
 {
     ALOGD ("%s timer timedout , sending standby mode cmd", __FUNCTION__);
-    bool stat = false;
-    //Send the EVT_END_OF_APDU_TRANSFER  after the transceive timer timed out
-    stat = SecureElement::getInstance().sendEvent(SecureElement::EVT_END_OF_APDU_TRANSFER);
-    if(stat)
-    {
-        ALOGD ("%s sending standby mode command successful", __FUNCTION__);
-    }
+    SecureElement::getInstance().NfccStandByOperation(STANDBY_TIMER_TIMEOUT);
 }
 #endif
 /*******************************************************************************
@@ -1746,7 +1789,7 @@ void SecureElement::notifyEEReaderEvent (int evt, int data)
                     if (e == NULL)
                     {
                         ALOGE ("%s: jni env is null", fn);
-                        return;
+                        break;
                     }
                     sSwpReaderTimer.kill();
                 /*
@@ -2070,14 +2113,17 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
             if(eventData->rcvd_evt.evt_len > 0)
             {
                 sSecElem.mTransceiveWaitOk = true;
-#if((NFC_POWER_MANAGEMENT == TRUE)&&(NXP_EXTNS == TRUE))
-                if(nfccStandbytimeout > 0)
-                {
-                    mNFCCStandbyModeTimer.set(nfccStandbytimeout , NFCC_StandbyModeTimerCallBack );
-                    ALOGE ("%s: starting NFCC standby mode timer", fn);
-                }
-#endif
+#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
+                SecureElement::getInstance().NfccStandByOperation(STANDBY_TIMER_START);
             }
+            /*If there is pending reset event to process*/
+            if((active_ese_reset_control&RESET_BLOCKED)&&
+            (!(active_ese_reset_control &(TRANS_CL_ONGOING))))
+            {
+                SyncEventGuard guard (sSecElem.mResetEvent);
+                sSecElem.mResetEvent.notifyOne();
+            }
+#endif
             sSecElem.mTransceiveEvent.notifyOne ();
         }
         else if (eventData->rcvd_evt.evt_code == NFA_HCI_EVT_POST_DATA)
@@ -2498,11 +2544,9 @@ bool SecureElement::SecEle_Modeset(UINT8 type)
     tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
     bool retval = true;
 
-    SyncEventGuard guard (mEeSetModeEvent);
     ALOGD ("set EE mode = 0x%X", type);
-    if ((nfaStat = NFA_EeModeSet (0x4C0, type)) == NFA_STATUS_OK)
+    if ((nfaStat = SecElem_EeModeSet (0x4C0, type)) == NFA_STATUS_OK)
     {
-        mEeSetModeEvent.wait (); //wait for NFA_EE_MODE_SET_EVT
 #if 0
         if (eeItem.ee_status == NFC_NFCEE_STATUS_INACTIVE)
         {
@@ -2565,6 +2609,95 @@ bool SecureElement::sendEvent(UINT8 event)
     return retval;
 }
 
+#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
+/*******************************************************************************
+**
+** Function         NfccStandByTimerOperation
+**
+** Description      start/stops the standby timer
+**
+** Returns          void
+**
+*******************************************************************************/
+void SecureElement::NfccStandByOperation(nfcc_standby_operation_t value)
+{
+    static IntervalTimer   mNFCCStandbyModeTimer; // timer to enable standby mode for NFCC
+
+    ALOGD("In SecureElement::NfccStandByOperation value = %d", value);
+    switch(value)
+    {
+    case STANDBY_TIMER_START:
+        if(nfccStandbytimeout > 0)
+        {
+            mNFCCStandbyModeTimer.set(nfccStandbytimeout , NFCC_StandbyModeTimerCallBack );
+        }
+        break;
+    case STANDBY_TIMER_STOP:
+        {
+            if(nfccStandbytimeout > 0)
+                mNFCCStandbyModeTimer.kill();
+        }
+        break;
+    case STANDBY_TIMER_TIMEOUT:
+    {
+        bool stat = false;
+        //Send the EVT_END_OF_APDU_TRANSFER  after the transceive timer timed out
+        stat = SecureElement::getInstance().sendEvent(SecureElement::EVT_END_OF_APDU_TRANSFER);
+        if(stat)
+        {
+            ALOGD ("%s sending standby mode command successful", __FUNCTION__);
+        }
+    }
+    break;
+    case STANDBY_GPIO_HIGH:
+    {
+        jint ret_val = -1;
+        NFCSTATUS status = NFCSTATUS_FAILED;
+
+        /* Set the ESE VDD gpio to high to make sure P61 is powered, even if NFCC
+         * is in standby
+         */
+        ret_val = NFC_EnableWired ((void *)&status);
+        if (ret_val < 0)
+        {
+            ALOGD("NFC_EnableWired failed");
+        }
+        else
+        {
+             if (status != NFCSTATUS_SUCCESS)
+             {
+                 ALOGD("SE is being used by SPI");
+             }
+        }
+    }
+    break;
+    case STANDBY_GPIO_LOW:
+    {
+        jint ret_val = -1;
+        NFCSTATUS status = NFCSTATUS_FAILED;
+        /* Set the ESE VDD gpio to low to make sure P61 is reset. */
+        ret_val = NFC_DisableWired ((void *)&status);
+        if (ret_val < 0)
+        {
+            ALOGD("NFC_DisableWired failed");
+        }
+        else
+        {
+            if (status != NFCSTATUS_SUCCESS)
+            {
+                ALOGD("SE is not being released by Pn54x driver");
+            }
+        }
+    }
+    break;
+    default:
+        ALOGE("Wrong param");
+    break;
+
+    }
+}
+#endif
+
 /*******************************************************************************
 **
 ** Function:        reconfigureEseHciInit
@@ -2613,7 +2746,11 @@ bool SecureElement::isWiredModeAllowedInRfState()
     ALOGD("%s; enter", fn);
     //mRecvdTransEvt = false; //reset to false before 2.5sec wait
     SyncEventGuard guard (mAllowWiredModeEvent);
-    if(isActivatedInListenMode())
+    if(android::isp2pActivated())
+    {
+        status = true;
+    }
+    else if(isActivatedInListenMode())
     {
         ALOGD("%s; mAllowWiredMode=%d ",fn, mAllowWiredMode);
         if(mAllowWiredMode)
@@ -2636,7 +2773,6 @@ bool SecureElement::isWiredModeAllowedInRfState()
         if(!isActivatedInListenMode() || !isRfFieldOn() || !mRecvdTransEvt)
             status = true;
     }
-
     return status;
 }
 #endif
@@ -2849,7 +2985,7 @@ TheEnd:
 
     return decoded_length;
 }
-#if((NFC_POWER_MANAGEMENT == TRUE)&&(NXP_EXTNS == TRUE))
+#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
 void spi_prio_signal_handler (int signum, siginfo_t *info, void *unused)
 {
     ALOGD ("%s: Inside the Signal Handler %d\n", __FUNCTION__, SIG_NFC);
@@ -2914,7 +3050,6 @@ void SecureElement::setCPTimeout()
     static const char fn [] = "SecureElement::setCPTimeout";
     for ( i = 0; i < mActualNumEe; i++)
     {
-
         if (mEeInfo[i].ee_handle == 0x4C0)
         {
             nfaStat = NFA_STATUS_OK;
@@ -2938,15 +3073,31 @@ void SecureElement::setCPTimeout()
         }
         if(found)
         {
-            SecEle_Modeset(0x01);
-            activate(0xF3);
-            connectEE();
-            getAtr(0xF3,received_getatr,&recvBufferActualSize);
-            transceive(selectISD,(INT32)sizeof(selectISD),received_selectISD,(int)sizeof(received_selectISD),recvBufferActualSize,
-                                                  timeout);
-            transceive(setCPTimeoutcmdbuff,(INT32)sizeof(setCPTimeoutcmdbuff),received_setCPTimeout,(int)sizeof(received_setCPTimeout),recvBufferActualSize,
-                                                  timeout);
-            disconnectEE(0xF3);
+            bool stat = false;
+
+            stat = SecEle_Modeset(0x01);
+            if(stat == true)
+            {
+                stat = connectEE();
+                if(stat == true)
+                {
+                    stat = getAtr(ESE_ID,received_getatr,&recvBufferActualSize);
+                    if(stat == true)
+                    {
+                        /*select card manager*/
+                        stat = transceive(selectISD,(INT32)sizeof(selectISD),received_selectISD,
+                            (int)sizeof(received_selectISD), recvBufferActualSize, timeout);
+                        if(stat == true)
+                        {
+                            /*set timeout value in CP registry*/
+                            transceive(setCPTimeoutcmdbuff,(INT32)sizeof(setCPTimeoutcmdbuff),
+                                received_setCPTimeout, (int)sizeof(received_setCPTimeout), recvBufferActualSize, timeout);
+                        }
+                    }
+                }
+            }
+            sendEvent(SecureElement::EVT_END_OF_APDU_TRANSFER);
+            disconnectEE(ESE_ID);
         }
     }
 
@@ -2983,5 +3134,44 @@ static void setSPIState(bool mState)
         }
     }
     ALOGD ("%s: Exit setSPIState = %d\n", __FUNCTION__, dual_mode_current_state);
+}
+
+/*******************************************************************************
+ **
+ ** Function:       SecElem_EeModeSet
+ **
+ ** Description:    Perform SE mode set ON/OFF based on mode type
+ **
+ ** Returns:        NFA_STATUS_OK/NFA_STATUS_FAILED.
+ **
+ *******************************************************************************/
+tNFA_STATUS SecureElement::SecElem_EeModeSet(uint16_t handle, uint8_t mode)
+{
+    tNFA_STATUS stat = NFA_STATUS_FAILED;
+    ALOGD("%s:Enter mode = %d", __FUNCTION__, mode);
+
+#if((NFC_NXP_ESE == TRUE))
+    if((mode == NFA_EE_MD_DEACTIVATE)&&(active_ese_reset_control&(TRANS_WIRED_ONGOING|TRANS_CL_ONGOING)))
+    {
+        active_ese_reset_control |= RESET_BLOCKED;
+        SyncEventGuard guard (sSecElem.mResetEvent);
+        sSecElem.mResetEvent.wait();
+    }
+#endif
+    SyncEventGuard guard (sSecElem.mEeSetModeEvent);
+    stat =  NFA_EeModeSet(handle, mode);
+    if(stat == NFA_STATUS_OK)
+    {
+        sSecElem.mEeSetModeEvent.wait ();
+    }
+
+#if((NFC_NXP_ESE == TRUE))
+    if((active_ese_reset_control&RESET_BLOCKED))
+    {
+        SyncEventGuard guard (sSecElem.mResetOngoingEvent);
+        sSecElem.mResetOngoingEvent.notifyOne();
+    }
+#endif
+    return stat;
 }
 #endif

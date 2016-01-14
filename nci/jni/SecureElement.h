@@ -49,11 +49,11 @@ extern "C"
     #include "nfa_hci_defs.h"
     #include "nfa_ce_api.h"
     #include "phNxpExtns.h"
-#if((NFC_POWER_MANAGEMENT == TRUE)&&(NXP_EXTNS == TRUE))
+#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
     #include "phNfcTypes.h"
 #endif
 }
-#if((NFC_POWER_MANAGEMENT == TRUE)&&(NXP_EXTNS == TRUE))
+#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
 #define SIG_NFC 44
 #endif
 typedef enum dual_mode{
@@ -63,6 +63,12 @@ typedef enum dual_mode{
  SPI_DWPCL_BOTH_ACTIVE = 0x03,
 }dual_mode_state;
 
+typedef enum reset_management{
+ TRANS_IDLE = 0x00,
+ TRANS_WIRED_ONGOING = 0x01,
+ TRANS_CL_ONGOING = 0x02,
+ RESET_BLOCKED = 0x04,
+}ese_reset_control;
 typedef struct {
     tNFA_HANDLE src;
     tNFA_TECHNOLOGY_MASK tech_mask;
@@ -97,7 +103,14 @@ typedef struct{
     Mutex mMutex;
 }Rdr_req_ntf_info_t;
 
-#if((NFC_POWER_MANAGEMENT == TRUE)&&(NXP_EXTNS == TRUE))
+#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
+typedef enum operation{
+    STANDBY_TIMER_START,
+    STANDBY_TIMER_STOP,
+    STANDBY_TIMER_TIMEOUT,
+    STANDBY_GPIO_HIGH,
+    STANDBY_GPIO_LOW
+}nfcc_standby_operation_t;
 void spi_prio_signal_handler (int signum, siginfo_t *info, void *unused);
 #endif
 
@@ -545,8 +558,10 @@ public:
     jint getGenericEseId(tNFA_HANDLE handle);
 
     tNFA_STATUS reconfigureEseHciInit();
-#if(NXP_EXTNS == TRUE)
+#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
     void setCPTimeout();
+    tNFA_STATUS SecElem_EeModeSet(uint16_t handle, uint8_t mode);
+    void NfccStandByOperation(nfcc_standby_operation_t value);
 #endif
     bool isWiredModeAllowedInRfState();
     bool mRecvdTransEvt;
@@ -556,12 +571,11 @@ public:
     SyncEvent       mAidAddRemoveEvent;
     SyncEvent       mUiccListenEvent;
     SyncEvent       mEseListenEvent;
-#if(NXP_EXTNS == TRUE)
-    SyncEvent       mEEdatapacketEvent;
-#endif
     SyncEvent       mAllowWiredModeEvent;
+    SyncEvent       mEeSetModeEvent;
 
 #if(NXP_EXTNS == TRUE)
+    SyncEvent       mEEdatapacketEvent;
     static const UINT8 EVT_END_OF_APDU_TRANSFER = 0x21;    //NXP Propritory
     void setCLState(bool mState);
 #endif
@@ -578,16 +592,13 @@ private:
     static const UINT8 EVT_SEND_DATA = 0x10;    //see specification ETSI TS 102 622 v9.0.0 (Host Controller Interface); section 9.3.3.3
 #if(NXP_EXTNS == TRUE)
     static const tNFA_HANDLE EE_HANDLE_0xF3 = 0x4C0;//0x401; //handle to secure element in slot 0
-#else
-    static const tNFA_HANDLE EE_HANDLE_0xF3 = 0x4F3; //handle to secure element in slot 0
-#endif
-#if(NXP_EXTNS == TRUE)
 #ifdef NXP_UICC_ENABLE
     static const tNFA_HANDLE EE_HANDLE_0xF4 = 0x402; //handle to secure element in slot 1
 #else
     static const tNFA_HANDLE EE_HANDLE_0xF4 = 0x0F4;//0x4C0; //handle to secure element in slot 1
 #endif
 #else
+    static const tNFA_HANDLE EE_HANDLE_0xF3 = 0x4F3; //handle to secure element in slot 0
     static const tNFA_HANDLE EE_HANDLE_0xF4 = 0x4F4; //handle to secure element in slot 1
 #endif
 
@@ -618,7 +629,9 @@ private:
     tNFA_HCI_GET_GATE_PIPE_LIST mHciCfg;
     SyncEvent       mEeRegisterEvent;
     SyncEvent       mHciRegisterEvent;
-    SyncEvent       mEeSetModeEvent;
+
+    SyncEvent       mResetEvent;
+    SyncEvent       mResetOngoingEvent;
     SyncEvent       mPipeListEvent;
     SyncEvent       mCreatePipeEvent;
     SyncEvent       mPipeOpenedEvent;

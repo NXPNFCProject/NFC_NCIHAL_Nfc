@@ -66,6 +66,9 @@ public:
     bool mCashbeeDetected;
     bool mEzLinkTypeTag;
     activationParams_t mActivationParams_t;
+#if(NXP_EXTNS == TRUE)
+    bool mWaitingForSelect;
+#endif
    /*******************************************************************************
     **
     ** Function:        NfcTag
@@ -485,7 +488,18 @@ public:
     **
     *******************************************************************************/
     void storeActivationParams();
-
+#if(NXP_EXTNS == TRUE)
+    /*******************************************************************************
+    **
+    ** Function:        selectCompleteStatus
+    **
+    ** Description:     Notify whether tag select is success/failure
+    **
+    ** Returns:         None
+    **
+    *******************************************************************************/
+    void selectCompleteStatus(bool status);
+#endif
 private:
     std::vector<int> mTechnologyTimeoutsTable;
     std::vector<int> mTechnologyDefaultTimeoutsTable;
@@ -673,4 +687,5 @@ private:
     **
     *******************************************************************************/
     void calculateT1tMaxMessageSize (tNFA_ACTIVATED& activate);
+
 };

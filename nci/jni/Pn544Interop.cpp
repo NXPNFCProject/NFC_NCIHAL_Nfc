@@ -29,6 +29,8 @@
 namespace android
 {
     extern void startStopPolling (bool isStartPolling);
+    extern void releaseRfInterfaceMutexLock();
+    extern void acquireRfInterfaceMutexLock();
 }
 
 
@@ -84,6 +86,7 @@ void pn544InteropStopPolling ()
 void pn544InteropStartPolling (union sigval)
 {
     ALOGD ("%s: enter", __FUNCTION__);
+    android::acquireRfInterfaceMutexLock();
     gMutex.lock ();
     NfcTag::ActivationState state = NfcTag::getInstance ().getActivationState ();
 
@@ -108,6 +111,7 @@ void pn544InteropStartPolling (union sigval)
 
 TheEnd:
     gMutex.unlock ();
+    android::releaseRfInterfaceMutexLock();
     ALOGD ("%s: exit", __FUNCTION__);
 }
 
