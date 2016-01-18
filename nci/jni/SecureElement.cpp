@@ -417,7 +417,9 @@ void SecureElement::finalize ()
 
 /*    if (mNfaHciHandle != NFA_HANDLE_INVALID)
         NFA_HciDeregister (const_cast<char*>(APP_NAME));*/
+#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
     NfccStandByOperation(STANDBY_TIMER_STOP);
+#endif
     mNfaHciHandle = NFA_HANDLE_INVALID;
     mNativeData   = NULL;
     mIsInit       = false;
@@ -2110,10 +2112,11 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
             ALOGD ("%s: NFA_HCI_EVENT_RCVD_EVT; data from static pipe", fn);
             SyncEventGuard guard (sSecElem.mTransceiveEvent);
             sSecElem.mActualResponseSize = (eventData->rcvd_evt.evt_len > MAX_RESPONSE_SIZE) ? MAX_RESPONSE_SIZE : eventData->rcvd_evt.evt_len;
+#if(NXP_EXTNS == TRUE)
+#if(NFC_NXP_ESE == TRUE)
             if(eventData->rcvd_evt.evt_len > 0)
             {
                 sSecElem.mTransceiveWaitOk = true;
-#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
                 SecureElement::getInstance().NfccStandByOperation(STANDBY_TIMER_START);
             }
             /*If there is pending reset event to process*/
@@ -2123,6 +2126,12 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
                 SyncEventGuard guard (sSecElem.mResetEvent);
                 sSecElem.mResetEvent.notifyOne();
             }
+#else
+            if(eventData->rcvd_evt.evt_len > 0)
+            {
+                sSecElem.mTransceiveWaitOk = true;
+	    }
+#endif
 #endif
             sSecElem.mTransceiveEvent.notifyOne ();
         }
@@ -3020,7 +3029,7 @@ void spi_prio_signal_handler (int signum, siginfo_t *info, void *unused)
 }
 #endif
 
-#if(NXP_EXTNS == TRUE)
+#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
 /*******************************************************************************
 **
 ** Function:        setCPTimeout
@@ -3102,7 +3111,9 @@ void SecureElement::setCPTimeout()
     }
 
 }
+#endif
 
+#if(NXP_EXTNS == TRUE)
 /*******************************************************************************
  **
  ** Function:       setSPIState

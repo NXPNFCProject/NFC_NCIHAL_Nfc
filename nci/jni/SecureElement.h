@@ -560,7 +560,6 @@ public:
     tNFA_STATUS reconfigureEseHciInit();
 #if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
     void setCPTimeout();
-    tNFA_STATUS SecElem_EeModeSet(uint16_t handle, uint8_t mode);
     void NfccStandByOperation(nfcc_standby_operation_t value);
 #endif
     bool isWiredModeAllowedInRfState();
@@ -575,6 +574,7 @@ public:
     SyncEvent       mEeSetModeEvent;
 
 #if(NXP_EXTNS == TRUE)
+    tNFA_STATUS SecElem_EeModeSet(uint16_t handle, uint8_t mode);
     SyncEvent       mEEdatapacketEvent;
     static const UINT8 EVT_END_OF_APDU_TRANSFER = 0x21;    //NXP Propritory
     void setCLState(bool mState);

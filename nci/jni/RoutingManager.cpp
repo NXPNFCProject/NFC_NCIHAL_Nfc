@@ -2581,9 +2581,11 @@ void *ee_removed_ntf_handler_thread(void *data)
         SyncEventGuard guard (se.mEeSetModeEvent);
         se.mEeSetModeEvent.wait ();
     }
+#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
     se.NfccStandByOperation(STANDBY_GPIO_LOW);
     usleep(10*1000);
     se.NfccStandByOperation(STANDBY_GPIO_HIGH);
+#endif
     stat = NFA_EeModeSet(0x4c0, NFA_EE_MD_ACTIVATE);
 
     if(stat == NFA_STATUS_OK)
