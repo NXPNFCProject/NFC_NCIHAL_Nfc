@@ -38,6 +38,7 @@
 
 #include "IntervalTimer.h"
 #include "OverrideLog.h"
+#include <string.h>
 
 
 IntervalTimer::IntervalTimer()
@@ -98,7 +99,8 @@ void IntervalTimer::kill()
 
 bool IntervalTimer::create(TIMER_FUNC cb)
 {
-    struct sigevent se = {0};
+    struct sigevent se;
+    memset(&se,0,sizeof(struct sigevent));
     int stat = 0;
 
     /*

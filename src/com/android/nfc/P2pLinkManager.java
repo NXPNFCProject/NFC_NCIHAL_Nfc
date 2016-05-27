@@ -1031,9 +1031,7 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
             // until we can deprecate it.
             /*IncomingHandoverData inCmgHandoverData;*/
             if(msg == null){
-                Log.d(TAG, "DEBUG> Inavlid params msg");
             }else if((mHandoverDataParser.getIncomingHandoverData(msg)) ==  null){
-                Log.d(TAG, "DEBUG> Inavlid params inCmgHandoverData");
             }else{
                 response = mHandoverDataParser.getIncomingHandoverData(msg).handoverSelect;
             }

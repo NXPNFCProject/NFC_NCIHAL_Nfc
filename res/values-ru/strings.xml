@@ -38,7 +38,7 @@
     <string name="pay_with" msgid="5531545488795798945">"Способ оплаты"</string>
     <string name="complete_with" msgid="6797459104103012992">"Использовать"</string>
     <string name="default_pay_app_removed" msgid="4108250545457437360">"Вы удалили приложение для бесконтактной оплаты, используемое по умолчанию. Выбрать другое?"</string>
-    <string name="ask_nfc_tap" msgid="2925239870458286340">"Нажмите на экран другого устройства, чтобы передать данные"</string>
+    <string name="ask_nfc_tap" msgid="2925239870458286340">"Коснитесь другого устройства, чтобы передать данные"</string>
     <string name="wifi_connect" msgid="6250727951843550671">"Подключиться"</string>
     <string name="status_unable_to_connect" msgid="9183908200295307657">"Не удалось подключиться к сети"</string>
     <string name="status_wifi_connected" msgid="5893022897732105739">"Соединение установлено"</string>

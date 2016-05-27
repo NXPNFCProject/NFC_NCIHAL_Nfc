@@ -159,7 +159,7 @@ bool RouteDataSet::initialize ()
 void RouteDataSet::deleteDatabase ()
 {
     static const char fn [] = "RouteDataSet::deleteDatabase";
-    ALOGD ("%s: default db size=%u; sec elem db size=%u", fn, mDefaultRouteDatabase.size(), mSecElemRouteDatabase.size());
+    ALOGD ("%s: default db size=%zu; sec elem db size=%zu", fn, mDefaultRouteDatabase.size(), mSecElemRouteDatabase.size());
     Database::iterator it;
 
     for (it = mDefaultRouteDatabase.begin(); it != mDefaultRouteDatabase.end(); it++)
@@ -287,7 +287,7 @@ bool RouteDataSet::saveToFile (const char* routesXml)
     actualWritten = fwrite (routesXml, sizeof(char), strlen(routesXml), fh);
     retval = actualWritten == strlen(routesXml);
     fclose (fh);
-    ALOGD ("%s: wrote %u bytes", fn, actualWritten);
+    ALOGD ("%s: wrote %zu bytes", fn, actualWritten);
     if (retval == false)
         ALOGE ("%s: error during write", fn);
 
@@ -334,7 +334,7 @@ bool RouteDataSet::loadFromFile (std::string& routesXml)
         routesXml.append (buffer, actual);
     }
     fclose (fh);
-    ALOGD ("%s: read %u bytes", fn, routesXml.length());
+    ALOGD ("%s: read %zu bytes", fn, routesXml.length());
     return true;
 }
 

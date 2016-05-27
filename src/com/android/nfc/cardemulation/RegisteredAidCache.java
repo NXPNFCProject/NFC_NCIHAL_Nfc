@@ -42,6 +42,7 @@ import com.android.nfc.NfcService;
 import android.nfc.cardemulation.ApduServiceInfo;
 import android.nfc.cardemulation.CardEmulation;
 import android.util.Log;
+import com.nxp.nfc.NxpConstants;
 
 import com.google.android.collect.Maps;
 
@@ -424,9 +425,12 @@ public class RegisteredAidCache {
                 ServiceAidInfo serviceAidInfo = new ServiceAidInfo();
                 serviceAidInfo.service = service;
                 serviceAidInfo.category = service.getCategoryForAid(aid);
-                if( serviceAidInfo.category == CardEmulation.CATEGORY_OTHER &&
-                    service.getServiceState(CardEmulation.CATEGORY_OTHER) == false) {
-                    Log.e(TAG, "ignoring other category aid because service category disabled");
+                if( (serviceAidInfo.category.equals(CardEmulation.CATEGORY_OTHER)) &&
+                    ((service.getServiceState(CardEmulation.CATEGORY_OTHER) == NxpConstants.SERVICE_STATE_DISABLED) ||
+                     (service.getServiceState(CardEmulation.CATEGORY_OTHER) == NxpConstants.SERVICE_STATE_DISABLING))){
+                    /*Do not include the services which are already disabled Or services which are disabled by user recently
+                     * for the current commit to routing table*/
+                    Log.e(TAG, "ignoring other category aid because service category is disabled");
                     continue;
                 }
                 //NXP specific, Adding prefix (*) to all off host aid for prefix match.

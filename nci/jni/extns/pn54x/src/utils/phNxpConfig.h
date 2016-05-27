@@ -20,13 +20,13 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2015 NXP Semiconductors
+ *  Copyright (C) 2015 The Android Open Source Project
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
@@ -44,12 +44,13 @@ extern "C"
 {
 #endif
 
-int GetNxpStrValue(const char* name, char* p_value, unsigned long len);
-int GetNxpNumValue(const char* name, void* p_value, unsigned long len);
-int GetNxpByteArrayValue(const char* name, char* pValue,long bufflen, long *len);
-void resetNxpConfig(void);
-int isNxpConfigModified();
-int updateNxpConfigTimestamp();
+int GetNxpStrValue (const char* name, char* p_value, unsigned long len);
+int GetNxpNumValue (const char* name, void* p_value, unsigned long len);
+int GetNxpByteArrayValue (const char* name, char* pValue, long bufflen, long *len);
+void resetNxpConfig (void);
+int isNxpConfigModified ();
+int updateNxpConfigTimestamp ();
+
 #ifdef __cplusplus
 }
 #endif
@@ -69,6 +70,8 @@ int updateNxpConfigTimestamp();
 #define NAME_NXP_RF_CONF_BLK_2       "NXP_RF_CONF_BLK_2"
 #define NAME_NXP_RF_CONF_BLK_3       "NXP_RF_CONF_BLK_3"
 #define NAME_NXP_RF_CONF_BLK_4       "NXP_RF_CONF_BLK_4"
+#define NAME_NXP_RF_CONF_BLK_5       "NXP_RF_CONF_BLK_5"
+#define NAME_NXP_RF_CONF_BLK_6       "NXP_RF_CONF_BLK_6"
 #define NAME_NXP_CORE_CONF_EXTN      "NXP_CORE_CONF_EXTN"
 #define NAME_NXP_CORE_CONF           "NXP_CORE_CONF"
 #define NAME_NXP_CORE_MFCKEY_SETTING "NXP_CORE_MFCKEY_SETTING"

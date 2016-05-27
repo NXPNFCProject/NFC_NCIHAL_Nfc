@@ -12,10 +12,11 @@ ifneq ($(NCI_VERSION),)
 LOCAL_CFLAGS += -DNCI_VERSION=$(NCI_VERSION) -O0 -g
 endif
 
-LOCAL_CFLAGS += -Wall -Wextra
+LOCAL_CFLAGS += -Wall -Wextra -Wno-unused-parameter -Werror
 #variables for NFC_NXP_CHIP_TYPE
 PN547C2 := 1
 PN548C2 := 2
+PN551   := 3
 NQ110 := $PN547C2
 NQ120 := $PN547C2
 NQ210 := $PN548C2
@@ -28,22 +29,24 @@ endif
 ifeq ($(PN548C2),2)
 LOCAL_CFLAGS += -DPN548C2=2
 endif
+ifeq ($(PN551),3)
+LOCAL_CFLAGS += -DPN551=3
+endif
 
 #NXP PN547 Enable
 LOCAL_CFLAGS += -DNXP_EXTNS=TRUE
 LOCAL_CFLAGS += -DNFC_NXP_NON_STD_CARD=FALSE
 LOCAL_CFLAGS += -DNFC_NXP_HFO_SETTINGS=FALSE
 
-#### Select the JCOP OS Version ####
-JCOP_VER_3_0 := 1
-JCOP_VER_3_1_1 := 2
-JCOP_VER_3_1_2 := 3
-JCOP_VER_3_2 := 4
-JCOP_VER_3_3 := 5
+#Enable HCE-F specific
+LOCAL_CFLAGS += -DNXP_NFCC_HCE_F=TRUE
 
-LOCAL_CFLAGS += -DJCOP_VER_3_0=$(JCOP_VER_3_0)
-LOCAL_CFLAGS += -DJCOP_VER_3_1_1=$(JCOP_VER_3_1_1)
-LOCAL_CFLAGS += -DJCOP_VER_3_1_2=$(JCOP_VER_3_1_2)
+#### Select the JCOP OS Version ####
+JCOP_VER_3_1 := 1
+JCOP_VER_3_2 := 2
+JCOP_VER_3_3 := 3
+
+LOCAL_CFLAGS += -DJCOP_VER_3_1=$(JCOP_VER_3_1)
 LOCAL_CFLAGS += -DJCOP_VER_3_2=$(JCOP_VER_3_2)
 LOCAL_CFLAGS += -DJCOP_VER_3_3=$(JCOP_VER_3_3)
 
@@ -56,12 +59,14 @@ LOCAL_CFLAGS += -DNFC_NXP_ESE=FALSE
 endif
 
 #### Select the CHIP ####
-NXP_CHIP_TYPE := $(PN548C2)
+NXP_CHIP_TYPE := $(PN551)
 
 ifeq ($(NXP_CHIP_TYPE),$(PN547C2))
 LOCAL_CFLAGS += -DNFC_NXP_CHIP_TYPE=PN547C2
 else ifeq ($(NXP_CHIP_TYPE),$(PN548C2))
 LOCAL_CFLAGS += -DNFC_NXP_CHIP_TYPE=PN548C2
+else ifeq ($(NXP_CHIP_TYPE),$(PN551))
+LOCAL_CFLAGS += -DNFC_NXP_CHIP_TYPE=PN551
 endif
 
 NFC_POWER_MANAGEMENT:= FALSE
@@ -78,18 +83,12 @@ else
 LOCAL_CFLAGS += -DNXP_LDR_SVC_VER_2=FALSE
 endif
 
-
+LOCAL_CFLAGS += -DNFC_NXP_STAT_DUAL_UICC_EXT_SWITCH=TRUE
 #Gemalto SE Support
 LOCAL_CFLAGS += -DGEMATO_SE_SUPPORT
 LOCAL_CFLAGS += -DNXP_UICC_ENABLE
-define all-cpp-files-under
-$(patsubst ./%,%, \
-  $(shell cd $(LOCAL_PATH) ; \
-          find $(1) -name "*.cpp" -and -not -name ".*") \
- )
-endef
 
-LOCAL_SRC_FILES += $(call all-cpp-files-under, .) $(call all-c-files-under, .)
+LOCAL_SRC_FILES := $(call all-subdir-cpp-files) $(call all-subdir-c-files)
 
 LOCAL_C_INCLUDES += \
     frameworks/native/include \

@@ -67,21 +67,24 @@ bool gReaderNotificationflag = false;
 bool hold_the_transceive = false;
 int dual_mode_current_state=0;
 nfc_jni_native_data* mthreadnative;
-
+#if(NFC_NXP_ESE == TRUE && ((NFC_NXP_CHIP_TYPE == PN548C2) || (NFC_NXP_CHIP_TYPE == PN551)))
 extern Rdr_req_ntf_info_t swp_rdr_req_ntf_info ;
+#endif
 namespace android
 {
     extern void startRfDiscovery (bool isStart);
     extern void setUiccIdleTimeout (bool enable);
     extern bool isDiscoveryStarted();
     extern int getScreenState();
-#if((NFC_NXP_ESE == TRUE) && (NFC_NXP_CHIP_TYPE == PN548C2))
+#if(NFC_NXP_ESE == TRUE && ((NFC_NXP_CHIP_TYPE == PN548C2) || (NFC_NXP_CHIP_TYPE == PN551)))
     extern bool isp2pActivated();
 #endif
     extern SyncEvent sNfaSetConfigEvent;
     extern tNFA_STATUS EmvCo_dosetPoll(jboolean enable);
     extern tNFA_STATUS ResetEseSession();
     extern void config_swp_reader_mode(bool mode);
+    extern void start_timer_msec(struct timeval  *start_tv);
+    extern long stop_timer_getdifference_msec(struct timeval  *start_tv, struct timeval  *stop_tv);
     extern void set_transcation_stat(bool result);
 }
 #if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
@@ -142,7 +145,7 @@ static const tNCI_DISCOVER_MAPS nfc_interface_mapping_ese[NFC_SWP_RD_NUM_INTERFA
         }
 
 };
-
+#if(NFC_NXP_ESE == TRUE && ((NFC_NXP_CHIP_TYPE == PN548C2) || (NFC_NXP_CHIP_TYPE == PN551)))
 /*******************************************************************************
 **
 ** Function:        startStopSwpReaderProc
@@ -169,7 +172,7 @@ static void startStopSwpReaderProc (union sigval)
         e->CallVoidMethod (RoutingManager::getInstance().mNativeData->manager, android::gCachedNfcManagerNotifyETSIReaderModeSwpTimeout,disc_ntf_timeout);
 
 }
-
+#endif
 
 void SecureElement::discovery_map_cb (tNFC_DISCOVER_EVT event, tNFC_DISCOVER *p_data)
 {
@@ -197,6 +200,8 @@ const UINT16 ACTIVE_SE_USE_ANY = 0xFFFF;
 *******************************************************************************/
 SecureElement::SecureElement ()
 :   mActiveEeHandle (NFA_HANDLE_INVALID),
+    mRecvdTransEvt(false),
+    mAllowWiredMode(false),
     mDestinationGate (4), //loopback gate
     mNfaHciHandle (NFA_HANDLE_INVALID),
     mNativeData (NULL),
@@ -211,15 +216,15 @@ SecureElement::SecureElement ()
     mIsPiping (false),
     mCurrentRouteSelection (NoRoute),
     mActualResponseSize(0),
+    mAtrInfolen (0),
     mUseOberthurWarmReset (false),
     mActivatedInListenMode (false),
     mOberthurWarmResetCommand (3),
     mGetAtrRspwait (false),
-    mAtrInfolen (0),
     mRfFieldIsOn(false),
     mTransceiveWaitOk(false),
-    mAllowWiredMode(false),
-    mRecvdTransEvt(false),
+
+
     mWiredModeRfFiledEnable(0)
 {
     memset (&mEeInfo, 0, sizeof(mEeInfo));
@@ -307,7 +312,7 @@ bool SecureElement::initialize (nfc_jni_native_data* native)
         mActiveSeOverride = num;
     ALOGD ("%s: Active SE override: 0x%X", fn, mActiveSeOverride);
     }
-#if (NFC_NXP_ESE == TRUE && NFC_NXP_CHIP_TYPE == PN548C2)
+#if (NFC_NXP_ESE == TRUE &&  ((NFC_NXP_CHIP_TYPE == PN548C2) || (NFC_NXP_CHIP_TYPE == PN551)))
     if (GetNxpNumValue (NAME_NXP_WIRED_MODE_RF_FIELD_ENABLE, (void*)&num, sizeof(num)))
     {
         ALOGD ("%s: NAME_NXP_WIRED_MODE_RF_FIELD_ENABLE =%d",fn, num);
@@ -399,8 +404,56 @@ bool SecureElement::initialize (nfc_jni_native_data* native)
     ALOGD ("%s: exit", fn);
     return (true);
 }
+#if((NXP_EXTNS == TRUE) && (NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH == TRUE))
+/*******************************************************************************
+ **
+ ** Function:        updateEEStatus
+ **
+ ** Description:     updateEEStatus
+ **                  Reads EE related information from libnfc
+ **                  and updates in JNI
+ **
+ ** Returns:         True if ok.
+ **
+*******************************************************************************/
+bool SecureElement::updateEEStatus ()
+{
+    tNFA_STATUS nfaStat;
+    mActualNumEe    = MAX_NUM_EE;
+    ALOGD ("%s: Enter", __FUNCTION__);
 
+    if (! getEeInfo())
+        return (false);
 
+    // If the controller has an HCI Network, register for that
+    for (size_t xx = 0; xx < mActualNumEe; xx++)
+    {
+#ifdef GEMALTO_SE_SUPPORT
+        if ( (mEeInfo[xx].num_interface > 0) && (mEeInfo[xx].ee_handle != EE_HANDLE_0xF4 ) )
+#else
+            if ((mEeInfo[xx].num_interface > 0) && (mEeInfo[xx].ee_interface[0] == NCI_NFCEE_INTERFACE_HCI_ACCESS) )
+#endif
+            {
+                ALOGD ("%s: Found HCI network, try hci register", __FUNCTION__);
+
+                SyncEventGuard guard (mHciRegisterEvent);
+
+                nfaStat = NFA_HciRegister (const_cast<char*>(APP_NAME), nfaHciCallback, TRUE);
+                if (nfaStat != NFA_STATUS_OK)
+                {
+                    ALOGE ("%s: fail hci register; error=0x%X", __FUNCTION__, nfaStat);
+                    return (false);
+                }
+                mHciRegisterEvent.wait();
+                break;
+            }
+    }
+
+    GetStrValue(NAME_AID_FOR_EMPTY_SELECT, (char*)&mAidForEmptySelect[0], sizeof(mAidForEmptySelect));
+    ALOGD ("%s: exit", __FUNCTION__);
+    return (true);
+}
+#endif
 /*******************************************************************************
 **
 ** Function:        finalize
@@ -783,7 +836,7 @@ bool SecureElement::activate (jint seID)
 
     ALOGD ("%s: override ee h=0x%X", fn, overrideEeHandle );
 
-#if (NFC_NXP_ESE != TRUE || NFC_NXP_CHIP_TYPE == PN547C2)
+#if (NFC_NXP_ESE != TRUE || ((NFC_NXP_CHIP_TYPE != PN548C2) && (NFC_NXP_CHIP_TYPE != PN551)))
     if (mRfFieldIsOn) {
         ALOGE("%s: RF field indication still on, resetting", fn);
         mRfFieldIsOn = false;
@@ -809,12 +862,14 @@ bool SecureElement::activate (jint seID)
 
             {
                 ALOGD ("%s: set EE mode activate; h=0x%X", fn, eeItem.ee_handle);
+#if(NXP_EXTNS == TRUE)
                 if ((nfaStat = SecElem_EeModeSet (eeItem.ee_handle, NFA_EE_MD_ACTIVATE)) == NFA_STATUS_OK)
                 {
                     if (eeItem.ee_status == NFC_NFCEE_STATUS_ACTIVE)
                         numActivatedEe++;
                 }
                 else
+#endif
                     ALOGE ("%s: NFA_EeModeSet failed; error=0x%X", fn, nfaStat);
             }
         }
@@ -896,6 +951,7 @@ bool SecureElement::deactivate (jint seID)
 
             {
                 ALOGD ("%s: set EE mode activate; h=0x%X", fn, eeItem.ee_handle);
+#if(NXP_EXTNS == TRUE)
                 if ((nfaStat = SecElem_EeModeSet (eeItem.ee_handle, NFA_EE_MD_DEACTIVATE)) == NFA_STATUS_OK)
                 {
                     ALOGD ("%s: eeItem.ee_status =0x%X  NFC_NFCEE_STATUS_INACTIVE = %x", fn, eeItem.ee_status, NFC_NFCEE_STATUS_INACTIVE);
@@ -906,6 +962,7 @@ bool SecureElement::deactivate (jint seID)
                     }
                 }
                 else
+#endif
                     ALOGE ("%s: NFA_EeModeSet failed; error=0x%X", fn, nfaStat);
             }
         }
@@ -1143,7 +1200,7 @@ bool SecureElement::connectEE ()
         return (false);
     }
 
-#if(NFC_NXP_ESE == TRUE && NFC_NXP_CHIP_TYPE != PN547C2)
+#if(NFC_NXP_ESE == TRUE && ((NFC_NXP_CHIP_TYPE == PN548C2) || (NFC_NXP_CHIP_TYPE == PN551)))
 //Do Nothing
 #else
     android::startRfDiscovery(false);
@@ -1390,6 +1447,7 @@ bool SecureElement::transceive (UINT8* xmitBuffer, INT32 xmitBufferSize, UINT8* 
     UINT8 newSelectCmd[NCI_MAX_AID_LEN + 10];
 #if(NXP_EXTNS == TRUE)
     bool recovery;
+    bool isEseAccessSuccess = false;
 #endif
     ALOGD ("%s: enter; xmitBufferSize=%ld; recvBufferMaxSize=%ld; timeout=%ld", fn, xmitBufferSize, recvBufferMaxSize, timeoutMillisec);
 
@@ -1442,14 +1500,26 @@ bool SecureElement::transceive (UINT8* xmitBuffer, INT32 xmitBufferSize, UINT8* 
         mActualResponseSize = 0;
         memset (mResponseData, 0, sizeof(mResponseData));
 #if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
-        if(hold_the_transceive == true){
-            ALOGD("%s: holding the transceive\n", fn);
-            sSPIPrioSessionEndEvent.wait(timeoutMillisec);
-            if (mTransceiveWaitOk == false) //timeout occurs
-            {
-                ALOGE ("%s: holding the transceive for SPI Prio....wait response timeout\n", fn);
-                goto TheEnd;
-            }
+        struct timeval start_timer, end_timer;
+        INT32 time_elapsed = 0;
+        while(hold_the_transceive == true)
+        {
+             android::start_timer_msec(&start_timer);
+             ALOGD("%s: holding the transceive for %d ms.\n", fn, (timeoutMillisec - time_elapsed));
+             if(sSPIPrioSessionEndEvent.wait(timeoutMillisec - time_elapsed)== FALSE)
+             {
+                 ALOGE ("%s: wait response timeout \n", fn);
+                 time_elapsed = android::stop_timer_getdifference_msec(&start_timer, &end_timer);
+                 time_elapsed = 0;
+                 goto TheEnd;
+             }
+             time_elapsed += android::stop_timer_getdifference_msec(&start_timer, &end_timer);
+             if((timeoutMillisec - time_elapsed) <= 0)
+             {
+                 ALOGE ("%s: wait response timeout - time_elapsed \n", fn);
+                 time_elapsed = 0;
+                 goto TheEnd;
+             }
         }
 #endif
         if ((mNewPipeId == STATIC_PIPE_0x70) || (mNewPipeId == STATIC_PIPE_0x71))
@@ -1465,7 +1535,7 @@ bool SecureElement::transceive (UINT8* xmitBuffer, INT32 xmitBufferSize, UINT8* 
             {
                ALOGE ("%s: Not in Recovery State", fn);
             }
-#if (NFC_NXP_ESE == TRUE && NFC_NXP_CHIP_TYPE != PN547C2)
+#if (NFC_NXP_ESE == TRUE && ((NFC_NXP_CHIP_TYPE == PN548C2) || (NFC_NXP_CHIP_TYPE == PN551)))
             if(!isWiredModeAllowedInRfState())
             {
                 ALOGD("%s, Dont allow wired mode in this RF state", fn);
@@ -1482,6 +1552,14 @@ bool SecureElement::transceive (UINT8* xmitBuffer, INT32 xmitBufferSize, UINT8* 
 #endif
 #if(NFC_NXP_ESE == TRUE)
             active_ese_reset_control |= TRANS_WIRED_ONGOING;
+#if((NFC_NXP_ESE_VER == JCOP_VER_3_1) || (NFC_NXP_ESE_VER == JCOP_VER_3_2))
+            if (NFC_GetEseAccess((void *)&timeoutMillisec) != 0)
+            {
+                ALOGE ("%s: NFC_ReqWiredAccess timeout", fn);
+                goto TheEnd;
+            }
+            isEseAccessSuccess = true;
+#endif
 #endif
 #endif
             nfaStat = NFA_HciSendEvent (mNfaHciHandle, mNewPipeId, EVT_SEND_DATA, xmitBufferSize, xmitBuffer, sizeof(mResponseData), mResponseData, timeoutMillisec);
@@ -1493,6 +1571,14 @@ bool SecureElement::transceive (UINT8* xmitBuffer, INT32 xmitBufferSize, UINT8* 
         {
 #if(NFC_NXP_ESE == TRUE)
             active_ese_reset_control |= TRANS_WIRED_ONGOING;
+#if((NFC_NXP_ESE_VER == JCOP_VER_3_1) || (NFC_NXP_ESE_VER == JCOP_VER_3_2))
+            if (NFC_GetEseAccess((void *)&timeoutMillisec) != 0)
+            {
+                ALOGE ("%s: NFC_ReqWiredAccess timeout", fn);
+                goto TheEnd;
+            }
+            isEseAccessSuccess = true;
+#endif
 #endif
 #endif
             nfaStat = NFA_HciSendEvent (mNfaHciHandle, mNewPipeId, NFA_HCI_EVT_POST_DATA, xmitBufferSize, xmitBuffer, sizeof(mResponseData), mResponseData, timeoutMillisec);
@@ -1545,6 +1631,15 @@ bool SecureElement::transceive (UINT8* xmitBuffer, INT32 xmitBufferSize, UINT8* 
 
 TheEnd:
 #if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
+#if((NFC_NXP_ESE_VER == JCOP_VER_3_1) || (NFC_NXP_ESE_VER == JCOP_VER_3_2))
+    if (isEseAccessSuccess == true)
+    {
+        if (NFC_RelEseAccess((void *)&nfaStat) != 0)
+        {
+            ALOGE ("%s: NFC_RelEseAccess failed", fn);
+        }
+    }
+#endif
     if((active_ese_reset_control&TRANS_WIRED_ONGOING))
         active_ese_reset_control ^= TRANS_WIRED_ONGOING;
 #endif
@@ -1659,11 +1754,12 @@ void SecureElement::notifyListenModeState (bool isActivated) {
     }
 
     mActivatedInListenMode = isActivated;
-#if (NFC_NXP_ESE == TRUE && NFC_NXP_CHIP_TYPE != PN547C2)
+#if (NFC_NXP_ESE == TRUE && ((NFC_NXP_CHIP_TYPE == PN548C2) || (NFC_NXP_CHIP_TYPE == PN551)))
     if(!isActivated)
     {
         mRecvdTransEvt = false;
         mAllowWiredMode = false;
+        ALOGD("%s: Sem Post for mAllowWiredModeEvent", __FUNCTION__);
         SyncEventGuard guard (mAllowWiredModeEvent);
         mAllowWiredModeEvent.notifyOne();
         setCLState(false);
@@ -1726,9 +1822,10 @@ void SecureElement::notifyRfFieldEvent (bool isActive)
     }
     else {
         mRfFieldIsOn = false;
-#if (NFC_NXP_ESE == TRUE && NFC_NXP_CHIP_TYPE != PN547C2)
+#if (NFC_NXP_ESE == TRUE && ((NFC_NXP_CHIP_TYPE == PN548C2) || (NFC_NXP_CHIP_TYPE == PN551)))
         mRecvdTransEvt = false;
         mAllowWiredMode = false;
+        ALOGD("%s: Sem Post for mAllowWiredModeEvent", __FUNCTION__);
         SyncEventGuard guard (mAllowWiredModeEvent);
         mAllowWiredModeEvent.notifyOne();
 #endif
@@ -1745,7 +1842,7 @@ void SecureElement::notifyRfFieldEvent (bool isActive)
     ALOGD ("%s: exit", fn);
 }
 
-#if(NFC_NXP_ESE == TRUE && NFC_NXP_CHIP_TYPE == PN548C2)
+#if(NFC_NXP_ESE == TRUE && ((NFC_NXP_CHIP_TYPE == PN548C2) || (NFC_NXP_CHIP_TYPE == PN551)))
 /*Reader over SWP*/
 void SecureElement::notifyEEReaderEvent (int evt, int data)
 {
@@ -2414,13 +2511,21 @@ bool SecureElement::getAtr(jint seID, UINT8* recvBuffer, INT32 *recvBufferSize)
     tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
     UINT8 reg_index = 0x01;
     ALOGD("%s: enter ;seID=0x%X", fn, seID);
+    int timeoutMillisec = 30000;
 
-#if (NFC_NXP_ESE ==  TRUE && NFC_NXP_CHIP_TYPE != PN547C2)
+#if (NFC_NXP_ESE ==  TRUE && ((NFC_NXP_CHIP_TYPE == PN548C2) || (NFC_NXP_CHIP_TYPE == PN551)))
     if(!isWiredModeAllowedInRfState())
     {
         ALOGD("Denying /atr in SE listen mode active");
         return false;
     }
+#if((NFC_NXP_ESE_VER == JCOP_VER_3_1) || (NFC_NXP_ESE_VER == JCOP_VER_3_2))
+    if (NFC_GetEseAccess((void *)&timeoutMillisec) != 0)
+    {
+        ALOGE ("%s: NFC_ReqWiredAccess timeout", fn);
+        return false;
+    }
+#endif
 #endif
     {
         SyncEventGuard guard (mGetRegisterEvent);
@@ -2437,7 +2542,14 @@ bool SecureElement::getAtr(jint seID, UINT8* recvBuffer, INT32 *recvBufferSize)
 
     if(mAtrStatus == NFA_HCI_ANY_E_NOK)
         reconfigureEseHciInit();
-
+#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
+#if((NFC_NXP_ESE_VER == JCOP_VER_3_1) || (NFC_NXP_ESE_VER == JCOP_VER_3_2))
+    if (NFC_RelEseAccess((void *)&nfaStat) != 0)
+    {
+        ALOGE ("%s: NFC_ReqWiredAccess timeout", fn);
+    }
+#endif
+#endif
     return (nfaStat == NFA_STATUS_OK)?true:false;
 }
 
@@ -2554,6 +2666,7 @@ bool SecureElement::SecEle_Modeset(UINT8 type)
     bool retval = true;
 
     ALOGD ("set EE mode = 0x%X", type);
+#if(NXP_EXTNS == TRUE)
     if ((nfaStat = SecElem_EeModeSet (0x4C0, type)) == NFA_STATUS_OK)
     {
 #if 0
@@ -2565,6 +2678,7 @@ bool SecureElement::SecEle_Modeset(UINT8 type)
 #endif
     }
     else
+#endif
     {
         retval = false;
         ALOGE ("NFA_EeModeSet failed; error=0x%X",nfaStat);
@@ -2747,7 +2861,7 @@ tNFA_STATUS SecureElement::reconfigureEseHciInit()
     return status;
 }
 
-#if (NFC_NXP_ESE == TRUE && NFC_NXP_CHIP_TYPE != PN547C2)
+#if (NFC_NXP_ESE == TRUE && ((NFC_NXP_CHIP_TYPE == PN548C2) || (NFC_NXP_CHIP_TYPE == PN551)))
 bool SecureElement::isWiredModeAllowedInRfState()
 {
     static const char fn[] = "isWiredModeAllowedInRfState";
@@ -2786,7 +2900,7 @@ bool SecureElement::isWiredModeAllowedInRfState()
 }
 #endif
 
-#if(NFC_NXP_ESE == TRUE && NFC_NXP_CHIP_TYPE == PN548C2)
+#if(NFC_NXP_ESE == TRUE && ((NFC_NXP_CHIP_TYPE == PN548C2) || (NFC_NXP_CHIP_TYPE == PN551)))
 /*******************************************************************************
 **
 ** Function:        etsiInitConfig
@@ -3185,4 +3299,79 @@ tNFA_STATUS SecureElement::SecElem_EeModeSet(uint16_t handle, uint8_t mode)
 #endif
     return stat;
 }
+/**********************************************************************************
+ **
+ ** Function:        getEeStatus
+ **
+ ** Description:     get the status of EE
+ **
+ ** Returns:         EE status
+ **
+ **********************************************************************************/
+UINT16 SecureElement::getEeStatus(UINT16 eehandle)
+{
+    int currentUicc, i;
+    UINT16 ee_status = NFA_EE_STATUS_REMOVED;
+    ALOGD("%s  num_nfcee_present = %d",__FUNCTION__,mNfceeData_t.mNfceePresent);
+
+    for(i = 1; i<= mNfceeData_t.mNfceePresent ; i++)
+    {
+        if(mNfceeData_t.mNfceeHandle[i] == eehandle)
+        {
+            ee_status = mNfceeData_t.mNfceeStatus[i];
+            ALOGD("%s  EE is detected 0x%02x  status = 0x%02x",__FUNCTION__,eehandle,ee_status);
+            break;
+        }
+    }
+    return ee_status;
+}
+#if(NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH == TRUE)
+/**********************************************************************************
+ **
+ ** Function:        getUiccStatus
+ **
+ ** Description:     get the status of EE
+ **
+ ** Returns:         UICC Status
+ **
+ **********************************************************************************/
+uicc_stat_t SecureElement::getUiccStatus(UINT8 selected_uicc)
+{
+    UINT16 ee_stat = NFA_EE_STATUS_REMOVED;
+    ee_stat = getEeStatus(0x402);
+    uicc_stat_t uicc_stat = UICC_STATUS_UNKNOWN;
+
+    if(selected_uicc == 0x01)
+    {
+        switch(ee_stat)
+        {
+        case 0x00:
+            uicc_stat = UICC_01_SELECTED_ENABLED;
+            break;
+        case 0x01:
+            uicc_stat = UICC_01_SELECTED_DISABLED;
+            break;
+        case 0x02:
+            uicc_stat = UICC_01_REMOVED;
+            break;
+        }
+    }
+    else if(selected_uicc == 0x02)
+    {
+        switch(ee_stat)
+        {
+        case 0x00:
+            uicc_stat = UICC_02_SELECTED_ENABLED;
+            break;
+        case 0x01:
+            uicc_stat = UICC_02_SELECTED_DISABLED;
+            break;
+        case 0x02:
+            uicc_stat = UICC_02_REMOVED;
+            break;
+        }
+    }
+    return uicc_stat;
+}
+#endif
 #endif

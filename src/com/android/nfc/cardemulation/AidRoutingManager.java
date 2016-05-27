@@ -77,7 +77,7 @@ public class AidRoutingManager {
     //
     // For Nexus devices, the default route is always 0x00.
     int mDefaultRoute;
-
+    boolean mRoutingTableChanged;
     // For Nexus devices, just a static route to the eSE
     // OEMs/Carriers could manually map off-host AIDs
     // to the correct eSE/UICC based on state they keep.
@@ -91,6 +91,10 @@ public class AidRoutingManager {
     private int mAidRoutingTableSize;
     // Maximum AID routing table size
     final Object mLock = new Object();
+    //set the status of last AID routes commit to routing table
+    //if true, last commit was successful,
+    //if false, there was an overflow of routing table for commit using last set of AID's in (mRouteForAid)
+    boolean mLastCommitStatus;
 
     // mAidRoutingTable contains the current routing table. The index is the route ID.
     // The route can include routes to a eSE/UICC.
@@ -113,6 +117,7 @@ public class AidRoutingManager {
 
     public AidRoutingManager() {
         mDefaultRoute = doGetDefaultRouteDestination();
+        mRoutingTableChanged = false;
         if (DBG) Log.d(TAG, "mDefaultRoute=0x" + Integer.toHexString(mDefaultRoute));
         mDefaultOffHostRoute = doGetDefaultOffHostRouteDestination();
         if (DBG) Log.d(TAG, "mDefaultOffHostRoute=0x" + Integer.toHexString(mDefaultOffHostRoute));
@@ -121,11 +126,16 @@ public class AidRoutingManager {
         mAidMatchingPlatform = doGetAidMatchingPlatform();
         if (DBG) Log.d(TAG, "mAidTableSize=0x" + Integer.toHexString(mAidRoutingTableSize));
         mVzwRoutingCache = new VzwRoutingCache();
+        mLastCommitStatus = true;
     }
 
     public boolean supportsAidPrefixRouting() {
         return mAidMatchingSupport == AID_MATCHING_EXACT_OR_PREFIX ||
                 mAidMatchingSupport == AID_MATCHING_PREFIX_ONLY;
+    }
+
+    public boolean isRoutingTableUpdated() {
+        return mRoutingTableChanged;
     }
     void clearNfcRoutingTableLocked() {
         NfcService.getInstance().clearRouting();
@@ -134,6 +144,7 @@ public class AidRoutingManager {
     }
 
     public boolean configureRouting(HashMap<String, AidElement> aidMap) {
+        mRoutingTableChanged = false;
         mDefaultRoute = NfcService.getInstance().GetDefaultRouteLoc();
         boolean aidRouteResolved = false;
         if (DBG) Log.d(TAG, "mAidMatchingPlatform=0x" + Integer.toHexString(mAidMatchingPlatform));
@@ -167,9 +178,18 @@ public class AidRoutingManager {
         synchronized (mLock) {
             if (routeForAid.equals(mRouteForAid)) {
                 if (DBG) Log.d(TAG, "Routing table unchanged, not updating");
+                if(mLastCommitStatus == false){
+                    NfcService.getInstance().updateStatusOfServices(false);
+                    NfcService.getInstance().notifyRoutingTableFull();
+                }
+                else
+                {/*If last commit status was success, And a new service is added whose AID's are
+                already resolved by previously installed services, service state of newly installed app needs to be updated*/
+                    NfcService.getInstance().updateStatusOfServices(true);
+                }
                 return false;
             }
-
+            mRoutingTableChanged = true;
             // Otherwise, update internal structures and commit new routing
             clearNfcRoutingTableLocked();
             mRouteForAid = routeForAid;
@@ -281,9 +301,15 @@ public class AidRoutingManager {
                 NfcService.getInstance().notifyRoutingTableFull();
             }
         }
-        // And finally commit the routing
+        // And finally commit the routing and update the status of commit for each service
         if(aidRouteResolved == true) {
             commit(routeCache);
+            NfcService.getInstance().updateStatusOfServices(true);
+            mLastCommitStatus = true;
+        }
+        else{
+            NfcService.getInstance().updateStatusOfServices(false);
+            mLastCommitStatus = false;
         }
 //        NfcService.getInstance().commitRouting();
 

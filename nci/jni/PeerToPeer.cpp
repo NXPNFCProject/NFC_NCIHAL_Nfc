@@ -497,8 +497,8 @@ bool PeerToPeer::deregisterServer (tJNI_HANDLE jniHandle)
     ALOGD ("%s: enter; JNI handle: %u", fn, jniHandle);
     tNFA_STATUS     nfaStat = NFA_STATUS_FAILED;
     sp<P2pServer>   pSrv = NULL;
+    bool            isPollingTempStopped = false;
 
-    bool isDiscStopped = false;
     mMutex.lock();
     if ((pSrv = findServerLocked (jniHandle)) == NULL)
     {
@@ -509,14 +509,7 @@ bool PeerToPeer::deregisterServer (tJNI_HANDLE jniHandle)
     mMutex.unlock();
     if(isDiscoveryStarted())
     {
-        isDiscStopped = true;
-        startRfDiscovery(false);
-    }
-
-    //Check if discovery  is started
-    if(isDiscoveryStarted())
-    {
-
+        isPollingTempStopped = true;
         startRfDiscovery(false);
     }
 
@@ -538,7 +531,7 @@ bool PeerToPeer::deregisterServer (tJNI_HANDLE jniHandle)
      * conditional check is added to avoid multiple dicovery cmds
      * at the time of NFC OFF in progress
      */
-    if((gGeneralPowershutDown != NFC_MODE_OFF) && isDiscStopped == true)
+    if((gGeneralPowershutDown != NFC_MODE_OFF) && isPollingTempStopped == true)
     {
         startRfDiscovery(true);
     }
@@ -1739,7 +1732,7 @@ bool P2pServer::accept(PeerToPeer::tJNI_HANDLE serverJniHandle, PeerToPeer::tJNI
 
     if (maxInfoUnit > (int)LLCP_MIU)
     {
-        ALOGD ("%s: overriding the miu passed by the app(%d) with stack miu(%d)", fn, maxInfoUnit, LLCP_MIU);
+        ALOGD ("%s: overriding the miu passed by the app(%d) with stack miu(%zu)", fn, maxInfoUnit, LLCP_MIU);
         maxInfoUnit = LLCP_MIU;
     }
 

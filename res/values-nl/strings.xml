@@ -6,7 +6,7 @@
     <string name="inbound_me_profile_title" msgid="6146013785225412693">"Contact ontvangen via NFC"</string>
     <string name="inbound_me_profile_text" msgid="2342757196108092923">"Raak aan om deze persoon toe te voegen als contact."</string>
     <string name="outbound_me_profile_title" msgid="2523625031572784769">"NFC-interactie voltooid"</string>
-    <string name="outbound_me_profile_text" msgid="5594998841143667989">"Raak aan om deze persoon uw contactgegevens te geven."</string>
+    <string name="outbound_me_profile_text" msgid="5594998841143667989">"Raak aan om deze persoon je contactgegevens te geven."</string>
     <string name="accessibility_nfc_enabled" msgid="7796246979948787735">"NFC ingeschakeld."</string>
     <string name="touch" msgid="4727218133711188355">"Tikken om uit te zenden"</string>
     <string name="beam_progress" msgid="7453634884807323920">"Inkomende beam..."</string>
@@ -28,7 +28,7 @@
     <string name="pairing_peripheral" msgid="6983626861540899365">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g> koppelen"</string>
     <string name="pairing_peripheral_failed" msgid="6087643307743264679">"Kan <xliff:g id="DEVICE_NAME">%1$s</xliff:g> niet koppelen"</string>
     <string name="failed_to_enable_bt" msgid="7229153323594758077">"Kan Bluetooth niet inschakelen"</string>
-    <string name="confirm_pairing" msgid="4112568077038265363">"Weet u zeker dat u het Bluetooth-apparaat <xliff:g id="DEVICE_NAME">%1$s</xliff:g> wilt koppelen?"</string>
+    <string name="confirm_pairing" msgid="4112568077038265363">"Weet je zeker dat je het Bluetooth-apparaat <xliff:g id="DEVICE_NAME">%1$s</xliff:g> wilt koppelen?"</string>
     <string name="pair_yes" msgid="3525614878559994448">"Ja"</string>
     <string name="pair_no" msgid="5022308368904055020">"Nee"</string>
     <string name="tap_again_to_pay" msgid="5754988005412859897">"Tik nogmaals om te betalen met <xliff:g id="APP">%1$s</xliff:g>"</string>
@@ -37,13 +37,13 @@
     <string name="could_not_use_app" msgid="8137587876138569083">"Kan <xliff:g id="APP">%1$s</xliff:g> niet gebruiken."</string>
     <string name="pay_with" msgid="5531545488795798945">"Betalen met"</string>
     <string name="complete_with" msgid="6797459104103012992">"Voltooien met"</string>
-    <string name="default_pay_app_removed" msgid="4108250545457437360">"Uw voorkeursservice voor tikken en betalen is verwijderd. Een andere app kiezen?"</string>
+    <string name="default_pay_app_removed" msgid="4108250545457437360">"Je voorkeursservice voor tikken en betalen is verwijderd. Een andere app kiezen?"</string>
     <string name="ask_nfc_tap" msgid="2925239870458286340">"Tik op een ander apparaat om te voltooien"</string>
     <string name="wifi_connect" msgid="6250727951843550671">"Verbinding maken"</string>
     <string name="status_unable_to_connect" msgid="9183908200295307657">"Kan geen verbinding maken met het netwerk"</string>
     <string name="status_wifi_connected" msgid="5893022897732105739">"Verbonden"</string>
     <string name="title_connect_to_network" msgid="2474034615817280146">"Verbinding maken met netwerk"</string>
     <string name="prompt_connect_to_network" msgid="8511683573657516114">"Verbinding maken met netwerk <xliff:g id="NETWORK_SSID">%1$s</xliff:g>?"</string>
-    <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"NFC moet zijn ingeschakeld voor Android Beam. Wilt u dit inschakelen?"</string>
+    <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"NFC moet zijn ingeschakeld voor Android Beam. Wil je dit inschakelen?"</string>
     <string name="android_beam" msgid="1666446406999492763">"Android Beam"</string>
 </resources>

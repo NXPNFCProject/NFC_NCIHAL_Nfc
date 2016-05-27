@@ -86,7 +86,6 @@ typedef struct{
     Mutex mMutex;
 }NfcID2_rmv_req_info_t;
 
-
 class RoutingManager
 {
 public:
@@ -114,8 +113,10 @@ public:
     void HandleRmvNfcID2_Req();
     void setCeRouteStrictDisable(UINT32 state);
     bool is_ee_recovery_ongoing();
+#if(NFC_NXP_ESE == TRUE && ((NFC_NXP_CHIP_TYPE == PN548C2) || (NFC_NXP_CHIP_TYPE == PN551)))
     se_rd_req_state_t getEtsiReaederState();
     Rdr_req_ntf_info_t getSwpRrdReqInfo();
+#endif
     void setEtsiReaederState(se_rd_req_state_t newState);
     void setDefaultTechRouting (int seId, int tech_switchon,int tech_switchoff);
     void setDefaultProtoRouting (int seId, int proto_switchon,int proto_switchoff);
@@ -132,13 +133,18 @@ public:
 #endif
     bool removeAidRouting(const UINT8* aid, UINT8 aidLen);
     bool commitRouting();
+    int registerT3tIdentifier(UINT8* t3tId, UINT8 t3tIdLen);
+    void deregisterT3tIdentifier(int handle);
     void onNfccShutdown();
     int registerJniFunctions (JNIEnv* e);
     void ee_removed_disc_ntf_handler(tNFA_HANDLE handle, tNFA_EE_STATUS status);
     SyncEvent mLmrtEvent;
+    SyncEvent mEeSetModeEvent;
     SyncEvent mCeRegisterEvent;//FelicaOnHost
     SyncEvent mCeDeRegisterEvent;
     Mutex  mResetHandlerMutex;
+    IntervalTimer LmrtRspTimer;
+    SyncEvent mEeUpdateEvent;
 private:
     RoutingManager();
     ~RoutingManager();
@@ -146,9 +152,9 @@ private:
     RoutingManager& operator=(const RoutingManager&);
 
     void cleanRouting();
-    void handleData (const UINT8* data, UINT32 dataLen, tNFA_STATUS status);
-    void notifyActivated ();
-    void notifyDeactivated ();
+    void handleData (UINT8 technology, const UINT8* data, UINT32 dataLen, tNFA_STATUS status);
+    void notifyActivated (UINT8 technology);
+    void notifyDeactivated (UINT8 technology);
     void notifyLmrtFull();
 
     // See AidRoutingManager.java for corresponding
@@ -172,6 +178,7 @@ private:
     static const int AID_MATCHING_K = 0x02;
     static void nfaEeCallback (tNFA_EE_EVT event, tNFA_EE_CBACK_DATA* eventData);
     static void stackCallback (UINT8 event, tNFA_CONN_EVT_DATA* eventData);
+    static void nfcFCeCallback (UINT8 event, tNFA_CONN_EVT_DATA* eventData);
     static int com_android_nfc_cardemulation_doGetDefaultRouteDestination (JNIEnv* e);
     static int com_android_nfc_cardemulation_doGetDefaultOffHostRouteDestination (JNIEnv* e);
     static int com_android_nfc_cardemulation_doGetAidMatchingMode (JNIEnv* e);
@@ -181,20 +188,21 @@ private:
 
     // Fields below are final after initialize()
     //int mDefaultEe;
+    int mDefaultEeNfcF;
     int mOffHostEe;
     int mActiveSe;
+    int mActiveSeNfcF;
     int mAidMatchingMode;
+    int mNfcFOnDhHandle;
     int mAidMatchingPlatform;
     tNFA_TECHNOLOGY_MASK mSeTechMask;
     static const JNINativeMethod sMethods [];
     int mDefaultEe; //since this variable is used in both cases moved out of compiler switch
-    int mHostListnEnable;
+    int mHostListnTechMask;
     int mFwdFuntnEnable;
     static int mChipId;
     SyncEvent mEeRegisterEvent;
     SyncEvent mRoutingEvent;
-    SyncEvent mEeUpdateEvent;
-    SyncEvent mEeSetModeEvent;
 #if(NXP_EXTNS == TRUE)
      UINT32 mCeRouteStrictDisable;
      int defaultSeID ;

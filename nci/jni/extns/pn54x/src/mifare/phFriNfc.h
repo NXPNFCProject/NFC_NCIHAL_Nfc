@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 NXP Semiconductors
+ * Copyright (C) 2015 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@
  *       there is no interaction or asynchronous processing the definition of the Process(ing)
  *       function can be arbitrary, if present at all.
  */
-typedef void (*pphFriNfc_Cr_t)(void*, NFCSTATUS);
+typedef void (*pphFriNfc_Cr_t) (void*, NFCSTATUS);
 
 /*
  * Completion Routine structure

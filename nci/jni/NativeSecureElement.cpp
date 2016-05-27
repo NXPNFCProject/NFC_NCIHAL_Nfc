@@ -99,7 +99,7 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection (JNIEnv*, jobje
     {
         goto TheEnd;
     }
-#if (NFC_NXP_ESE ==  TRUE && NFC_NXP_CHIP_TYPE != PN547C2)
+#if (NFC_NXP_ESE ==  TRUE && ((NFC_NXP_CHIP_TYPE == PN548C2) || (NFC_NXP_CHIP_TYPE == PN551)))
     if((RoutingManager::getInstance().is_ee_recovery_ongoing()))
     {
         ALOGD ("ee recovery ongoing!!!");
@@ -135,7 +135,7 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection (JNIEnv*, jobje
     }
     ALOGD("P61 Status is: %x", p61_current_state);
 #if(NFC_NXP_ESE_VER == JCOP_VER_3_1)
-    if (!(p61_current_state & P61_STATE_SPI))
+    if (!(p61_current_state & P61_STATE_SPI) && !(p61_current_state & P61_STATE_SPI_PRIO))
     {
 #endif
     if(p61_current_state & (P61_STATE_SPI)||(p61_current_state & (P61_STATE_SPI_PRIO)))
@@ -201,8 +201,12 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection (JNIEnv*, jobje
         startRfDiscovery (true);
     }
 #endif
-
-        stat = se.activate(SecureElement::ESE_ID);
+#if(NXP_EXTNS == TRUE) && (NFC_NXP_ESE == TRUE)
+    if(!(p61_current_state & (P61_STATE_SPI | P61_STATE_SPI_PRIO)))
+        stat = se.SecEle_Modeset(0x01); //Workaround
+    usleep(150000); /*provide enough delay if NFCC enter in recovery*/
+#endif
+        stat = se.activate(SecureElement::ESE_ID); // It is to get the current activated handle.
 
     if (stat)
     {
@@ -250,8 +254,10 @@ static jboolean nativeNfcSecureElement_doDisconnectSecureElementConnection (JNIE
 #if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
     long ret_val = -1;
     NFCSTATUS status = NFCSTATUS_FAILED;
-#endif
 
+    SecureElement &se = SecureElement::getInstance();
+    se.NfccStandByOperation(STANDBY_TIMER_STOP);
+#endif
     //Send the EVT_END_OF_APDU_TRANSFER event at the end of wired mode session.
     stat = SecureElement::getInstance().sendEvent(SecureElement::EVT_END_OF_APDU_TRANSFER);
 

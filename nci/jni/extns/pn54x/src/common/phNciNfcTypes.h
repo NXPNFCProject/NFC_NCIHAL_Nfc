@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 NXP Semiconductors
+ * Copyright (C) 2015 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 
 /*
  * NCI Interface
@@ -150,12 +149,12 @@ typedef enum
     /* Other Sources */
     phNciNfc_eInvalid_DevType
 
-}phNciNfc_RFDevType_t;
+} phNciNfc_RFDevType_t;
 
 /*
  * RATS Response Params structure
  */
-typedef struct phNciNfc_RATSResp{
+typedef struct phNciNfc_RATSResp {
     uint8_t   bFormatByte;                 /* Format Byte */
     uint8_t   bIByteTA;                    /* Interface Byte TA(1) */
     uint8_t   bIByteTB;                    /* Interface Byte TB(1) */
@@ -191,7 +190,7 @@ typedef struct phNciNfc_Iso14443AInfo
     uint8_t         bSelResRespLen;                     /* SEL_RES Response Length */
     uint8_t         bRatsRespLen;                       /* Length of RATS Response */
     phNciNfc_RATSResp_t   tRatsResp;                    /* RATS Response Info */
-}phNciNfc_Iso14443AInfo_t;
+} phNciNfc_Iso14443AInfo_t;
 
 /*
  * The Remote Device Information Union includes the available Remote Device Information
@@ -200,7 +199,7 @@ typedef struct phNciNfc_Iso14443AInfo
 typedef union phNciNfc_RemoteDevInfo
 {
     phNciNfc_Iso14443AInfo_t          Iso14443A_Info;/* Type A tag Info */
-}phNciNfc_RemoteDevInfo_t;
+} phNciNfc_RemoteDevInfo_t;
 
 /* Contains Details of Discovered Target */
 typedef struct phNciNfc_RemoteDevInformation
@@ -220,7 +219,7 @@ typedef struct phNciNfc_RemoteDevInformation
     uint8_t   bTransBitRate;                        /* Transmit Bit Rate */
     uint8_t   bRecvBitRate;                         /* Receive Bit Rate */
     phNciNfc_RemoteDevInfo_t tRemoteDevInfo;        /* Structure object to #phNciNfc_RemoteDevInfo_t*/
-}phNciNfc_RemoteDevInformation_t,*pphNciNfc_RemoteDevInformation_t;/* Pointer to Remote Dev Info*/
+} phNciNfc_RemoteDevInformation_t,*pphNciNfc_RemoteDevInformation_t;/* Pointer to Remote Dev Info*/
 
 /*
  * Structure contains buffer where payload of the received data packet
@@ -230,7 +229,7 @@ typedef struct phNciNfc_Data
 {
     uint8_t *pBuff;     /* Buffer to store received data packet's payload */
     uint16_t wLen;      /* Length of the payload */
-}phNciNfc_Data_t, *pphNciNfc_Data_t;
+} phNciNfc_Data_t, *pphNciNfc_Data_t;
 
 
 /*
@@ -246,13 +245,13 @@ typedef enum phNciNfc_T2TCmdList
     phNciNfc_eT2TAuth,   /* Sector Select for MifareStd Cards*/
     phNciNfc_eT2TProxCheck,/* Proxy Check command for MF+*/
     phNciNfc_eT2TInvalidCmd /* Invalid Command*/
-}phNciNfc_T2TCmdList_t;    /* Type2 Tag and Mifare specicific command list*/
+} phNciNfc_T2TCmdList_t;    /* Type2 Tag and Mifare specicific command list*/
 
 /* All command list for tag operation supported by NCI stack */
 typedef union phNciNfc_TagCmdList
 {
     phNciNfc_T2TCmdList_t T2TCmd; /* T2T Specific command*/
-}phNciNfc_TagCmdList_t; /* Tag specific command */
+} phNciNfc_TagCmdList_t; /* Tag specific command */
 
 /* Transceive info */
 typedef struct phNciNfc_TransceiveInfo
@@ -264,6 +263,6 @@ typedef struct phNciNfc_TransceiveInfo
     phNciNfc_Data_t         tSendData;/* Buffer information for sending data */
     phNciNfc_Data_t         tRecvData;/* Buffer information for receiving data */
     /* Details for Felica To be Added if Check and Update supported */
-}phNciNfc_TransceiveInfo_t, *pphNciNfc_TransceiveInfo_t; /* pointer to struct #phNciNfc_TransceiveInfo_t */
+} phNciNfc_TransceiveInfo_t, *pphNciNfc_TransceiveInfo_t; /* pointer to struct #phNciNfc_TransceiveInfo_t */
 
 #endif                          /* end of #ifndef PHNCINFCTYPES_H */

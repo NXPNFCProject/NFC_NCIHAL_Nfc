@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 NXP Semiconductors
+ * Copyright (C) 2015 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,28 +24,28 @@
 #include <unistd.h>
 
 #ifndef TRUE
-#define TRUE            (0x01)            /* Logical True Value */
+#define TRUE            (0x01)        /* Logical True Value */
 #endif
 #ifndef FALSE
-#define FALSE           (0x00)            /* Logical False Value */
+#define FALSE           (0x00)        /* Logical False Value */
 #endif
-typedef uint8_t             utf8_t;       /* UTF8 Character String */
-typedef uint8_t             bool_t;       /* boolean data type */
-typedef uint16_t        NFCSTATUS;        /* Return values */
+typedef uint8_t         utf8_t;       /* UTF8 Character String */
+typedef uint8_t         bool_t;       /* boolean data type */
+typedef uint16_t        NFCSTATUS;    /* Return values */
 #define STATIC static
 
-#define PHNFC_MAX_UID_LENGTH            0x0AU  /* Maximum UID length expected */
-#define PHNFC_MAX_ATR_LENGTH            0x30U  /* Maximum ATR_RES (General Bytes) length expected */
-#define PHNFC_NFCID_LENGTH              0x0AU  /* Maximum length of NFCID 1.3*/
-#define PHNFC_ATQA_LENGTH               0x02U  /* ATQA length */
+#define PHNFC_MAX_UID_LENGTH            0x0AU    /* Maximum UID length expected */
+#define PHNFC_MAX_ATR_LENGTH            0x30U    /* Maximum ATR_RES (General Bytes) length expected */
+#define PHNFC_NFCID_LENGTH              0x0AU    /* Maximum length of NFCID 1.3*/
+#define PHNFC_ATQA_LENGTH               0x02U    /* ATQA length */
 
 /*
  * NFC Data structure
  */
 typedef struct phNfc_sData
 {
-    uint8_t             *buffer; /* Buffer to store data */
-    uint32_t            length;  /* Buffer length */
+    uint8_t             *buffer;    /* Buffer to store data */
+    uint32_t            length;     /* Buffer length */
 } phNfc_sData_t;
 
 /*
@@ -54,19 +54,19 @@ typedef struct phNfc_sData
  */
 typedef enum
 {
-   ENUM_LINK_TYPE_COM1,
-   ENUM_LINK_TYPE_COM2,
-   ENUM_LINK_TYPE_COM3,
-   ENUM_LINK_TYPE_COM4,
-   ENUM_LINK_TYPE_COM5,
-   ENUM_LINK_TYPE_COM6,
-   ENUM_LINK_TYPE_COM7,
-   ENUM_LINK_TYPE_COM8,
-   ENUM_LINK_TYPE_I2C,
-   ENUM_LINK_TYPE_SPI,
-   ENUM_LINK_TYPE_USB,
-   ENUM_LINK_TYPE_TCP,
-   ENUM_LINK_TYPE_NB
+    ENUM_LINK_TYPE_COM1,
+    ENUM_LINK_TYPE_COM2,
+    ENUM_LINK_TYPE_COM3,
+    ENUM_LINK_TYPE_COM4,
+    ENUM_LINK_TYPE_COM5,
+    ENUM_LINK_TYPE_COM6,
+    ENUM_LINK_TYPE_COM7,
+    ENUM_LINK_TYPE_COM8,
+    ENUM_LINK_TYPE_I2C,
+    ENUM_LINK_TYPE_SPI,
+    ENUM_LINK_TYPE_USB,
+    ENUM_LINK_TYPE_TCP,
+    ENUM_LINK_TYPE_NB
 } phLibNfc_eConfigLinkType;
 
 /*
@@ -80,14 +80,14 @@ typedef enum
  * This type of API is called from ClientApplication ( main thread) to notify
  * specific callback.
  */
-typedef  void (*pphLibNfc_DeferredCallback_t) (void*);
+typedef void (*pphLibNfc_DeferredCallback_t) (void*);
 
 /*
  * Deferred parameter declaration.
  * This type of data is passed as parameter from ClientApplication (main thread) to the
  * callback.
  */
-typedef  void *pphLibNfc_DeferredParameter_t;
+typedef void *pphLibNfc_DeferredParameter_t;
 
 /*
  * Possible Hardware Configuration exposed to upper layer.
@@ -96,11 +96,11 @@ typedef  void *pphLibNfc_DeferredParameter_t;
  */
 typedef struct phLibNfc_sConfig
 {
-   uint8_t                 *pLogFile; /* Log File Name*/
-   /* Hardware communication link to the controller */
-   phLibNfc_eConfigLinkType  nLinkType;
-   /* The client ID (thread ID or message queue ID) */
-   unsigned int              nClientId;
+    uint8_t *pLogFile; /* Log File Name*/
+    /* Hardware communication link to the controller */
+    phLibNfc_eConfigLinkType nLinkType;
+    /* The client ID (thread ID or message queue ID) */
+    unsigned int nClientId;
 } phLibNfc_sConfig_t, *pphLibNfc_sConfig_t;
 
 /*
@@ -112,7 +112,7 @@ typedef struct phLibNfc_Message
     uint32_t eMsgType;   /* Type of the message to be posted*/
     void   * pMsgData;   /* Pointer to message specific data block in case any*/
     uint32_t Size;       /* Size of the datablock*/
-} phLibNfc_Message_t,*pphLibNfc_Message_t;
+} phLibNfc_Message_t, *pphLibNfc_Message_t;
 
 /*
  * Deferred message specific info declaration.
@@ -130,21 +130,21 @@ typedef struct phLibNfc_DeferredCall
  */
 typedef struct phNfc_sSupProtocol
 {
-    unsigned int MifareUL    : 1;  /* Protocol Mifare Ultra Light or any NFC Forum Type-2 tags */
-    unsigned int MifareStd   : 1;  /* Protocol Mifare Standard. */
-    unsigned int ISO14443_4A : 1;  /* Protocol ISO14443-4 Type A.  */
-    unsigned int ISO14443_4B : 1;  /* Protocol ISO14443-4 Type B.  */
-    unsigned int ISO15693    : 1;  /* Protocol ISO15693 HiTag.  */
-    unsigned int Felica      : 1;  /* Protocol Felica. */
-    unsigned int NFC         : 1;  /* Protocol NFC. */
-    unsigned int Jewel       : 1;  /* Protocol Innovision Jewel Tag. or Any T1T*/
-    unsigned int Desfire     : 1;  /*TRUE indicates specified feature (mapping
-                                   or formatting)for DESFire tag supported else not supported.*/
-    unsigned int Kovio       : 1;   /* Protocol Kovio Tag*/
-    unsigned int HID         : 1;   /* Protocol HID(Picopass) Tag*/
-    unsigned int Bprime      : 1;   /* Protocol BPrime Tag*/
-    unsigned int EPCGEN2     : 1;   /* Protocol EPCGEN2 Tag*/
-}phNfc_sSupProtocol_t;
+    unsigned int MifareUL    : 1;    /* Protocol Mifare Ultra Light or any NFC Forum Type-2 tags */
+    unsigned int MifareStd   : 1;    /* Protocol Mifare Standard. */
+    unsigned int ISO14443_4A : 1;    /* Protocol ISO14443-4 Type A.  */
+    unsigned int ISO14443_4B : 1;    /* Protocol ISO14443-4 Type B.  */
+    unsigned int ISO15693    : 1;    /* Protocol ISO15693 HiTag.  */
+    unsigned int Felica      : 1;    /* Protocol Felica. */
+    unsigned int NFC         : 1;    /* Protocol NFC. */
+    unsigned int Jewel       : 1;    /* Protocol Innovision Jewel Tag. or Any T1T*/
+    unsigned int Desfire     : 1;    /* TRUE indicates specified feature (mapping
+                                        or formatting)for DESFire tag supported else not supported.*/
+    unsigned int Kovio       : 1;    /* Protocol Kovio Tag*/
+    unsigned int HID         : 1;    /* Protocol HID(Picopass) Tag*/
+    unsigned int Bprime      : 1;    /* Protocol BPrime Tag*/
+    unsigned int EPCGEN2     : 1;    /* Protocol EPCGEN2 Tag*/
+} phNfc_sSupProtocol_t;
 
 /*
  *  Enumerated MIFARE Commands
@@ -194,13 +194,13 @@ typedef struct phNfc_sIso14443AInfo
                                                      * by the tag Discovered */
     uint8_t         Fwi_Sfgt;                       /* Frame waiting time and start up
                                                      * frame guard */
-}phNfc_sIso14443AInfo_t;
+} phNfc_sIso14443AInfo_t;
 
 /* Remote device information structure */
 typedef union phNfc_uRemoteDevInfo
 {
-    phNfc_sIso14443AInfo_t          Iso14443A_Info;/* ISO1443A Remote device info */
-}phNfc_uRemoteDevInfo_t;
+    phNfc_sIso14443AInfo_t Iso14443A_Info;/* ISO1443A Remote device info */
+} phNfc_uRemoteDevInfo_t;
 
 /*
 *
@@ -212,7 +212,6 @@ typedef union phNfc_uRemoteDevInfo
 typedef enum phNfc_eRFDevType
 {
     phNfc_eUnknown_DevType        = 0x00U,
-
     phNfc_eISO14443_A_PCD,
     phNfc_eISO14443_B_PCD,
     phNfc_eISO14443_BPrime_PCD,
@@ -221,7 +220,6 @@ typedef enum phNfc_eRFDevType
     phNfc_eISO15693_PCD,
     phNfc_eEpcGen2_PCD,
     phNfc_ePCD_DevType,
-
     phNfc_ePICC_DevType,
     phNfc_eISO14443_A_PICC,
     phNfc_eISO14443_4A_PICC,
@@ -234,13 +232,10 @@ typedef enum phNfc_eRFDevType
     phNfc_eJewel_PICC,
     phNfc_eISO15693_PICC,
     phNfc_eEpcGen2_PICC,
-
     phNfc_eNfcIP1_Target,
     phNfc_eNfcIP1_Initiator,
-
     phNfc_eInvalid_DevType
-
-}phNfc_eRFDevType_t;
+} phNfc_eRFDevType_t;
 
 /*
  * The Remote Device Type List is used to identify the type of
@@ -255,8 +250,8 @@ typedef phNfc_eRemDevType_t phHal_eRemDevType_t;
 
 typedef union phNfc_uCommand
 {
-  phNfc_eMifareCmdList_t         MfCmd;  /* Mifare command structure.  */
-}phNfc_uCmdList_t;
+    phNfc_eMifareCmdList_t MfCmd;  /* Mifare command structure.  */
+} phNfc_uCmdList_t;
 
 /*
  *  The Remote Device Information Structure holds information about one single Remote
@@ -269,7 +264,7 @@ typedef struct phNfc_sRemoteDevInformation
                                                      * 1 = Device is not activer (Only discovered), 2 = Device is active and ready for use*/
     phNfc_eRemDevType_t        RemDevType;          /* Remote device type */
     phNfc_uRemoteDevInfo_t     RemoteDevInfo;       /* Union of available Remote Device */
-}phNfc_sRemoteDevInformation_t;
+} phNfc_sRemoteDevInformation_t;
 
 
 /*
@@ -278,35 +273,35 @@ typedef struct phNfc_sRemoteDevInformation
 
 typedef struct phNfc_sTransceiveInfo
 {
-    phNfc_uCmdList_t                cmd;        /* Command for transceive */
-    uint8_t                         addr;       /* Start Block Number */
-    uint8_t                         NumBlock;   /* Number of Blocks to perform operation */
+    phNfc_uCmdList_t                cmd;         /* Command for transceive */
+    uint8_t                         addr;        /* Start Block Number */
+    uint8_t                         NumBlock;    /* Number of Blocks to perform operation */
     /* For Felica only*/
-    uint16_t *ServiceCodeList;                  /* 2 Byte service Code List */
-    uint16_t *Blocklist;                        /* 2 Byte Block list */
-    phNfc_sData_t                   sSendData; /* Send data */
-    phNfc_sData_t                   sRecvData; /* Recv data */
+    uint16_t *ServiceCodeList;                   /* 2 Byte service Code List */
+    uint16_t *Blocklist;                         /* 2 Byte Block list */
+    phNfc_sData_t                   sSendData;   /* Send data */
+    phNfc_sData_t                   sRecvData;   /* Recv data */
     /* For EPC-GEN */
     uint32_t                        dwWordPtr;   /* Word address for the memory write */
     uint8_t                         bWordPtrLen; /* Specifies the length of word pointer
-                                                 00: 8  bits
-                                                 01: 16 bits
-                                                 10: 24 bits
-                                                 11: 32 bits
+                                                    00: 8  bits
+                                                    01: 16 bits
+                                                    10: 24 bits
+                                                    11: 32 bits
                                                  */
     uint8_t                        bWordCount;   /* Number of words to be read or written */
-}phNfc_sTransceiveInfo_t;
+} phNfc_sTransceiveInfo_t;
 
 typedef enum p61_access_state{
     P61_STATE_INVALID = 0x0000,
     P61_STATE_IDLE = 0x0100, /* p61 is free to use */
-    P61_STATE_WIRED = 0x0200,  /* p61 is being accessed by DWP (NFCC)*/
+    P61_STATE_WIRED = 0x0200, /* p61 is being accessed by DWP (NFCC)*/
     P61_STATE_SPI = 0x0400, /* P61 is being accessed by SPI */
     P61_STATE_DWNLD = 0x0800, /* NFCC fw download is in progress */
     P61_STATE_SPI_PRIO = 0x1000, /*Start of p61 access by SPI on priority*/
     P61_STATE_SPI_PRIO_END = 0x2000, /*End of p61 access by SPI on priority*/
     P61_STATE_SPI_END = 0x4000, /*End of p61 access by SPI*/
-}p61_access_state_t;
+} p61_access_state_t;
 
 #define UNUSED(X) (void)X;
 

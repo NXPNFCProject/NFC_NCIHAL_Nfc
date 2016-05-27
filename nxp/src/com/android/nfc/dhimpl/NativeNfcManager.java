@@ -205,6 +205,26 @@ public class NativeNfcManager implements DeviceHost {
     }
 
     @Override
+    public void registerT3tIdentifier(byte[] t3tIdentifier) {
+        return;
+    }
+
+    @Override
+    public void deregisterT3tIdentifier(byte[] t3tIdentifier) {
+        return;
+    }
+
+    @Override
+    public void clearT3tIdentifiersCache() {
+        return;
+    }
+
+    @Override
+    public int getLfT3tMax() {
+        return 0;
+	}
+
+    @Override
     public native void enableDiscovery();
 
     @Override
@@ -458,6 +478,18 @@ public class NativeNfcManager implements DeviceHost {
      */
     private void notifyLlcpLinkDeactivated(NativeP2pDevice device) {
         mListener.onLlcpLinkDeactivated(device);
+    }
+
+    private void notifyHostEmuActivated(int technology) {
+        mListener.onHostCardEmulationActivated(technology);
+    }
+
+    private void notifyHostEmuData(int technology, byte[] data) {
+        mListener.onHostCardEmulationData(technology, data);
+    }
+
+    private void notifyHostEmuDeactivated(int technology) {
+        mListener.onHostCardEmulationDeactivated(technology);
     }
 
     private void notifySeFieldActivated() {

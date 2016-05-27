@@ -355,9 +355,11 @@ public class NxpNfcController {
            }
 
            Log.d(TAG, "is routing Table size calcution required :  "+ is_table_size_required);
-           if((is_table_size_required == true) && NfcService.getInstance().getRemainingAidTableSize() < aidLength) {
+           /* Checking for table size availability is not required here as the default AID route may be changed by routing manager
+            * to accomodate more AID's.
+            * if((is_table_size_required == true) && NfcService.getInstance().getRemainingAidTableSize() < aidLength) {
                return false;
-           }
+           }*/
 
            Log.d(TAG, "Commiting :  ");
            return mServiceCache.registerApduService(userId, Binder.getCallingUid(), packageName, serviceName, service);

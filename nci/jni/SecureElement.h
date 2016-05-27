@@ -88,13 +88,26 @@ typedef enum
 
 }se_rd_req_state_t;
 
+#if((NXP_EXTNS == TRUE) && (NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH == TRUE))
+
+typedef enum
+{
+    UICC_01_SELECTED_ENABLED = 0x01,
+    UICC_01_SELECTED_DISABLED,
+    UICC_01_REMOVED,
+    UICC_02_SELECTED_ENABLED,
+    UICC_02_SELECTED_DISABLED,
+    UICC_02_REMOVED,
+    UICC_STATUS_UNKNOWN
+}uicc_stat_t;
+#endif
 typedef enum
 {   STATE_SE_RDR_FAILURE_NOT_SUPPORTED ,
     STATE_SE_RDR_FAILURE_NOT_ALLOWED
 
 }se_rd_req_failures_t;
 
-
+#if (NFC_NXP_ESE ==  TRUE && ((NFC_NXP_CHIP_TYPE == PN548C2) || (NFC_NXP_CHIP_TYPE == PN551)))
 typedef struct{
     rd_swp_req_t swp_rd_req_info ;
     rd_swp_req_t swp_rd_req_current_info ;
@@ -102,6 +115,7 @@ typedef struct{
     se_rd_req_failures_t swp_rd_req_fail_cause;
     Mutex mMutex;
 }Rdr_req_ntf_info_t;
+#endif
 
 #if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
 typedef enum operation{
@@ -135,7 +149,7 @@ public:
     mNfceeData  mNfceeData_t;
 #endif
 
-#if(NFC_NXP_ESE == TRUE && NFC_NXP_CHIP_TYPE == PN548C2)
+#if(NFC_NXP_ESE == TRUE && ((NFC_NXP_CHIP_TYPE == PN548C2) || (NFC_NXP_CHIP_TYPE == PN551)))
     IntervalTimer sSwpReaderTimer; // timer swp reader timeout.
 #endif
 
@@ -541,7 +555,44 @@ public:
     **
     *******************************************************************************/
     bool getAtr(jint seID, UINT8* recvBuffer, INT32 *recvBufferSize);
-#if(NFC_NXP_ESE == TRUE && NFC_NXP_CHIP_TYPE == PN548C2)
+#if(NXP_EXTNS == TRUE)
+    /**********************************************************************************
+     **
+     ** Function:        getEeStatus
+     **
+     ** Description:     get the status of EE
+     **
+     ** Returns:         EE status .
+     **
+     **********************************************************************************/
+    UINT16 getEeStatus(UINT16 eehandle);
+#if(NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH == TRUE)
+    /**********************************************************************************
+     **
+     ** Function:        getUiccStatus
+     **
+     ** Description:     get the status of EE
+     **
+     ** Returns:         EE status .
+     **
+     **********************************************************************************/
+    uicc_stat_t getUiccStatus(UINT8 selected_uicc);
+
+    /*******************************************************************************
+     **
+     ** Function:        updateEEStatus
+     **
+     ** Description:     updateEEStatus
+     **                  Reads EE related information from libnfc
+     **                  and updates in JNI
+     **
+     ** Returns:         True if ok.
+     **
+    *******************************************************************************/
+    bool updateEEStatus ();
+#endif
+#endif
+#if(NFC_NXP_ESE == TRUE && ((NFC_NXP_CHIP_TYPE == PN548C2) || (NFC_NXP_CHIP_TYPE == PN551)))
     void etsiInitConfig();
     tNFC_STATUS etsiReaderConfig(int eeHandle);
     tNFC_STATUS etsiResetReaderConfig();
@@ -576,6 +627,7 @@ public:
 #if(NXP_EXTNS == TRUE)
     tNFA_STATUS SecElem_EeModeSet(uint16_t handle, uint8_t mode);
     SyncEvent       mEEdatapacketEvent;
+    SyncEvent       mTransceiveEvent;
     static const UINT8 EVT_END_OF_APDU_TRANSFER = 0x21;    //NXP Propritory
     void setCLState(bool mState);
 #endif
@@ -640,7 +692,6 @@ private:
 //    SyncEvent       mRoutingEvent;
     SyncEvent       mUiccInfoEvent;
 //    SyncEvent       mAidAddRemoveEvent;
-    SyncEvent       mTransceiveEvent;
     SyncEvent       mGetRegisterEvent;
     SyncEvent       mVerInfoEvent;
     SyncEvent       mRegistryEvent;
