@@ -516,8 +516,9 @@ private:
     struct timespec mLastKovioTime; // time of last Kovio tag activation
     UINT8 mLastKovioUid[NFC_KOVIO_MAX_LEN]; // uid of last Kovio tag activated
     bool mIsDynamicTagId; // whether the tag has dynamic tag ID
-    tNFA_RW_PRES_CHK_OPTION mPresenceCheckAlgorithm;
     bool mIsFelicaLite;
+    tNFA_RW_PRES_CHK_OPTION mPresenceCheckAlgorithm;
+
 
     /*******************************************************************************
     **

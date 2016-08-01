@@ -147,7 +147,7 @@ bool HciRFParams::initialize ()
     bPipeStatus_CeB = *params++;
     bMode_CeB = *params++;
 
-#if((NFC_NXP_CHIP_TYPE == PN548C2) || (NFC_NXP_CHIP_TYPE == PN551))
+#if(NFC_NXP_CHIP_TYPE != PN547C2)
         aPupiRegDataSize_CeB = *params++;
 #endif
         aPupiRegDataSize_CeB = 4;

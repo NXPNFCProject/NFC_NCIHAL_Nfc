@@ -86,6 +86,37 @@ typedef struct{
     Mutex mMutex;
 }NfcID2_rmv_req_info_t;
 
+typedef struct
+{
+    UINT8 protocol;
+    UINT16 routeLoc;
+    UINT8 power;
+    UINT8 enable;
+} protoEntry_t;
+
+typedef struct
+{
+    UINT8 technology;
+    UINT16 routeLoc;
+    UINT8 power;
+    UINT8 enable;
+} techEntry_t;
+
+typedef struct
+{
+    UINT16 nfceeID;//ID for the route location
+    tNFA_TECHNOLOGY_MASK    tech_switch_on;     /* default routing - technologies switch_on  */
+    tNFA_TECHNOLOGY_MASK    tech_switch_off;    /* default routing - technologies switch_off */
+    tNFA_TECHNOLOGY_MASK    tech_battery_off;   /* default routing - technologies battery_off*/
+    tNFA_TECHNOLOGY_MASK    tech_screen_lock;    /* default routing - technologies screen_lock*/
+    tNFA_TECHNOLOGY_MASK    tech_screen_off;   /* default routing - technologies screen_off*/
+    tNFA_PROTOCOL_MASK      proto_switch_on;    /* default routing - protocols switch_on     */
+    tNFA_PROTOCOL_MASK      proto_switch_off;   /* default routing - protocols switch_off    */
+    tNFA_PROTOCOL_MASK      proto_battery_off;  /* default routing - protocols battery_off   */
+    tNFA_PROTOCOL_MASK      proto_screen_lock;   /* default routing - protocols screen_lock    */
+    tNFA_PROTOCOL_MASK      proto_screen_off;  /* default routing - protocols screen_off  */
+} LmrtEntry_t;
+
 class RoutingManager
 {
 public:
@@ -112,8 +143,11 @@ public:
     void HandleAddNfcID2_Req();
     void HandleRmvNfcID2_Req();
     void setCeRouteStrictDisable(UINT32 state);
+#if (JCOP_WA_ENABLE == TRUE)
     bool is_ee_recovery_ongoing();
-#if(NFC_NXP_ESE == TRUE && ((NFC_NXP_CHIP_TYPE == PN548C2) || (NFC_NXP_CHIP_TYPE == PN551)))
+    void handleSERemovedNtf();
+#endif
+#if(NFC_NXP_ESE == TRUE && (NFC_NXP_CHIP_TYPE != PN547C2))
     se_rd_req_state_t getEtsiReaederState();
     Rdr_req_ntf_info_t getSwpRrdReqInfo();
 #endif
@@ -123,9 +157,7 @@ public:
     int addNfcid2Routing(UINT8* nfcid2, UINT8 aidLen,const UINT8* syscode,
             int syscodelen,const UINT8* optparam, int optparamlen);
     bool removeNfcid2Routing(UINT8* nfcID2);
-
     void getRouting();
-    void handleSERemovedNtf();
     void processGetRoutingRsp(tNFA_DM_CBACK_DATA* eventData, UINT8* sRoutingBuff);
     bool addAidRouting(const UINT8* aid, UINT8 aidLen, int route, int power, bool isprefix);
 #else
@@ -156,20 +188,51 @@ private:
     void notifyActivated (UINT8 technology);
     void notifyDeactivated (UINT8 technology);
     void notifyLmrtFull();
+    void printMemberData(void);
+    void initialiseTableEntries(void);
+    void compileProtoEntries(void);
+    void compileTechEntries(void);
+    void consolidateProtoEntries(void);
+    void consolidateTechEntries(void);
+    void setProtoRouting(void);
+    void setTechRouting(void);
+    void processTechEntriesForFwdfunctionality(void);
+    void checkProtoSeID(void);
+    void dumpTables(int);
 
+    static const int DBG               = true;
+    //Currently 4 protocols supported namely T3T, ISO-DEP, ISO-7816, NFC-DEP(taken care internally by the libnfc stack)
+    static const int MAX_PROTO_ENTRIES = 0x03;
+    static const int PROTO_T3T_IDX     = 0x00;
+    static const int PROTO_ISODEP_IDX  = 0x01;
+    static const int PROTO_ISO7816_IDX = 0x02;
+    //Currently 3 Technologies supported namely A,B,F
+    static const int MAX_TECH_ENTRIES  = 0x03;
+    static const int TECH_A_IDX        = 0x00;
+    static const int TECH_B_IDX        = 0x01;
+    static const int TECH_F_IDX        = 0x02;
+    //Fixed number of Lmrt entries
+    static const int MAX_ROUTE_LOC_ENTRIES  = 0x04;
+    //Fixed route location Lmrt index
+    static const int ROUTE_LOC_HOST_ID_IDX  = 0x00;
+    static const int ROUTE_LOC_ESE_ID_IDX   = 0x01;
+    static const int ROUTE_LOC_UICC1_ID_IDX = 0x02;
+    static const int ROUTE_LOC_UICC2_ID_IDX = 0x03;
+    //Fixed route location Lmrt entries
+    static const int ROUTE_LOC_HOST_ID      = 0x400;
+    static const int ROUTE_LOC_ESE_ID       = 0x4C0;
+    static const int ROUTE_LOC_UICC1_ID     = 0x402;
+    static const int ROUTE_LOC_UICC2_ID     = 0x481;
     // See AidRoutingManager.java for corresponding
     // AID_MATCHING_ constants
-
     // Every routing table entry is matched exact (BCM20793)
     static const int AID_MATCHING_EXACT_ONLY = 0x00;
     // Every routing table entry can be matched either exact or prefix
     static const int AID_MATCHING_EXACT_OR_PREFIX = 0x01;
     // Every routing table entry is matched as a prefix
     static const int AID_MATCHING_PREFIX_ONLY = 0x02;
-
     // See AidRoutingManager.java for corresponding
     // AID_MATCHING_ platform constants
-
     //Behavior as per Android-L, supporting prefix match and full
     //match for both OnHost and OffHost apps.
     static const int AID_MATCHING_L = 0x01;
@@ -199,20 +262,33 @@ private:
     static const JNINativeMethod sMethods [];
     int mDefaultEe; //since this variable is used in both cases moved out of compiler switch
     int mHostListnTechMask;
+    int mUiccListnTechMask;
     int mFwdFuntnEnable;
     static int mChipId;
     SyncEvent mEeRegisterEvent;
     SyncEvent mRoutingEvent;
 #if(NXP_EXTNS == TRUE)
-     UINT32 mCeRouteStrictDisable;
-     int defaultSeID ;
-     bool mIsDirty;
-     int defaultPowerstate;
-     int defaultProtoSeID;
-     int defaultProtoPowerstate;
-     int defaultTechSeID;
-     int defaultTechAPowerstate;
-     int DefaultTechType;
-     int mAddAid;
+    bool mIsDirty;
+    protoEntry_t mProtoTableEntries[MAX_PROTO_ENTRIES];
+    techEntry_t mTechTableEntries[MAX_TECH_ENTRIES];
+    LmrtEntry_t mLmrtEntries[MAX_ROUTE_LOC_ENTRIES];
+    UINT32 mCeRouteStrictDisable;
+    UINT32 mDefaultIso7816SeID;
+    UINT32 mDefaultIso7816Powerstate;
+    UINT32 mDefaultIsoDepSeID;
+    UINT32 mDefaultIsoDepPowerstate;
+    UINT32 mDefaultT3TSeID;
+    UINT32 mDefaultT3TPowerstate;
+    UINT32 mDefaultTechType;
+    UINT32 mDefaultTechASeID;
+    UINT32 mDefaultTechAPowerstate;
+    UINT32 mDefaultTechBSeID;
+    UINT32 mDefaultTechBPowerstate;
+    UINT32 mDefaultTechFSeID;
+    UINT32 mDefaultTechFPowerstate;
+    UINT32 mAddAid;
+    UINT32 mTechSupportedByEse;
+    UINT32 mTechSupportedByUicc1;
+    UINT32 mTechSupportedByUicc2;
 #endif
 };

@@ -107,7 +107,7 @@ typedef enum
 
 }se_rd_req_failures_t;
 
-#if (NFC_NXP_ESE ==  TRUE && ((NFC_NXP_CHIP_TYPE == PN548C2) || (NFC_NXP_CHIP_TYPE == PN551)))
+#if (NFC_NXP_ESE ==  TRUE && (NFC_NXP_CHIP_TYPE != PN547C2))
 typedef struct{
     rd_swp_req_t swp_rd_req_info ;
     rd_swp_req_t swp_rd_req_current_info ;
@@ -123,7 +123,9 @@ typedef enum operation{
     STANDBY_TIMER_STOP,
     STANDBY_TIMER_TIMEOUT,
     STANDBY_GPIO_HIGH,
-    STANDBY_GPIO_LOW
+    STANDBY_GPIO_LOW,
+    STANDBY_MODE_ON,
+    STANDBY_MODE_OFF
 }nfcc_standby_operation_t;
 void spi_prio_signal_handler (int signum, siginfo_t *info, void *unused);
 #endif
@@ -147,9 +149,11 @@ public:
         UINT8 mNfceePresent;
     };
     mNfceeData  mNfceeData_t;
+    UINT8 mHostsPresent;
+    UINT8 mHostsId[MAX_NFCEE];
 #endif
 
-#if(NFC_NXP_ESE == TRUE && ((NFC_NXP_CHIP_TYPE == PN548C2) || (NFC_NXP_CHIP_TYPE == PN551)))
+#if(NFC_NXP_ESE == TRUE && (NFC_NXP_CHIP_TYPE != PN547C2))
     IntervalTimer sSwpReaderTimer; // timer swp reader timeout.
 #endif
 
@@ -556,6 +560,9 @@ public:
     *******************************************************************************/
     bool getAtr(jint seID, UINT8* recvBuffer, INT32 *recvBufferSize);
 #if(NXP_EXTNS == TRUE)
+    bool getNfceeHostTypeList (void);
+    bool configureNfceeETSI12 (UINT8 host_id);
+
     /**********************************************************************************
      **
      ** Function:        getEeStatus
@@ -590,15 +597,48 @@ public:
      **
     *******************************************************************************/
     bool updateEEStatus ();
+
+    /*******************************************************************************
+     **
+     ** Function:        isTeckInfoReceived
+     **
+     ** Description:     isTeckInfoReceived
+     **                  Checks if discovery_req_ntf received
+     **                  for a given EE
+     **
+     ** Returns:         True if ok.
+     **
+     *******************************************************************************/
+    bool isTeckInfoReceived (UINT16 eeHandle);
 #endif
 #endif
-#if(NFC_NXP_ESE == TRUE && ((NFC_NXP_CHIP_TYPE == PN548C2) || (NFC_NXP_CHIP_TYPE == PN551)))
+#if(NFC_NXP_ESE == TRUE && (NFC_NXP_CHIP_TYPE != PN547C2))
     void etsiInitConfig();
     tNFC_STATUS etsiReaderConfig(int eeHandle);
     tNFC_STATUS etsiResetReaderConfig();
 #endif
+
+#if((NFC_NXP_ESE == TRUE)&&(CONCURRENCY_PROTECTION == TRUE))
+    /*******************************************************************************
+    **
+    ** Function:        enablePassiveListen
+    **
+    ** Description:     Enable or disable listening to Passive A/B
+    **
+    ** Returns:         True if ok.
+    **
+    *******************************************************************************/
+    UINT16 enablePassiveListen (UINT8 event);
+
+    UINT16 startThread(UINT8 thread_arg);
+
+    bool            mPassiveListenEnabled;
+    bool            meseUiccConcurrentAccess;
+    IntervalTimer   mPassiveListenTimer;
+#endif
     jint getSETechnology(tNFA_HANDLE eeHandle);
     static const UINT8 UICC_ID = 0x02;
+    static const UINT8 UICC2_ID = 0x04;
     static const UINT8 ESE_ID = 0x01;
     static const UINT8 DH_ID = 0x00;
 
@@ -607,28 +647,54 @@ public:
     tNFA_HANDLE getEseHandleFromGenericId(jint eseId);
 
     jint getGenericEseId(tNFA_HANDLE handle);
-
+#if (JCOP_WA_ENABLE == TRUE)
     tNFA_STATUS reconfigureEseHciInit();
+#endif
 #if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
     void setCPTimeout();
     void NfccStandByOperation(nfcc_standby_operation_t value);
+    void eSE_ISO_Reset(void);
+    tNFA_STATUS SecElem_sendEvt_Abort();
 #endif
-    bool isWiredModeAllowedInRfState();
+    bool checkForWiredModeAccess();
+    bool isEtsi12ApduGatePresent();
     bool mRecvdTransEvt;
     bool mAllowWiredMode;
-
+    UINT8           mPassiveListenCnt;                 //Retry cnt for passive listen enable timer
     SyncEvent       mRoutingEvent;
     SyncEvent       mAidAddRemoveEvent;
     SyncEvent       mUiccListenEvent;
     SyncEvent       mEseListenEvent;
     SyncEvent       mAllowWiredModeEvent;
     SyncEvent       mEeSetModeEvent;
+    UINT32          mPassiveListenTimeout;                 //Retry timout value for passive listen enable timer
+#if((NFC_NXP_ESE == TRUE)&&(CONCURRENCY_PROTECTION == TRUE))
+    SyncEvent       mPassiveListenEvt;
+    Mutex           mPassiveListenMutex;
+#endif
+#if ((NXP_EXTNS == TRUE) && (NXP_WIRED_MODE_STANDBY == TRUE))
+    SyncEvent       mPwrLinkCtrlEvent;
+#endif
 
 #if(NXP_EXTNS == TRUE)
+    SyncEvent       mNfceeInitCbEvent;
     tNFA_STATUS SecElem_EeModeSet(uint16_t handle, uint8_t mode);
+#if (JCOP_WA_ENABLE == TRUE)
     SyncEvent       mEEdatapacketEvent;
+#endif
     SyncEvent       mTransceiveEvent;
     static const UINT8 EVT_END_OF_APDU_TRANSFER = 0x21;    //NXP Propritory
+#if (NXP_WIRED_MODE_STANDBY == TRUE)
+    static const UINT8 EVT_SUSPEND_APDU_TRANSFER = 0x31;
+#endif
+    tNFA_HANDLE mActiveCeHandle;
+    bool    mIsWiredModeOpen;
+    bool    mlistenDisabled;
+    bool    mIsExclusiveWiredMode;
+    bool    mIsActionNtfReceived;
+    bool    mIsDesfireMifareDisable;
+    bool    mIsAllowWiredInDesfireMifareCE;
+    static const UINT8 EVT_ABORT = 0x11;  //ETSI12
     void setCLState(bool mState);
 #endif
 
@@ -643,7 +709,14 @@ private:
     static const UINT8 STATIC_PIPE_0x71 = 0x71; //Broadcom's proprietary static pipe
     static const UINT8 EVT_SEND_DATA = 0x10;    //see specification ETSI TS 102 622 v9.0.0 (Host Controller Interface); section 9.3.3.3
 #if(NXP_EXTNS == TRUE)
+    static const UINT8 STATIC_PIPE_UICC = 0x20; //UICC's proprietary static pipe
+#if (NXP_WIRED_MODE_STANDBY == TRUE)
+    static const UINT8 NFCC_DECIDES     = 0x00;     //NFCC decides
+    static const UINT8 POWER_ALWAYS_ON  = 0x01;     //NFCEE Power Supply always On
+    static const UINT8 COMM_LINK_ACTIVE = 0x02;     //NFCC to NFCEE Communication link always active when the NFCEE  is powered on.
+#endif
     static const tNFA_HANDLE EE_HANDLE_0xF3 = 0x4C0;//0x401; //handle to secure element in slot 0
+    static const tNFA_HANDLE EE_HANDLE_0xF8 = 0x481; //handle to secure element in slot 2
 #ifdef NXP_UICC_ENABLE
     static const tNFA_HANDLE EE_HANDLE_0xF4 = 0x402; //handle to secure element in slot 1
 #else
@@ -681,9 +754,10 @@ private:
     tNFA_HCI_GET_GATE_PIPE_LIST mHciCfg;
     SyncEvent       mEeRegisterEvent;
     SyncEvent       mHciRegisterEvent;
-
+#if (JCOP_WA_ENABLE == TRUE)
     SyncEvent       mResetEvent;
     SyncEvent       mResetOngoingEvent;
+#endif
     SyncEvent       mPipeListEvent;
     SyncEvent       mCreatePipeEvent;
     SyncEvent       mPipeOpenedEvent;
@@ -709,6 +783,10 @@ private:
     IntervalTimer   mTransceiveTimer;
     bool            mTransceiveWaitOk;
     int mWiredModeRfFiledEnable;
+#if(NXP_EXTNS == TRUE)
+    SyncEvent       mAbortEvent;
+    bool            mAbortEventWaitOk;
+#endif
     /*******************************************************************************
     **
     ** Function:        SecureElement
@@ -799,6 +877,18 @@ private:
     tNFA_HANDLE getDefaultEeHandle ();
 
 
+#if(NXP_EXTNS == TRUE)
+    /*******************************************************************************
+    **
+    ** Function:        getActiveEeHandle
+    **
+    ** Description:     Get the handle of the active execution environment.
+    **
+    ** Returns:         Handle to the execution environment.
+    **
+    *******************************************************************************/
+    tNFA_HANDLE getActiveEeHandle (tNFA_HANDLE eeHandle);
+#endif
     /*******************************************************************************
     **
     ** Function:        adjustRoutes

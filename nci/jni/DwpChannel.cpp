@@ -17,6 +17,8 @@
 #include "SecureElement.h"
 #include "RoutingManager.h"
 #include <cutils/log.h>
+#include "config.h"
+#include "phNxpConfig.h"
 
 static const int EE_ERROR_OPEN_FAIL =  -1;
 
@@ -172,7 +174,9 @@ bool close(INT16 mHandle)
     if(eSE_connected != true)
         return true;
 
-    stat = se.sendEvent(SecureElement::EVT_END_OF_APDU_TRANSFER);
+#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
+    se.NfccStandByOperation(STANDBY_MODE_ON);
+#endif
 
     stat = se.disconnectEE (SecureElement::ESE_ID);
 
@@ -224,8 +228,9 @@ void doeSE_Reset(void)
     se.SecEle_Modeset(0x01);
     ALOGD("2nd mode set called");
 
-    usleep(2000 * 1000);
+    usleep(3000 * 1000);
     rm.mResetHandlerMutex.unlock();
+#if (JCOP_WA_ENABLE == TRUE)
     if((RoutingManager::getInstance().is_ee_recovery_ongoing()))
     {
         ALOGE ("%s: is_ee_recovery_ongoing ", fn);
@@ -236,6 +241,7 @@ void doeSE_Reset(void)
     {
        ALOGE ("%s: Not in Recovery State", fn);
     }
+#endif
 }
 namespace android
 {
@@ -246,4 +252,79 @@ namespace android
         dwpChannelForceClose = true;
         ALOGD("%s: exit", fn);
     }
+}
+/*******************************************************************************
+**
+** Function:        doeSE_JcopDownLoadReset
+**
+** Description:     Performs a reset to eSE during JCOP OS update depending on
+**                  Power schemes configuered
+**
+** Returns:         void.
+**
+*******************************************************************************/
+void doeSE_JcopDownLoadReset(void)
+{
+    static const char fn [] = "DwpChannel::JcopDownLoadReset";
+    SecureElement &se = SecureElement::getInstance();
+    RoutingManager &rm = RoutingManager::getInstance();
+    unsigned long int num = 0;
+    ALOGD("%s: enter:", fn);
+
+    rm.mResetHandlerMutex.lock();
+#if ((NXP_ESE_RESET_METHOD == TRUE) && (NXP_ESE_POWER_MODE == TRUE))
+    if (GetNxpNumValue (NAME_NXP_ESE_POWER_DH_CONTROL, (void*)&num, sizeof(num)) == true)
+    {
+        if(num ==1)
+        {
+            ALOGD("1st mode set calling");
+            se.SecEle_Modeset(0x00);
+            usleep(100 * 1000);
+            ALOGD("1st mode set called");
+            ALOGD("2nd mode set calling");
+            se.SecEle_Modeset(0x01);
+            ALOGD("2nd mode set called");
+            usleep(3000 * 1000);
+        }
+        else if(num ==2)
+        {
+            ALOGD("%s: eSE ISO_RST on DWP Channel:", fn);
+            se.SecEle_Modeset(0x00);
+            usleep(100 * 1000);
+            se.eSE_ISO_Reset();
+            se.SecEle_Modeset(0x01);
+            ALOGD("ISO Reset DONE");
+            usleep(3000 * 1000);
+        }
+        else
+        {
+            ALOGD("%s: Invalid Power scheme:", fn);
+        }
+    }
+#else
+    ALOGD("1st mode set calling");
+    se.SecEle_Modeset(0x00);
+    usleep(100 * 1000);
+    ALOGD("1st mode set called");
+    ALOGD("2nd mode set calling");
+
+    se.SecEle_Modeset(0x01);
+    ALOGD("2nd mode set called");
+
+    usleep(3000 * 1000);
+#endif
+    rm.mResetHandlerMutex.unlock();
+
+#if (JCOP_WA_ENABLE == TRUE)
+    if((RoutingManager::getInstance().is_ee_recovery_ongoing()))
+    {
+        ALOGE ("%s: is_ee_recovery_ongoing ", fn);
+        SyncEventGuard guard (se.mEEdatapacketEvent);
+        se.mEEdatapacketEvent.wait();
+    }
+    else
+    {
+       ALOGE ("%s: Not in Recovery State", fn);
+    }
+#endif
 }

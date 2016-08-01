@@ -54,6 +54,7 @@
     <uses-permission android:name="android.permission.DISPATCH_NFC_MESSAGE" />
     <uses-permission android:name="android.permission.OVERRIDE_WIFI_CONFIG" />
     <uses-permission android:name="android.permission.DEVICE_POWER" />
+    <uses-permission android:name="android.permission.USER_ACTIVITY" />
     <permission-group android:name ="com.gsma.services.nfc.permission"
                       android:label ="@string/permgrouplab_NFC"
                       android:description="@string/permgroupdesc_NFC"

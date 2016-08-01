@@ -85,8 +85,8 @@ NfcTag::NfcTag ()
     mLastKovioUidLen (0),
     mNdefDetectionTimedOut (false),
     mIsDynamicTagId (false),
-    mPresenceCheckAlgorithm (NFA_RW_PRES_CHK_DEFAULT),
-    mIsFelicaLite(false)
+    mIsFelicaLite(false),
+    mPresenceCheckAlgorithm (NFA_RW_PRES_CHK_DEFAULT)
 {
     memset (mTechList, 0, sizeof(mTechList));
     memset (mTechHandles, 0, sizeof(mTechHandles));

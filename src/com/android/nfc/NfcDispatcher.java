@@ -227,6 +227,7 @@ class NfcDispatcher {
         PendingIntent overrideIntent;
         IntentFilter[] overrideFilters;
         String[][] overrideTechLists;
+        String[] provisioningMimes;
         boolean provisioningOnly;
 
         synchronized (this) {
@@ -234,6 +235,7 @@ class NfcDispatcher {
             overrideIntent = mOverrideIntent;
             overrideTechLists = mOverrideTechLists;
             provisioningOnly = mProvisioningOnly;
+            provisioningMimes = mProvisioningMimes;
         }
 
         boolean screenUnlocked = false;
@@ -267,6 +269,20 @@ class NfcDispatcher {
             return screenUnlocked ? DISPATCH_UNLOCK : DISPATCH_SUCCESS;
         }
 
+        if (provisioningOnly) {
+            if (message == null) {
+                // We only allow NDEF-message dispatch in provisioning mode
+                return DISPATCH_FAIL;
+            }
+            // Restrict to mime-types in whitelist.
+            String ndefMimeType = message.getRecords()[0].toMimeType();
+            if (provisioningMimes == null ||
+                    !(Arrays.asList(provisioningMimes).contains(ndefMimeType))) {
+                Log.e(TAG, "Dropping NFC intent in provisioning mode.");
+                return DISPATCH_FAIL;
+            }
+        }
+
         if (tryPeripheralHandover(message)) {
             if (DBG) Log.i(TAG, "matched BT HANDOVER");
             return screenUnlocked ? DISPATCH_UNLOCK : DISPATCH_SUCCESS;
@@ -277,18 +293,13 @@ class NfcDispatcher {
             return screenUnlocked ? DISPATCH_UNLOCK : DISPATCH_SUCCESS;
         }
 
-        if (tryNdef(dispatch, message, provisioningOnly)) {
+        if (tryNdef(dispatch, message)) {
             return screenUnlocked ? DISPATCH_UNLOCK : DISPATCH_SUCCESS;
         }
 
         if (screenUnlocked) {
             // We only allow NDEF-based mimeType matching in case of an unlock
             return DISPATCH_UNLOCK;
-        }
-
-        if (provisioningOnly) {
-            // We only allow NDEF-based mimeType matching
-            return DISPATCH_FAIL;
         }
 
         // Only allow NDEF-based mimeType matching for unlock tags
@@ -449,7 +460,7 @@ class NfcDispatcher {
         return false;
     }
 
-    boolean tryNdef(DispatchInfo dispatch, NdefMessage message, boolean provisioningOnly) {
+    boolean tryNdef(DispatchInfo dispatch, NdefMessage message) {
         if (message == null) {
             return false;
         }
@@ -457,14 +468,6 @@ class NfcDispatcher {
 
         // Bail out if the intent does not contain filterable NDEF data
         if (intent == null) return false;
-
-        if (provisioningOnly) {
-            if (mProvisioningMimes == null ||
-                    !(Arrays.asList(mProvisioningMimes).contains(intent.getType()))) {
-                Log.e(TAG, "Dropping NFC intent in provisioning mode.");
-                return false;
-            }
-        }
 
         // Try to start AAR activity with matching filter
         List<String> aarPackages = extractAarPackages(message);

@@ -60,13 +60,13 @@ public class NativeNfcSecureElement {
         mPrefsEditor = mPrefs.edit();
     }
 
-    private native int doNativeOpenSecureElementConnection();
+    private native int doNativeOpenSecureElementConnection(int seId);
 
-    public int doOpenSecureElementConnection() {
+    public int doOpenSecureElementConnection(int seId) {
         mPrefsEditor.putBoolean(PREF_SE_WIRED, true);
         mPrefsEditor.apply();
 
-        return doNativeOpenSecureElementConnection();
+        return doNativeOpenSecureElementConnection(seId);
     }
 
     private native boolean doNativeDisconnectSecureElementConnection(int handle);

@@ -194,7 +194,7 @@ clean_and_return:
 }
 
 
-static jint com_android_nfc_NativeNfcSecureElement_doOpenSecureElementConnection(JNIEnv *e, jobject o)
+static jint com_android_nfc_NativeNfcSecureElement_doOpenSecureElementConnection(JNIEnv *e, jobject o, jint seId)
 {
    NFCSTATUS ret;
    int semResult;
@@ -762,7 +762,7 @@ static jintArray com_android_nfc_NativeNfcSecureElement_doGetTechList(JNIEnv *e,
  */
 static JNINativeMethod gMethods[] =
 {
-   {"doNativeOpenSecureElementConnection", "()I",
+   {"doNativeOpenSecureElementConnection", "(I)I",
       (void *)com_android_nfc_NativeNfcSecureElement_doOpenSecureElementConnection},
    {"doNativeDisconnectSecureElementConnection", "(I)Z",
       (void *)com_android_nfc_NativeNfcSecureElement_doDisconnect},

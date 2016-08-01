@@ -182,7 +182,7 @@ static void NxpResponse_SwitchUICC_Cb(UINT8 event, UINT16 param_len, UINT8 *p_pa
     gnxpfeature_conf.NxpFeatureConfigEvt.notifyOne ();
 }
 #endif
-#if((NFC_NXP_CHIP_TYPE == PN548C2) || (NFC_NXP_CHIP_TYPE == PN551))
+#if(NFC_NXP_CHIP_TYPE != PN547C2)
 /*******************************************************************************
  **
  ** Function:        NxpResponse_EnableAGCDebug_Cb()
@@ -421,7 +421,7 @@ tNFA_STATUS Nxp_SelfTest(uint8_t testcase, uint8_t* param)
 {
     tNFA_STATUS status = NFA_STATUS_FAILED;
     uint8_t swp_test[] ={0x2F, 0x3E, 0x01, 0x00};   //SWP SelfTest
-#if((NFC_NXP_CHIP_TYPE == PN548C2) || (NFC_NXP_CHIP_TYPE == PN551))
+#if(NFC_NXP_CHIP_TYPE != PN547C2)
     uint8_t prbs_test[] ={0x2F, 0x30, 0x06, 0x00, 0x00, 0x00, 0x00, 0x01, 0xFF};    //PRBS SelfTest
     uint8_t cmd_buf[9] = {0,};
 #else
@@ -565,6 +565,14 @@ static void NxpResponse_GetSwpStausValueCb(UINT8 event, UINT16 param_len, UINT8 
             ALOGD("SWP2 Interface is enabled");
             gActualSeCount++;
         }
+#if(NXP_NFCC_DYNAMIC_DUAL_UICC == TRUE)
+        if (p_param[16] != 0x00)
+        {
+            ALOGD("SWP1A Interface is enabled");
+            gActualSeCount++;
+        }
+
+#endif
     }
     else
     {
@@ -588,7 +596,11 @@ tNFA_STATUS GetSwpStausValue(void)
 {
     tNFA_STATUS status = NFA_STATUS_FAILED;
     gActualSeCount = 1; /* default ese present */
+#if(NXP_NFCC_DYNAMIC_DUAL_UICC == TRUE)
+    uint8_t cmd_buf[] = {0x20, 0x03, 0x07, 0x03, 0xA0, 0xEC, 0xA0, 0xED, 0xA0, 0xD4};
+#else
     uint8_t cmd_buf[] = {0x20, 0x03, 0x05, 0x02, 0xA0, 0xEC, 0xA0, 0xED};
+#endif
     ALOGD("%s: enter", __FUNCTION__);
 
     SetCbStatus(NFA_STATUS_FAILED);
@@ -668,6 +680,7 @@ tNFA_STATUS SetHfoConfigValue(void)
 }
 #endif
 
+#if (JCOP_WA_ENABLE == TRUE)
 /*******************************************************************************
  **
  ** Function:        ResetEseSession
@@ -704,6 +717,7 @@ tNFA_STATUS ResetEseSession()
     ALOGD("%s: exit", __FUNCTION__);
     return status;
 }
+#endif
 /*******************************************************************************
  **
  ** Function:        SetUICC_SWPBitRate()

@@ -36,4 +36,5 @@ extern "C"
                      INT32 recvBufferMaxSize, INT32& recvBufferActualSize, INT32 timeoutMillisec);
 
     void doeSE_Reset();
+    void doeSE_JcopDownLoadReset();
     void doDwpChannel_ForceExit();

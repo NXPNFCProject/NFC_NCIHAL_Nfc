@@ -95,7 +95,7 @@ namespace android
 
 // Pre-defined tag type values. These must match the values in
 // framework Ndef.java for Google public NFC API.
-#define NDEF_UNKNOWN_TYPE          -1
+#define NDEF_UNKNOWN_TYPE          (-1)
 #define NDEF_TYPE1_TAG             1
 #define NDEF_TYPE2_TAG             2
 #define NDEF_TYPE3_TAG             3

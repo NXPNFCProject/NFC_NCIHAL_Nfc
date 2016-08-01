@@ -303,6 +303,6 @@ typedef enum p61_access_state{
     P61_STATE_SPI_END = 0x4000, /*End of p61 access by SPI*/
 } p61_access_state_t;
 
-#define UNUSED(X) (void)X;
+#define UNUSED(X) (void)(X);
 
 #endif /* PHNFCTYPES_H */

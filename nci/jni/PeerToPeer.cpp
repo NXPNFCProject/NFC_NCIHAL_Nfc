@@ -132,11 +132,13 @@ PeerToPeer& PeerToPeer::getInstance ()
 *******************************************************************************/
 void PeerToPeer::initialize ()
 {
-    ALOGD ("PeerToPeer::initialize");
+    static const char fn [] = "PeerToPeer::initialize";
     unsigned long num = 0;
 
+    ALOGD ("%s: enter", fn);
     if (GetNumValue ("P2P_LISTEN_TECH_MASK", &num, sizeof (num)))
         mP2pListenTechMask = num;
+    ALOGD ("%s: exit", fn);
 }
 
 

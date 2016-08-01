@@ -171,7 +171,6 @@ public class NfcService implements DeviceHostListener {
     static final boolean NDEF_PUSH_ON_DEFAULT = true;
     static final String PREF_FIRST_BEAM = "first_beam";
     static final String PREF_FIRST_BOOT = "first_boot";
-    static final String PREF_AIRPLANE_OVERRIDE = "airplane_override";
     private static final String PREF_SECURE_ELEMENT_ON = "secure_element_on";
     private boolean SECURE_ELEMENT_ON_DEFAULT = false;
     private int SECURE_ELEMENT_ID_DEFAULT = 0;
@@ -194,9 +193,10 @@ public class NfcService implements DeviceHostListener {
     private static final long[] JCOP_MODTIME_TEMP = {-1,-1,-1};
 
     private boolean ETSI_STOP_CONFIG = false;
-    private int ROUTE_ID_HOST= 0x00;
-    private int ROUTE_ID_SMX= 0x01;
-    private int ROUTE_ID_UICC= 0x02;
+    private int ROUTE_ID_HOST   = 0x00;
+    private int ROUTE_ID_SMX    = 0x01;
+    private int ROUTE_ID_UICC   = 0x02;
+    private int ROUTE_ID_UICC2  = 0x04;
 
     private int ROUTE_SWITCH_ON = 0x01;
     private int ROUTE_SWITCH_OFF = 0x02;
@@ -393,9 +393,13 @@ public class NfcService implements DeviceHostListener {
     public static final int UICC_ID_TYPE = 2;
 
     /**
+     * UICC2 ID to be able to select it as the default Secure Element
+     */
+    public static final int UICC2_ID_TYPE = 4;
+    /**
      * ID to be able to select all Secure Elements
      */
-    public static final int ALL_SE_ID_TYPE = 3;
+    public static final int ALL_SE_ID_TYPE = 7;
 
     public static final int PN547C2_ID = 1;
     public static final int PN65T_ID = 2;
@@ -473,8 +477,6 @@ public class NfcService implements DeviceHostListener {
     NxpNfcAdapterExtrasService mNxpExtrasService;
     NxpExtrasService mNxpExtras;
     EseClientServicesAdapter mEseClientServicesAdapter;
-    boolean mIsAirplaneSensitive;
-    boolean mIsAirplaneToggleable;
     boolean mIsDebugBuild;
     boolean mIsHceCapable;
     boolean mIsHceFCapable;
@@ -882,7 +884,6 @@ public class NfcService implements DeviceHostListener {
         filter.addAction(Intent.ACTION_USER_PRESENT);
         filter.addAction(Intent.ACTION_USER_SWITCHED);
         filter.addAction(Intent.ACTION_SHUTDOWN);
-        registerForAirplaneMode(filter);
         mContext.registerReceiverAsUser(mReceiver, UserHandle.ALL, filter, null, null);
 
         IntentFilter ownerFilter = new IntentFilter(Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE);
@@ -952,21 +953,6 @@ public class NfcService implements DeviceHostListener {
         }
     }
 
-    void registerForAirplaneMode(IntentFilter filter) {
-        final String airplaneModeRadios = Settings.System.getString(mContentResolver,
-                Settings.Global.AIRPLANE_MODE_RADIOS);
-        final String toggleableRadios = Settings.System.getString(mContentResolver,
-                Settings.Global.AIRPLANE_MODE_TOGGLEABLE_RADIOS);
-
-        mIsAirplaneSensitive = airplaneModeRadios == null ? true :
-                airplaneModeRadios.contains(Settings.Global.RADIO_NFC);
-        mIsAirplaneToggleable = toggleableRadios == null ? false :
-            toggleableRadios.contains(Settings.Global.RADIO_NFC);
-
-        if (mIsAirplaneSensitive) {
-            filter.addAction(Intent.ACTION_AIRPLANE_MODE_CHANGED);
-        }
-    }
     void updatePackageCache() {
         PackageManager pm = mContext.getPackageManager();
         List<PackageInfo> packages = pm.getInstalledPackages(0, UserHandle.USER_OWNER);
@@ -975,10 +961,10 @@ public class NfcService implements DeviceHostListener {
         }
     }
 
-    int doOpenSecureElementConnection() {
+    int doOpenSecureElementConnection(int seId) {
         mEeWakeLock.acquire();
         try {
-            return mSecureElement.doOpenSecureElementConnection();
+            return mSecureElement.doOpenSecureElementConnection(seId);
         } finally {
             mEeWakeLock.release();
         }
@@ -1115,9 +1101,7 @@ public class NfcService implements DeviceHostListener {
                     break;
                 case TASK_BOOT:
                     Log.d(TAG, "checking on firmware download");
-                    boolean airplaneOverride = mPrefs.getBoolean(PREF_AIRPLANE_OVERRIDE, false);
-                    if (mPrefs.getBoolean(PREF_NFC_ON, NFC_ON_DEFAULT) &&
-                            (!mIsAirplaneSensitive || !isAirplaneModeOn() || airplaneOverride)) {
+                    if (mPrefs.getBoolean(PREF_NFC_ON, NFC_ON_DEFAULT)) {
                         Log.d(TAG, "NFC is on. Doing normal stuff");
                         enableInternal();
                     } else {
@@ -1147,14 +1131,12 @@ public class NfcService implements DeviceHostListener {
                 filter.addAction(Intent.ACTION_USER_PRESENT);
                 filter.addAction(Intent.ACTION_USER_SWITCHED);
                 filter.addAction(Intent.ACTION_SHUTDOWN);
-                registerForAirplaneMode(filter);
                 mContext.registerReceiverAsUser(mReceiver, UserHandle.ALL, filter, null, null);
             }else if (mState == NfcAdapter.STATE_OFF){
                 mContext.unregisterReceiver(mReceiver);
                 IntentFilter filter = new IntentFilter(NativeNfcManager.INTERNAL_TARGET_DESELECTED_ACTION);
                 filter.addAction(Intent.ACTION_USER_SWITCHED);
                 filter.addAction(Intent.ACTION_SHUTDOWN);
-                registerForAirplaneMode(filter);
                 mContext.registerReceiverAsUser(mReceiver, UserHandle.ALL, filter, null, null);
             }
 
@@ -1194,6 +1176,7 @@ public class NfcService implements DeviceHostListener {
 
                     if (secureElementId != ALL_SE_ID_TYPE/* SECURE_ELEMENT_ALL */) {
                         mDeviceHost.doDeselectSecureElement(UICC_ID_TYPE);
+                        mDeviceHost.doDeselectSecureElement(UICC2_ID_TYPE);
                         mDeviceHost.doDeselectSecureElement(SMART_MX_ID_TYPE);
 
                         for (int i = 0; i < Se_list.length; i++) {
@@ -1216,6 +1199,16 @@ public class NfcService implements DeviceHostListener {
                                         }
                                     }
                                     Log.d(TAG, "Select UICC");
+                                    mDeviceHost.doSelectSecureElement(secureElementId);
+                                    mSelectedSeId = secureElementId;
+                                    break;
+                                }else if (secureElementId == UICC2_ID_TYPE/* SECURE_ELEMENT_UICC_ID */) {
+                                    if (Se_list.length > 1) {
+                                        if (DBG) {
+                                            Log.d(TAG, "Deselect SMX");
+                                        }
+                                    }
+                                    Log.d(TAG, "Select UICC2");
                                     mDeviceHost.doSelectSecureElement(secureElementId);
                                     mSelectedSeId = secureElementId;
                                     break;
@@ -1254,6 +1247,7 @@ public class NfcService implements DeviceHostListener {
                         Log.d(TAG, "UICC/eSE deselected by default");
                     }
                     mDeviceHost.doDeselectSecureElement(UICC_ID_TYPE);
+                    mDeviceHost.doDeselectSecureElement(UICC2_ID_TYPE);
                     mDeviceHost.doDeselectSecureElement(SMART_MX_ID_TYPE);
                 }
             }
@@ -1549,15 +1543,6 @@ public class NfcService implements DeviceHostListener {
 
             saveNfcOnSetting(true);
 
-            if (mIsAirplaneSensitive && isAirplaneModeOn()) {
-                if (!mIsAirplaneToggleable) {
-                    Log.i(TAG, "denying enable() request (airplane mode)");
-                    return false;
-                }
-                // Make sure the override survives a reboot
-                mPrefsEditor.putBoolean(PREF_AIRPLANE_OVERRIDE, true);
-                mPrefsEditor.apply();
-            }
             new EnableDisableTask().execute(TASK_ENABLE);
 
             return true;
@@ -1577,6 +1562,7 @@ public class NfcService implements DeviceHostListener {
                 //Since only Nfc is getting disabled so disable CE from EE.
                 mDeviceHost.doSetScreenOrPowerState(ScreenStateHelper.POWER_STATE_ON);
                 mDeviceHost.doDeselectSecureElement(UICC_ID_TYPE);
+                mDeviceHost.doDeselectSecureElement(UICC2_ID_TYPE);
                 mDeviceHost.doDeselectSecureElement(SMART_MX_ID_TYPE);
             } else {
                 Log.i(TAG, "Power off : Disabling NFC Disabling ESE/UICC");
@@ -2084,8 +2070,18 @@ public class NfcService implements DeviceHostListener {
         throws RemoteException
         {
             int protoRouteEntry = 0;
-            protoRouteEntry=((routeLoc & 0x03)== 0x01) ? (0x01 << 3) : (((routeLoc & 0x03) == 0x02) ? (0x01 << 4) : 0x00) ;
-            protoRouteEntry |= ((fullPower ? 0x01 : 0) | (lowPower ? 0x01 << 1 :0 ) | (noPower ? 0x01 << 2 :0) );
+            protoRouteEntry=((routeLoc & 0x03)== 0x01) ? (0x01 << ROUTE_LOC_MASK) : (((routeLoc & 0x03) == 0x02) ? (0x02 << ROUTE_LOC_MASK) : 0x00) ;
+            if(routeLoc == 0x00)
+              //if routeLocation is HOST, Allow HCE only for SCREEN_ON_UNLOCKED
+            {
+                protoRouteEntry |= ((fullPower ? 0x01 : 0) | (lowPower ? 0x01 << 1 :0 ) | (noPower ? 0x01 << 2 :0));
+            }
+            else
+                //if routeLocation is ESE/UICC, Allow CE for the states requested
+            {
+                protoRouteEntry |= ((fullPower ? (mDeviceHost.getDefaultDesfirePowerState() & 0x1F) | 0x01 : 0) | (lowPower ? 0x01 << 1 :0 ) | (noPower ? 0x01 << 2 :0));
+            }
+            Log.i(TAG,"MifareDesfireRouteSet : " + protoRouteEntry);
             mNxpPrefsEditor = mNxpPrefs.edit();
             mNxpPrefsEditor.putInt("PREF_MIFARE_DESFIRE_PROTO_ROUTE_ID", protoRouteEntry);
             mNxpPrefsEditor.commit();
@@ -2098,8 +2094,18 @@ public class NfcService implements DeviceHostListener {
         {
             if (mIsHceCapable) {
                 int protoRouteEntry = 0;
-                protoRouteEntry=((routeLoc & 0x03)== 0x01) ? (0x01 << 3) : (((routeLoc & 0x03) == 0x02) ? (0x01 << 4) : 0x00) ;
-                protoRouteEntry |= ((fullPower ? 0x01 : 0) | (lowPower ? 0x01 << 1 :0 ) | (noPower ? 0x01 << 2 :0));
+                protoRouteEntry=((routeLoc & 0x03)== 0x01) ? (0x01 << ROUTE_LOC_MASK) : (((routeLoc & 0x03) == 0x02) ? (0x02 << ROUTE_LOC_MASK) : 0x00) ;
+                if(routeLoc == 0x00)
+                  //if routeLocation is HOST, Allow HCE only for SCREEN_ON_UNLOCKED
+                {
+                    protoRouteEntry |= ((fullPower ? 0x01 : 0) | (lowPower ? 0x01 << 1 :0 ) | (noPower ? 0x01 << 2 :0));
+                }
+                else
+                    //if routeLocation is ESE/UICC, Allow CE for the states requested
+                {
+                    protoRouteEntry |= ((fullPower ? (mDeviceHost.getDefaultAidPowerState() & 0x1F) | 0x01 : 0) | (lowPower ? 0x01 << 1 :0 ) | (noPower ? 0x01 << 2 :0));
+                }
+                Log.i(TAG,"DefaultRouteSet : " + protoRouteEntry);
                 if(GetDefaultRouteLoc() != routeLoc)
                 {
                     mNxpPrefsEditor = mNxpPrefs.edit();
@@ -2125,9 +2131,11 @@ public class NfcService implements DeviceHostListener {
         throws RemoteException
         {
             int techRouteEntry=0;
-            techRouteEntry=((routeLoc & 0x03)== 0x01) ? (0x01 << 3) : (((routeLoc & 0x03) == 0x02) ? (0x01 << 4) : 0x00) ;
-            techRouteEntry |= ((fullPower ? 0x01 : 0) | (lowPower ? 0x01 << 1 :0 ) | (noPower ? 0x01 << 2 :0) );
-            techRouteEntry |=0x20;
+            techRouteEntry=((routeLoc & 0x03) == 0x01) ? (0x01 << ROUTE_LOC_MASK) : (((routeLoc & 0x03) == 0x02) ? (0x02 << ROUTE_LOC_MASK) : 0x00);
+            techRouteEntry |= ((fullPower ? (mDeviceHost.getDefaultMifareCLTPowerState() & 0x1F) | 0x01 : 0) | (lowPower ? 0x01 << 1 :0 ) | (noPower ? 0x01 << 2 :0));
+            techRouteEntry |= (TECH_TYPE_A << TECH_TYPE_MASK);
+
+            Log.i(TAG,"MifareCLTRouteSet : " + techRouteEntry);
             mNxpPrefsEditor = mNxpPrefs.edit();
             mNxpPrefsEditor.putInt("PREF_MIFARE_CLT_ROUTE_ID", techRouteEntry);
             mNxpPrefsEditor.commit();
@@ -2636,6 +2644,9 @@ public class NfcService implements DeviceHostListener {
                 int Ver = mDeviceHost.getChipVer();
                 if(Ver == PN67T_ID || Ver == PN66T_ID || Ver == PN65T_ID) {
                     status = mDeviceHost.JCOSDownload();
+            }
+            else {
+                status = ErrorCodes.ERROR_NOT_SUPPORTED;
                 }
             }
             else {
@@ -3102,12 +3113,14 @@ public class NfcService implements DeviceHostListener {
                     // Deny access to the NFCEE as long as the device is being setup
                     return EE_ERROR_IO;
                 }
+                /*Concurrent access for  DWP transactions to be allowed even when P2P is already ongoing */
+                /*
                 if (mP2pLinkManager.isLlcpActive()) {
                     // Don't allow PN544-based devices to open the SE while the LLCP
                     // link is still up or in a debounce state. This avoids race
                     // conditions in the NXP stack around P2P/SMX switching.
                     return EE_ERROR_EXT_FIELD;
-                }
+                } */
                 if (mOpenEe != null) {
                     return EE_ERROR_ALREADY_OPEN;
                 }
@@ -3121,7 +3134,7 @@ public class NfcService implements DeviceHostListener {
                     mNfcPollingEnabled = false;
                     restorePolling = true;
                 }
-                int handle = doOpenSecureElementConnection();
+                int handle = doOpenSecureElementConnection(0xF3);
                 if (handle < 0) {
 
                     if (restorePolling) {
@@ -3130,7 +3143,7 @@ public class NfcService implements DeviceHostListener {
                     }
                     return handle;
                 }
-                mDeviceHost.setTimeout(TagTechnology.ISO_DEP, 1000);
+                mDeviceHost.setTimeout(TagTechnology.ISO_DEP, 30000);
 
                 mOpenEe = new OpenSecureElement(getCallingPid(), handle, b);
                 try {
@@ -3373,12 +3386,14 @@ public class NfcService implements DeviceHostListener {
                     // Deny access to the NFCEE as long as the device is being setup
                     return EE_ERROR_IO;
                 }
+                /*Concurrent access for  DWP transactions to be allowed even when P2P is already ongoing */
+                /*
                 if (mP2pLinkManager.isLlcpActive()) {
                     // Don't allow PN544-based devices to open the SE while the LLCP
                     // link is still up or in a debounce state. This avoids race
                     // conditions in the NXP stack around P2P/SMX switching.
                     return EE_ERROR_EXT_FIELD;
-                }
+                }*/
                 if (mOpenEe != null) {
                     Log.i(TAG, "SE is Busy. returning..");
                     return EE_ERROR_ALREADY_OPEN;
@@ -3393,7 +3408,7 @@ public class NfcService implements DeviceHostListener {
                     restorePolling = true;
                 }
 
-                int handle = doOpenSecureElementConnection();
+                int handle = doOpenSecureElementConnection(0xF3);
                 if (handle < 0) {
 
                     if (restorePolling) {
@@ -3402,7 +3417,7 @@ public class NfcService implements DeviceHostListener {
                     }
                     return handle;
                 }
-                mDeviceHost.setTimeout(TagTechnology.ISO_DEP, 1000);
+                mDeviceHost.setTimeout(TagTechnology.ISO_DEP, 30000);
                 mOpenEe = new OpenSecureElement(getCallingPid(), handle, b);
                 try {
                     b.linkToDeath(mOpenEe, 0);
@@ -3706,6 +3721,129 @@ public class NfcService implements DeviceHostListener {
             return mDeviceHost.doGetSelectedUicc();
         }
 
+        @Override
+        public Bundle openuicc(String pkg, IBinder b) throws RemoteException {
+            NfcService.this.enforceNfceeAdminPerm(pkg);
+
+        Bundle result;
+        int handle = _openuicc(b);
+        if (handle < 0) {
+            result = writeEeException(handle, "NFCEE UICC open exception.");
+        } else {
+            result = writeNoException();
+        }
+        return result;
+    }
+
+    /**
+     * Opens a connection to the UICC element.
+     *
+     * @return A handle with a value >= 0 in case of success, or a
+     *         negative value in case of failure.
+     */
+    private int _openuicc(IBinder b) {
+        synchronized(NfcService.this) {
+            if (!isNfcEnabled()) {
+                return EE_ERROR_NFC_DISABLED;
+            }
+            if (mInProvisionMode) {
+                // Deny access to the NFCEE as long as the device is being setup
+                return EE_ERROR_IO;
+            }
+            if (mP2pLinkManager.isLlcpActive()) {
+                // Don't allow PN544-based devices to open the SE while the LLCP
+                // link is still up or in a debounce state. This avoids race
+                // conditions in the NXP stack around P2P/SMX switching.
+                return EE_ERROR_EXT_FIELD;
+            }
+            if (mOpenEe != null) {
+                return EE_ERROR_ALREADY_OPEN;
+            }
+
+            boolean restorePolling = false;
+            if (mNfcPollingEnabled) {
+                // Disable polling for tags/P2P when connecting to the SMX
+                // on PN544-based devices. Whenever nfceeClose is called,
+                // the polling configuration will be restored.
+                mDeviceHost.disableDiscovery();
+                mNfcPollingEnabled = false;
+                restorePolling = true;
+            }
+
+            int handle = doOpenSecureElementConnection(0xF4);
+            if (handle < 0) {
+
+                if (restorePolling) {
+                    mDeviceHost.enableDiscovery(mCurrentDiscoveryParameters, true);
+                    mNfcPollingEnabled = true;
+                }
+                return handle;
+            }
+            mDeviceHost.setTimeout(TagTechnology.ISO_DEP, 30000);
+
+            mOpenEe = new OpenSecureElement(getCallingPid(), handle, b);
+            try {
+                b.linkToDeath(mOpenEe, 0);
+            } catch (RemoteException e) {
+                mOpenEe.binderDied();
+            }
+
+            // Add the calling package to the list of packages that have accessed
+            // the secure element.
+            for (String packageName : mContext.getPackageManager().getPackagesForUid(getCallingUid())) {
+                mSePackages.add(packageName);
+            }
+
+            return handle;
+       }
+    }
+
+    @Override
+    public Bundle closeuicc(String pkg, IBinder binder) throws RemoteException {
+        NfcService.this.enforceNfceeAdminPerm(pkg);
+
+        Bundle result;
+        try {
+            Log.w("Nxp", "Close UICC!");
+            _nfcEeClose(getCallingPid(), binder);
+            result = writeNoException();
+        } catch (IOException e) {
+            result = writeEeException(EE_ERROR_IO, e.getMessage());
+        }
+        return result;
+    }
+
+    @Override
+    public Bundle transceiveuicc(String pkg, byte[] in) throws RemoteException {
+        NfcService.this.enforceNfceeAdminPerm(pkg);
+
+        Bundle result;
+        byte[] out;
+        try {
+            out = _transceiveuicc(in);
+            result = writeNoException();
+            result.putByteArray("out", out);
+        } catch (IOException e) {
+            result = writeEeException(EE_ERROR_IO, e.getMessage());
+        }
+        return result;
+    }
+
+    private byte[] _transceiveuicc(byte[] data) throws IOException {
+        synchronized(NfcService.this) {
+            if (!isNfcEnabled()) {
+                throw new IOException("NFC is not enabled");
+            }
+            if (mOpenEe == null) {
+                throw new IOException("NFC EE is not open");
+            }
+            if (getCallingPid() != mOpenEe.pid) {
+                throw new SecurityException("Wrong PID");
+            }
+        }
+
+        return doTransceive(mOpenEe.handle, data);
+    }
     }
 
     /** resources kept while secure element is open */
@@ -4172,9 +4310,17 @@ public class NfcService implements DeviceHostListener {
      */
     public int GetDefaultMifareDesfireRouteEntry()
     {
-        //return ((ROUTE_ID_UICC << ROUTE_LOC_MASK ) | ROUTE_SWITCH_ON | ROUTE_SWITCH_OFF) ;
-        Log.d(TAG, "GetDefaultMifareDesfireRouteEntry :" + mDeviceHost.getDefaultDesfireRoute() );
-        return ((mDeviceHost.getDefaultDesfirePowerState() & 0x1F) | (mDeviceHost.getDefaultDesfireRoute() << ROUTE_LOC_MASK)) ;
+        int routeLoc = mDeviceHost.getDefaultDesfireRoute();
+        int defaultMifareDesfireRoute = ((mDeviceHost.getDefaultDesfirePowerState() & 0x1F) | (routeLoc << ROUTE_LOC_MASK));
+        if(routeLoc == 0x00)
+        {
+            /*bit pos 3 = Screen Lock
+              bit pos 4 = Screen Off
+              Set these 2 bits to 0 because in case routeLoc = HOST it can work only in SCREEN_ON_UNLOCKED*/
+            defaultMifareDesfireRoute &= 0xE7;
+        }
+        Log.d(TAG, "defaultMifareDesfireRoute : " + defaultMifareDesfireRoute);
+        return defaultMifareDesfireRoute;
     }
     /**
      * set default Aid route entry in case application does not configure this route entry
@@ -4182,8 +4328,16 @@ public class NfcService implements DeviceHostListener {
 
     public int GetDefaultRouteEntry()
     {
-        int defaultAidRoute = ((mDeviceHost.getDefaultAidPowerState() & 0x1F) | (mDeviceHost.getDefaultAidRoute()<< ROUTE_LOC_MASK));
-        Log.d(TAG, "GetDefaultRouteEntry :" + defaultAidRoute );
+        int routeLoc = mDeviceHost.getDefaultAidRoute();
+        int defaultAidRoute = ((mDeviceHost.getDefaultAidPowerState() & 0x1F) | (routeLoc << ROUTE_LOC_MASK));
+        if(routeLoc == 0x00)
+        {
+            /*bit pos 3 = Screen Lock
+              bit pos 4 = Screen Off
+              Set these 2 bits to 0 because in case routeLoc = HOST it can work only in SCREEN_ON_UNLOCKED*/
+            defaultAidRoute &= 0xE7;
+        }
+        Log.d(TAG, "defaultAidRoute : " + defaultAidRoute);
         return defaultAidRoute;
     }
 
@@ -4192,9 +4346,11 @@ public class NfcService implements DeviceHostListener {
      */
     public int GetDefaultMifateCLTRouteEntry()
     {
-        //return ((ROUTE_ID_UICC << ROUTE_LOC_MASK ) | ROUTE_SWITCH_ON | ROUTE_SWITCH_OFF | (TECH_TYPE_A << TECH_TYPE_MASK)) ;
-        Log.d(TAG, "getDefaultMifareCLTRoute :" + mDeviceHost.getDefaultMifareCLTRoute() );
-        return ((mDeviceHost.getDefaultMifareCLTPowerState() & 0x1F) | (mDeviceHost.getDefaultMifareCLTRoute() << ROUTE_LOC_MASK) | (TECH_TYPE_A << TECH_TYPE_MASK)) ;
+        int routeLoc = mDeviceHost.getDefaultMifareCLTRoute();
+        int defaultMifateCLTRoute = ((mDeviceHost.getDefaultMifareCLTPowerState() & 0x1F) | (routeLoc << ROUTE_LOC_MASK) | (TECH_TYPE_A << TECH_TYPE_MASK));
+
+        Log.d(TAG, "defaultMifateCLTRoute : " + defaultMifateCLTRoute);
+        return defaultMifateCLTRoute;
     }
 
     public boolean setDefaultRoute(int defaultRouteEntry, int defaultProtoRouteEntry, int defaultTechRouteEntry) {
@@ -4626,6 +4782,9 @@ public class NfcService implements DeviceHostListener {
                         if(dataSrcInfo.second == UICC_ID_TYPE) {
                             evtSrc = NxpConstants.UICC_ID;
                             gsmaSrc = "SIM1";
+                        } else if(dataSrcInfo.second == UICC2_ID_TYPE) {
+                            evtSrc = NxpConstants.UICC2_ID;
+                            gsmaSrc = "SIM2";
                         } else if(dataSrcInfo.second == SMART_MX_ID_TYPE) {
                             evtSrc = NxpConstants.SMART_MX_ID;
                             gsmaSrc = "ESE";
@@ -4670,6 +4829,8 @@ public class NfcService implements DeviceHostListener {
                     String evtSrc = "";
                     if(evtSrcInfo == UICC_ID_TYPE) {
                         evtSrc = NxpConstants.UICC_ID;
+                    } else if(evtSrcInfo == UICC2_ID_TYPE) {
+                        evtSrc = NxpConstants.UICC2_ID;
                     } else if(evtSrcInfo == SMART_MX_ID_TYPE) {
                         evtSrc = NxpConstants.SMART_MX_ID;
                     }
@@ -5198,23 +5359,7 @@ public class NfcService implements DeviceHostListener {
                 // TODO mCardEmulationManager.setScreenState(screenState);
                 sendMessage(NfcService.MSG_APPLY_SREEN_STATE, screenState);
                 //new ApplyRoutingTask().execute(Integer.valueOf(screenState));
-            } else if (action.equals(Intent.ACTION_AIRPLANE_MODE_CHANGED)) {
-                boolean isAirplaneModeOn = intent.getBooleanExtra("state", false);
-                // Query the airplane mode from Settings.System just to make sure that
-                // some random app is not sending this intent
-                if (isAirplaneModeOn != isAirplaneModeOn()) {
-                    return;
-                }
-                if (!mIsAirplaneSensitive) {
-                    return;
-                }
-                mPrefsEditor.putBoolean(PREF_AIRPLANE_OVERRIDE, false);
-                mPrefsEditor.apply();
-                if (isAirplaneModeOn) {
-                    new EnableDisableTask().execute(TASK_DISABLE);
-                } else if (!isAirplaneModeOn && mPrefs.getBoolean(PREF_NFC_ON, NFC_ON_DEFAULT)) {
-                    new EnableDisableTask().execute(TASK_ENABLE);
-                }
+
             } else if (action.equals(Intent.ACTION_USER_SWITCHED)) {
                 int screenState = ScreenStateHelper.SCREEN_STATE_OFF;
                 int userId = intent.getIntExtra(Intent.EXTRA_USER_HANDLE, 0);
@@ -5287,14 +5432,6 @@ public class NfcService implements DeviceHostListener {
     };
 
     /**
-     * Returns true if airplane mode is currently on
-     */
-    boolean isAirplaneModeOn() {
-        return Settings.System.getInt(mContentResolver,
-                Settings.Global.AIRPLANE_MODE_ON, 0) == 1;
-    }
-
-    /**
      * for debugging only - no i18n
      */
     static String stateToString(int state) {
@@ -5328,8 +5465,6 @@ public class NfcService implements DeviceHostListener {
             pw.println("mNfcPollingEnabled=" + mNfcPollingEnabled);
             pw.println("mNfceeRouteEnabled=" + mNfceeRouteEnabled);
             pw.println("mOpenEe=" + mOpenEe);
-            pw.println("mIsAirplaneSensitive=" + mIsAirplaneSensitive);
-            pw.println("mIsAirplaneToggleable=" + mIsAirplaneToggleable);
             pw.println("mLockscreenPollMask=" + mLockscreenPollMask);
             pw.println(mCurrentDiscoveryParameters);
             mP2pLinkManager.dump(fd, pw, args);
