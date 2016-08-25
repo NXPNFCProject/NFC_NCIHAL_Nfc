@@ -83,7 +83,7 @@ public class BluetoothOppHandover implements Handler.Callback {
                 // - start send.
                 sendIntent();
             }
-       } else {
+        } else {
             // Remote BT enabled already, start send immediately
             sendIntent();
         }
@@ -92,6 +92,7 @@ public class BluetoothOppHandover implements Handler.Callback {
     void complete() {
         mState = STATE_COMPLETE;
     }
+
     void sendIntent() {
         Intent intent = new Intent();
         intent.setPackage("com.android.bluetooth");
@@ -109,11 +110,11 @@ public class BluetoothOppHandover implements Handler.Callback {
                 Log.e(TAG, "Failed to transfer permission to Bluetooth process.");
             }
         }
-       if (mUris.size() == 1) {
+        if (mUris.size() == 1) {
             intent.setAction(ACTION_HANDOVER_SEND);
             intent.putExtra(Intent.EXTRA_STREAM, mUris.get(0));
         } else {
-           intent.setAction(ACTION_HANDOVER_SEND_MULTIPLE);
+            intent.setAction(ACTION_HANDOVER_SEND_MULTIPLE);
             intent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, mUris);
         }
         if (DBG) Log.d(TAG, "Handing off outging transfer to BT");

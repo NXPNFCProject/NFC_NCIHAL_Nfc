@@ -80,5 +80,4 @@ public class NativeP2pDevice implements NfcDepEndpoint {
     public byte getLlcpVersion() {
         return mLlcpVersion;
     }
-
 }

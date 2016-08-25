@@ -373,7 +373,8 @@ public class AidRoutingManager {
 
     public void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
         pw.println("Routing table:");
-        pw.println("    Default route: " + ((mDefaultRoute == 0x00) ? "host" : "secure element"));
+        pw.println("    Default route: " +
+                (NfcService.getInstance().GetDefaultRouteLoc() == 0x00 ? "host" : "secure element"));
         synchronized (mLock) {
             for (int i = 0; i < mAidRoutingTable.size(); i++) {
                 Set<String> aids = mAidRoutingTable.valueAt(i);

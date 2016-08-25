@@ -786,6 +786,7 @@ private:
 #if(NXP_EXTNS == TRUE)
     SyncEvent       mAbortEvent;
     bool            mAbortEventWaitOk;
+#define             WIRED_MODE_TRANSCEIVE_TIMEOUT 30000
 #endif
     /*******************************************************************************
     **

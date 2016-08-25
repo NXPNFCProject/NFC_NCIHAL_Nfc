@@ -3,21 +3,9 @@
     <string name="app_name">Nfc Service</string>
     <string name="nfcUserLabel">Nfc</string>
 
-    <!-- A notification description string informing the user that contact details were received over NFC [CHAR-LIMIT=64] -->
-    <string name="inbound_me_profile_title">Contact received over NFC</string>
-
-    <!-- A notification action string prompting the user to add contact details to the People application [CHAR-LIMIT=64] -->
-    <string name="inbound_me_profile_text">Touch to add this person as a contact.</string>
-
-    <!-- A notification description string asking the user to share their contact details over NFC [CHAR-LIMIT=64] -->
-    <string name="outbound_me_profile_title">NFC interaction complete</string>
-
-    <!-- A notification action string prompting the user to share their contact details over NFC [CHAR-LIMIT=64] -->
-    <string name="outbound_me_profile_text">Touch to give this person your contact info.</string>
-
     <!-- Content description of the NFC enabled notification icon for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
     <string name="accessibility_nfc_enabled">NFC enabled.</string>
-    <string name="touch">Touch to beam</string>
+    <string name="tap_to_beam">Tap to beam</string>
 
     <string name="beam_progress">Incoming beam...</string>
     <string name="beam_outgoing">Beaming...</string>
@@ -25,7 +13,7 @@
     <string name="beam_failed">Beam did not complete</string>
     <string name="beam_canceled">Beam canceled</string>
     <string name="cancel">Cancel</string>
-    <string name="beam_touch_to_view">Touch to view</string>
+    <string name="beam_tap_to_view">Tap to view</string>
     <string name="beam_handover_not_supported">The receiver\'s device doesn\'t support large file transfer via beam.</string>
     <string name="beam_try_again">Bring devices together again</string>
     <string name="beam_busy">Beam is currently busy. Try again when the previous transfer completes.</string>

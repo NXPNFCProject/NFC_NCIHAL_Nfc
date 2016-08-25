@@ -36,7 +36,7 @@ public final class MimeTypeUtil {
             return cr.getType(uri);
         } else if (uri.getScheme().equals(ContentResolver.SCHEME_FILE)) {
             String extension = MimeTypeMap.getFileExtensionFromUrl(uri.getPath()).toLowerCase();
-           if (extension != null) {
+            if (extension != null) {
                 return MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
             } else {
                 return null;

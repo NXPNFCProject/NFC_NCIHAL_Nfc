@@ -11,9 +11,9 @@ import java.io.File;
 
 /**
  * @hide
-*/
+ */
 public class BeamStatusReceiver extends BroadcastReceiver {
-   private static final boolean DBG = true;
+    private static final boolean DBG = true;
     private static final String TAG = "BeamStatusReceiver";
 
     private static final String ACTION_HANDOVER_STARTED =
@@ -49,7 +49,7 @@ public class BeamStatusReceiver extends BroadcastReceiver {
 
     // FIXME: Needs to stay in sync with com.android.bluetooth.opp.Constants
     private static final int HANDOVER_TRANSFER_STATUS_SUCCESS = 0;
-   private static final int HANDOVER_TRANSFER_STATUS_FAILURE = 1;
+    private static final int HANDOVER_TRANSFER_STATUS_FAILURE = 1;
 
     // permission needed to be able to receive handover status requests
     public static final String BEAM_STATUS_PERMISSION =
@@ -72,7 +72,7 @@ public class BeamStatusReceiver extends BroadcastReceiver {
     public static final int DIRECTION_OUTGOING = 1;
 
     private final Context mContext;
-   private final BeamTransferManager mTransferManager;
+    private final BeamTransferManager mTransferManager;
 
     BeamStatusReceiver(Context context, BeamTransferManager transferManager) {
         mContext = context;

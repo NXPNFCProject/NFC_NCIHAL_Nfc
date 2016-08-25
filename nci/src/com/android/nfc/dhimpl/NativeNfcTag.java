@@ -267,19 +267,24 @@ public class NativeNfcTag implements TagEndpoint {
     }
     native boolean doDisconnect();
     @Override
-    public synchronized boolean disconnect() {
+    public boolean disconnect() {
         boolean result = false;
-
-        mIsPresent = false;
-        if (mWatchdog != null) {
+        PresenceCheckWatchdog watchdog;
+        synchronized (this) {
+            mIsPresent = false;
+            watchdog = mWatchdog;
+        }
+        if (watchdog != null) {
             // Watchdog has already disconnected or will do it
-            mWatchdog.end();
+            watchdog.end();
             try {
-                mWatchdog.join();
+                watchdog.join();
             } catch (InterruptedException e) {
                 // Should never happen.
             }
-            mWatchdog = null;
+            synchronized (this) {
+                mWatchdog = null;
+            }
             result = true;
         } else {
             result = doDisconnect();

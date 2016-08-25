@@ -17,6 +17,7 @@
 package com.android.nfc;
 
 import android.bluetooth.BluetoothAdapter;
+import android.os.UserManager;
 import com.android.nfc.RegisteredComponentCache.ComponentInfo;
 import com.android.nfc.handover.HandoverDataParser;
 import com.android.nfc.handover.PeripheralHandoverService;
@@ -269,6 +270,16 @@ class NfcDispatcher {
             return screenUnlocked ? DISPATCH_UNLOCK : DISPATCH_SUCCESS;
         }
 
+        if (tryPeripheralHandover(message)) {
+            if (DBG) Log.i(TAG, "matched BT HANDOVER");
+            return screenUnlocked ? DISPATCH_UNLOCK : DISPATCH_SUCCESS;
+        }
+
+        if (NfcWifiProtectedSetup.tryNfcWifiSetup(ndef, mContext)) {
+            if (DBG) Log.i(TAG, "matched NFC WPS TOKEN");
+            return screenUnlocked ? DISPATCH_UNLOCK : DISPATCH_SUCCESS;
+        }
+
         if (provisioningOnly) {
             if (message == null) {
                 // We only allow NDEF-message dispatch in provisioning mode
@@ -281,16 +292,6 @@ class NfcDispatcher {
                 Log.e(TAG, "Dropping NFC intent in provisioning mode.");
                 return DISPATCH_FAIL;
             }
-        }
-
-        if (tryPeripheralHandover(message)) {
-            if (DBG) Log.i(TAG, "matched BT HANDOVER");
-            return screenUnlocked ? DISPATCH_UNLOCK : DISPATCH_SUCCESS;
-        }
-
-        if (NfcWifiProtectedSetup.tryNfcWifiSetup(ndef, mContext)) {
-            if (DBG) Log.i(TAG, "matched NFC WPS TOKEN");
-            return screenUnlocked ? DISPATCH_UNLOCK : DISPATCH_SUCCESS;
         }
 
         if (tryNdef(dispatch, message)) {
@@ -586,11 +587,20 @@ class NfcDispatcher {
 
         HandoverDataParser.BluetoothHandoverData handover = mHandoverDataParser.parseBluetooth(m);
         if (handover == null || !handover.valid) return false;
+        if (UserManager.get(mContext).hasUserRestriction(
+                UserManager.DISALLOW_CONFIG_BLUETOOTH,
+                // hasUserRestriction does not support UserHandle.CURRENT
+                UserHandle.of(ActivityManager.getCurrentUser()))) {
+            return false;
+        }
 
         Intent intent = new Intent(mContext, PeripheralHandoverService.class);
         intent.putExtra(PeripheralHandoverService.EXTRA_PERIPHERAL_DEVICE, handover.device);
         intent.putExtra(PeripheralHandoverService.EXTRA_PERIPHERAL_NAME, handover.name);
         intent.putExtra(PeripheralHandoverService.EXTRA_PERIPHERAL_TRANSPORT, handover.transport);
+        if (handover.oobData != null) {
+            intent.putExtra(PeripheralHandoverService.EXTRA_PERIPHERAL_OOB_DATA, handover.oobData);
+        }
         mContext.startServiceAsUser(intent, UserHandle.CURRENT);
 
         return true;

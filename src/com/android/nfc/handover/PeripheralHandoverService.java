@@ -19,6 +19,7 @@ package com.android.nfc.handover;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.OobData;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -46,6 +47,7 @@ public class PeripheralHandoverService extends Service implements BluetoothPerip
     public static final String EXTRA_PERIPHERAL_DEVICE = "device";
     public static final String EXTRA_PERIPHERAL_NAME = "headsetname";
     public static final String EXTRA_PERIPHERAL_TRANSPORT = "transporttype";
+    public static final String EXTRA_PERIPHERAL_OOB_DATA = "oobdata";
 
     // Amount of time to pause polling when connecting to peripherals
     private static final int PAUSE_POLLING_TIMEOUT_MS = 35000;
@@ -156,9 +158,10 @@ public class PeripheralHandoverService extends Service implements BluetoothPerip
         BluetoothDevice device = msgData.getParcelable(EXTRA_PERIPHERAL_DEVICE);
         String name = msgData.getString(EXTRA_PERIPHERAL_NAME);
         int transport = msgData.getInt(EXTRA_PERIPHERAL_TRANSPORT);
+        OobData oobData = msgData.getParcelable(EXTRA_PERIPHERAL_OOB_DATA);
 
         mBluetoothPeripheralHandover = new BluetoothPeripheralHandover(
-                this, device, name, transport, this);
+                this, device, name, transport, oobData, this);
 
         if (transport == BluetoothDevice.TRANSPORT_LE) {
             mHandler.sendMessageDelayed(

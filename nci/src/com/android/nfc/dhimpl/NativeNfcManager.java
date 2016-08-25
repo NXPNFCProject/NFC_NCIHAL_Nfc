@@ -408,6 +408,9 @@ public class NativeNfcManager implements DeviceHost {
     public native boolean isVzwFeatureEnabled();
 
     @Override
+    public native boolean isNfccBusy();
+
+    @Override
     public native void setEtsiReaederState(int newState);
 
     @Override

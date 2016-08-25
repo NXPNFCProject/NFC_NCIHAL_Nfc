@@ -12,7 +12,7 @@ ifneq ($(NCI_VERSION),)
 LOCAL_CFLAGS += -DNCI_VERSION=$(NCI_VERSION) -O0 -g
 endif
 
-LOCAL_CFLAGS += -Wall -Wextra -Wno-unused-parameter -Werror
+LOCAL_CFLAGS += -Wall -Wextra -Wno-unused-parameter
 #variables for NFC_NXP_CHIP_TYPE
 PN547C2 := 1
 PN548C2 := 2
@@ -65,7 +65,7 @@ LOCAL_CFLAGS += -DNFC_NXP_ESE=FALSE
 endif
 
 #### Select the CHIP ####
-NXP_CHIP_TYPE := $(PN553)
+NXP_CHIP_TYPE := $(PN551)
 
 ifeq ($(NXP_CHIP_TYPE),$(PN547C2))
 LOCAL_CFLAGS += -DNFC_NXP_CHIP_TYPE=PN547C2

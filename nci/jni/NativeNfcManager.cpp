@@ -176,7 +176,6 @@ SyncEvent                   gDeactivatedEvent;
 
 namespace android
 {
-    int                     gGeneralTransceiveTimeout = DEFAULT_GENERAL_TRANS_TIMEOUT;
     int                     gGeneralPowershutDown = 0;
     jmethodID               gCachedNfcManagerNotifyNdefMessageListeners;
     jmethodID               gCachedNfcManagerNotifyTransactionListeners;
@@ -602,9 +601,14 @@ int thread_ret;
         multiprotocol_flag = 0;
         multiprotocol_detected = 1;
         ALOGD("Prio_Logic_multiprotocol Logic");
-        thread_ret = pthread_create(&multiprotocol_thread, NULL, p2p_prio_logic_multiprotocol, NULL);
+        pthread_attr_t attr;
+        pthread_attr_init(&attr);
+        pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+        thread_ret = pthread_create(&multiprotocol_thread, &attr,
+                p2p_prio_logic_multiprotocol, NULL);
         if(thread_ret != 0)
             ALOGD("unable to create the thread");
+        pthread_attr_destroy(&attr);
         ALOGD("Prio_Logic_multiprotocol start timer");
         multiprotocol_timer.set (300, reconfigure_poll_cb);
     }
@@ -700,10 +704,13 @@ int thread_ret;
 
     ALOGD ("clear_multiprotocol");
     multiprotocol_detected = 0;
-
-    thread_ret = pthread_create(&multiprotocol_thread, NULL, p2p_prio_logic_multiprotocol, NULL);
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+    thread_ret = pthread_create(&multiprotocol_thread, &attr, p2p_prio_logic_multiprotocol, NULL);
     if(thread_ret != 0)
         ALOGD("unable to create the thread");
+    pthread_attr_destroy(&attr);
 }
 
 void multiprotocol_clear_flag(union sigval)
@@ -1104,25 +1111,6 @@ static void nfaConnectionCallback (UINT8 connEvent, tNFA_CONN_EVT_DATA* eventDat
                 SecureElement::getInstance().mEEdatapacketEvent.notifyOne();
             }
 #endif
-
-#if((NFC_NXP_ESE == TRUE)&&(CONCURRENCY_PROTECTION == TRUE))
-        case NFA_PASSIVE_LISTEN_DISABLED_EVT:
-        {
-            ALOGD("%s: NFA_PASSIVE_LISTEN_DISABLED_EVT", __FUNCTION__);
-            SyncEventGuard g (SecureElement::getInstance().mPassiveListenEvt);
-            SecureElement::getInstance().mPassiveListenEvt.notifyOne();
-        }
-        break;
-#endif
-#if(NFC_NXP_ESE == TRUE)
-        case NFA_LISTEN_ENABLED_EVT:
-        {
-            ALOGD("%s: NFA_LISTEN_ENABLED_EVT", __FUNCTION__);
-            SyncEventGuard g (SecureElement::getInstance().mPassiveListenEvt);
-            SecureElement::getInstance().mPassiveListenEvt.notifyOne();
-        }
-        break;
-#endif
 #endif
             if (sSeRfActive) {
                 sSeRfActive = false;
@@ -1303,6 +1291,24 @@ static void nfaConnectionCallback (UINT8 connEvent, tNFA_CONN_EVT_DATA* eventDat
             RoutingManager::getInstance().setEtsiReaederState(STATE_SE_RDR_MODE_STOPPED);
         }
 
+        break;
+#endif
+#if((NFC_NXP_ESE == TRUE)&&(CONCURRENCY_PROTECTION == TRUE))
+        case NFA_PASSIVE_LISTEN_DISABLED_EVT:
+        {
+            ALOGD("%s: NFA_PASSIVE_LISTEN_DISABLED_EVT", __FUNCTION__);
+            SyncEventGuard g (SecureElement::getInstance().mPassiveListenEvt);
+            SecureElement::getInstance().mPassiveListenEvt.notifyOne();
+        }
+        break;
+#endif
+#if(NFC_NXP_ESE == TRUE)
+        case NFA_LISTEN_ENABLED_EVT:
+        {
+            ALOGD("%s: NFA_LISTEN_ENABLED_EVT", __FUNCTION__);
+            SyncEventGuard g (SecureElement::getInstance().mPassiveListenEvt);
+            SecureElement::getInstance().mPassiveListenEvt.notifyOne();
+        }
         break;
 #endif
     default:
@@ -2432,7 +2438,7 @@ static void nfcManager_enableDiscovery (JNIEnv* e, jobject o, jint technologies_
 
     if ((GetNumValue(NAME_UICC_LISTEN_TECH_MASK, &num, sizeof(num))))
     {
-        ALOGE ("%s:UICC_LISTEN_MASK=0x0%d;", __FUNCTION__, num);
+        ALOGD ("%s:UICC_LISTEN_MASK=0x0%lu;", __FUNCTION__, num);
     }
 
 
@@ -2697,11 +2703,11 @@ void nfcManager_disableDiscovery (JNIEnv* e, jobject o)
 
     if ((GetNumValue(NAME_UICC_LISTEN_TECH_MASK, &num, sizeof(num))))
     {
-        ALOGE ("%s:UICC_LISTEN_MASK=0x0%d;", __FUNCTION__, num);
+        ALOGD ("%s:UICC_LISTEN_MASK=0x0%lu;", __FUNCTION__, num);
     }
     if ((GetNumValue("P2P_LISTEN_TECH_MASK", &p2p_listen_mask, sizeof(p2p_listen_mask))))
     {
-        ALOGE ("%s:P2P_LISTEN_MASK=0x0%d;", __FUNCTION__, p2p_listen_mask);
+        ALOGD ("%s:P2P_LISTEN_MASK=0x0%lu;", __FUNCTION__, p2p_listen_mask);
     }
 
     PeerToPeer::getInstance().enableP2pListening (false);
@@ -3800,6 +3806,38 @@ static bool nfcManager_isVzwFeatureEnabled (JNIEnv *e, jobject o)
     }
     return mStat;
 }
+/*******************************************************************************
+**
+** Function:        nfcManager_isNfccBusy
+**
+** Description:     Check If NFCC is busy
+**
+** Returns:         True if NFCC is busy.
+**
+*******************************************************************************/
+static bool nfcManager_isNfccBusy(JNIEnv*, jobject)
+{
+    ALOGD ("%s: ENTER", __FUNCTION__);
+    bool statBusy = false;
+    if(SecureElement::getInstance().isBusy())
+    {
+        ALOGE("%s:FAIL  SE wired-mode : busy", __FUNCTION__);
+        statBusy = true;
+    }
+    else if(rfActivation)
+    {
+        ALOGE("%s:FAIL  RF session ongoing", __FUNCTION__);
+        statBusy = true;
+    }
+    else if(get_transcation_stat() == true)
+    {
+        ALOGE ("%s: FAIL Transaction in progress", __FUNCTION__);
+        statBusy = true;
+    }
+
+    ALOGD ("%s: Exit statBusy : 0x%02x", __FUNCTION__,statBusy);
+    return statBusy;
+}
 #endif
 /*******************************************************************************
 **
@@ -3963,7 +4001,7 @@ static bool nfcManager_doSetTimeout(JNIEnv*, jobject, jint tech, jint timeout)
         return false;
     }
     ALOGD ("%s: tech=%d, timeout=%d", __FUNCTION__, tech, timeout);
-    gGeneralTransceiveTimeout = timeout;
+
     NfcTag::getInstance().setTransceiveTimeout (tech, timeout);
     return true;
 }
@@ -4752,6 +4790,8 @@ static JNINativeMethod gMethods[] =
              (void *)nfcManager_getNfcInitTimeout},
     {"isVzwFeatureEnabled", "()Z",
             (void *)nfcManager_isVzwFeatureEnabled},
+    {"isNfccBusy", "()Z",
+            (void *)nfcManager_isNfccBusy},
 #endif
     {"doSetEEPROM", "([B)V",
             (void*)nfcManager_doSetEEPROM},

@@ -21,7 +21,7 @@ import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.Application;
 import android.os.Process;
 import android.os.UserHandle;
-import android.view.HardwareRenderer;
+import android.view.ThreadedRenderer;
 
 import java.util.Iterator;
 import java.util.List;
@@ -59,7 +59,7 @@ public class NfcApplication extends Application {
         }
         if (UserHandle.myUserId() == 0 && isMainProcess) {
             mNfcService = new NfcService(this);
-            HardwareRenderer.enableForegroundTrimming();
+            ThreadedRenderer.enableForegroundTrimming();
         }
     }
 }

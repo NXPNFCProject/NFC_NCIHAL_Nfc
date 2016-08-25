@@ -99,7 +99,7 @@ public class SnepMessenger {
                     snepResponse.getField() + ")");
         }
         // Look for wrong/invalid request or response from peer
-       if(NfcService.mIsDtaMode) {
+       if(NfcService.sIsDtaMode) {
             if((mIsClient)&&(DtaSnepClient.mTestCaseId == 6)) {
                 length = Math.min(buffer.length - offset, mFragmentLength);
                 tmpBuffer = Arrays.copyOfRange(buffer, offset, offset + length);
@@ -129,7 +129,7 @@ public class SnepMessenger {
             if (DBG) Log.d(TAG, "about to send a " + length + " byte fragment");
             mSocket.send(tmpBuffer);
 
-            if(NfcService.mIsDtaMode) {
+            if(NfcService.sIsDtaMode) {
                 if((!mIsClient)&&(ExtDtaSnepServer.mTestCaseId == 0x01)){
                     mSocket.receive(responseBytes);
                     try {
@@ -179,7 +179,7 @@ public class SnepMessenger {
             throw new IOException("Error reading SNEP message.");
         } else if (size < HEADER_LENGTH) {
             try {
-                if((NfcService.mIsDtaMode)&&(mIsClient)){
+                if((NfcService.sIsDtaMode)&&(mIsClient)){
                     if (DBG) Log.d(TAG, "Invalid header length");
                     close();
                 } else {
@@ -204,11 +204,11 @@ public class SnepMessenger {
         if (DBG) Log.d(TAG, "read " + readSize + " of " + requestLength);
 
         if (((requestVersion & 0xF0) >> 4) != SnepMessage.VERSION_MAJOR) {
-            if(NfcService.mIsDtaMode) {
+            if(NfcService.sIsDtaMode) {
                 sendMessage(SnepMessage.getMessage(SnepMessage.RESPONSE_UNSUPPORTED_VERSION));
                 close();
             } else {
-            if(NfcService.mIsDtaMode) {
+            if(NfcService.sIsDtaMode) {
                 sendMessage(SnepMessage.getMessage(SnepMessage.RESPONSE_UNSUPPORTED_VERSION));
                 close();
             } else {
@@ -219,7 +219,7 @@ public class SnepMessenger {
 
         }
 
-        if(NfcService.mIsDtaMode) {
+        if(NfcService.sIsDtaMode) {
             if((!mIsClient)&&((requestField == SnepMessage.RESPONSE_CONTINUE)||  // added for TC_S_BIT_B1_01_X
                               (requestField == SnepMessage.RESPONSE_SUCCESS) ||
                               (requestField == SnepMessage.RESPONSE_NOT_FOUND)))

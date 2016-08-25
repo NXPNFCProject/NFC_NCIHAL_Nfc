@@ -41,6 +41,7 @@ import android.util.Log;
 import android.view.ActionMode;
 import android.view.Display;
 import android.view.KeyEvent;
+import android.view.KeyboardShortcutGroup;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -61,6 +62,8 @@ import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.util.List;
 
 /**
  * This class is responsible for handling the UI animation
@@ -165,7 +168,7 @@ public class SendUi implements Animator.AnimatorListener, View.OnTouchListener,
     final ObjectAnimator mAlphaUpAnimator;
     final AnimatorSet mSuccessAnimatorSet;
 
-   // Besides animating the screenshot, the Beam UI also renders
+    // Besides animating the screenshot, the Beam UI also renders
     // fireflies on platforms where we can do hardware-acceleration.
     // Firefly rendering is only started once the initial
     // "pre-animation" has scaled down the screenshot, to avoid
@@ -366,7 +369,7 @@ public class SendUi implements Animator.AnimatorListener, View.OnTouchListener,
         if (promptToNfcTap) {
             mTextHint.setText(mContext.getResources().getString(R.string.ask_nfc_tap));
         } else {
-            mTextHint.setText(mContext.getResources().getString(R.string.touch));
+            mTextHint.setText(mContext.getResources().getString(R.string.tap_to_beam));
         }
         mTextHint.setAlpha(0.0f);
         mTextHint.setVisibility(View.VISIBLE);
@@ -424,7 +427,7 @@ public class SendUi implements Animator.AnimatorListener, View.OnTouchListener,
 
         float currentAlpha = mBlackLayer.getAlpha();
         if (mBlackLayer.isShown() && currentAlpha > 0.0f) {
-           PropertyValuesHolder alphaDown = PropertyValuesHolder.ofFloat("alpha",
+            PropertyValuesHolder alphaDown = PropertyValuesHolder.ofFloat("alpha",
                     new float[] {currentAlpha, 0.0f});
             mAlphaDownAnimator.setValues(alphaDown);
             mAlphaDownAnimator.start();
@@ -581,7 +584,7 @@ public class SendUi implements Animator.AnimatorListener, View.OnTouchListener,
         }
     };
 
-   /**
+    /**
      * Returns a screenshot of the current display contents.
      */
     Bitmap createScreenshot() {
@@ -610,7 +613,7 @@ public class SendUi implements Animator.AnimatorListener, View.OnTouchListener,
             // Get the dimensions of the device in its native orientation
             mDisplayMatrix.reset();
             mDisplayMatrix.preRotate(-degrees);
-           mDisplayMatrix.mapPoints(dims);
+            mDisplayMatrix.mapPoints(dims);
             dims[0] = Math.abs(dims[0]);
             dims[1] = Math.abs(dims[1]);
         }
@@ -620,6 +623,7 @@ public class SendUi implements Animator.AnimatorListener, View.OnTouchListener,
         if (bitmap == null) {
             return null;
         }
+
         if (requiresRotation) {
             // Rotate the screenshot to the current orientation
             Bitmap ss = Bitmap.createBitmap(mDisplayMetrics.widthPixels,
@@ -827,6 +831,7 @@ public class SendUi implements Animator.AnimatorListener, View.OnTouchListener,
     public boolean onMenuOpened(int featureId, Menu menu) {
         return false;
     }
+
     @Override
     public boolean onMenuItemSelected(int featureId, MenuItem item) {
         return false;
@@ -857,9 +862,10 @@ public class SendUi implements Animator.AnimatorListener, View.OnTouchListener,
     public void onPanelClosed(int featureId, Menu menu) {
 
     }
+
     @Override
     public boolean onSearchRequested(SearchEvent searchEvent) {
-         return onSearchRequested();
+        return onSearchRequested();
     }
 
     @Override

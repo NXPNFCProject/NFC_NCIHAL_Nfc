@@ -101,6 +101,9 @@ namespace android
     extern void start_timer_msec(struct timeval  *start_tv);
     extern long stop_timer_getdifference_msec(struct timeval  *start_tv, struct timeval  *stop_tv);
     extern void set_transcation_stat(bool result);
+#if ((NFC_NXP_CHIP_TYPE == PN548C2) || (NFC_NXP_CHIP_TYPE == PN551))
+    extern bool nfcManager_isNfcActive();
+#endif
 }
 #if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
 /* hold the transceive flag should be set when the prio session is actrive/about to active*/
@@ -2627,8 +2630,8 @@ tNFA_HANDLE SecureElement::getDefaultEeHandle ()
 {
     static const char fn [] = "SecureElement::activate";
 
-    ALOGE ("%s: - Enter", fn);
-    ALOGE ("%s: - mActualNumEe = %x mActiveSeOverride = 0x%02X", fn,mActualNumEe, mActiveSeOverride);
+    ALOGD ("%s: - Enter", fn);
+    ALOGD ("%s: - mActualNumEe = %x mActiveSeOverride = 0x%02X", fn,mActualNumEe, mActiveSeOverride);
 
     UINT16 overrideEeHandle = NFA_HANDLE_GROUP_EE | mActiveSeOverride;
     // Find the first EE that is not the HCI Access i/f.
@@ -2636,7 +2639,7 @@ tNFA_HANDLE SecureElement::getDefaultEeHandle ()
     {
         if ( (mActiveSeOverride != ACTIVE_SE_USE_ANY) && (overrideEeHandle != mEeInfo[xx].ee_handle))
             continue; //skip all the EE's that are ignored
-        ALOGE ("%s: - mEeInfo[xx].ee_handle = 0x%02x, mEeInfo[xx].ee_status = 0x%02x", fn,mEeInfo[xx].ee_handle, mEeInfo[xx].ee_status);
+        ALOGD ("%s: - mEeInfo[xx].ee_handle = 0x%02x, mEeInfo[xx].ee_status = 0x%02x", fn,mEeInfo[xx].ee_handle, mEeInfo[xx].ee_status);
 
         if ((mEeInfo[xx].num_interface != 0)
 #ifndef GEMALTO_SE_SUPPORT
@@ -2820,7 +2823,7 @@ bool SecureElement::getAtr(jint seID, UINT8* recvBuffer, INT32 *recvBufferSize)
         {
             mGetAtrRspwait = true;
             mGetRegisterEvent.wait();
-            ALOGE("%s: Received ATR response on pipe 0x%x ", fn, mNewPipeId);
+            ALOGD ("%s: Received ATR response on pipe 0x%x ", fn, mNewPipeId);
         }
         *recvBufferSize = mAtrInfolen;
         memcpy(recvBuffer, mAtrInfo, mAtrInfolen);
@@ -3614,12 +3617,89 @@ TheEnd:
     return decoded_length;
 }
 #if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
+#if ((NFC_NXP_CHIP_TYPE == PN548C2) || (NFC_NXP_CHIP_TYPE == PN551))
+/*******************************************************************************
+**
+** Function:        nfaVSC_SVDDSyncOnOffCallback
+**
+** Description:     callback to process the svdd protection response from FW
+**
+**
++** Returns:         void.
+**
+*******************************************************************************/
+static void nfaVSC_SVDDSyncOnOffCallback(UINT8 event, UINT16 param_len, UINT8 *p_param)
+{
+    (void)event;
+    tNFC_STATUS nfaStat;
+    char fn[] = "nfaVSC_SVDDProtectionCallback";
+    ALOGD ("%s", __FUNCTION__);
+    ALOGD ("%s param_len = %d ", __FUNCTION__, param_len);
+    ALOGD ("%s status = 0x%X ", __FUNCTION__, p_param[3]);
+    if (NFC_RelSvddWait((void *)&nfaStat) != 0)
+    {
+        ALOGE ("%s: NFC_RelSvddWait failed ret = %d", fn, nfaStat);
+    }
+}
+/*******************************************************************************
+**
+** Function:        nfaVSC_SVDDSyncOnOff
+**
+** Description:     starts and stops the svdd protection in FW
+**
+**
+** Returns:         void.
+**
+*******************************************************************************/
+static void nfaVSC_SVDDSyncOnOff(bool type)
+{
+    tNFC_STATUS stat;
+    UINT8 param = 0x00;
+    if(type == true)
+    {
+        param = 0x01; //SVDD protection on
+    }
+    if (android::nfcManager_isNfcActive() == false)
+    {
+        ALOGE ("%s: NFC is no longer active.", __FUNCTION__);
+        return;
+    }
+    stat = NFA_SendVsCommand (0x31, 0x01, &param, nfaVSC_SVDDSyncOnOffCallback);
+    if(NFA_STATUS_OK == stat)
+    {
+        ALOGD ("%s: NFA_SendVsCommand pass stat = %d", __FUNCTION__,stat);
+    }
+    else
+    {
+        ALOGD ("%s: NFA_SendVsCommand failed stat = %d", __FUNCTION__,stat);
+    }
+}
+#endif
+
 void spi_prio_signal_handler (int signum, siginfo_t *info, void *unused)
 {
     ALOGD ("%s: Inside the Signal Handler %d\n", __FUNCTION__, SIG_NFC);
     if (signum == SIG_NFC)
     {
         ALOGD ("%s: Signal is SIG_NFC\n", __FUNCTION__);
+#if ((NFC_NXP_CHIP_TYPE == PN548C2) || (NFC_NXP_CHIP_TYPE == PN551))
+        if ((P61_STATE_DWP_SVDD_SYNC_START == info->si_int)
+                || (P61_STATE_SPI_SVDD_SYNC_START == info->si_int))
+        {
+            ALOGD ("%s: svdd protection on: signal type %d\n", __FUNCTION__, info->si_int);
+            nfaVSC_SVDDSyncOnOff(true);
+            ALOGD ("%s: Wait for response", __FUNCTION__);
+            return;
+        }
+        else if ((P61_STATE_DWP_SVDD_SYNC_END == info->si_int)
+            || (P61_STATE_SPI_SVDD_SYNC_END == info->si_int ))
+        {
+            ALOGD ("%s: svdd protection off: signal type %d\n", __FUNCTION__, info->si_int);
+            nfaVSC_SVDDSyncOnOff(false);
+            ALOGD ("%s: Wait for response", __FUNCTION__);
+            return;
+        }
+#endif
         if(info->si_int & P61_STATE_SPI_PRIO)
         {
             ALOGD ("%s: SPI PRIO request Signal....=%d\n", __FUNCTION__);

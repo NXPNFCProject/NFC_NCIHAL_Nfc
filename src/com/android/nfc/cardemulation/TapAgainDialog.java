@@ -35,7 +35,8 @@ import com.android.internal.app.AlertActivity;
 import com.android.internal.app.AlertController;
 
 public class TapAgainDialog extends AlertActivity implements DialogInterface.OnClickListener {
-    public static final String ACTION_CLOSE = "com.android.nfc.cardmeulation.close_tap_dialog";
+    public static final String ACTION_CLOSE =
+            "com.android.nfc.cardemulation.action.CLOSE_TAP_DIALOG";
     public static final String EXTRA_APDU_SERVICE = "apdu_service";
 
     public static final String EXTRA_CATEGORY = "category";

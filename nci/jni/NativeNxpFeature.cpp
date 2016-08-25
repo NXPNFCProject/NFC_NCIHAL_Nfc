@@ -74,6 +74,9 @@ tNFA_STATUS GetCbStatus(void);
 static void NxpResponse_Cb(UINT8 event, UINT16 param_len, UINT8 *p_param);
 static void NxpResponse_SetDhlf_Cb(UINT8 event, UINT16 param_len, UINT8 *p_param);
 static void NxpResponse_SetVenConfig_Cb(UINT8 event, UINT16 param_len, UINT8 *p_param);
+#if(NXP_EXTNS == TRUE)
+static tNFA_STATUS NxpNfc_Send_CoreResetInit_Cmd(void);
+#endif
 }
 
 namespace android
@@ -698,21 +701,24 @@ tNFA_STATUS ResetEseSession()
     ALOGD("%s: enter", __FUNCTION__);
 
     SetCbStatus(NFA_STATUS_FAILED);
-    SyncEventGuard guard (gnxpfeature_conf.NxpFeatureConfigEvt);
-    status = NFA_SendNxpNciCommand(sizeof(cmd_buf), cmd_buf, NxpResponse_Cb);
-    if (status == NFA_STATUS_OK)
     {
-        ALOGD ("%s: Success NFA_SendNxpNciCommand", __FUNCTION__);
-        gnxpfeature_conf.NxpFeatureConfigEvt.wait(); /* wait for callback */
-    }
-    else
-    {
-        ALOGE ("%s: Failed NFA_SendNxpNciCommand", __FUNCTION__);
+        SyncEventGuard guard (gnxpfeature_conf.NxpFeatureConfigEvt);
+        status = NFA_SendNxpNciCommand(sizeof(cmd_buf), cmd_buf, NxpResponse_Cb);
+        if (status == NFA_STATUS_OK)
+        {
+            ALOGD ("%s: Success NFA_SendNxpNciCommand", __FUNCTION__);
+            gnxpfeature_conf.NxpFeatureConfigEvt.wait(); /* wait for callback */
+        }
+        else
+        {
+            ALOGE ("%s: Failed NFA_SendNxpNciCommand", __FUNCTION__);
+        }
     }
     status = GetCbStatus();
     if (NFA_STATUS_OK == status)
     {
         ALOGD ("%s: ResetEseSession identity is Success", __FUNCTION__);
+        status = NxpNfc_Send_CoreResetInit_Cmd();
     }
     ALOGD("%s: exit", __FUNCTION__);
     return status;
@@ -839,6 +845,57 @@ tNFA_STATUS NxpNfc_Write_Cmd_Common(uint8_t retlen, uint8_t* buffer)
          ALOGE ("%s: Failed NFA_SendNxpNciCommand", __FUNCTION__);
     }
     status = GetCbStatus();
+    return status;
+}
+#endif
+#if(NXP_EXTNS == TRUE)
+/*******************************************************************************
+ **
+ ** Function:        NxpNfc_Send_CoreResetInit_Cmd()
+ **
+ ** Description:     Sends Core Reset and Init command to NFCC
+ **
+ ** Returns:         success/failure
+ **
+ *******************************************************************************/
+tNFA_STATUS NxpNfc_Send_CoreResetInit_Cmd(void)
+{
+    tNFA_STATUS status = NFA_STATUS_FAILED;
+    /*NCI_CORE_INIT_CMD*/
+    static uint8_t core_init_cmd[] = {0x20,0x01,0x00};
+    /*NCI_CORE_RESET_CMD*/
+    static uint8_t core_reset_cmd[] = {0x20,0x00,0x01,0x00}; //keep configuration
+    SetCbStatus(NFA_STATUS_FAILED);
+    {
+        SyncEventGuard guard (gnxpfeature_conf.NxpFeatureConfigEvt);
+        status = NFA_SendNxpNciCommand(sizeof(core_reset_cmd), core_reset_cmd, NxpResponse_Cb);
+        if (status == NFA_STATUS_OK)
+        {
+            ALOGD ("%s: Success NFA_SendNxpNciCommand", __FUNCTION__);
+            gnxpfeature_conf.NxpFeatureConfigEvt.wait(1000); /* wait for callback */
+        }
+        else
+        {
+            ALOGE ("%s: Failed NFA_SendNxpNciCommand", __FUNCTION__);
+        }
+    }
+    status = GetCbStatus();
+
+
+    if(status == NFA_STATUS_OK) {
+        SyncEventGuard guard (gnxpfeature_conf.NxpFeatureConfigEvt);
+        status = NFA_SendNxpNciCommand(sizeof(core_init_cmd), core_init_cmd, NxpResponse_Cb);
+        if (status == NFA_STATUS_OK)
+        {
+            ALOGD ("%s: Success NFA_SendNxpNciCommand", __FUNCTION__);
+            gnxpfeature_conf.NxpFeatureConfigEvt.wait(1000); /* wait for callback */
+        }
+        else
+        {
+            ALOGE ("%s: Failed NFA_SendNxpNciCommand", __FUNCTION__);
+        }
+        status = GetCbStatus();
+    }
     return status;
 }
 #endif

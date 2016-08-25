@@ -30,3 +30,4 @@ public class NfcBackupAgent extends BackupAgentHelper {
         addHelper(SHARED_PREFS_BACKUP_KEY, helper);
     }
 }
+

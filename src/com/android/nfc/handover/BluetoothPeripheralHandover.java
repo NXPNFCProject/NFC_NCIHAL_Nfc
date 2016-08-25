@@ -22,6 +22,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothHeadset;
 import android.bluetooth.BluetoothInputDevice;
 import android.bluetooth.BluetoothProfile;
+import android.bluetooth.OobData;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -94,6 +95,7 @@ public class BluetoothPeripheralHandover implements BluetoothProfile.ServiceList
     int mHfpResult;  // used only in STATE_CONNECTING and STATE_DISCONNETING
     int mA2dpResult; // used only in STATE_CONNECTING and STATE_DISCONNETING
     int mHidResult;
+    OobData mOobData;
 
     // protected by mLock
     BluetoothA2dp mA2dp;
@@ -105,12 +107,13 @@ public class BluetoothPeripheralHandover implements BluetoothProfile.ServiceList
     }
 
     public BluetoothPeripheralHandover(Context context, BluetoothDevice device, String name,
-                                       int transport, Callback callback) {
+                                       int transport, OobData oobData, Callback callback) {
         checkMainThread();  // mHandler must get get constructed on Main Thread for toasts to work
         mContext = context;
         mDevice = device;
         mName = name;
         mTransport = transport;
+        mOobData = oobData;
         mCallback = callback;
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
@@ -388,9 +391,14 @@ public class BluetoothPeripheralHandover implements BluetoothProfile.ServiceList
     void startBonding() {
         mState = STATE_BONDING;
         toast(getToastString(R.string.pairing_peripheral));
-        if (!mDevice.createBond(mTransport)) {
-            toast(getToastString(R.string.pairing_peripheral_failed));
-            complete(false);
+        if (mOobData != null) {
+            if (!mDevice.createBondOutOfBand(mTransport, mOobData)) {
+                toast(getToastString(R.string.pairing_peripheral_failed));
+                complete(false);
+            }
+        } else if (!mDevice.createBond(mTransport)) {
+                toast(getToastString(R.string.pairing_peripheral_failed));
+                complete(false);
         }
     }
 

@@ -377,6 +377,8 @@ public interface DeviceHost {
 
     boolean isVzwFeatureEnabled();
 
+    boolean isNfccBusy();
+
     void setEtsiReaederState(int newState);
 
     int getEtsiReaederState();
