@@ -2123,16 +2123,18 @@ public class NfcService implements DeviceHostListener {
             NfcPermissions.enforceAdminPermissions(mContext);
             int protoRouteEntry = 0;
             protoRouteEntry=((routeLoc & 0x03)== 0x01) ? (0x01 << ROUTE_LOC_MASK) : (((routeLoc & 0x03) == 0x02) ? (0x02 << ROUTE_LOC_MASK) : 0x00) ;
+            protoRouteEntry |= ((fullPower ? (mDeviceHost.getDefaultDesfirePowerState() & 0x1F) | 0x01 : 0) | (lowPower ? 0x01 << 1 :0 ) | (noPower ? 0x01 << 2 :0));
+
             if(routeLoc == 0x00)
-              //if routeLocation is HOST, Allow HCE only for SCREEN_ON_UNLOCKED
             {
-                protoRouteEntry |= ((fullPower ? 0x01 : 0) | (lowPower ? 0x01 << 1 :0 ) | (noPower ? 0x01 << 2 :0));
+                /*
+                bit pos 1 = Power Off
+                bit pos 2 = Battery Off
+                bit pos 4 = Screen Off
+                Set these bits to 0 because in case routeLoc = HOST it can not work on POWER_OFF, BATTERY_OFF and SCREEN_OFF*/
+                protoRouteEntry &= 0xE9;
             }
-            else
-                //if routeLocation is ESE/UICC, Allow CE for the states requested
-            {
-                protoRouteEntry |= ((fullPower ? (mDeviceHost.getDefaultDesfirePowerState() & 0x1F) | 0x01 : 0) | (lowPower ? 0x01 << 1 :0 ) | (noPower ? 0x01 << 2 :0));
-            }
+
             Log.i(TAG,"MifareDesfireRouteSet : " + protoRouteEntry);
             mNxpPrefsEditor = mNxpPrefs.edit();
             mNxpPrefsEditor.putInt("PREF_MIFARE_DESFIRE_PROTO_ROUTE_ID", protoRouteEntry);
@@ -2148,15 +2150,16 @@ public class NfcService implements DeviceHostListener {
             if (mIsHceCapable) {
                 int protoRouteEntry = 0;
                 protoRouteEntry=((routeLoc & 0x03)== 0x01) ? (0x01 << ROUTE_LOC_MASK) : (((routeLoc & 0x03) == 0x02) ? (0x02 << ROUTE_LOC_MASK) : 0x00) ;
+                protoRouteEntry |= ((fullPower ? (mDeviceHost.getDefaultAidPowerState() & 0x1F) | 0x01 : 0) | (lowPower ? 0x01 << 1 :0 ) | (noPower ? 0x01 << 2 :0));
+
                 if(routeLoc == 0x00)
-                  //if routeLocation is HOST, Allow HCE only for SCREEN_ON_UNLOCKED
                 {
-                    protoRouteEntry |= ((fullPower ? 0x01 : 0) | (lowPower ? 0x01 << 1 :0 ) | (noPower ? 0x01 << 2 :0));
-                }
-                else
-                    //if routeLocation is ESE/UICC, Allow CE for the states requested
-                {
-                    protoRouteEntry |= ((fullPower ? (mDeviceHost.getDefaultAidPowerState() & 0x1F) | 0x01 : 0) | (lowPower ? 0x01 << 1 :0 ) | (noPower ? 0x01 << 2 :0));
+                    /*
+                    bit pos 1 = Power Off
+                    bit pos 2 = Battery Off
+                    bit pos 4 = Screen Off
+                    Set these bits to 0 because in case routeLoc = HOST it can not work on POWER_OFF, BATTERY_OFF and SCREEN_OFF*/
+                    protoRouteEntry &= 0xE9;
                 }
                 Log.i(TAG,"DefaultRouteSet : " + protoRouteEntry);
                 if(GetDefaultRouteLoc() != routeLoc)
@@ -4409,10 +4412,12 @@ public class NfcService implements DeviceHostListener {
         int defaultMifareDesfireRoute = ((mDeviceHost.getDefaultDesfirePowerState() & 0x1F) | (routeLoc << ROUTE_LOC_MASK));
         if(routeLoc == 0x00)
         {
-            /*bit pos 3 = Screen Lock
-              bit pos 4 = Screen Off
-              Set these 2 bits to 0 because in case routeLoc = HOST it can work only in SCREEN_ON_UNLOCKED*/
-            defaultMifareDesfireRoute &= 0xE7;
+            /*
+            bit pos 1 = Power Off
+            bit pos 2 = Battery Off
+            bit pos 4 = Screen Off
+            Set these bits to 0 because in case routeLoc = HOST it can not work on POWER_OFF, BATTERY_OFF and SCREEN_OFF*/
+            defaultMifareDesfireRoute &= 0xE9;
         }
         if (DBG) Log.d(TAG, "defaultMifareDesfireRoute : " + defaultMifareDesfireRoute);
         return defaultMifareDesfireRoute;
@@ -4427,10 +4432,12 @@ public class NfcService implements DeviceHostListener {
         int defaultAidRoute = ((mDeviceHost.getDefaultAidPowerState() & 0x1F) | (routeLoc << ROUTE_LOC_MASK));
         if(routeLoc == 0x00)
         {
-            /*bit pos 3 = Screen Lock
-              bit pos 4 = Screen Off
-              Set these 2 bits to 0 because in case routeLoc = HOST it can work only in SCREEN_ON_UNLOCKED*/
-            defaultAidRoute &= 0xE7;
+            /*
+            bit pos 1 = Power Off
+            bit pos 2 = Battery Off
+            bit pos 4 = Screen Off
+            Set these bits to 0 because in case routeLoc = HOST it can not work on POWER_OFF, BATTERY_OFF and SCREEN_OFF*/
+            defaultAidRoute &= 0xE9;
         }
         if (DBG) Log.d(TAG, "defaultAidRoute : " + defaultAidRoute);
         return defaultAidRoute;

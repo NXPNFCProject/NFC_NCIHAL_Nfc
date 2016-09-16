@@ -197,6 +197,7 @@ private:
     void setProtoRouting(void);
     void setTechRouting(void);
     void processTechEntriesForFwdfunctionality(void);
+    void configureOffHostNfceeTechMask(void);
     void checkProtoSeID(void);
     void dumpTables(int);
 
@@ -223,6 +224,12 @@ private:
     static const int ROUTE_LOC_ESE_ID       = 0x4C0;
     static const int ROUTE_LOC_UICC1_ID     = 0x402;
     static const int ROUTE_LOC_UICC2_ID     = 0x481;
+    // Fixed power states masks
+    static const int PWR_SWTCH_ON_SCRN_UNLCK_MASK = 0x01;
+    static const int PWR_SWTCH_OFF_MASK           = 0x02;
+    static const int PWR_BATT_OFF_MASK            = 0x04;
+    static const int PWR_SWTCH_ON_SCRN_LOCK_MASK  = 0x08;
+    static const int PWR_SWTCH_ON_SCRN_OFF_MASK   = 0x10;
     // See AidRoutingManager.java for corresponding
     // AID_MATCHING_ constants
     // Every routing table entry is matched exact (BCM20793)

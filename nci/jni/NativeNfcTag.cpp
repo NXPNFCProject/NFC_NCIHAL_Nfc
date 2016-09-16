@@ -77,6 +77,10 @@ namespace android
 {
     bool    gIsTagDeactivating = false;    // flag for nfa callback indicating we are deactivating for RF interface switch
     bool    gIsSelectingRfInterface = false; // flag for nfa callback indicating we are selecting for RF interface switch
+#if(NXP_EXTNS == TRUE)
+    bool    gIsWaiting4Deact2SleepNtf = false;
+    bool    gGotDeact2IdleNtf = false;
+#endif
     bool    fNeedToSwitchBack = false;
     void    acquireRfInterfaceMutexLock();
     void    releaseRfInterfaceMutexLock();
@@ -985,7 +989,10 @@ static int reSelect (tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded)
         }
 #if(NFC_NXP_NON_STD_CARD == TRUE)
         if(!retry_cnt && (natTag.mTechLibNfcTypes[handle] != NFA_PROTOCOL_MIFARE))
+        {
+            ALOGD ("%s: Cashbee detected", __FUNCTION__);
             NfcTag::getInstance ().mCashbeeDetected = true;
+        }
 #endif
         {
             SyncEventGuard g (sReconnectEvent);
@@ -1002,7 +1009,7 @@ static int reSelect (tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded)
                 setReconnectState(true);
                 /* send deactivate to Idle command */
                 ALOGD ("%s: deactivate to Idle", __FUNCTION__);
-                if (NFA_STATUS_OK != (status = NFA_StopRfDiscovery ())) //deactivate to sleep state
+                if (NFA_STATUS_OK != (status = NFA_StopRfDiscovery ())) //deactivate to idle state
                 {
                     ALOGE ("%s: deactivate failed, status = %d", __FUNCTION__, status);
                     break;
@@ -1016,18 +1023,36 @@ static int reSelect (tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded)
                     ALOGE ("%s: deactivate failed, status = %d", __FUNCTION__, status);
                     break;
                 }
+#if(NXP_EXTNS == TRUE)
+                else
+                {
+                    gIsWaiting4Deact2SleepNtf = true;
+                }
+#endif
             }
             if (sReconnectEvent.wait (1000) == false) //if timeout occurred
             {
                 ALOGE ("%s: timeout waiting for deactivate", __FUNCTION__);
             }
         }
-
         /* if (!sGotDeactivate)
         {
             rVal = STATUS_CODE_TARGET_LOST;
             break;
-         }*/
+        }*/
+#if(NXP_EXTNS == TRUE)
+        if(gIsWaiting4Deact2SleepNtf)
+        {
+            if (gGotDeact2IdleNtf)
+            {
+                ALOGE ("%s: wrong deactivate ntf; break", __FUNCTION__);
+                gIsWaiting4Deact2SleepNtf = false;
+                gGotDeact2IdleNtf = false;
+                rVal = STATUS_CODE_TARGET_LOST;
+                break;
+            }
+        }
+#endif
         if(NfcTag::getInstance().getActivationState() == NfcTag::Idle)
         {
             ALOGD("%s:tag is in idle", __FUNCTION__);

@@ -602,9 +602,8 @@ void RoutingManager::setRouting(bool isHCEEnabled)
 
 bool RoutingManager::setDefaultRoute(const UINT8 defaultRoute, const UINT8 protoRoute, const UINT8 techRoute)
 {
-    static const char fn []           = "RoutingManager::setDefaultRoute";
-    tNFA_STATUS       nfaStat         = NFA_STATUS_FAILED;
-    tNFA_HANDLE       preferredHandle = ROUTE_LOC_UICC1_ID;
+    static const char fn []   = "RoutingManager::setDefaultRoute";
+    tNFA_STATUS       nfaStat = NFA_STATUS_FAILED;
 
     ALOGD ("%s: enter; defaultRoute:0x%2X protoRoute:0x%2X TechRoute:0x%2X HostListenMask:0x%X", fn, defaultRoute, protoRoute, techRoute, mHostListnTechMask);
 
@@ -659,6 +658,8 @@ bool RoutingManager::setDefaultRoute(const UINT8 defaultRoute, const UINT8 proto
 
     setTechRouting ();
 
+    configureOffHostNfceeTechMask();
+
     ALOGD ("%s: exit", fn);
 
     return true;
@@ -698,10 +699,10 @@ void RoutingManager::printMemberData()
  * If not connected then set it to HOST by default*/
 void RoutingManager::checkProtoSeID(void)
 {
-    static const char fn []                     = "RoutingManager::checkProtoSeID";
-    UINT8 isDefaultIsoDepSeIDPresent            = 0;
-    tNFA_HANDLE ActDevHandle                    = NFA_HANDLE_INVALID;
-    unsigned long check_default_proto_se_id_req = 0;
+    static const char fn []                         = "RoutingManager::checkProtoSeID";
+    UINT8             isDefaultIsoDepSeIDPresent    = 0;
+    tNFA_HANDLE       ActDevHandle                  = NFA_HANDLE_INVALID;
+    unsigned long     check_default_proto_se_id_req = 0;
 
     ALOGD ("%s: enter", fn);
 
@@ -736,7 +737,68 @@ void RoutingManager::checkProtoSeID(void)
         if(!isDefaultIsoDepSeIDPresent)
         {
             mDefaultIsoDepSeID = ROUTE_LOC_HOST_ID;
-            mDefaultIsoDepPowerstate = 0x01;
+            mDefaultIsoDepPowerstate = PWR_SWTCH_ON_SCRN_UNLCK_MASK;
+        }
+    }
+
+    ALOGD ("%s: exit", fn);
+}
+
+void RoutingManager::configureOffHostNfceeTechMask(void)
+{
+    static const char fn []           = "RoutingManager::configureOffHostNfceeTechMask";
+    tNFA_STATUS       nfaStat         = NFA_STATUS_FAILED;
+    UINT8             seId            = 0x00;
+    UINT8             count           = 0x00;
+    tNFA_HANDLE       preferredHandle = ROUTE_LOC_UICC1_ID;
+    tNFA_HANDLE       defaultHandle   = NFA_HANDLE_INVALID;
+    tNFA_HANDLE       ee_handleList[SecureElement::MAX_NUM_EE];
+
+    ALOGD ("%s: enter", fn);
+
+    if (mDefaultEe == SecureElement::ESE_ID) //eSE
+    {
+        preferredHandle = ROUTE_LOC_ESE_ID;
+    }
+    else if (mDefaultEe == SecureElement::UICC_ID) //UICC
+    {
+        preferredHandle = ROUTE_LOC_UICC1_ID;
+    }
+
+    SecureElement::getInstance().getEeHandleList(ee_handleList, &count);
+
+    for (UINT8 i = 0; ((count != 0 ) && (i < count)); i++)
+    {
+        seId = SecureElement::getInstance().getGenericEseId(ee_handleList[i]);
+        defaultHandle = SecureElement::getInstance().getEseHandleFromGenericId(seId);
+        ALOGD ("%s: ee_handleList[%d] : 0x%X", fn, i,ee_handleList[i]);
+        if (preferredHandle == defaultHandle)
+        {
+            break;
+        }
+    }
+
+    if((defaultHandle != NFA_HANDLE_INVALID)  &&  (0 != mUiccListnTechMask))
+    {
+        {
+            SyncEventGuard guard (SecureElement::getInstance().mUiccListenEvent);
+            nfaStat = NFA_CeConfigureUiccListenTech (defaultHandle, 0x00);
+            if (nfaStat == NFA_STATUS_OK)
+            {
+                 SecureElement::getInstance().mUiccListenEvent.wait ();
+            }
+            else
+                 ALOGE ("fail to start UICC listen");
+        }
+        {
+            SyncEventGuard guard (SecureElement::getInstance().mUiccListenEvent);
+            nfaStat = NFA_CeConfigureUiccListenTech (defaultHandle, (mUiccListnTechMask & 0x07));
+            if(nfaStat == NFA_STATUS_OK)
+            {
+                 SecureElement::getInstance().mUiccListenEvent.wait ();
+            }
+            else
+                 ALOGE ("fail to start UICC listen");
         }
     }
 
@@ -805,7 +867,7 @@ void RoutingManager::compileProtoEntries(void)
 
     /*Populate the entries on  protocol table*/
     mProtoTableEntries[PROTO_T3T_IDX].routeLoc = ROUTE_LOC_HOST_ID;//T3T Proto always to HOST. For other EE used Tech F routing
-    mProtoTableEntries[PROTO_T3T_IDX].power    = 0x01; //Only Screen ON UNLOCK allowed
+    mProtoTableEntries[PROTO_T3T_IDX].power    = PWR_SWTCH_ON_SCRN_UNLCK_MASK; //Only Screen ON UNLOCK allowed
     mProtoTableEntries[PROTO_T3T_IDX].enable   = ((mHostListnTechMask & 0x04) != 0x00) ? TRUE : FALSE;
 
     mProtoTableEntries[PROTO_ISODEP_IDX].routeLoc = mDefaultIsoDepSeID;
@@ -856,11 +918,16 @@ void RoutingManager::consolidateProtoEntries(void)
             }
             if(index != -1)
             {
-                mLmrtEntries[index].proto_switch_on    = (mLmrtEntries[index].proto_switch_on)   | ((mProtoTableEntries[xx].power & 0X01)? mProtoTableEntries[xx].protocol:0);
-                mLmrtEntries[index].proto_switch_off   = (mLmrtEntries[index].proto_switch_off)  | ((mProtoTableEntries[xx].power & 0X02)? mProtoTableEntries[xx].protocol:0);
-                mLmrtEntries[index].proto_battery_off  = (mLmrtEntries[index].proto_battery_off) | ((mProtoTableEntries[xx].power & 0X04)? mProtoTableEntries[xx].protocol:0);
-                mLmrtEntries[index].proto_screen_lock  = (mLmrtEntries[index].proto_screen_lock) | ((mProtoTableEntries[xx].power & 0X08)? mProtoTableEntries[xx].protocol:0);
-                mLmrtEntries[index].proto_screen_off   = (mLmrtEntries[index].proto_screen_off)  | ((mProtoTableEntries[xx].power & 0X10)? mProtoTableEntries[xx].protocol:0);
+                mLmrtEntries[index].proto_switch_on    = (mLmrtEntries[index].proto_switch_on)   |
+                                                         ((mProtoTableEntries[xx].power & PWR_SWTCH_ON_SCRN_UNLCK_MASK) ? mProtoTableEntries[xx].protocol:0);
+                mLmrtEntries[index].proto_switch_off   = (mLmrtEntries[index].proto_switch_off)  |
+                                                         ((mProtoTableEntries[xx].power & PWR_SWTCH_OFF_MASK) ? mProtoTableEntries[xx].protocol:0);
+                mLmrtEntries[index].proto_battery_off  = (mLmrtEntries[index].proto_battery_off) |
+                                                         ((mProtoTableEntries[xx].power & PWR_BATT_OFF_MASK) ? mProtoTableEntries[xx].protocol:0);
+                mLmrtEntries[index].proto_screen_lock  = (mLmrtEntries[index].proto_screen_lock) |
+                                                         ((mProtoTableEntries[xx].power & PWR_SWTCH_ON_SCRN_LOCK_MASK) ? mProtoTableEntries[xx].protocol:0);
+                mLmrtEntries[index].proto_screen_off   = (mLmrtEntries[index].proto_screen_off)  |
+                                                         ((mProtoTableEntries[xx].power & PWR_SWTCH_ON_SCRN_OFF_MASK) ? mProtoTableEntries[xx].protocol:0);
             }
         }
     }
@@ -1104,15 +1171,15 @@ void RoutingManager::consolidateTechEntries(void)
             if(index != -1)
             {
                 mLmrtEntries[index].tech_switch_on    = mLmrtEntries[index].tech_switch_on |
-                                                        ((mTechTableEntries[xx].power & 0X01)? mTechTableEntries[xx].technology:0);
+                                                        ((mTechTableEntries[xx].power & PWR_SWTCH_ON_SCRN_UNLCK_MASK)? mTechTableEntries[xx].technology:0);
                 mLmrtEntries[index].tech_switch_off   = mLmrtEntries[index].tech_switch_off |
-                                                        ((mTechTableEntries[xx].power & 0X02)? mTechTableEntries[xx].technology:0);
+                                                        ((mTechTableEntries[xx].power & PWR_SWTCH_OFF_MASK)? mTechTableEntries[xx].technology:0);
                 mLmrtEntries[index].tech_battery_off  = mLmrtEntries[index].tech_battery_off |
-                                                        ((mTechTableEntries[index].power & 0X04)? mTechTableEntries[xx].technology:0);
+                                                        ((mTechTableEntries[index].power & PWR_BATT_OFF_MASK)? mTechTableEntries[xx].technology:0);
                 mLmrtEntries[index].tech_screen_lock  = mLmrtEntries[index].tech_screen_lock |
-                                                        ((mTechTableEntries[xx].power & 0X08)? mTechTableEntries[xx].technology:0);
+                                                        ((mTechTableEntries[xx].power & PWR_SWTCH_ON_SCRN_LOCK_MASK)? mTechTableEntries[xx].technology:0);
                 mLmrtEntries[index].tech_screen_off   = mLmrtEntries[index].tech_screen_off |
-                                                        ((mTechTableEntries[xx].power & 0X10)? mTechTableEntries[xx].technology:0);
+                                                        ((mTechTableEntries[xx].power & PWR_SWTCH_ON_SCRN_OFF_MASK)? mTechTableEntries[xx].technology:0);
             }
         }
     }
@@ -1685,7 +1752,7 @@ bool RoutingManager::addAidRouting(const UINT8* aid, UINT8 aidLen, int route)
 
 #else
     current_handle = ((handle == 0x4C0)?SecureElement::ESE_ID:SecureElement::UICC_ID);
-#endif    
+#endif
     if(handle == 0x400)
         current_handle = 0x00;
 
@@ -3233,4 +3300,4 @@ static void LmrtRspTimerCb(union sigval)
     RoutingManager::getInstance().mEeUpdateEvent.notifyOne();
 }
 #endif
-    
+
