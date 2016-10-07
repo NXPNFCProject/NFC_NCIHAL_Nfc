@@ -111,6 +111,10 @@ namespace android
 {
     extern bool gIsTagDeactivating;
     extern bool gIsSelectingRfInterface;
+#if(NXP_EXTNS == TRUE)
+    extern bool gIsWaiting4Deact2SleepNtf;
+    extern bool gGotDeact2IdleNtf;
+#endif
 #if((NFC_NXP_ESE == TRUE)&&(CONCURRENCY_PROTECTION == TRUE))
     extern bool is_wired_mode_open;
 #endif
@@ -176,7 +180,6 @@ SyncEvent                   gDeactivatedEvent;
 
 namespace android
 {
-    int                     gGeneralTransceiveTimeout = DEFAULT_GENERAL_TRANS_TIMEOUT;
     int                     gGeneralPowershutDown = 0;
     jmethodID               gCachedNfcManagerNotifyNdefMessageListeners;
     jmethodID               gCachedNfcManagerNotifyTransactionListeners;
@@ -602,9 +605,14 @@ int thread_ret;
         multiprotocol_flag = 0;
         multiprotocol_detected = 1;
         ALOGD("Prio_Logic_multiprotocol Logic");
-        thread_ret = pthread_create(&multiprotocol_thread, NULL, p2p_prio_logic_multiprotocol, NULL);
+        pthread_attr_t attr;
+        pthread_attr_init(&attr);
+        pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+        thread_ret = pthread_create(&multiprotocol_thread, &attr,
+                p2p_prio_logic_multiprotocol, NULL);
         if(thread_ret != 0)
             ALOGD("unable to create the thread");
+        pthread_attr_destroy(&attr);
         ALOGD("Prio_Logic_multiprotocol start timer");
         multiprotocol_timer.set (300, reconfigure_poll_cb);
     }
@@ -700,10 +708,13 @@ int thread_ret;
 
     ALOGD ("clear_multiprotocol");
     multiprotocol_detected = 0;
-
-    thread_ret = pthread_create(&multiprotocol_thread, NULL, p2p_prio_logic_multiprotocol, NULL);
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+    thread_ret = pthread_create(&multiprotocol_thread, &attr, p2p_prio_logic_multiprotocol, NULL);
     if(thread_ret != 0)
         ALOGD("unable to create the thread");
+    pthread_attr_destroy(&attr);
 }
 
 void multiprotocol_clear_flag(union sigval)
@@ -868,16 +879,11 @@ static void nfaConnectionCallback (UINT8 connEvent, tNFA_CONN_EVT_DATA* eventDat
         break;
 
     case NFA_ACTIVATED_EVT: // NFC link/protocol activated
-#if(NXP_EXTNS == TRUE)
-        rfActivation = true;
-#endif
-        checkforTranscation(NFA_ACTIVATED_EVT, (void *)eventData);
-
         ALOGD("%s: NFA_ACTIVATED_EVT: gIsSelectingRfInterface=%d, sIsDisabling=%d", __FUNCTION__, gIsSelectingRfInterface, sIsDisabling);
 #if(NXP_EXTNS == TRUE)
+        rfActivation = true;
+        checkforTranscation(NFA_ACTIVATED_EVT, (void *)eventData);
         NfcTag::getInstance().selectCompleteStatus(true);
-#endif
-#if(NXP_EXTNS == TRUE)
         /***P2P-Prio Logic for Multiprotocol***/
         if( (eventData->activated.activate_ntf.protocol == NFA_PROTOCOL_NFC_DEP) && (multiprotocol_detected == 1) )
         {
@@ -958,11 +964,11 @@ static void nfaConnectionCallback (UINT8 connEvent, tNFA_CONN_EVT_DATA* eventDat
                 break;
             }
             sP2pActive = true;
-            ALOGD("%s: NFA_ACTIVATED_EVT; is p2p", __FUNCTION__);
-            // Disable RF field events in case of p2p
-//            UINT8  nfa_disable_rf_events[] = { 0x00 };    /*commented to eliminate unused variable warning*/
-            ALOGD ("%s: Disabling RF field events", __FUNCTION__);
+            ALOGD("%s: NFA_ACTIVATED_EVT p2p is activated", __FUNCTION__);
 #if 0
+            // Disable RF field events in case of p2p
+            // UINT8  nfa_disable_rf_events[] = { 0x00 };    /*commented to eliminate unused variable warning*/
+            ALOGD ("%s: Disabling RF field events", __FUNCTION__);
             status = NFA_SetConfig(NCI_PARAM_ID_RF_FIELD_INFO, sizeof(nfa_disable_rf_events),
                     &nfa_disable_rf_events[0]);
             if (status == NFA_STATUS_OK) {
@@ -983,17 +989,16 @@ static void nfaConnectionCallback (UINT8 connEvent, tNFA_CONN_EVT_DATA* eventDat
         else if (pn544InteropIsBusy() == false)
         {
 #if(NXP_EXTNS == TRUE && NFC_NXP_NON_STD_CARD == TRUE)
-        nativeNfcTag_handleNonNciMultiCardDetection(connEvent, eventData);
-        ALOGD("%s: scoreGenericNtf = 0x%x", __FUNCTION__ ,scoreGenericNtf);
-        if(scoreGenericNtf == true)
-        {
-        if( (eventData->activated.activate_ntf.intf_param.type == NFC_INTERFACE_ISO_DEP) && (eventData->activated.activate_ntf.protocol == NFC_PROTOCOL_ISO_DEP) )
+            nativeNfcTag_handleNonNciMultiCardDetection(connEvent, eventData);
+            ALOGD("%s: scoreGenericNtf = 0x%x", __FUNCTION__ ,scoreGenericNtf);
+            if(scoreGenericNtf == true)
             {
-                nativeNfcTag_handleNonNciCardDetection(eventData);
+                if( (eventData->activated.activate_ntf.intf_param.type == NFC_INTERFACE_ISO_DEP) && (eventData->activated.activate_ntf.protocol == NFC_PROTOCOL_ISO_DEP) )
+                {
+                    nativeNfcTag_handleNonNciCardDetection(eventData);
+                }
+                scoreGenericNtf = false;
             }
-            scoreGenericNtf = false;
-        }
-
 #else
             NfcTag::getInstance().connectionEventHandler (connEvent, eventData);
             if(NfcTag::getInstance ().mNumDiscNtf)
@@ -1001,7 +1006,6 @@ static void nfaConnectionCallback (UINT8 connEvent, tNFA_CONN_EVT_DATA* eventDat
                 NFA_Deactivate (TRUE);
             }
 #endif
-
             // We know it is not activating for P2P.  If it activated in
             // listen mode then it is likely for an SE transaction.
             // Send the RF Event.
@@ -1031,11 +1035,11 @@ static void nfaConnectionCallback (UINT8 connEvent, tNFA_CONN_EVT_DATA* eventDat
         }
 #endif
 #if(NXP_EXTNS == TRUE && NFC_NXP_NON_STD_CARD == TRUE)
-    if(checkCmdSent == 1 && eventData->deactivated.type == 0)
-    {
-        ALOGD("%s: NFA_DEACTIVATED_EVT   setting check flag  to one", __FUNCTION__);
-        checkTagNtf = 1;
-    }
+        if(checkCmdSent == 1 && eventData->deactivated.type == 0)
+        {
+            ALOGD("%s: NFA_DEACTIVATED_EVT   setting check flag  to one", __FUNCTION__);
+            checkTagNtf = 1;
+        }
 #endif
         notifyPollingEventwhileNfcOff();
         if (true == getReconnectState())
@@ -1051,6 +1055,17 @@ static void nfaConnectionCallback (UINT8 connEvent, tNFA_CONN_EVT_DATA* eventDat
             NfcTag::getInstance ().mNumDiscNtf = 0;//reset if any notifications are not cleared
             clear_multiprotocol();
             multiprotocol_flag = 1;
+        }
+        if(gIsWaiting4Deact2SleepNtf)
+        {
+            if(eventData->deactivated.type == NFA_DEACTIVATE_TYPE_IDLE)
+            {
+                gGotDeact2IdleNtf = true;
+            }
+            else if(eventData->deactivated.type == NFA_DEACTIVATE_TYPE_SLEEP)
+            {
+                gIsWaiting4Deact2SleepNtf = false;
+            }
         }
 #endif
         NfcTag::getInstance().setDeactivationState (eventData->deactivated);
@@ -1103,25 +1118,6 @@ static void nfaConnectionCallback (UINT8 connEvent, tNFA_CONN_EVT_DATA* eventDat
                 SyncEventGuard guard (SecureElement::getInstance().mEEdatapacketEvent);
                 SecureElement::getInstance().mEEdatapacketEvent.notifyOne();
             }
-#endif
-
-#if((NFC_NXP_ESE == TRUE)&&(CONCURRENCY_PROTECTION == TRUE))
-        case NFA_PASSIVE_LISTEN_DISABLED_EVT:
-        {
-            ALOGD("%s: NFA_PASSIVE_LISTEN_DISABLED_EVT", __FUNCTION__);
-            SyncEventGuard g (SecureElement::getInstance().mPassiveListenEvt);
-            SecureElement::getInstance().mPassiveListenEvt.notifyOne();
-        }
-        break;
-#endif
-#if(NFC_NXP_ESE == TRUE)
-        case NFA_LISTEN_ENABLED_EVT:
-        {
-            ALOGD("%s: NFA_LISTEN_ENABLED_EVT", __FUNCTION__);
-            SyncEventGuard g (SecureElement::getInstance().mPassiveListenEvt);
-            SecureElement::getInstance().mPassiveListenEvt.notifyOne();
-        }
-        break;
 #endif
 #endif
             if (sSeRfActive) {
@@ -1303,6 +1299,24 @@ static void nfaConnectionCallback (UINT8 connEvent, tNFA_CONN_EVT_DATA* eventDat
             RoutingManager::getInstance().setEtsiReaederState(STATE_SE_RDR_MODE_STOPPED);
         }
 
+        break;
+#endif
+#if((NFC_NXP_ESE == TRUE)&&(CONCURRENCY_PROTECTION == TRUE))
+        case NFA_PASSIVE_LISTEN_DISABLED_EVT:
+        {
+            ALOGD("%s: NFA_PASSIVE_LISTEN_DISABLED_EVT", __FUNCTION__);
+            SyncEventGuard g (SecureElement::getInstance().mPassiveListenEvt);
+            SecureElement::getInstance().mPassiveListenEvt.notifyOne();
+        }
+        break;
+#endif
+#if(NFC_NXP_ESE == TRUE)
+        case NFA_LISTEN_ENABLED_EVT:
+        {
+            ALOGD("%s: NFA_LISTEN_ENABLED_EVT", __FUNCTION__);
+            SyncEventGuard g (SecureElement::getInstance().mPassiveListenEvt);
+            SecureElement::getInstance().mPassiveListenEvt.notifyOne();
+        }
         break;
 #endif
     default:
@@ -2432,7 +2446,7 @@ static void nfcManager_enableDiscovery (JNIEnv* e, jobject o, jint technologies_
 
     if ((GetNumValue(NAME_UICC_LISTEN_TECH_MASK, &num, sizeof(num))))
     {
-        ALOGE ("%s:UICC_LISTEN_MASK=0x0%d;", __FUNCTION__, num);
+        ALOGD ("%s:UICC_LISTEN_MASK=0x0%lu;", __FUNCTION__, num);
     }
 
 
@@ -2697,11 +2711,11 @@ void nfcManager_disableDiscovery (JNIEnv* e, jobject o)
 
     if ((GetNumValue(NAME_UICC_LISTEN_TECH_MASK, &num, sizeof(num))))
     {
-        ALOGE ("%s:UICC_LISTEN_MASK=0x0%d;", __FUNCTION__, num);
+        ALOGD ("%s:UICC_LISTEN_MASK=0x0%lu;", __FUNCTION__, num);
     }
     if ((GetNumValue("P2P_LISTEN_TECH_MASK", &p2p_listen_mask, sizeof(p2p_listen_mask))))
     {
-        ALOGE ("%s:P2P_LISTEN_MASK=0x0%d;", __FUNCTION__, p2p_listen_mask);
+        ALOGD ("%s:P2P_LISTEN_MASK=0x0%lu;", __FUNCTION__, p2p_listen_mask);
     }
 
     PeerToPeer::getInstance().enableP2pListening (false);
@@ -3800,6 +3814,38 @@ static bool nfcManager_isVzwFeatureEnabled (JNIEnv *e, jobject o)
     }
     return mStat;
 }
+/*******************************************************************************
+**
+** Function:        nfcManager_isNfccBusy
+**
+** Description:     Check If NFCC is busy
+**
+** Returns:         True if NFCC is busy.
+**
+*******************************************************************************/
+static bool nfcManager_isNfccBusy(JNIEnv*, jobject)
+{
+    ALOGD ("%s: ENTER", __FUNCTION__);
+    bool statBusy = false;
+    if(SecureElement::getInstance().isBusy())
+    {
+        ALOGE("%s:FAIL  SE wired-mode : busy", __FUNCTION__);
+        statBusy = true;
+    }
+    else if(rfActivation)
+    {
+        ALOGE("%s:FAIL  RF session ongoing", __FUNCTION__);
+        statBusy = true;
+    }
+    else if(get_transcation_stat() == true)
+    {
+        ALOGE ("%s: FAIL Transaction in progress", __FUNCTION__);
+        statBusy = true;
+    }
+
+    ALOGD ("%s: Exit statBusy : 0x%02x", __FUNCTION__,statBusy);
+    return statBusy;
+}
 #endif
 /*******************************************************************************
 **
@@ -3963,7 +4009,7 @@ static bool nfcManager_doSetTimeout(JNIEnv*, jobject, jint tech, jint timeout)
         return false;
     }
     ALOGD ("%s: tech=%d, timeout=%d", __FUNCTION__, tech, timeout);
-    gGeneralTransceiveTimeout = timeout;
+
     NfcTag::getInstance().setTransceiveTimeout (tech, timeout);
     return true;
 }
@@ -4752,6 +4798,8 @@ static JNINativeMethod gMethods[] =
              (void *)nfcManager_getNfcInitTimeout},
     {"isVzwFeatureEnabled", "()Z",
             (void *)nfcManager_isVzwFeatureEnabled},
+    {"isNfccBusy", "()Z",
+            (void *)nfcManager_isNfccBusy},
 #endif
     {"doSetEEPROM", "([B)V",
             (void*)nfcManager_doSetEEPROM},
@@ -5559,7 +5607,7 @@ void checkforTranscation(UINT8 connEvent, void* eventData)
                 if (!sP2pActive && eventDM_Conn_data->rf_field.status == NFA_STATUS_OK)
                     SecureElement::getInstance().notifyRfFieldEvent (true);
             }
-#if((NFC_NXP_CHIP_TYPE != PN548C2) && (NFC_NXP_CHIP_TYPE != PN551))
+#if(NFC_NXP_CHIP_TYPE == PN547C2)
             if((action.param.technology == NFC_RF_TECHNOLOGY_A)&&(( getScreenState () == NFA_SCREEN_STATE_OFF ||  getScreenState () == NFA_SCREEN_STATE_LOCKED)))
             {
                 transaction_data.current_transcation_state = NFA_TRANS_MIFARE_ACT_EVT;

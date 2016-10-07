@@ -121,9 +121,6 @@
 #define NFCSTATUS_SUCCESS (0x0000)
 #define NFCSTATUS_FAILED (0x00FF)
 
-//default general trasceive timeout in millisecond
-#define DEFAULT_GENERAL_TRANS_TIMEOUT  2000
-
 struct nfc_jni_native_data
 {
    /* Thread handle */

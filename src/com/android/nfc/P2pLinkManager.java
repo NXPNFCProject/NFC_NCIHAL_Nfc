@@ -793,7 +793,7 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
             }
             if (needsNdef || (needsHandover && handoverClient == null))
             {
-                if(NfcService.mIsDtaMode) {
+                if(NfcService.sIsDtaMode) {
                     if(mClientEnabled)
                     {
                         if(mDtaSnepClient == null){
@@ -808,7 +808,7 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
                 }
                 try
                 {
-                    if(NfcService.mIsDtaMode) {
+                    if(NfcService.sIsDtaMode) {
                         if(mDtaSnepClient != null)
                         {
                             mDtaSnepClient.DtaClientOperations(mContext);
@@ -1014,7 +1014,7 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
     final SnepServer.Callback mDefaultSnepCallback = new SnepServer.Callback() {
         @Override
         public SnepMessage doPut(NdefMessage msg) {
-            if(NfcService.mIsDtaMode)
+            if(NfcService.sIsDtaMode)
             Log.d(TAG, "DTA mode enabled, dont dispatch the tag");
             else
             onReceiveComplete(msg);

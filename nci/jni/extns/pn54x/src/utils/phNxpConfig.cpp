@@ -53,12 +53,20 @@ const char alternative_config_path[] = "";
 
 #if 1
 const char transport_config_path[] = "/etc/";
+#if(NXP_EXTNS == TRUE)
+const char transit_config_path[] = "/data/nfc/";
+#endif
 #else
 const char transport_config_path[] = "res/";
 #endif
 
 #define config_name             "libnfc-nxp.conf"
+#if(NXP_EXTNS == TRUE)
+#define extra_config_base       "libnfc-"
+#else
 #define extra_config_base       "libnfc-nxp-"
+#endif
+
 #define extra_config_ext        ".conf"
 #define IsStringValue           0x80000000
 
@@ -95,6 +103,9 @@ public:
     bool    getValue (const char* name, unsigned short & rValue) const;
     bool    getValue (const char* name, char* pValue, long len, long* readlen) const;
     const CNxpNfcParam* find (const char* p_name) const;
+#if(NXP_EXTNS == TRUE)
+    void    readNxpTransitConfig(const char* fileName) const;
+#endif
     void  clean ();
 private:
     CNxpNfcConfig ();
@@ -102,6 +113,11 @@ private:
     void    moveFromList ();
     void    moveToList ();
     void    add (const CNxpNfcParam* pParam);
+#if(NXP_EXTNS == TRUE)
+    void    dump();
+    bool    isAllowed(const char* name);
+    string  mCurrentFile;
+#endif
     list<const CNxpNfcParam*> m_list;
     bool    mValidFile;
     unsigned long m_timeStamp;
@@ -207,6 +223,9 @@ bool CNxpNfcConfig::readConfig (const char* name, bool bResetContent)
     int     base = 0;
     char    c;
     int     bflag = 0;
+#if(NXP_EXTNS == TRUE)
+    mCurrentFile = name;
+#endif
     state = BEGIN_LINE;
     /* open config file, read it into a buffer */
     if ((fd = fopen (name, "rb")) == NULL)
@@ -219,6 +238,8 @@ bool CNxpNfcConfig::readConfig (const char* name, bool bResetContent)
         }
         return false;
     }
+    ALOGD("%s Opened %s config %s\n", __func__, (bResetContent ? "base" : "optional"), name);
+
     stat (name, &buf);
     m_timeStamp = (unsigned long) buf.st_mtime;
 
@@ -480,6 +501,9 @@ CNxpNfcConfig& CNxpNfcConfig::GetInstance ()
         strPath.assign (transport_config_path);
         strPath += config_name;
         theInstance.readConfig (strPath.c_str (), true);
+#if(NXP_EXTNS == TRUE)
+        theInstance.readNxpTransitConfig("nxpTransit");
+#endif
     }
 
     return theInstance;
@@ -620,6 +644,27 @@ const CNxpNfcParam* CNxpNfcConfig::find (const char* p_name) const
     return NULL;
 }
 
+#if(NXP_EXTNS == TRUE)
+/*******************************************************************************
+**
+** Function:    CNxpNfcConfig::readNxpTransitConfig()
+**
+** Description: read Config settings from transit conf file
+**
+** Returns:     none
+**
+*******************************************************************************/
+void CNxpNfcConfig::readNxpTransitConfig(const char* fileName) const
+{
+    string strPath;
+    strPath.assign(transit_config_path);
+    strPath += extra_config_base;
+    strPath += fileName;
+    strPath += extra_config_ext;
+    CNxpNfcConfig::GetInstance().readConfig(strPath.c_str(), false);
+}
+#endif
+
 /*******************************************************************************
 **
 ** Function:    CNxpNfcConfig::clean()
@@ -656,17 +701,81 @@ void CNxpNfcConfig::add (const CNxpNfcParam* pParam)
         m_list.push_back (pParam);
         return;
     }
+#if(NXP_EXTNS == TRUE)
+    if((mCurrentFile.find("nxpTransit") != std::string::npos) && !isAllowed(pParam->c_str()))
+    {
+        ALOGD("%s Token restricted. Returning", __func__);
+        return;
+    }
+#endif
     for (list<const CNxpNfcParam*>::iterator it = m_list.begin (), itEnd = m_list.end (); it != itEnd; ++it)
     {
         if (**it < pParam->c_str ())
             continue;
 
+#if(NXP_EXTNS == TRUE)
+        if (**it == pParam->c_str())
+            m_list.insert(m_list.erase(it), pParam);
+        else
+            m_list.insert(it, pParam);
+#else
         m_list.insert (it, pParam);
+#endif
         return;
     }
     m_list.push_back (pParam);
 }
 
+#if(NXP_EXTNS == TRUE)
+/*******************************************************************************
+**
+** Function:    CNxpNfcConfig::dump()
+**
+** Description: prints all elements in the list
+**
+** Returns:     none
+**
+*******************************************************************************/
+void CNxpNfcConfig::dump()
+{
+    ALOGD("%s Enter", __func__);
+
+    for (list<const CNxpNfcParam*>::iterator it = m_list.begin(), itEnd = m_list.end(); it != itEnd; ++it)
+    {
+        if((*it)->str_len()>0)
+            ALOGD("%s %s \t= %s", __func__, (*it)->c_str(),(*it)->str_value());
+        else
+            ALOGD("%s %s \t= (0x%0lX)\n", __func__,(*it)->c_str(),(*it)->numValue());
+    }
+}
+
+/*******************************************************************************
+**
+** Function:    CNfcConfig::isAllowed()
+**
+** Description: checks if token update is allowed
+**
+** Returns:     true if allowed else false
+**
+*******************************************************************************/
+bool CNxpNfcConfig::isAllowed(const char* name)
+{
+    string token(name);
+    bool stat = false;
+    if((token.find("P2P_LISTEN_TECH_MASK") != std::string::npos)        ||
+            (token.find("HOST_LISTEN_TECH_MASK") != std::string::npos)  ||
+            (token.find("UICC_LISTEN_TECH_MASK") != std::string::npos)  ||
+            (token.find("POLLING_TECH_MASK") != std::string::npos)      ||
+            (token.find("NXP_RF_CONF_BLK") != std::string::npos)        ||
+            (token.find("NXP_CN_TRANSIT_BLK_NUM_CHECK_ENABLE") != std::string::npos) ||
+            (token.find("NXP_FWD_FUNCTIONALITY_ENABLE") != std::string::npos))
+
+    {
+        stat = true;
+    }
+    return stat;
+}
+#endif
 /*******************************************************************************
 **
 ** Function:    CNxpNfcConfig::moveFromList()

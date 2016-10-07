@@ -25,6 +25,10 @@ static const int EE_ERROR_OPEN_FAIL =  -1;
 bool IsWiredMode_Enable();
 bool eSE_connected = false;
 bool dwpChannelForceClose = false;
+namespace android
+{
+    extern void checkforNfceeConfig();
+}
 
 /*******************************************************************************
 **
@@ -269,6 +273,7 @@ void doeSE_JcopDownLoadReset(void)
     SecureElement &se = SecureElement::getInstance();
     RoutingManager &rm = RoutingManager::getInstance();
     unsigned long int num = 0;
+    tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
     ALOGD("%s: enter:", fn);
 
     rm.mResetHandlerMutex.lock();
@@ -299,6 +304,41 @@ void doeSE_JcopDownLoadReset(void)
         else
         {
             ALOGD("%s: Invalid Power scheme:", fn);
+        }
+        if( (num == 1) || (num == 2))
+        {
+           if((se.eSE_Compliancy == se.eSE_Compliancy_ETSI_12)&&(se.mDeletePipeHostId == 0xC0))
+           {
+               ALOGD("%s: Clear All pipes received.....Create pipe at APDU Gate:", fn);
+               se.mDeletePipeHostId = 0x00;
+               android ::checkforNfceeConfig();
+               SyncEventGuard guard (se.mCreatePipeEvent);
+               nfaStat = NFA_HciCreatePipe(NFA_HANDLE_GROUP_HCI,NFA_HCI_ETSI12_APDU_GATE,0xC0,NFA_HCI_ETSI12_APDU_GATE);
+               if(nfaStat == NFA_STATUS_OK)
+               {
+                  se.mCreatePipeEvent.wait();
+                  ALOGD("%s: Created pipe at APDU Gate Open the pipe!!!", fn);
+                  SyncEventGuard guard (se.mPipeOpenedEvent);
+                  nfaStat = NFA_STATUS_FAILED;
+                  nfaStat = NFA_HciOpenPipe(NFA_HANDLE_GROUP_HCI,se.mCreatedPipe);
+                  if(nfaStat == NFA_STATUS_OK)
+                  {
+                      se.mPipeOpenedEvent.wait();
+                      ALOGD("%s:Pipe at APDU Gate opened successfully!!!", fn);
+                      SyncEventGuard guard (se.mAbortEvent);
+                      se.mAbortEvent.wait();
+                      ALOGD("%s:ATR received successfully!!!", fn);
+                  }
+                  else
+                  {
+                      ALOGD ("%s: fail open pipe; error=0x%X", fn, nfaStat);
+                  }
+               }
+               else
+               {
+                   ALOGE ("%s: fail create pipe; error=0x%X", fn, nfaStat);
+               }
+           }
         }
     }
 #else

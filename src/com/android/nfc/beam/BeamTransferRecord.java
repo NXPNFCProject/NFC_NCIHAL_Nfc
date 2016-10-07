@@ -60,7 +60,7 @@ public class BeamTransferRecord implements Parcelable {
                 return null;
             }
 
-           BluetoothDevice remoteDevice = in.readParcelable(getClass().getClassLoader());
+            BluetoothDevice remoteDevice = in.readParcelable(getClass().getClassLoader());
             boolean remoteActivating = (in.readInt() == 1);
             int numUris = in.readInt();
             Uri[] uris = null;

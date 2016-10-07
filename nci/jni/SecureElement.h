@@ -151,6 +151,13 @@ public:
     mNfceeData  mNfceeData_t;
     UINT8 mHostsPresent;
     UINT8 mHostsId[MAX_NFCEE];
+    UINT8   eSE_Compliancy;
+    UINT8   mCreatedPipe;
+    UINT8   mDeletePipeHostId;
+    SyncEvent       mCreatePipeEvent;
+    SyncEvent       mPipeOpenedEvent;
+    SyncEvent       mAbortEvent;
+    bool            mAbortEventWaitOk;
 #endif
 
 #if(NFC_NXP_ESE == TRUE && (NFC_NXP_CHIP_TYPE != PN547C2))
@@ -641,6 +648,10 @@ public:
     static const UINT8 UICC2_ID = 0x04;
     static const UINT8 ESE_ID = 0x01;
     static const UINT8 DH_ID = 0x00;
+#if(NXP_EXTNS == TRUE)
+    static const UINT8 eSE_Compliancy_ETSI_9 = 9;
+    static const UINT8 eSE_Compliancy_ETSI_12 = 12;
+#endif
 
     void getEeHandleList(tNFA_HANDLE *list, UINT8* count);
 
@@ -759,9 +770,11 @@ private:
     SyncEvent       mResetOngoingEvent;
 #endif
     SyncEvent       mPipeListEvent;
+    SyncEvent       mAllocateGateEvent;
+#if(NXP_EXTNS != TRUE)
     SyncEvent       mCreatePipeEvent;
     SyncEvent       mPipeOpenedEvent;
-    SyncEvent       mAllocateGateEvent;
+#endif
     SyncEvent       mDeallocateGateEvent;
 //    SyncEvent       mRoutingEvent;
     SyncEvent       mUiccInfoEvent;
@@ -784,8 +797,7 @@ private:
     bool            mTransceiveWaitOk;
     int mWiredModeRfFiledEnable;
 #if(NXP_EXTNS == TRUE)
-    SyncEvent       mAbortEvent;
-    bool            mAbortEventWaitOk;
+#define             WIRED_MODE_TRANSCEIVE_TIMEOUT 30000
 #endif
     /*******************************************************************************
     **

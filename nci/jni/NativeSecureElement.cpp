@@ -54,7 +54,6 @@ extern bool isDiscoveryStarted();
 
 extern void com_android_nfc_NfcManager_disableDiscovery (JNIEnv* e, jobject o);
 extern void com_android_nfc_NfcManager_enableDiscovery (JNIEnv* e, jobject o, jint mode);
-extern int gGeneralTransceiveTimeout;
 static SyncEvent            sNfaVSCResponseEvent;
 //static bool sRfEnabled;           /*commented to eliminate warning defined but not used*/
 
@@ -625,7 +624,7 @@ static jbyteArray nativeNfcSecureElement_doTransceive (JNIEnv* e, jobject, jint 
     ScopedByteArrayRW bytes(e, data);
 #if(NXP_EXTNS == TRUE)
     ALOGD("%s: enter; handle=0x%X; buf len=%zu", __FUNCTION__, handle, bytes.size());
-    SecureElement::getInstance().transceive(reinterpret_cast<UINT8*>(&bytes[0]), bytes.size(), recvBuffer, recvBufferMaxSize, recvBufferActualSize, gGeneralTransceiveTimeout);
+    SecureElement::getInstance().transceive(reinterpret_cast<UINT8*>(&bytes[0]), bytes.size(), recvBuffer, recvBufferMaxSize, recvBufferActualSize, WIRED_MODE_TRANSCEIVE_TIMEOUT);
 
     //copy results back to java
     jbyteArray result = e->NewByteArray(recvBufferActualSize);

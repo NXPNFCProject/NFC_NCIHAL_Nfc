@@ -28,7 +28,6 @@ import android.util.Log;
 
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
-
 import java.util.Arrays;
 import java.util.BitSet;
 
@@ -103,12 +102,10 @@ public final class NfcWifiProtectedSetup {
                     short fieldSize = payload.getShort();
                     if (fieldId == CREDENTIAL_FIELD_ID) {
                         return parseCredential(payload, fieldSize);
-
                     }
                 }
             }
         }
-
         return null;
     }
 

@@ -96,3 +96,4 @@ class NfcUnlockManager {
         mLockscreenPollMask = 0;
     }
 }
+

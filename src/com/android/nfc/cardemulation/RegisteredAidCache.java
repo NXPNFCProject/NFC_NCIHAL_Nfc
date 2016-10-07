@@ -602,7 +602,7 @@ public class RegisteredAidCache {
                 boolean isOnHost = resolveInfo.defaultService.isOnHost();
                 boolean isPaymentAid = resolveInfo.category.equals(CardEmulation.CATEGORY_PAYMENT);
                 int route;
-                int VzwPowerstate =0 ;
+                int vzwPowerstate =0 ;
 
                 /*get power state from the app : - N|L |F */
                 int powerstate = seInfo.getPowerState() & POWER_STATE_ALL;
@@ -635,11 +635,11 @@ public class RegisteredAidCache {
                             /*if vzw AID reset the previous screen state   */
                             powerstate &= ~0x80;
                             /*get the vzw power and screen state  :- SCREEN | L |F */
-                            VzwPowerstate = mRoutingManager.GetVzwCache().getPowerState(plainAid);
+                            vzwPowerstate = mRoutingManager.GetVzwCache().getPowerState(plainAid);
                             /*merge power state with vzw power state */
-                            powerstate &= VzwPowerstate;
+                            powerstate &= vzwPowerstate;
                             /*merge the power state with vzw screen state*/
-                            powerstate |= (VzwPowerstate & 0x80);
+                            powerstate |= (vzwPowerstate & 0x80);
                             Log.d(TAG," vzw aid" + aid);
                             Log.d(TAG," vzw merged power state" + powerstate);
                         }

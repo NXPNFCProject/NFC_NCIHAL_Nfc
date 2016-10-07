@@ -182,7 +182,7 @@ public class FireflyRenderer {
 
             // make adjustments for screen ratio
             mGL.glMatrixMode(GL10.GL_PROJECTION);
-           mGL.glLoadIdentity();
+            mGL.glLoadIdentity();
             mGL.glFrustumf(-mDisplayWidth, mDisplayWidth, mDisplayHeight, -mDisplayHeight, NEAR_CLIPPING_PLANE, FAR_CLIPPING_PLANE);
 
             // Switch back to modelview

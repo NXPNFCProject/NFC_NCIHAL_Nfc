@@ -200,7 +200,6 @@ public class RegisteredNfcFServicesCache {
             UserServices userServices = findOrCreateUserLocked(userId);
             return userServices.services.get(componentName);
         }
-
     }
 
     public List<NfcFServiceInfo> getServices(int userId) {
@@ -525,7 +524,6 @@ public class RegisteredNfcFServicesCache {
             }
             return false;
         }
-
     }
 
     public boolean registerSystemCodeForService(int userId, int uid,
@@ -662,7 +660,6 @@ public class RegisteredNfcFServicesCache {
 
     public String getNfcid2ForService(int userId, int uid, ComponentName componentName) {
         if (DBG) Log.d(TAG, "getNfcid2ForService");
-
         NfcFServiceInfo service = getService(userId, componentName);
         if (service != null) {
             if (service.getUid() != uid) {
@@ -674,7 +671,6 @@ public class RegisteredNfcFServicesCache {
             Log.e(TAG, "Could not find service " + componentName);
             return null;
         }
-
     }
 
     public void onHostEmulationActivated() {
@@ -700,6 +696,7 @@ public class RegisteredNfcFServicesCache {
     private String generateRandomNfcid2() {
         long min = 0L;
         long max = 0xFFFFFFFFFFFFL;
+
         long randomNfcid2 = (long)Math.floor(Math.random() * (max-min+1)) + min;
         return String.format("02FE%02X%02X%02X%02X%02X%02X",
                 (randomNfcid2 >>> 8 * 5) & 0xFF, (randomNfcid2 >>> 8 * 4) & 0xFF,

@@ -50,7 +50,6 @@ NFCSTATUS EXTNS_CheckMfcResponse (uint8_t** sTransceiveData, uint32_t *sTranscei
 void MfcPresenceCheckResult (NFCSTATUS status);
 void MfcResetPresenceCheckStatus (void);
 NFCSTATUS EXTNS_GetPresenceCheckStatus (void);
-
 #ifdef __cplusplus
 }
 #endif

@@ -101,7 +101,7 @@ public final class SnepMessage {
     }
     public static NdefMessage getLargeNdef() throws UnsupportedEncodingException
     {
-        String snep_test_data2 = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus at"
+        String snepTestData2 = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus at"
                 +" lorem nunc, ut venenatis quam. Etiam id dolor quam, at viverra dolor."
                 +" Phasellus eu lacus ligula, quis euismod erat. Sed feugiat, ligula at"
                 +" mollis aliquet, justo lacus condimentum eros, non tincidunt neque"
@@ -110,7 +110,7 @@ public final class SnepMessage {
                 +" Phasellus tristique consectetur mauris eu porttitor. Sed lobortis"
                 +" porttitor orci.";
         String lang = "la";
-        byte[] textBytes = snep_test_data2.getBytes();
+        byte[] textBytes = snepTestData2.getBytes();
         byte[] langBytes = lang.getBytes("US-ASCII");
         int langLength = langBytes.length;
         int textLength = textBytes.length;
@@ -127,9 +127,9 @@ public final class SnepMessage {
 
     public static NdefMessage getSmallNdef() throws UnsupportedEncodingException
     {
-        String snep_test_data1 = "Lorem ipsum dolor sit amet.";
+        String snepTestData1 = "Lorem ipsum dolor sit amet.";
         String lang = "la";
-        byte[] textBytes = snep_test_data1.getBytes();
+        byte[] textBytes = snepTestData1.getBytes();
         byte[] langBytes = lang.getBytes("US-ASCII");
         int langLength = langBytes.length;
         int textLength = textBytes.length;
@@ -183,12 +183,12 @@ public final class SnepMessage {
     public byte[] toByteArray() {
         byte[] bytes;
         if (mNdefMessage != null) {
-            if((NfcService.mIsDtaMode)&&(DtaSnepClient.mTestCaseId != 0)){
+            if((NfcService.sIsDtaMode)&&(DtaSnepClient.mTestCaseId != 0)){
                if(DtaSnepClient.mTestCaseId == 5 || DtaSnepClient.mTestCaseId == 6){
                    bytes = mNdefMessage.toByteArray();
                }
                else{
-                   if(NfcService.mIsShortRecordLayout){
+                   if(NfcService.sIsShortRecordLayout){
                        bytes = new byte[]{(byte)0xD1,(byte)0x01,(byte)0x1E,(byte)0x54,(byte)0x02,(byte)0x6C,(byte)0x61, // NDEF Header
                                           (byte)0x4C,(byte)0x6F,(byte)0x72,(byte)0x65,(byte)0x6D,(byte)0x20,(byte)0x69,(byte)0x70,(byte)0x73,(byte)0x75, // Payload
                                           (byte)0x6D,(byte)0x20,(byte)0x64,(byte)0x6F,(byte)0x6C,(byte)0x6F,(byte)0x72,(byte)0x20,(byte)0x73,(byte)0x69,
