@@ -3,19 +3,15 @@
     xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="app_name" msgid="78565911793142902">"NFC-szolgáltatás"</string>
     <string name="nfcUserLabel" msgid="7708535817084357357">"NFC"</string>
-    <string name="inbound_me_profile_title" msgid="6146013785225412693">"NFC-n kapott névjegy"</string>
-    <string name="inbound_me_profile_text" msgid="2342757196108092923">"Érintse meg, ha hozzá szeretné adni ezt a személyt ismerősként."</string>
-    <string name="outbound_me_profile_title" msgid="2523625031572784769">"Az NFC-kapcsolat befejeződött"</string>
-    <string name="outbound_me_profile_text" msgid="5594998841143667989">"Érintse meg kapcsolatfelvételi adatok megosztásához."</string>
     <string name="accessibility_nfc_enabled" msgid="7796246979948787735">"NFC bekapcsolva"</string>
-    <string name="touch" msgid="4727218133711188355">"Érintse meg a sugárzáshoz"</string>
+    <string name="tap_to_beam" msgid="5819197866281059878">"Koppintson rá sugárzáshoz"</string>
     <string name="beam_progress" msgid="7453634884807323920">"Bejövő sugár..."</string>
     <string name="beam_outgoing" msgid="4679536649779123495">"Sugárzás..."</string>
     <string name="beam_complete" msgid="477026736424637435">"Átvitel befejezve."</string>
     <string name="beam_failed" msgid="5116241718189888630">"A sugárzás nem fejeződött be"</string>
     <string name="beam_canceled" msgid="5425192751826544741">"Sugárzás megszakítva"</string>
     <string name="cancel" msgid="61873902552555096">"Mégse"</string>
-    <string name="beam_touch_to_view" msgid="7853129156831642630">"A megtekintéshez érintse meg."</string>
+    <string name="beam_tap_to_view" msgid="7430394753262448349">"Koppintson rá a megtekintéshez"</string>
     <string name="beam_handover_not_supported" msgid="4083165921751489015">"A fogadó eszköz nem támogatja a nagyméretű fájlok átvitelét adatsugárzás útján."</string>
     <string name="beam_try_again" msgid="3364677301009783455">"Eszközök újbóli összekapcsolása"</string>
     <string name="beam_busy" msgid="5253335587620612576">"A Beam jelenleg elfoglalt. Próbálja újra, ha az előző átvitel már befejeződött."</string>

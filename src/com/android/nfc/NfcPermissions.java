@@ -9,7 +9,7 @@ public class NfcPermissions {
     /**
      * NFC ADMIN permission - only for system apps
      */
-    private static final String ADMIN_PERM = android.Manifest.permission.WRITE_SECURE_SETTINGS;
+    static final String ADMIN_PERM = android.Manifest.permission.WRITE_SECURE_SETTINGS;
     private static final String ADMIN_PERM_ERROR = "WRITE_SECURE_SETTINGS permission required";
 
     /**

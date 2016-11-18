@@ -84,6 +84,11 @@ public class NativeNfcSecureElement {
         return doNativeResetSecureElement(handle);
     }
 
+    //TODO: Just stub for compilation
+    public boolean doeSEChipReset() {
+        //return false;
+        return doNativeeSEChipResetSecureElement();
+    }
 
     //TODO: Just stub for compilation
     public byte[] doGetAtr (int handle) {
@@ -98,4 +103,6 @@ public class NativeNfcSecureElement {
     public native int[] doGetTechList(int handle);
 
     public native byte [] doGetUid(int handle);
+    private native boolean doNativeeSEChipResetSecureElement();
+
 }

@@ -717,6 +717,11 @@ public class RegisteredAidCache {
         }
     }
 
+    public void clearRoutingTable()
+    {
+        mRoutingManager.clearNfcRoutingTableLocked();
+    }
+
     String dumpEntry(Map.Entry<String, AidResolveInfo> entry) {
         StringBuilder sb = new StringBuilder();
         String category = entry.getValue().category;

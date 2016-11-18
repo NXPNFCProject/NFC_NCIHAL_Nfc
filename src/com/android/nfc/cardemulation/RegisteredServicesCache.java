@@ -134,24 +134,24 @@ public class RegisteredServicesCache {
                 String action = intent.getAction();
                 if (DEBUG) Log.d(TAG, "Intent action: " + action);
                 if (uid != -1) {
-                    boolean replaced = intent.getBooleanExtra(Intent.EXTRA_REPLACING, false) &&
-                            (Intent.ACTION_PACKAGE_ADDED.equals(action) ||
-                             Intent.ACTION_PACKAGE_REMOVED.equals(action));
-                    if (!replaced) {
-                        int currentUser = ActivityManager.getCurrentUser();
+                    int currentUser = ActivityManager.getCurrentUser();
+                    if (currentUser == UserHandle.getUserId(uid)) {
                         if(Intent.ACTION_PACKAGE_REMOVED.equals(action)) {
                             Uri uri = intent.getData();
                             String pkg = uri != null ? uri.getSchemeSpecificPart() : null;
                             mRegisteredNxpServicesCache.onPackageRemoved(pkg); //GSMA changes
                             mRegisteredNxpServicesCache.writeDynamicApduService();
                         }
-                        if (currentUser == UserHandle.getUserId(uid)) {
-                            invalidateCache(UserHandle.getUserId(uid));
+                        boolean replaced = intent.getBooleanExtra(Intent.EXTRA_REPLACING, false) &&
+                                (Intent.ACTION_PACKAGE_ADDED.equals(action) ||
+                                 Intent.ACTION_PACKAGE_REMOVED.equals(action));
+                        if (!replaced) {
+                        invalidateCache(UserHandle.getUserId(uid));
                         } else {
-                            // Cache will automatically be updated on user switch
+                        if (DEBUG) Log.d(TAG, "Ignoring package intent due to package being replaced.");
                         }
                     } else {
-                        if (DEBUG) Log.d(TAG, "Ignoring package intent due to package being replaced.");
+                        // Cache will automatically be updated on user switch
                     }
                 }
             }

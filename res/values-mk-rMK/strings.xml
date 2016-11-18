@@ -3,19 +3,15 @@
     xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="app_name" msgid="78565911793142902">"NFC услуга"</string>
     <string name="nfcUserLabel" msgid="7708535817084357357">"NFC"</string>
-    <string name="inbound_me_profile_title" msgid="6146013785225412693">"Контакт примен преку NFC"</string>
-    <string name="inbound_me_profile_text" msgid="2342757196108092923">"Допри за да го додадеш ова лице како контакт."</string>
-    <string name="outbound_me_profile_title" msgid="2523625031572784769">"Интеракцијата со NFC е целосна"</string>
-    <string name="outbound_me_profile_text" msgid="5594998841143667989">"Допрете да ги дадете вашите информации за контакт на ова лице."</string>
     <string name="accessibility_nfc_enabled" msgid="7796246979948787735">"NFC е овозможена."</string>
-    <string name="touch" msgid="4727218133711188355">"Допри за зрак"</string>
+    <string name="tap_to_beam" msgid="5819197866281059878">"Допри за пренесување"</string>
     <string name="beam_progress" msgid="7453634884807323920">"Дојдовен зрак..."</string>
     <string name="beam_outgoing" msgid="4679536649779123495">"Зрачење..."</string>
     <string name="beam_complete" msgid="477026736424637435">"Зракот е целосен"</string>
     <string name="beam_failed" msgid="5116241718189888630">"Зракот не се заврши"</string>
     <string name="beam_canceled" msgid="5425192751826544741">"Зракот е откажан"</string>
     <string name="cancel" msgid="61873902552555096">"Откажи"</string>
-    <string name="beam_touch_to_view" msgid="7853129156831642630">"Допри за да видиш"</string>
+    <string name="beam_tap_to_view" msgid="7430394753262448349">"Допри за приказ"</string>
     <string name="beam_handover_not_supported" msgid="4083165921751489015">"Уредот на примачот не поддржува пренос на големи датотеки преку зрак."</string>
     <string name="beam_try_again" msgid="3364677301009783455">"Повторно спој ги уредите"</string>
     <string name="beam_busy" msgid="5253335587620612576">"Beam е моментално зафатен. Обидете се повторно кога ќе заврши претходниот пренос."</string>
@@ -44,6 +40,6 @@
     <string name="status_wifi_connected" msgid="5893022897732105739">"Поврзано"</string>
     <string name="title_connect_to_network" msgid="2474034615817280146">"Поврзи се на мрежа"</string>
     <string name="prompt_connect_to_network" msgid="8511683573657516114">"Да се поврзе со мрежата <xliff:g id="NETWORK_SSID">%1$s</xliff:g>?"</string>
-    <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"Android Beam бара да се овозможи НФЦ. Дали сакате да го овозможите?"</string>
+    <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"Android Beam бара да се овозможи NFC. Дали сакате да го овозможите?"</string>
     <string name="android_beam" msgid="1666446406999492763">"Android Beam"</string>
 </resources>

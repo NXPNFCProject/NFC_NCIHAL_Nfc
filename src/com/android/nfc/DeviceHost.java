@@ -62,6 +62,8 @@ public interface DeviceHost {
         public void onHostCardEmulationData(int technology, byte[] data);
         public void onHostCardEmulationDeactivated(int technology);
         public void onAidRoutingTableFull();
+        public void onNotifyT3tConfigure();
+        public void onNotifyReRoutingEntry();
 
         /**
          * Notifies about multiple card presented to
@@ -84,6 +86,9 @@ public interface DeviceHost {
         public void onRemoteFieldActivated();
 
         public void onRemoteFieldDeactivated();
+
+        /*Restart disable watchdog timer*/
+        public void onRestartWatchDog(int enable);
 
         /**
          * Notifies that the SE has been activated in listen mode

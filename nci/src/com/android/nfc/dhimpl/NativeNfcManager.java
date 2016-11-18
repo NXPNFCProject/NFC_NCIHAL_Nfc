@@ -807,6 +807,10 @@ public class NativeNfcManager implements DeviceHost {
         mListener.onRemoteFieldDeactivated();
     }
 
+    private void notifyJcosDownloadInProgress(int enable) {
+        mListener.onRestartWatchDog(enable);
+    }
+
     /* Reader over SWP listeners*/
     private void notifySWPReaderRequested(boolean istechA, boolean istechB) {
         mListener.onSWPReaderRequestedEvent(istechA, istechB);
@@ -816,11 +820,9 @@ public class NativeNfcManager implements DeviceHost {
         mListener.onSWPReaderRequestedFail(FailureCause);
     }
 
-
     private void notifySWPReaderActivated() {
         mListener.onSWPReaderActivatedEvent();
     }
-
 
     private void notifyonETSIReaderModeStartConfig(int eeHandle) {
         mListener.onETSIReaderModeStartConfig(eeHandle);
@@ -856,6 +858,14 @@ public class NativeNfcManager implements DeviceHost {
 
     private void notifyHostEmuActivated(int technology) {
         mListener.onHostCardEmulationActivated(technology);
+    }
+
+    private void notifyT3tConfigure() {
+        mListener.onNotifyT3tConfigure();
+    }
+
+    private void notifyReRoutingEntry() {
+        mListener.onNotifyReRoutingEntry();
     }
 
     private void notifyHostEmuData(int technology, byte[] data) {

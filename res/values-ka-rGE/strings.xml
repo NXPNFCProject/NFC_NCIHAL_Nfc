@@ -3,19 +3,15 @@
     xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="app_name" msgid="78565911793142902">"NFC სერვისი"</string>
     <string name="nfcUserLabel" msgid="7708535817084357357">"NFC"</string>
-    <string name="inbound_me_profile_title" msgid="6146013785225412693">"NFC-თ მიღებული კონტაქტი"</string>
-    <string name="inbound_me_profile_text" msgid="2342757196108092923">"შეეხეთ, რათა დაამატოთ ეს პიროვნება კონტაქტად."</string>
-    <string name="outbound_me_profile_title" msgid="2523625031572784769">"NFC ინტერაქცია დასრულდა"</string>
-    <string name="outbound_me_profile_text" msgid="5594998841143667989">"შეეხეთ, რომ მიაწოდოთ ამ პიროვნებას თქვენი საკონტაქტო ინფორმაცია."</string>
     <string name="accessibility_nfc_enabled" msgid="7796246979948787735">"NFC-გააქტიურებული."</string>
-    <string name="touch" msgid="4727218133711188355">"შეეხეთ სხივით გადასაცემად"</string>
+    <string name="tap_to_beam" msgid="5819197866281059878">"შეეხეთ სხივით გადასაცემად"</string>
     <string name="beam_progress" msgid="7453634884807323920">"შემომავალი სხივი..."</string>
     <string name="beam_outgoing" msgid="4679536649779123495">"სხივით გადაცემა..."</string>
     <string name="beam_complete" msgid="477026736424637435">"სხივით გადაცემა დასრულდა"</string>
     <string name="beam_failed" msgid="5116241718189888630">"სხივით გადაცემა დასრულდა"</string>
     <string name="beam_canceled" msgid="5425192751826544741">"სხივით გადაცემა გაუქმდა"</string>
     <string name="cancel" msgid="61873902552555096">"გაუქმება"</string>
-    <string name="beam_touch_to_view" msgid="7853129156831642630">"შეეხეთ სანახავად"</string>
+    <string name="beam_tap_to_view" msgid="7430394753262448349">"შეეხეთ სანახავად"</string>
     <string name="beam_handover_not_supported" msgid="4083165921751489015">"მიმღების მოწყობილობას დიდი ფაილების სხივით გადაცემის მხარდაჭერა არ გააჩნია."</string>
     <string name="beam_try_again" msgid="3364677301009783455">"ისევ მიაახლოვეთ მოწყობილობები ერთმანეთს"</string>
     <string name="beam_busy" msgid="5253335587620612576">"სხივი ამჟამად დაკავებულია. სცადეთ ხელახლა, როდესაც წინა გადაცემა დასრულდება."</string>

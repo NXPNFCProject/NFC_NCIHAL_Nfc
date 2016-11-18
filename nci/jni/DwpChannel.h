@@ -19,22 +19,80 @@ extern "C"
     #include "nfa_ee_api.h"
 }
 
-    /*******************************************************************************
-    **
-    ** Function:        initialize
-    **
-    ** Description:     Initialize the channel.
-    **
-    ** Returns:         True if ok.
-    **
-    *******************************************************************************/
-    extern bool dwpChannelForceClose;
-    INT16 open();
-    bool close(INT16 mHandle);
+#if(NXP_ESE_JCOP_DWNLD_PROTECTION == TRUE)
+class DwpChannel
+{
+public:
 
-    bool transceive (UINT8* xmitBuffer, INT32 xmitBufferSize, UINT8* recvBuffer,
-                     INT32 recvBufferMaxSize, INT32& recvBufferActualSize, INT32 timeoutMillisec);
+/*******************************************************************************
+**
+** Function:        DwpChannel's get class instance
+**
+** Description:     Returns instance object of the class
+**
+** Returns:         DwpChannel instance.
+**
+*******************************************************************************/
+static DwpChannel& getInstance ();
 
-    void doeSE_Reset();
-    void doeSE_JcopDownLoadReset();
-    void doDwpChannel_ForceExit();
+/*******************************************************************************
+**
+** Function:        DwpChannel's force exit
+**
+** Description:     Force exit of DWP channel
+**
+** Returns:         None.
+**
+*******************************************************************************/
+void forceClose();
+
+bool dwpChannelForceClose;
+
+private:
+
+static DwpChannel sDwpChannel;
+
+/*******************************************************************************
+**
+** Function:        DwpChannel Constructor
+**
+** Description:     Class constructor
+**
+** Returns:         None.
+**
+*******************************************************************************/
+DwpChannel () ;
+
+/*******************************************************************************
+**
+** Function:        DwpChannel Destructor
+**
+** Description:     Class destructor
+**
+** Returns:         None.
+**
+*******************************************************************************/
+~DwpChannel () ;
+
+};
+#endif
+
+/*******************************************************************************
+**
+** Function:        initialize
+**
+** Description:     Initialize the channel.
+**
+** Returns:         True if ok.
+**
+*******************************************************************************/
+extern bool dwpChannelForceClose;
+INT16 open();
+bool close(INT16 mHandle);
+
+bool transceive (UINT8* xmitBuffer, INT32 xmitBufferSize, UINT8* recvBuffer,
+				 INT32 recvBufferMaxSize, INT32& recvBufferActualSize, INT32 timeoutMillisec);
+
+void doeSE_Reset();
+void doeSE_JcopDownLoadReset();
+void doDwpChannel_ForceExit();

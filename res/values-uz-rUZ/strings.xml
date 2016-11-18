@@ -3,19 +3,15 @@
     xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="app_name" msgid="78565911793142902">"Nfc xizmati"</string>
     <string name="nfcUserLabel" msgid="7708535817084357357">"Nfc"</string>
-    <string name="inbound_me_profile_title" msgid="6146013785225412693">"Kontakt NFC orqali qabul qilindi"</string>
-    <string name="inbound_me_profile_text" msgid="2342757196108092923">"Bu shaxsni kontakt sifatida qo‘shish uchun ustiga bosing."</string>
-    <string name="outbound_me_profile_title" msgid="2523625031572784769">"NFC orqali bog‘landi"</string>
-    <string name="outbound_me_profile_text" msgid="5594998841143667989">"Bu shaxsga kontaktingiz ma’lumotini o‘tkazish uchun bosing."</string>
     <string name="accessibility_nfc_enabled" msgid="7796246979948787735">"NFC yoqilgan."</string>
-    <string name="touch" msgid="4727218133711188355">"O‘tkazish uchun bosing"</string>
+    <string name="tap_to_beam" msgid="5819197866281059878">"Ma’lumotlarni uzatish uchun bosing"</string>
     <string name="beam_progress" msgid="7453634884807323920">"Kiruvchi o‘tkazma…"</string>
     <string name="beam_outgoing" msgid="4679536649779123495">"O‘tkazmoqda…"</string>
     <string name="beam_complete" msgid="477026736424637435">"O‘tkazildi"</string>
     <string name="beam_failed" msgid="5116241718189888630">"O‘tkazilmadi"</string>
     <string name="beam_canceled" msgid="5425192751826544741">"O‘tkazish bekor qilindi"</string>
     <string name="cancel" msgid="61873902552555096">"Bekor qilish"</string>
-    <string name="beam_touch_to_view" msgid="7853129156831642630">"Ko‘rish uchun bosing"</string>
+    <string name="beam_tap_to_view" msgid="7430394753262448349">"Ko‘rish uchun bosing"</string>
     <string name="beam_handover_not_supported" msgid="4083165921751489015">"Qabul qiluvchining qurilmasi o‘tkazish xususiyati orqali katta hajmdagi fayllar o‘tkazmasini qo‘llab-quvvatlamaydi."</string>
     <string name="beam_try_again" msgid="3364677301009783455">"Qurilmalarni yana jipslashtiring"</string>
     <string name="beam_busy" msgid="5253335587620612576">"Beam hozirda band. Avvalgi o‘tkazma tugallangach, qaytadan urining."</string>
@@ -37,7 +33,7 @@
     <string name="could_not_use_app" msgid="8137587876138569083">"<xliff:g id="APP">%1$s</xliff:g>dan foydalanib bo‘lmadi."</string>
     <string name="pay_with" msgid="5531545488795798945">"To‘lov usuli:"</string>
     <string name="complete_with" msgid="6797459104103012992">"Quyidagi bilan yakunlash:"</string>
-    <string name="default_pay_app_removed" msgid="4108250545457437360">"Afzal ko‘rgan bosib &amp; to‘lash xizmati ilovasi o‘chirib tashlandi. Boshqasini tanlang?"</string>
+    <string name="default_pay_app_removed" msgid="4108250545457437360">"Siz kontaktsiz to‘lov uchun belgilangan asosiy ilovani o‘chirib tashladingiz. Boshqasi tanlansinmi?"</string>
     <string name="ask_nfc_tap" msgid="2925239870458286340">"Ishni yakunlash uchun boshqa qurilmani bosing"</string>
     <string name="wifi_connect" msgid="6250727951843550671">"Ulanish"</string>
     <string name="status_unable_to_connect" msgid="9183908200295307657">"Tarmoqqa ulanib bo‘lmadi"</string>

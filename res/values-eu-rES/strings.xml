@@ -3,19 +3,15 @@
     xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="app_name" msgid="78565911793142902">"NFC zerbitzua"</string>
     <string name="nfcUserLabel" msgid="7708535817084357357">"NFC"</string>
-    <string name="inbound_me_profile_title" msgid="6146013785225412693">"Kontaktua NFC bidez jaso da"</string>
-    <string name="inbound_me_profile_text" msgid="2342757196108092923">"Pertsona hau kontaktu gisa gehitzeko, ukitu hau."</string>
-    <string name="outbound_me_profile_title" msgid="2523625031572784769">"NFC elkarrekintza osatu da"</string>
-    <string name="outbound_me_profile_text" msgid="5594998841143667989">"Zurekin harremanetan jartzeko informazioa emateko, ukitu hau."</string>
     <string name="accessibility_nfc_enabled" msgid="7796246979948787735">"NFC gaituta."</string>
-    <string name="touch" msgid="4727218133711188355">"NFC bidez partekatzeko, ukitu hau"</string>
+    <string name="tap_to_beam" msgid="5819197866281059878">"Sakatu NFC bidez partekatzeko"</string>
     <string name="beam_progress" msgid="7453634884807323920">"Sarrerako NFC bidez partekatzea…"</string>
     <string name="beam_outgoing" msgid="4679536649779123495">"NFC bidez partekatzen"</string>
     <string name="beam_complete" msgid="477026736424637435">"NFC bidezko partekatzea osatu da"</string>
     <string name="beam_failed" msgid="5116241718189888630">"NFC bidezko partekatzea ez da osatu"</string>
     <string name="beam_canceled" msgid="5425192751826544741">"NFC bidezko partekatzea bertan behera utzi da"</string>
     <string name="cancel" msgid="61873902552555096">"Utzi"</string>
-    <string name="beam_touch_to_view" msgid="7853129156831642630">"Ukitu ikusteko"</string>
+    <string name="beam_tap_to_view" msgid="7430394753262448349">"Sakatu ikusteko"</string>
     <string name="beam_handover_not_supported" msgid="4083165921751489015">"Hartzailearen gailuak ez du onartzen fitxategi handiak NFC bidez transferitzea."</string>
     <string name="beam_try_again" msgid="3364677301009783455">"Elkartu gailuak berriro"</string>
     <string name="beam_busy" msgid="5253335587620612576">"Beam lanpetuta dago. Saiatu berriro abian den transferentzia amaitutakoan."</string>
@@ -37,7 +33,7 @@
     <string name="could_not_use_app" msgid="8137587876138569083">"Ezin izan da <xliff:g id="APP">%1$s</xliff:g> erabili."</string>
     <string name="pay_with" msgid="5531545488795798945">"Ordaindu honekin"</string>
     <string name="complete_with" msgid="6797459104103012992">"Ekintza osatzeko aplikazioak"</string>
-    <string name="default_pay_app_removed" msgid="4108250545457437360">"Sakatu eta ordaindu eginbidea erabiltzeko zerbitzu hobetsia kendu egin da. Beste bat aukeratu nahi duzu?"</string>
+    <string name="default_pay_app_removed" msgid="4108250545457437360">"Ukitu eta ordaindu eginbidea erabiltzeko zerbitzu hobetsia kendu egin da. Beste bat aukeratu nahi duzu?"</string>
     <string name="ask_nfc_tap" msgid="2925239870458286340">"Datuak bidaltzeko, ukitu beste gailu bat"</string>
     <string name="wifi_connect" msgid="6250727951843550671">"Konektatu"</string>
     <string name="status_unable_to_connect" msgid="9183908200295307657">"Ezin da sarera konektatu"</string>

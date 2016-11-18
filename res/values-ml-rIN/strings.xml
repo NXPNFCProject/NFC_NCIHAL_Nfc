@@ -3,19 +3,15 @@
     xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="app_name" msgid="78565911793142902">"Nfc സേവനം"</string>
     <string name="nfcUserLabel" msgid="7708535817084357357">"Nfc"</string>
-    <string name="inbound_me_profile_title" msgid="6146013785225412693">"NFC മുഖേന ലഭിച്ച കോൺടാക്റ്റ്"</string>
-    <string name="inbound_me_profile_text" msgid="2342757196108092923">"ഈ വ്യക്തിയെ ഒരു കോൺടാക്‌റ്റ് ആയി ചേർക്കുന്നതിന് സ്‌പർശിക്കുക."</string>
-    <string name="outbound_me_profile_title" msgid="2523625031572784769">"NFC ഇടപെടൽ പൂർത്തിയായി"</string>
-    <string name="outbound_me_profile_text" msgid="5594998841143667989">"നിങ്ങളുടെ കോൺടാക്റ്റ് വിവരം ഈ വ്യക്തിയ്ക്ക് നൽകുന്നതിന് സ്‌പർശിക്കുക."</string>
     <string name="accessibility_nfc_enabled" msgid="7796246979948787735">"NFC പ്രവർത്തനക്ഷമമാക്കി."</string>
-    <string name="touch" msgid="4727218133711188355">"ബീം സ്‌പർശിക്കുക"</string>
+    <string name="tap_to_beam" msgid="5819197866281059878">"ബീം ചെയ്യാൻ ടാപ്പുചെയ്യുക"</string>
     <string name="beam_progress" msgid="7453634884807323920">"ഇൻകമിംഗ് ബീം..."</string>
     <string name="beam_outgoing" msgid="4679536649779123495">"ബീമിംഗ്..."</string>
     <string name="beam_complete" msgid="477026736424637435">"ബീം പൂർത്തിയായി"</string>
     <string name="beam_failed" msgid="5116241718189888630">"ബീം പൂർത്തിയായില്ല"</string>
     <string name="beam_canceled" msgid="5425192751826544741">"ബീം റദ്ദാക്കി"</string>
     <string name="cancel" msgid="61873902552555096">"റദ്ദാക്കുക"</string>
-    <string name="beam_touch_to_view" msgid="7853129156831642630">"കാണാൻ സ്‌പർശിക്കുക"</string>
+    <string name="beam_tap_to_view" msgid="7430394753262448349">"കാണാൻ ടാപ്പുചെയ്യുക"</string>
     <string name="beam_handover_not_supported" msgid="4083165921751489015">"ബീം മുഖേന വലിയ ഫയൽ കൈമാറുന്നതിനെ സ്വീകർത്താവിന്റെ ഉപകരണം പിന്തുണയ്ക്കുന്നില്ല."</string>
     <string name="beam_try_again" msgid="3364677301009783455">"ഉപകരണങ്ങൾ വീണ്ടും ഒരുമിച്ചുകൊണ്ടുവരുക"</string>
     <string name="beam_busy" msgid="5253335587620612576">"ബീം നിലവിൽ തിരക്കിലാണ്. മുമ്പുള്ള കൈമാറ്റം പൂർത്തിയാക്കുമ്പോൾ വീണ്ടും ശ്രമിക്കുക."</string>

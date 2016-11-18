@@ -3,19 +3,15 @@
     xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="app_name" msgid="78565911793142902">"Nfc ಸೇವೆ"</string>
     <string name="nfcUserLabel" msgid="7708535817084357357">"Nfc"</string>
-    <string name="inbound_me_profile_title" msgid="6146013785225412693">"NFC ಮೂಲಕ ಸಂಪರ್ಕವನ್ನು ಸ್ವೀಕರಿಸಲಾಗಿದೆ"</string>
-    <string name="inbound_me_profile_text" msgid="2342757196108092923">"ಈ ವ್ಯಕ್ತಿಯನ್ನು ಸಂಪರ್ಕದ ರೂಪದಲ್ಲಿ ಸೇರಿಸಿಕೊಳ್ಳಲು ಸ್ಪರ್ಶಿಸಿ."</string>
-    <string name="outbound_me_profile_title" msgid="2523625031572784769">"NFC ಪರಸ್ಪರ ಸಂವಹನ ಪೂರ್ಣಗೊಂಡಿದೆ"</string>
-    <string name="outbound_me_profile_text" msgid="5594998841143667989">"ಈ ವ್ಯಕ್ತಿಗೆ ನಿಮ್ಮ ಸಂಪರ್ಕ ಮಾಹಿತಿಯನ್ನು ನೀಡಲು ಸ್ಪರ್ಶಿಸಿ."</string>
     <string name="accessibility_nfc_enabled" msgid="7796246979948787735">"NFC ಸಕ್ರಿಯಗೊಂಡಿದೆ."</string>
-    <string name="touch" msgid="4727218133711188355">"ಬೀಮ್ ಮಾಡಲು ಸ್ಪರ್ಶಿಸಿ"</string>
+    <string name="tap_to_beam" msgid="5819197866281059878">"ಬೀಮ್ ಮಾಡಲು ಟ್ಯಾಪ್ ಮಾಡಿ"</string>
     <string name="beam_progress" msgid="7453634884807323920">"ಒಳಬರುತ್ತಿರುವ ಬೀಮ್..."</string>
     <string name="beam_outgoing" msgid="4679536649779123495">"ಬೀಮ್ ಮಾಡಲಾಗುತ್ತಿದೆ..."</string>
     <string name="beam_complete" msgid="477026736424637435">"ಬೀಮ್ ಪೂರ್ಣಗೊಂಡಿದೆ"</string>
     <string name="beam_failed" msgid="5116241718189888630">"ಬೀಮ್ ಪೂರ್ಣಗೊಂಡಿಲ್ಲ"</string>
     <string name="beam_canceled" msgid="5425192751826544741">"ಬೀಮ್ ರದ್ದುಗೊಂಡಿದೆ"</string>
     <string name="cancel" msgid="61873902552555096">"ರದ್ದುಮಾಡು"</string>
-    <string name="beam_touch_to_view" msgid="7853129156831642630">"ವೀಕ್ಷಿಸಲು ಸ್ಪರ್ಶಿಸಿ"</string>
+    <string name="beam_tap_to_view" msgid="7430394753262448349">"ವೀಕ್ಷಿಸಲು ಟ್ಯಾಪ್ ಮಾಡಿ"</string>
     <string name="beam_handover_not_supported" msgid="4083165921751489015">"ಸ್ವೀಕರಿಸುವವರ ಸಾಧನವು ಬೀಮ್ ಮೂಲಕ ಮಾಡಲಾಗುವ ವರ್ಗಾವಣೆಯನ್ನು ಬೆಂಬಲಿಸುವುದಿಲ್ಲ."</string>
     <string name="beam_try_again" msgid="3364677301009783455">"ಸಾಧನಗಳನ್ನು ಮತ್ತೆ ಒಟ್ಟಿಗೆ ತನ್ನಿ"</string>
     <string name="beam_busy" msgid="5253335587620612576">"ಬೀಮ್ ಪ್ರಸ್ತುತ ಕಾರ್ಯನಿರತವಾಗಿದೆ. ಹಿಂದಿನ ವರ್ಗಾವಣೆ ಪೂರ್ಣಗೊಂಡ ಬಳಿಕ ಮತ್ತೊಮ್ಮೆ ಪ್ರಯತ್ನಿಸಿ."</string>

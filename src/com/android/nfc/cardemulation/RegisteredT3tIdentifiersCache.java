@@ -124,6 +124,11 @@ public class RegisteredT3tIdentifiersCache {
         updateRoutingLocked();
     }
 
+    void clearT3tidentifiercache()
+    {
+        mRoutingManager.onNfccRoutingTableCleared();
+    }
+
     void updateRoutingLocked() {
         if (DBG) Log.d(TAG, "updateRoutingLocked");
         if (!mNfcEnabled) {

@@ -3,19 +3,15 @@
     xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="app_name" msgid="78565911793142902">"Nfc қызметі"</string>
     <string name="nfcUserLabel" msgid="7708535817084357357">"Nfc"</string>
-    <string name="inbound_me_profile_title" msgid="6146013785225412693">"Контакт NFC арқылы алынды."</string>
-    <string name="inbound_me_profile_text" msgid="2342757196108092923">"Бұл адамды контакт ретінде қосу үшін оны түртіңіз."</string>
-    <string name="outbound_me_profile_title" msgid="2523625031572784769">"NFC әрекеттесу аяқталды"</string>
-    <string name="outbound_me_profile_text" msgid="5594998841143667989">"Бұл адамға байланыс деректеріңізді беру үшін оны түртіңіз."</string>
     <string name="accessibility_nfc_enabled" msgid="7796246979948787735">"NFC (жақын өріс байланысы) қосулы."</string>
-    <string name="touch" msgid="4727218133711188355">"Хабар тарату үшін түртіңіз"</string>
+    <string name="tap_to_beam" msgid="5819197866281059878">"Жіберу үшін түртіңіз"</string>
     <string name="beam_progress" msgid="7453634884807323920">"Келген сигналдар..."</string>
     <string name="beam_outgoing" msgid="4679536649779123495">"Хабар таратылуда..."</string>
     <string name="beam_complete" msgid="477026736424637435">"Бим (хабар тарату) аяқталды"</string>
     <string name="beam_failed" msgid="5116241718189888630">"Бим (хабар тарату) аяқталмады"</string>
     <string name="beam_canceled" msgid="5425192751826544741">"Бим (хабар тарату) тоқтатылды"</string>
     <string name="cancel" msgid="61873902552555096">"Бас тарту"</string>
-    <string name="beam_touch_to_view" msgid="7853129156831642630">"Көру үшін түрту"</string>
+    <string name="beam_tap_to_view" msgid="7430394753262448349">"Көру үшін түртіңіз"</string>
     <string name="beam_handover_not_supported" msgid="4083165921751489015">"Хабар алушының құрылғысы бим арқылы үлкен файл жіберуді қолдамайды."</string>
     <string name="beam_try_again" msgid="3364677301009783455">"Құрылғыларды қайта біріктіру"</string>
     <string name="beam_busy" msgid="5253335587620612576">"Тарату қазіргі уақытта бос емес. Алдыңғы тасымалдау аяқталғанда әрекетті қайталаңыз."</string>

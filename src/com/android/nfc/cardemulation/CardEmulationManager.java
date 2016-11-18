@@ -186,6 +186,19 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         mPreferredServices.onUserSwitched(userId);
     }
 
+    public void onT3tConfigure()
+    {
+        mT3tIdentifiersCache.clearT3tidentifiercache();
+        mT3tIdentifiersCache.generateForegroundT3tIdentifiersCacheLocked();
+    }
+
+    public void onReRoutingEntry()
+    {
+        Log.e(TAG, "onReRoutingEntry: notify service.");
+        mAidCache.clearRoutingTable();
+        mAidCache.generateAidCacheLocked();
+    }
+
     public void onNfcEnabled() {
         mAidCache.onNfcEnabled();
         mNfcid2Cache.onNfcEnabled();

@@ -43,7 +43,7 @@
 
 extern bool hold_the_transceive;
 extern int dual_mode_current_state;
-#if((NFC_NXP_ESE == TRUE)&&(CONCURRENCY_PROTECTION == TRUE))
+#if((NFC_NXP_ESE == TRUE)&&(NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == TRUE))
 extern bool ceTransactionPending;
 #endif
 namespace android
@@ -51,7 +51,7 @@ namespace android
 
 extern void startRfDiscovery (bool isStart);
 extern bool isDiscoveryStarted();
-
+extern bool isp2pActivated();
 extern void com_android_nfc_NfcManager_disableDiscovery (JNIEnv* e, jobject o);
 extern void com_android_nfc_NfcManager_enableDiscovery (JNIEnv* e, jobject o, jint mode);
 static SyncEvent            sNfaVSCResponseEvent;
@@ -100,6 +100,7 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection (JNIEnv*, jobje
     long ret_val = -1;
     NFCSTATUS status = NFCSTATUS_FAILED;
     p61_access_state_t p61_current_state = P61_STATE_INVALID;
+    se_apdu_gate_info gateInfo = NO_APDU_GATE;
 #endif
     SecureElement &se = SecureElement::getInstance();
 #if ((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
@@ -182,7 +183,7 @@ if((RoutingManager::getInstance().is_ee_recovery_ongoing()))
     {
         ALOGD ("ee recovery ongoing!!!");
         SyncEventGuard guard (SecureElement::getInstance().mEEdatapacketEvent);
-		SecureElement::getInstance().mEEdatapacketEvent.wait();
+        SecureElement::getInstance().mEEdatapacketEvent.wait();
     }
 #endif
 #if(NXP_ESE_DUAL_MODE_PRIO_SCHEME == NXP_ESE_EXCLUSIVE_WIRED_MODE)
@@ -217,6 +218,15 @@ if((RoutingManager::getInstance().is_ee_recovery_ongoing()))
     }
     ALOGD("P61 Status is: %x", p61_current_state);
 
+#if (NXP_ESE_JCOP_DWNLD_PROTECTION == TRUE && NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+    if(p61_current_state & P61_STATE_JCP_DWNLD)
+    {
+        ALOGD("Denying SE open due to JCOP OS Download is in progress");
+        secElemHandle = EE_ERROR_IO;
+        goto TheEnd;
+    }
+#endif
+
 #if(NFC_NXP_ESE_VER == JCOP_VER_3_1)
     if (!(p61_current_state & P61_STATE_SPI) && !(p61_current_state & P61_STATE_SPI_PRIO))
     {
@@ -246,7 +256,6 @@ if((RoutingManager::getInstance().is_ee_recovery_ongoing()))
         }
         else
         {
-            se.mIsWiredModeOpen = true;
             ALOGD("SE Access granted");
 #if(NXP_ESE_DUAL_MODE_PRIO_SCHEME == NXP_ESE_EXCLUSIVE_WIRED_MODE)
             if (isDiscoveryStarted())
@@ -277,32 +286,13 @@ if((RoutingManager::getInstance().is_ee_recovery_ongoing()))
     }
 #endif
 #endif
-    //tell the controller to power up to get ready for sec elem operations
+    /* Tell the controller to power up to get ready for sec elem operations */
     PowerSwitch::getInstance ().setLevel (PowerSwitch::FULL_POWER);
     PowerSwitch::getInstance ().setModeOn (PowerSwitch::SE_CONNECTED);
-#if 0
-    {
-
-        sRfEnabled = isDiscoveryStarted();
-        if (sRfEnabled) {
-            // Stop RF Discovery if we were polling
-            startRfDiscovery (false);
-        }
-
-        UINT8 param[] = {0x00}; //Disable standby
-        SyncEventGuard guard (sNfaVSCResponseEvent);
-        tNFA_STATUS stat = NFA_SendVsCommand (0x00,0x01,param,nfaVSCCallback);
-        if(NFA_STATUS_OK == stat)
-        {
-            sNfaVSCResponseEvent.wait(); //wait for NFA VS command to finish
-
-        }
-
-        startRfDiscovery (true);
-    }
-#endif
+    /* If controller is not routing AND there is no pipe connected,
+       then turn on the sec elem */
 #if(NXP_EXTNS == TRUE) && (NFC_NXP_ESE == TRUE)
-    if(!(p61_current_state & (P61_STATE_SPI | P61_STATE_SPI_PRIO)))
+    if((!(p61_current_state & (P61_STATE_SPI | P61_STATE_SPI_PRIO))) && (!(dual_mode_current_state & CL_ACTIVE)))
         stat = se.SecEle_Modeset(0x01); //Workaround
     usleep(150000); /*provide enough delay if NFCC enter in recovery*/
 #endif
@@ -321,11 +311,49 @@ if((RoutingManager::getInstance().is_ee_recovery_ongoing()))
             se.deactivate (0);
         }
     }
-#if((NFC_NXP_ESE == TRUE)&&(CONCURRENCY_PROTECTION == TRUE))
-    if(is_wired_mode_open)
+#if((NXP_EXTNS == TRUE) && (NFC_NXP_ESE == TRUE))
+    if(stat)
     {
-        se.enablePassiveListen(0x00);
+        status = NFA_STATUS_OK;
+#if((NFC_NXP_ESE == TRUE)&&(NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == TRUE))
+        if(!(se.isActivatedInListenMode() || isp2pActivated() || NfcTag::getInstance ().isActivated ()))
+        {
+             se.enablePassiveListen(0x00);
+        }
         se.meseUiccConcurrentAccess = true;
+#endif
+        if(se.mIsIntfRstEnabled)
+        {
+            gateInfo = se.getApduGateInfo();
+            if(gateInfo == ETSI_12_APDU_GATE)
+            {
+                se.NfccStandByOperation(STANDBY_TIMER_STOP);
+                status = se.SecElem_sendEvt_Abort();
+                if(status != NFA_STATUS_OK)
+                {
+                    ALOGD("%s: EVT_ABORT failed", __FUNCTION__);
+                }
+            }
+        }
+#if(NXP_ESE_DUAL_MODE_PRIO_SCHEME == NXP_ESE_WIRED_MODE_RESUME)
+        if((status == NFA_STATUS_OK) && (se.mNfccPowerMode == 1))
+        {
+            status = se.setNfccPwrConfig(se.POWER_ALWAYS_ON);
+            if(status != NFA_STATUS_OK)
+            {
+                ALOGD("%s: power link command failed", __FUNCTION__);
+            }
+        }
+#endif
+        if(status != NFA_STATUS_OK)
+        {
+            se.disconnectEE (secElemHandle);
+            secElemHandle = EE_ERROR_INIT;
+        }
+        else
+        {
+            se.mIsWiredModeOpen = true;
+        }
     }
 #endif
     //if code fails to connect to the secure element, and nothing is active, then
@@ -399,37 +427,9 @@ static jboolean nativeNfcSecureElement_doDisconnectSecureElementConnection (JNIE
     se.NfccStandByOperation(STANDBY_MODE_ON);
 #endif
 
-#if 0
-    {
-        sRfEnabled = isDiscoveryStarted();
-        if (sRfEnabled) {
-            // Stop RF Discovery if we were polling
-            startRfDiscovery (false);
-        }
-
-        UINT8 param[] = {0x01};//Enable standby
-        SyncEventGuard guard (sNfaVSCResponseEvent);
-        tNFA_STATUS stat = NFA_SendVsCommand (0x00,0x01,param,nfaVSCCallback);
-        if(NFA_STATUS_OK == stat)
-        {
-            sNfaVSCResponseEvent.wait(); //wait for NFA VS command to finish
-
-        }
-
-        startRfDiscovery (true);
-    }
-#endif
     stat = SecureElement::getInstance().disconnectEE (handle);
 
-    //if controller is not routing AND there is no pipe connected,
-    //then turn off the sec elem
-#if(NFC_NXP_ESE == TRUE)
-//Do Nothing
-#else
-    if (! SecureElement::getInstance().isBusy())
-        SecureElement::getInstance().deactivate (handle);
-#endif
-    //if nothing is active after this, then tell the controller to power down
+    /* if nothing is active after this, then tell the controller to power down */
     if (! PowerSwitch::getInstance ().setModeOff (PowerSwitch::SE_CONNECTED))
         PowerSwitch::getInstance ().setLevel (PowerSwitch::LOW_POWER);
 #if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
@@ -446,7 +446,7 @@ static jboolean nativeNfcSecureElement_doDisconnectSecureElementConnection (JNIE
             ALOGD("Denying SE close due to SE is not being released by Pn54x driver");
             stat = false;
         }
-#if((NFC_NXP_ESE == TRUE)&&(CONCURRENCY_PROTECTION == TRUE))
+#if((NFC_NXP_ESE == TRUE)&&(NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == TRUE))
         se.enablePassiveListen(0x01);
         SecureElement::getInstance().mPassiveListenTimer.kill();
         se.meseUiccConcurrentAccess = false;
@@ -519,6 +519,7 @@ static jboolean nativeNfcSecureElement_doResetSecureElement (JNIEnv*, jobject, j
     bool stat = false;
 #if (NFC_NXP_ESE == TRUE)
     tNFA_STATUS mstatus;
+    tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
     SecureElement &se = SecureElement::getInstance();
     unsigned long num = 0;
     ALOGD("%s: enter; handle=0x%04x", __FUNCTION__, handle);
@@ -527,26 +528,14 @@ static jboolean nativeNfcSecureElement_doResetSecureElement (JNIEnv*, jobject, j
         ALOGD("wired mode is not open");
         return stat;
     }
-    if (GetNxpNumValue("NXP_ESE_POWER_DH_CONTROL", &num, sizeof(num)))
-    {
-        ALOGD("Power schemes enabled in config file is %ld", num);
-    }
-
-#if(NXP_ESE_RESET_METHOD == TRUE)
-    if((num == 2) && (se.isEtsi12ApduGatePresent()))
-    {
-        ALOGD("Power Scheme : Ext PMU");
-        mstatus = se.SecElem_sendEvt_Abort();
-        if(mstatus == NFA_STATUS_OK){
-            stat = true;
+#if (NXP_WIRED_MODE_STANDBY == TRUE)
+        if(se.mNfccPowerMode == 1)
+        {
+            nfaStat = se.setNfccPwrConfig(se.NFCC_DECIDES);
+            ALOGD ("%s Power Mode is Legacy", __FUNCTION__);
         }
-        else {
-            stat = false;
-        }
-    }else
 #endif
     {
-        ALOGD("Power Scheme : Int PMU/Legacy");
         stat = se.SecEle_Modeset(0x00);
         if (handle == 0x4C0)
         {
@@ -566,6 +555,42 @@ static jboolean nativeNfcSecureElement_doResetSecureElement (JNIEnv*, jobject, j
     ALOGD("%s: exit", __FUNCTION__);
     return stat ? JNI_TRUE : JNI_FALSE;
 }
+
+/*******************************************************************************
+ **
+** Function:        nativeNfcSecureElement_doeSEChipResetSecureElement
+**
+** Description:     Reset the secure element.
+**                  e: JVM environment.
+**                  o: Java object.
+**                  handle: Handle of secure element.
+**
+** Returns:         True if ok.
+**
+*******************************************************************************/
+static jboolean nativeNfcSecureElement_doeSEChipResetSecureElement (JNIEnv*, jobject)
+{
+    bool stat = false;
+    NFCSTATUS status = NFCSTATUS_FAILED;
+    unsigned long num = 0x01;
+#if ((NFC_NXP_ESE == TRUE) && (NXP_EXTNS == TRUE))
+    SecureElement &se = SecureElement::getInstance();
+    if (GetNxpNumValue("NXP_ESE_POWER_DH_CONTROL", &num, sizeof(num)))
+    {
+        ALOGD("Power schemes enabled in config file is %ld", num);
+    }
+    if(num == 0x02)
+    {
+        status = se.eSE_Chip_Reset();
+        if(status == NFCSTATUS_SUCCESS)
+        {
+            stat = true;
+        }
+    }
+#endif
+    return stat ? JNI_TRUE : JNI_FALSE;
+}
+
 
 /*******************************************************************************
 **
@@ -632,8 +657,8 @@ static jbyteArray nativeNfcSecureElement_doTransceive (JNIEnv* e, jobject, jint 
     {
         e->SetByteArrayRegion(result, 0, recvBufferActualSize, (jbyte *) recvBuffer);
     }
-#if((NFC_NXP_ESE == TRUE)&&(CONCURRENCY_PROTECTION == TRUE))
-    if (ceTransactionPending)
+#if((NFC_NXP_ESE == TRUE)&&(NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == TRUE))
+    if (SecureElement::getInstance().mIsWiredModeBlocked == true)
     {
         ALOGD ("APDU Transceive CE wait");
         SecureElement::getInstance().startThread(0x01);
@@ -661,6 +686,7 @@ static JNINativeMethod gMethods[] =
 #endif
    {"doNativeDisconnectSecureElementConnection", "(I)Z", (void *) nativeNfcSecureElement_doDisconnectSecureElementConnection},
    {"doNativeResetSecureElement", "(I)Z", (void *) nativeNfcSecureElement_doResetSecureElement},
+   {"doNativeeSEChipResetSecureElement", "()Z", (void *) nativeNfcSecureElement_doeSEChipResetSecureElement},
    {"doTransceive", "(I[B)[B", (void *) nativeNfcSecureElement_doTransceive},
    {"doNativeGetAtr", "(I)[B", (void *) nativeNfcSecureElement_doGetAtr},
 };

@@ -301,12 +301,12 @@ typedef enum p61_access_state{
     P61_STATE_SPI_PRIO = 0x1000, /*Start of p61 access by SPI on priority*/
     P61_STATE_SPI_PRIO_END = 0x2000, /*End of p61 access by SPI on priority*/
     P61_STATE_SPI_END = 0x4000, /*End of p61 access by SPI*/
-#if ((NFC_NXP_CHIP_TYPE == PN548C2) || (NFC_NXP_CHIP_TYPE == PN551))
     P61_STATE_SPI_SVDD_SYNC_START = 0x0001, /*ESE_VDD Low req by SPI*/
     P61_STATE_SPI_SVDD_SYNC_END = 0x0002, /*ESE_VDD is Low by SPI*/
-    P61_STATE_DWP_SVDD_SYNC_START = 0x0003, /*ESE_VDD  Low req by Nfc*/
-    P61_STATE_DWP_SVDD_SYNC_END = 0x0004, /*ESE_VDD is Low by Nfc*/
-#endif
+    P61_STATE_DWP_SVDD_SYNC_START = 0x0004, /*ESE_VDD  Low req by Nfc*/
+    P61_STATE_DWP_SVDD_SYNC_END = 0x0008, /*ESE_VDD is Low by Nfc*/
+    P61_STATE_DWP_SESSION_CLOSE = 0xFFFF,
+    P61_STATE_JCP_DWNLD         = 0x8000, /* JCOP download is in progress */
 } p61_access_state_t;
 
 #define UNUSED(X) (void)(X);

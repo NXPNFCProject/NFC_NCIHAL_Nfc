@@ -241,8 +241,11 @@ static void printDataByte(UINT16 param_len, UINT8 *p_param)
 tNFA_STATUS SendAGCDebugCommand()
 {
     tNFA_STATUS status = NFA_STATUS_FAILED;
+#if ((NFC_NXP_CHIP_TYPE == PN548C2) || (NFC_NXP_CHIP_TYPE == PN551))
     uint8_t cmd_buf[] = {0x2F, 0x33, 0x04, 0x40, 0x00, 0x40, 0xD8};
-    uint8_t dynamic_rssi_buf[50];
+#elif(NFC_NXP_CHIP_TYPE == PN553)
+    uint8_t cmd_buf[] = {0x2F, 0x32, 0x01, 0x01};
+#endif
     ALOGD("%s: enter", __FUNCTION__);
     SetCbStatus(NFA_STATUS_FAILED);
     gnxpfeature_conf.rsp_len = 0;
@@ -550,32 +553,48 @@ tNFA_STATUS SetVenConfigValue(jint nfcMode)
     return status;
 }
 
-static void NxpResponse_GetSwpStausValueCb(UINT8 event, UINT16 param_len, UINT8 *p_param)
+static void NxpResponse_GetNumNFCEEValueCb(UINT8 event, UINT16 param_len, UINT8 *p_param)
 {
-    ALOGD("NxpResponse_GetSwpStausValueCb length data = 0x%x status = 0x%x", param_len, p_param[3]);
-    if(p_param[3] == 0x00)
-    {
-        if (p_param[8] != 0x00)
-        {
-            ALOGD("SWP1 Interface is enabled");
-#if(NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH == TRUE)
-            sSelectedUicc = (p_param[8] & 0x0F);
-#endif
-            gActualSeCount++;
-        }
-        if (p_param[12] != 0x00)
-        {
-            ALOGD("SWP2 Interface is enabled");
-            gActualSeCount++;
-        }
-#if(NXP_NFCC_DYNAMIC_DUAL_UICC == TRUE)
-        if (p_param[16] != 0x00)
-        {
-            ALOGD("SWP1A Interface is enabled");
-            gActualSeCount++;
-        }
+    uint8_t cfg_param_offset = 0x05;
+    ALOGD("NxpResponse_GetNumNFCEEValueCb length data = 0x%x status = 0x%x", param_len, p_param[3]);
 
+    if(p_param != NULL && param_len > 0x00 && p_param[3] == NFA_STATUS_OK && p_param[2] > 0x00)
+    {
+        while(cfg_param_offset < param_len)
+        {
+#if(NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH == TRUE)
+            if(p_param[5] == 0xA0 && p_param[6] == 0xEC)
+            {
+                sSelectedUicc = (p_param[8] & 0x0F);
+                ALOGD("Selected Uicc:%d",sSelectedUicc);
+            }
 #endif
+            if(p_param[cfg_param_offset] == NXP_NFC_SET_CONFIG_PARAM_EXT && p_param[cfg_param_offset+1] == NXP_NFC_PARAM_ID_SWP1)
+            {
+                if(p_param[cfg_param_offset+3] != NXP_FEATURE_DISABLED)
+                {
+                     ALOGD("SWP1 Interface is enabled");
+                     gActualSeCount++;
+                }
+            }
+            else if(p_param[cfg_param_offset] == NXP_NFC_SET_CONFIG_PARAM_EXT && p_param[cfg_param_offset+1] == NXP_NFC_PARAM_ID_SWP2)
+            {
+                if (p_param[cfg_param_offset+3] != NXP_FEATURE_DISABLED)
+                {
+                    ALOGD("SWP2 Interface is enabled");
+                    gActualSeCount++;
+                }
+            }
+            else if(p_param[cfg_param_offset] == NXP_NFC_SET_CONFIG_PARAM_EXT && p_param[cfg_param_offset+1] == NXP_NFC_PARAM_ID_SWP1A)
+            {
+                if (p_param[cfg_param_offset+3] != NXP_FEATURE_DISABLED)
+                {
+                    ALOGD("SWP1A Interface is enabled");
+                    gActualSeCount++;
+                }
+            }
+            cfg_param_offset += 0x04;
+        }
     }
     else
     {
@@ -588,27 +607,37 @@ static void NxpResponse_GetSwpStausValueCb(UINT8 event, UINT16 param_len, UINT8 
 }
 /*******************************************************************************
  **
- ** Function:        GetSwpStausValue
+ ** Function:        GetNumNFCEEConfigured
  **
- ** Description:     Get the current SWP1 and SWP2 status
+ ** Description:     Get the no of NFCEE configured
  **
  ** Returns:         success/failure
  **
  *******************************************************************************/
-tNFA_STATUS GetSwpStausValue(void)
+tNFA_STATUS GetNumNFCEEConfigured(void)
 {
     tNFA_STATUS status = NFA_STATUS_FAILED;
     gActualSeCount = 1; /* default ese present */
+    uint8_t cmd_buf[255] = {0x20, 0x03, 0x05, 0x02, NXP_NFC_SET_CONFIG_PARAM_EXT, NXP_NFC_PARAM_ID_SWP1, NXP_NFC_SET_CONFIG_PARAM_EXT, NXP_NFC_PARAM_ID_SWP2};
+    uint8_t cmd_buf_len = 0x08;
+    uint8_t buf_offset = 0x08;
+    uint8_t num_config_params = 0x02;
+    uint8_t config_param_len = 0x05;
 #if(NXP_NFCC_DYNAMIC_DUAL_UICC == TRUE)
-    uint8_t cmd_buf[] = {0x20, 0x03, 0x07, 0x03, 0xA0, 0xEC, 0xA0, 0xED, 0xA0, 0xD4};
-#else
-    uint8_t cmd_buf[] = {0x20, 0x03, 0x05, 0x02, 0xA0, 0xEC, 0xA0, 0xED};
+    cmd_buf[buf_offset++] = NXP_NFC_SET_CONFIG_PARAM_EXT;
+    cmd_buf[buf_offset++] = NXP_NFC_PARAM_ID_SWP1A;
+    cmd_buf_len += 0x02;
+    num_config_params++;
+    config_param_len += 0x02;
 #endif
+    cmd_buf[2] = config_param_len;
+    cmd_buf[3] = num_config_params;
+
     ALOGD("%s: enter", __FUNCTION__);
 
     SetCbStatus(NFA_STATUS_FAILED);
     SyncEventGuard guard (gnxpfeature_conf.NxpFeatureConfigEvt);
-    status = NFA_SendNxpNciCommand(sizeof(cmd_buf), cmd_buf, NxpResponse_GetSwpStausValueCb);
+    status = NFA_SendNxpNciCommand(cmd_buf_len, cmd_buf, NxpResponse_GetNumNFCEEValueCb);
     if (status == NFA_STATUS_OK)
     {
         ALOGD ("%s: Success NFA_SendNxpNciCommand", __FUNCTION__);
