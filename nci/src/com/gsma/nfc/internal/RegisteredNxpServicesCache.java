@@ -127,10 +127,17 @@ public class RegisteredNxpServicesCache {
     private boolean deleteBitMapfromFile(String drawablePath) {
         Log.d(TAG, " delete Path "+ drawablePath);
         boolean deleted = false;
-        File file = new File(drawablePath);
-        if (file.exists()) {
-            Log.d(TAG, " delete Path found"+ drawablePath);
-            deleted = file.delete();
+        if((drawablePath != null) && (!drawablePath.isEmpty()))
+        {
+            File file = new File(drawablePath);
+            if (file.exists()) {
+                Log.d(TAG, " delete Path found"+ drawablePath);
+                deleted = file.delete();
+            }
+        }
+        else
+        {
+            deleted = true;
         }
         Log.d(TAG, "deleted "+deleted);
         return deleted;
@@ -326,9 +333,12 @@ public class RegisteredNxpServicesCache {
                             Log.e(TAG, "readDynamicApduService "+bannerId);
                             if(bannerId <= 0x00) {
                                 bannerId = -1;
-                                DrawableResource = readDrawableFromBitMap(drawbalePath);
-                                if(!mApduBanner.containsKey(currentComponent)) {
-                                    mApduBanner.put(currentComponent, drawbalePath);
+                                if(drawbalePath != null)
+                                {
+                                    DrawableResource = readDrawableFromBitMap(drawbalePath);
+                                    if(!mApduBanner.containsKey(currentComponent)) {
+                                        mApduBanner.put(currentComponent, drawbalePath);
+                                    }
                                 }
                             }
                         }
@@ -376,7 +386,7 @@ public class RegisteredNxpServicesCache {
                 }
             }
         }  catch (Exception e) {
-            Log.e(TAG, "Could not parse dynamic APDU Service file, trashing.");
+            Log.e(TAG, "Could not parse dynamic APDU Service file, trashing.", e);
             mDynamicApduServiceFile.delete();
         } finally {
             if (fis != null) {

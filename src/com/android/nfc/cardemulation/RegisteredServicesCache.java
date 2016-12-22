@@ -226,7 +226,8 @@ public class RegisteredServicesCache {
         synchronized (mLock) {
             UserServices userServices = findOrCreateUserLocked(userId);
             for (ApduServiceInfo service : userServices.services.values()) {
-                if (service.hasCategory(category)) services.add(service);
+                if (service.hasCategory(category) &&
+                        (service.getAidCacheSizeForCategory(category) > 0)) services.add(service);
             }
         }
         return services;

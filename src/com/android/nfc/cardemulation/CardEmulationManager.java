@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.ArrayList;
+import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -676,6 +677,11 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         }
         //Add dynamic non-payment services
         return nonPaymentServiceAidCacheSize;
+    }
+
+    public List<ApduServiceInfo> getAllServices() {
+        int userId = ActivityManager.getCurrentUser();
+        return mServiceCache.getServices(userId);
     }
 
     public int updateServiceState(int userId ,

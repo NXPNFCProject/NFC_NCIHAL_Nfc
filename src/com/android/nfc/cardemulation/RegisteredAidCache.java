@@ -150,6 +150,7 @@ public class RegisteredAidCache {
     final Object mLock = new Object();
 
     ComponentName mPreferredPaymentService;
+    ComponentName mPreviousPreferredPaymentService;
     ComponentName mPreferredForegroundService;
 
     boolean mNfcEnabled = false;
@@ -609,18 +610,19 @@ public class RegisteredAidCache {
                 if(powerstate == 0)
                 {
                     powerstate |= POWER_STATE_SWITCH_ON;
+                    if (!isOnHost) {
+                        powerstate |= POWER_STATE_SWITCH_OFF;
+                    }
                 }
                 int weight = AidElement.ROUTE_WIEGHT_OTHER;
 
                 /*If non default off host payment AID ,set screen state*/
-                if (!isPaymentAid && !isOnHost) {
+                if (!isOnHost) {
                     Log.d(TAG," set screen off enable for " + aid);
                     powerstate |= (powerstate | 0x80);
                 }
-                if(!isPaymentAid || isOnHost)
-                {
-                    powerstate |= 0x40;
-                }
+
+                powerstate |= 0x40;
 
                 if (!isOnHost && NfcService.getInstance().isVzwFeatureEnabled()) {
                     String plainAid = "";
@@ -684,9 +686,18 @@ public class RegisteredAidCache {
     public void onPreferredPaymentServiceChanged(ComponentName service) {
         if (DBG) Log.d(TAG, "Preferred payment service changed.");
        synchronized (mLock) {
+           mPreviousPreferredPaymentService = mPreferredPaymentService;
            mPreferredPaymentService = service;
            generateAidCacheLocked();
        }
+    }
+
+    public ComponentName getPreviousPreferredPaymentService() {
+        return mPreviousPreferredPaymentService;
+       }
+
+    public void setPreviousPreferredPaymentService(ComponentName mPrevPaymentService) {
+        mPreviousPreferredPaymentService = mPrevPaymentService;
     }
 
     public void onPreferredForegroundServiceChanged(ComponentName service) {

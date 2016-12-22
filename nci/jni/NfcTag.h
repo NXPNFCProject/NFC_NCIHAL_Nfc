@@ -68,6 +68,7 @@ public:
     activationParams_t mActivationParams_t;
 #if(NXP_EXTNS == TRUE)
     bool mWaitingForSelect;
+    bool mIsMultiProtocolTag;
 #endif
    /*******************************************************************************
     **

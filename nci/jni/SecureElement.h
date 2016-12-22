@@ -53,8 +53,13 @@ extern "C"
     #include "phNfcTypes.h"
 #endif
 }
-#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
+#if(NXP_EXTNS == TRUE)
+#if(NFC_NXP_ESE == TRUE)
 #define SIG_NFC 44
+#define HOST_TYPE_ESE   0xC0
+#endif
+#define HOST_TYPE_UICC1 0x02
+#define HOST_TYPE_UICC2 0x81
 #endif
 typedef enum dual_mode{
  SPI_DWPCL_NOT_ACTIVE = 0x00,
@@ -62,6 +67,13 @@ typedef enum dual_mode{
  SPI_ON = 0x02,
  SPI_DWPCL_BOTH_ACTIVE = 0x03,
 }dual_mode_state;
+
+typedef enum {
+    STATE_IDLE = 0x00,
+    STATE_WK_ENBLE = 0x01,
+    STATE_WK_WAIT_RSP = 0x02,
+    STATE_TIME_OUT = 0x04
+}spiDwpSyncState_t;
 
 typedef enum reset_management{
  TRANS_IDLE = 0x00,
@@ -175,6 +187,9 @@ public:
     SyncEvent   mPipeOpenedEvent;
     SyncEvent   mAbortEvent;
     bool        mAbortEventWaitOk;
+#if (NXP_ESE_DWP_SPI_SYNC_ENABLE == TRUE)
+    bool enableDwp(void);
+#endif
 #if((NFC_NXP_ESE == TRUE) && (NXP_ESE_ETSI_READER_ENABLE == TRUE))
     IntervalTimer sSwpReaderTimer; /*timer swp reader timeout*/
 #endif
@@ -583,7 +598,7 @@ public:
     bool getAtr(jint seID, UINT8* recvBuffer, INT32 *recvBufferSize);
 #if(NXP_EXTNS == TRUE)
     bool getNfceeHostTypeList (void);
-    bool configureNfceeETSI12 (UINT8 host_id);
+    bool configureNfceeETSI12 ();
 
     /**********************************************************************************
      **
@@ -700,7 +715,6 @@ public:
     SyncEvent       mAidAddRemoveEvent;
     SyncEvent       mUiccListenEvent;
     SyncEvent       mEseListenEvent;
-    SyncEvent       mAllowWiredModeEvent;
     SyncEvent       mEeSetModeEvent;
 #if ((NXP_EXTNS == TRUE) && (NXP_WIRED_MODE_STANDBY == TRUE))
     SyncEvent       mPwrLinkCtrlEvent;
@@ -709,7 +723,7 @@ public:
 #if(NXP_EXTNS == TRUE)
     SyncEvent       mNfceeInitCbEvent;
     tNFA_STATUS SecElem_EeModeSet(uint16_t handle, uint8_t mode);
-#if (JCOP_WA_ENABLE == TRUE)
+#if (NXP_NFCEE_REMOVED_NTF_RECOVERY == TRUE)
     SyncEvent       mEEdatapacketEvent;
 #endif
     SyncEvent       mTransceiveEvent;
@@ -717,16 +731,10 @@ public:
     bool            mIsWiredModeOpen;
     bool            mlistenDisabled;
     bool            mIsExclusiveWiredMode;
-#if ((NXP_EXTNS == TRUE) && (NFC_NXP_ESE == TRUE) && (NXP_ESE_DUAL_MODE_PRIO_SCHEME == NXP_ESE_WIRED_MODE_TIMEOUT))
-    bool            mIsActionNtfReceived;
-    bool            mIsDesfireMifareDisable;
-    bool            mRecvdTransEvt;
-    bool            mAllowWiredMode;
-    tNFA_HANDLE     mActiveCeHandle;
-#endif
     bool            mIsAllowWiredInDesfireMifareCE;
     static const UINT8 EVT_ABORT = 0x11;  //ETSI12
-    bool            mIsWiredModeBlocked;   /* for wired mode resume feature support */
+    static const UINT8 EVT_ABORT_MAX_RSP_LEN = 40;
+    bool    mIsWiredModeBlocked;   /* for wired mode resume feature support */
     IntervalTimer   mRfFieldEventTimer;
     UINT32          mRfFieldEventTimeout;
 #if (NXP_WIRED_MODE_STANDBY == TRUE)
@@ -820,7 +828,7 @@ private:
     struct timespec mLastRfFieldToggle; // last time RF field went off
     IntervalTimer   mTransceiveTimer;
     bool            mTransceiveWaitOk;
-    int mWiredModeRfFiledEnable;
+
 #if(NXP_EXTNS == TRUE)
 #define             WIRED_MODE_TRANSCEIVE_TIMEOUT 30000
 #endif

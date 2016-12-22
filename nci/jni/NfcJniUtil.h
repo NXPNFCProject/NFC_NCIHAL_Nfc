@@ -120,6 +120,10 @@
 //see external/libnfc-nxp/inc/phNfcStatus.h
 #define NFCSTATUS_SUCCESS (0x0000)
 #define NFCSTATUS_FAILED (0x00FF)
+#if(NXP_EXTNS == TRUE)
+/*NFCEE recovery maximum timeout value*/
+#define MAX_EE_RECOVERY_TIMEOUT    10000
+#endif
 
 struct nfc_jni_native_data
 {

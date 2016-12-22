@@ -258,7 +258,7 @@ tNFA_STATUS SendAGCDebugCommand()
         gnxpfeature_conf.NxpFeatureConfigEvt.wait(1000); /* wait for callback */
     }
     else
-    {    tNFA_STATUS status = NFA_STATUS_FAILED;
+    {
         ALOGE ("%s: Failed NFA_SendNxpNciCommand", __FUNCTION__);
     }
     status = GetCbStatus();
@@ -605,6 +605,7 @@ static void NxpResponse_GetNumNFCEEValueCb(UINT8 event, UINT16 param_len, UINT8 
     SyncEventGuard guard(gnxpfeature_conf.NxpFeatureConfigEvt);
     gnxpfeature_conf.NxpFeatureConfigEvt.notifyOne ();
 }
+
 /*******************************************************************************
  **
  ** Function:        GetNumNFCEEConfigured
@@ -648,7 +649,7 @@ tNFA_STATUS GetNumNFCEEConfigured(void)
         ALOGE ("%s: Failed NFA_SendNxpNciCommand", __FUNCTION__);
     }
     status = GetCbStatus();
-    ALOGD("%s : gActualSeCount = %d",__FUNCTION__, gActualSeCount);
+    ALOGD("%s : gActualSeCount = %ld",__FUNCTION__, gActualSeCount);
     return status;
 }
 

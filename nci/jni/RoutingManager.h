@@ -152,7 +152,7 @@ public:
     bool addAidRouting(const UINT8* aid, UINT8 aidLen, int route, int power, bool isprefix);
     int  addNfcid2Routing(UINT8* nfcid2, UINT8 aidLen,const UINT8* syscode,
     int  syscodelen,const UINT8* optparam, int optparamlen);
-#if (JCOP_WA_ENABLE == TRUE)
+#if (NXP_NFCEE_REMOVED_NTF_RECOVERY == TRUE)
     void handleSERemovedNtf();
     bool is_ee_recovery_ongoing();
 #endif
@@ -194,6 +194,8 @@ private:
     void notifyDeactivated (UINT8 technology);
     void notifyLmrtFull();
     void printMemberData(void);
+    void extractRouteLocationAndPowerStates(const UINT8 defaultRoute, const UINT8 protoRoute, const UINT8 techRoute);
+    UINT16 getUiccRouteLocId(const UINT8 route);
     void initialiseTableEntries(void);
     void compileProtoEntries(void);
     void compileTechEntries(void);

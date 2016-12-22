@@ -108,6 +108,7 @@ import com.android.nfc.cardemulation.AidRoutingManager;
 import com.android.nfc.cardemulation.CardEmulationManager;
 import com.android.nfc.cardemulation.Nfcid2RoutingManager;
 import com.android.nfc.cardemulation.Nfcid2RoutingCache;
+import com.android.nfc.cardemulation.RegisteredAidCache;
 import com.android.nfc.cardemulation.RegisteredNfcid2Cache;
 import com.android.nfc.dhimpl.NativeNfcManager;
 import com.android.nfc.handover.HandoverDataParser;
@@ -176,6 +177,7 @@ public class NfcService implements DeviceHostListener {
     private static final String PREF_SECURE_ELEMENT_ON = "secure_element_on";
     private boolean SECURE_ELEMENT_ON_DEFAULT = false;
     private int SECURE_ELEMENT_ID_DEFAULT = 0;
+    private int SECURE_ELEMENT_UICC_SLOT_DEFAULT = 1;
     private static final String PREF_DEFAULT_ROUTE_ID = "default_route_id";
     private static final String PREF_MIFARE_DESFIRE_PROTO_ROUTE_ID = "mifare_desfire_proto_route";
     private static final String PREF_SET_DEFAULT_ROUTE_ID ="set_default_route";
@@ -214,6 +216,7 @@ public class NfcService implements DeviceHostListener {
     static final boolean SE_BROADCASTS_WITH_HCE = true;
 
     private static final String PREF_SECURE_ELEMENT_ID = "secure_element_id";
+    private static final String PREF_CUR_SELECTED_UICC_ID = "current_selected_uicc_id";
     public static final int ROUTE_LOC_MASK=5;
     public static final int TECH_TYPE_MASK=7;
 
@@ -412,7 +415,7 @@ public class NfcService implements DeviceHostListener {
 
     public static final int PN547C2_ID = 1;
     public static final int PN65T_ID = 2;
-    public static final int PN548AD_ID = 3;
+    public static final int PN548C2_ID = 3;
     public static final int PN66T_ID = 4;
     public static final int PN551_ID = 5;
     public static final int PN67T_ID = 6;
@@ -516,7 +519,7 @@ public class NfcService implements DeviceHostListener {
     ToastHandler mToastHandler;
     private HandoverDataParser mHandoverDataParser;
     private ContentResolver mContentResolver;
-  //  private RegisteredAidCache mAidCache;
+    private RegisteredAidCache mAidCache;
     private CardEmulationManager mCardEmulationManager;
     private AidRoutingManager mAidRoutingManager;
     private Nfcid2RoutingManager mNfcid2RoutingManager;
@@ -591,6 +594,10 @@ public class NfcService implements DeviceHostListener {
 
     public int getRemainingAidTableSize() {
         return mDeviceHost.getRemainingAidTableSize();
+    }
+
+    public boolean getLastCommitRoutingStatus() {
+        return mAidRoutingManager.getLastCommitRoutingStatus();
     }
 
     public int getChipVer() {
@@ -962,6 +969,7 @@ public class NfcService implements DeviceHostListener {
             mAidRoutingManager = new AidRoutingManager();
             mNfcid2RoutingManager = new Nfcid2RoutingManager();
             mCardEmulationManager = new CardEmulationManager(mContext, mAidRoutingManager, mNfcid2RoutingManager);
+            mAidCache = new RegisteredAidCache(mContext, mAidRoutingManager);
             //mCardEmulationManager = new CardEmulationManager(mContext);
             Log.d("NfcService", "Before mIsHceCapable");
             mNxpNfcController = new NxpNfcController(mContext, mCardEmulationManager);
@@ -1192,7 +1200,9 @@ public class NfcService implements DeviceHostListener {
 
             /* Get SE List */
             int[] seList = mDeviceHost.doGetSecureElementList();
-
+            int uiccSlot = 0;
+            uiccSlot = mPrefs.getInt(PREF_CUR_SELECTED_UICC_ID, SECURE_ELEMENT_UICC_SLOT_DEFAULT);
+            int status = mDeviceHost.setPreferredSimSlot(uiccSlot);
             /* Check Secure Element setting */
             int seNum=mDeviceHost.GetDefaultSE();
             if(seNum != 0)
@@ -3843,6 +3853,8 @@ public class NfcService implements DeviceHostListener {
                  **/
                 if((status == 0x00)||(status == 0x01))
                 {
+                    mPrefsEditor.putInt(PREF_CUR_SELECTED_UICC_ID, uiccSlot);
+                    mPrefsEditor.apply();
                     if((mAidRoutingManager != null) && (mCardEmulationManager != null))
                     {
                         Log.i(TAG, "Update routing table");
@@ -4387,25 +4399,43 @@ public class NfcService implements DeviceHostListener {
 
     public void notifyRoutingTableFull()
     {
-        mNxpPrefsEditor = mNxpPrefs.edit();
-        mNxpPrefsEditor.putInt("PREF_SET_AID_ROUTING_TABLE_FULL",0x01);
-        mNxpPrefsEditor.commit();
-        //broadcast Aid Routing Table Full intent to the user
-        Intent aidTableFull = new Intent();
-        aidTableFull.setAction(NxpConstants.ACTION_ROUTING_TABLE_FULL);
-        if (DBG) {
-            Log.d(TAG, "notify aid routing table full to the user");
+        if(!mNxpNfcController.isGsmaCommitOffhostService()) {
+            ComponentName prevPaymentComponent = mAidCache.getPreviousPreferredPaymentService();
+
+            mNxpPrefsEditor = mNxpPrefs.edit();
+            mNxpPrefsEditor.putInt("PREF_SET_AID_ROUTING_TABLE_FULL",0x01);
+            mNxpPrefsEditor.commit();
+            //broadcast Aid Routing Table Full intent to the user
+            Intent aidTableFull = new Intent();
+            aidTableFull.putExtra(NxpConstants.EXTRA_GSMA_PREV_PAYMENT_COMPONENT,prevPaymentComponent);
+            aidTableFull.setAction(NxpConstants.ACTION_ROUTING_TABLE_FULL);
+            if (DBG) {
+                Log.d(TAG, "notify aid routing table full to the user");
+            }
+            mContext.sendBroadcastAsUser(aidTableFull, UserHandle.CURRENT);
+            mAidCache.setPreviousPreferredPaymentService(null);
         }
-        mContext.sendBroadcastAsUser(aidTableFull, UserHandle.CURRENT);
     }
     /**
      * set default  Aid route entry in case application does not configure this route entry
      */
-    public void setDefaultAidRouteLoc( int defaultAidRouteEntry)
+    public void setDefaultAidRouteLoc( int routeLoc)
     {
         mNxpPrefsEditor = mNxpPrefs.edit();
-        Log.d(TAG, "writing to preferences setDefaultAidRouteLoc  :" + defaultAidRouteEntry);
-        mNxpPrefsEditor.putInt("PREF_SET_DEFAULT_ROUTE_ID", ((defaultAidRouteEntry << ROUTE_LOC_MASK)| (mDeviceHost.getDefaultAidPowerState() & 0x1F)));
+        Log.d(TAG, "writing to preferences setDefaultAidRouteLoc  :" + routeLoc);
+
+        int defaultAidRoute = ((mDeviceHost.getDefaultAidPowerState() & 0x1F) | (routeLoc << ROUTE_LOC_MASK));
+        if(routeLoc == 0x00)
+        {
+            /*
+            bit pos 1 = Power Off
+            bit pos 2 = Battery Off
+            bit pos 4 = Screen Off
+            Set these bits to 0 because in case routeLoc = HOST it can not work on POWER_OFF, BATTERY_OFF and SCREEN_OFF*/
+            defaultAidRoute &= 0xE9;
+        }
+
+        mNxpPrefsEditor.putInt("PREF_SET_DEFAULT_ROUTE_ID", defaultAidRoute);
         mNxpPrefsEditor.commit();
         int defaultRoute=mNxpPrefs.getInt("PREF_SET_DEFAULT_ROUTE_ID",0xFF);
         Log.d(TAG, "reading preferences from user  :" + defaultRoute);
@@ -5363,7 +5393,6 @@ public class NfcService implements DeviceHostListener {
                 }
                 return;
             }
-
             for(int i=0; i<packageList.size(); i++) {
                 Log.d(TAG,"MultiEvt Enabled Application packageName: " + packageList.get(i));
                 intent.setPackage(packageList.get(i));
@@ -5708,6 +5737,10 @@ public class NfcService implements DeviceHostListener {
      * Update the status of all the services which were populated to commit to routing table
      */
     public void updateStatusOfServices(boolean commitStatus) {
+        if(commitStatus == true)
+        {
+            mAidCache.setPreviousPreferredPaymentService(null);
+        }
         mCardEmulationManager.updateStatusOfServices(commitStatus);
     }
 }

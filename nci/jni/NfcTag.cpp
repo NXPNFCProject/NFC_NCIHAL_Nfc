@@ -74,6 +74,7 @@ NfcTag::NfcTag ()
     mEzLinkTypeTag(false),
 #if(NXP_EXTNS == TRUE)
     mWaitingForSelect(false),
+    mIsMultiProtocolTag(false),
 #endif
     mTechnologyTimeoutsTable (MAX_NUM_TECHNOLOGY),
     mNativeData (NULL),
@@ -1293,7 +1294,7 @@ bool NfcTag::isP2pDiscovered ()
 *******************************************************************************/
 void NfcTag::storeActivationParams()
 {
-    static const char fn [] = "NfcTag::storeActivationParams";
+
     mActivationParams_t.mTechParams = mTechParams[0].mode;
     mActivationParams_t.mTechLibNfcTypes = mTechLibNfcTypes [0];
 }
@@ -1910,7 +1911,6 @@ void NfcTag::setTransceiveTimeout (int techId, int timeout)
 *******************************************************************************/
 bool NfcTag::isEzLinkTagActivated ()
 {
-    static const char fn [] = "NfcTag::isEzLinkTagActivated";
     return mEzLinkTypeTag;
 }
 
@@ -1925,7 +1925,6 @@ bool NfcTag::isEzLinkTagActivated ()
 *******************************************************************************/
 bool NfcTag::isCashBeeActivated ()
 {
-    static const char fn [] = "NfcTag::isCashBeeActivated";
     return mCashbeeDetected;
 }
 

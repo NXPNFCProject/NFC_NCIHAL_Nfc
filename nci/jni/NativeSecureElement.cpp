@@ -54,6 +54,9 @@ extern bool isDiscoveryStarted();
 extern bool isp2pActivated();
 extern void com_android_nfc_NfcManager_disableDiscovery (JNIEnv* e, jobject o);
 extern void com_android_nfc_NfcManager_enableDiscovery (JNIEnv* e, jobject o, jint mode);
+#if (NXP_EXTNS == TRUE)
+extern int gMaxEERecoveryTimeout;
+#endif
 static SyncEvent            sNfaVSCResponseEvent;
 //static bool sRfEnabled;           /*commented to eliminate warning defined but not used*/
 
@@ -70,11 +73,9 @@ inline static void nfaVSCCallback(UINT8 event, UINT16 param_len, UINT8 *p_param)
 
 // These must match the EE_ERROR_ types in NfcService.java
 static const int EE_ERROR_IO = -1;
-static const int EE_ERROR_ALREADY_OPEN = -2;
 static const int EE_ERROR_INIT = -3;
 static const int EE_ERROR_LISTEN_MODE = -4;
-static const int EE_ERROR_EXT_FIELD = -5;
-static const int EE_ERROR_NFC_DISABLED = -6;
+
 bool is_wired_mode_open = false;
 /*******************************************************************************
 **
@@ -178,12 +179,14 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection (JNIEnv*, jobje
 #endif
 
 #if(NFC_NXP_CHIP_TYPE != PN547C2)
-#if (JCOP_WA_ENABLE == TRUE)
+#if (NXP_NFCEE_REMOVED_NTF_RECOVERY == TRUE)
 if((RoutingManager::getInstance().is_ee_recovery_ongoing()))
     {
-        ALOGD ("ee recovery ongoing!!!");
-        SyncEventGuard guard (SecureElement::getInstance().mEEdatapacketEvent);
-        SecureElement::getInstance().mEEdatapacketEvent.wait();
+        SyncEventGuard guard (se.mEEdatapacketEvent);
+        if(se.mEEdatapacketEvent.wait(android::gMaxEERecoveryTimeout) == false)
+        {
+            goto TheEnd;
+        }
     }
 #endif
 #if(NXP_ESE_DUAL_MODE_PRIO_SCHEME == NXP_ESE_EXCLUSIVE_WIRED_MODE)
@@ -322,7 +325,17 @@ if((RoutingManager::getInstance().is_ee_recovery_ongoing()))
         }
         se.meseUiccConcurrentAccess = true;
 #endif
-        if(se.mIsIntfRstEnabled)
+#if (NXP_WIRED_MODE_STANDBY == TRUE)
+        if(se.mNfccPowerMode == 1)
+        {
+            status = se.setNfccPwrConfig(se.POWER_ALWAYS_ON);
+            if(status != NFA_STATUS_OK)
+            {
+                ALOGD("%s: power link command failed", __FUNCTION__);
+            }
+        }
+#endif
+        if((status == NFA_STATUS_OK) && (se.mIsIntfRstEnabled))
         {
             gateInfo = se.getApduGateInfo();
             if(gateInfo == ETSI_12_APDU_GATE)
@@ -335,16 +348,6 @@ if((RoutingManager::getInstance().is_ee_recovery_ongoing()))
                 }
             }
         }
-#if(NXP_ESE_DUAL_MODE_PRIO_SCHEME == NXP_ESE_WIRED_MODE_RESUME)
-        if((status == NFA_STATUS_OK) && (se.mNfccPowerMode == 1))
-        {
-            status = se.setNfccPwrConfig(se.POWER_ALWAYS_ON);
-            if(status != NFA_STATUS_OK)
-            {
-                ALOGD("%s: power link command failed", __FUNCTION__);
-            }
-        }
-#endif
         if(status != NFA_STATUS_OK)
         {
             se.disconnectEE (secElemHandle);
@@ -518,16 +521,22 @@ static jboolean nativeNfcSecureElement_doResetSecureElement (JNIEnv*, jobject, j
 {
     bool stat = false;
 #if (NFC_NXP_ESE == TRUE)
-    tNFA_STATUS mstatus;
     tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
     SecureElement &se = SecureElement::getInstance();
-    unsigned long num = 0;
+
     ALOGD("%s: enter; handle=0x%04x", __FUNCTION__, handle);
     if(!se.mIsWiredModeOpen)
     {
         ALOGD("wired mode is not open");
         return stat;
     }
+#if ((NXP_ESE_DWP_SPI_SYNC_ENABLE == TRUE) && (NXP_WIRED_MODE_STANDBY == TRUE))
+    if(!checkP61Status())
+    {
+         ALOGD("Reset is not allowed while SPI ON");
+         return stat;
+    }
+#endif
 #if (NXP_WIRED_MODE_STANDBY == TRUE)
         if(se.mNfccPowerMode == 1)
         {

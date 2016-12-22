@@ -31,6 +31,7 @@ DwpChannel DwpChannel::sDwpChannel;
 namespace android
 {
     extern void checkforNfceeConfig();
+    extern int gMaxEERecoveryTimeout;
 }
 
 /*******************************************************************************
@@ -119,9 +120,6 @@ INT16 open()
     bool stat = false;
     INT16 dwpHandle = EE_ERROR_OPEN_FAIL;
     SecureElement &se = SecureElement::getInstance();
-#if(NXP_ESE_JCOP_DWNLD_PROTECTION == TRUE)
-    DwpChannel &dc = DwpChannel::getInstance();
-#endif
 
     ALOGE("DwpChannel: Sec Element open Enter");
 
@@ -152,6 +150,16 @@ INT16 open()
         {
           dwpChannelForceClose = false;
           dwpHandle = se.mActiveEeHandle;
+#if(NXP_ESE_DUAL_MODE_PRIO_SCHEME == NXP_ESE_WIRED_MODE_RESUME)
+          /*NFCC shall keep secure element always powered on ; however NFCC may deactivate communication link with secure element.
+          **NOTE: Since open() api does not call nativeNfcSecureElement_doOpenSecureElementConnection() and LS application can invoke
+          **open(), POWER_ALWAYS_ON is needed.
+          */
+          if(se.setNfccPwrConfig(se.POWER_ALWAYS_ON) != NFA_STATUS_OK)
+          {
+              ALOGD("%s: power link command failed", __FUNCTION__);
+          }
+#endif
         }
     }
 
@@ -182,7 +190,7 @@ bool close(INT16 mHandle)
     if(eSE_connected != true)
         return true;
 
-#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
+#if((NFC_NXP_ESE == TRUE) && (NXP_EXTNS == TRUE))
     se.NfccStandByOperation(STANDBY_MODE_ON);
 #endif
 
@@ -306,16 +314,12 @@ void doeSE_Reset(void)
 
     usleep(3000 * 1000);
     rm.mResetHandlerMutex.unlock();
-#if (JCOP_WA_ENABLE == TRUE)
+#if (NXP_NFCEE_REMOVED_NTF_RECOVERY == TRUE)
     if((RoutingManager::getInstance().is_ee_recovery_ongoing()))
     {
         ALOGE ("%s: is_ee_recovery_ongoing ", fn);
         SyncEventGuard guard (se.mEEdatapacketEvent);
-        se.mEEdatapacketEvent.wait();
-    }
-    else
-    {
-       ALOGE ("%s: Not in Recovery State", fn);
+        se.mEEdatapacketEvent.wait(android::gMaxEERecoveryTimeout);
     }
 #endif
 }
@@ -342,7 +346,7 @@ namespace android
 void doeSE_JcopDownLoadReset(void)
 {
     static const char fn [] = "DwpChannel::JcopDownLoadReset";
-    tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
+    /*tNFA_STATUS nfaStat = NFA_STATUS_FAILED;*/
     SecureElement &se = SecureElement::getInstance();
     RoutingManager &rm = RoutingManager::getInstance();
     unsigned long int num = 0;
@@ -433,16 +437,11 @@ void doeSE_JcopDownLoadReset(void)
 #endif
     rm.mResetHandlerMutex.unlock();
 
-#if (JCOP_WA_ENABLE == TRUE)
+#if (NXP_NFCEE_REMOVED_NTF_RECOVERY == TRUE)
     if((RoutingManager::getInstance().is_ee_recovery_ongoing()))
     {
-        ALOGE ("%s: is_ee_recovery_ongoing ", fn);
         SyncEventGuard guard (se.mEEdatapacketEvent);
-        se.mEEdatapacketEvent.wait();
-    }
-    else
-    {
-       ALOGE ("%s: Not in Recovery State", fn);
+        se.mEEdatapacketEvent.wait(android::gMaxEERecoveryTimeout);
     }
 #endif
 }

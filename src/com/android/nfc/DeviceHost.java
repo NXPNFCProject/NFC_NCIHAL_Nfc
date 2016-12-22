@@ -435,4 +435,5 @@ public interface DeviceHost {
 
     public int doGetSelectedUicc();
 
+    public int setPreferredSimSlot(int uiccSlot);
 }

@@ -177,7 +177,7 @@ public class AidRoutingManager {
 
         synchronized (mLock) {
             if (routeForAid.equals(mRouteForAid)) {
-                if (DBG) Log.d(TAG, "Routing table unchanged, not updating");
+                if (DBG) Log.d(TAG, "Routing table unchanged, but commit the routing");
                 if(mLastCommitStatus == false){
                     NfcService.getInstance().updateStatusOfServices(false);
                     NfcService.getInstance().notifyRoutingTableFull();
@@ -187,8 +187,10 @@ public class AidRoutingManager {
                 already resolved by previously installed services, service state of newly installed app needs to be updated*/
                     NfcService.getInstance().updateStatusOfServices(true);
                 }
+                NfcService.getInstance().commitRouting();
                 return false;
             }
+
             mRoutingTableChanged = true;
             // Otherwise, update internal structures and commit new routing
             clearNfcRoutingTableLocked();
@@ -365,6 +367,10 @@ public class AidRoutingManager {
 
     public int getAidMatchMode() {
         return mAidMatchingSupport;
+    }
+
+    public boolean getLastCommitRoutingStatus() {
+        return mLastCommitStatus;
     }
 
     public int getAidMatchingPlatform() {

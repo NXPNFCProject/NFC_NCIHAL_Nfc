@@ -95,7 +95,7 @@ namespace android
 #endif
     extern UINT16 sRoutingBuffLen;
     extern bool  rfActivation;
-#if (JCOP_WA_ENABLE == TRUE)
+#if (NXP_NFCEE_REMOVED_NTF_RECOVERY == TRUE)
     extern bool isNfcInitializationDone();
 #endif
     extern void startRfDiscovery (bool isStart);
@@ -187,7 +187,7 @@ void NfcID2_rmv_timoutHandler (union sigval);
 
 int RoutingManager::mChipId = 0;
 #if (NXP_EXTNS == TRUE)
-#if (JCOP_WA_ENABLE == TRUE)
+#if (NXP_NFCEE_REMOVED_NTF_RECOVERY == TRUE)
 bool recovery;
 #endif
 #endif
@@ -254,22 +254,22 @@ bool RoutingManager::initialize (nfc_jni_native_data* native)
 #if(NXP_ESE_FELICA_CLT == TRUE)
     if (GetNxpNumValue (NAME_DEFAULT_FELICA_CLT_ROUTE, (void*)&num, sizeof(num)))
     {
-#if(NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH == TRUE)
+#if((NXP_NFCC_DYNAMIC_DUAL_UICC == TRUE) && (NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH == TRUE))
         if((num == 0x02 || num == 0x04) && sCurrentSelectedUICCSlot)
         {
             mDefaultTechFSeID = getUiccRoute(sCurrentSelectedUICCSlot);
         }
         else
         {
-            mDefaultTechFSeID = ((num == 0x01)? 0x4C0 : ((num == 0x02)? 0x402 : 0x481));
+            mDefaultTechFSeID = ( (num == 0x01) ? ROUTE_LOC_ESE_ID : ((num == 0x02) ? ROUTE_LOC_UICC1_ID : ROUTE_LOC_UICC2_ID) );
         }
 #else
-    mDefaultTechFSeID = ((num == 0x01)? 0x4C0 : ((num == 0x02)? 0x402 : 0x481));
+        mDefaultTechFSeID = ( (num == 0x01) ? ROUTE_LOC_ESE_ID : ((num == 0x02) ? ROUTE_LOC_UICC1_ID : ROUTE_LOC_UICC2_ID) );
 #endif
     }
     else
     {
-        mDefaultTechFSeID = 0x402;
+        mDefaultTechFSeID = getUiccRoute(sCurrentSelectedUICCSlot);
     }
 
     if (GetNxpNumValue (NAME_DEFAULT_FELICA_CLT_PWR_STATE, (void*)&num, sizeof(num)))
@@ -277,7 +277,7 @@ bool RoutingManager::initialize (nfc_jni_native_data* native)
     else
         mDefaultTechFPowerstate = 0x1F;
 #else
-    mDefaultTechFSeID = 0x402;
+    mDefaultTechFSeID = ROUTE_LOC_UICC1_ID;
     mDefaultTechFPowerstate = 0x1F;
 #endif
     if (GetNxpNumValue (NAME_NXP_HCEF_CMD_RSP_TIMEOUT_VALUE, (void*)&num, sizeof(num)))
@@ -645,7 +645,25 @@ void RoutingManager::setRouting(bool isHCEEnabled)
     if (nfaStat != NFA_STATUS_OK)
         ALOGE("Failed to commit routing configuration");
 }
-
+/*This function takes the default AID route, protocol(ISO-DEP) route and Tech(A&B) route as arguments in following format
+* -----------------------------------------------------------------------------------------------------------
+* | RFU(TechA/B) | RouteLocBit1 | RouteLocBit0 | ScreenOff | ScreenLock | BatteryOff | SwitchOff | SwitchOn |
+* -----------------------------------------------------------------------------------------------------------
+* Route location is set as below
+* ----------------------------------------------
+* | RouteLocBit1 | RouteLocBit0 | RouteLocation|
+* ----------------------------------------------
+* |       0      |      0       |    Host      |
+* ----------------------------------------------
+* |       0      |      1       |    eSE       |
+* ----------------------------------------------
+* |       1      |      0       |    Uicc1     |
+* ----------------------------------------------
+* |       1      |      1       |    Uicc2     | => Valid if DYNAMIC_DUAL_UICC is enabled
+* ----------------------------------------------
+* Based on these parameters, this function creates the protocol route entries/ technology route entries
+* which are required to be pushed to listen mode routing table using NFA_EeSetDefaultProtoRouting/TechRouting
+*/
 bool RoutingManager::setDefaultRoute(const UINT8 defaultRoute, const UINT8 protoRoute, const UINT8 techRoute)
 {
     static const char fn []   = "RoutingManager::setDefaultRoute";
@@ -653,60 +671,7 @@ bool RoutingManager::setDefaultRoute(const UINT8 defaultRoute, const UINT8 proto
 
     ALOGD ("%s: enter; defaultRoute:0x%2X protoRoute:0x%2X TechRoute:0x%2X HostListenMask:0x%X", fn, defaultRoute, protoRoute, techRoute, mHostListnTechMask);
 
-#if(NXP_NFCC_DYNAMIC_DUAL_UICC == TRUE)
-    mDefaultIso7816SeID = ((((defaultRoute & 0xE0) >> 5) == 0x00) ? ROUTE_LOC_HOST_ID : ((((defaultRoute & 0xE0)>>5 )== 0x01 ) ? ROUTE_LOC_ESE_ID : ((((defaultRoute & 0xE0)>>5 )== 0x02 ) ? ROUTE_LOC_UICC1_ID : ROUTE_LOC_UICC2_ID)));
-#endif
-#if (NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH == TRUE)
-    if(getUiccRoute(sCurrentSelectedUICCSlot)!=0xFF)
-    {
-        mDefaultIso7816SeID = ((((defaultRoute & 0xE0) >> 5) == 0x00)  ? 0x400 :  ((((defaultRoute & 0x60)>>5 )== 0x01 ) ? 0x4C0 : getUiccRoute(sCurrentSelectedUICCSlot)));
-    }
-    else
-    {
-        mDefaultIso7816SeID = ((((defaultRoute & 0xE0) >> 5) == 0x00)  ? 0x400 :  ((((defaultRoute & 0xE0)>>5 )== 0x01 ) ? 0x4C0 : ((((defaultRoute & 0xE0)>>5 )== 0x02 ) ? ROUTE_LOC_UICC1_ID : ROUTE_LOC_UICC2_ID)));
-    }
-#else
-    mDefaultIso7816SeID = (((defaultRoute & 0x60) >> 5) == 0x00) ? ROUTE_LOC_HOST_ID : ((((defaultRoute & 0x60)>>5 )== 0x01 ) ? ROUTE_LOC_ESE_ID : ROUTE_LOC_UICC1_ID);
-#endif
-    mDefaultIso7816Powerstate = defaultRoute & 0x1F;
-    ALOGD ("%s:mDefaultIso7816SeID:0x%2X mDefaultIso7816Powerstate:0x%X", fn, mDefaultIso7816SeID, mDefaultIso7816Powerstate);
-
-#if(NXP_NFCC_DYNAMIC_DUAL_UICC == TRUE)
-    mDefaultIsoDepSeID = ((((protoRoute & 0xE0) >> 5) == 0x00) ? ROUTE_LOC_HOST_ID : ((((protoRoute & 0xE0)>>5 )== 0x01 ) ? ROUTE_LOC_ESE_ID : ((((protoRoute & 0xE0)>>5 )== 0x02 ) ? ROUTE_LOC_UICC1_ID : ROUTE_LOC_UICC2_ID)));
-#endif
-#if (NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH == TRUE)
-    if(getUiccRoute(sCurrentSelectedUICCSlot)!=0xFF)
-    {
-        mDefaultIsoDepSeID = ((((protoRoute & 0xE0) >> 5) == 0x00)  ? 0x400 :  ((((protoRoute & 0x60)>>5 )== 0x01 ) ? 0x4C0 : getUiccRoute(sCurrentSelectedUICCSlot)));
-    }
-    else
-    {
-        mDefaultIsoDepSeID = ((((protoRoute & 0xE0) >> 5) == 0x00)  ? 0x400 :  ((((protoRoute & 0xE0)>>5 )== 0x01 ) ? 0x4C0 : ((((protoRoute & 0xE0)>>5 )== 0x02 ) ? 0x402 : 0x481)));
-    }
-#else
-    mDefaultIsoDepSeID = (((protoRoute & 0x60) >> 5) == 0x00) ? ROUTE_LOC_HOST_ID : ((((protoRoute & 0x60)>>5 )== 0x01 ) ? ROUTE_LOC_ESE_ID : ROUTE_LOC_UICC1_ID);
-#endif
-    mDefaultIsoDepPowerstate = protoRoute & 0x1F;
-    ALOGD ("%s:mDefaultIsoDepSeID:0x%2X mDefaultIsoDepPowerstate:0x%2X", fn, mDefaultIsoDepSeID,mDefaultIsoDepPowerstate);
-
-
-#if(NXP_NFCC_DYNAMIC_DUAL_UICC == TRUE)
-    mDefaultTechASeID = ((((techRoute & 0x60) >> 5) == 0x00) ? ROUTE_LOC_HOST_ID : ((((techRoute & 0x60)>>5 )== 0x01 ) ? ROUTE_LOC_ESE_ID : ((((techRoute & 0x60)>>5 ) == 0x02)? ROUTE_LOC_UICC1_ID : ROUTE_LOC_UICC2_ID)));
-#endif
-#if (NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH == TRUE)
-    if(getUiccRoute(sCurrentSelectedUICCSlot)!=0xFF) {
-        mDefaultTechASeID = ((((techRoute & 0xE0) >> 5) == 0x00)  ? 0x400 :  ((((techRoute & 0x60)>>5 )== 0x01 ) ? 0x4C0 : getUiccRoute(sCurrentSelectedUICCSlot)));
-    }
-    else
-    {
-        mDefaultTechASeID = ((((techRoute & 0xE0) >> 5) == 0x00)  ? 0x400 :  ((((techRoute & 0xE0)>>5 )== 0x01 ) ? 0x4C0 : ((((techRoute & 0xE0)>>5 ) == 0x02)? 0x402:0x481)));
-    }
-#else
-    mDefaultTechASeID = (((techRoute & 0x60) >> 5) == 0x00) ? ROUTE_LOC_HOST_ID : ((((techRoute & 0x60)>>5 )== 0x01 ) ? ROUTE_LOC_ESE_ID : ROUTE_LOC_UICC1_ID);
-#endif
-    mDefaultTechAPowerstate = techRoute & 0x1F;
-
-    ALOGD ("%s:mDefaultTechASeID:0x%2X mDefaultTechAPowerstate:0x%2X", fn, mDefaultTechASeID,mDefaultTechAPowerstate);
+    extractRouteLocationAndPowerStates(defaultRoute,protoRoute,techRoute);
 
     if (mHostListnTechMask)
     {
@@ -770,6 +735,44 @@ void RoutingManager::printMemberData()
     ALOGD("%s: NXP_WIRED_MODE_RF_FIELD_ENABLE = 0x%0X;", __FUNCTION__, gWiredModeRfFieldEnable);
 
 }
+/* extract route location and power states in defaultRoute,protoRoute & techRoute in the following format
+ * -----------------------------------------------------------------------------------------------------------
+ * | RFU(TechA/B) | RouteLocBit1 | RouteLocBit0 | ScreenOff | ScreenLock | BatteryOff | SwitchOff | SwitchOn |
+ * -----------------------------------------------------------------------------------------------------------
+ * to mDefaultIso7816SeID & mDefaultIso7816Powerstate
+ *    mDefaultIsoDepSeID  & mDefaultIsoDepPowerstate
+ *    mDefaultTechASeID   & mDefaultTechAPowerstate
+ */
+void RoutingManager::extractRouteLocationAndPowerStates(const UINT8 defaultRoute, const UINT8 protoRoute, const UINT8 techRoute)
+{
+    static const char fn []   = "RoutingManager::extractRouteLocationAndPowerStates";
+    mDefaultIso7816SeID = ((((defaultRoute & 0x60) >> 5) == 0x00) ? ROUTE_LOC_HOST_ID : ((((defaultRoute & 0x60)>>5 )== 0x01 ) ? ROUTE_LOC_ESE_ID : getUiccRouteLocId(defaultRoute)));
+    mDefaultIso7816Powerstate = defaultRoute & 0x1F;
+    ALOGD ("%s:mDefaultIso7816SeID:0x%2X mDefaultIso7816Powerstate:0x%X", fn, mDefaultIso7816SeID, mDefaultIso7816Powerstate);
+    mDefaultIsoDepSeID = ((((protoRoute & 0x60) >> 5) == 0x00) ? ROUTE_LOC_HOST_ID : ((((protoRoute & 0x60)>>5 )== 0x01 ) ? ROUTE_LOC_ESE_ID : getUiccRouteLocId(protoRoute)));
+    mDefaultIsoDepPowerstate = protoRoute & 0x1F;
+    ALOGD ("%s:mDefaultIsoDepSeID:0x%2X mDefaultIsoDepPowerstate:0x%2X", fn, mDefaultIsoDepSeID,mDefaultIsoDepPowerstate);
+    mDefaultTechASeID = ((((techRoute & 0x60) >> 5) == 0x00) ? ROUTE_LOC_HOST_ID : ((((techRoute & 0x60)>>5 )== 0x01 ) ? ROUTE_LOC_ESE_ID : getUiccRouteLocId(techRoute)));
+    mDefaultTechAPowerstate = techRoute & 0x1F;
+    ALOGD ("%s:mDefaultTechASeID:0x%2X mDefaultTechAPowerstate:0x%2X", fn, mDefaultTechASeID,mDefaultTechAPowerstate);
+
+}
+/* Based on the features enabled :- NXP_NFCC_DYNAMIC_DUAL_UICC, NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH & NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH,
+ * Calculate the UICC route location ID.
+ * For DynamicDualUicc,Route location is based on the user configuration(6th & 7th bit) of route
+ * For StaticDualUicc without External Switch(with DynamicDualUicc enabled), Route location is based on user selection from selectUicc() API
+ * For StaticDualUicc(With External Switch), Route location is always ROUTE_LOC_UICC1_ID
+ */
+UINT16 RoutingManager::getUiccRouteLocId(const UINT8 route)
+{
+#if((NXP_NFCC_DYNAMIC_DUAL_UICC == TRUE) && (NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH == TRUE))
+    return getUiccRoute(sCurrentSelectedUICCSlot);
+#elif(NXP_NFCC_DYNAMIC_DUAL_UICC == TRUE)
+    return ((((route & 0x60)>>5 )== 0x02 ) ? ROUTE_LOC_UICC1_ID : ROUTE_LOC_UICC2_ID);
+#else /*#if (NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH == TRUE)*/
+    return ROUTE_LOC_UICC1_ID;
+#endif
+}
 
 /* To check whether the route location for ISO-DEP protocol defined by user in config file is actually connected or not
  * If not connected then set it to HOST by default*/
@@ -814,7 +817,7 @@ void RoutingManager::checkProtoSeID(void)
         if(!isDefaultIsoDepSeIDPresent)
         {
             mDefaultIsoDepSeID = ROUTE_LOC_HOST_ID;
-            mDefaultIsoDepPowerstate = PWR_SWTCH_ON_SCRN_UNLCK_MASK;
+            mDefaultIsoDepPowerstate = PWR_SWTCH_ON_SCRN_UNLCK_MASK | PWR_SWTCH_ON_SCRN_LOCK_MASK;
         }
     }
 
@@ -833,14 +836,20 @@ void RoutingManager::configureOffHostNfceeTechMask(void)
 
     ALOGD ("%s: enter", fn);
 
-    if (mDefaultEe == SecureElement::ESE_ID) //eSE
+    if (mDefaultEe & SecureElement::ESE_ID) //eSE
     {
         preferredHandle = ROUTE_LOC_ESE_ID;
     }
-    else if (mDefaultEe == SecureElement::UICC_ID) //UICC
+    else if (mDefaultEe & SecureElement::UICC_ID) //UICC
     {
         preferredHandle = ROUTE_LOC_UICC1_ID;
     }
+#if((NXP_NFCC_DYNAMIC_DUAL_UICC == TRUE) && (NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH == TRUE))
+    else if (mDefaultEe & SecureElement::UICC2_ID) //UICC
+    {
+        preferredHandle = ROUTE_LOC_UICC2_ID;
+    }
+#endif
 
     SecureElement::getInstance().getEeHandleList(ee_handleList, &count);
 
@@ -853,6 +862,7 @@ void RoutingManager::configureOffHostNfceeTechMask(void)
         {
             break;
         }
+        defaultHandle   = NFA_HANDLE_INVALID;
     }
 
     if((defaultHandle != NFA_HANDLE_INVALID)  &&  (0 != mUiccListnTechMask))
@@ -917,6 +927,7 @@ void RoutingManager::initialiseTableEntries(void)
     mLmrtEntries[ROUTE_LOC_UICC1_ID_IDX].nfceeID   = ROUTE_LOC_UICC1_ID;
     mLmrtEntries[ROUTE_LOC_UICC2_ID_IDX].nfceeID   = ROUTE_LOC_UICC2_ID;
 
+    /*Initialize the table for all route location nfceeID*/
     for(int xx=0;xx<MAX_ROUTE_LOC_ENTRIES;xx++)
     {
         mLmrtEntries[xx].proto_switch_on   = mLmrtEntries[xx].tech_switch_on   = 0x00;
@@ -1069,6 +1080,7 @@ void RoutingManager::compileTechEntries(void)
 {
     static const char fn []          = "RoutingManager::compileTechEntries";
     UINT32 techSupportedBySelectedEE = 0;
+    unsigned long num = 0;
 
     ALOGD ("%s: enter", fn);
 
@@ -1091,6 +1103,31 @@ void RoutingManager::compileTechEntries(void)
     mTechTableEntries[TECH_B_IDX].routeLoc = mDefaultTechASeID;
     mTechTableEntries[TECH_B_IDX].power    = mCeRouteStrictDisable ? mDefaultTechAPowerstate : (mDefaultTechAPowerstate & 0xE7);
     mTechTableEntries[TECH_B_IDX].enable   = (techSupportedBySelectedEE & NFA_TECHNOLOGY_MASK_B)? TRUE : FALSE;
+
+    /*Update Tech F Route in case there is switch between uicc's*/
+#if(NXP_ESE_FELICA_CLT == TRUE)
+    if (GetNxpNumValue (NAME_DEFAULT_FELICA_CLT_ROUTE, (void*)&num, sizeof(num)))
+    {
+#if((NXP_NFCC_DYNAMIC_DUAL_UICC == TRUE) && (NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH == TRUE))
+        if((num == 0x02 || num == 0x04) && sCurrentSelectedUICCSlot)
+        {
+            mDefaultTechFSeID = getUiccRoute(sCurrentSelectedUICCSlot);
+        }
+        else
+        {
+            mDefaultTechFSeID = ( (num == 0x01) ? ROUTE_LOC_ESE_ID : ((num == 0x02) ? ROUTE_LOC_UICC1_ID : ROUTE_LOC_UICC2_ID) );
+        }
+#else
+        mDefaultTechFSeID = ( (num == 0x01) ? ROUTE_LOC_ESE_ID : ((num == 0x02) ? ROUTE_LOC_UICC1_ID : ROUTE_LOC_UICC2_ID) );
+#endif
+    }
+    else
+    {
+        mDefaultTechFSeID = getUiccRoute(sCurrentSelectedUICCSlot);
+    }
+#else
+    mDefaultTechFSeID = ROUTE_LOC_UICC1_ID;
+#endif
 
     /*Check technologies supported by EE selected in conf file - For TypeF*/
     if(mDefaultTechFSeID == ROUTE_LOC_UICC1_ID)
@@ -1121,10 +1158,13 @@ void RoutingManager::processTechEntriesForFwdfunctionality(void)
 {
     static const char fn []    = "RoutingManager::processTechEntriesForFwdfunctionality";
     UINT32 techSupportedByUICC = mTechSupportedByUicc1;
-#if(NXP_NFCC_DYNAMIC_DUAL_UICC == TRUE)
-    techSupportedByUICC        = mTechSupportedByUicc1 | mTechSupportedByUicc2;
+#if((NXP_NFCC_DYNAMIC_DUAL_UICC == TRUE) && (NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH == TRUE))
+    techSupportedByUICC = (getUiccRoute(sCurrentSelectedUICCSlot) == ROUTE_LOC_UICC1_ID)?
+        mTechSupportedByUicc1 : mTechSupportedByUicc2;
+#elif (NXP_NFCC_DYNAMIC_DUAL_UICC == TRUE)
+    techSupportedByUICC = (mDefaultTechASeID == ROUTE_LOC_UICC1_ID)?
+        mTechSupportedByUicc1:mTechSupportedByUicc2;
 #endif
-
     ALOGD ("%s: enter", fn);
 
     switch(mHostListnTechMask)
@@ -2595,10 +2635,6 @@ void RoutingManager::stackCallback (UINT8 event, tNFA_CONN_EVT_DATA* eventData)
     case NFA_CE_DATA_EVT:
         {
 #if ((NFC_NXP_ESE == TRUE) && (NXP_EXTNS == TRUE))
-#if(NXP_ESE_DUAL_MODE_PRIO_SCHEME == NXP_ESE_WIRED_MODE_TIMEOUT)
-            se.mRecvdTransEvt = true;
-            se.mAllowWiredMode = true;
-#endif
 #if(NXP_ESE_DUAL_MODE_PRIO_SCHEME != NXP_ESE_WIRED_MODE_RESUME)
             se.setDwpTranseiveState(false, NFCC_CE_DATA_EVT);
 #endif
@@ -2681,11 +2717,7 @@ void RoutingManager::nfaEeCallback (tNFA_EE_EVT event, tNFA_EE_CBACK_DATA* event
             tNFA_EE_ACTION& action = eventData->action;
             tNFC_APP_INIT& app_init = action.param.app_init;
             android::checkforTranscation(NFA_EE_ACTION_EVT, (void *)eventData);
-#if ((NFC_NXP_ESE == TRUE) && (NXP_EXTNS == TRUE))
-#if(NXP_ESE_DUAL_MODE_PRIO_SCHEME == NXP_ESE_WIRED_MODE_TIMEOUT)
-            se.mRecvdTransEvt = true;
-#endif
-#endif
+
             if (action.trigger == NFC_EE_TRIG_SELECT)
             {
                 ALOGD ("%s: NFA_EE_ACTION_EVT; h=0x%X; trigger=select (0x%X); aid len=%u", fn, action.ee_handle, action.trigger, app_init.len_aid);
@@ -2719,48 +2751,7 @@ void RoutingManager::nfaEeCallback (tNFA_EE_EVT event, tNFA_EE_CBACK_DATA* event
                 se.setCLState(true);
             }
 
-#if(NXP_ESE_DUAL_MODE_PRIO_SCHEME == NXP_ESE_WIRED_MODE_TIMEOUT)
-            if(action.ee_handle == 0x4C0)
-            {
-                if((action.trigger == NFC_EE_TRIG_RF_TECHNOLOGY)&& (gEseVirtualWiredProtectMask & 0x04))
-                {
-                    se.mAllowWiredMode = false;
-                }
-                else if((action.trigger == NFC_EE_TRIG_RF_PROTOCOL && action.param.protocol == NFA_PROTOCOL_ISO_DEP)&&(gEseVirtualWiredProtectMask & 0x02))
-                {
-                    se.mAllowWiredMode = false;
-                }
-                else
-                {
-                    se.mAllowWiredMode = true;
-                }
-            }
-            if(action.ee_handle == 0x402)
-            {
-                if((action.trigger == NFC_EE_TRIG_RF_TECHNOLOGY)&& (gUICCVirtualWiredProtectMask & 0x04))
-                {
-                    se.mAllowWiredMode = false;
-                }
-                else if((action.trigger == NFC_EE_TRIG_RF_PROTOCOL)&&(gUICCVirtualWiredProtectMask & 0x02))
-                {
-                    se.mAllowWiredMode = false;
-                }
-                else if(((action.trigger == NFC_EE_TRIG_SELECT)||(action.trigger == NFC_EE_TRIG_APP_INIT))&&(gUICCVirtualWiredProtectMask & 0x01))
-                {
-                    se.mAllowWiredMode = false;
-                }
-                else
-                {
-                    se.mAllowWiredMode = true;
-                }
-            }
-            if(se.mAllowWiredMode == true)
-            {
-                ALOGD("%s: Sem Post for mAllowWiredModeEvent", __FUNCTION__);
-                SyncEventGuard guard (se.mAllowWiredModeEvent);
-                se.mAllowWiredModeEvent.notifyOne();
-            }
-#endif
+
 #if(NXP_ESE_DUAL_MODE_PRIO_SCHEME != NXP_ESE_WIRED_MODE_RESUME)
             if(action.ee_handle == 0x4C0 && (action.trigger != NFC_EE_TRIG_RF_TECHNOLOGY) &&
             ((se.mIsAllowWiredInDesfireMifareCE) || !(action.trigger == NFC_EE_TRIG_RF_PROTOCOL && action.param.protocol == NFA_PROTOCOL_ISO_DEP)))
@@ -2783,22 +2774,29 @@ void RoutingManager::nfaEeCallback (tNFA_EE_EVT event, tNFA_EE_CBACK_DATA* event
             UINT8 num_ee = eventData->ee_discover.num_ee;
             tNFA_EE_DISCOVER ee_disc_info = eventData->ee_discover;
             ALOGD ("%s: NFA_EE_DISCOVER_EVT; status=0x%X; num ee=%u", __FUNCTION__,eventData->status, eventData->ee_discover.num_ee);
-#if (JCOP_WA_ENABLE == TRUE)
+#if (NXP_NFCEE_REMOVED_NTF_RECOVERY == TRUE)
             if(android::isNfcInitializationDone() == true)
             {
-                if(mChipId == 0x02 || mChipId == 0x04 || mChipId == 0x06)
+                if((mChipId == CHIP_ID_PN65T) || (mChipId == CHIP_ID_PN66T) ||
+                    (mChipId == CHIP_ID_PN67T) || (mChipId == CHIP_ID_PN80T))
                 {
                     for(int xx = 0; xx <  num_ee; xx++)
                     {
                         ALOGE("xx=%d, ee_handle=0x0%x, status=0x0%x", xx, ee_disc_info.ee_info[xx].ee_handle,ee_disc_info.ee_info[xx].ee_status);
-                        if ((ee_disc_info.ee_info[xx].ee_handle == 0x4C0) &&
-                            (ee_disc_info.ee_info[xx].ee_status == 0x02))
+                        if (ee_disc_info.ee_info[xx].ee_handle == 0x4C0)
                         {
-#if(NXP_EXTNS == TRUE)
-                            recovery=TRUE;
-#endif
-                            routingManager.ee_removed_disc_ntf_handler(ee_disc_info.ee_info[xx].ee_handle, ee_disc_info.ee_info[xx].ee_status);
-                            break;
+                            if(ee_disc_info.ee_info[xx].ee_status == NFA_EE_STATUS_REMOVED)
+                            {
+                                recovery=TRUE;
+                                routingManager.ee_removed_disc_ntf_handler(ee_disc_info.ee_info[xx].ee_handle, ee_disc_info.ee_info[xx].ee_status);
+                                break;
+                            }
+                            else if((ee_disc_info.ee_info[xx].ee_status == NFA_EE_STATUS_ACTIVE) && (recovery == TRUE))
+                            {
+                                recovery = FALSE;
+                                SyncEventGuard guard(se.mEEdatapacketEvent);
+                                se.mEEdatapacketEvent.notifyOne();
+                            }
                         }
                     }
                 }
@@ -3143,12 +3141,18 @@ void RoutingManager::nfcFCeCallback (UINT8 event, tNFA_CONN_EVT_DATA* eventData)
    case NFA_CE_ACTIVATED_EVT:
         {
             ALOGD ("%s: activated event notified", fn);
+#if (NXP_EXTNS == TRUE)
+            android::checkforTranscation(NFA_CE_ACTIVATED_EVT, (void *)eventData);
+#endif
             routingManager.notifyActivated(NFA_TECHNOLOGY_MASK_F);
         }
         break;
     case NFA_CE_DEACTIVATED_EVT:
         {
             ALOGD ("%s: deactivated event notified", fn);
+#if (NXP_EXTNS == TRUE)
+            android::checkforTranscation(NFA_CE_DEACTIVATED_EVT, (void *)eventData);
+#endif
             routingManager.notifyDeactivated(NFA_TECHNOLOGY_MASK_F);
         }
         break;
@@ -3156,7 +3160,9 @@ void RoutingManager::nfcFCeCallback (UINT8 event, tNFA_CONN_EVT_DATA* eventData)
         {
             ALOGD ("%s: data event notified", fn);
 #if ((NXP_EXTNS == TRUE) && (NFC_NXP_ESE == TRUE))
+#if(NXP_ESE_DUAL_MODE_PRIO_SCHEME != NXP_ESE_WIRED_MODE_RESUME)
             se.setDwpTranseiveState(false, NFCC_CE_DATA_EVT);
+#endif
 #endif
             tNFA_CE_DATA& ce_data = eventData->ce_data;
             routingManager.handleData(NFA_TECHNOLOGY_MASK_F, ce_data.p_data, ce_data.len, ce_data.status);
@@ -3255,6 +3261,19 @@ void *ee_removed_ntf_handler_thread(void *data)
     ALOGD ("%s: Enter: ", fn);
     rm.mResetHandlerMutex.lock();
     ALOGD ("%s: enter sEseRemovedHandlerMutex lock", fn);
+#if (NXP_NFCEE_REMOVED_NTF_RECOVERY == TRUE)
+    NFA_HciW4eSETransaction_Complete(Release);
+#endif
+#if((NFC_NXP_ESE == TRUE) && (NXP_WIRED_MODE_STANDBY == TRUE))
+    if(se.mIsWiredModeOpen)
+    {
+        stat = se.setNfccPwrConfig(se.NFCC_DECIDES);
+        if(stat != NFA_STATUS_OK)
+        {
+            ALOGD("%s: power link command failed", __FUNCTION__);
+        }
+    }
+#endif
     stat = NFA_EeModeSet(0x4c0, NFA_EE_MD_DEACTIVATE);
 
     if(stat == NFA_STATUS_OK)
@@ -3266,6 +3285,16 @@ void *ee_removed_ntf_handler_thread(void *data)
     se.NfccStandByOperation(STANDBY_GPIO_LOW);
     usleep(10*1000);
     se.NfccStandByOperation(STANDBY_GPIO_HIGH);
+#if(NXP_WIRED_MODE_STANDBY == TRUE)
+    if(se.mIsWiredModeOpen)
+    {
+        stat = se.setNfccPwrConfig(se.POWER_ALWAYS_ON);
+        if(stat != NFA_STATUS_OK)
+        {
+            ALOGD("%s: power link command failed", __FUNCTION__);
+        }
+    }
+#endif
 #endif
     stat = NFA_EeModeSet(0x4c0, NFA_EE_MD_ACTIVATE);
 
@@ -3274,12 +3303,6 @@ void *ee_removed_ntf_handler_thread(void *data)
         SyncEventGuard guard(se.mEeSetModeEvent);
         se.mEeSetModeEvent.wait ();
     }
-#if (JCOP_WA_ENABLE == TRUE)
-    NFA_HciW4eSETransaction_Complete(Release);
-    SyncEventGuard guard(se.mEEdatapacketEvent);
-    recovery=FALSE;
-    se.mEEdatapacketEvent.notifyOne();
-#endif
     rm.mResetHandlerMutex.unlock();
 #if(NXP_EXTNS == TRUE) && (NFC_NXP_ESE == TRUE)
     if(active_ese_reset_control & TRANS_WIRED_ONGOING)
@@ -3287,6 +3310,17 @@ void *ee_removed_ntf_handler_thread(void *data)
         SyncEventGuard guard(se.mTransceiveEvent);
         se.mTransceiveEvent.notifyOne();
     }
+#if (NXP_ESE_DWP_SPI_SYNC_ENABLE == TRUE)
+    /* restart the discovery */
+    usleep(100 * 100);
+    if (android::isDiscoveryStarted() == true)
+    {
+
+        android::startRfDiscovery(false);
+        usleep(100 * 100);
+        android::startRfDiscovery(true);
+    }
+#endif
 #endif
     ALOGD ("%s: exit sEseRemovedHandlerMutex lock ", fn);
     ALOGD ("%s: exit ", fn);
@@ -3297,21 +3331,21 @@ void *ee_removed_ntf_handler_thread(void *data)
 void RoutingManager::ee_removed_disc_ntf_handler(tNFA_HANDLE handle, tNFA_EE_STATUS status)
 {
     static const char fn [] = "RoutingManager::ee_disc_ntf_handler";
-    ALOGD("%s; ee_handle=0x0%x, status=0x0%x", fn, handle, status);
-    int ret = -1;
     pthread_t thread;
     pthread_attr_t attr;
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-
-    ret = pthread_create(&thread, &attr, &ee_removed_ntf_handler_thread, (void*)NULL);
-    pthread_attr_destroy(&attr);
-    if (ret != 0)
+    ALOGE("%s; ee_handle=0x0%x, status=0x0%x", fn, handle, status);
+    if (pthread_create (&thread, &attr,  &ee_removed_ntf_handler_thread, (void*)NULL) < 0)
     {
-        ALOGE("Unable to create the thread");
+        ALOGD("Thread creation failed");
     }
+    else
+    {
+        ALOGD("Thread creation success");
+    }
+    pthread_attr_destroy(&attr);
 }
-
 #if((NFC_NXP_ESE == TRUE )&& (NXP_EXTNS == TRUE) && (NXP_ESE_ETSI_READER_ENABLE == TRUE))
 /*******************************************************************************
 **
@@ -3370,14 +3404,12 @@ Rdr_req_ntf_info_t RoutingManager::getSwpRrdReqInfo()
 #endif
 
 #if(NXP_EXTNS == TRUE)
-#if (JCOP_WA_ENABLE == TRUE)
+#if (NXP_NFCEE_REMOVED_NTF_RECOVERY == TRUE)
 bool RoutingManager::is_ee_recovery_ongoing()
 {
-    ALOGD("is_ee_recovery_ongoing : recovery");
-    if(recovery)
-        return true;
-    else
-        return false;
+    static const char fn [] = "RoutingManager::is_ee_recovery_ongoing";
+    ALOGD("%s := %s", fn, ((recovery==true) ? "TRUE" : "FALSE" ));
+    return recovery;
 }
 #endif
 
@@ -3441,7 +3473,7 @@ void RoutingManager::processGetRoutingRsp(tNFA_DM_CBACK_DATA* eventData, UINT8* 
         xx++;
     }
 }
-#if (JCOP_WA_ENABLE == TRUE)
+#if (NXP_NFCEE_REMOVED_NTF_RECOVERY == TRUE)
 /*******************************************************************************
 **
 ** Function:        handleSERemovedNtf()
@@ -3465,7 +3497,8 @@ void RoutingManager::handleSERemovedNtf()
     }
     else
     {
-        if(mChipId == 0x02 || mChipId == 0x04 || mChipId == 0x06)
+        if(( mChipId == CHIP_ID_PN65T) || (mChipId == CHIP_ID_PN66T) ||
+           (mChipId == CHIP_ID_PN67T) || (mChipId == CHIP_ID_PN80T))
         {
             for(int xx = 0; xx <  ActualNumEe; xx++)
             {

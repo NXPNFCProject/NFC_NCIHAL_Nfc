@@ -67,8 +67,12 @@ public class NativeNfcManager implements DeviceHost {
     static final int DEFAULT_LLCP_RWSIZE = 2;
     static final int PN547C2_ID = 1;
     static final int PN65T_ID = 2;
-    static final int PN548AD_ID = 3;
+    static final int PN548C2_ID = 3;
     static final int PN66T_ID = 4;
+    static final int PN551_ID = 5;
+    static final int PN67T_ID = 6;
+    static final int PN553_ID = 7;
+    static final int PN80T_ID = 8;
 
     static final String DRIVER_NAME = "android-nci";
 
@@ -130,8 +134,12 @@ public class NativeNfcManager implements DeviceHost {
             int Ver = getChipVer();
             if( Ver == PN547C2_ID || Ver == PN65T_ID )
                 filePath=filePath.concat("libpn547_fw.so");
-            else if( Ver == PN548AD_ID || Ver == PN66T_ID )
-                filePath=filePath.concat("libpn548ad_fw.so");
+            else if( Ver == PN548C2_ID || Ver == PN66T_ID )
+                filePath=filePath.concat("libpn548c2_fw.so");
+            else if( Ver == PN551_ID || Ver == PN67T_ID )
+                filePath=filePath.concat("libpn551_fw.so");
+            else if( Ver == PN553_ID || Ver == PN80T_ID )
+                filePath=filePath.concat("libpn553_fw.so");
             else
                 filePath=null;
         }
@@ -159,14 +167,14 @@ public class NativeNfcManager implements DeviceHost {
         }
 
         // FW download.
-        Log.d(TAG,"Perform Download");
+        Log.d(TAG,"Perform FW Download Procedure");
         if(doDownload()) {
-            Log.d(TAG,"Download Success");
+            Log.d(TAG,"FW Download Success");
             // Now that we've finished updating the firmware, save the new modtime.
             prefs.edit().putLong(PREF_FIRMWARE_MODTIME, modtime).apply();
         }
     else {
-            Log.d(TAG,"Download Failed");
+            Log.d(TAG,"FW Download Failed");
         }
     }
 
@@ -743,6 +751,13 @@ public class NativeNfcManager implements DeviceHost {
 
     @Override
     public native int doGetSelectedUicc();
+
+    /**
+     * This api internally used to set preferred sim slot to select UICC
+     */
+    @Override
+    public native int setPreferredSimSlot(int uiccSlot);
+
     /**
      * Notifies Ndef Message (TODO: rename into notifyTargetDiscovered)
      */
