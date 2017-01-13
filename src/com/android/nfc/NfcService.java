@@ -106,10 +106,7 @@ import android.widget.Toast;
 
 import com.android.nfc.cardemulation.AidRoutingManager;
 import com.android.nfc.cardemulation.CardEmulationManager;
-import com.android.nfc.cardemulation.Nfcid2RoutingManager;
-import com.android.nfc.cardemulation.Nfcid2RoutingCache;
 import com.android.nfc.cardemulation.RegisteredAidCache;
-import com.android.nfc.cardemulation.RegisteredNfcid2Cache;
 import com.android.nfc.dhimpl.NativeNfcManager;
 import com.android.nfc.handover.HandoverDataParser;
 
@@ -275,6 +272,7 @@ public class NfcService implements DeviceHostListener {
     static final int TASK_DISABLE = 2;
     static final int TASK_BOOT = 3;
     static final int TASK_EE_WIPE = 4;
+    static final int TASK_RESTART = 0x1F;
     static final int MSG_CHANGE_DEFAULT_ROUTE = 52;
     static final int MSG_SE_DELIVER_INTENT = 53;
 
@@ -390,6 +388,9 @@ public class NfcService implements DeviceHostListener {
 
     public static final String ACTION_UICC_STATUS_RECEIVED =
             "com.nxp.action.UICC_STATUS_RECEIVED";
+
+    public static final String ACTION_FLASH_SUCCESS =
+            "com.android.nfc_extras.action.ACTION_FLASH_SUCCESS";
 
     public static final String EXTRA_UICC_STATUS = "com.nxp.extra.UICC_STATUS";
 
@@ -522,7 +523,6 @@ public class NfcService implements DeviceHostListener {
     private RegisteredAidCache mAidCache;
     private CardEmulationManager mCardEmulationManager;
     private AidRoutingManager mAidRoutingManager;
-    private Nfcid2RoutingManager mNfcid2RoutingManager;
     private ScreenStateHelper mScreenStateHelper;
     private ForegroundUtils mForegroundUtils;
     private boolean mClearNextTapDefault;
@@ -834,6 +834,11 @@ public class NfcService implements DeviceHostListener {
         Log.d(TAG, "Restart Watchdog: WatchDog Thread ID is  "+ disableInternalwatchDog.getId());
         sendMessage(NfcService.MSG_RESTART_WATCHDOG, enable);
     }
+    @Override
+    public void onFwDwnldReqRestartNfc() {
+        Log.d(TAG, "Restart NFC:When Fw dwnld request was stored during SPI onGoing");
+        new EnableDisableTask().execute(TASK_RESTART);
+    }
 
     final class ReaderModeParams {
         public int flags;
@@ -967,9 +972,8 @@ public class NfcService implements DeviceHostListener {
 
         if (mIsHceCapable) {
             mAidRoutingManager = new AidRoutingManager();
-            mNfcid2RoutingManager = new Nfcid2RoutingManager();
-            mCardEmulationManager = new CardEmulationManager(mContext, mAidRoutingManager, mNfcid2RoutingManager);
-            mAidCache = new RegisteredAidCache(mContext, mAidRoutingManager);
+            mCardEmulationManager = new CardEmulationManager(mContext, mAidRoutingManager);
+            mAidCache = mCardEmulationManager.getRegisteredAidCache();
             //mCardEmulationManager = new CardEmulationManager(mContext);
             Log.d("NfcService", "Before mIsHceCapable");
             mNxpNfcController = new NxpNfcController(mContext, mCardEmulationManager);
@@ -1166,6 +1170,9 @@ public class NfcService implements DeviceHostListener {
                         mPrefsEditor.apply();
                     }
                     break;
+                case TASK_RESTART:
+                    restartInternal();
+
             }
 
             // Restore default AsyncTask priority
@@ -1505,6 +1512,36 @@ public class NfcService implements DeviceHostListener {
 
             releaseSoundPool();
 
+            return result;
+        }
+
+        boolean restartInternal()
+        {
+            boolean result;
+            result = disableInternal();
+            if (DBG) Log.d(TAG, "disableInternal status = " + result);
+            while(true)
+            {
+                if(mState == NfcAdapter.STATE_OFF)
+                {
+                    if (DBG) Log.d(TAG, "disableInternal is success = " + result);
+                    break;
+                }
+            }
+            result = enableInternal();
+            if (DBG) Log.d(TAG, "enableInternal status = " + result);
+            while(true)
+            {
+                if(mState == NfcAdapter.STATE_ON)
+                {
+                    if (DBG) Log.d(TAG, "enableInternal is success = " + result);
+                    break;
+                }
+            }
+            Intent flashIntent = new Intent();
+            flashIntent.setAction(ACTION_FLASH_SUCCESS);
+            if (DBG) Log.d(TAG, "Broadcasting " + ACTION_FLASH_SUCCESS);
+            mContext.sendBroadcast(flashIntent);
             return result;
         }
 
@@ -4578,24 +4615,6 @@ public class NfcService implements DeviceHostListener {
         return aidTableStatus;
     }
 
-    public void routeNfcid2(String nfcid2, String syscode, String optparam) {
-        Message msg = mHandler.obtainMessage();
-        msg.what = MSG_ROUTE_NFCID2;
-        Bundle extras = new Bundle();
-        extras.putString(Nfcid2RoutingCache.EXTRA_NFCID2, nfcid2);
-        extras.putString(Nfcid2RoutingCache.EXTRA_SYSCODE, syscode);
-        extras.putString(Nfcid2RoutingCache.EXTRA_OPTPARAM, optparam);
-        msg.obj = extras;
-        mHandler.sendMessage(msg);
-    }
-
-    public void unrouteNfcid2(String nfcid2) {
-        Message msg = mHandler.obtainMessage();
-        msg.what = MSG_UNROUTE_NFCID2;
-        msg.obj = nfcid2;
-        mHandler.sendMessage(msg);
-    }
-
     public void clearRouting() {
         mHandler.sendEmptyMessage(MSG_CLEAR_ROUTING);
     }
@@ -4756,24 +4775,6 @@ public class NfcService implements DeviceHostListener {
                 case MSG_UNROUTE_AID: {
                     String aid = (String) msg.obj;
                     mDeviceHost.unrouteAid(hexStringToBytes(aid));
-                    break;
-                }
-
-                case MSG_ROUTE_NFCID2: {
-                    Bundle extras = (Bundle) msg.obj;
-                    String nfcid2 = extras.getString(Nfcid2RoutingCache.EXTRA_NFCID2, null);
-                    String syscode = extras.getString(Nfcid2RoutingCache.EXTRA_SYSCODE, null);
-                    String optcode = extras.getString(Nfcid2RoutingCache.EXTRA_OPTPARAM, null);
-
-                    mDeviceHost.routeNfcid2(hexStringToBytes(nfcid2), hexStringToBytes(syscode), hexStringToBytes(optcode));
-                    // Restart polling config
-                    break;
-                }
-
-                case MSG_UNROUTE_NFCID2: {
-                    String nfcid2 = (String) msg.obj;
-                    mDeviceHost.unrouteNfcid2(hexStringToBytes(nfcid2));
-                    // Restart polling config
                     break;
                 }
 

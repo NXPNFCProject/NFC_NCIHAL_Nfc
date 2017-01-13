@@ -59,7 +59,6 @@ import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 
-import com.android.nfc.cardemulation.RegisteredNfcid2Cache.Nfcid2ResolveInfo;
 
 public class HostEmulationManager {
     static final String TAG = "HostEmulationManager";
@@ -103,7 +102,6 @@ public class HostEmulationManager {
 
     final Context mContext;
     final RegisteredAidCache mAidCache;
-    final RegisteredNfcid2Cache mNfcid2Cache;
 
     final Messenger mMessenger = new Messenger (new MessageHandler());
     final KeyguardManager mKeyguard;
@@ -139,11 +137,10 @@ public class HostEmulationManager {
 
     int mScreenState;
 
-    public HostEmulationManager(Context context, RegisteredAidCache aidCache, RegisteredNfcid2Cache nfcid2Cache) {
+    public HostEmulationManager(Context context, RegisteredAidCache aidCache) {
         mContext = context;
         mLock = new Object();
         mAidCache = aidCache;
-        mNfcid2Cache = nfcid2Cache;
         mState = STATE_IDLE;
         mScreenState = SCREEN_STATE_ON_UNLOCKED;
         mKeyguard = (KeyguardManager) context.getSystemService(Context.KEYGUARD_SERVICE);
@@ -256,60 +253,6 @@ public class HostEmulationManager {
                     mState = STATE_W4_DEACTIVATE;
                     launchResolver((ArrayList<ApduServiceInfo>)resolveInfo.services, null,
                             resolveInfo.category);
-                    return;
-                }
-            }   else if(nfcid2 != null) {
-
-                Nfcid2ResolveInfo resolveInfo = mNfcid2Cache.resolveNfcid2Prefix(nfcid2);
-                if (resolveInfo == null || resolveInfo.services.size() == 0) {
-                    // Tell the remote we don't handle this AID
-                    //TODO: How to handle an NFCID2, which does not supported by DH.
-                    Log.d(TAG, "TODO: How to handle an NFCID2, which does not supported by DH.");
-                    NfcService.getInstance().sendData(UNKNOWN_ERROR);
-                    return;
-                }
-
-                mLastSelectedNfcid2 = resolveInfo.nfcid2;
-                    if (resolveInfo.defaultService != null) {
-                        // Resolve to default
-                        // Check if resolvedService requires unlock
-                        if (resolveInfo.defaultService.requiresUnlock()
-                                && mKeyguard.isKeyguardLocked() && mKeyguard.isKeyguardSecure()) {
-                            String category = mNfcid2Cache.getCategoryForNfcid2(resolveInfo.nfcid2);
-                            // Just ignore all future APDUs until next tap
-                            mState = STATE_W4_DEACTIVATE;
-                            launchTapAgain(resolveInfo.defaultService, category);
-                            return;
-                        }
-                    // In no circumstance should this be an OffHostService -
-                    // we should never get this AID on the host in the first place
-                    if (!resolveInfo.defaultService.isOnHost()) {
-                        Log.e(TAG, "AID that was meant to go off-host was routed to host." +
-                                " Check routing table configuration.");
-                        //TODO: How to handle an NFCID2, which does not supported by DH.
-                        Log.d(TAG, "TODO: How to handle an NFCID2, which does not supported by DH.");
-                        NfcService.getInstance().sendData(AID_NOT_FOUND);
-                        return;
-                    }
-                    resolvedService = resolveInfo.defaultService.getComponent();
-                } else if (mActiveServiceName != null) {
-                    for (ApduServiceInfo service : resolveInfo.services) {
-                        if (mActiveServiceName.equals(service.getComponent())) {
-                            resolvedService = mActiveServiceName;
-                            break;
-                            }
-                        }
-                    }
-
-                if (resolvedService == null) {
-                    // We have no default, and either one or more services.
-                    // Ask the user to confirm.
-                    // Get corresponding category
-                    String category = mNfcid2Cache.getCategoryForNfcid2(resolveInfo.nfcid2);
-                    ArrayList<ApduServiceInfo> services = (ArrayList<ApduServiceInfo>) resolveInfo.services;
-                    // Just ignore all future APDUs until we resolve to only one
-                    mState = STATE_W4_DEACTIVATE;
-                    launchResolver(services, null, category);
                     return;
                 }
             }

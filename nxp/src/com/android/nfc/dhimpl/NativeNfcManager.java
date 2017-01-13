@@ -231,18 +231,6 @@ public class NativeNfcManager implements DeviceHost {
     public native void disableDiscovery();
 
     @Override
-    public void enableRoutingToHost()
-    {
-
-    }
-
-    @Override
-    public void disableRoutingToHost()
-    {
-
-    }
-
-    @Override
     public native int[] doGetSecureElementList();
 
     @Override

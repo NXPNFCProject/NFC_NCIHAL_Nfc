@@ -54,6 +54,8 @@ extern "C"
 #endif
 }
 #if(NXP_EXTNS == TRUE)
+#define CONNECTIVITY_PIPE_ID_UICC1 0x0A
+#define CONNECTIVITY_PIPE_ID_UICC2 0x23
 #if(NFC_NXP_ESE == TRUE)
 #define SIG_NFC 44
 #define HOST_TYPE_ESE   0xC0
@@ -61,13 +63,27 @@ extern "C"
 #define HOST_TYPE_UICC1 0x02
 #define HOST_TYPE_UICC2 0x81
 #endif
+
 typedef enum dual_mode{
  SPI_DWPCL_NOT_ACTIVE = 0x00,
  CL_ACTIVE = 0x01,
  SPI_ON = 0x02,
  SPI_DWPCL_BOTH_ACTIVE = 0x03,
 }dual_mode_state;
+#if(NXP_EXTNS == TRUE)
+typedef enum connectivity_pipe_status{
+PIPE_DELETED,
+PIPE_CLOSED,
+PIPE_OPENED
+}pipe_status;
 
+typedef enum
+{
+    UICC_SESSION_NOT_INTIALIZED = 0x00,
+    UICC_CLEAR_ALL_PIPE_NTF_RECEIVED = 0x01,
+    UICC_SESSION_INTIALIZATION_DONE = 0x02
+}nfcee_disc_state;
+#endif
 typedef enum {
     STATE_IDLE = 0x00,
     STATE_WK_ENBLE = 0x01,
@@ -112,6 +128,15 @@ typedef enum
     UICC_02_REMOVED,
     UICC_STATUS_UNKNOWN
 }uicc_stat_t;
+typedef enum
+{
+    SWP_DEFAULT = 0x00,
+    SWP1_UICC1 = 0x01,
+    SWP2_ESE = 0x02,
+    SWP1A_UICC2 = 0x04,
+    T4T_NDEFEE = 0x08,
+    HCI_ACESS = 0x10
+}nfcee_swp_getconfig_status;
 #endif
 typedef enum
 {   STATE_SE_RDR_FAILURE_NOT_SUPPORTED ,
@@ -179,6 +204,7 @@ public:
     };
     mNfceeData  mNfceeData_t;
     UINT8       mHostsPresent;
+    UINT8   mETSI12InitStatus;
     UINT8       mHostsId[MAX_NFCEE];
     UINT8       eSE_Compliancy;
     UINT8       mCreatedPipe;
@@ -599,7 +625,7 @@ public:
 #if(NXP_EXTNS == TRUE)
     bool getNfceeHostTypeList (void);
     bool configureNfceeETSI12 ();
-
+    void eSE_ClearAllPipe_handler(uint8_t host);
     /**********************************************************************************
      **
      ** Function:        getEeStatus
@@ -699,7 +725,6 @@ public:
     bool        meSESessionIdOk;
     void        setCPTimeout();
     SyncEvent   mRfFieldOffEvent;
-    void        eSE_pipeRecreate_handler(void);
     void        NfccStandByOperation(nfcc_standby_operation_t value);
     NFCSTATUS   eSE_Chip_Reset(void);
     tNFA_STATUS SecElem_sendEvt_Abort();
@@ -716,11 +741,26 @@ public:
     SyncEvent       mUiccListenEvent;
     SyncEvent       mEseListenEvent;
     SyncEvent       mEeSetModeEvent;
+    SyncEvent       mModeSetNtf;
+    SyncEvent       mHciAddStaticPipe;
 #if ((NXP_EXTNS == TRUE) && (NXP_WIRED_MODE_STANDBY == TRUE))
     SyncEvent       mPwrLinkCtrlEvent;
 #endif
 
 #if(NXP_EXTNS == TRUE)
+    UINT8 getUiccGateAndPipeList(UINT8 uiccNo);
+    /*******************************************************************************
+    **
+    ** Function:        updateNfceeDiscoverInfo
+    **
+    ** Description:     Update the gSeDiscoverycount based on new NFCEE handle
+    **                  discovered
+    **
+    ** Returns:         Count of NFCEE discovered.
+    **
+    *******************************************************************************/
+    UINT8 updateNfceeDiscoverInfo(int numEe, tNFA_EE_INFO* mEeInfo);
+    tNFA_HANDLE getHciHandleInfo();
     SyncEvent       mNfceeInitCbEvent;
     tNFA_STATUS SecElem_EeModeSet(uint16_t handle, uint8_t mode);
 #if (NXP_NFCEE_REMOVED_NTF_RECOVERY == TRUE)
@@ -737,6 +777,7 @@ public:
     bool    mIsWiredModeBlocked;   /* for wired mode resume feature support */
     IntervalTimer   mRfFieldEventTimer;
     UINT32          mRfFieldEventTimeout;
+    tNFA_STATUS  mModeSetInfo;/*Mode set info status*/
 #if (NXP_WIRED_MODE_STANDBY == TRUE)
     static const UINT8 NFCC_DECIDES     = 0x00;     //NFCC decides
     static const UINT8 POWER_ALWAYS_ON  = 0x01;     //NFCEE Power Supply always On
@@ -766,6 +807,8 @@ private:
     static const tNFA_HANDLE EE_HANDLE_0xF3 = 0x4C0;//0x401; //handle to secure element in slot 0
     static const tNFA_HANDLE EE_HANDLE_0xF8 = 0x481; //handle to secure element in slot 2
     static const tNFA_HANDLE EE_HANDLE_0xF4 = 0x402; //handle to secure element in slot 1
+    static const tNFA_HANDLE EE_HANDLE_HCI  = 0x401;
+    static const tNFA_HANDLE EE_HANDLE_NDEFEE = 0x410;
 #else
     static const tNFA_HANDLE EE_HANDLE_0xF3 = 0x4F3; //handle to secure element in slot 0
     static const tNFA_HANDLE EE_HANDLE_0xF4 = 0x4F4; //handle to secure element in slot 1
@@ -855,6 +898,18 @@ private:
     *******************************************************************************/
     ~SecureElement ();
 
+    /*******************************************************************************
+    **
+    ** Function:        handleClearAllPipe
+    **
+    ** Description:     To handle clear all pipe event received from HCI based on the
+    **                  deleted host
+    **                  eventData: Event data.
+    **
+    ** Returns:         None
+    **
+    *******************************************************************************/
+    static void handleClearAllPipe (tNFA_HCI_EVT_DATA* eventData);
 
     /*******************************************************************************
     **

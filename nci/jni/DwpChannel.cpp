@@ -122,7 +122,10 @@ INT16 open()
     SecureElement &se = SecureElement::getInstance();
 
     ALOGE("DwpChannel: Sec Element open Enter");
-
+#if(NXP_ESE_JCOP_DWNLD_PROTECTION == TRUE)
+    DwpChannel::getInstance().Initialize();
+#endif
+    ALOGE("DwpChannel: Sec Element open Enter");
     if (se.isBusy())
     {
         ALOGE("DwpChannel: SE is busy");
@@ -182,6 +185,9 @@ bool close(INT16 mHandle)
     ALOGD("%s: enter", fn);
     bool stat = false;
     SecureElement &se = SecureElement::getInstance();
+#if(NXP_ESE_JCOP_DWNLD_PROTECTION == TRUE)
+    DwpChannel::getInstance().finalize();
+#endif
     if(mHandle == EE_ERROR_OPEN_FAIL)
     {
         ALOGD("%s: Channel access denied. Returning", fn);
@@ -277,6 +283,35 @@ DwpChannel& DwpChannel::getInstance()
     return sDwpChannel;
 }
 
+/*******************************************************************************
+**
+** Function:        finalize
+**
+** Description:     Release all resources.
+**
+** Returns:         None
+**
+*******************************************************************************/
+void DwpChannel::finalize()
+{
+    static const char fn [] = "DwpChannel::finalize";
+    dwpChannelForceClose = false;
+}
+
+/*******************************************************************************
+**
+** Function:        initialize
+**
+** Description:     Initialize all member variables.
+**
+** Returns:         None.
+**
+*******************************************************************************/
+void DwpChannel::Initialize()
+{
+    static const char fn [] = "DwpChannel::Initialize";
+    dwpChannelForceClose = false;
+}
 /*******************************************************************************
 **
 ** Function:        DwpChannel's force exit

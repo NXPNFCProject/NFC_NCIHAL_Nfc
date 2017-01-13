@@ -46,6 +46,28 @@ static DwpChannel& getInstance ();
 *******************************************************************************/
 void forceClose();
 
+/*******************************************************************************
+**
+** Function:        finalize
+**
+** Description:     Release all resources.
+**
+** Returns:         None
+**
+*******************************************************************************/
+void finalize();
+
+/*******************************************************************************
+**
+** Function:        initialize
+**
+** Description:     Initialize all member variables.
+**
+** Returns:         None.
+**
+*******************************************************************************/
+void Initialize();
+
 bool dwpChannelForceClose;
 
 private:

@@ -266,39 +266,6 @@ public class NativeNfcManager implements DeviceHost {
 
     public native boolean doUnrouteAid(byte[] aid);
 
-    @Override
-    public boolean routeNfcid2(byte[] nfcid2, byte[] syscode, byte[] optparam) {
-        Log.d(TAG,"routeNfcid2 NFCID2 : " + toHexString(nfcid2, 0, nfcid2.length) );
-
-      //  if(mNfcid2ToHandle.get(toHexString(nfcid2, 0, nfcid2.length)) != null) {
-       //     unrouteNfcid2(nfcid2);
-        //}
-
-        Log.d(TAG,"routeNfcid2 syscode--- : " + toHexString(syscode, 0, syscode.length) );
-        int handle = doRouteNfcid2(nfcid2,syscode,optparam);
-        if(handle != 0xFF) {
-            mNfcid2ToHandle.put(toHexString(nfcid2, 0, nfcid2.length), handle);
-            return true;
-        } else {
-            return false;
-        }
-
-    }
-
-    private native int doRouteNfcid2(byte[] nfcid2, byte[] syscode, byte[] optparam);
-
-    @Override
-    public boolean unrouteNfcid2(byte[] nfcid2) {
-        Log.d(TAG,"unrouteNfcid2 NFCID2 : " + toHexString(nfcid2, 0, nfcid2.length) );
-        int handle = mNfcid2ToHandle.get(toHexString(nfcid2, 0, nfcid2.length));
-        if(mNfcid2ToHandle.get(toHexString(nfcid2, 0, nfcid2.length)) != null) {
-            mNfcid2ToHandle.remove(toHexString(nfcid2, 0, nfcid2.length));
-        }
-        return doUnRouteNfcid2(nfcid2);
-    }
-
-    private native boolean doUnRouteNfcid2(byte[] nfcid2);
-
     public native boolean clearAidTable();
 
     @Override
@@ -369,13 +336,7 @@ public class NativeNfcManager implements DeviceHost {
 
     @Override
     public native void disableDiscovery();
-/*
-    @Override
-    public native void enableRoutingToHost();
 
-    @Override
-    public native void disableRoutingToHost();
-*/
     @Override
     public native int[] doGetSecureElementList();
 
@@ -826,6 +787,9 @@ public class NativeNfcManager implements DeviceHost {
         mListener.onRestartWatchDog(enable);
     }
 
+    private void notifyFwDwnldRequested() {
+        mListener.onFwDwnldReqRestartNfc();
+    }
     /* Reader over SWP listeners*/
     private void notifySWPReaderRequested(boolean istechA, boolean istechB) {
         mListener.onSWPReaderRequestedEvent(istechA, istechB);

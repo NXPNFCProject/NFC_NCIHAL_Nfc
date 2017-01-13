@@ -62,6 +62,9 @@ namespace android
 #if(NXP_ESE_JCOP_DWNLD_PROTECTION == TRUE)
     extern jmethodID gCachedNfcManagerNotifyDownloadInProgress;
 #endif
+#if(NXP_NFCC_SPI_FW_DOWNLOAD_SYNC == TRUE)
+    extern jmethodID gCachedNfcManagerNotifyFwDwnldRequested;
+#endif
 #endif
     extern jmethodID gCachedNfcManagerNotifyHostEmuDeactivated;
     extern jmethodID gCachedNfcManagerNotifyAidRoutingTableFull;

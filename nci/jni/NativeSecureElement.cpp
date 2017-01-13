@@ -221,7 +221,7 @@ if((RoutingManager::getInstance().is_ee_recovery_ongoing()))
     }
     ALOGD("P61 Status is: %x", p61_current_state);
 
-#if (NXP_ESE_JCOP_DWNLD_PROTECTION == TRUE && NFC_NXP_NOT_OPEN_INCLUDED == TRUE)
+#if (NXP_ESE_JCOP_DWNLD_PROTECTION == TRUE && NXP_EXTNS == TRUE)
     if(p61_current_state & P61_STATE_JCP_DWNLD)
     {
         ALOGD("Denying SE open due to JCOP OS Download is in progress");
@@ -328,11 +328,13 @@ if((RoutingManager::getInstance().is_ee_recovery_ongoing()))
 #if (NXP_WIRED_MODE_STANDBY == TRUE)
         if(se.mNfccPowerMode == 1)
         {
-            status = se.setNfccPwrConfig(se.POWER_ALWAYS_ON);
+            status = se.setNfccPwrConfig(se.POWER_ALWAYS_ON|se.COMM_LINK_ACTIVE);
             if(status != NFA_STATUS_OK)
             {
                 ALOGD("%s: power link command failed", __FUNCTION__);
             }
+            stat = se.SecEle_Modeset(0x01);
+            status = se.setNfccPwrConfig(se.POWER_ALWAYS_ON);
         }
 #endif
         if((status == NFA_STATUS_OK) && (se.mIsIntfRstEnabled))
