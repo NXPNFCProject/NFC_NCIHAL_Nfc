@@ -876,6 +876,12 @@ jintArray SecureElement::getActiveSecureElementList (JNIEnv* e)
             ALOGD("UICC  Active");
         }
 
+        if(nfcee_handle[i] == EE_HANDLE_0xF8 && nfcee_status[i] == NFC_NFCEE_STATUS_ACTIVE)
+        {
+            seId = getGenericEseId(EE_HANDLE_0xF8 & ~NFA_HANDLE_GROUP_EE);
+            ALOGD("UICC2  Active");
+        }
+
         ALOGD ("%s: Generic id %u = 0x%X", __FUNCTION__, i, seId);
         e->SetIntArrayRegion (list, cnt++, 1, &seId);
     }
