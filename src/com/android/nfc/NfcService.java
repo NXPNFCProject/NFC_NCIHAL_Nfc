@@ -4861,7 +4861,7 @@ public class NfcService implements DeviceHostListener {
                     }
                     break;
 
-                case MSG_CARD_EMULATION:
+                case MSG_CARD_EMULATION: {
                     if (DBG) Log.d(TAG, "Card Emulation message");
                     /* Tell the host-emu manager an AID has been selected on
                      * a secure element.
@@ -4871,13 +4871,12 @@ public class NfcService implements DeviceHostListener {
                     }
                     Pair<byte[], Pair> transactionInfo = (Pair<byte[], Pair>) msg.obj;
                     Pair<byte[], Integer> dataSrcInfo = (Pair<byte[], Integer>) transactionInfo.second;
-
+                    String evtSrc = "";
                     String gsmaSrc = "";
                     String gsmaDataAID = toHexString(transactionInfo.first, 0, transactionInfo.first.length);
                     {
                         Log.d(TAG, "Event source " + dataSrcInfo.second);
 
-                        String evtSrc = "";
                         if(dataSrcInfo.second == UICC_ID_TYPE) {
                             evtSrc = NxpConstants.UICC_ID;
                             gsmaSrc = "SIM1";
@@ -4894,19 +4893,12 @@ public class NfcService implements DeviceHostListener {
                         transactionIntent.putExtra(NxpConstants.EXTRA_AID, transactionInfo.first);
                         transactionIntent.putExtra(NxpConstants.EXTRA_DATA, dataSrcInfo.first);
                         transactionIntent.putExtra(NxpConstants.EXTRA_SOURCE, evtSrc);
-
                         if (DBG) {
                             Log.d(TAG, "Start Activity Card Emulation event");
                         }
                         mIsSentUnicastReception = false;
                         mContext.sendBroadcast(transactionIntent, NfcPermissions.NFC_PERMISSION);
                     }
-                    /* Send broadcast */
-                    Intent aidIntent = new Intent();
-                    aidIntent.setAction(ACTION_AID_SELECTED);
-                    aidIntent.putExtra(EXTRA_AID, transactionInfo.first);
-                    if (DBG) Log.d(TAG, "Broadcasting " + ACTION_AID_SELECTED);
-                    sendSeBroadcast(aidIntent);
 
                     /* Send "transaction events" to all authorized/registered components" */
                     Intent evtIntent = new Intent();
@@ -4917,6 +4909,19 @@ public class NfcService implements DeviceHostListener {
                     Log.d(TAG, "Broadcasting " + NxpConstants.ACTION_MULTI_EVT_TRANSACTION);
                     sendMultiEvtBroadcast(evtIntent);
 
+                    /* Send broadcast */
+                    if (dataSrcInfo.first != null) {
+                        String evt_data = toHexString(dataSrcInfo.first, 0, dataSrcInfo.first.length);
+                        if (DBG) Log.d(TAG, "Data is :"+evt_data);
+                    }
+                    Intent aidIntent = new Intent();
+                    aidIntent.setAction(ACTION_AID_SELECTED);
+                    aidIntent.putExtra(EXTRA_AID, transactionInfo.first);
+                    aidIntent.putExtra(NxpConstants.EXTRA_SOURCE, evtSrc);
+                    aidIntent.putExtra(NxpConstants.EXTRA_DATA,dataSrcInfo.first);
+                    if (DBG) Log.d(TAG, "Broadcasting " + ACTION_AID_SELECTED);
+                    sendSeBroadcast(aidIntent);
+				    }
                     break;
 
                 case MSG_CONNECTIVITY_EVENT:
