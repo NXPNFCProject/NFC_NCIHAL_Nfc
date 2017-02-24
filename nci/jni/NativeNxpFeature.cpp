@@ -780,10 +780,14 @@ tNFA_STATUS enableSWPInterface()
 {
     tNFA_STATUS status = NFA_STATUS_FAILED;
     static uint8_t get_eeprom_data[6] = {0x20, 0x03,  0x03 , 0x01 ,0xA0, 0x14};
+#if (NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH == TRUE)
     uint8_t cmd_buf[] = { 0x20, 0x02, 0x09, 0x02,
                                  0xA0, 0xEC, 0x01, 0x00
                                  ,0xA0, 0xD4, 0x01, 0x00};
-
+#else
+uint8_t cmd_buf[] = { 0x20, 0x02, 0x05, 0x01,
+                             0xA0, 0xEC, 0x01, 0x00};
+#endif
     ALOGD("%s: enter", __FUNCTION__);
 
     status = NxpNfc_Write_Cmd(sizeof(get_eeprom_data), get_eeprom_data, NxpResponse_Cb);
@@ -793,12 +797,18 @@ tNFA_STATUS enableSWPInterface()
         {
             cmd_buf[7] = 0x01;
         }
+#if (NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH == TRUE)
         if(gnxpfeature_conf.rsp_data[9] == 0x01 && !(swp_getconfig_status & SWP1A_UICC2) ) //SWP1A status read
         {
             cmd_buf[11] = 0x01;
         }
-
-        if(cmd_buf[7] == 0x00 &&  cmd_buf[11] == 0x00)
+#endif
+        if((cmd_buf[7] == 0x00)
+#if (NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH == TRUE)
+            &&  (cmd_buf[11] == 0x00))
+#else
+    )
+#endif
         {
             ALOGD ("%s: No mismatch in UICC SWP and configuration set", __FUNCTION__);
             status = NFA_STATUS_FAILED;
