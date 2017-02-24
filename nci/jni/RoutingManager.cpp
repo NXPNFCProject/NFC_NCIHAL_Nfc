@@ -76,9 +76,7 @@ const JNINativeMethod RoutingManager::sMethods [] =
 
 static UINT16 rdr_req_handling_timeout = 50;
 
-#if((NXP_EXTNS == TRUE) && (NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH == TRUE))
-static int mSetDefaulRouteParams;
-#endif
+
 #if((NFC_NXP_ESE == TRUE) && (NXP_EXTNS == TRUE) && (NXP_ESE_ETSI_READER_ENABLE == TRUE))
 Rdr_req_ntf_info_t swp_rdr_req_ntf_info;
 static IntervalTimer swp_rd_req_timer;
@@ -1069,8 +1067,9 @@ void RoutingManager::compileTechEntries(void)
 {
     static const char fn []          = "RoutingManager::compileTechEntries";
     UINT32 techSupportedBySelectedEE = 0;
+#if(NXP_ESE_FELICA_CLT == TRUE)
     unsigned long num = 0;
-
+#endif
     ALOGD ("%s: enter", fn);
 
     /*Check technologies supported by EE selected in conf file*/

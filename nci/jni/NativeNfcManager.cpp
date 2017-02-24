@@ -2179,7 +2179,7 @@ if ((signal(SIGABRT, sig_handler) == SIG_ERR) &&
 #if (JCOP_WA_ENABLE == TRUE)
     RoutingManager::getInstance().handleSERemovedNtf();
 #endif
-    ALOGD(" Discovered se count %d",gSeDiscoverycount);
+    ALOGD(" Discovered se count %ld",gSeDiscoverycount);
                 /*Check for ETSI12 Configuration for SEs detected in the HCI Network*/
                 performNfceeETSI12Config();
 #if(NFC_NXP_ESE ==  TRUE)
@@ -4588,8 +4588,6 @@ static int nfcManager_doSelectUicc(JNIEnv* e, jobject o, jint uiccSlot)
     tNFA_STATUS status = NFC_STATUS_FAILED;
     ALOGD("%s: enter", __FUNCTION__);
     ALOGD("%s: sUicc1CntxLen : 0x%02x  sUicc2CntxLen : 0x%02x", __FUNCTION__,dualUiccInfo.sUicc1CntxLen,dualUiccInfo.sUicc2CntxLen);
-    tNFA_STATUS stat = NFA_STATUS_FAILED;
-    BOOLEAN result =FALSE;
     UINT16 RegAddr = 0xA0EC;
     uint8_t bitVal;
     eScreenState_t last_screen_state_request;
@@ -4693,7 +4691,7 @@ static int nfcManager_doSelectUicc(JNIEnv* e, jobject o, jint uiccSlot)
         sIsSecElemDetected = sIsSecElemSelected;
     }
 
-    ALOGD("%s : gSeDiscoverycount = %d", __FUNCTION__ , gSeDiscoverycount);
+    ALOGD("%s : gSeDiscoverycount = %ld", __FUNCTION__ , gSeDiscoverycount);
     {
         SyncEventGuard g(gNfceeDiscCbEvent);
         /*Get the SWP1 and SWP2 lines status*/
@@ -4702,7 +4700,7 @@ static int nfcManager_doSelectUicc(JNIEnv* e, jobject o, jint uiccSlot)
          /*The SWP lines enabled and SE's discovered*/
             if (gSeDiscoverycount < gActualSeCount)
             {
-                ALOGD("%s : Wait for ESE to discover, gdisc_timeout = %d", __FUNCTION__, gdisc_timeout);
+                ALOGD("%s : Wait for ESE to discover, gdisc_timeout = %ld", __FUNCTION__, gdisc_timeout);
                 if(gNfceeDiscCbEvent.wait(gdisc_timeout) == false)
                 {
                     ALOGE ("%s: timeout waiting for nfcee dis event", __FUNCTION__);
@@ -5287,7 +5285,7 @@ static int nfcManager_getChipVer(JNIEnv* e, jobject o)
     unsigned long num =0;
 
     GetNxpNumValue(NAME_NXP_NFC_CHIP, (void *)&num, sizeof(num));
-    ALOGD ("%d: nfcManager_getChipVer", num);
+    ALOGD ("%ld: nfcManager_getChipVer", num);
     return num;
 }
 
@@ -5671,7 +5669,7 @@ static void nfcManager_doSetScreenState (JNIEnv* e, jobject o, jint state)
             }
             else
             {
-                 ALOGD ("%s: enter; NAME_NXP_CORE_SCRN_OFF_AUTONOMOUS_ENABLE = %02x", __FUNCTION__, auto_num);
+                 ALOGD ("%s: enter; NAME_NXP_CORE_SCRN_OFF_AUTONOMOUS_ENABLE = %02lx", __FUNCTION__, auto_num);
             }
             if(buffer)
             {
@@ -5925,8 +5923,8 @@ void checkforTranscation(UINT8 connEvent, void* eventData)
 {
     tNFA_CONN_EVT_DATA *eventAct_Data = (tNFA_CONN_EVT_DATA*) eventData;
     tNFA_DM_CBACK_DATA* eventDM_Conn_data = (tNFA_DM_CBACK_DATA *) eventData;
-    tNFA_EE_CBACK_DATA* ee_action_data = (tNFA_EE_CBACK_DATA *) eventData;
 #if(NFC_NXP_CHIP_TYPE == PN547C2)
+    tNFA_EE_CBACK_DATA* ee_action_data = (tNFA_EE_CBACK_DATA *) eventData;
     tNFA_EE_ACTION& action = ee_action_data->action;
 #endif
     ALOGD ("%s: enter; event=0x%X transaction_data.current_transcation_state = 0x%x", __FUNCTION__, connEvent,
@@ -6437,7 +6435,9 @@ void checkforNfceeConfig(UINT8 type)
     tNFA_STATUS status;
     tNFA_PMID param_ids_UICC[]                  = {0xA0, 0xEA};
     tNFA_PMID param_ids_eSE[]                   = {0xA0, 0xEB};
+#if(NXP_UICC_CREATE_CONNECTIVITY_PIPE == TRUE)
     tNFA_PMID param_uicc1[] = {0xA0, 0x24};
+#endif
 #if(NXP_NFCC_DYNAMIC_DUAL_UICC == TRUE)
     tNFA_PMID param_ids_UICC2[]                 = {0xA0, 0x1E};
     tNFA_PMID param_uicc2[] = {0xA0, 0xE9};
@@ -6447,7 +6447,10 @@ void checkforNfceeConfig(UINT8 type)
     UINT8 pipeId = 0;
     SecureElement::getInstance().updateEEStatus();
     bool configureuicc1 = false;
+#if((NXP_NFCC_DYNAMIC_DUAL_UICC == TRUE) || (NXP_UICC_CREATE_CONNECTIVITY_PIPE == TRUE))
     bool configureuicc2 = false;
+#endif
+
     status = GetNxpNumValue(NAME_NXP_DEFAULT_NFCEE_TIMEOUT, (void*)&timeout_buff_val, sizeof(timeout_buff_val));
 
     if(status == TRUE)
@@ -6707,8 +6710,6 @@ static void nfaNxpSelfTestNtfTimerCb (union sigval)
  **********************************************************************************/
 void performNfceeETSI12Config()
 {
-    UINT8 num_nfcee_present = 0;
-    UINT8 count =0;
     bool status;
 
     ALOGD ("%s", __FUNCTION__);
@@ -7275,12 +7276,16 @@ static void notifyUiccEvent (union sigval)
 #if((NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH == TRUE) || (NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH == TRUE))
 static int nfcManager_staticDualUicc_Precondition(int uiccSlot)
 {
+
+#if(NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH == TRUE)
     unsigned long uicc_active_state = 0;
+#endif
+
     uint8_t retStat = UICC_NOT_CONFIGURED;
 #if(NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH == TRUE)
     if(GetNxpNumValue (NAME_NXP_DUAL_UICC_ENABLE, (void*)&uicc_active_state, sizeof(uicc_active_state)))
     {
-        ALOGD ("NXP_DUAL_UICC_ENABLE  : 0x%02x",uicc_active_state);
+        ALOGD ("NXP_DUAL_UICC_ENABLE  : 0x%02lx",uicc_active_state);
     }
     else
     {
@@ -7312,7 +7317,7 @@ static int nfcManager_staticDualUicc_Precondition(int uiccSlot)
     }
     else if((uiccSlot != 0x01) && (uiccSlot != 0x02))
     {
-        ALOGE("%s: Invalid slot id");
+        ALOGE("%s: Invalid slot id", __FUNCTION__);
         retStat = DUAL_UICC_ERROR_INVALID_SLOT;
     }
     else if(SecureElement::getInstance().isRfFieldOn())

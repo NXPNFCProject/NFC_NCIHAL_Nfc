@@ -633,10 +633,10 @@ tNFA_STATUS GetNumNFCEEConfigured(void)
     gActualSeCount = 1; /* default ese present */
     uint8_t cmd_buf[255] = {0x20, 0x03, 0x05, 0x02, NXP_NFC_SET_CONFIG_PARAM_EXT, NXP_NFC_PARAM_ID_SWP1, NXP_NFC_SET_CONFIG_PARAM_EXT, NXP_NFC_PARAM_ID_SWP2};
     uint8_t cmd_buf_len = 0x08;
-    uint8_t buf_offset = 0x08;
     uint8_t num_config_params = 0x02;
     uint8_t config_param_len = 0x05;
 #if(NXP_NFCC_DYNAMIC_DUAL_UICC == TRUE)
+    uint8_t buf_offset = 0x08;
     cmd_buf[buf_offset++] = NXP_NFC_SET_CONFIG_PARAM_EXT;
     cmd_buf[buf_offset++] = NXP_NFC_PARAM_ID_SWP1A;
     cmd_buf_len += 0x02;
@@ -803,9 +803,9 @@ uint8_t cmd_buf[] = { 0x20, 0x02, 0x05, 0x01,
             cmd_buf[11] = 0x01;
         }
 #endif
-        if((cmd_buf[7] == 0x00)
+        if(cmd_buf[7] == 0x00
 #if (NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH == TRUE)
-            &&  (cmd_buf[11] == 0x00))
+            &&  cmd_buf[11] == 0x00)
 #else
     )
 #endif

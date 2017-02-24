@@ -386,9 +386,9 @@ bool SecureElement::initialize (nfc_jni_native_data* native)
     if (GetNxpNumValue(NAME_NXP_NFCC_PASSIVE_LISTEN_TIMEOUT, &mPassiveListenTimeout, sizeof(mPassiveListenTimeout)) == false)
     {
         mPassiveListenTimeout = 2500;
-        ALOGD ("%s: NFCC Passive Listen Disable timeout =%d", fn, mPassiveListenTimeout);
+        ALOGD ("%s: NFCC Passive Listen Disable timeout =%ld", fn, mPassiveListenTimeout);
     }
-    ALOGD ("%s: NFCC Passive Listen Disable timeout =%d", fn, mPassiveListenTimeout);
+    ALOGD ("%s: NFCC Passive Listen Disable timeout =%ld", fn, mPassiveListenTimeout);
 #endif
     if (GetNxpNumValue(NAME_NXP_NFCC_STANDBY_TIMEOUT, &nfccStandbytimeout, sizeof(nfccStandbytimeout)) == false)
     {
@@ -1660,9 +1660,6 @@ bool SecureElement::transceive (UINT8* xmitBuffer, INT32 xmitBufferSize, UINT8* 
 #if((NXP_EXTNS == TRUE) && ((NFC_NXP_ESE_VER == JCOP_VER_3_1) || (NFC_NXP_ESE_VER == JCOP_VER_3_2)))
     bool isEseAccessSuccess = false;
 #endif
-#if ((NXP_EXTNS == TRUE) && (NFC_NXP_ESE == TRUE))
-    se_apdu_gate_info gateInfo = NO_APDU_GATE;
-#endif
 
     ALOGD ("%s: enter; xmitBufferSize=%ld; recvBufferMaxSize=%ld; timeout=%ld", fn, xmitBufferSize, recvBufferMaxSize, timeoutMillisec);
 
@@ -2380,7 +2377,6 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
     static const char fn [] = "SecureElement::nfaHciCallback";
     ALOGD ("%s: event=0x%X", fn, event);
     int evtSrc = 0xFF;
-    UINT8 count = 0;
 
     switch (event)
     {
@@ -3274,7 +3270,7 @@ UINT8 SecureElement::getUiccGateAndPipeList(UINT8 uiccNo)
                 {
                     ALOGD ("%s : get gate, pipe list host = 0x%x gate = 0x%x",fn, mHciCfg.pipe[xx].dest_host,
                             mHciCfg.uicc_created_pipe[xx].dest_gate);
-                    if ((mHciCfg.uicc_created_pipe[xx].dest_gate == NFA_HCI_CONNECTIVITY_GATE) )
+                    if (mHciCfg.uicc_created_pipe[xx].dest_gate == NFA_HCI_CONNECTIVITY_GATE)
                     {
                         ALOGD ("%s: found configured gate: 0x%02x  pipe: 0x%02x",fn, mNewSourceGate, mNewPipeId);
                         if((uiccNo == HOST_TYPE_UICC1 && mHciCfg.uicc_created_pipe[xx].pipe_id == CONNECTIVITY_PIPE_ID_UICC1) ||
@@ -3590,7 +3586,6 @@ NFCSTATUS SecureElement::eSE_Chip_Reset(void)
 *******************************************************************************/
 tNFA_STATUS SecureElement::reconfigureEseHciInit()
 {
-    static const char fn[] = "reconfigureEseHciInit";
     tNFA_STATUS status = NFA_STATUS_FAILED;
     if (isActivatedInListenMode()) {
         ALOGD("Denying HCI re-initialization due to SE listen mode active");
@@ -4774,7 +4769,6 @@ tNFA_STATUS SecureElement::SecElem_sendEvt_Abort()
 
 void SecureElement::setDwpTranseiveState(bool block, tNFCC_EVTS_NTF action)
 {
-    tNFA_STATUS status = NFA_STATUS_FAILED;
     ALOGD("%s  block = %d action = %d ",__FUNCTION__,block,action);
 
     switch(action)

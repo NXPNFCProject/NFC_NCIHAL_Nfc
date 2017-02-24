@@ -523,7 +523,9 @@ static jboolean nativeNfcSecureElement_doResetSecureElement (JNIEnv*, jobject, j
 {
     bool stat = false;
 #if (NFC_NXP_ESE == TRUE)
+#if (NXP_WIRED_MODE_STANDBY == TRUE)
     tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
+#endif
     SecureElement &se = SecureElement::getInstance();
 
     ALOGD("%s: enter; handle=0x%04x", __FUNCTION__, handle);
