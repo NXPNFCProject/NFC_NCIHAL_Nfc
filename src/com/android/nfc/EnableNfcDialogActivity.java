@@ -16,37 +16,14 @@
 
 package com.android.nfc;
 
-import java.util.ArrayList;
-
-import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.ClipData;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.net.Uri;
-import android.nfc.BeamShareData;
-import android.nfc.NdefMessage;
-import android.nfc.NdefRecord;
 import android.nfc.NfcAdapter;
 import android.os.Bundle;
-import android.util.Log;
-import android.webkit.URLUtil;
 import android.widget.Button;
 import android.content.DialogInterface;
 import com.android.internal.app.AlertActivity;
 import com.android.internal.app.AlertController;
-import android.view.View.OnClickListener;
-import android.nfc.NfcAdapter;
 import com.nxp.nfc.NxpConstants;
-
-import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
-import android.view.View.OnClickListener;
-
 import com.android.internal.R;
 
 

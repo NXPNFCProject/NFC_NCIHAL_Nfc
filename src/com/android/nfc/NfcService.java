@@ -46,10 +46,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.pm.ApplicationInfo;
+
 import android.content.pm.IPackageManager;
 import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.PackageManager;
 import android.content.pm.UserInfo;
 import android.content.res.Resources.NotFoundException;
@@ -129,10 +128,9 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.io.IOException;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
+
 import android.util.Pair;
 import java.util.HashSet;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import com.nxp.nfc.INxpNfcAdapter;
@@ -144,7 +142,6 @@ import com.nxp.nfc.INfcDta;
 import com.nxp.nfc.INfcVzw;
 import com.nxp.nfc.INxpNfcAdapterExtras;
 import com.nxp.nfc.INxpNfcAccessExtras;
-import com.nxp.nfc.NxpNfcAdapter;
 import com.nxp.nfc.NxpConstants;
 import com.vzw.nfc.RouteEntry;
 import com.gsma.nfc.internal.NxpNfcController;

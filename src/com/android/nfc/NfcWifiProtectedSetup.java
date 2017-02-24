@@ -25,11 +25,8 @@ import android.nfc.NdefRecord;
 import android.nfc.tech.Ndef;
 import android.os.UserHandle;
 import android.os.UserManager;
-import android.util.Log;
-
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.BitSet;
 
 public final class NfcWifiProtectedSetup {
