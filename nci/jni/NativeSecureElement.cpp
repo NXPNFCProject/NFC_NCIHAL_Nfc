@@ -97,8 +97,8 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection (JNIEnv*, jobje
     ALOGD("%s: enter", __FUNCTION__);
     bool stat = false;
     jint secElemHandle = EE_ERROR_INIT;
-#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
     long ret_val = -1;
+#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
     NFCSTATUS status = NFCSTATUS_FAILED;
     p61_access_state_t p61_current_state = P61_STATE_INVALID;
     se_apdu_gate_info gateInfo = NO_APDU_GATE;
@@ -333,8 +333,11 @@ if((RoutingManager::getInstance().is_ee_recovery_ongoing()))
             {
                 ALOGD("%s: power link command failed", __FUNCTION__);
             }
-            stat = se.SecEle_Modeset(0x01);
-            status = se.setNfccPwrConfig(se.POWER_ALWAYS_ON);
+            else
+            {
+                se.SecEle_Modeset(0x01);
+                status = se.setNfccPwrConfig(se.POWER_ALWAYS_ON);
+            }
         }
 #endif
         if((status == NFA_STATUS_OK) && (se.mIsIntfRstEnabled))
@@ -347,13 +350,24 @@ if((RoutingManager::getInstance().is_ee_recovery_ongoing()))
                 if(status != NFA_STATUS_OK)
                 {
                     ALOGD("%s: EVT_ABORT failed", __FUNCTION__);
+                    se.sendEvent(SecureElement::EVT_END_OF_APDU_TRANSFER);
                 }
             }
         }
         if(status != NFA_STATUS_OK)
         {
+#if (NXP_WIRED_MODE_STANDBY == TRUE)
+            if(se.mNfccPowerMode == 1)
+                se.setNfccPwrConfig(se.NFCC_DECIDES);
+#endif
             se.disconnectEE (secElemHandle);
             secElemHandle = EE_ERROR_INIT;
+
+            ret_val = NFC_RelWiredAccess((void*)&status);
+            if(ret_val < 0)
+                ALOGD("Denying SE release due to NFC_RelWiredAccess failure");
+            else if(status != NFCSTATUS_SUCCESS)
+                ALOGD("Denying SE close, since SE is not released by PN54xx driver");
         }
         else
         {
