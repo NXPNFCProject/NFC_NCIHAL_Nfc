@@ -103,9 +103,6 @@ namespace android
 #if (NXP_ESE_JCOP_DWNLD_PROTECTION == TRUE && NXP_EXTNS == TRUE)
     extern bool nfcManager_checkNfcStateBusy();
 #endif
-#if((NFC_NXP_ESE == TRUE)&&(NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == TRUE))
-    extern bool is_wired_mode_open;
-#endif
     extern bool isp2pActivated();
     extern SyncEvent sNfaSetConfigEvent;
     extern tNFA_STATUS EmvCo_dosetPoll(jboolean enable);
@@ -2053,48 +2050,35 @@ void SecureElement::notifyRfFieldEvent (bool isActive)
         ALOGE("%s: clock_gettime failed", fn);
         // There is no good choice here...
     }
-#if((NFC_NXP_ESE == TRUE)&&(NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == TRUE))
-    if (android::is_wired_mode_open)
+
+    if (isActive)
     {
-        if (isActive)
-        {
-            ceTransactionPending = true;
-            ALOGD ("%s: CE Transaction pending flag set", fn);
-        }
-        else
-        {
-            ceTransactionPending = false;
-            ALOGD ("%s: CE Transaction pending flag cleared", fn);
-        }
-    }
-    if (ceTransactionPending)
-    {
-        if(isTransceiveOngoing == false && mPassiveListenEnabled == false)
-        {
-            startThread(0x01);
-        }
-    }
-#endif
-    if (isActive) {
         mRfFieldIsOn = true;
-#if((NFC_NXP_ESE == TRUE)&& (NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == TRUE))
-        if(isTransceiveOngoing == false && meseUiccConcurrentAccess == true && mPassiveListenEnabled == false)
-        {
-            startThread(0x01);
-        }
+#if (NXP_EXTNS == TRUE)
+#if (NFC_NXP_ESE == TRUE)
+#if (NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == TRUE)
+    if(isTransceiveOngoing == false && meseUiccConcurrentAccess == true && mPassiveListenEnabled == false)
+    {
+        startThread(0x01);
+    }
 #endif
-#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
 #if(NXP_ESE_DUAL_MODE_PRIO_SCHEME != NXP_ESE_WIRED_MODE_RESUME)
-        setDwpTranseiveState(true, NFCC_RF_FIELD_EVT);
+    setDwpTranseiveState(true, NFCC_RF_FIELD_EVT);
+#endif
 #endif
 #endif
         e->CallVoidMethod (mNativeData->manager, android::gCachedNfcManagerNotifySeFieldActivated);
     }
-    else {
+    else
+    {
         mRfFieldIsOn = false;
         setCLState(false);
-#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE)&&(NXP_ESE_DUAL_MODE_PRIO_SCHEME != NXP_ESE_WIRED_MODE_RESUME))
+#if (NXP_EXTNS == TRUE)
+#if (NFC_NXP_ESE == TRUE)
+#if (NXP_ESE_DUAL_MODE_PRIO_SCHEME != NXP_ESE_WIRED_MODE_RESUME)
         setDwpTranseiveState(false, NFCC_RF_FIELD_EVT);
+#endif
+#endif
 #endif
         e->CallVoidMethod (mNativeData->manager, android::gCachedNfcManagerNotifySeFieldDeactivated);
     }

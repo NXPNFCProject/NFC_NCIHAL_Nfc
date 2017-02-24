@@ -89,9 +89,6 @@ namespace android
     extern void checkforTranscation(UINT8 connEvent, void* eventData );
     extern bool nfcManager_sendEmptyDataMsg();
 #if (NXP_EXTNS == TRUE)
-#if((NFC_NXP_ESE == TRUE) && (NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == TRUE))
-    extern bool is_wired_mode_open;
-#endif
     extern UINT16 sRoutingBuffLen;
     extern bool  rfActivation;
 #if (NXP_NFCEE_REMOVED_NTF_RECOVERY == TRUE)

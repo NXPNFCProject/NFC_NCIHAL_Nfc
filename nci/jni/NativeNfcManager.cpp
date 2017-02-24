@@ -176,9 +176,6 @@ namespace android
     extern bool gGotDeact2IdleNtf;
     bool nfcManager_isTransanctionOnGoing(bool isInstallRequest);
     extern tNFA_STATUS enableSWPInterface();
-#if((NFC_NXP_ESE == TRUE)&&(NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == TRUE))
-    extern bool is_wired_mode_open;
-#endif
 #if(NXP_NFCC_SPI_FW_DOWNLOAD_SYNC == TRUE)
     jmethodID               gCachedNfcManagerNotifyFwDwnldRequested;
 #endif

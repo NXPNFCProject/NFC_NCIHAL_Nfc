@@ -76,7 +76,6 @@ static const int EE_ERROR_IO = -1;
 static const int EE_ERROR_INIT = -3;
 static const int EE_ERROR_LISTEN_MODE = -4;
 
-bool is_wired_mode_open = false;
 /*******************************************************************************
 **
 ** Function:        nativeNfcSecureElement_doOpenSecureElementConnection
