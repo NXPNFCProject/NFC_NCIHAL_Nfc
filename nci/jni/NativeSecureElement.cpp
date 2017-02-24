@@ -561,6 +561,14 @@ static jboolean nativeNfcSecureElement_doResetSecureElement (JNIEnv*, jobject, j
         }
         stat = se.SecEle_Modeset(0x01);
         usleep(2000 * 1000);
+
+#if (NXP_WIRED_MODE_STANDBY == TRUE)
+        if(se.mNfccPowerMode == 1)
+        {
+            nfaStat = se.setNfccPwrConfig(se.POWER_ALWAYS_ON);
+            ALOGD ("%s Power Mode is Legacy", __FUNCTION__);
+        }
+#endif
     }
 #endif
     ALOGD("%s: exit", __FUNCTION__);
