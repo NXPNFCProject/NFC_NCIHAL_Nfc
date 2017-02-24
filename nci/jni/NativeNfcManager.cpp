@@ -4882,7 +4882,7 @@ static JNINativeMethod gMethods[] =
     {"getLfT3tMax", "()I",
             (void*) nfcManager_getLfT3tMax},
 
-    {"doEnableDiscovery", "(IZZZZZ)V",
+    {"doEnableDiscovery", "(IZZZZ)V",
             (void*) nfcManager_enableDiscovery},
 
     {"doGetSecureElementList", "()[I",
