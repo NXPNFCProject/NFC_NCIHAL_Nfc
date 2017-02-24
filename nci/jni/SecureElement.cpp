@@ -4379,8 +4379,6 @@ UINT16 SecureElement::enablePassiveListen (UINT8 event)
 
     if(event == 0x00 && mPassiveListenEnabled == true)
     {
-        resetRfFieldStatus();
-        setDwpTranseiveState(false, NFCC_RF_FIELD_EVT);
         if(android::isDiscoveryStarted() == true)
         {
             android::startRfDiscovery(false);
@@ -4391,7 +4389,10 @@ UINT16 SecureElement::enablePassiveListen (UINT8 event)
             SyncEventGuard g (mPassiveListenEvt);
             mPassiveListenEvt.wait(100);
         }
+        resetRfFieldStatus();
+        setDwpTranseiveState(false, NFCC_RF_FIELD_EVT);
         mPassiveListenEnabled = false;
+
         if(android::isDiscoveryStarted() == false)
         {
             android::startRfDiscovery(true);

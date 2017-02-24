@@ -121,6 +121,9 @@ UINT8                       sSelectedUicc = 0;
 #if ((NFC_NXP_ESE ==  TRUE) && (NXP_ESE_ETSI_READER_ENABLE == TRUE))
 extern Rdr_req_ntf_info_t   swp_rdr_req_ntf_info;
 #endif
+#if ((NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == TRUE) && (NFC_NXP_ESE == TRUE))
+Mutex gDiscMutex;
+#endif
 #if(NXP_NFCC_HCE_F == TRUE)
 bool nfcManager_getTransanctionRequest(int t3thandle, bool registerRequest);
 #endif
@@ -2854,43 +2857,8 @@ void nfcManager_disableDiscovery (JNIEnv* e, jobject o)
 
     PeerToPeer::getInstance().enableP2pListening (false);
     NFA_PauseP2p();
-#if 0 //EEPROM Init optimization
-    {
-        UINT8 sel_info = 0x20;
-        UINT8 lf_protocol = 0x00;
-        {
-            SyncEventGuard guard (android::sNfaSetConfigEvent);
-            status = NFA_SetConfig(NCI_PARAM_ID_LA_SEL_INFO, sizeof(UINT8), &sel_info);
-            if (status == NFA_STATUS_OK)
-                sNfaSetConfigEvent.wait ();
-            else
-                ALOGE ("%s: Could not able to configure sel_info", __FUNCTION__);
-        }
 
-        {
-            SyncEventGuard guard (android::sNfaSetConfigEvent);
-            status = NFA_SetConfig(NCI_PARAM_ID_LF_PROTOCOL, sizeof(UINT8), &lf_protocol);
-            if (status == NFA_STATUS_OK)
-                sNfaSetConfigEvent.wait ();
-            else
-                ALOGE ("%s: Could not able to configure lf_protocol", __FUNCTION__);
-        }
-    }
-
-#endif //EEPROM Init optimization
-  /*
-    {
-        StoreScreenState(1);
-        status = SetScreenState(1);
-        if (status != NFA_STATUS_OK)
-        {
-            ALOGE ("%s: fail disable SetScreenState; error=0x%X", __FUNCTION__, status);
-        }
-    }*/
-
-    //To support card emulation in screen off state.
-//    if (SecureElement::getInstance().isBusy() == true )
-    if (sIsSecElemSelected /*&& (sHCEEnabled == false )*/)
+    if (sIsSecElemSelected)
     {
         handle = SecureElement::getInstance().getEseHandleFromGenericId(SecureElement::UICC_ID);
         {
@@ -2914,33 +2882,6 @@ void nfcManager_disableDiscovery (JNIEnv* e, jobject o)
             else
                 ALOGE ("fail to start UICC listen");
         }
- #if 0
-        {
-            ALOGE ("%s: configure lf_protocol", __FUNCTION__);
-            UINT8 lf_protocol = 0x00;
-
-            SyncEventGuard guard (android::sNfaSetConfigEvent);
-            status = NFA_SetConfig(NCI_PARAM_ID_LF_PROTOCOL, sizeof(UINT8), &lf_protocol);
-            if (status == NFA_STATUS_OK)
-                sNfaSetConfigEvent.wait ();
-            else
-                ALOGE ("%s: Could not able to configure lf_protocol", __FUNCTION__);
-        }
-        {
-            ALOGE ("%s: configure sel_info", __FUNCTION__);
-
-            UINT8 sel_info = 0x00;
-            SyncEventGuard guard (android::sNfaSetConfigEvent);
-            status = NFA_SetConfig(NCI_PARAM_ID_LA_SEL_INFO, sizeof(UINT8), &sel_info);
-            if (status == NFA_STATUS_OK)
-                sNfaSetConfigEvent.wait ();
-            else
-                ALOGE ("%s: Could not able to configure sel_info", __FUNCTION__);
-        }
-
-#endif
-        //PeerToPeer::getInstance().setP2pListenMask(p2p_listen_mask & 0x05);
-        //PeerToPeer::getInstance().enableP2pListening (true);
 
         PeerToPeer::getInstance().enableP2pListening (false);
         startRfDiscovery (true);
@@ -5085,6 +5026,9 @@ void startRfDiscovery(bool isStart)
 {
     tNFA_STATUS status = NFA_STATUS_FAILED;
 
+#if((NXP_EXTNS == TRUE) && (NFC_NXP_ESE == TRUE) && (NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == TRUE))
+    gDiscMutex.lock();
+#endif
     ALOGD ("%s: is start=%d", __FUNCTION__, isStart);
     SyncEventGuard guard (sNfaEnableDisablePollingEvent);
     status  = isStart ? NFA_StartRfDiscovery () : NFA_StopRfDiscovery ();
@@ -5100,6 +5044,9 @@ void startRfDiscovery(bool isStart)
     {
         ALOGE ("%s: Failed to start/stop RF discovery; error=0x%X", __FUNCTION__, status);
     }
+#if((NXP_EXTNS == TRUE) && (NFC_NXP_ESE == TRUE) && (NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == TRUE))
+    gDiscMutex.unlock();
+#endif
     ALOGD ("%s: is exit=%d", __FUNCTION__, isStart);
 }
 
