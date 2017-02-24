@@ -2209,7 +2209,8 @@ if ((signal(SIGABRT, sig_handler) == SIG_ERR) &&
 #endif
                 /////////////////////////////////////////////////////////////////////////////////
                 // Add extra configuration here (work-arounds, etc.)
-#if ((NFC_NXP_ESE ==  TRUE) && (NXP_EXTNS == TRUE))
+#if (NXP_EXTNS == TRUE)
+#if (NFC_NXP_ESE ==  TRUE)
 #if ((NXP_ESE_SVDD_SYNC == TRUE) || (NXP_ESE_JCOP_DWNLD_PROTECTION == TRUE) || (NXP_NFCC_SPI_FW_DOWNLOAD_SYNC == TRUE)||(NXP_ESE_DWP_SPI_SYNC_ENABLE == TRUE))
                 isSuccess = createSPIEvtHandlerThread();
 #endif
@@ -2219,6 +2220,7 @@ if ((signal(SIGABRT, sig_handler) == SIG_ERR) &&
 #else
                 if(!isSuccess)
                     ALOGD("Failed to start SPI Event Handler Thread");
+#endif
 #endif
                     set_transcation_stat(false);
                     pendingScreenState = false;
