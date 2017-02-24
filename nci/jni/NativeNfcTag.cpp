@@ -328,9 +328,11 @@ void nativeNfcTag_doReadCompleted (tNFA_STATUS status)
 ** Returns:         void
 **
 *******************************************************************************/
-void nativeNfcTag_setRfInterface (tNFA_INTF_TYPE rfInterface)
+void nativeNfcTag_setRfInterface (tNFA_ACTIVATED& activated)
 {
-    sCurrentRfInterface = rfInterface;
+    sCurrentRfInterface = activated.activate_ntf.intf_param.type;
+    sCurrentConnectedTargetProtocol = activated.activate_ntf.protocol;
+    sCurrentConnectedHandle = activated.activate_ntf.rf_disc_id;
 }
 
 /*******************************************************************************

@@ -149,7 +149,7 @@ namespace android
     extern void nativeNfcTag_formatStatus (bool is_ok);
     extern void nativeNfcTag_resetPresenceCheck ();
     extern void nativeNfcTag_doReadCompleted (tNFA_STATUS status);
-    extern void nativeNfcTag_setRfInterface (tNFA_INTF_TYPE rfInterface);
+    extern void nativeNfcTag_setRfInterface (tNFA_ACTIVATED& activated);
     extern void nativeNfcTag_abortWaits ();
     extern void doDwpChannel_ForceExit();
     extern void nativeLlcpConnectionlessSocket_abortWait ();
@@ -987,7 +987,7 @@ static void nfaConnectionCallback (UINT8 connEvent, tNFA_CONN_EVT_DATA* eventDat
 #endif
             if((eventData->activated.activate_ntf.protocol != NFA_PROTOCOL_NFC_DEP) && (!isListenMode(eventData->activated)))
             {
-                nativeNfcTag_setRfInterface ((tNFA_INTF_TYPE) eventData->activated.activate_ntf.intf_param.type);
+                nativeNfcTag_setRfInterface(eventData->activated);
             }
 
             if (EXTNS_GetConnectFlag() == TRUE)
