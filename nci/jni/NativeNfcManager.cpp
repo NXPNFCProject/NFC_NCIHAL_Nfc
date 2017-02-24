@@ -801,570 +801,621 @@ void multiprotocol_clear_flag(union sigval)
 *******************************************************************************/
 static void nfaConnectionCallback (UINT8 connEvent, tNFA_CONN_EVT_DATA* eventData)
 {
-    tNFA_STATUS status = NFA_STATUS_FAILED;
-    static UINT8 prev_more_val = 0x00;
-    UINT8 cur_more_val=0x00;
-    ALOGD("%s: event= %u", __FUNCTION__, connEvent);
+    tNFA_STATUS status          = NFA_STATUS_FAILED;
+    static UINT8 prev_more_val  = 0x00;
+    UINT8 cur_more_val          = 0x00;
+
+    ALOGD("%s: Connection Event = %u", __FUNCTION__, connEvent);
 
     switch (connEvent)
     {
-    case NFA_POLL_ENABLED_EVT: // whether polling successfully started
+        case NFA_POLL_ENABLED_EVT:
         {
-            ALOGD("%s: NFA_POLL_ENABLED_EVT: status = %u", __FUNCTION__, eventData->status);
-
+            ALOGD("%s: NFA_POLL_ENABLED_EVT: status = 0x%0X", __FUNCTION__, eventData->status);
             SyncEventGuard guard (sNfaEnableDisablePollingEvent);
             sNfaEnableDisablePollingEvent.notifyOne ();
         }
         break;
 
-    case NFA_POLL_DISABLED_EVT: // Listening/Polling stopped
+        case NFA_POLL_DISABLED_EVT:
         {
-            ALOGD("%s: NFA_POLL_DISABLED_EVT: status = %u", __FUNCTION__, eventData->status);
-
+            ALOGD("%s: NFA_POLL_DISABLED_EVT: status = 0x%0X", __FUNCTION__, eventData->status);
             SyncEventGuard guard (sNfaEnableDisablePollingEvent);
             sNfaEnableDisablePollingEvent.notifyOne ();
         }
         break;
 
-    case NFA_RF_DISCOVERY_STARTED_EVT: // RF Discovery started
+        case NFA_RF_DISCOVERY_STARTED_EVT:
         {
-            ALOGD("%s: NFA_RF_DISCOVERY_STARTED_EVT: status = %u", __FUNCTION__, eventData->status);
-
+            ALOGD("%s: NFA_RF_DISCOVERY_STARTED_EVT: status = 0x%0X", __FUNCTION__, eventData->status);
             SyncEventGuard guard (sNfaEnableDisablePollingEvent);
             sNfaEnableDisablePollingEvent.notifyOne ();
         }
         break;
 
-    case NFA_RF_DISCOVERY_STOPPED_EVT: // RF Discovery stopped event
+        case NFA_RF_DISCOVERY_STOPPED_EVT:
         {
-            ALOGD("%s: NFA_RF_DISCOVERY_STOPPED_EVT: status = %u", __FUNCTION__, eventData->status);
+            ALOGD("%s: NFA_RF_DISCOVERY_STOPPED_EVT: status = 0x%0X", __FUNCTION__, eventData->status);
             notifyPollingEventwhileNfcOff();
             if (getReconnectState() == true)
             {
-               eventData->deactivated.type = NFA_DEACTIVATE_TYPE_SLEEP;
-               NfcTag::getInstance().setDeactivationState (eventData->deactivated);
-               if (gIsTagDeactivating)
+                eventData->deactivated.type = NFA_DEACTIVATE_TYPE_SLEEP;
+                NfcTag::getInstance().setDeactivationState (eventData->deactivated);
+                if (gIsTagDeactivating)
                 {
                     NfcTag::getInstance().setActive(false);
                     nativeNfcTag_doDeactivateStatus(0);
                 }
             }
-            //sNfaEnableDisablePollingEvent shall be notified in all cases otherwise RF stop activity will block wait.
+            /* sNfaEnableDisablePollingEvent shall be notified in all cases
+             * otherwise RF stop activity will block wait */
             SyncEventGuard guard (sNfaEnableDisablePollingEvent);
             sNfaEnableDisablePollingEvent.notifyOne ();
         }
         break;
 
-    case NFA_DISC_RESULT_EVT: // NFC link/protocol discovery notificaiton
-        status = eventData->disc_result.status;
-        cur_more_val = eventData->disc_result.discovery_ntf.more;
-        ALOGD("%s: NFA_DISC_RESULT_EVT: status = %d", __FUNCTION__, status);
-        if((cur_more_val == 0x01) && (prev_more_val != 0x02))
+        case NFA_DISC_RESULT_EVT:
         {
-            ALOGE("NFA_DISC_RESULT_EVT failed");
-            status = NFA_STATUS_FAILED;
-        }else
-        {
-            ALOGD("NFA_DISC_RESULT_EVT success");
-            status = NFA_STATUS_OK;
-            prev_more_val = cur_more_val;
-        }
-#if(NXP_EXTNS == TRUE && NFC_NXP_NON_STD_CARD == TRUE)
-        if (gIsSelectingRfInterface)
-        {
-            ALOGE("reselect mechanism did not save the modification");
-            if(cur_more_val == 0x00)
+            status = eventData->disc_result.status;
+            ALOGD("%s: NFA_DISC_RESULT_EVT: status = 0x%0X", __FUNCTION__, status);
+            cur_more_val = eventData->disc_result.discovery_ntf.more;
+            if((cur_more_val == 0x01) && (prev_more_val != 0x02))
             {
-                ALOGE("error case select any one tag");
-                multiprotocol_flag = 0;
+                ALOGE("%s: NFA_DISC_RESULT_EVT: Failed", __FUNCTION__);
+                status = NFA_STATUS_FAILED;
             }
-        }
-#endif
-        if (status != NFA_STATUS_OK)
-        {
-            NfcTag::getInstance ().mNumDiscNtf = 0;
-            ALOGE("%s: NFA_DISC_RESULT_EVT error: status = %d", __FUNCTION__, status);
-        }
-        else
-        {
-            NfcTag::getInstance().connectionEventHandler(connEvent, eventData);
-            handleRfDiscoveryEvent(&eventData->disc_result.discovery_ntf);
-        }
-        break;
-
-    case NFA_SELECT_RESULT_EVT: // NFC link/protocol discovery select response
-        ALOGD("%s: NFA_SELECT_RESULT_EVT: status = %d, gIsSelectingRfInterface = %d, sIsDisabling=%d", __FUNCTION__, eventData->status, gIsSelectingRfInterface, sIsDisabling);
-
-        if (sIsDisabling)
-            break;
-
-        if (eventData->status != NFA_STATUS_OK)
-        {
+            else
+            {
+                ALOGD("%s: NFA_DISC_RESULT_EVT: Success", __FUNCTION__);
+                status = NFA_STATUS_OK;
+                prev_more_val = cur_more_val;
+            }
+#if (NXP_EXTNS == TRUE)
+#if (NFC_NXP_NON_STD_CARD == TRUE)
             if (gIsSelectingRfInterface)
             {
-#if(NXP_EXTNS == TRUE && NFC_NXP_NON_STD_CARD == TRUE)
-                nativeNfcTag_cacheNonNciCardDetection();
+                ALOGE("%s: NFA_DISC_RESULT_EVT: reSelect function didn't save the modification", __FUNCTION__);
+                if(cur_more_val == 0x00)
+                {
+                    ALOGE("%s: NFA_DISC_RESULT_EVT: error, select any one tag", __FUNCTION__);
+                    multiprotocol_flag = 0;
+                }
+            }
 #endif
-                nativeNfcTag_doConnectStatus(false);
+#endif
+            if (status != NFA_STATUS_OK)
+            {
+                ALOGE("%s: NFA_DISC_RESULT_EVT: error, status = 0x%0X", __FUNCTION__, status);
+                NfcTag::getInstance ().mNumDiscNtf = 0;
+            }
+            else
+            {
+                NfcTag::getInstance().connectionEventHandler(connEvent, eventData);
+                handleRfDiscoveryEvent(&eventData->disc_result.discovery_ntf);
+            }
+        }
+        break;
+
+        case NFA_SELECT_RESULT_EVT:
+        {
+            ALOGD("%s: NFA_SELECT_RESULT_EVT: status = 0x%0X, gIsSelectingRfInterface = %d, sIsDisabling = %d", __FUNCTION__, eventData->status, gIsSelectingRfInterface, sIsDisabling);
+
+            if (sIsDisabling)
+                break;
+
+            if (eventData->status != NFA_STATUS_OK)
+            {
+                if (gIsSelectingRfInterface)
+                {
+#if (NXP_EXTNS == TRUE)
+#if (NFC_NXP_NON_STD_CARD == TRUE)
+                    nativeNfcTag_cacheNonNciCardDetection();
+#endif
+#endif
+                    nativeNfcTag_doConnectStatus(false);
+                }
+#if(NXP_EXTNS == TRUE)
+                NfcTag::getInstance().selectCompleteStatus(false);
+                NfcTag::getInstance ().mNumDiscNtf = 0x00;
+#endif
+                NfcTag::getInstance().mTechListIndex = 0;
+                ALOGE("%s: NFA_SELECT_RESULT_EVT: error, status = 0x%0X", __FUNCTION__, eventData->status);
+                NFA_Deactivate (FALSE);
             }
 #if(NXP_EXTNS == TRUE)
-            NfcTag::getInstance().selectCompleteStatus(false);
-            NfcTag::getInstance ().mNumDiscNtf = 0x00;
+            else if (sReaderModeEnabled && (gFelicaReaderState == STATE_DEACTIVATED_TO_SLEEP))
+            {
+                SyncEventGuard g (sRespCbEvent);
+                ALOGD("%s: Sending Sem Post for Select Event", __FUNCTION__);
+                sRespCbEvent.notifyOne ();
+                ALOGD("%s: NFA_SELECT_RESULT_EVT: Frame RF Interface Selected", __FUNCTION__);
+                gFelicaReaderState = STATE_FRAMERF_INTF_SELECTED;
+            }
 #endif
-            NfcTag::getInstance().mTechListIndex = 0;
-            ALOGE("%s: NFA_SELECT_RESULT_EVT error: status = %d", __FUNCTION__, eventData->status);
-            NFA_Deactivate (FALSE);
-        }
-#if(NXP_EXTNS == TRUE)
-        else if(sReaderModeEnabled && (gFelicaReaderState == STATE_DEACTIVATED_TO_SLEEP))
-        {
-            SyncEventGuard g (sRespCbEvent);
-            ALOGD("%s: Sending Sem Post for Select Event", __FUNCTION__);
-            sRespCbEvent.notifyOne ();
-            gFelicaReaderState = STATE_FRAMERF_INTF_SELECTED;
-        ALOGD ("%s: FRM NFA_SELECT_RESULT_EVT", __FUNCTION__);
-        }
-#endif
-        break;
-
-    case NFA_DEACTIVATE_FAIL_EVT:
-        ALOGD("%s: NFA_DEACTIVATE_FAIL_EVT: status = %d", __FUNCTION__, eventData->status);
-        {
-            SyncEventGuard g (gDeactivatedEvent);
-            gActivated = false;
-            gDeactivatedEvent.notifyOne ();
-        }
-        {
-            SyncEventGuard guard (sNfaEnableDisablePollingEvent);
-            sNfaEnableDisablePollingEvent.notifyOne ();
         }
         break;
 
-    case NFA_ACTIVATED_EVT: // NFC link/protocol activated
-        ALOGD("%s: NFA_ACTIVATED_EVT: gIsSelectingRfInterface=%d, sIsDisabling=%d", __FUNCTION__, gIsSelectingRfInterface, sIsDisabling);
+        case NFA_DEACTIVATE_FAIL_EVT:
+        {
+            ALOGD("%s: NFA_DEACTIVATE_FAIL_EVT: status = 0x%0X", __FUNCTION__, eventData->status);
+            {
+                SyncEventGuard guard (gDeactivatedEvent);
+                gActivated = false;
+                gDeactivatedEvent.notifyOne ();
+            }
+            {
+                SyncEventGuard guard (sNfaEnableDisablePollingEvent);
+                sNfaEnableDisablePollingEvent.notifyOne ();
+            }
+        }
+        break;
+
+        case NFA_ACTIVATED_EVT:
+        {
+            ALOGD("%s: NFA_ACTIVATED_EVT: gIsSelectingRfInterface=%d, sIsDisabling=%d", __FUNCTION__, gIsSelectingRfInterface, sIsDisabling);
 #if(NXP_EXTNS == TRUE)
-        rfActivation = true;
-        checkforTranscation(NFA_ACTIVATED_EVT, (void *)eventData);
-        NfcTag::getInstance().selectCompleteStatus(true);
-        /***P2P-Prio Logic for Multiprotocol***/
-        if( (eventData->activated.activate_ntf.protocol == NFA_PROTOCOL_NFC_DEP) && (multiprotocol_detected == 1) )
-        {
-            ALOGD("Prio_Logic_multiprotocol stop timer");
-            multiprotocol_timer.kill();
-        }
-        if( (eventData->activated.activate_ntf.protocol == NFA_PROTOCOL_T3T) && (multiprotocol_detected == 1) )
-        {
-            ALOGD("Prio_Logic_multiprotocol stop timer");
-            multiprotocol_timer.kill();
-            clear_multiprotocol();
-        }
+            rfActivation = true;
+
+            checkforTranscation(NFA_ACTIVATED_EVT, (void *)eventData);
+
+            NfcTag::getInstance().selectCompleteStatus(true);
+
+            /***P2P-Prio Logic for Multiprotocol***/
+            if( (eventData->activated.activate_ntf.protocol == NFA_PROTOCOL_NFC_DEP) && (multiprotocol_detected == 1) )
+            {
+                ALOGD("Prio_Logic_multiprotocol stop timer");
+                multiprotocol_timer.kill();
+            }
+
+            if( (eventData->activated.activate_ntf.protocol == NFA_PROTOCOL_T3T) && (multiprotocol_detected == 1) )
+            {
+                ALOGD("Prio_Logic_multiprotocol stop timer");
+                multiprotocol_timer.kill();
+                clear_multiprotocol();
+            }
 #endif
 #if ((NFC_NXP_ESE ==  TRUE) && (NXP_ESE_ETSI_READER_ENABLE == TRUE))
-        /*
-         * Handle Reader over SWP START_READER_EVENT
-         * */
-        if(eventData->activated.activate_ntf.intf_param.type == NCI_INTERFACE_UICC_DIRECT || eventData->activated.activate_ntf.intf_param.type == NCI_INTERFACE_ESE_DIRECT )
-        {
-            SecureElement::getInstance().notifyEEReaderEvent(NFA_RD_SWP_READER_START, eventData->activated.activate_ntf.rf_tech_param.mode);
-            gReaderNotificationflag = true;
-            break;
-        }
-#endif
-        if((eventData->activated.activate_ntf.protocol != NFA_PROTOCOL_NFC_DEP) && (!isListenMode(eventData->activated)))
-        {
-            nativeNfcTag_setRfInterface ((tNFA_INTF_TYPE) eventData->activated.activate_ntf.intf_param.type);
-        }
-
-        if (EXTNS_GetConnectFlag() == TRUE)
-        {
-            NfcTag::getInstance().setActivationState ();
-            nativeNfcTag_doConnectStatus(true);
-            break;
-        }
-        NfcTag::getInstance().setActive(true);
-        if (sIsDisabling || !sIsNfaEnabled)
-            break;
-        gActivated = true;
-
-        NfcTag::getInstance().setActivationState ();
-
-        if (gIsSelectingRfInterface)
-        {
-            nativeNfcTag_doConnectStatus(true);
-            if (NfcTag::getInstance ().isCashBeeActivated() == true || NfcTag::getInstance ().isEzLinkTagActivated() == true)
+            /*
+             * Handle Reader over SWP START_READER_EVENT
+             * */
+            if(eventData->activated.activate_ntf.intf_param.type == NCI_INTERFACE_UICC_DIRECT || eventData->activated.activate_ntf.intf_param.type == NCI_INTERFACE_ESE_DIRECT )
             {
-                NfcTag::getInstance().connectionEventHandler (NFA_ACTIVATED_UPDATE_EVT, eventData);
-            }
-            break;
-        }
-
-        nativeNfcTag_resetPresenceCheck();
-        if (isPeerToPeer(eventData->activated))
-        {
-            if (sReaderModeEnabled)
-            {
-#if(NXP_EXTNS == TRUE)
-             /*if last transaction is complete or prev state is Idle
-                       *then proceed to nxt state*/
-                if (isActivatedTypeF(eventData->activated) &&
-                        (sTechMask & NFA_TECHNOLOGY_MASK_F) &&
-                        ((gFelicaReaderState == STATE_IDLE) ||
-                                (gFelicaReaderState == STATE_FRAMERF_INTF_SELECTED)))
-                {
-                    ALOGD("%s: Activating Reader Mode in P2P ", __FUNCTION__);
-                    gFelicaReaderState = STATE_NFCDEP_ACTIVATED_NFCDEP_INTF;
-                    switchP2PToT3TRead(eventData->activated.activate_ntf.rf_disc_id);
-                }
-                else
-                {
-                    ALOGD("%s: Invalid FelicaReaderState : %d  ", __FUNCTION__,gFelicaReaderState);
-                    gFelicaReaderState = STATE_IDLE;
-#endif
-                    ALOGD("%s: ignoring peer target in reader mode.", __FUNCTION__);
-                    NFA_Deactivate (FALSE);
-#if(NXP_EXTNS == TRUE)
-                }
-#endif
+                SecureElement::getInstance().notifyEEReaderEvent(NFA_RD_SWP_READER_START, eventData->activated.activate_ntf.rf_tech_param.mode);
+                gReaderNotificationflag = true;
                 break;
             }
-            sP2pActive = true;
-            ALOGD("%s: NFA_ACTIVATED_EVT p2p is activated", __FUNCTION__);
-#if 0
-            // Disable RF field events in case of p2p
-            // UINT8  nfa_disable_rf_events[] = { 0x00 };    /*commented to eliminate unused variable warning*/
-            ALOGD ("%s: Disabling RF field events", __FUNCTION__);
-            status = NFA_SetConfig(NCI_PARAM_ID_RF_FIELD_INFO, sizeof(nfa_disable_rf_events),
-                    &nfa_disable_rf_events[0]);
-            if (status == NFA_STATUS_OK) {
-                ALOGD ("%s: Disabled RF field events", __FUNCTION__);
-            } else {
-                ALOGE ("%s: Failed to disable RF field events", __FUNCTION__);
-            }
 #endif
-            // For the SE, consider the field to be on while p2p is active.
-#if((NFC_NXP_ESE == TRUE)&&(NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == TRUE))
-            if (SecureElement::getInstance().mIsWiredModeOpen && SecureElement::getInstance().mPassiveListenEnabled == true)
+            if((eventData->activated.activate_ntf.protocol != NFA_PROTOCOL_NFC_DEP) && (!isListenMode(eventData->activated)))
             {
-                SecureElement::getInstance().mPassiveListenTimer.kill();
+                nativeNfcTag_setRfInterface ((tNFA_INTF_TYPE) eventData->activated.activate_ntf.intf_param.type);
             }
-#endif
-            SecureElement::getInstance().notifyRfFieldEvent (true);
-#if((NXP_EXTNS == TRUE) && (NFC_NXP_ESE == TRUE))
-#if (NXP_ESE_DUAL_MODE_PRIO_SCHEME != NXP_ESE_WIRED_MODE_RESUME)
-            SecureElement::getInstance().setDwpTranseiveState(false, NFCC_ACTIVATED_NTF);
-#endif
-#endif
-        }
-        else if (pn544InteropIsBusy() == false)
-        {
-#if(NXP_EXTNS == TRUE && NFC_NXP_NON_STD_CARD == TRUE)
-            nativeNfcTag_handleNonNciMultiCardDetection(connEvent, eventData);
-            ALOGD("%s: scoreGenericNtf = 0x%x", __FUNCTION__ ,scoreGenericNtf);
-            if(scoreGenericNtf == true)
+
+            if (EXTNS_GetConnectFlag() == TRUE)
             {
-                if( (eventData->activated.activate_ntf.intf_param.type == NFC_INTERFACE_ISO_DEP) && (eventData->activated.activate_ntf.protocol == NFC_PROTOCOL_ISO_DEP) )
+                NfcTag::getInstance().setActivationState ();
+                nativeNfcTag_doConnectStatus(true);
+                break;
+            }
+
+            NfcTag::getInstance().setActive(true);
+
+            if (sIsDisabling || !sIsNfaEnabled)
+                break;
+
+            gActivated = true;
+
+            NfcTag::getInstance().setActivationState ();
+
+            if (gIsSelectingRfInterface)
+            {
+                nativeNfcTag_doConnectStatus(true);
+                if (NfcTag::getInstance ().isCashBeeActivated() == true || NfcTag::getInstance ().isEzLinkTagActivated() == true)
                 {
-                    nativeNfcTag_handleNonNciCardDetection(eventData);
+                    NfcTag::getInstance().connectionEventHandler (NFA_ACTIVATED_UPDATE_EVT, eventData);
                 }
-                scoreGenericNtf = false;
+                break;
             }
-#else
-            NfcTag::getInstance().connectionEventHandler (connEvent, eventData);
-            if(NfcTag::getInstance ().mNumDiscNtf)
+
+            nativeNfcTag_resetPresenceCheck();
+
+            if (isPeerToPeer(eventData->activated))
             {
-                NFA_Deactivate (TRUE);
-            }
+                if (sReaderModeEnabled)
+                {
+#if(NXP_EXTNS == TRUE)
+                    /* If last transaction is complete or prev state is idle
+                     * then proceed to next state*/
+                    if (isActivatedTypeF(eventData->activated) &&
+                            (sTechMask & NFA_TECHNOLOGY_MASK_F) &&
+                            ((gFelicaReaderState == STATE_IDLE) ||
+                                    (gFelicaReaderState == STATE_FRAMERF_INTF_SELECTED)))
+                    {
+                        ALOGD("%s: Activating Reader Mode in P2P ", __FUNCTION__);
+                        gFelicaReaderState = STATE_NFCDEP_ACTIVATED_NFCDEP_INTF;
+                        switchP2PToT3TRead(eventData->activated.activate_ntf.rf_disc_id);
+                    }
+                    else
+                    {
+                        ALOGD("%s: Invalid FelicaReaderState : %d  ", __FUNCTION__,gFelicaReaderState);
+                        gFelicaReaderState = STATE_IDLE;
 #endif
-            // We know it is not activating for P2P.  If it activated in
-            // listen mode then it is likely for an SE transaction.
-            // Send the RF Event.
-            if (isListenMode(eventData->activated))
-            {
-                sSeRfActive = true;
-                SecureElement::getInstance().notifyListenModeState (true);
+                        ALOGD("%s: Ignoring P2P target in reader mode.", __FUNCTION__);
+                        NFA_Deactivate (FALSE);
+#if(NXP_EXTNS == TRUE)
+                    }
+#endif
+                    break;
+                }
+                sP2pActive = true;
+                ALOGD("%s: NFA_ACTIVATED_EVT: P2P is activated", __FUNCTION__);
 #if((NFC_NXP_ESE == TRUE)&&(NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == TRUE))
                 if (SecureElement::getInstance().mIsWiredModeOpen && SecureElement::getInstance().mPassiveListenEnabled == true)
                 {
                     SecureElement::getInstance().mPassiveListenTimer.kill();
                 }
 #endif
+                /* For Secure Element, consider the field to be on while P2P is active */
+                SecureElement::getInstance().notifyRfFieldEvent (true);
+#if((NXP_EXTNS == TRUE) && (NFC_NXP_ESE == TRUE))
+#if (NXP_ESE_DUAL_MODE_PRIO_SCHEME != NXP_ESE_WIRED_MODE_RESUME)
+                SecureElement::getInstance().setDwpTranseiveState(false, NFCC_ACTIVATED_NTF);
+#endif
+#endif
+            }
+            else if (pn544InteropIsBusy() == false)
+            {
+#if(NXP_EXTNS == TRUE && NFC_NXP_NON_STD_CARD == TRUE)
+                nativeNfcTag_handleNonNciMultiCardDetection(connEvent, eventData);
+                ALOGD("%s: scoreGenericNtf = 0x%x", __FUNCTION__ ,scoreGenericNtf);
+                if(scoreGenericNtf == true)
+                {
+                    if( (eventData->activated.activate_ntf.intf_param.type == NFC_INTERFACE_ISO_DEP) && (eventData->activated.activate_ntf.protocol == NFC_PROTOCOL_ISO_DEP) )
+                    {
+                        nativeNfcTag_handleNonNciCardDetection(eventData);
+                    }
+                    scoreGenericNtf = false;
+                }
+#else
+                NfcTag::getInstance().connectionEventHandler (connEvent, eventData);
+
+                if(NfcTag::getInstance ().mNumDiscNtf)
+                {
+                    NFA_Deactivate (TRUE);
+                }
+#endif
+                /* We know it is not activating for P2P.  If it activated in
+                 * listen mode then it is likely for an SE transaction.
+                 * Send the RF Event */
+                if (isListenMode(eventData->activated))
+                {
+                    sSeRfActive = true;
+                    SecureElement::getInstance().notifyListenModeState (true);
+#if((NFC_NXP_ESE == TRUE)&&(NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == TRUE))
+                    if (SecureElement::getInstance().mIsWiredModeOpen && SecureElement::getInstance().mPassiveListenEnabled == true)
+                    {
+                        SecureElement::getInstance().mPassiveListenTimer.kill();
+                    }
+#endif
+                }
             }
         }
         break;
 
-    case NFA_DEACTIVATED_EVT: // NFC link/protocol deactivated
-        ALOGD("%s: NFA_DEACTIVATED_EVT   Type: %u, gIsTagDeactivating: %d", __FUNCTION__, eventData->deactivated.type,gIsTagDeactivating);
-#if(NXP_EXTNS == TRUE)
-        rfActivation = false;
-#endif
-#if(NFC_NXP_CHIP_TYPE == PN547C2 && NXP_EXTNS == TRUE)
-        if(eventData->deactivated.type == NFA_DEACTIVATE_TYPE_IDLE)
+        case NFA_DEACTIVATED_EVT:
         {
-            checkforTranscation(NFA_DEACTIVATED_EVT, (void *)eventData);
-        }
-#endif
-#if(NXP_EXTNS == TRUE && NFC_NXP_NON_STD_CARD == TRUE)
-        if(checkCmdSent == 1 && eventData->deactivated.type == 0)
-        {
-            ALOGD("%s: NFA_DEACTIVATED_EVT   setting check flag  to one", __FUNCTION__);
-            checkTagNtf = 1;
-        }
-#endif
-        notifyPollingEventwhileNfcOff();
-        if (true == getReconnectState())
-        {
-            ALOGD("Reconnect in progress : Do nothing");
-            break;
-        }
-        gReaderNotificationflag = false;
-#if(NXP_EXTNS == TRUE)
-        /***P2P-Prio Logic for Multiprotocol***/
-        if( (multiprotocol_detected == 1) && (sP2pActive == 1) )
-        {
-            NfcTag::getInstance ().mNumDiscNtf = 0;//reset if any notifications are not cleared
-            clear_multiprotocol();
-            multiprotocol_flag = 1;
-        }
-        if(gIsWaiting4Deact2SleepNtf)
-        {
+            ALOGD("%s: NFA_DEACTIVATED_EVT: Type=%u, gIsTagDeactivating=%d", __FUNCTION__, eventData->deactivated.type, gIsTagDeactivating);
+#if (NXP_EXTNS == TRUE)
+            rfActivation = false;
+#if (NFC_NXP_CHIP_TYPE == PN547C2)
             if(eventData->deactivated.type == NFA_DEACTIVATE_TYPE_IDLE)
             {
-                gGotDeact2IdleNtf = true;
-            }
-            else if(eventData->deactivated.type == NFA_DEACTIVATE_TYPE_SLEEP)
-            {
-                gIsWaiting4Deact2SleepNtf = false;
-            }
-        }
-#endif
-        NfcTag::getInstance().setDeactivationState (eventData->deactivated);
-        if(NfcTag::getInstance ().mNumDiscNtf)
-        {
-            NfcTag::getInstance ().mNumDiscNtf--;
-            NfcTag::getInstance().selectNextTag();
-        }
-        if (eventData->deactivated.type != NFA_DEACTIVATE_TYPE_SLEEP)
-        {
-            {
-                SyncEventGuard g (gDeactivatedEvent);
-                gActivated = false; //guard this variable from multi-threaded access
-                gDeactivatedEvent.notifyOne ();
-            }
-#if((NFC_NXP_ESE == TRUE)&&(NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == TRUE))
-            if (SecureElement::getInstance().mIsWiredModeOpen && SecureElement::getInstance().mPassiveListenEnabled)
-            {
-                SecureElement::getInstance().startThread(0x00);
+                checkforTranscation(NFA_DEACTIVATED_EVT, (void *)eventData);
             }
 #endif
-            NfcTag::getInstance ().mNumDiscNtf = 0;
-            NfcTag::getInstance ().mTechListIndex =0;
-            nativeNfcTag_resetPresenceCheck();
-            NfcTag::getInstance().connectionEventHandler (connEvent, eventData);
-            nativeNfcTag_abortWaits();
-            NfcTag::getInstance().abort ();
-            NfcTag::getInstance().mIsMultiProtocolTag = false;
-        }
-        else if (gIsTagDeactivating)
-        {
-            NfcTag::getInstance ().setActive (false);
-            nativeNfcTag_doDeactivateStatus (0);
-        }
-        else if (EXTNS_GetDeactivateFlag () == TRUE)
-        {
-            NfcTag::getInstance ().setActive (false);
-            nativeNfcTag_doDeactivateStatus (0);
-        }
+#if (NFC_NXP_NON_STD_CARD == TRUE)
+            if(checkCmdSent == 1 && eventData->deactivated.type == 0)
+            {
+                ALOGD("%s: NFA_DEACTIVATED_EVT: Setting check flag  to one", __FUNCTION__);
+                checkTagNtf = 1;
+            }
+#endif
+#endif
 
-        // If RF is activated for what we think is a Secure Element transaction
-        // and it is deactivated to either IDLE or DISCOVERY mode, notify w/event.
-        if ((eventData->deactivated.type == NFA_DEACTIVATE_TYPE_IDLE)
-                || (eventData->deactivated.type == NFA_DEACTIVATE_TYPE_DISCOVERY))
-        {
-#if(NXP_EXTNS == TRUE)
- #if (NXP_NFCEE_REMOVED_NTF_RECOVERY == TRUE)
-            if(RoutingManager::getInstance().is_ee_recovery_ongoing())
+            notifyPollingEventwhileNfcOff();
+
+            if (true == getReconnectState())
             {
-                recovery=FALSE;
-                SyncEventGuard guard (SecureElement::getInstance().mEEdatapacketEvent);
-                SecureElement::getInstance().mEEdatapacketEvent.notifyOne();
+                ALOGD("Reconnect in progress : Do nothing");
+                break;
             }
-#endif
-#endif
-            if (sSeRfActive) {
-                sSeRfActive = false;
-                if (!sIsDisabling && sIsNfaEnabled)
-                    SecureElement::getInstance().notifyListenModeState (false);
-            } else if (sP2pActive) {
-                sP2pActive = false;
-                SecureElement::getInstance().notifyRfFieldEvent (false);
-                // Make sure RF field events are re-enabled
-                ALOGD("%s: NFA_DEACTIVATED_EVT; is p2p", __FUNCTION__);
-                // Disable RF field events in case of p2p
-//                UINT8  nfa_enable_rf_events[] = { 0x01 };     /*commented to eliminate unused variable warning*/
-/*
-                if (!sIsDisabling && sIsNfaEnabled)
+
+            gReaderNotificationflag = false;
+
+#if(NXP_EXTNS == TRUE)
+            /* P2P-priority logic for multiprotocol tags */
+            if( (multiprotocol_detected == 1) && (sP2pActive == 1) )
+            {
+                NfcTag::getInstance ().mNumDiscNtf = 0;
+                clear_multiprotocol();
+                multiprotocol_flag = 1;
+            }
+            if(gIsWaiting4Deact2SleepNtf)
+            {
+                if(eventData->deactivated.type == NFA_DEACTIVATE_TYPE_IDLE)
                 {
-                    ALOGD ("%s: Enabling RF field events", __FUNCTION__);
-                    status = NFA_SetConfig(NCI_PARAM_ID_RF_FIELD_INFO, sizeof(nfa_enable_rf_events),
-                            &nfa_enable_rf_events[0]);
-                    if (status == NFA_STATUS_OK) {
-                        ALOGD ("%s: Enabled RF field events", __FUNCTION__);
-                    } else {
-                        ALOGE ("%s: Failed to enable RF field events", __FUNCTION__);
-                    }
-                    // Consider the field to be off at this point
+                    gGotDeact2IdleNtf = true;
                 }
-*/
+                else if(eventData->deactivated.type == NFA_DEACTIVATE_TYPE_SLEEP)
+                {
+                    gIsWaiting4Deact2SleepNtf = false;
+                }
             }
-        }
-#if(NXP_EXTNS == TRUE)
-        if (sReaderModeEnabled && (eventData->deactivated.type == NFA_DEACTIVATE_TYPE_SLEEP))
-        {
-            if(gFelicaReaderState == STATE_NFCDEP_ACTIVATED_NFCDEP_INTF)
-            {
-                SyncEventGuard g (sRespCbEvent);
-                ALOGD("%s: Sending Sem Post for Deactivated", __FUNCTION__);
-                sRespCbEvent.notifyOne ();
-                ALOGD("Switching to T3T\n");
-                gFelicaReaderState = STATE_DEACTIVATED_TO_SLEEP;
-            }
-            else
-            {
-                ALOGD("%s: FelicaReaderState Invalid", __FUNCTION__);
-                gFelicaReaderState = STATE_IDLE;
-            }
-        }
 #endif
-        break;
+            NfcTag::getInstance().setDeactivationState (eventData->deactivated);
 
-    case NFA_TLV_DETECT_EVT: // TLV Detection complete
-        status = eventData->tlv_detect.status;
-        ALOGD("%s: NFA_TLV_DETECT_EVT: status = %d, protocol = %d, num_tlvs = %d, num_bytes = %d",
-             __FUNCTION__, status, eventData->tlv_detect.protocol,
-             eventData->tlv_detect.num_tlvs, eventData->tlv_detect.num_bytes);
-        if (status != NFA_STATUS_OK)
-        {
-            ALOGE("%s: NFA_TLV_DETECT_EVT error: status = %d", __FUNCTION__, status);
+            if(NfcTag::getInstance ().mNumDiscNtf)
+            {
+                NfcTag::getInstance ().mNumDiscNtf--;
+                NfcTag::getInstance().selectNextTag();
+            }
+
+            if (eventData->deactivated.type != NFA_DEACTIVATE_TYPE_SLEEP)
+            {
+                {
+                    SyncEventGuard guard (gDeactivatedEvent);
+                    gActivated = false;
+                    gDeactivatedEvent.notifyOne ();
+                }
+#if((NFC_NXP_ESE == TRUE)&&(NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == TRUE))
+                if (SecureElement::getInstance().mIsWiredModeOpen && SecureElement::getInstance().mPassiveListenEnabled)
+                {
+                    SecureElement::getInstance().startThread(0x00);
+                }
+#endif
+                NfcTag::getInstance ().mNumDiscNtf = 0;
+                NfcTag::getInstance ().mTechListIndex =0;
+                nativeNfcTag_resetPresenceCheck();
+                NfcTag::getInstance().connectionEventHandler (connEvent, eventData);
+                nativeNfcTag_abortWaits();
+                NfcTag::getInstance().abort ();
+                NfcTag::getInstance().mIsMultiProtocolTag = false;
+            }
+            else if (gIsTagDeactivating)
+            {
+                NfcTag::getInstance ().setActive (false);
+                nativeNfcTag_doDeactivateStatus (0);
+            }
+            else if (EXTNS_GetDeactivateFlag () == TRUE)
+            {
+                NfcTag::getInstance ().setActive (false);
+                nativeNfcTag_doDeactivateStatus (0);
+            }
+
+            /* If RF is activated for what we think is a Secure Element transaction
+             * and it is deactivated to either IDLE or DISCOVERY mode, notify wait event */
+            if ( (eventData->deactivated.type == NFA_DEACTIVATE_TYPE_IDLE) ||
+                 (eventData->deactivated.type == NFA_DEACTIVATE_TYPE_DISCOVERY) )
+            {
+#if(NXP_EXTNS == TRUE)
+#if (NXP_NFCEE_REMOVED_NTF_RECOVERY == TRUE)
+                if(RoutingManager::getInstance().is_ee_recovery_ongoing())
+                {
+                    recovery=FALSE;
+                    SyncEventGuard guard (SecureElement::getInstance().mEEdatapacketEvent);
+                    SecureElement::getInstance().mEEdatapacketEvent.notifyOne();
+                }
+#endif
+#endif
+                if (sSeRfActive)
+                {
+                    sSeRfActive = false;
+                    if (!sIsDisabling && sIsNfaEnabled)
+                        SecureElement::getInstance().notifyListenModeState (false);
+                }
+                else if (sP2pActive)
+                {
+                    sP2pActive = false;
+                    SecureElement::getInstance().notifyRfFieldEvent (false);
+                    ALOGD("%s: NFA_DEACTIVATED_EVT: is p2p", __FUNCTION__);
+                }
+            }
+#if(NXP_EXTNS == TRUE)
+            if (sReaderModeEnabled && (eventData->deactivated.type == NFA_DEACTIVATE_TYPE_SLEEP))
+            {
+                if(gFelicaReaderState == STATE_NFCDEP_ACTIVATED_NFCDEP_INTF)
+                {
+                    SyncEventGuard g (sRespCbEvent);
+                    ALOGD("%s: Sending Sem Post for Deactivated", __FUNCTION__);
+                    sRespCbEvent.notifyOne ();
+                    ALOGD("Switching to T3T\n");
+                    gFelicaReaderState = STATE_DEACTIVATED_TO_SLEEP;
+                }
+                else
+                {
+                    ALOGD("%s: FelicaReaderState Invalid", __FUNCTION__);
+                    gFelicaReaderState = STATE_IDLE;
+                }
+            }
+#endif
         }
         break;
 
-    case NFA_NDEF_DETECT_EVT: // NDEF Detection complete;
-        //if status is failure, it means the tag does not contain any or valid NDEF data;
-        //pass the failure status to the NFC Service;
-        status = eventData->ndef_detect.status;
-        ALOGD("%s: NFA_NDEF_DETECT_EVT: status = 0x%X, protocol = %u, "
-             "max_size = %lu, cur_size = %lu, flags = 0x%X", __FUNCTION__,
-             status,
-             eventData->ndef_detect.protocol, eventData->ndef_detect.max_size,
-             eventData->ndef_detect.cur_size, eventData->ndef_detect.flags);
-        NfcTag::getInstance().connectionEventHandler (connEvent, eventData);
-        nativeNfcTag_doCheckNdefResult(status,
-            eventData->ndef_detect.max_size, eventData->ndef_detect.cur_size,
-            eventData->ndef_detect.flags);
-        break;
-
-    case NFA_DATA_EVT: // Data message received (for non-NDEF reads)
-        ALOGD("%s: NFA_DATA_EVT: status = 0x%X, len = %d", __FUNCTION__, eventData->status, eventData->data.len);
-        nativeNfcTag_doTransceiveStatus(eventData->status, eventData->data.p_data, eventData->data.len);
-        break;
-    case NFA_RW_INTF_ERROR_EVT:
-        ALOGD("%s: NFC_RW_INTF_ERROR_EVT", __FUNCTION__);
-        nativeNfcTag_notifyRfTimeout();
-        nativeNfcTag_doReadCompleted (NFA_STATUS_TIMEOUT);
-        break;
-    case NFA_SELECT_CPLT_EVT: // Select completed
-        status = eventData->status;
-        ALOGD("%s: NFA_SELECT_CPLT_EVT: status = %d", __FUNCTION__, status);
-        if (status != NFA_STATUS_OK)
+        case NFA_TLV_DETECT_EVT:
         {
-            ALOGE("%s: NFA_SELECT_CPLT_EVT error: status = %d", __FUNCTION__, status);
+            status = eventData->tlv_detect.status;
+            ALOGD("%s: NFA_TLV_DETECT_EVT status = 0x%0X, protocol = %d, num_tlvs = %d, num_bytes = %d",
+                 __FUNCTION__, status, eventData->tlv_detect.protocol,
+                 eventData->tlv_detect.num_tlvs, eventData->tlv_detect.num_bytes);
+            if (status != NFA_STATUS_OK)
+            {
+                ALOGE("%s: NFA_TLV_DETECT_EVT error: status = 0x%0X", __FUNCTION__, status);
+            }
         }
         break;
 
-    case NFA_READ_CPLT_EVT: // NDEF-read or tag-specific-read completed
-        ALOGD("%s: NFA_READ_CPLT_EVT: status = 0x%X", __FUNCTION__, eventData->status);
-        nativeNfcTag_doReadCompleted (eventData->status);
-        NfcTag::getInstance().connectionEventHandler (connEvent, eventData);
+        case NFA_NDEF_DETECT_EVT:
+        {
+            /* NDEF Detection procedure is completed,
+             * if status is failure, it means the tag does not contain any or valid NDEF data
+             * pass the failure status to the NFC Service */
+            status = eventData->ndef_detect.status;
+            ALOGD("%s: NFA_NDEF_DETECT_EVT status = 0x%0X, protocol = %u, "
+                 "max_size = %lu, cur_size = %lu, flags = 0x%X", __FUNCTION__,
+                 status,
+                 eventData->ndef_detect.protocol, eventData->ndef_detect.max_size,
+                 eventData->ndef_detect.cur_size, eventData->ndef_detect.flags);
+            NfcTag::getInstance().connectionEventHandler (connEvent, eventData);
+            nativeNfcTag_doCheckNdefResult(status,
+                eventData->ndef_detect.max_size, eventData->ndef_detect.cur_size,
+                eventData->ndef_detect.flags);
+        }
         break;
 
-    case NFA_WRITE_CPLT_EVT: // Write completed
-        ALOGD("%s: NFA_WRITE_CPLT_EVT: status = %d", __FUNCTION__, eventData->status);
-        nativeNfcTag_doWriteStatus (eventData->status == NFA_STATUS_OK);
+        case NFA_DATA_EVT:
+        {
+            /* Data message received (for non-NDEF reads) */
+            ALOGD("%s: NFA_DATA_EVT: status = 0x%X, len = %d", __FUNCTION__, eventData->status, eventData->data.len);
+            nativeNfcTag_doTransceiveStatus(eventData->status, eventData->data.p_data, eventData->data.len);
+        }
         break;
 
-    case NFA_SET_TAG_RO_EVT: // Tag set as Read only
-        ALOGD("%s: NFA_SET_TAG_RO_EVT: status = %d", __FUNCTION__, eventData->status);
-        nativeNfcTag_doMakeReadonlyResult(eventData->status);
+        case NFA_RW_INTF_ERROR_EVT:
+        {
+            ALOGD("%s: NFA_RW_INTF_ERROR_EVT", __FUNCTION__);
+            nativeNfcTag_notifyRfTimeout();
+            nativeNfcTag_doReadCompleted (NFA_STATUS_TIMEOUT);
+        }
         break;
 
-    case NFA_CE_NDEF_WRITE_START_EVT: // NDEF write started
-        ALOGD("%s: NFA_CE_NDEF_WRITE_START_EVT: status: %d", __FUNCTION__, eventData->status);
-
-        if (eventData->status != NFA_STATUS_OK)
-            ALOGE("%s: NFA_CE_NDEF_WRITE_START_EVT error: status = %d", __FUNCTION__, eventData->status);
+        case NFA_SELECT_CPLT_EVT:
+        {
+            status = eventData->status;
+            ALOGD("%s: NFA_SELECT_CPLT_EVT: status = 0x%0X", __FUNCTION__, status);
+            if (status != NFA_STATUS_OK)
+            {
+                ALOGE("%s: NFA_SELECT_CPLT_EVT error: status = 0x%0X", __FUNCTION__, status);
+            }
+        }
         break;
 
-    case NFA_CE_NDEF_WRITE_CPLT_EVT: // NDEF write completed
-        ALOGD("%s: FA_CE_NDEF_WRITE_CPLT_EVT: len = %lu", __FUNCTION__, eventData->ndef_write_cplt.len);
+        case NFA_READ_CPLT_EVT:
+        {
+            ALOGD("%s: NFA_READ_CPLT_EVT: status = 0x%0X", __FUNCTION__, eventData->status);
+            nativeNfcTag_doReadCompleted (eventData->status);
+            NfcTag::getInstance().connectionEventHandler (connEvent, eventData);
+        }
         break;
 
-    case NFA_LLCP_ACTIVATED_EVT: // LLCP link is activated
-        ALOGD("%s: NFA_LLCP_ACTIVATED_EVT: is_initiator: %d  remote_wks: %d, remote_lsc: %d, remote_link_miu: %d, local_link_miu: %d",
-             __FUNCTION__,
-             eventData->llcp_activated.is_initiator,
-             eventData->llcp_activated.remote_wks,
-             eventData->llcp_activated.remote_lsc,
-             eventData->llcp_activated.remote_link_miu,
-             eventData->llcp_activated.local_link_miu);
-
-        PeerToPeer::getInstance().llcpActivatedHandler (getNative(0, 0), eventData->llcp_activated);
+        case NFA_WRITE_CPLT_EVT:
+        {
+            ALOGD("%s: NFA_WRITE_CPLT_EVT: status = 0x%0X", __FUNCTION__, eventData->status);
+            nativeNfcTag_doWriteStatus (eventData->status == NFA_STATUS_OK);
+        }
         break;
 
-    case NFA_LLCP_DEACTIVATED_EVT: // LLCP link is deactivated
-        ALOGD("%s: NFA_LLCP_DEACTIVATED_EVT", __FUNCTION__);
-        PeerToPeer::getInstance().llcpDeactivatedHandler (getNative(0, 0), eventData->llcp_deactivated);
-        break;
-    case NFA_LLCP_FIRST_PACKET_RECEIVED_EVT: // Received first packet over llcp
-        ALOGD("%s: NFA_LLCP_FIRST_PACKET_RECEIVED_EVT", __FUNCTION__);
-        PeerToPeer::getInstance().llcpFirstPacketHandler (getNative(0, 0));
-        break;
-    case NFA_PRESENCE_CHECK_EVT:
-        ALOGD("%s: NFA_PRESENCE_CHECK_EVT", __FUNCTION__);
-        nativeNfcTag_doPresenceCheckResult (eventData->status);
-        break;
-    case NFA_FORMAT_CPLT_EVT:
-        ALOGD("%s: NFA_FORMAT_CPLT_EVT: status=0x%X", __FUNCTION__, eventData->status);
-        nativeNfcTag_formatStatus (eventData->status == NFA_STATUS_OK);
+        case NFA_SET_TAG_RO_EVT:
+        {
+            ALOGD("%s: NFA_SET_TAG_RO_EVT: status = 0x%0X", __FUNCTION__, eventData->status);
+            nativeNfcTag_doMakeReadonlyResult(eventData->status);
+        }
         break;
 
-    case NFA_I93_CMD_CPLT_EVT:
-        ALOGD("%s: NFA_I93_CMD_CPLT_EVT: status=0x%X", __FUNCTION__, eventData->status);
+        case NFA_CE_NDEF_WRITE_START_EVT:
+        {
+            ALOGD("%s: NFA_CE_NDEF_WRITE_START_EVT: status: 0x%0X", __FUNCTION__, eventData->status);
+            if (eventData->status != NFA_STATUS_OK)
+                ALOGE("%s: NFA_CE_NDEF_WRITE_START_EVT error: status = 0x%0X", __FUNCTION__, eventData->status);
+        }
         break;
 
-    case NFA_CE_UICC_LISTEN_CONFIGURED_EVT :
-        ALOGD("%s: NFA_CE_UICC_LISTEN_CONFIGURED_EVT : status=0x%X", __FUNCTION__, eventData->status);
-        SecureElement::getInstance().connectionEventHandler (connEvent, eventData);
+        case NFA_CE_NDEF_WRITE_CPLT_EVT:
+        {
+            ALOGD("%s: NFA_CE_NDEF_WRITE_CPLT_EVT: len = %lu", __FUNCTION__, eventData->ndef_write_cplt.len);
+        }
         break;
 
-    case NFA_CE_ESE_LISTEN_CONFIGURED_EVT :
-        ALOGD("%s: NFA_CE_ESE_LISTEN_CONFIGURED_EVT : status=0x%X", __FUNCTION__, eventData->status);
-        SecureElement::getInstance().connectionEventHandler (connEvent, eventData);
+        case NFA_LLCP_ACTIVATED_EVT:
+        {
+            ALOGD("%s: NFA_LLCP_ACTIVATED_EVT: is_initiator: %d  remote_wks: %d, remote_lsc: %d, remote_link_miu: %d, local_link_miu: %d",
+                 __FUNCTION__,
+                 eventData->llcp_activated.is_initiator,
+                 eventData->llcp_activated.remote_wks,
+                 eventData->llcp_activated.remote_lsc,
+                 eventData->llcp_activated.remote_link_miu,
+                 eventData->llcp_activated.local_link_miu);
+            PeerToPeer::getInstance().llcpActivatedHandler (getNative(0, 0), eventData->llcp_activated);
+        }
         break;
 
-    case NFA_SET_P2P_LISTEN_TECH_EVT:
-        ALOGD("%s: NFA_SET_P2P_LISTEN_TECH_EVT", __FUNCTION__);
-        PeerToPeer::getInstance().connectionEventHandler (connEvent, eventData);
+        case NFA_LLCP_DEACTIVATED_EVT:
+        {
+            ALOGD("%s: NFA_LLCP_DEACTIVATED_EVT", __FUNCTION__);
+            PeerToPeer::getInstance().llcpDeactivatedHandler (getNative(0, 0), eventData->llcp_deactivated);
+        }
         break;
-    case NFA_CE_LOCAL_TAG_CONFIGURED_EVT:
-        ALOGD("%s: NFA_CE_LOCAL_TAG_CONFIGURED_EVT", __FUNCTION__);
+
+        case NFA_LLCP_FIRST_PACKET_RECEIVED_EVT:
+        {
+            ALOGD("%s: NFA_LLCP_FIRST_PACKET_RECEIVED_EVT", __FUNCTION__);
+            PeerToPeer::getInstance().llcpFirstPacketHandler (getNative(0, 0));
+        }
+        break;
+
+        case NFA_PRESENCE_CHECK_EVT:
+        {
+            ALOGD("%s: NFA_PRESENCE_CHECK_EVT", __FUNCTION__);
+            nativeNfcTag_doPresenceCheckResult (eventData->status);
+        }
+        break;
+
+        case NFA_FORMAT_CPLT_EVT:
+        {
+            ALOGD("%s: NFA_FORMAT_CPLT_EVT: status = 0x%0X", __FUNCTION__, eventData->status);
+            nativeNfcTag_formatStatus (eventData->status == NFA_STATUS_OK);
+        }
+        break;
+
+        case NFA_I93_CMD_CPLT_EVT:
+        {
+            ALOGD("%s: NFA_I93_CMD_CPLT_EVT: status = 0x%0X", __FUNCTION__, eventData->status);
+        }
+        break;
+
+        case NFA_CE_UICC_LISTEN_CONFIGURED_EVT :
+        {
+            ALOGD("%s: NFA_CE_UICC_LISTEN_CONFIGURED_EVT : status = 0x%0X", __FUNCTION__, eventData->status);
+            SecureElement::getInstance().connectionEventHandler (connEvent, eventData);
+        }
+        break;
+
+        case NFA_CE_ESE_LISTEN_CONFIGURED_EVT :
+        {
+            ALOGD("%s: NFA_CE_ESE_LISTEN_CONFIGURED_EVT : status = 0x%0X", __FUNCTION__, eventData->status);
+            SecureElement::getInstance().connectionEventHandler (connEvent, eventData);
+        }
+        break;
+
+        case NFA_SET_P2P_LISTEN_TECH_EVT:
+        {
+            ALOGD("%s: NFA_SET_P2P_LISTEN_TECH_EVT", __FUNCTION__);
+            PeerToPeer::getInstance().connectionEventHandler (connEvent, eventData);
+        }
+        break;
+
+        case NFA_CE_LOCAL_TAG_CONFIGURED_EVT:
+        {
+            ALOGD("%s: NFA_CE_LOCAL_TAG_CONFIGURED_EVT", __FUNCTION__);
+        }
         break;
 #if((NXP_EXTNS == TRUE) && (NFC_NXP_ESE == TRUE) && (NXP_ESE_ETSI_READER_ENABLE == TRUE))
-    case NFA_RECOVERY_EVT:
-        ALOGD("%s: NFA_RECOVERY_EVT:Discovery Started in lower layer:Updating status in JNI", __FUNCTION__);
-        if(RoutingManager::getInstance().getEtsiReaederState() == STATE_SE_RDR_MODE_STOP_IN_PROGRESS)
+        case NFA_RECOVERY_EVT:
         {
-            ALOGD("%s: Reset the Etsi Reader State to STATE_SE_RDR_MODE_STOPPED", __FUNCTION__);
-            RoutingManager::getInstance().setEtsiReaederState(STATE_SE_RDR_MODE_STOPPED);
+            ALOGD("%s: NFA_RECOVERY_EVT: Discovery Started in lower layer:Updating status in JNI", __FUNCTION__);
+            if(RoutingManager::getInstance().getEtsiReaederState() == STATE_SE_RDR_MODE_STOP_IN_PROGRESS)
+            {
+                ALOGD("%s: Reset the ETSI Reader State to STATE_SE_RDR_MODE_STOPPED", __FUNCTION__);
+                RoutingManager::getInstance().setEtsiReaederState(STATE_SE_RDR_MODE_STOPPED);
+            }
         }
         break;
 #endif
@@ -1385,8 +1436,8 @@ static void nfaConnectionCallback (UINT8 connEvent, tNFA_CONN_EVT_DATA* eventDat
         }
         break;
 #endif
-    default:
-        ALOGE("%s: unknown event ????", __FUNCTION__);
+        default:
+            ALOGE("%s: unknown event ????", __FUNCTION__);
         break;
     }
 }
