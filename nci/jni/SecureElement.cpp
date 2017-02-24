@@ -2551,8 +2551,7 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
         {
             ALOGD ("%s: NFA_HCI_EVENT_RCVD_EVT; data from static pipe", fn);
 #if ((NXP_EXTNS == TRUE) && (NXP_ESE_DWP_SPI_SYNC_ENABLE == TRUE))
-            if((spiDwpSyncState & STATE_WK_WAIT_RSP) && ((eventData->rcvd_evt.evt_len == 2) &&
-                    (eventData->rcvd_evt.p_evt_buf[0] == 0x6E && eventData->rcvd_evt.p_evt_buf[1] == 0x00)))
+            if((spiDwpSyncState & STATE_WK_WAIT_RSP) && (eventData->rcvd_evt.evt_len == 2))
             {
                 spiDwpSyncState ^= STATE_WK_WAIT_RSP;
                 SyncEventGuard guard (sSPIForceEnableDWPEvent);
