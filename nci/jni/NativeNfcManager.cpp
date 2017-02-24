@@ -849,11 +849,9 @@ static void nfaConnectionCallback (UINT8 connEvent, tNFA_CONN_EVT_DATA* eventDat
                     nativeNfcTag_doDeactivateStatus(0);
                 }
             }
-            else
-            {
-                SyncEventGuard guard (sNfaEnableDisablePollingEvent);
-                sNfaEnableDisablePollingEvent.notifyOne ();
-            }
+            //sNfaEnableDisablePollingEvent shall be notified in all cases otherwise RF stop activity will block wait.
+            SyncEventGuard guard (sNfaEnableDisablePollingEvent);
+            sNfaEnableDisablePollingEvent.notifyOne ();
         }
         break;
 
