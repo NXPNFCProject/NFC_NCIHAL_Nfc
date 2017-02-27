@@ -19,4 +19,7 @@
 | android-6.0.0_r1                     |  4.2.0_M (PN547C2/PN548C2) |  NFC_NCIHALx_AR0F.4.2.0_M_OpnSrc |
 | android-6.0.0_r1                     |  4.3.0_M (PN547C2/PN548C2) |  NFC_NCIHALx_AR0F.4.3.0_M_OpnSrc |
 
-
+####Supported Versions on "br_android_ncihalx_n" Branch
+| Android Version        | NXP Release          | NXP Tag  |
+| :-------------: |:-------------:| :-----:|
+| android-7.1.1_r1                     |  7.4.0_N (PN548C2/PN551) |  NFC_NCIHALx_AR3C.7.4.0_N_OpnSrc |
