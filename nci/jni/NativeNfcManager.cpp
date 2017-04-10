@@ -1681,9 +1681,22 @@ void nfaDeviceManagementCallback (UINT8 dmEvent, tNFA_DM_CBACK_DATA* eventData)
                 return;
             }
             if (eventData->rf_field.rf_field_status == NFA_DM_RF_FIELD_ON)
+             {
+                if(!update_transaction_stat("RF_FIELD_EVT",SET_TRANSACTION_STATE))
+                {
+                    ALOGD ("%s: RF field on evnt Not allowing to set", __FUNCTION__);
+                }
                 e->CallVoidMethod (nat->manager, android::gCachedNfcManagerNotifyRfFieldActivated);
+             }
             else
+            {
+                if(!update_transaction_stat("RF_FIELD_EVT",RESET_TRANSACTION_STATE))
+                {
+                    ALOGD ("%s: RF field off evnt Not allowing to reset", __FUNCTION__);
+                }
+
                 e->CallVoidMethod (nat->manager, android::gCachedNfcManagerNotifyRfFieldDeactivated);
+            }
         }
         break;
 
@@ -5970,7 +5983,8 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
              **/
             if(strcmp(req_handle,"NFA_ACTIVATED_EVT") &&
                     strcmp(req_handle,"NFA_EE_ACTION_EVT") &&
-                    strcmp(req_handle,"NFA_TRANS_CE_ACTIVATED"))
+                    strcmp(req_handle,"NFA_TRANS_CE_ACTIVATED") &&
+                    strcmp(req_handle,"RF_FIELD_EVT") )
             {
                 scleanupTimerProc_transaction.set (10000, cleanupTimerProc_transaction);
             }
