@@ -173,6 +173,7 @@ namespace android
     extern tNFA_STATUS GetNumNFCEEConfigured(void);
     extern void acquireRfInterfaceMutexLock();
     extern void releaseRfInterfaceMutexLock();
+    extern tNFA_STATUS NxpNfc_Write_Cmd_Common(uint8_t retlen, uint8_t* buffer);
 #if(NXP_EXTNS == TRUE)
     extern bool gIsWaiting4Deact2SleepNtf;
     extern bool gGotDeact2IdleNtf;
@@ -186,7 +187,6 @@ namespace android
 #endif
 #if(NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH == TRUE)
     extern tNFA_STATUS Set_EERegisterValue(UINT16 RegAddr, uint8_t bitVal);
-    extern tNFA_STATUS NxpNfc_Write_Cmd_Common(uint8_t retlen, uint8_t* buffer);
 #endif
 #if(NFC_NXP_NON_STD_CARD == TRUE)
     extern void nativeNfcTag_cacheNonNciCardDetection();
@@ -310,6 +310,7 @@ static jint                 sLfT3tMax = 0;
 static UINT8                sIsSecElemSelected = 0;  //has NFC service selected a sec elem
 static UINT8                sIsSecElemDetected = 0;  //has NFC service deselected a sec elem
 static bool                 sDiscCmdwhleNfcOff = false;
+static UINT8                sAutonomousSet = 0;
 #if (NXP_EXTNS == TRUE)
 static bool                 gsNfaPartialEnabled = false;
 #endif
@@ -5113,6 +5114,11 @@ int register_com_android_nfc_NativeNfcManager (JNIEnv *e)
 void startRfDiscovery(bool isStart)
 {
     tNFA_STATUS status = NFA_STATUS_FAILED;
+    if(sAutonomousSet == 1)
+    {
+        ALOGD("Autonomous mode set don't start RF disc %d",isStart);
+        return;
+    }
 
 #if((NXP_EXTNS == TRUE) && (NFC_NXP_ESE == TRUE) && (NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == TRUE))
     gDiscMutex.lock();
@@ -5654,6 +5660,8 @@ static void nfcManager_doSetScreenState (JNIEnv* e, jobject o, jint state)
     long bufflen = 260;
     long retlen = 0;
     int isfound;
+    UINT8 core_reset_cfg[8] = {0x20,0x00,0x01,0x00};
+    UINT8 core_init_cfg[8] = {0x20,0x01,0x00};
 
     ALOGD ("%s: state = %d", __FUNCTION__, state);
     if (sIsDisabling || !sIsNfaEnabled)
@@ -5681,52 +5689,21 @@ static void nfcManager_doSetScreenState (JNIEnv* e, jobject o, jint state)
             startRfDiscovery(false);
         }
 
-    if(state == NFA_SCREEN_STATE_LOCKED || state == NFA_SCREEN_STATE_OFF)
-    {
-        SyncEventGuard guard (sNfaEnableDisablePollingEvent);
-        status = NFA_DisablePolling ();
-        if (status == NFA_STATUS_OK)
+        if(state == NFA_SCREEN_STATE_LOCKED || state == NFA_SCREEN_STATE_OFF)
         {
-            sNfaEnableDisablePollingEvent.wait (); //wait for NFA_POLL_DISABLED_EVT
-        }else
-        ALOGE ("%s: Failed to disable polling; error=0x%X", __FUNCTION__, status);
-    }
+            SyncEventGuard guard (sNfaEnableDisablePollingEvent);
+            status = NFA_DisablePolling ();
+            if (status == NFA_STATUS_OK)
+            {
+                sNfaEnableDisablePollingEvent.wait (); //wait for NFA_POLL_DISABLED_EVT
+            }else
+                ALOGE ("%s: Failed to disable polling; error=0x%X", __FUNCTION__, status);
+        }
 
-    if(GetNxpNumValue(NAME_NXP_CORE_SCRN_OFF_AUTONOMOUS_ENABLE,&auto_num ,sizeof(auto_num)))
-            {
-                 ALOGD ("%s: enter; NAME_NXP_CORE_SCRN_OFF_AUTONOMOUS_ENABLE = %02lx", __FUNCTION__, auto_num);
-            }
-            if(auto_num == 0x01)
-            {
-                buffer = (uint8_t*) malloc(bufflen*sizeof(uint8_t));
-                if(buffer == NULL)
-                {
-                    ALOGD ("%s: enter; NAME_NXP_CORE_STANDBY buffer is NULL", __FUNCTION__);
-                }
-                else
-                {
-                     isfound = GetNxpByteArrayValue(NAME_NXP_CORE_STANDBY, (char *) buffer,bufflen, &retlen);
-                     if (retlen > 0)
-                     {
-                          standby_num = buffer[3];
-                          ALOGD ("%s: enter; NAME_NXP_CORE_STANDBY = %02x", __FUNCTION__, standby_num);
-                          SendAutonomousMode(state,standby_num);
-                     }
-                     else
-                     {
-                          ALOGD ("%s: enter; NAME_NXP_CORE_STANDBY = %02x", __FUNCTION__, standby_num);
-                          SendAutonomousMode(state , standby_num);
-                     }
-                }
-            }
-            else
-            {
-                 ALOGD ("%s: enter; NAME_NXP_CORE_SCRN_OFF_AUTONOMOUS_ENABLE = %02lx", __FUNCTION__, auto_num);
-            }
-            if(buffer)
-            {
-                 free(buffer);
-            }
+        if(GetNxpNumValue(NAME_NXP_CORE_SCRN_OFF_AUTONOMOUS_ENABLE,&auto_num ,sizeof(auto_num)))
+        {
+            ALOGD ("%s: enter; NAME_NXP_CORE_SCRN_OFF_AUTONOMOUS_ENABLE = %02lx", __FUNCTION__, auto_num);
+        }
 
         status = SetScreenState(state);
         if (status != NFA_STATUS_OK)
@@ -5737,14 +5714,58 @@ static void nfcManager_doSetScreenState (JNIEnv* e, jobject o, jint state)
         {
             if ((old == NFA_SCREEN_STATE_OFF && state == NFA_SCREEN_STATE_LOCKED)||
 #if(NXP_EXTNS == TRUE)
-            (old == NFA_SCREEN_STATE_LOCKED && state == NFA_SCREEN_STATE_UNLOCKED && sProvisionMode)||
+                    (old == NFA_SCREEN_STATE_LOCKED && state == NFA_SCREEN_STATE_UNLOCKED && sProvisionMode)||
 #endif
-            (old == NFA_SCREEN_STATE_LOCKED && state == NFA_SCREEN_STATE_OFF && sIsSecElemSelected))
+                    (old == NFA_SCREEN_STATE_LOCKED && state == NFA_SCREEN_STATE_OFF && sIsSecElemSelected) )
             {
-                startRfDiscovery(true);
+                if(auto_num != 0x01)
+                {
+                    ALOGD ("Start RF discovery");
+                    startRfDiscovery(true);
+                }
             }
             StoreScreenState(state);
         }
+        if(sAutonomousSet == 1)
+        {
+            ALOGD ("Send Core reset");
+            status = NxpNfc_Write_Cmd_Common(4, core_reset_cfg);
+            status = NxpNfc_Write_Cmd_Common(3, core_init_cfg);
+        }
+
+        if(auto_num == 0x01 && sAutonomousSet != 1 && state == NFA_SCREEN_STATE_OFF)
+        {
+            buffer = (uint8_t*) malloc(bufflen*sizeof(uint8_t));
+            if(buffer == NULL)
+            {
+                ALOGD ("%s: enter; NAME_NXP_CORE_STANDBY buffer is NULL", __FUNCTION__);
+            }
+            else
+            {
+                isfound = GetNxpByteArrayValue(NAME_NXP_CORE_STANDBY, (char *) buffer,bufflen, &retlen);
+                if (retlen > 0)
+                {
+                    standby_num = buffer[3];
+                }
+                status = SendAutonomousMode(state,standby_num);
+                sAutonomousSet = 1;
+            }
+        }
+        else
+        {
+            sAutonomousSet = 0;
+            ALOGD ("Not sending AUTONOMOUS command state is %d", state);
+            if (!sRfEnabled) {
+                // Start RF discovery if not
+                startRfDiscovery(true);
+            }
+
+        }
+        if(buffer)
+        {
+            free(buffer);
+        }
+
     }
     releaseRfInterfaceMutexLock();
 #if (NXP_EXTNS == TRUE)

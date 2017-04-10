@@ -384,7 +384,6 @@ tNFA_STATUS SendAutonomousMode(jint state ,uint8_t num)
 
 
     ALOGD("%s: enter", __FUNCTION__);
-
     SetCbStatus(NFA_STATUS_FAILED);
     SyncEventGuard guard (gnxpfeature_conf.NxpFeatureConfigEvt);
     if(state == NFA_SCREEN_STATE_OFF )
@@ -959,7 +958,7 @@ tNFA_STATUS Set_EERegisterValue(UINT16 RegAddr, uint8_t bitVal)
 }
 
 #endif
-#if((NXP_EXTNS == TRUE) && (NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH == TRUE))
+#if(NXP_EXTNS == TRUE)
 /*******************************************************************************
 + **
 + ** Function:        NxpNfc_Write_Cmd()
