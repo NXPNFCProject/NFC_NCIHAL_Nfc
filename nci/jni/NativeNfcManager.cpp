@@ -3345,8 +3345,11 @@ static jboolean nfcManager_doDeinitialize (JNIEnv* e, jobject obj)
         SyncEventGuard guard (sNfaEnableDisablePollingEvent);
         sNfaEnableDisablePollingEvent.notifyOne ();
     }
-#if ((NXP_ESE_DWP_SPI_SYNC_ENABLE == TRUE)||(NXP_ESE_SVDD_SYNC == TRUE))
+#if(NXP_EXTNS == TRUE)
+#if ((NXP_ESE_DWP_SPI_SYNC_ENABLE == TRUE)||(NXP_ESE_SVDD_SYNC == TRUE) || (NXP_ESE_JCOP_DWNLD_PROTECTION == TRUE) ||\
+     (NXP_NFCC_SPI_FW_DOWNLOAD_SYNC == TRUE))
     releaseSPIEvtHandlerThread();
+#endif
 #endif
     NfcAdaptation& theInstance = NfcAdaptation::GetInstance();
     theInstance.Finalize();
