@@ -56,12 +56,17 @@ extern "C"
 #if(NXP_EXTNS == TRUE)
 #define CONNECTIVITY_PIPE_ID_UICC1 0x0A
 #define CONNECTIVITY_PIPE_ID_UICC2 0x23
+
 #if(NFC_NXP_ESE == TRUE)
 #define SIG_NFC 44
 #define HOST_TYPE_ESE   0xC0
 #endif
 #define HOST_TYPE_UICC1 0x02
 #define HOST_TYPE_UICC2 0x81
+typedef enum {
+    RESET_TRANSACTION_STATE,
+    SET_TRANSACTION_STATE
+}transaction_state_t;
 #endif
 
 typedef enum dual_mode{

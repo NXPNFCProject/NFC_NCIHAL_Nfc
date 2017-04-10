@@ -109,13 +109,12 @@ namespace android
 #if (JCOP_WA_ENABLE == TRUE)
     extern tNFA_STATUS ResetEseSession();
 #endif
-    extern void config_swp_reader_mode(bool mode);
     extern void start_timer_msec(struct timeval  *start_tv);
     extern long stop_timer_getdifference_msec(struct timeval  *start_tv, struct timeval  *stop_tv);
-    extern void set_transcation_stat(bool result);
     extern bool nfcManager_isNfcActive();
 #if(NXP_EXTNS == TRUE)
     extern int gMaxEERecoveryTimeout;
+    extern bool update_transaction_stat(const char * req_handle, transaction_state_t req_state);
 #endif
 }
 #if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
@@ -3715,7 +3714,10 @@ void SecureElement::etsiInitConfig()
     else if((swp_rdr_req_ntf_info.swp_rd_state == STATE_SE_RDR_MODE_STOP_CONFIG) &&
             (swp_rdr_req_ntf_info.swp_rd_req_current_info.src == swp_rdr_req_ntf_info.swp_rd_req_info.src))
     {
-        android::set_transcation_stat(false);
+        if(!android::update_transaction_stat("etsiReader", RESET_TRANSACTION_STATE))
+        {
+            ALOGE ("%s: Can not reset transaction stat", __FUNCTION__);
+        }
         swp_rdr_req_ntf_info.swp_rd_state = STATE_SE_RDR_MODE_STOP_IN_PROGRESS;
         ALOGD ("%s: new ETSI state : STATE_SE_RDR_MODE_STOP_IN_PROGRESS", __FUNCTION__);
 
