@@ -94,6 +94,7 @@ bool                          sHCEEnabled = true;
 #define CLEAR_ENABLE_DISABLE_PARAM   0xFC
 /* Delay to wait for SE intialization */
 #define SE_INIT_DELAY       50*1000
+#define NFCEE_DISC_TIMEOUT_SEC      2
 #define JCOP_INFO_PATH              "/data/nfc/jcop_info.txt"
 #define OSU_NOT_STARTED             00
 #define OSU_COMPLETE                03
@@ -2237,8 +2238,31 @@ if ((signal(SIGABRT, sig_handler) == SIG_ERR) &&
                 NfcTag::getInstance().initialize (getNative(e, o));
                 PeerToPeer::getInstance().initialize ();
                 PeerToPeer::getInstance().handleNfcOnOff (true);
-
 #if(NXP_EXTNS == TRUE)
+                if(GetNxpNumValue(NAME_NXP_DEFAULT_NFCEE_DISC_TIMEOUT, (void *)&gdisc_timeout, sizeof(gdisc_timeout))==false)
+                {
+                    ALOGD ("NAME_NXP_DEFAULT_NFCEE_DISC_TIMEOUT not found");
+                    gdisc_timeout = NFCEE_DISC_TIMEOUT_SEC; /*Default nfcee discover timeout*/
+                }
+                gdisc_timeout = gdisc_timeout * 1000;
+                if (NFA_STATUS_OK == GetNumNFCEEConfigured())
+                {
+                    ALOGD(" gSeDiscoverycount = %d gActualSeCount=%d", gSeDiscoverycount,gActualSeCount);
+                    if (gSeDiscoverycount < gActualSeCount)
+                    {
+                        ALOGD("Wait for ESE to discover, gdisc_timeout = %d", gdisc_timeout);
+                        SyncEventGuard g(gNfceeDiscCbEvent);
+                        if(gNfceeDiscCbEvent.wait(gdisc_timeout) == false)
+                        {
+                            ALOGE ("%s: timeout waiting for nfcee dis event", __FUNCTION__);
+                        }
+                        ALOGD("gSeDiscoverycount  = %d gActualSeCount=%d", gSeDiscoverycount,gActualSeCount);
+                    }
+                    else
+                    {
+                        ALOGD("All ESE are discovered ");
+                    }
+                }
 #if(NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH == TRUE)
                 GetNxpNumValue (NAME_NXP_DUAL_UICC_ENABLE, (void*)&dualUiccInfo.dualUiccEnable, sizeof(dualUiccInfo.dualUiccEnable));
                 if(dualUiccInfo.dualUiccEnable == 0x01)
@@ -2261,14 +2285,14 @@ if ((signal(SIGABRT, sig_handler) == SIG_ERR) &&
 #endif
                 SecureElement::getInstance().updateEEStatus();
 #if (JCOP_WA_ENABLE == TRUE)
-    RoutingManager::getInstance().handleSERemovedNtf();
+                RoutingManager::getInstance().handleSERemovedNtf();
 #endif
-    ALOGD(" Discovered se count %ld",gSeDiscoverycount);
+                ALOGD("Discovered se count %ld",gSeDiscoverycount);
                 /*Check for ETSI12 Configuration for SEs detected in the HCI Network*/
                 performNfceeETSI12Config();
-#if((NFC_NXP_ESE ==  TRUE) && (NFC_NXP_ESE_ETSI12_PROP_INIT == TRUE))
-                    if(swp_getconfig_status & SWP2_ESE)
-                        performHCIInitialization (e,o);
+#if (NFC_NXP_ESE_ETSI12_PROP_INIT == TRUE)
+                if(swp_getconfig_status & SWP2_ESE)
+                    performHCIInitialization (e,o);
 #endif
                 SecureElement::getInstance().getSETechnology(ESE_HANDLE);
                 checkforNfceeConfig(UICC1 | UICC2 | ESE);
@@ -2290,7 +2314,7 @@ if ((signal(SIGABRT, sig_handler) == SIG_ERR) &&
                 }
                 else
                 {
-                    ALOGD("No Need to set JCOP CP Timeout  ");
+                    ALOGD("No Need to set JCOP CP Timeout");
                 }
 #endif
                 /////////////////////////////////////////////////////////////////////////////////
@@ -6689,10 +6713,8 @@ void checkforNfceeConfig(UINT8 type)
                     {
                         android::sNfaGetConfigEvent.wait();
                     }
-
                     if(sNfceeConfigured == 1)
                     {
-
                         SecureElement::getInstance().meSESessionIdOk = false;
                         ALOGD("eSE Not Configured");
                     }
