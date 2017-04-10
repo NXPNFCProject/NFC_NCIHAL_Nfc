@@ -87,8 +87,11 @@ UINT16 lastcehandle = 0;
 namespace android
 {
     extern void checkforTranscation(UINT8 connEvent, void* eventData );
-    extern bool nfcManager_sendEmptyDataMsg();
 #if (NXP_EXTNS == TRUE)
+#if (NXP_NFCC_EMPTY_DATA_PACKET == TRUE)
+    extern bool nfcManager_sendEmptyDataMsg();
+    extern bool gIsEmptyRspSentByHceFApk;
+#endif
     extern UINT16 sRoutingBuffLen;
     extern bool  rfActivation;
 #if (NXP_NFCEE_REMOVED_NTF_RECOVERY == TRUE)
@@ -2054,14 +2057,18 @@ void RoutingManager::notifyLmrtFull ()
         ALOGE ("fail notify");
     }
 }
-
+#if((NXP_EXTNS == TRUE) && (NXP_NFCC_EMPTY_DATA_PACKET == TRUE))
 void RoutingManager::nfcFRspTimerCb(union sigval)
 {
     static const char fn[] = "RoutingManager::nfcFRspTimerCb";
     ALOGD("%s; enter", fn);
-    android::nfcManager_sendEmptyDataMsg();
-
+    if(android::gIsEmptyRspSentByHceFApk)
+        android::gIsEmptyRspSentByHceFApk = FALSE;
+    else
+        android::nfcManager_sendEmptyDataMsg();
+    ALOGD("%s; exit", fn);
 }
+#endif
 
 void RoutingManager::handleData (UINT8 technology, const UINT8* data, UINT32 dataLen, tNFA_STATUS status)
 {
@@ -2080,6 +2087,7 @@ void RoutingManager::handleData (UINT8 technology, const UINT8* data, UINT32 dat
         if (dataLen > 0)
         {
             mRxDataBuffer.insert (mRxDataBuffer.end(), &data[0], &data[dataLen]); //append data
+#if((NXP_EXTNS == TRUE) && (NXP_NFCC_EMPTY_DATA_PACKET == TRUE))
             if (technology == NFA_TECHNOLOGY_MASK_F)
             {
                 bool ret = false;
@@ -2087,6 +2095,7 @@ void RoutingManager::handleData (UINT8 technology, const UINT8* data, UINT32 dat
                 if(!ret)
                     ALOGD("%s; rsp timer create failed", __FUNCTION__);
             }
+#endif
         }
         //entire data packet has been received; no more NFA_CE_DATA_EVT
     }

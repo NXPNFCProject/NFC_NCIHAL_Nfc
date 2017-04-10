@@ -482,7 +482,11 @@ static int nfcManager_staticDualUicc_Precondition(int uiccSlot);
 #endif
 #endif
 
+#if((NXP_EXTNS == TRUE) && (NXP_NFCC_EMPTY_DATA_PACKET == TRUE))
 bool nfcManager_sendEmptyDataMsg();
+bool gIsEmptyRspSentByHceFApk = FALSE;
+#endif
+
 static int nfcManager_doGetSeInterface(JNIEnv* e, jobject o, jint type);
 
 #if(NXP_EXTNS == TRUE && NFC_NXP_NON_STD_CARD == TRUE)
@@ -1843,7 +1847,12 @@ static jboolean nfcManager_sendRawFrame (JNIEnv* e, jobject, jbyteArray data)
         buf = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
         bufLen = bytes.size();
     }
+#if((NXP_EXTNS == TRUE) && (NXP_NFCC_EMPTY_DATA_PACKET == TRUE))
     RoutingManager::getInstance().mNfcFRspTimer.kill();
+    if(bufLen == 0)
+        gIsEmptyRspSentByHceFApk = TRUE;
+#endif
+    ALOGD("nfcManager_sendRawFrame(): bufLen:%d", bufLen);
     tNFA_STATUS status = NFA_SendRawFrame (buf, bufLen, 0);
     return (status == NFA_STATUS_OK);
 }
@@ -8200,7 +8209,7 @@ static bool nfcManager_doCheckJCOPOsDownLoad()
 #endif
 #endif
 #endif
-
+#if((NXP_EXTNS == TRUE) && (NXP_NFCC_EMPTY_DATA_PACKET == TRUE))
 /*******************************************************************************
  **
  ** Function:        nfcManager_sendEmptyDataMsg()
@@ -8221,5 +8230,6 @@ bool nfcManager_sendEmptyDataMsg()
 
     return (status == NFA_STATUS_OK);
 }
+#endif
 }
 /* namespace android */

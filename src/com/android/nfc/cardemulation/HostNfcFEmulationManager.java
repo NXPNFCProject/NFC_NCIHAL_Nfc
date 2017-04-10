@@ -309,12 +309,15 @@ public class HostNfcFEmulationManager {
                     Log.e(TAG, "Data is null");
                     return;
                 }
+                */
                 if (data.length == 0) {
-                    Log.e(TAG, "Invalid response packet");
+                    Log.e(TAG, "Empty response packet");
+                    sendEmptyData();
                     return;
-                }*/
+                }
                 if (data != null && (data.length != (data[0] & 0xff))) {
                     Log.e(TAG, "Invalid response packet");
+                    sendEmptyData();
                     return;
                 }
                 int state;
@@ -330,7 +333,12 @@ public class HostNfcFEmulationManager {
                 }
             }
         }
+    }
 
+    static void sendEmptyData() {
+        byte[] data = new byte[0]; /* to send NCI empty message */
+        Log.d(TAG, "sending empty data");
+        NfcService.getInstance().sendData(data);
     }
 
     static String bytesToString(byte[] bytes, int offset, int length) {
