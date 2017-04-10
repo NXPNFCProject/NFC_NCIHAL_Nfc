@@ -180,8 +180,15 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
     }
 
     public void onUserSwitched(int userId) {
+        //For HCE
         mServiceCache.invalidateCache(userId);
         mPreferredServices.onUserSwitched(userId);
+        //For HCE-F
+        mHostNfcFEmulationManager.onUserSwitched();
+        mT3tIdentifiersCache.onUserSwitched();
+        mEnabledNfcFServices.onUserSwitched(userId);
+        mNfcFServicesCache.invalidateCache(userId);
+
     }
 
     public void onT3tConfigure()

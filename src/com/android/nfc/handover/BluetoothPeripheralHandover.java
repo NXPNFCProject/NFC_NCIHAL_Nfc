@@ -365,7 +365,7 @@ public class BluetoothPeripheralHandover implements BluetoothProfile.ServiceList
                         mDevice.setAlias(mName);
                         complete(true);
                     } else {
-                        toast(getToastString(R.string.connected_peripheral));
+                        toast(getToastString(R.string.connect_peripheral_failed));
                         complete(false);
                     }
                 } else {
