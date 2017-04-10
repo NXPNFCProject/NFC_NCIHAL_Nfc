@@ -2669,7 +2669,11 @@ static void nfcManager_enableDiscovery (JNIEnv* e, jobject o, jint technologies_
     if( sDiscoveryEnabled && !restart)
     {
         ALOGE ("%s: already discovering", __FUNCTION__);
+#if(NXP_EXTNS == TRUE)
         goto TheEnd;
+#else
+        return;
+#endif
     }
 
     ALOGD ("%s: sIsSecElemSelected=%u", __FUNCTION__, sIsSecElemSelected);
@@ -2852,14 +2856,12 @@ static void nfcManager_enableDiscovery (JNIEnv* e, jobject o, jint technologies_
     PowerSwitch::getInstance ().setModeOn (PowerSwitch::DISCOVERY);
     releaseRfInterfaceMutexLock();
 
-#if((NXP_EXTNS == TRUE) && (NFC_NXP_ESE == TRUE) && (NXP_ESE_ETSI_READER_ENABLE == TRUE))
-TheEnd:
-#endif
 #if (NXP_EXTNS == TRUE)
-if(!update_transaction_stat("enableDiscovery",RESET_TRANSACTION_STATE))
-{
-    ALOGE("%s: Can not reset transaction state", __FUNCTION__);
-}
+TheEnd:
+    if(!update_transaction_stat("enableDiscovery",RESET_TRANSACTION_STATE))
+    {
+        ALOGE("%s: Can not reset transaction state", __FUNCTION__);
+    }
 #endif
     ALOGD ("%s: exit", __FUNCTION__);
 }
