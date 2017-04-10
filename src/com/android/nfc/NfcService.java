@@ -3738,13 +3738,8 @@ public class NfcService implements DeviceHostListener {
                     {
                         Log.i(TAG, "Update routing table");
                         mAidRoutingManager.onNfccRoutingTableCleared();
+                        mIsRoutingTableDirty = true;
                         mCardEmulationManager.onNfcEnabled();
-                        if(!mAidRoutingManager.isRoutingTableUpdated())
-                        {
-                            Log.i(TAG, "Update only Mifare and Desfire route");
-                            mIsRoutingTableDirty = true;
-                            applyRouting(false);
-                        }
                     }
                     else
                     {
