@@ -327,7 +327,7 @@ if((RoutingManager::getInstance().is_ee_recovery_ongoing()))
 #if (NXP_WIRED_MODE_STANDBY == TRUE)
         if(se.mNfccPowerMode == 1)
         {
-            status = se.setNfccPwrConfig(se.POWER_ALWAYS_ON|se.COMM_LINK_ACTIVE);
+            status = se.setNfccPwrConfig(se.POWER_ALWAYS_ON);
             if(status != NFA_STATUS_OK)
             {
                 ALOGD("%s: power link command failed", __FUNCTION__);
@@ -335,7 +335,6 @@ if((RoutingManager::getInstance().is_ee_recovery_ongoing()))
             else
             {
                 se.SecEle_Modeset(0x01);
-                status = se.setNfccPwrConfig(se.POWER_ALWAYS_ON);
             }
         }
 #endif
