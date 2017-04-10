@@ -2905,6 +2905,7 @@ void nfcManager_disableDiscovery (JNIEnv* e, jobject o)
         return;
     }
 #endif
+    pn544InteropAbortNow ();
 #if((NXP_EXTNS == TRUE) && (NFC_NXP_ESE == TRUE) && (NXP_ESE_ETSI_READER_ENABLE == TRUE))
     if(RoutingManager::getInstance().getEtsiReaederState() == STATE_SE_RDR_MODE_START_IN_PROGRESS)
     {
@@ -2933,7 +2934,6 @@ void nfcManager_disableDiscovery (JNIEnv* e, jobject o)
     }
 #endif
 
-    pn544InteropAbortNow ();
     if (sDiscoveryEnabled == false)
     {
         ALOGD ("%s: already disabled", __FUNCTION__);
