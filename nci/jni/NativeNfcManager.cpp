@@ -111,7 +111,7 @@ extern uint8_t              swp_getconfig_status;
 extern int                  gUICCVirtualWiredProtectMask;
 extern int                  gEseVirtualWiredProtectMask;
 static INT32                gNfcInitTimeout;
-static INT32                gdisc_timeout;
+INT32                       gdisc_timeout;
 INT32                       gSeDiscoverycount = 0;
 INT32                       gActualSeCount = 0;
 UINT16                      sCurrentSelectedUICCSlot = 1;
@@ -2275,7 +2275,8 @@ if ((signal(SIGABRT, sig_handler) == SIG_ERR) &&
                 {
                     ALOGD("Perform pending UICC clear all pipe handling");
                     sNfcee_disc_state = UICC_SESSION_INTIALIZATION_DONE;
-                    SecureElement::getInstance().eSE_ClearAllPipe_handler(HOST_TYPE_UICC1);
+                    /*Handle UICC clear all pipe notification*/
+                    checkforNfceeConfig(UICC1 | UICC2);
                 }
                     sNfcee_disc_state = UICC_SESSION_INTIALIZATION_DONE;
 #endif

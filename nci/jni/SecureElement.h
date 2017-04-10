@@ -764,7 +764,7 @@ public:
     ** Returns:         Count of NFCEE discovered.
     **
     *******************************************************************************/
-    UINT8 updateNfceeDiscoverInfo(int numEe, tNFA_EE_INFO* mEeInfo);
+    UINT8 updateNfceeDiscoverInfo();
     tNFA_HANDLE getHciHandleInfo();
     SyncEvent       mNfceeInitCbEvent;
     tNFA_STATUS SecElem_EeModeSet(uint16_t handle, uint8_t mode);

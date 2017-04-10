@@ -55,6 +55,7 @@ extern SyncEvent gNfceeDiscCbEvent;
 
 uint8_t nfcee_swp_discovery_status;
 extern INT32 gActualSeCount;
+extern INT32 gdisc_timeout;
 extern UINT16 sCurrentSelectedUICCSlot;
 static void LmrtRspTimerCb(union sigval);
 #if(NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH == TRUE)
@@ -327,7 +328,7 @@ bool RoutingManager::initialize (nfc_jni_native_data* native)
     else
     {
         //gSeDiscoverycount = ActualNumEe;
-        SecureElement::getInstance().updateNfceeDiscoverInfo(ActualNumEe, (tNFA_EE_INFO*)mEeInfo);
+        SecureElement::getInstance().updateNfceeDiscoverInfo();
         ALOGD ("%s:gSeDiscoverycount=0x%lX;", __FUNCTION__, gSeDiscoverycount);
 #if 0
         if(mChipId == 0x02 || mChipId == 0x04)
@@ -2391,7 +2392,7 @@ void RoutingManager::nfaEeCallback (tNFA_EE_EVT event, tNFA_EE_CBACK_DATA* event
             }
 #endif
             /*gSeDiscoverycount++ incremented for new NFCEE discovery;*/
-            SecureElement::getInstance().updateNfceeDiscoverInfo(num_ee, (tNFA_EE_INFO*)&(ee_disc_info.ee_info));
+            SecureElement::getInstance().updateNfceeDiscoverInfo();
             ALOGD(" gSeDiscoverycount = %ld gActualSeCount=%ld", gSeDiscoverycount,gActualSeCount);
             if(gSeDiscoverycount >= gActualSeCount)
             {
@@ -3021,7 +3022,7 @@ void RoutingManager::nfaEEConnect()
     {
         SyncEventGuard g (gNfceeDiscCbEvent);
         ALOGD("%s: Sem wait for gNfceeDiscCbEvent", __FUNCTION__);
-        gNfceeDiscCbEvent.wait (5000);
+        gNfceeDiscCbEvent.wait (gdisc_timeout);
     }
 }
 /*******************************************************************************

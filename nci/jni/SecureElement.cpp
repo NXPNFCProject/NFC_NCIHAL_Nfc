@@ -4657,8 +4657,18 @@ uicc_stat_t SecureElement::getUiccStatus(UINT8 selected_uicc)
  ** Returns:         Number of new NFCEEs discovered
  **
  **********************************************************************************/
-UINT8 SecureElement::updateNfceeDiscoverInfo(int numEe, tNFA_EE_INFO* mEeInfo)
+UINT8 SecureElement::updateNfceeDiscoverInfo()
 {
+    UINT8 numEe = SecureElement::MAX_NUM_EE;
+    tNFA_EE_INFO mEeInfo[numEe];
+    tNFA_STATUS nfaStat;
+
+    if((nfaStat = NFA_AllEeGetInfo(&numEe, mEeInfo)) != NFA_STATUS_OK)
+    {
+        ALOGD("%s failed to get info, error = 0x%X ",__FUNCTION__, nfaStat);
+        mActualNumEe = 0;
+
+    }
     for(int xx = 0; xx < numEe ; xx++ )
     {
         if(mEeInfo[xx].ee_handle == EE_HANDLE_0xF3)
