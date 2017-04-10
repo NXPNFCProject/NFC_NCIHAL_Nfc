@@ -1852,7 +1852,7 @@ static jboolean nfcManager_sendRawFrame (JNIEnv* e, jobject, jbyteArray data)
     if(bufLen == 0)
         gIsEmptyRspSentByHceFApk = TRUE;
 #endif
-    ALOGD("nfcManager_sendRawFrame(): bufLen:%d", bufLen);
+    ALOGD("nfcManager_sendRawFrame(): bufLen:%lu", bufLen);
     tNFA_STATUS status = NFA_SendRawFrame (buf, bufLen, 0);
     return (status == NFA_STATUS_OK);
 }
@@ -6884,8 +6884,6 @@ static void nfaNxpSelfTestNtfTimerCb (union sigval)
  **********************************************************************************/
 void performNfceeETSI12Config()
 {
-    UINT8 num_nfcee_present = 0;
-    UINT8 count =0;
     bool status;
     tNFA_STATUS configstatus = NFA_STATUS_FAILED;
     ALOGD ("%s", __FUNCTION__);

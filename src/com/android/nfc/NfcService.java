@@ -463,7 +463,7 @@ public class NfcService implements DeviceHostListener {
     private int mUserId;
     boolean mPollingPaused;
 
-    byte mDebounceTagUid[];
+    byte[] mDebounceTagUid;
     int mDebounceTagDebounceMs;
     ITagRemovedCallback mDebounceTagRemovedCallback;
 
@@ -533,8 +533,8 @@ public class NfcService implements DeviceHostListener {
 
     //GSMA
     private final Boolean defaultTransactionEventReceptionMode = Boolean.FALSE;
-    private final static Boolean multiReceptionMode = Boolean.TRUE;
-    private final static Boolean unicastReceptionMode = Boolean.FALSE;
+    private static final Boolean multiReceptionMode = Boolean.TRUE;
+    private static final Boolean unicastReceptionMode = Boolean.FALSE;
     boolean mIsSentUnicastReception = false;
 
     public void enforceNfcSeAdminPerm(String pkg) {
