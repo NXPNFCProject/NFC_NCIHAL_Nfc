@@ -2264,7 +2264,7 @@ if ((signal(SIGABRT, sig_handler) == SIG_ERR) &&
     ALOGD(" Discovered se count %ld",gSeDiscoverycount);
                 /*Check for ETSI12 Configuration for SEs detected in the HCI Network*/
                 performNfceeETSI12Config();
-#if(NFC_NXP_ESE ==  TRUE)
+#if((NFC_NXP_ESE ==  TRUE) && (NFC_NXP_ESE_ETSI12_PROP_INIT == TRUE))
                     if(swp_getconfig_status & SWP2_ESE)
                         performHCIInitialization (e,o);
 #endif
