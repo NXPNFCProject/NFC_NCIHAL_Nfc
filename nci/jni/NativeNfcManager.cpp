@@ -598,6 +598,7 @@ static IntervalTimer scleanupTimerProc_transaction;
 static bool gIsDtaEnabled=false;
 
 #if(NXP_EXTNS == TRUE)
+static bool sRfFieldOff = true;
 /***P2P-Prio Logic for Multiprotocol***/
 static UINT8 multiprotocol_flag = 1;
 static UINT8 multiprotocol_detected = 0;
@@ -1690,6 +1691,7 @@ void nfaDeviceManagementCallback (UINT8 dmEvent, tNFA_DM_CBACK_DATA* eventData)
                 {
                     ALOGD ("%s: RF field on evnt Not allowing to set", __FUNCTION__);
                 }
+                sRfFieldOff = false;
                 e->CallVoidMethod (nat->manager, android::gCachedNfcManagerNotifyRfFieldActivated);
              }
             else
@@ -1698,7 +1700,7 @@ void nfaDeviceManagementCallback (UINT8 dmEvent, tNFA_DM_CBACK_DATA* eventData)
                 {
                     ALOGD ("%s: RF field off evnt Not allowing to reset", __FUNCTION__);
                 }
-
+                sRfFieldOff = true;
                 e->CallVoidMethod (nat->manager, android::gCachedNfcManagerNotifyRfFieldDeactivated);
             }
         }
@@ -5760,8 +5762,9 @@ static void nfcManager_doSetScreenState (JNIEnv* e, jobject o, jint state)
             status = NxpNfc_Write_Cmd_Common(4, core_reset_cfg);
             status = NxpNfc_Write_Cmd_Common(3, core_init_cfg);
         }
-
-        if(auto_num == 0x01 && sAutonomousSet != 1 && state == NFA_SCREEN_STATE_OFF)
+        ALOGD ("%s: auto_num : %d  sAutonomousSet : %d  sRfFieldOff : %d", __FUNCTION__,auto_num,sAutonomousSet,sRfFieldOff);
+        if((auto_num == 0x01) && (sAutonomousSet != 1) &&
+                (sRfFieldOff == true) && (state == NFA_SCREEN_STATE_OFF))
         {
             buffer = (uint8_t*) malloc(bufflen*sizeof(uint8_t));
             if(buffer == NULL)
