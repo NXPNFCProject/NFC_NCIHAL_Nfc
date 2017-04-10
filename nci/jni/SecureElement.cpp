@@ -2513,9 +2513,6 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
                 memcpy(sSecElem.mAtrInfo, eventData->rcvd_evt.p_evt_buf, eventData->rcvd_evt.evt_len);
                 sSecElem.mAtrInfolen = eventData->rcvd_evt.evt_len;
                 sSecElem.mAtrStatus = eventData->rcvd_evt.status;
-#if(NFC_NXP_ESE == TRUE)
-                sSecElem.NfccStandByOperation(STANDBY_TIMER_START);
-#endif
                 sSecElem.mAbortEvent.notifyOne();
             }
             else
@@ -2545,7 +2542,7 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
             if(eventData->rcvd_evt.evt_len > 0)
             {
                 sSecElem.mTransceiveWaitOk = true;
-                SecureElement::getInstance().NfccStandByOperation(STANDBY_TIMER_START);
+                sSecElem.NfccStandByOperation(STANDBY_TIMER_START);
             }
 #if (JCOP_WA_ENABLE == TRUE)
             /*If there is pending reset event to process*/
@@ -2560,7 +2557,7 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
             if(eventData->rcvd_evt.evt_len > 0)
             {
                 sSecElem.mTransceiveWaitOk = true;
-	    }
+	        }
 #endif
 #endif
             sSecElem.mTransceiveEvent.notifyOne ();
@@ -3465,7 +3462,6 @@ void SecureElement::NfccStandByOperation(nfcc_standby_operation_t value)
         stat = SecureElement::getInstance().sendEvent(SecureElement::EVT_END_OF_APDU_TRANSFER);
 #endif
 #if (NXP_WIRED_MODE_STANDBY == TRUE)
-        nfaStat = setNfccPwrConfig(POWER_ALWAYS_ON);
         stat = SecureElement::getInstance().sendEvent(SecureElement::EVT_SUSPEND_APDU_TRANSFER);
 #endif
         if(stat)
@@ -4173,6 +4169,11 @@ static void nfaVSC_ForceDwpOnOff(bool type)
             /*Just stand by timer expired*/
         if(spiDwpSyncState & STATE_TIME_OUT)
         {
+            /*Clear APDU state to activate DWP link once spi standalone is triggered*/
+            if(spiDwpSyncState & STATE_WK_ENBLE)
+            {
+                spiDwpSyncState ^= STATE_WK_ENBLE;
+            }
             stat = SecureElement::getInstance().sendEvent(SecureElement::EVT_SUSPEND_APDU_TRANSFER);
             if(stat)
             {
