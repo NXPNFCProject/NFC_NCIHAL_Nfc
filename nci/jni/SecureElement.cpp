@@ -258,6 +258,7 @@ SecureElement::SecureElement ()
     mETSI12InitStatus (NFA_STATUS_FAILED),
     mModeSetInfo(NFA_STATUS_FAILED),
 #if(NFC_NXP_ESE == TRUE)
+    meseETSI12Recovery(false),
     meSESessionIdOk (false),
 #endif
 #if (NXP_WIRED_MODE_STANDBY == TRUE)

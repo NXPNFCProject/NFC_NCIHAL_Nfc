@@ -6890,59 +6890,35 @@ void performNfceeETSI12Config()
     tNFA_STATUS configstatus = NFA_STATUS_FAILED;
     ALOGD ("%s", __FUNCTION__);
 
-    ALOGD("Sending Admin command ");
-
-    num_nfcee_present = SecureElement::getInstance().mHostsPresent;
-    ALOGD("num_nfcee_present = %d",num_nfcee_present);
-
-    if(num_nfcee_present > 0)
+    status = SecureElement::getInstance().configureNfceeETSI12();
+    if(status == TRUE)
     {
-        SecureElement::getInstance().SecEle_Modeset(0x01);
-        for(count = 0; count< num_nfcee_present ; count++)
         {
-            status = SecureElement::getInstance().configureNfceeETSI12();
-            if(status == TRUE)
+            SyncEventGuard guard (SecureElement::getInstance().mNfceeInitCbEvent);
+            if(SecureElement::getInstance().mNfceeInitCbEvent.wait(4000) == false)
             {
-                {
-                    SyncEventGuard guard (SecureElement::getInstance().mNfceeInitCbEvent);
-                    if(SecureElement::getInstance().mNfceeInitCbEvent.wait(4000) == false)
-                    {
-                        ALOGE ("%s:     timeout waiting for Nfcee Init event", __FUNCTION__);
-                    }
-                }
-                if(SecureElement::getInstance().mETSI12InitStatus != NFA_STATUS_OK)
-                {
-                    //check for recovery
-                    configstatus = ResetEseSession();
-                    if(configstatus == NFA_STATUS_OK)
-                    {
-                        SecureElement::getInstance().SecEle_Modeset(0x00);
-                        usleep(50*1000);
-                        SecureElement::getInstance().SecEle_Modeset(0x01);
-                        checkforNfceeConfig(ESE);
-                        SecureElement::getInstance().configureNfceeETSI12();
-                        {
-                            SyncEventGuard guard (SecureElement::getInstance().mNfceeInitCbEvent);
-                            if(SecureElement::getInstance().mNfceeInitCbEvent.wait(4000) == false)
-                            {
-                                ALOGE ("%s:     timeout waiting for Nfcee Init event", __FUNCTION__);
-                            }
-                        }
-                    }
-                }
-#if (NXP_WIRED_MODE_STANDBY == TRUE)
-                SecureElement::getInstance().
-                    setNfccPwrConfig(SecureElement::getInstance().
-                        NFCC_DECIDES);
-#endif
+                ALOGE ("%s:     timeout waiting for Nfcee Init event", __FUNCTION__);
             }
         }
+        if(SecureElement::getInstance().mETSI12InitStatus != NFA_STATUS_OK)
+        {
+            //check for recovery
+            configstatus = ResetEseSession();
+            if(configstatus == NFA_STATUS_OK)
+            {
+                SecureElement::getInstance().meseETSI12Recovery = true;
+                SecureElement::getInstance().SecEle_Modeset(0x00);
+                usleep(50*1000);
+                SecureElement::getInstance().SecEle_Modeset(0x01);
+                SecureElement::getInstance().meseETSI12Recovery = false;
+            }
+        }
+#if (NXP_WIRED_MODE_STANDBY == TRUE)
+        SecureElement::getInstance().
+            setNfccPwrConfig(SecureElement::getInstance().
+                NFCC_DECIDES);
+#endif
     }
-    else
-    {
-        ALOGD("No ETS12 Compliant Host in the network!!!");
-    }
-
 }
 
 /**********************************************************************************

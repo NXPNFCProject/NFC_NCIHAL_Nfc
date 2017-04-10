@@ -209,11 +209,12 @@ public:
     };
     mNfceeData  mNfceeData_t;
     UINT8       mHostsPresent;
-    UINT8   mETSI12InitStatus;
+    UINT8       mETSI12InitStatus;
     UINT8       mHostsId[MAX_NFCEE];
     UINT8       eSE_Compliancy;
     UINT8       mCreatedPipe;
     UINT8       mDeletePipeHostId;
+    bool        meseETSI12Recovery;
     SyncEvent   mCreatePipeEvent;
     SyncEvent   mPipeOpenedEvent;
     SyncEvent   mAbortEvent;
