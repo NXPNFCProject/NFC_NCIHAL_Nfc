@@ -129,7 +129,7 @@ Mutex gDiscMutex;
 #if(NXP_NFCC_HCE_F == TRUE)
 bool nfcManager_getTransanctionRequest(int t3thandle, bool registerRequest);
 #endif
-#if (NFC_NXP_ESE ==  TRUE)
+#if ((NXP_EXTNS == TRUE) && (NFC_NXP_ESE == TRUE))
 #if ((NXP_ESE_SVDD_SYNC == TRUE) || (NXP_ESE_JCOP_DWNLD_PROTECTION == TRUE) || (NXP_NFCC_SPI_FW_DOWNLOAD_SYNC == TRUE) || (NXP_ESE_DWP_SPI_SYNC_ENABLE == TRUE))
 extern bool createSPIEvtHandlerThread();
 extern void releaseSPIEvtHandlerThread();
@@ -3371,7 +3371,7 @@ static jboolean nfcManager_doDeinitialize (JNIEnv* e, jobject obj)
         SyncEventGuard guard (sNfaEnableDisablePollingEvent);
         sNfaEnableDisablePollingEvent.notifyOne ();
     }
-#if(NXP_EXTNS == TRUE)
+#if (NXP_EXTNS == TRUE) && (NFC_NXP_ESE == TRUE)
 #if ((NXP_ESE_DWP_SPI_SYNC_ENABLE == TRUE)||(NXP_ESE_SVDD_SYNC == TRUE) || (NXP_ESE_JCOP_DWNLD_PROTECTION == TRUE) ||\
      (NXP_NFCC_SPI_FW_DOWNLOAD_SYNC == TRUE))
     releaseSPIEvtHandlerThread();
