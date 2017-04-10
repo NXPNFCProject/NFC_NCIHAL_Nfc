@@ -4036,18 +4036,22 @@ void *spiEventHandlerThread(void *arg)
 #endif
     }
     ALOGD ("%s: exit", __FUNCTION__);
-    pthread_kill(spiEvtHandler_thread, 0);
+    pthread_exit(NULL);
     return NULL;
 }
 
 bool createSPIEvtHandlerThread()
 {
     bool stat = true;
-    if (pthread_create(&spiEvtHandler_thread, NULL, spiEventHandlerThread, NULL) != 0)
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+    if (pthread_create(&spiEvtHandler_thread, &attr, spiEventHandlerThread, NULL) != 0)
     {
         ALOGD("Unable to create the thread");
         stat = false;
     }
+    pthread_attr_destroy(&attr);
     return stat;
 }
 
