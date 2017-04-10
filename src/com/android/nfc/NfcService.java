@@ -1808,6 +1808,12 @@ public class NfcService implements DeviceHostListener {
 
         @Override
         public INfcAdapterExtras getNfcAdapterExtrasInterface(String pkg) {
+
+            if (pkg.equals(PACKAGE_SMART_CARD_SERVICE)){
+                Log.d(TAG, "wildcard for SmartcardService");
+                return mExtrasService;
+            }
+
             NfcService.this.enforceNfceeAdminPerm(pkg);
             return mExtrasService;
         }
@@ -5140,6 +5146,7 @@ public class NfcService implements DeviceHostListener {
             mNfcDispatcher.resumeAppSwitches();
             ArrayList<String> matchingPackages = new ArrayList<String>();
             ArrayList<String> preferredPackages = new ArrayList<String>();
+            Log.d(TAG, "NFCINTENT sendNfcEeAccessProtectedBroadcast");
             if(mInstalledPackages == null) {
                 Log.d(TAG, "No packages to send broadcast.");
                 return;
@@ -5147,6 +5154,10 @@ public class NfcService implements DeviceHostListener {
             synchronized(this) {
                 for (PackageInfo pkg : mInstalledPackages) {
                     if (pkg != null && pkg.applicationInfo != null) {
+                         if (pkg.packageName.equals(PACKAGE_SMART_CARD_SERVICE)) {
+                            preferredPackages.add(pkg.packageName);
+                            Log.d(TAG, "NFCINTENT PACKAGE ADDED");
+                        }
                         if (mNfceeAccessControl.check(pkg.applicationInfo)) {
                             matchingPackages.add(pkg.packageName);
                             if (mCardEmulationManager != null &&
@@ -5162,6 +5173,7 @@ public class NfcService implements DeviceHostListener {
                     // with signatures in nfcee_access.xml from acting upon the events.
                     for (String packageName : preferredPackages){
                         intent.setPackage(packageName);
+                        Log.d(TAG, "NFCINTENT SENT TO PACKAGE" + packageName);
                         mContext.sendBroadcast(intent);
                     }
                 } else {
