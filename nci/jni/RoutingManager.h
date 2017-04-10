@@ -56,6 +56,20 @@ extern "C"
 
 #define MAX_GET_ROUTING_BUFFER_SIZE     740
 #define EE_HCI_DEFAULT_HANDLE           0x401
+
+typedef struct protoroutInfo {
+    UINT8 ee_handle;
+    tNFA_PROTOCOL_MASK  protocols_switch_on;
+    tNFA_PROTOCOL_MASK  protocols_switch_off;
+    tNFA_PROTOCOL_MASK  protocols_battery_off;
+    tNFA_PROTOCOL_MASK  protocols_screen_lock;
+    tNFA_PROTOCOL_MASK  protocols_screen_off;
+}ProtoRoutInfo_t;
+
+typedef struct routeInfo {
+    UINT8 num_entries;
+    ProtoRoutInfo_t protoInfo[4];
+}RouteInfo_t;
 #endif
 
 //FelicaOnHost
@@ -122,6 +136,13 @@ public:
 #if(NXP_EXTNS == TRUE)
     void setRouting(bool);
     void getRouting();
+    void registerProtoRouteEntry(tNFA_HANDLE ee_handle,
+                                 tNFA_PROTOCOL_MASK  protocols_switch_on,
+                                 tNFA_PROTOCOL_MASK  protocols_switch_off,
+                                 tNFA_PROTOCOL_MASK  protocols_battery_off,
+                                 tNFA_PROTOCOL_MASK  protocols_screen_lock,
+                                 tNFA_PROTOCOL_MASK  protocols_screen_off
+                                 );
     void notifyReRoutingEntry();
     void HandleAddNfcID2_Req();
     void HandleRmvNfcID2_Req();

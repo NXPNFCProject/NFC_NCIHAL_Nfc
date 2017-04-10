@@ -103,6 +103,10 @@ namespace android
 #endif
 }
 
+#if (NXP_EXTNS == TRUE)
+static RouteInfo_t gRouteInfo;
+#endif
+
 RoutingManager::RoutingManager ()
 : mNativeData(NULL),
   mDefaultEe (NFA_HANDLE_INVALID),
@@ -196,6 +200,7 @@ bool RoutingManager::initialize (nfc_jni_native_data* native)
 
     ALOGD ("%s: enter", fn);
 #if (NXP_EXTNS == TRUE)
+    memset(&gRouteInfo, 0x00, sizeof(RouteInfo_t));
     nfcee_swp_discovery_status = SWP_DEFAULT;
     if ((GetNumValue(NAME_HOST_LISTEN_TECH_MASK, &tech, sizeof(tech))))
         mHostListnTechMask = tech;
@@ -353,6 +358,78 @@ bool RoutingManager::initialize (nfc_jni_native_data* native)
     ALOGD ("%s: exit", fn);
     return true;
 }
+#if(NXP_EXTNS == TRUE)
+void RoutingManager::registerProtoRouteEntry(tNFA_HANDLE     ee_handle,
+                                         tNFA_PROTOCOL_MASK  protocols_switch_on,
+                                         tNFA_PROTOCOL_MASK  protocols_switch_off,
+                                         tNFA_PROTOCOL_MASK  protocols_battery_off,
+                                         tNFA_PROTOCOL_MASK  protocols_screen_lock,
+                                         tNFA_PROTOCOL_MASK  protocols_screen_off
+                                         )
+{
+    static const char fn [] = "RoutingManager::registerProtoRouteEntry";
+    bool new_entry = true;
+    UINT8 i = 0;
+    tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
+
+    if(gRouteInfo.num_entries == 0)
+    {
+        ALOGD ("%s: enter, first entry :%x", fn, ee_handle);
+        gRouteInfo.protoInfo[0].ee_handle = ee_handle;
+        gRouteInfo.protoInfo[0].protocols_switch_on = protocols_switch_on;
+        gRouteInfo.protoInfo[0].protocols_switch_off = protocols_switch_off;
+        gRouteInfo.protoInfo[0].protocols_battery_off = protocols_battery_off;
+        gRouteInfo.protoInfo[0].protocols_screen_lock = protocols_screen_lock;
+        gRouteInfo.protoInfo[0].protocols_screen_off = protocols_screen_off;
+        gRouteInfo.num_entries = 1;
+    }
+    else
+    {
+        for (i = 0;i < gRouteInfo.num_entries; i++)
+        {
+            if(gRouteInfo.protoInfo[i].ee_handle == ee_handle)
+            {
+                ALOGD ("%s: enter, proto handle match found :%x", fn, ee_handle);
+                gRouteInfo.protoInfo[i].protocols_switch_on |= protocols_switch_on;
+                gRouteInfo.protoInfo[i].protocols_switch_off |= protocols_switch_off;
+                gRouteInfo.protoInfo[i].protocols_battery_off |= protocols_battery_off;
+                gRouteInfo.protoInfo[i].protocols_screen_lock |= protocols_screen_lock;
+                gRouteInfo.protoInfo[i].protocols_screen_off |= protocols_screen_off;
+                new_entry = false;
+                break;
+            }
+        }
+        if(new_entry)
+        {
+            ALOGD ("%s: enter,new proto handle entry :%x", fn, ee_handle);
+            i = gRouteInfo.num_entries;
+            gRouteInfo.protoInfo[i].ee_handle = ee_handle;
+            gRouteInfo.protoInfo[i].protocols_switch_on = protocols_switch_on;
+            gRouteInfo.protoInfo[i].protocols_switch_off = protocols_switch_off;
+            gRouteInfo.protoInfo[i].protocols_battery_off = protocols_battery_off;
+            gRouteInfo.protoInfo[i].protocols_screen_lock = protocols_screen_lock;
+            gRouteInfo.protoInfo[i].protocols_screen_off = protocols_screen_off;
+            gRouteInfo.num_entries++;
+        }
+    }
+    for (i = 0;i < gRouteInfo.num_entries; i++)
+    {
+        nfaStat = NFA_EeSetDefaultProtoRouting (gRouteInfo.protoInfo[i].ee_handle,
+                                                gRouteInfo.protoInfo[i].protocols_switch_on,
+                                                gRouteInfo.protoInfo[i].protocols_switch_off,
+                                                gRouteInfo.protoInfo[i].protocols_battery_off,
+                                                gRouteInfo.protoInfo[i].protocols_screen_lock,
+                                                gRouteInfo.protoInfo[i].protocols_screen_off);
+        if(nfaStat == NFA_STATUS_OK){
+            mRoutingEvent.wait ();
+            ALOGD ("tech routing SUCCESS");
+        }
+        else{
+            ALOGE ("Fail to set default tech routing");
+        }
+    }
+}
+#endif
 
 RoutingManager& RoutingManager::getInstance ()
 {
@@ -1538,19 +1615,15 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
             protocol_mask = NFA_PROTOCOL_MASK_ISO_DEP;
         if( value == 0x02)
             protocol_mask = NFA_PROTOCOL_MASK_NFC_DEP;
+        if( value == 0x04)
+            protocol_mask = NFA_PROTOCOL_MASK_T3T;
+
         switch_on_mask     = (power & 0x01) ? protocol_mask : 0;
         switch_off_mask    = (power & 0x02) ? protocol_mask : 0;
         battery_off_mask   = (power & 0x04) ? protocol_mask : 0;
         screen_lock_mask   = (power & 0x10) ? protocol_mask : 0;
         screen_off_mask    = (power & 0x08) ? protocol_mask : 0;
-        nfaStat = NFA_EeSetDefaultProtoRouting (ee_handle,switch_on_mask , switch_off_mask, battery_off_mask, screen_lock_mask, screen_off_mask);
-        if(nfaStat == NFA_STATUS_OK){
-            mRoutingEvent.wait ();
-            ALOGD ("tech routing SUCCESS");
-        }
-        else{
-            ALOGE ("Fail to set default tech routing");
-        }
+        registerProtoRouteEntry(ee_handle, switch_on_mask, switch_off_mask, battery_off_mask, screen_lock_mask, screen_off_mask);
     }
 
     if ((GetNumValue(NAME_UICC_LISTEN_TECH_MASK, &uiccListenTech, sizeof(uiccListenTech))))
@@ -1589,6 +1662,8 @@ bool RoutingManager::clearRoutingEntry(int type)
     ALOGD ("%s: enter, type:0x%x", fn, type );
     tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
     //tNFA_HANDLE ee_handle = NFA_HANDLE_INVLAID;
+
+    memset(&gRouteInfo, 0x00, sizeof(RouteInfo_t));
     SyncEventGuard guard (mRoutingEvent);
     if(NFA_SET_TECHNOLOGY_ROUTING & type)
     {
