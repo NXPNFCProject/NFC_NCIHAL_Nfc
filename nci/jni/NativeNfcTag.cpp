@@ -2641,8 +2641,14 @@ static void presenceCheckTimerProc (union sigval)
     ALOGD ("%s", __FUNCTION__);
     sIsTagInField = false;
     sIsReconnecting = false;
-    SyncEventGuard guard (sNfaVSCNotificationEvent);
-    sNfaVSCNotificationEvent.notifyOne ();
+    {
+        SyncEventGuard guard (sNfaVSCResponseEvent);
+        sNfaVSCResponseEvent.notifyOne ();
+    }
+    {
+        SyncEventGuard guard (sNfaVSCNotificationEvent);
+        sNfaVSCNotificationEvent.notifyOne ();
+    }
 }
 
 /*******************************************************************************
@@ -2657,8 +2663,14 @@ static void presenceCheckTimerProc (union sigval)
 static void sReconnectTimerProc (union sigval)
 {
     ALOGD ("%s", __FUNCTION__);
-    SyncEventGuard guard (sNfaVSCNotificationEvent);
-    sNfaVSCNotificationEvent.notifyOne ();
+    {
+        SyncEventGuard guard (sNfaVSCResponseEvent);
+        sNfaVSCResponseEvent.notifyOne ();
+    }
+    {
+        SyncEventGuard guard (sNfaVSCNotificationEvent);
+        sNfaVSCNotificationEvent.notifyOne ();
+    }
 }
 
 /*******************************************************************************
