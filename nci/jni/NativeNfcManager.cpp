@@ -163,6 +163,7 @@ namespace android
     extern void SetCbStatus(tNFA_STATUS status);
     extern tNFA_STATUS GetCbStatus(void);
     static void nfaNxpSelfTestNtfTimerCb (union sigval);
+    extern tNFA_STATUS ResetEseSession();
     //Factory Test Code --end
     extern bool getReconnectState(void);
     extern tNFA_STATUS SetVenConfigValue(jint nfcMode);
@@ -6705,26 +6706,65 @@ static void nfaNxpSelfTestNtfTimerCb (union sigval)
  **********************************************************************************/
 void performNfceeETSI12Config()
 {
+    UINT8 num_nfcee_present = 0;
+    UINT8 count =0;
     bool status;
-
+    tNFA_STATUS configstatus = NFA_STATUS_FAILED;
     ALOGD ("%s", __FUNCTION__);
-    status = SecureElement::getInstance().configureNfceeETSI12();
-    if(status == TRUE)
+
+    ALOGD("Sending Admin command ");
+
+    num_nfcee_present = SecureElement::getInstance().mHostsPresent;
+    ALOGD("num_nfcee_present = %d",num_nfcee_present);
+
+    if(num_nfcee_present > 0)
     {
-        SyncEventGuard guard (SecureElement::getInstance().mNfceeInitCbEvent);
-        if(SecureElement::getInstance().mNfceeInitCbEvent.wait(4000) == false)
+        SecureElement::getInstance().SecEle_Modeset(0x01);
+        for(count = 0; count< num_nfcee_present ; count++)
         {
-             ALOGE ("%s:     timeout waiting for Nfcee Init event", __FUNCTION__);
-        }
-        else
-        {
+            status = SecureElement::getInstance().configureNfceeETSI12();
+            if(status == TRUE)
+            {
+                {
+                    SyncEventGuard guard (SecureElement::getInstance().mNfceeInitCbEvent);
+                    if(SecureElement::getInstance().mNfceeInitCbEvent.wait(4000) == false)
+                    {
+                        ALOGE ("%s:     timeout waiting for Nfcee Init event", __FUNCTION__);
+                    }
+                }
+                if(SecureElement::getInstance().mETSI12InitStatus != NFA_STATUS_OK)
+                {
+                    //check for recovery
+                    configstatus = ResetEseSession();
+                    if(configstatus == NFA_STATUS_OK)
+                    {
+                        SecureElement::getInstance().SecEle_Modeset(0x00);
+                        usleep(50*1000);
+                        SecureElement::getInstance().SecEle_Modeset(0x01);
+                        checkforNfceeConfig(ESE);
+                        SecureElement::getInstance().configureNfceeETSI12();
+                        {
+                            SyncEventGuard guard (SecureElement::getInstance().mNfceeInitCbEvent);
+                            if(SecureElement::getInstance().mNfceeInitCbEvent.wait(4000) == false)
+                            {
+                                ALOGE ("%s:     timeout waiting for Nfcee Init event", __FUNCTION__);
+                            }
+                        }
+                    }
+                }
 #if (NXP_WIRED_MODE_STANDBY == TRUE)
-            SecureElement::getInstance().
-                setNfccPwrConfig(SecureElement::getInstance().
-                    NFCC_DECIDES);
+                SecureElement::getInstance().
+                    setNfccPwrConfig(SecureElement::getInstance().
+                        NFCC_DECIDES);
 #endif
+            }
         }
     }
+    else
+    {
+        ALOGD("No ETS12 Compliant Host in the network!!!");
+    }
+
 }
 
 /**********************************************************************************

@@ -725,7 +725,7 @@ tNFA_STATUS SetHfoConfigValue(void)
 }
 #endif
 
-#if (JCOP_WA_ENABLE == TRUE)
+
 /*******************************************************************************
  **
  ** Function:        ResetEseSession
@@ -757,15 +757,11 @@ tNFA_STATUS ResetEseSession()
         }
     }
     status = GetCbStatus();
-    if (NFA_STATUS_OK == status)
-    {
-        ALOGD ("%s: ResetEseSession identity is Success", __FUNCTION__);
-        status = NxpNfc_Send_CoreResetInit_Cmd();
-    }
+
     ALOGD("%s: exit", __FUNCTION__);
     return status;
 }
-#endif
+
 
 /*******************************************************************************
  **
