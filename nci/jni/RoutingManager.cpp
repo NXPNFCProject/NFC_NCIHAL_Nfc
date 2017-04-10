@@ -2433,7 +2433,8 @@ void RoutingManager::nfaEeCallback (tNFA_EE_EVT event, tNFA_EE_CBACK_DATA* event
             ALOGD("%s, swp_rd_state=%x", fn, swp_rdr_req_ntf_info.swp_rd_state);
             if( (info.ee_disc_info[xx].ee_req_op == NFC_EE_DISC_OP_ADD) &&
                     (swp_rdr_req_ntf_info.swp_rd_state == STATE_SE_RDR_MODE_STOPPED ||
-                    swp_rdr_req_ntf_info.swp_rd_state == STATE_SE_RDR_MODE_START_CONFIG)&&
+                    swp_rdr_req_ntf_info.swp_rd_state == STATE_SE_RDR_MODE_START_CONFIG ||
+                    swp_rdr_req_ntf_info.swp_rd_state == STATE_SE_RDR_MODE_STOP_CONFIG)&&
                     (info.ee_disc_info[xx].pa_protocol ==  0x04 || info.ee_disc_info[xx].pb_protocol == 0x04 ))
             {
                 ALOGD ("%s NFA_RD_SWP_READER_REQUESTED  EE[%u] Handle: 0x%04x  PA: 0x%02x  PB: 0x%02x",
@@ -2466,9 +2467,20 @@ void RoutingManager::nfaEeCallback (tNFA_EE_EVT event, tNFA_EE_CBACK_DATA* event
                 if(swp_rdr_req_ntf_info.swp_rd_req_info.reCfg)
                 {
                     ALOGD("%s, swp_rd_state=%x  evt : NFA_RD_SWP_READER_REQUESTED swp_rd_req_timer start", fn, swp_rdr_req_ntf_info.swp_rd_state);
-                    swp_rdr_req_ntf_info.swp_rd_state = STATE_SE_RDR_MODE_START_CONFIG;
+
                     swp_rd_req_timer.kill();
-                    swp_rd_req_timer.set (rdr_req_handling_timeout, reader_req_event_ntf);
+                    if(swp_rdr_req_ntf_info.swp_rd_state != STATE_SE_RDR_MODE_STOP_CONFIG)
+                    {
+                        swp_rd_req_timer.set (rdr_req_handling_timeout, reader_req_event_ntf);
+                        swp_rdr_req_ntf_info.swp_rd_state = STATE_SE_RDR_MODE_START_CONFIG;
+                    }
+                    /*RestartReadermode procedure special case should not de-activate*/
+                    else if(swp_rdr_req_ntf_info.swp_rd_state == STATE_SE_RDR_MODE_STOP_CONFIG)
+                    {
+                        swp_rdr_req_ntf_info.swp_rd_state = STATE_SE_RDR_MODE_STARTED;
+                        /*RFDEACTIVATE_DISCOVERY*/
+                        NFA_Deactivate(false);
+                    }
                     swp_rdr_req_ntf_info.swp_rd_req_info.reCfg = false;
                 }
                 //Reader over SWP - Reader Requested.
