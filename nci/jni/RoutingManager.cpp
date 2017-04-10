@@ -52,7 +52,7 @@ extern "C"{
 
 extern INT32 gSeDiscoverycount;
 extern SyncEvent gNfceeDiscCbEvent;
-uint8_t swp_getconfig_status;
+
 uint8_t nfcee_swp_discovery_status;
 extern INT32 gActualSeCount;
 extern UINT16 sCurrentSelectedUICCSlot;

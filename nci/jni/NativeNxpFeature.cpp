@@ -64,7 +64,7 @@ typedef struct nxp_feature_data
 }Nxp_Feature_Data_t;
 
 extern INT32 gActualSeCount;
-extern uint8_t swp_getconfig_status;
+uint8_t swp_getconfig_status;
 #if((NXP_EXTNS == TRUE) && (NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH == TRUE))
 extern UINT8 sSelectedUicc;
 #endif
@@ -826,13 +826,14 @@ uint8_t cmd_buf[] = { 0x20, 0x02, 0x05, 0x01,
                 }
             }
             status = GetCbStatus();
+            if (NFA_STATUS_OK == status)
+            {
+                ALOGD ("%s: Enable interface SWP1 & SWP1A is Success", __FUNCTION__);
+                status = NxpNfc_Send_CoreResetInit_Cmd();
+            }
         }
     }
-    if (NFA_STATUS_OK == status)
-    {
-        ALOGD ("%s: Enable interface SWP1 & SWP1A is Success", __FUNCTION__);
-        status = NxpNfc_Send_CoreResetInit_Cmd();
-    }
+
     ALOGD("%s: exit", __FUNCTION__);
     return status;
 }

@@ -107,6 +107,7 @@ bool                          sHCEEnabled = true;
 #endif
 extern nfcee_disc_state     sNfcee_disc_state;
 extern bool                 recovery;
+extern uint8_t              swp_getconfig_status;
 extern int                  gUICCVirtualWiredProtectMask;
 extern int                  gEseVirtualWiredProtectMask;
 static INT32                gNfcInitTimeout;
@@ -2235,7 +2236,8 @@ if ((signal(SIGABRT, sig_handler) == SIG_ERR) &&
                 /*Check for ETSI12 Configuration for SEs detected in the HCI Network*/
                 performNfceeETSI12Config();
 #if(NFC_NXP_ESE ==  TRUE)
-                    performHCIInitialization (e,o);
+                    if(swp_getconfig_status & SWP2_ESE)
+                        performHCIInitialization (e,o);
 #endif
                 SecureElement::getInstance().getSETechnology(ESE_HANDLE);
                 checkforNfceeConfig(UICC1 | UICC2 | ESE);
