@@ -2208,7 +2208,7 @@ void RoutingManager::stackCallback (UINT8 event, tNFA_CONN_EVT_DATA* eventData)
         break;
     case NFA_CE_DATA_EVT:
         {
-#if ((NFC_NXP_ESE == TRUE) && (NXP_EXTNS == TRUE))
+#if ((NFC_NXP_ESE == TRUE && NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == true) && (NXP_EXTNS == TRUE))
 #if(NXP_ESE_DUAL_MODE_PRIO_SCHEME != NXP_ESE_WIRED_MODE_RESUME)
             se.setDwpTranseiveState(false, NFCC_CE_DATA_EVT);
 #endif

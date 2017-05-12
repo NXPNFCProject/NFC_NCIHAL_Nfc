@@ -75,6 +75,7 @@ inline static void nfaVSCCallback(UINT8 event, UINT16 param_len, UINT8 *p_param)
 static const int EE_ERROR_IO = -1;
 static const int EE_ERROR_INIT = -3;
 static const int EE_ERROR_LISTEN_MODE = -4;
+static const int EE_ERROR_EXT_FIELD = -5;
 
 /*******************************************************************************
 **

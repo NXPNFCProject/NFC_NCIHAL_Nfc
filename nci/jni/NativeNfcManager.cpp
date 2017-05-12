@@ -4752,9 +4752,9 @@ static int nfcManager_doSelectUicc(JNIEnv* e, jobject o, jint uiccSlot)
         NFA_EE_HCI_Control(false);
         if(sNfceeHciCbDisableEvent.wait(500) == false)
         {
-            ALOGD("sNfceeHciCbDisableEvent.wait Timeout happened")
+            ALOGD("sNfceeHciCbDisableEvent.wait Timeout happened");
         }else{
-            ALOGD("sNfceeHciCbDisableEvent.wait success")
+            ALOGD("sNfceeHciCbDisableEvent.wait success");
         }
     }
 
@@ -4767,9 +4767,9 @@ static int nfcManager_doSelectUicc(JNIEnv* e, jobject o, jint uiccSlot)
         ALOGD("sNfceeHciCbEnableEvent waiting ......");
         if(sNfceeHciCbEnableEvent.wait (500) == false)
         {
-            ALOGD("sNfceeHciCbEnableEvent.wait Timeout happened")
+            ALOGD("sNfceeHciCbEnableEvent.wait Timeout happened");
         }else{
-            ALOGD("sNfceeHciCbEnableEvent.wait success")
+            ALOGD("sNfceeHciCbEnableEvent.wait success");
         }
 
     }
@@ -5695,7 +5695,7 @@ int getScreenState()
     return screenstate;
 }
 
-#if(NFC_NXP_ESE == TRUE && (NFC_NXP_CHIP_TYPE != PN547C2))
+#if(NFC_NXP_ESE == TRUE)
 /*******************************************************************************
 **
 ** Function:        isp2pActivated
