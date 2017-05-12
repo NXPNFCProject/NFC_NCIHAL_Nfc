@@ -1804,6 +1804,7 @@ void nfaDeviceManagementCallback (UINT8 dmEvent, tNFA_DM_CBACK_DATA* eventData)
     case NFA_DM_EE_HCI_DISABLE:
     {
         ALOGD("NFA_DM_EE_HCI_DISABLE wait releasing");
+        SyncEventGuard guard (sNfceeHciCbDisableEvent);
         sNfceeHciCbDisableEvent.notifyOne();
         ALOGD("NFA_DM_EE_HCI_DISABLE wait released");
         break;
@@ -1811,6 +1812,7 @@ void nfaDeviceManagementCallback (UINT8 dmEvent, tNFA_DM_CBACK_DATA* eventData)
     case NFA_DM_EE_HCI_ENABLE:
     {
         ALOGD("NFA_DM_EE_HCI_ENABLE wait releasing");
+        SyncEventGuard guard (sNfceeHciCbEnableEvent);
         sNfceeHciCbEnableEvent.notifyOne();
         ALOGD("NFA_DM_EE_HCI_ENABLE wait released");
         break;
@@ -4746,8 +4748,14 @@ static int nfcManager_doSelectUicc(JNIEnv* e, jobject o, jint uiccSlot)
      * NFA EE and HCI Subsystem de-init*/
     {
         SyncEventGuard guard (sNfceeHciCbDisableEvent);
+        ALOGD("sNfceeHciCbDisableEvent waiting ......");
         NFA_EE_HCI_Control(false);
-        sNfceeHciCbDisableEvent.wait(500);
+        if(sNfceeHciCbDisableEvent.wait(500) == false)
+        {
+            ALOGD("sNfceeHciCbDisableEvent.wait Timeout happened")
+        }else{
+            ALOGD("sNfceeHciCbDisableEvent.wait success")
+        }
     }
 
     /*Reset Nfcc*/
@@ -4756,7 +4764,14 @@ static int nfcManager_doSelectUicc(JNIEnv* e, jobject o, jint uiccSlot)
     {
         SyncEventGuard guard (sNfceeHciCbEnableEvent);
         NFA_EE_HCI_Control(true);
-        sNfceeHciCbEnableEvent.wait (500);
+        ALOGD("sNfceeHciCbEnableEvent waiting ......");
+        if(sNfceeHciCbEnableEvent.wait (500) == false)
+        {
+            ALOGD("sNfceeHciCbEnableEvent.wait Timeout happened")
+        }else{
+            ALOGD("sNfceeHciCbEnableEvent.wait success")
+        }
+
     }
 
     {
