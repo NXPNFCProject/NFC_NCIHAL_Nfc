@@ -63,6 +63,7 @@ extern "C"
 #endif
 #define HOST_TYPE_UICC1 0x02
 #define HOST_TYPE_UICC2 0x81
+#define SIGNAL_EVENT_SIZE 0x02
 typedef enum {
     RESET_TRANSACTION_STATE,
     SET_TRANSACTION_STATE

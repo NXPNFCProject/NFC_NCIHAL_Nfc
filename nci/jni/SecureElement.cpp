@@ -47,6 +47,7 @@
 #include "nfc_api.h"
 #include "phNxpConfig.h"
 #include "PeerToPeer.h"
+#include "DataQueue.h"
 #if(NXP_EXTNS == TRUE)
 #include "RoutingManager.h"
 #if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
@@ -134,10 +135,9 @@ namespace android
     int       spiDwpSyncState = STATE_IDLE;
     void      *spiEventHandlerThread(void *arg);
     Mutex     mSPIEvtMutex;
+    DataQueue gSPIEvtQueue;
     volatile  UINT16    usSPIActEvent = 0;
     pthread_t spiEvtHandler_thread;
-    void getSPIEvent(UINT16* usEvent);
-    void setSPIEvent(UINT16 usEvent);
     bool createSPIEvtHandlerThread();
     void releaseSPIEvtHandlerThread();
     static void nfaVSC_SVDDSyncOnOff(bool type);
@@ -3891,54 +3891,6 @@ TheEnd:
 #if((NXP_ESE_SVDD_SYNC == TRUE) || (NXP_ESE_JCOP_DWNLD_PROTECTION == TRUE) || (NXP_NFCC_SPI_FW_DOWNLOAD_SYNC == TRUE) || (NXP_ESE_DWP_SPI_SYNC_ENABLE == TRUE))
 /*******************************************************************************
 **
-** Function:       getSPIEvent
-**
-** Description:    Get the current SPI state event
-**
-** Returns:        None .
-**
-*******************************************************************************/
-void getSPIEvent(UINT16* usEvent)
-{
-    static const char fn[] = "getSPIEvent";
-    if(mSPIEvtMutex.tryLock())
-    {
-        *usEvent = usSPIActEvent;
-        mSPIEvtMutex.unlock();
-        ALOGD("%s:event=%x", fn, *usEvent);
-    }
-    else
-    {
-        ALOGD("%s:mutex lock failed-event=%x", fn, *usEvent);
-    }
-}
-
-/*******************************************************************************
-**
-** Function:       setSPIEvent
-**
-** Description:    set the current SPI state event
-**
-** Returns:        None .
- **
-*******************************************************************************/
-void setSPIEvent(UINT16 usEvent)
-{
-    static const char fn[] = "setSPIEvent";
-    if(mSPIEvtMutex.tryLock())
-    {
-        usSPIActEvent = usEvent;
-        mSPIEvtMutex.unlock();
-        ALOGD("%s:event=%x", fn, usEvent);
-    }
-    else
-    {
-        ALOGD("%s:mutex lock failed-event=%x", fn, usEvent);
-    }
-}
-
-/*******************************************************************************
-**
 ** Function:       spiEventHandlerThread
 **
 ** Description:    thread to trigger on SPI event
@@ -3950,6 +3902,7 @@ void *spiEventHandlerThread(void *arg)
 {
     (void)arg;
     UINT16 usEvent = 0;
+    UINT16 usEvent = 0, usEvtLen = 0;
 
 #if (NXP_ESE_JCOP_DWNLD_PROTECTION == TRUE)
     NFCSTATUS ese_status = NFA_STATUS_FAILED;
@@ -3958,11 +3911,17 @@ void *spiEventHandlerThread(void *arg)
     ALOGD ("%s: enter", __FUNCTION__);
     while(android::nfcManager_isNfcActive())
     {
-        SyncEventGuard guard(sSPISignalHandlerEvent);
-        sSPISignalHandlerEvent.wait();
-        getSPIEvent(&usEvent);
-        ALOGD ("%s: evt received %x", __FUNCTION__, usEvent);
+        if(true == gSPIEvtQueue.isEmpty()) /* Wait for the event only if the queue is empty */
+        { /* scope of the guard start */
+            SyncEventGuard guard(sSPISignalHandlerEvent);
+            sSPISignalHandlerEvent.wait();
+            ALOGE("%s: Empty evt received", __FUNCTION__);
+        } /* scope of the guard end */
 
+        /* Dequeue the received signal */
+        gSPIEvtQueue.dequeue((UINT8*)&usEvent, (UINT16)SIGNAL_EVENT_SIZE, usEvtLen);
+
+        ALOGD ("%s: evt received %x len %x", __FUNCTION__, usEvent, usEvtLen);
         if(usEvent == P61_STATE_DWP_SESSION_CLOSE)
         {
             ALOGD ("%s: release handler", __FUNCTION__);
@@ -4035,6 +3994,7 @@ void *spiEventHandlerThread(void *arg)
             android::requestFwDownload();
         }
 #endif
+ALOGD ("%s: Event handled EXIT %x", __FUNCTION__, usEvent);
     }
     ALOGD ("%s: exit", __FUNCTION__);
     pthread_exit(NULL);
@@ -4058,8 +4018,11 @@ bool createSPIEvtHandlerThread()
 
 void releaseSPIEvtHandlerThread()
 {
+    UINT16 usEvent = 0;
     ALOGD("releaseSPIEvtHandlerThread");
-    setSPIEvent(P61_STATE_DWP_SESSION_CLOSE);
+    /* Posting session close event to exit the signal handler thread */
+    usEvent = P61_STATE_DWP_SESSION_CLOSE;
+    gSPIEvtQueue.enqueue((UINT8*)&usEvent, (UINT16)SIGNAL_EVENT_SIZE);
     SyncEventGuard guard(sSPISignalHandlerEvent);
     sSPISignalHandlerEvent.notifyOne ();
 }
@@ -4224,6 +4187,7 @@ bool SecureElement::enableDwp(void)
 void spi_prio_signal_handler (int signum, siginfo_t *info, void *unused)
 {
     ALOGD ("%s: Inside the Signal Handler %d\n", __FUNCTION__, SIG_NFC);
+    UINT16 usEvent = 0;
     if (android::nfcManager_isNfcActive() == false)
     {
         ALOGE ("%s: NFC is no longer active.", __FUNCTION__);
@@ -4259,7 +4223,8 @@ void spi_prio_signal_handler (int signum, siginfo_t *info, void *unused)
         }
 
 #if ((NXP_ESE_SVDD_SYNC == TRUE) || (NXP_ESE_JCOP_DWNLD_PROTECTION == TRUE) || (NXP_NFCC_SPI_FW_DOWNLOAD_SYNC == TRUE)||(NXP_ESE_DWP_SPI_SYNC_ENABLE == TRUE))
-        setSPIEvent(info->si_int);
+        usEvent = info->si_int;
+        gSPIEvtQueue.enqueue((UINT8*)&usEvent, (UINT16)SIGNAL_EVENT_SIZE);
         SyncEventGuard guard(sSPISignalHandlerEvent);
         sSPISignalHandlerEvent.notifyOne ();
 #endif
