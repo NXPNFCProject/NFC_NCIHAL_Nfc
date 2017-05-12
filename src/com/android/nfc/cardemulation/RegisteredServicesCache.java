@@ -267,8 +267,8 @@ public class RegisteredServicesCache {
                 // Check if the package holds the NFC permission
                 if (pm.checkPermission(android.Manifest.permission.NFC, si.packageName) !=
                         PackageManager.PERMISSION_GRANTED) {
-                    Log.e(TAG, "Skipping APDU service " + componentName +
-                            ": it does not require the permission " +
+                    Log.e(TAG, "Skipping application component " + componentName +
+                            ": it must request the permission " +
                             android.Manifest.permission.NFC);
                     continue;
                 }

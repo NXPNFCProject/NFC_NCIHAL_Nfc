@@ -18,6 +18,7 @@ package com.android.nfc.handover;
 
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Random;
@@ -41,12 +42,10 @@ public class HandoverDataParser {
     private static final boolean DBG = false;
 
     private static final byte[] TYPE_BT_OOB = "application/vnd.bluetooth.ep.oob"
-            .getBytes(Charset.forName("US_ASCII"));
+            .getBytes(StandardCharsets.US_ASCII);
     private static final byte[] TYPE_BLE_OOB = "application/vnd.bluetooth.le.oob"
-            .getBytes(Charset.forName("US_ASCII"));
-
-    private static final byte[] TYPE_NOKIA = "nokia.com:bt".getBytes(Charset.forName("US_ASCII"));
-
+            .getBytes(StandardCharsets.US_ASCII);
+    private static final byte[] TYPE_NOKIA = "nokia.com:bt".getBytes(StandardCharsets.US_ASCII);
     private static final byte[] RTD_COLLISION_RESOLUTION = {0x63, 0x72}; // "cr";
 
     private static final int CARRIER_POWER_STATE_INACTIVE = 0;
@@ -354,7 +353,7 @@ public class HandoverDataParser {
             int nameLength = payload.get();
             byte[] nameBytes = new byte[nameLength];
             payload.get(nameBytes);
-            result.name = new String(nameBytes, Charset.forName("UTF-8"));
+            result.name = new String(nameBytes, StandardCharsets.UTF_8);
         } catch (IllegalArgumentException e) {
             Log.i(TAG, "nokia: invalid BT address");
         } catch (BufferUnderflowException e) {
@@ -382,13 +381,13 @@ public class HandoverDataParser {
                     case BT_HANDOVER_TYPE_SHORT_LOCAL_NAME:
                         nameBytes = new byte[len - 1];
                         payload.get(nameBytes);
-                        result.name = new String(nameBytes, Charset.forName("UTF-8"));
+                        result.name = new String(nameBytes, StandardCharsets.UTF_8);
                         break;
                     case BT_HANDOVER_TYPE_LONG_LOCAL_NAME:
                         if (result.name != null) break;  // prefer short name
                         nameBytes = new byte[len - 1];
                         payload.get(nameBytes);
-                        result.name = new String(nameBytes, Charset.forName("UTF-8"));
+                        result.name = new String(nameBytes, StandardCharsets.UTF_8);
                         break;
                     default:
                         payload.position(payload.position() + len - 1);
@@ -432,7 +431,7 @@ public class HandoverDataParser {
                    case BT_HANDOVER_TYPE_LONG_LOCAL_NAME:
                         byte[] nameBytes = new byte[len - 1];
                         payload.get(nameBytes);
-                        result.name = new String(nameBytes, Charset.forName("UTF-8"));
+                        result.name = new String(nameBytes, StandardCharsets.UTF_8);
                         break;
                    case BT_HANDOVER_TYPE_SECURITY_MANAGER_TK:
                         if (len-1 != SECURITY_MANAGER_TK_SIZE) {
