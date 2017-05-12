@@ -3901,7 +3901,6 @@ TheEnd:
 void *spiEventHandlerThread(void *arg)
 {
     (void)arg;
-    UINT16 usEvent = 0;
     UINT16 usEvent = 0, usEvtLen = 0;
 
 #if (NXP_ESE_JCOP_DWNLD_PROTECTION == TRUE)
