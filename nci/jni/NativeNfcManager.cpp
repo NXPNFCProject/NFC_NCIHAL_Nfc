@@ -123,7 +123,7 @@ UINT8                       sSelectedUicc = 0;
 #if ((NFC_NXP_ESE ==  TRUE) && (NXP_ESE_ETSI_READER_ENABLE == TRUE))
 extern Rdr_req_ntf_info_t   swp_rdr_req_ntf_info;
 #endif
-#if ((NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == TRUE) && (NFC_NXP_ESE == TRUE))
+#if (NXP_EXTNS == TRUE)
 Mutex gDiscMutex;
 #endif
 #if(NXP_NFCC_HCE_F == TRUE)
@@ -5193,7 +5193,12 @@ void startRfDiscovery(bool isStart)
         return;
     }
 
-#if((NXP_EXTNS == TRUE) && (NFC_NXP_ESE == TRUE) && (NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == TRUE))
+#if(NXP_EXTNS == TRUE)
+    if(isStart == sRfEnabled)
+    {
+        ALOGD("%s Already in RF state: %d", __FUNCTION__, isStart);
+        return;
+    }
     gDiscMutex.lock();
 #endif
     ALOGD ("%s: is start=%d", __FUNCTION__, isStart);
@@ -5211,7 +5216,7 @@ void startRfDiscovery(bool isStart)
     {
         ALOGE ("%s: Failed to start/stop RF discovery; error=0x%X", __FUNCTION__, status);
     }
-#if((NXP_EXTNS == TRUE) && (NFC_NXP_ESE == TRUE) && (NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == TRUE))
+#if(NXP_EXTNS == TRUE)
     gDiscMutex.unlock();
 #endif
     ALOGD ("%s: is exit=%d", __FUNCTION__, isStart);
