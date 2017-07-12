@@ -488,7 +488,7 @@ public class NativeNfcManager implements DeviceHost {
     }
 
     @Override
-    public native void doAbort();
+    public native void doAbort(String msg);
 
     private native boolean doSetTimeout(int tech, int timeout);
     @Override

@@ -76,6 +76,15 @@ public class BeamShareActivity extends Activity {
         }
     }
 
+    @Override
+    protected void onDestroy() {
+        try {
+            unregisterReceiver(mReceiver);
+        } catch (Exception e) {
+            Log.w(TAG, e.getMessage());
+        }
+        super.onDestroy();
+    }
 
     private void showNfcDialogAndExit(int msgId) {
         IntentFilter filter = new IntentFilter(NfcAdapter.ACTION_ADAPTER_STATE_CHANGED);
@@ -133,7 +142,8 @@ public class BeamShareActivity extends Activity {
     }
 
     public void parseShareIntentAndFinish(Intent intent) {
-        if (intent == null || (!intent.getAction().equalsIgnoreCase(Intent.ACTION_SEND) &&
+        if (intent == null || intent.getAction() == null ||
+                (!intent.getAction().equalsIgnoreCase(Intent.ACTION_SEND) &&
                 !intent.getAction().equalsIgnoreCase(Intent.ACTION_SEND_MULTIPLE))) return;
 
         // First, see if the intent contains clip-data, and if so get data from there

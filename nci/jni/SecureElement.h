@@ -59,10 +59,7 @@ extern "C"
 
 #if(NFC_NXP_ESE == TRUE)
 #define SIG_NFC 44
-#define HOST_TYPE_ESE   0xC0
 #endif
-#define HOST_TYPE_UICC1 0x02
-#define HOST_TYPE_UICC2 0x81
 #define SIGNAL_EVENT_SIZE 0x02
 typedef enum {
     RESET_TRANSACTION_STATE,
@@ -150,7 +147,7 @@ typedef enum
 
 }se_rd_req_failures_t;
 
-#if (NFC_NXP_ESE ==  TRUE && (NFC_NXP_CHIP_TYPE != PN547C2))
+#if (NFC_NXP_ESE == TRUE && (NFC_NXP_CHIP_TYPE != PN547C2))
 typedef struct{
     rd_swp_req_t swp_rd_req_info ;
     rd_swp_req_t swp_rd_req_current_info ;
@@ -206,27 +203,31 @@ public:
     {
         tNFA_HANDLE mNfceeHandle[MAX_NFCEE];
         tNFA_EE_STATUS mNfceeStatus[MAX_NFCEE];
-        UINT8 mNfceePresent;
+        uint8_t mNfceePresent;
     };
     mNfceeData  mNfceeData_t;
-    UINT8       mHostsPresent;
-    UINT8       mETSI12InitStatus;
-    UINT8       mHostsId[MAX_NFCEE];
-    UINT8       eSE_Compliancy;
-    UINT8       mCreatedPipe;
-    UINT8       mDeletePipeHostId;
+    uint8_t     mHostsPresent;
+    uint8_t     mETSI12InitStatus;
+    uint8_t     mHostsId[MAX_NFCEE];
+    uint8_t     eSE_Compliancy;
+    uint8_t     mCreatedPipe;
+    uint8_t     mDeletePipeHostId;
     bool        meseETSI12Recovery;
     SyncEvent   mCreatePipeEvent;
     SyncEvent   mPipeOpenedEvent;
     SyncEvent   mAbortEvent;
     bool        mAbortEventWaitOk;
-#if (NXP_ESE_DWP_SPI_SYNC_ENABLE == TRUE)
+#if (NXP_ESE_DWP_SPI_SYNC_ENABLE == true)
     bool enableDwp(void);
 #endif
-#if((NFC_NXP_ESE == TRUE) && (NXP_ESE_ETSI_READER_ENABLE == TRUE))
+#if((NFC_NXP_ESE == TRUE) && (NXP_ESE_ETSI_READER_ENABLE == true))
     IntervalTimer sSwpReaderTimer; /*timer swp reader timeout*/
 #endif
+    static const tNFA_HANDLE EE_HANDLE_0xF3 = 0x4C0;//0x401; //handle to secure element in slot 0
+    static const tNFA_HANDLE EE_HANDLE_0xF8 = 0x481; //handle to secure element in slot 2
+    tNFA_HANDLE EE_HANDLE_0xF4;               //handle to secure element in slot 1
 #endif
+
     static const int MAX_NUM_EE = NFA_EE_MAX_EE_SUPPORTED;    /*max number of EE's*/
 
     /*******************************************************************************
@@ -328,7 +329,7 @@ public:
     *******************************************************************************/
     bool connectEE ();
 
-
+    bool activateAllNfcee();
     /*******************************************************************************
     **
     ** Function:        disconnectEE
@@ -357,8 +358,8 @@ public:
     ** Returns:         True if ok.
     **
     *******************************************************************************/
-    bool transceive (UINT8* xmitBuffer, INT32 xmitBufferSize, UINT8* recvBuffer,
-                     INT32 recvBufferMaxSize, INT32& recvBufferActualSize, INT32 timeoutMillisec);
+    bool transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uint8_t* recvBuffer,
+                     int32_t recvBufferMaxSize, int32_t& recvBufferActualSize, int32_t timeoutMillisec);
 
     void notifyModeSet (tNFA_HANDLE eeHandle, bool success, tNFA_EE_STATUS eeStatus);
 
@@ -399,6 +400,16 @@ public:
     *******************************************************************************/
     void notifyEEReaderEvent (int evt, int data);
 
+    /*******************************************************************************
+    **
+    ** Function:        initializeEeHandle
+    **
+    ** Description:     Set NFCEE handle.
+    **
+    ** Returns:         True if ok.
+    **
+    *******************************************************************************/
+    bool initializeEeHandle ();
 #endif
 
     /*******************************************************************************
@@ -449,7 +460,7 @@ public:
     ** Returns:         None
     **
     *******************************************************************************/
-    void notifyTransactionListenersOfAid (const UINT8* aid, UINT8 aidLen, const UINT8* data, UINT32 dataLen,UINT32 evtSrc);
+    void notifyTransactionListenersOfAid (const uint8_t* aid, uint8_t aidLen, const uint8_t* data, uint32_t dataLen,uint32_t evtSrc);
 
     /*******************************************************************************
     **
@@ -461,7 +472,7 @@ public:
     ** Returns:         None
     **
     *******************************************************************************/
-    void notifyConnectivityListeners (UINT8 evtSrc);
+    void notifyConnectivityListeners (uint8_t evtSrc);
 
     /*******************************************************************************
     **
@@ -487,7 +498,7 @@ public:
     ** Returns:         None
     **
     *******************************************************************************/
-    void notifyTransactionListenersOfTlv (const UINT8* tlv, UINT8 tlvLen);
+    void notifyTransactionListenersOfTlv (const uint8_t* tlv, uint8_t tlvLen);
 
 
     /*******************************************************************************
@@ -501,7 +512,7 @@ public:
     ** Returns:         None
     **
     *******************************************************************************/
-    void connectionEventHandler (UINT8 event, tNFA_CONN_EVT_DATA* eventData);
+    void connectionEventHandler (uint8_t event, tNFA_CONN_EVT_DATA* eventData);
 
 
     /*******************************************************************************
@@ -527,9 +538,9 @@ public:
     ** Returns:         None
     **
     *******************************************************************************/
-    void setActiveSeOverride (UINT8 activeSeOverride);
+    void setActiveSeOverride (uint8_t activeSeOverride);
 
-    bool SecEle_Modeset(UINT8 type);
+    bool SecEle_Modeset(uint8_t type);
     /*******************************************************************************
     **
     ** Function:        routeToSecureElement
@@ -564,7 +575,7 @@ public:
     ** Returns          Number of secure elements we know about.
     **
     *******************************************************************************/
-    UINT8 getActualNumEe();
+    uint8_t getActualNumEe();
 
 
     /*******************************************************************************
@@ -579,7 +590,7 @@ public:
     ** Returns          ture on success, false on failure
     **
     *******************************************************************************/
-    bool getSeVerInfo(int seIndex, char * verInfo, int verInfoSz, UINT8 * seid);
+    bool getSeVerInfo(int seIndex, char * verInfo, int verInfoSz, uint8_t * seid);
 
 
     /*******************************************************************************
@@ -616,9 +627,9 @@ public:
     ** Returns:         True if listening is configured.
     **
     *******************************************************************************/
-    bool setEseListenTechMask(UINT8 tech_mask);
+    bool setEseListenTechMask(uint8_t tech_mask);
 
-    bool sendEvent(UINT8 event);
+    bool sendEvent(uint8_t event);
     /*******************************************************************************
     **
     ** Function:        getAtr
@@ -628,7 +639,7 @@ public:
     ** Returns:         True if ATR response is returned successfully
     **
     *******************************************************************************/
-    bool getAtr(jint seID, UINT8* recvBuffer, INT32 *recvBufferSize);
+    bool getAtr(jint seID, uint8_t* recvBuffer, int32_t *recvBufferSize);
 #if(NXP_EXTNS == TRUE)
     bool getNfceeHostTypeList (void);
     bool configureNfceeETSI12 ();
@@ -642,7 +653,7 @@ public:
      ** Returns:         EE status .
      **
      **********************************************************************************/
-    UINT16 getEeStatus(UINT16 eehandle);
+    uint16_t getEeStatus(uint16_t eehandle);
 
     /**********************************************************************************
      **
@@ -653,7 +664,7 @@ public:
      ** Returns:         EE status .
      **
      **********************************************************************************/
-    uicc_stat_t getUiccStatus(UINT8 selected_uicc);
+    uicc_stat_t getUiccStatus(uint8_t selected_uicc);
 
     /*******************************************************************************
      **
@@ -679,17 +690,17 @@ public:
      ** Returns:         True if ok.
      **
      *******************************************************************************/
-    bool isTeckInfoReceived (UINT16 eeHandle);
+    bool isTeckInfoReceived (uint16_t eeHandle);
 
 #endif
 
-#if((NFC_NXP_ESE == TRUE) && (NXP_EXTNS == TRUE) && (NXP_ESE_ETSI_READER_ENABLE == TRUE))
+#if((NFC_NXP_ESE == TRUE) && (NXP_EXTNS == TRUE) && (NXP_ESE_ETSI_READER_ENABLE == true))
     void etsiInitConfig();
     tNFC_STATUS etsiReaderConfig(int eeHandle);
     tNFC_STATUS etsiResetReaderConfig();
 #endif
 
-#if((NFC_NXP_ESE == TRUE)&&(NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == TRUE))
+#if((NFC_NXP_ESE == TRUE)&&(NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == true))
     /*******************************************************************************
     **
     ** Function:        enablePassiveListen
@@ -699,34 +710,34 @@ public:
     ** Returns:         True if ok.
     **
     *******************************************************************************/
-    UINT16 enablePassiveListen (UINT8 event);
+    uint16_t enablePassiveListen (uint8_t event);
 
-    UINT16 startThread(UINT8 thread_arg);
+    uint16_t startThread(uint8_t thread_arg);
 
     bool            mPassiveListenEnabled;
     bool            meseUiccConcurrentAccess;
     IntervalTimer   mPassiveListenTimer;
-    UINT32          mPassiveListenTimeout;             //Retry timout value for passive listen enable timer
-    UINT8           mPassiveListenCnt;                 //Retry cnt for passive listen enable timer
+    uint32_t        mPassiveListenTimeout;             //Retry timout value for passive listen enable timer
+    uint8_t         mPassiveListenCnt;                 //Retry cnt for passive listen enable timer
     SyncEvent       mPassiveListenEvt;
     Mutex           mPassiveListenMutex;
 #endif
     jint getSETechnology(tNFA_HANDLE eeHandle);
-    static const UINT8 UICC_ID = 0x02;
-    static const UINT8 UICC2_ID = 0x04;
-    static const UINT8 ESE_ID = 0x01;
-    static const UINT8 DH_ID = 0x00;
+    static const uint8_t UICC_ID = 0x02;
+    static const uint8_t UICC2_ID = 0x04;
+    static const uint8_t ESE_ID = 0x01;
+    static const uint8_t DH_ID = 0x00;
 #if(NXP_EXTNS == TRUE)
-    static const UINT8 eSE_Compliancy_ETSI_9 = 9;
-    static const UINT8 eSE_Compliancy_ETSI_12 = 12;
+    static const uint8_t eSE_Compliancy_ETSI_9 = 9;
+    static const uint8_t eSE_Compliancy_ETSI_12 = 12;
 #endif
 
-    void getEeHandleList(tNFA_HANDLE *list, UINT8* count);
+    void getEeHandleList(tNFA_HANDLE *list, uint8_t* count);
 
     tNFA_HANDLE getEseHandleFromGenericId(jint eseId);
 
     jint getGenericEseId(tNFA_HANDLE handle);
-    UINT8       mDownloadMode;
+    uint8_t     mDownloadMode;
 #if((NFC_NXP_ESE == TRUE) && (NXP_EXTNS == TRUE))
 
     bool        meSESessionIdOk;
@@ -750,12 +761,12 @@ public:
     SyncEvent       mEeSetModeEvent;
     SyncEvent       mModeSetNtf;
     SyncEvent       mHciAddStaticPipe;
-#if ((NXP_EXTNS == TRUE) && (NXP_WIRED_MODE_STANDBY == TRUE))
+#if ((NXP_EXTNS == TRUE) && (NXP_WIRED_MODE_STANDBY == true))
     SyncEvent       mPwrLinkCtrlEvent;
 #endif
 
 #if(NXP_EXTNS == TRUE)
-    UINT8 getUiccGateAndPipeList(UINT8 uiccNo);
+    uint8_t getUiccGateAndPipeList(uint8_t uiccNo);
     /*******************************************************************************
     **
     ** Function:        updateNfceeDiscoverInfo
@@ -766,33 +777,33 @@ public:
     ** Returns:         Count of NFCEE discovered.
     **
     *******************************************************************************/
-    UINT8 updateNfceeDiscoverInfo();
+    uint8_t updateNfceeDiscoverInfo();
     tNFA_HANDLE getHciHandleInfo();
     SyncEvent       mNfceeInitCbEvent;
     tNFA_STATUS SecElem_EeModeSet(uint16_t handle, uint8_t mode);
-#if (NXP_NFCEE_REMOVED_NTF_RECOVERY == TRUE)
+#if (NXP_NFCEE_REMOVED_NTF_RECOVERY == true)
     SyncEvent       mEEdatapacketEvent;
 #endif
     SyncEvent       mTransceiveEvent;
-    static const UINT8 EVT_END_OF_APDU_TRANSFER = 0x21;    //NXP Propritory
+    static const uint8_t EVT_END_OF_APDU_TRANSFER = 0x21;    //NXP Propritory
     bool            mIsWiredModeOpen;
     bool            mlistenDisabled;
     bool            mIsExclusiveWiredMode;
     bool            mIsAllowWiredInDesfireMifareCE;
-    static const UINT8 EVT_ABORT = 0x11;  //ETSI12
-    static const UINT8 EVT_ABORT_MAX_RSP_LEN = 40;
+    static const uint8_t EVT_ABORT = 0x11;  //ETSI12
+    static const uint8_t EVT_ABORT_MAX_RSP_LEN = 40;
     bool    mIsWiredModeBlocked;   /* for wired mode resume feature support */
     IntervalTimer   mRfFieldEventTimer;
-    UINT32          mRfFieldEventTimeout;
+    uint32_t        mRfFieldEventTimeout;
     tNFA_STATUS  mModeSetInfo;/*Mode set info status*/
-#if (NXP_WIRED_MODE_STANDBY == TRUE)
-    static const UINT8 NFCC_DECIDES     = 0x00;     //NFCC decides
-    static const UINT8 POWER_ALWAYS_ON  = 0x01;     //NFCEE Power Supply always On
-    static const UINT8 COMM_LINK_ACTIVE = 0x02;     //NFCC to NFCEE Communication link always active when the NFCEE  is powered on.
-    static const UINT8 EVT_SUSPEND_APDU_TRANSFER = 0x31;
+#if (NXP_WIRED_MODE_STANDBY == true)
+    static const uint8_t NFCC_DECIDES     = 0x00;     //NFCC decides
+    static const uint8_t POWER_ALWAYS_ON  = 0x01;     //NFCEE Power Supply always On
+    static const uint8_t COMM_LINK_ACTIVE = 0x02;     //NFCC to NFCEE Communication link always active when the NFCEE  is powered on.
+    static const uint8_t EVT_SUSPEND_APDU_TRANSFER = 0x31;
     tNFA_STATUS  mPwrCmdstatus;     //completion status of the power link control command
-    UINT8        mNfccPowerMode;
-    tNFA_STATUS  setNfccPwrConfig(UINT8 value);
+    uint8_t      mNfccPowerMode;
+    tNFA_STATUS  setNfccPwrConfig(uint8_t value);
 #endif
     bool mIsIntfRstEnabled;
     void setCLState(bool mState);
@@ -803,17 +814,14 @@ private:
     static const unsigned int MAX_RESPONSE_SIZE = 0x8800;//1024; //34K
     enum RouteSelection {NoRoute, DefaultRoute, SecElemRoute};
 #ifndef GEMATO_SE_SUPPORT
-    static const UINT8 STATIC_PIPE_0x70 = 0x19; //PN54X Gemalto's proprietary static pipe
+    static const uint8_t STATIC_PIPE_0x70 = 0x19; //PN54X Gemalto's proprietary static pipe
 #else
-    static const UINT8 STATIC_PIPE_0x70 = 0x70; //Broadcom's proprietary static pipe
+    static const uint8_t STATIC_PIPE_0x70 = 0x70; //Broadcom's proprietary static pipe
 #endif
-    static const UINT8 STATIC_PIPE_0x71 = 0x71; //Broadcom's proprietary static pipe
-    static const UINT8 EVT_SEND_DATA = 0x10;    //see specification ETSI TS 102 622 v9.0.0 (Host Controller Interface); section 9.3.3.3
+    static const uint8_t STATIC_PIPE_0x71 = 0x71; //Broadcom's proprietary static pipe
+    static const uint8_t EVT_SEND_DATA = 0x10;    //see specification ETSI TS 102 622 v9.0.0 (Host Controller Interface); section 9.3.3.3
 #if(NXP_EXTNS == TRUE)
-    static const UINT8 STATIC_PIPE_UICC = 0x20; //UICC's proprietary static pipe
-    static const tNFA_HANDLE EE_HANDLE_0xF3 = 0x4C0;//0x401; //handle to secure element in slot 0
-    static const tNFA_HANDLE EE_HANDLE_0xF8 = 0x481; //handle to secure element in slot 2
-    static const tNFA_HANDLE EE_HANDLE_0xF4 = 0x402; //handle to secure element in slot 1
+    static const uint8_t STATIC_PIPE_UICC = 0x20; //UICC's proprietary static pipe
     static const tNFA_HANDLE EE_HANDLE_HCI  = 0x401;
     static const tNFA_HANDLE EE_HANDLE_NDEFEE = 0x410;
 #else
@@ -824,25 +832,25 @@ private:
     static SecureElement sSecElem;
     static const char* APP_NAME;
 
-    UINT8           mDestinationGate;       //destination gate of the UICC
+    uint8_t         mDestinationGate;       //destination gate of the UICC
     tNFA_HANDLE     mNfaHciHandle;          //NFA handle to NFA's HCI component
     nfc_jni_native_data* mNativeData;
     bool    mIsInit;                // whether EE is initialized
-    UINT8   mActualNumEe;           // actual number of EE's reported by the stack
-    UINT8   mNumEePresent;          // actual number of usable EE's
+    uint8_t mActualNumEe;           // actual number of EE's reported by the stack
+    uint8_t mNumEePresent;          // actual number of usable EE's
     bool    mbNewEE;
-    UINT8   mNewPipeId;
-    UINT8   mNewSourceGate;
-    UINT16  mActiveSeOverride;      // active "enable" seid, 0 means activate all SEs
+    uint8_t mNewPipeId;
+    uint8_t mNewSourceGate;
+    uint16_t  mActiveSeOverride;      // active "enable" seid, 0 means activate all SEs
     tNFA_STATUS mCommandStatus;     //completion status of the last command
     bool    mIsPiping;              //is a pipe connected to the controller?
     RouteSelection mCurrentRouteSelection;
     int     mActualResponseSize;         //number of bytes in the response received from secure element
     int     mAtrInfolen;
-    UINT8   mAtrStatus;
+    uint8_t mAtrStatus;
     bool    mUseOberthurWarmReset;  //whether to use warm-reset command
     bool    mActivatedInListenMode; // whether we're activated in listen mode
-    UINT8   mOberthurWarmResetCommand; //warm-reset command byte
+    uint8_t mOberthurWarmResetCommand; //warm-reset command byte
     tNFA_EE_INFO mEeInfo [MAX_NUM_EE];  //actual size stored in mActualNumEe
     tNFA_EE_DISCOVER_REQ mUiccInfo;
     tNFA_HCI_GET_GATE_PIPE_LIST mHciCfg;
@@ -866,13 +874,13 @@ private:
     SyncEvent       mVerInfoEvent;
     SyncEvent       mRegistryEvent;
     SyncEvent       mDiscMapEvent;
-    UINT8           mVerInfo [3];
-    UINT8           mAtrInfo[40];
+    uint8_t         mVerInfo [3];
+    uint8_t         mAtrInfo[40];
     bool            mGetAtrRspwait;
-    UINT8           mResponseData [MAX_RESPONSE_SIZE];
+    uint8_t         mResponseData [MAX_RESPONSE_SIZE];
     RouteDataSet    mRouteDataSet; //routing data
     std::vector<std::string> mUsedAids; //AID's that are used in current routes
-    UINT8           mAidForEmptySelect[NCI_MAX_AID_LEN+1];
+    uint8_t         mAidForEmptySelect[NCI_MAX_AID_LEN+1];
     Mutex           mMutex; // protects fields below
     bool            mRfFieldIsOn; // last known RF field state
     struct timespec mLastRfFieldToggle; // last time RF field went off
@@ -1056,7 +1064,7 @@ private:
     ** Returns:         None
     **
     *******************************************************************************/
-    static const char* eeStatusToString (UINT8 status);
+    static const char* eeStatusToString (uint8_t status);
 
 
     /*******************************************************************************
@@ -1073,9 +1081,9 @@ private:
     ** Returns:         True if ok.
     **
     *******************************************************************************/
-    bool encodeAid (UINT8* tlv, UINT16 tlvMaxLen, UINT16& tlvActualLen, const UINT8* aid, UINT8 aidLen);
+    bool encodeAid (uint8_t* tlv, uint16_t tlvMaxLen, uint16_t& tlvActualLen, const uint8_t* aid, uint8_t aidLen);
 
-    static int decodeBerTlvLength(UINT8* data,int index, int data_length );
+    static int decodeBerTlvLength(uint8_t* data,int index, int data_length );
 
     static void discovery_map_cb (tNFC_DISCOVER_EVT event, tNFC_DISCOVER *p_data);
 

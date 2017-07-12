@@ -1,4 +1,4 @@
-VOB_COMPONENTS := external/libnfc-nci/src
+VOB_COMPONENTS := system/nfc/src
 NFA := $(VOB_COMPONENTS)/nfa
 NFC := $(VOB_COMPONENTS)/nfc
 
@@ -18,6 +18,7 @@ PN547C2 := 1
 PN548C2 := 2
 PN551   := 3
 PN553   := 4
+PN557   := 5
 NQ110 := $PN547C2
 NQ120 := $PN547C2
 NQ210 := $PN548C2
@@ -35,6 +36,9 @@ LOCAL_CFLAGS += -DPN551=3
 endif
 ifeq ($(PN553),4)
 LOCAL_CFLAGS += -DPN553=4
+endif
+ifeq ($(PN553),5)
+LOCAL_CFLAGS += -DPN557=5
 endif
 
 #NXP PN547 Enable
@@ -65,7 +69,7 @@ LOCAL_CFLAGS += -DNFC_NXP_ESE=FALSE
 endif
 
 #### Select the CHIP ####
-NXP_CHIP_TYPE := $(PN553)
+NXP_CHIP_TYPE := $(PN557)
 
 ifeq ($(NXP_CHIP_TYPE),$(PN547C2))
 LOCAL_CFLAGS += -DNFC_NXP_CHIP_TYPE=PN547C2
@@ -75,6 +79,8 @@ else ifeq ($(NXP_CHIP_TYPE),$(PN551))
 LOCAL_CFLAGS += -DNFC_NXP_CHIP_TYPE=PN551
 else ifeq ($(NXP_CHIP_TYPE),$(PN553))
 LOCAL_CFLAGS += -DNFC_NXP_CHIP_TYPE=PN553
+else ifeq ($(NXP_CHIP_TYPE),$(PN557))
+LOCAL_CFLAGS += -DNFC_NXP_CHIP_TYPE=PN557
 endif
 
 ifeq ($(NXP_CHIP_TYPE),$(PN553))
@@ -100,7 +106,6 @@ LOCAL_SRC_FILES := $(call all-subdir-cpp-files) $(call all-subdir-c-files)
 
 LOCAL_C_INCLUDES += \
     frameworks/native/include \
-    libcore/include \
     $(NFA)/include \
     $(NFA)/brcm \
     $(NFC)/include \
@@ -110,7 +115,8 @@ LOCAL_C_INCLUDES += \
     $(VOB_COMPONENTS)/hal/int \
     $(VOB_COMPONENTS)/include \
     $(VOB_COMPONENTS)/gki/ulinux \
-    $(VOB_COMPONENTS)/gki/common
+    $(VOB_COMPONENTS)/gki/common \
+    vendor/nxp/opensource/hardware/interfaces/nxpnfc/1.0/default/
 
 ifeq ($(NFC_NXP_ESE),TRUE)
 LOCAL_C_INCLUDES +=external/p61-jcop-kit/include
@@ -123,7 +129,9 @@ LOCAL_SHARED_LIBRARIES := \
     libcutils \
     libutils \
     liblog \
-    libnfc-nci
+    libnfc-nci \
+    android.hardware.nfc@1.0\
+    vendor.nxp.nxpnfc@1.0
 
 ifeq ($(NFC_NXP_ESE),TRUE)
 LOCAL_SHARED_LIBRARIES += libp61-jcop-kit

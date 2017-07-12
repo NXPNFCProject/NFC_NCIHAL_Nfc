@@ -342,7 +342,7 @@ public interface DeviceHost {
 
     public int getTimeout(int technology);
 
-    public void doAbort();
+    public void doAbort(String msg);
 
     boolean canMakeReadOnly(int technology);
 

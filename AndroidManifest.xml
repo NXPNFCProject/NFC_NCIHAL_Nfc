@@ -74,9 +74,19 @@
                  android:backupAgent="com.android.nfc.NfcBackupAgent"
                  android:killAfterRestore="false"
                  android:usesCleartextTraffic="false"
+                 android:supportsRtl="true"
     >
         <meta-data android:name="com.google.android.backup.api_key"
             android:value="AEdPqrEAAAAIbiKKs0wlimxeJ9y8iRIaBOH6aeb2IurmZyBHvg" />
+
+        <provider android:name="android.support.v4.content.FileProvider"
+            android:authorities="com.google.android.nfc.fileprovider"
+            android:grantUriPermissions="true"
+            android:exported="false">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
         <activity android:name=".TechListChooserActivity"
             android:theme="@*android:style/Theme.Dialog.Alert"
@@ -123,6 +133,7 @@
             android:excludeFromRecents="true"
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
             android:noHistory="true"
+            android:configChanges="orientation|keyboardHidden|screenSize"
         />
 
         <activity android:name=".BeamShareActivity"
@@ -157,6 +168,10 @@
         />
 
         <service android:name=".handover.PeripheralHandoverService"
+        />
+
+        <uses-library android:name="com.nxp.nfc"
+            android:required="true"
         />
     </application>
 </manifest>

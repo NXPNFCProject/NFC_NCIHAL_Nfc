@@ -19,8 +19,11 @@ package com.android.nfc.handover;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.os.Bundle;
 
@@ -64,16 +67,30 @@ public class ConfirmConnectActivity extends Activity {
                });
         mAlert = builder.create();
         mAlert.show();
+
+        registerReceiver(mReceiver,
+                new IntentFilter(BluetoothPeripheralHandover.ACTION_TIMEOUT_CONNECT));
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
+    protected void onDestroy() {
+        unregisterReceiver(mReceiver);
         if (mAlert != null) {
             mAlert.dismiss();
             Intent denyIntent = new Intent(BluetoothPeripheralHandover.ACTION_DENY_CONNECT);
             denyIntent.putExtra(BluetoothDevice.EXTRA_DEVICE, mDevice);
             sendBroadcast(denyIntent);
+            mAlert = null;
         }
+        super.onDestroy();
     }
+
+    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (BluetoothPeripheralHandover.ACTION_TIMEOUT_CONNECT.equals(intent.getAction())) {
+                finish();
+            }
+        }
+    };
 }

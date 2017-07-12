@@ -18,7 +18,7 @@
 #include <semaphore.h>
 #include <string.h>
 #include <errno.h>
-#include "OverrideLog.h"
+#include "_OverrideLog.h"
 #include "NfcJniUtil.h"
 #include "JavaClassConstants.h"
 #include <ScopedLocalRef.h>
@@ -61,7 +61,7 @@ static uint32_t     sConnlessRecvRemoteSap = 0;
 *******************************************************************************/
 static jboolean nativeLlcpConnectionlessSocket_doSendTo (JNIEnv *e, jobject o, jint nsap, jbyteArray data)
 {
-    ALOGD ("%s: nsap = %d", __FUNCTION__, nsap);
+    ALOGV("%s: nsap = %d", __func__, nsap);
 
     ScopedLocalRef<jclass> c(e, e->GetObjectClass(o));
     jfieldID f = e->GetFieldID(c.get(), "mHandle", "I");
@@ -74,14 +74,14 @@ static jboolean nativeLlcpConnectionlessSocket_doSendTo (JNIEnv *e, jobject o, j
     }
     size_t byte_count = bytes.size();
 
-    ALOGD("NFA_P2pSendUI: len = %zu", byte_count);
-    UINT8* raw_ptr = const_cast<UINT8*>(reinterpret_cast<const UINT8*>(&bytes[0])); // TODO: API bug; NFA_P2pSendUI should take const*!
+    ALOGV("NFA_P2pSendUI: len = %zu", byte_count);
+    uint8_t* raw_ptr = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0])); // TODO: API bug; NFA_P2pSendUI should take const*!
     tNFA_STATUS status = NFA_P2pSendUI((tNFA_HANDLE) handle, nsap, byte_count, raw_ptr);
 
-    ALOGD("%s: NFA_P2pSendUI done, status = %d", __FUNCTION__, status);
+    ALOGV("%s: NFA_P2pSendUI done, status = %d", __func__, status);
     if (status != NFA_STATUS_OK)
     {
-        ALOGE("%s: NFA_P2pSendUI failed, status = %d", __FUNCTION__, status);
+        ALOGE("%s: NFA_P2pSendUI failed, status = %d", __func__, status);
         return JNI_FALSE;
     }
     return JNI_TRUE;
@@ -102,7 +102,7 @@ static jboolean nativeLlcpConnectionlessSocket_doSendTo (JNIEnv *e, jobject o, j
 *******************************************************************************/
 void nativeLlcpConnectionlessSocket_receiveData (uint8_t* data, uint32_t len, uint32_t remoteSap)
 {
-    ALOGD ("%s: waiting for data = %d, len = %d", __FUNCTION__, sConnlessRecvWaitingForData, len);
+    ALOGV("%s: waiting for data = %d, len = %d", __func__, sConnlessRecvWaitingForData, len);
 
     // Sanity...
     if (sConnlessRecvLen < len)
@@ -173,20 +173,20 @@ void nativeLlcpConnectionlessSocket_abortWait ()
 *******************************************************************************/
 static jobject nativeLlcpConnectionlessSocket_doReceiveFrom (JNIEnv* e, jobject, jint linkMiu)
 {
-    ALOGD ("%s: linkMiu = %d", __FUNCTION__, linkMiu);
+    ALOGV("%s: linkMiu = %d", __func__, linkMiu);
     jobject llcpPacket = NULL;
     ScopedLocalRef<jclass> clsLlcpPacket(e, NULL);
 
     if (sConnlessRecvWaitingForData != JNI_FALSE)
     {
-        ALOGD ("%s: Already waiting for incoming data", __FUNCTION__);
+        ALOGV("%s: Already waiting for incoming data", __func__);
         return NULL;
     }
 
     sConnlessRecvBuf = (uint8_t*) malloc (linkMiu);
     if (sConnlessRecvBuf == NULL)
     {
-        ALOGD ("%s: Failed to allocate %d bytes memory buffer", __FUNCTION__, linkMiu);
+        ALOGV("%s: Failed to allocate %d bytes memory buffer", __func__, linkMiu);
         return NULL;
     }
     sConnlessRecvLen = linkMiu;
@@ -194,7 +194,7 @@ static jobject nativeLlcpConnectionlessSocket_doReceiveFrom (JNIEnv* e, jobject,
     // Create the write semaphore
     if (sem_init (&sConnlessRecvSem, 0, 0) == -1)
     {
-        ALOGE ("%s: semaphore creation failed (errno=0x%08x)", __FUNCTION__, errno);
+        ALOGE("%s: semaphore creation failed (errno=0x%08x)", __func__, errno);
         return connectionlessCleanup ();
     }
 
@@ -203,14 +203,14 @@ static jobject nativeLlcpConnectionlessSocket_doReceiveFrom (JNIEnv* e, jobject,
     // Wait for sConnlessRecvSem completion status
     if (sem_wait (&sConnlessRecvSem))
     {
-        ALOGE ("%s: Failed to wait for write semaphore (errno=0x%08x)", __FUNCTION__, errno);
+        ALOGE("%s: Failed to wait for write semaphore (errno=0x%08x)", __func__, errno);
         goto TheEnd;
     }
 
     // Create new LlcpPacket object
     if (nfc_jni_cache_object_local (e, "com/android/nfc/LlcpPacket", &(llcpPacket)) == -1)
     {
-        ALOGE ("%s: Find LlcpPacket class error", __FUNCTION__);
+        ALOGE("%s: Find LlcpPacket class error", __func__);
         return connectionlessCleanup ();
     }
 
@@ -219,7 +219,7 @@ static jobject nativeLlcpConnectionlessSocket_doReceiveFrom (JNIEnv* e, jobject,
     if (e->ExceptionCheck())
     {
         e->ExceptionClear();
-        ALOGE ("%s: Get Object class error", __FUNCTION__);
+        ALOGE("%s: Get Object class error", __func__);
         return connectionlessCleanup ();
     }
 
@@ -229,7 +229,7 @@ static jobject nativeLlcpConnectionlessSocket_doReceiveFrom (JNIEnv* e, jobject,
     e->SetIntField(llcpPacket, f, (jbyte) sConnlessRecvRemoteSap);
 
     // Set Llcp Packet Buffer
-    ALOGD ("%s: Received Llcp packet buffer size = %d\n", __FUNCTION__, sConnlessRecvLen);
+    ALOGV("%s: Received Llcp packet buffer size = %d\n", __func__, sConnlessRecvLen);
     f = e->GetFieldID(clsLlcpPacket.get(), "mDataBuffer", "[B");
 
     {
@@ -242,7 +242,7 @@ TheEnd: // TODO: should all the "return connectionlessCleanup()"s in this functi
     connectionlessCleanup ();
     if (sem_destroy (&sConnlessRecvSem))
     {
-        ALOGE ("%s: Failed to destroy sConnlessRecvSem semaphore (errno=0x%08x)", __FUNCTION__, errno);
+        ALOGE("%s: Failed to destroy sConnlessRecvSem semaphore (errno=0x%08x)", __func__, errno);
     }
     return llcpPacket;
 }
@@ -261,16 +261,16 @@ TheEnd: // TODO: should all the "return connectionlessCleanup()"s in this functi
 *******************************************************************************/
 static jboolean nativeLlcpConnectionlessSocket_doClose (JNIEnv *e, jobject o)
 {
-    ALOGD ("%s", __FUNCTION__);
+    ALOGV("%s", __func__);
 
     ScopedLocalRef<jclass> c(e, e->GetObjectClass(o));
     jfieldID f = e->GetFieldID(c.get(), "mHandle", "I");
     jint handle = e->GetIntField(o, f);
 
-    tNFA_STATUS status = NFA_P2pDisconnect((tNFA_HANDLE) handle, FALSE);
+    tNFA_STATUS status = NFA_P2pDisconnect((tNFA_HANDLE) handle, false);
     if (status != NFA_STATUS_OK)
     {
-        ALOGE ("%s: disconnect failed, status = %d", __FUNCTION__, status);
+        ALOGE("%s: disconnect failed, status = %d", __func__, status);
         return JNI_FALSE;
     }
     return JNI_TRUE;

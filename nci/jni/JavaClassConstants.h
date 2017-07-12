@@ -59,10 +59,10 @@ namespace android
     extern jmethodID gCachedNfcManagerNotifyT3tConfigure;
     extern jmethodID gCachedNfcManagerNotifyReRoutingEntry;
 #endif
-#if(NXP_ESE_JCOP_DWNLD_PROTECTION == TRUE)
+#if(NXP_ESE_JCOP_DWNLD_PROTECTION == true)
     extern jmethodID gCachedNfcManagerNotifyDownloadInProgress;
 #endif
-#if(NXP_NFCC_SPI_FW_DOWNLOAD_SYNC == TRUE)
+#if(NXP_NFCC_SPI_FW_DOWNLOAD_SYNC == true)
     extern jmethodID gCachedNfcManagerNotifyFwDwnldRequested;
 #endif
 #endif

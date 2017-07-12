@@ -58,64 +58,69 @@ extern "C"
 #define EE_HCI_DEFAULT_HANDLE           0x401
 
 typedef struct protoroutInfo {
-    UINT8 ee_handle;
+    uint8_t ee_handle;
     tNFA_PROTOCOL_MASK  protocols_switch_on;
     tNFA_PROTOCOL_MASK  protocols_switch_off;
     tNFA_PROTOCOL_MASK  protocols_battery_off;
     tNFA_PROTOCOL_MASK  protocols_screen_lock;
     tNFA_PROTOCOL_MASK  protocols_screen_off;
+    tNFA_PROTOCOL_MASK  protocols_screen_off_lock;
 }ProtoRoutInfo_t;
 
 typedef struct routeInfo {
-    UINT8 num_entries;
+    uint8_t num_entries;
     ProtoRoutInfo_t protoInfo[4];
 }RouteInfo_t;
+#define POWER_STATE_MASK 0xE7
+#define HOST_SCREEN_STATE_MASK 0x09
 #endif
 
 //FelicaOnHost
 typedef struct{
 
-    UINT8 nfcid2Len;
-    UINT8 sysCodeLen;
-    UINT8 optParamLen;
-    UINT16 nfcid2Handle;
-    UINT8 sysCode[2];
-    UINT8 nfcid2[8];
-    UINT8* optParam;
-    UINT8 InUse;
+    uint8_t nfcid2Len;
+    uint8_t sysCodeLen;
+    uint8_t optParamLen;
+    uint16_t nfcid2Handle;
+    uint8_t sysCode[2];
+    uint8_t nfcid2[8];
+    uint8_t* optParam;
+    uint8_t InUse;
 
    // Mutex mMutex; /*add if it is required */
 }NfcID2_info_t;
 
 typedef struct
 {
-    UINT8 protocol;
-    UINT16 routeLoc;
-    UINT8 power;
-    UINT8 enable;
+    uint8_t protocol;
+    uint16_t routeLoc;
+    uint8_t power;
+    uint8_t enable;
 } protoEntry_t;
 
 typedef struct
 {
-    UINT8 technology;
-    UINT16 routeLoc;
-    UINT8 power;
-    UINT8 enable;
+    uint8_t technology;
+    uint16_t routeLoc;
+    uint8_t power;
+    uint8_t enable;
 } techEntry_t;
 
 typedef struct
 {
-    UINT16 nfceeID;//ID for the route location
+    uint16_t nfceeID;//ID for the route location
     tNFA_TECHNOLOGY_MASK    tech_switch_on;     /* default routing - technologies switch_on  */
     tNFA_TECHNOLOGY_MASK    tech_switch_off;    /* default routing - technologies switch_off */
     tNFA_TECHNOLOGY_MASK    tech_battery_off;   /* default routing - technologies battery_off*/
     tNFA_TECHNOLOGY_MASK    tech_screen_lock;    /* default routing - technologies screen_lock*/
     tNFA_TECHNOLOGY_MASK    tech_screen_off;   /* default routing - technologies screen_off*/
+    tNFA_TECHNOLOGY_MASK    tech_screen_off_lock;  /* default routing - technologies screen_off_lock*/
     tNFA_PROTOCOL_MASK      proto_switch_on;    /* default routing - protocols switch_on     */
     tNFA_PROTOCOL_MASK      proto_switch_off;   /* default routing - protocols switch_off    */
     tNFA_PROTOCOL_MASK      proto_battery_off;  /* default routing - protocols battery_off   */
     tNFA_PROTOCOL_MASK      proto_screen_lock;   /* default routing - protocols screen_lock    */
     tNFA_PROTOCOL_MASK      proto_screen_off;  /* default routing - protocols screen_off  */
+    tNFA_PROTOCOL_MASK      proto_screen_off_lock;  /* default routing - protocols screen_off_lock  */
 } LmrtEntry_t;
 
 class RoutingManager
@@ -141,29 +146,30 @@ public:
                                  tNFA_PROTOCOL_MASK  protocols_switch_off,
                                  tNFA_PROTOCOL_MASK  protocols_battery_off,
                                  tNFA_PROTOCOL_MASK  protocols_screen_lock,
-                                 tNFA_PROTOCOL_MASK  protocols_screen_off
+                                 tNFA_PROTOCOL_MASK  protocols_screen_off,
+                                 tNFA_PROTOCOL_MASK  protocols_screen_off_lock
                                  );
     void notifyReRoutingEntry();
     void HandleAddNfcID2_Req();
     void HandleRmvNfcID2_Req();
-    void setCeRouteStrictDisable(UINT32 state);
+    void setCeRouteStrictDisable(uint32_t state);
     void setDefaultTechRouting (int seId, int tech_switchon,int tech_switchoff);
     void setDefaultProtoRouting (int seId, int proto_switchon,int proto_switchoff);
-    void processGetRoutingRsp(tNFA_DM_CBACK_DATA* eventData, UINT8* sRoutingBuff);
+    void processGetRoutingRsp(tNFA_DM_CBACK_DATA* eventData, uint8_t* sRoutingBuff);
     void nfaEEConnect();
     bool setRoutingEntry(int type, int value, int route, int power);
     bool clearRoutingEntry(int type);
-    bool setDefaultRoute(const UINT8 defaultRoute, const UINT8 protoRoute, const UINT8 techRoute);
+    bool setDefaultRoute(const int defaultRoute, const int protoRoute, const int techRoute);
     bool clearAidTable ();
-    bool removeNfcid2Routing(UINT8* nfcID2);
-    bool addAidRouting(const UINT8* aid, UINT8 aidLen, int route, int power, bool isprefix);
-    int  addNfcid2Routing(UINT8* nfcid2, UINT8 aidLen,const UINT8* syscode,
-    int  syscodelen,const UINT8* optparam, int optparamlen);
-#if (NXP_NFCEE_REMOVED_NTF_RECOVERY == TRUE)
+    bool removeNfcid2Routing(uint8_t* nfcID2);
+    bool addAidRouting(const uint8_t* aid, uint8_t aidLen, int route, int power, bool isprefix);
+    int  addNfcid2Routing(uint8_t* nfcid2, uint8_t aidLen,const uint8_t* syscode,
+    int  syscodelen,const uint8_t* optparam, int optparamlen);
+#if (NXP_NFCEE_REMOVED_NTF_RECOVERY == true)
     void handleSERemovedNtf();
     bool is_ee_recovery_ongoing();
 #endif
-#if((NFC_NXP_ESE == TRUE) && (NXP_ESE_ETSI_READER_ENABLE == TRUE))
+#if((NFC_NXP_ESE == TRUE) && (NXP_ESE_ETSI_READER_ENABLE == true))
     void setEtsiReaederState(se_rd_req_state_t newState);
     se_rd_req_state_t getEtsiReaederState();
     Rdr_req_ntf_info_t getSwpRrdReqInfo();
@@ -172,12 +178,12 @@ public:
     void notifyT3tConfigure();
 #endif
 #else
-    bool addAidRouting(const UINT8* aid, UINT8 aidLen, int route);
+    bool addAidRouting(const uint8_t* aid, uint8_t aidLen, int route);
 #endif
     void cleanRouting();
-    bool removeAidRouting(const UINT8* aid, UINT8 aidLen);
+    bool removeAidRouting(const uint8_t* aid, uint8_t aidLen);
     bool commitRouting();
-    int registerT3tIdentifier(UINT8* t3tId, UINT8 t3tIdLen);
+    int registerT3tIdentifier(uint8_t* t3tId, uint8_t t3tIdLen);
     void deregisterT3tIdentifier(int handle);
     void onNfccShutdown();
     int registerJniFunctions (JNIEnv* e);
@@ -196,13 +202,13 @@ private:
     RoutingManager(const RoutingManager&);
     RoutingManager& operator=(const RoutingManager&);
 
-    void handleData (UINT8 technology, const UINT8* data, UINT32 dataLen, tNFA_STATUS status);
-    void notifyActivated (UINT8 technology);
-    void notifyDeactivated (UINT8 technology);
+    void handleData (uint8_t technology, const uint8_t* data, uint32_t dataLen, tNFA_STATUS status);
+    void notifyActivated (uint8_t technology);
+    void notifyDeactivated (uint8_t technology);
     void notifyLmrtFull();
     void printMemberData(void);
-    void extractRouteLocationAndPowerStates(const UINT8 defaultRoute, const UINT8 protoRoute, const UINT8 techRoute);
-    UINT16 getUiccRouteLocId(const UINT8 route);
+    void extractRouteLocationAndPowerStates(const int defaultRoute, const int protoRoute, const int techRoute);
+    uint16_t getUiccRouteLocId(const int route);
     void initialiseTableEntries(void);
     void compileProtoEntries(void);
     void compileTechEntries(void);
@@ -235,15 +241,17 @@ private:
     static const int ROUTE_LOC_UICC2_ID_IDX = 0x03;
     //Fixed route location Lmrt entries
     static const int ROUTE_LOC_HOST_ID      = 0x400;
-    static const int ROUTE_LOC_ESE_ID       = 0x4C0;
+    static const int ROUTE_LOC_ESE_ID       = SecureElement::EE_HANDLE_0xF3;
     static const int ROUTE_LOC_UICC1_ID     = 0x402;
-    static const int ROUTE_LOC_UICC2_ID     = 0x481;
+    static const int ROUTE_LOC_UICC1_ID_NCI2_0 = 0x480;
+    static const int ROUTE_LOC_UICC2_ID     = SecureElement::EE_HANDLE_0xF8;
     // Fixed power states masks
-    static const int PWR_SWTCH_ON_SCRN_UNLCK_MASK = 0x01;
-    static const int PWR_SWTCH_OFF_MASK           = 0x02;
-    static const int PWR_BATT_OFF_MASK            = 0x04;
-    static const int PWR_SWTCH_ON_SCRN_LOCK_MASK  = 0x08;
-    static const int PWR_SWTCH_ON_SCRN_OFF_MASK   = 0x10;
+    static const int PWR_SWTCH_ON_SCRN_UNLCK_MASK       = 0x01;
+    static const int PWR_SWTCH_OFF_MASK                 = 0x02;
+    static const int PWR_BATT_OFF_MASK                  = 0x04;
+    static const int PWR_SWTCH_ON_SCRN_LOCK_MASK        = 0x08;
+    static const int PWR_SWTCH_ON_SCRN_OFF_MASK         = 0x10;
+    static const int PWR_SWTCH_ON_SCRN_OFF_LOCK_MASK    = 0x20;
     // See AidRoutingManager.java for corresponding
     // AID_MATCHING_ constants
     // Every routing table entry is matched exact (BCM20793)
@@ -262,14 +270,14 @@ private:
     static const int AID_MATCHING_K = 0x02;
     static void nfcFRspTimerCb(union sigval);
     static void nfaEeCallback (tNFA_EE_EVT event, tNFA_EE_CBACK_DATA* eventData);
-    static void stackCallback (UINT8 event, tNFA_CONN_EVT_DATA* eventData);
-    static void nfcFCeCallback (UINT8 event, tNFA_CONN_EVT_DATA* eventData);
+    static void stackCallback (uint8_t event, tNFA_CONN_EVT_DATA* eventData);
+    static void nfcFCeCallback (uint8_t event, tNFA_CONN_EVT_DATA* eventData);
     static int com_android_nfc_cardemulation_doGetDefaultRouteDestination (JNIEnv* e);
     static int com_android_nfc_cardemulation_doGetDefaultOffHostRouteDestination (JNIEnv* e);
     static int com_android_nfc_cardemulation_doGetAidMatchingMode (JNIEnv* e);
     static int com_android_nfc_cardemulation_doGetAidMatchingPlatform (JNIEnv* e);
 
-    std::vector<UINT8> mRxDataBuffer;
+    std::vector<uint8_t> mRxDataBuffer;
 
     // Fields below are final after initialize()
     //int mDefaultEe;
@@ -294,24 +302,24 @@ private:
     protoEntry_t mProtoTableEntries[MAX_PROTO_ENTRIES];
     techEntry_t mTechTableEntries[MAX_TECH_ENTRIES];
     LmrtEntry_t mLmrtEntries[MAX_ROUTE_LOC_ENTRIES];
-    UINT32 mCeRouteStrictDisable;
-    UINT32 mDefaultIso7816SeID;
-    UINT32 mDefaultIso7816Powerstate;
-    UINT32 mDefaultIsoDepSeID;
-    UINT32 mDefaultIsoDepPowerstate;
-    UINT32 mDefaultT3TSeID;
-    UINT32 mDefaultT3TPowerstate;
-    UINT32 mDefaultTechType;
-    UINT32 mDefaultTechASeID;
-    UINT32 mDefaultTechAPowerstate;
-    UINT32 mDefaultTechBSeID;
-    UINT32 mDefaultTechBPowerstate;
-    UINT32 mDefaultTechFSeID;
-    UINT32 mDefaultTechFPowerstate;
-    UINT32 mAddAid;
-    UINT32 mTechSupportedByEse;
-    UINT32 mTechSupportedByUicc1;
-    UINT32 mTechSupportedByUicc2;
+    uint32_t mCeRouteStrictDisable;
+    uint32_t mDefaultIso7816SeID;
+    uint32_t mDefaultIso7816Powerstate;
+    uint32_t mDefaultIsoDepSeID;
+    uint32_t mDefaultIsoDepPowerstate;
+    uint32_t mDefaultT3TSeID;
+    uint32_t mDefaultT3TPowerstate;
+    uint32_t mDefaultTechType;
+    uint32_t mDefaultTechASeID;
+    uint32_t mDefaultTechAPowerstate;
+    uint32_t mDefaultTechBSeID;
+    uint32_t mDefaultTechBPowerstate;
+    uint32_t mDefaultTechFSeID;
+    uint32_t mDefaultTechFPowerstate;
+    uint32_t mAddAid;
+    uint32_t mTechSupportedByEse;
+    uint32_t mTechSupportedByUicc1;
+    uint32_t mTechSupportedByUicc2;
 #endif
-    UINT32 mDefaultHCEFRspTimeout;
+    uint32_t mDefaultHCEFRspTimeout;
 };

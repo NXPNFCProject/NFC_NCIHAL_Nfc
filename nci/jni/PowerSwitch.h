@@ -221,7 +221,7 @@ public:
     ** Returns:         None
     **
     *******************************************************************************/
-    static void deviceManagementCallback (UINT8 event, tNFA_DM_CBACK_DATA* eventData);
+    static void deviceManagementCallback (uint8_t event, tNFA_DM_CBACK_DATA* eventData);
 
 
     /*******************************************************************************
@@ -237,11 +237,11 @@ public:
 
 private:
     PowerLevel mCurrLevel;
-    UINT8 mCurrDeviceMgtPowerState; //device management power state; such as NFA_BRCM_PWR_MODE_???
-    UINT8 mExpectedDeviceMgtPowerState; //device management power state; such as NFA_BRCM_PWR_MODE_???
+    uint8_t mCurrDeviceMgtPowerState; //device management power state; such as NFA_BRCM_PWR_MODE_???
+    uint8_t mExpectedDeviceMgtPowerState; //device management power state; such as NFA_BRCM_PWR_MODE_???
     int mDesiredScreenOffPowerState; //read from .conf file; 0=power-off-sleep; 1=full power; 2=CE4 power
     static PowerSwitch sPowerSwitch; //singleton object
-    static const UINT8 NFA_DM_PWR_STATE_UNKNOWN = -1; //device management power state power state is unknown
+    static const uint8_t NFA_DM_PWR_STATE_UNKNOWN = -1; //device management power state power state is unknown
     SyncEvent mPowerStateEvent;
     PowerActivity mCurrActivity;
     Mutex mMutex;
@@ -270,7 +270,7 @@ private:
     ** Returns:         Text representation of power level.
     **
     *******************************************************************************/
-    const char* deviceMgtPowerStateToString (UINT8 deviceMgtPowerState);
+    const char* deviceMgtPowerStateToString (uint8_t deviceMgtPowerState);
 
 
     /*******************************************************************************

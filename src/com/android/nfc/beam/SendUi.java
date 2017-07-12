@@ -530,7 +530,9 @@ public class SendUi implements Animator.AnimatorListener, View.OnTouchListener,
         mStatusBarManager.disable(StatusBarManager.DISABLE_NONE);
         mScreenshotBitmap = null;
         if (mToastString != null) {
-            Toast.makeText(mContext, mToastString, Toast.LENGTH_LONG).show();
+            Toast toast = Toast.makeText(mContext, mToastString, Toast.LENGTH_LONG);
+            toast.getWindowParams().privateFlags |= LayoutParams.PRIVATE_FLAG_SHOW_FOR_ALL_USERS;
+            toast.show();
         }
         mToastString = null;
     }

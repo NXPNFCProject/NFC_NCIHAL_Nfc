@@ -20,7 +20,7 @@
 
 #include "DataQueue.h"
 
-#include <cutils/log.h>
+#include <log/log.h>
 
 
 /*******************************************************************************
@@ -79,7 +79,7 @@ bool DataQueue::isEmpty()
 ** Returns:         True if ok.
 **
 *******************************************************************************/
-bool DataQueue::enqueue (UINT8* data, UINT16 dataLen)
+bool DataQueue::enqueue (uint8_t* data, uint16_t dataLen)
 {
     if ((data == NULL) || (dataLen==0))
         return false;
@@ -101,7 +101,7 @@ bool DataQueue::enqueue (UINT8* data, UINT16 dataLen)
     }
     else
     {
-        ALOGE ("DataQueue::enqueue: out of memory ?????");
+        ALOGE("DataQueue::enqueue: out of memory ?????");
     }
     mMutex.unlock ();
     return retval;
@@ -120,7 +120,7 @@ bool DataQueue::enqueue (UINT8* data, UINT16 dataLen)
 ** Returns:         True if ok.
 **
 *******************************************************************************/
-bool DataQueue::dequeue (UINT8* buffer, UINT16 bufferMaxLen, UINT16& actualLen)
+bool DataQueue::dequeue (uint8_t* buffer, uint16_t bufferMaxLen, uint16_t& actualLen)
 {
     mMutex.lock ();
 

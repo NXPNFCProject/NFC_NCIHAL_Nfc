@@ -18,8 +18,8 @@ extern "C"
 {
     #include "nfa_ee_api.h"
 }
-
-#if(NXP_ESE_JCOP_DWNLD_PROTECTION == TRUE)
+#define ALOGV ALOGD
+#if(NXP_ESE_JCOP_DWNLD_PROTECTION == true)
 class DwpChannel
 {
 public:
@@ -109,11 +109,11 @@ DwpChannel () ;
 **
 *******************************************************************************/
 extern bool dwpChannelForceClose;
-INT16 open();
-bool close(INT16 mHandle);
+int16_t open();
+bool close(int16_t mHandle);
 
-bool transceive (UINT8* xmitBuffer, INT32 xmitBufferSize, UINT8* recvBuffer,
-				 INT32 recvBufferMaxSize, INT32& recvBufferActualSize, INT32 timeoutMillisec);
+bool transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uint8_t* recvBuffer,
+				 int32_t recvBufferMaxSize, int32_t& recvBufferActualSize, int32_t timeoutMillisec);
 
 void doeSE_Reset();
 void doeSE_JcopDownLoadReset();

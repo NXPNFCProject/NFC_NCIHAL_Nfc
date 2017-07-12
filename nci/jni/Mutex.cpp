@@ -21,7 +21,7 @@
 #include "Mutex.h"
 #include "NfcJniUtil.h"
 
-#include <cutils/log.h>
+#include <log/log.h>
 #include <errno.h>
 
 /*******************************************************************************
@@ -39,7 +39,7 @@ Mutex::Mutex ()
     int res = pthread_mutex_init (&mMutex, NULL);
     if (res != 0)
     {
-        ALOGE ("Mutex::Mutex: fail init; error=0x%X", res);
+        ALOGE("Mutex::Mutex: fail init; error=0x%X", res);
     }
 }
 
@@ -58,7 +58,7 @@ Mutex::~Mutex ()
     int res = pthread_mutex_destroy (&mMutex);
     if (res != 0)
     {
-        ALOGE ("Mutex::~Mutex: fail destroy; error=0x%X", res);
+        ALOGE("Mutex::~Mutex: fail destroy; error=0x%X", res);
     }
 }
 
@@ -77,7 +77,7 @@ void Mutex::lock ()
     int res = pthread_mutex_lock (&mMutex);
     if (res != 0)
     {
-        ALOGE ("Mutex::lock: fail lock; error=0x%X", res);
+        ALOGE("Mutex::lock: fail lock; error=0x%X", res);
     }
 }
 
@@ -96,7 +96,7 @@ void Mutex::unlock ()
     int res = pthread_mutex_unlock (&mMutex);
     if (res != 0)
     {
-        ALOGE ("Mutex::unlock: fail unlock; error=0x%X", res);
+        ALOGE("Mutex::unlock: fail unlock; error=0x%X", res);
     }
 }
 
@@ -115,7 +115,7 @@ bool Mutex::tryLock ()
     int res = pthread_mutex_trylock (&mMutex);
     if ((res != 0) && (res != EBUSY))
     {
-        ALOGE ("Mutex::tryLock: error=0x%X", res);
+        ALOGE("Mutex::tryLock: error=0x%X", res);
     }
     return res == 0;
 }

@@ -117,7 +117,8 @@ public class EnabledNfcFServices implements com.android.nfc.ForegroundUtils.Call
                 return false;
             } else {
                 if (serviceInfo.getSystemCode().equalsIgnoreCase("NULL") ||
-                        serviceInfo.getNfcid2().equalsIgnoreCase("NULL")) {
+                        serviceInfo.getNfcid2().equalsIgnoreCase("NULL") ||
+                        serviceInfo.getT3tPmm().equalsIgnoreCase("NULL")) {
                     return false;
                 }
             }

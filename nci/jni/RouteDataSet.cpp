@@ -36,7 +36,7 @@
 /*
  *  Import and export general routing data using a XML file.
  */
-#include "OverrideLog.h"
+#include "_OverrideLog.h"
 #include "RouteDataSet.h"
 //#include "libxml/xmlmemory.h"
 #include <errno.h>
@@ -66,21 +66,21 @@ AidBuffer::AidBuffer (std::string& aid)
     std::string::size_type pos2 = aid.find_first_of (delimiter);
 
     //parse the AID string; each hex number is separated by a colon;
-    mBuffer = new UINT8 [aid.length()];
+    mBuffer = new uint8_t [aid.length()];
     while (true)
     {
         num = 0;
         if (pos2 == std::string::npos)
         {
             sscanf (aid.substr(pos1).c_str(), "%x", &num);
-            mBuffer [mBufferLen] = (UINT8) num;
+            mBuffer [mBufferLen] = (uint8_t) num;
             mBufferLen++;
             break;
         }
         else
         {
             sscanf (aid.substr(pos1, pos2-pos1+1).c_str(), "%x", &num);
-            mBuffer [mBufferLen] = (UINT8) num;
+            mBuffer [mBufferLen] = (uint8_t) num;
             mBufferLen++;
             pos1 = pos2 + 1;
             pos2 = aid.find_first_of (delimiter, pos1);
@@ -135,14 +135,13 @@ RouteDataSet::~RouteDataSet ()
 ** Returns:         True if ok.
 **
 *******************************************************************************/
-bool RouteDataSet::initialize ()
+bool RouteDataSet::initialize()
 {
-    static const char fn [] = "RouteDataSet::initialize";
-    ALOGD ("%s: enter", fn);
+    ALOGV("%s: enter", "RouteDataSet::initialize");
     //check that the libxml2 version in use is compatible
     //with the version the software has been compiled with
     //LIBXML_TEST_VERSION
-    ALOGD ("%s: exit; return=true", fn);
+    ALOGV("%s: exit; return=true", "RouteDataSet::initialize");
     return true;
 }
 
@@ -156,10 +155,10 @@ bool RouteDataSet::initialize ()
 ** Returns:         None.
 **
 *******************************************************************************/
-void RouteDataSet::deleteDatabase ()
+void RouteDataSet::deleteDatabase()
 {
-    static const char fn [] = "RouteDataSet::deleteDatabase";
-    ALOGD ("%s: default db size=%zu; sec elem db size=%zu", fn, mDefaultRouteDatabase.size(), mSecElemRouteDatabase.size());
+    ALOGV("%s: default db size=%zu; sec elem db size=%zu", "RouteDataSet::deleteDatabase",
+            mDefaultRouteDatabase.size(), mSecElemRouteDatabase.size());
     Database::iterator it;
 
     for (it = mDefaultRouteDatabase.begin(); it != mDefaultRouteDatabase.end(); it++)
@@ -184,7 +183,7 @@ void RouteDataSet::deleteDatabase ()
 bool RouteDataSet::import ()
 {
     static const char fn [] = "RouteDataSet::import";
-    ALOGD ("%s: enter", fn);
+    ALOGV("%s: enter", fn);
     bool retval = false;
 #if 0
     xmlDocPtr doc;
@@ -197,17 +196,17 @@ bool RouteDataSet::import ()
     doc = xmlParseFile (strFilename.c_str());
     if (doc == NULL)
     {
-        ALOGD ("%s: fail parse", fn);
+        ALOGV("%s: fail parse", fn);
         goto TheEnd;
     }
 
     node1 = xmlDocGetRootElement (doc);
     if (node1 == NULL)
     {
-        ALOGE ("%s: fail root element", fn);
+        ALOGE("%s: fail root element", fn);
         goto TheEnd;
     }
-    ALOGD ("%s: root=%s", fn, node1->name);
+    ALOGV("%s: root=%s", fn, node1->name);
 
     node1 = node1->xmlChildrenNode;
     while (node1) //loop through all elements in <Routes ...
@@ -217,7 +216,7 @@ bool RouteDataSet::import ()
             xmlChar* value = xmlGetProp (node1, (const xmlChar*) "Type");
             if (value && (xmlStrcmp (value, (const xmlChar*) "SecElemSelectedRoutes") == 0))
             {
-                ALOGD ("%s: found SecElemSelectedRoutes", fn);
+                ALOGV("%s: found SecElemSelectedRoutes", fn);
                 xmlNodePtr node2 = node1->xmlChildrenNode;
                 while (node2) //loop all elements in <Route Type="SecElemSelectedRoutes" ...
                 {
@@ -230,7 +229,7 @@ bool RouteDataSet::import ()
             }
             else if (value && (xmlStrcmp (value, (const xmlChar*) "DefaultRoutes") == 0))
             {
-                ALOGD ("%s: found DefaultRoutes", fn);
+                ALOGV("%s: found DefaultRoutes", fn);
                 xmlNodePtr node2 = node1->xmlChildrenNode;
                 while (node2) //loop all elements in <Route Type="DefaultRoutes" ...
                 {
@@ -251,7 +250,7 @@ bool RouteDataSet::import ()
 TheEnd:
     xmlFreeDoc (doc);
     xmlCleanupParser ();
-    ALOGD ("%s: exit; return=%u", fn, retval);
+    ALOGV("%s: exit; return=%u", fn, retval);
 #endif
     return retval;
 }
@@ -280,22 +279,22 @@ bool RouteDataSet::saveToFile (const char* routesXml)
     fh = fopen (filename.c_str (), "w");
     if (fh == NULL)
     {
-        ALOGE ("%s: fail to open file", fn);
+        ALOGE("%s: fail to open file", fn);
         return false;
     }
 
     actualWritten = fwrite (routesXml, sizeof(char), strlen(routesXml), fh);
     retval = actualWritten == strlen(routesXml);
     fclose (fh);
-    ALOGD ("%s: wrote %zu bytes", fn, actualWritten);
+    ALOGV("%s: wrote %zu bytes", fn, actualWritten);
     if (retval == false)
-        ALOGE ("%s: error during write", fn);
+        ALOGE("%s: error during write", fn);
 
     //set file permission to
     //owner read, write; group read; other read
     stat = chmod (filename.c_str (), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
     if (stat == -1)
-        ALOGE ("%s: error during chmod", fn);
+        ALOGE("%s: error during chmod", fn);
     return retval;
 }
 
@@ -312,7 +311,6 @@ bool RouteDataSet::saveToFile (const char* routesXml)
 *******************************************************************************/
 bool RouteDataSet::loadFromFile (std::string& routesXml)
 {
-    static const char fn [] = "RouteDataSet::loadFromFile";
     FILE* fh = NULL;
     size_t actual = 0;
     char buffer [1024];
@@ -322,7 +320,7 @@ bool RouteDataSet::loadFromFile (std::string& routesXml)
     fh = fopen (filename.c_str (), "r");
     if (fh == NULL)
     {
-        ALOGD ("%s: fail to open file", fn);
+        ALOGV("%s: fail to open file", "RouteDataSet::loadFromFile");
         return false;
     }
 
@@ -334,7 +332,7 @@ bool RouteDataSet::loadFromFile (std::string& routesXml)
         routesXml.append (buffer, actual);
     }
     fclose (fh);
-    ALOGD ("%s: read %zu bytes", fn, routesXml.length());
+    ALOGV("%s: read %zu bytes", "RouteDataSet::loadFromFile", routesXml.length());
     return true;
 }
 
@@ -355,7 +353,6 @@ bool RouteDataSet::loadFromFile (std::string& routesXml)
 *******************************************************************************/
 void RouteDataSet::importProtocolRoute (xmlNodePtr& element, Database& database)
 {
-    static const char fn [] = "RouteDataSet::importProtocolRoute";
     const xmlChar* id = (const xmlChar*) "Id";
     const xmlChar* secElem = (const xmlChar*) "SecElem";
     const xmlChar* trueString = (const xmlChar*) "true";
@@ -365,7 +362,7 @@ void RouteDataSet::importProtocolRoute (xmlNodePtr& element, Database& database)
     RouteDataForProtocol* data = new RouteDataForProtocol;
     xmlChar* value = NULL;
 
-    ALOGD_IF (sDebug, "%s: element=%s", fn, element->name);
+    ALOGV_IF(sDebug, "%s: element=%s", "RouteDataSet::importProtocolRoute", element->name);
     value = xmlGetProp (element, id);
     if (value)
     {
@@ -378,7 +375,7 @@ void RouteDataSet::importProtocolRoute (xmlNodePtr& element, Database& database)
         else if (xmlStrcmp (value, (const xmlChar*) "IsoDep") == 0)
             data->mProtocol = NFA_PROTOCOL_MASK_ISO_DEP;
         xmlFree (value);
-        ALOGD_IF (sDebug, "%s: %s=0x%X", fn, id, data->mProtocol);
+        ALOGV_IF(sDebug, "%s: %s=0x%X", "RouteDataSet::importProtocolRoute", id, data->mProtocol);
     }
 
     value = xmlGetProp (element, secElem);
@@ -387,7 +384,7 @@ void RouteDataSet::importProtocolRoute (xmlNodePtr& element, Database& database)
         data->mNfaEeHandle = strtol ((char*) value, NULL, 16);
         xmlFree (value);
         data->mNfaEeHandle = data->mNfaEeHandle | NFA_HANDLE_GROUP_EE;
-        ALOGD_IF (sDebug, "%s: %s=0x%X", fn, secElem, data->mNfaEeHandle);
+        ALOGV_IF(sDebug, "%s: %s=0x%X", "RouteDataSet::importProtocolRoute", secElem, data->mNfaEeHandle);
     }
 
     value = xmlGetProp (element, switchOn);
@@ -427,7 +424,6 @@ void RouteDataSet::importProtocolRoute (xmlNodePtr& element, Database& database)
 *******************************************************************************/
 void RouteDataSet::importTechnologyRoute (xmlNodePtr& element, Database& database)
 {
-    static const char fn [] = "RouteDataSet::importTechnologyRoute";
     const xmlChar* id = (const xmlChar*) "Id";
     const xmlChar* secElem = (const xmlChar*) "SecElem";
     const xmlChar* trueString = (const xmlChar*) "true";
@@ -437,7 +433,7 @@ void RouteDataSet::importTechnologyRoute (xmlNodePtr& element, Database& databas
     RouteDataForTechnology* data = new RouteDataForTechnology;
     xmlChar* value = NULL;
 
-    ALOGD_IF (sDebug, "%s: element=%s", fn, element->name);
+    ALOGV_IF(sDebug, "%s: element=%s", "RouteDataSet::importTechnologyRoute", element->name);
     value = xmlGetProp (element, id);
     if (value)
     {
@@ -448,7 +444,7 @@ void RouteDataSet::importTechnologyRoute (xmlNodePtr& element, Database& databas
         else if (xmlStrcmp (value, (const xmlChar*) "NfcF") == 0)
             data->mTechnology = NFA_TECHNOLOGY_MASK_F;
         xmlFree (value);
-        ALOGD_IF (sDebug, "%s: %s=0x%X", fn, id, data->mTechnology);
+        ALOGV_IF(sDebug, "%s: %s=0x%X", "RouteDataSet::importTechnologyRoute", id, data->mTechnology);
     }
 
     value = xmlGetProp (element, secElem);
@@ -457,7 +453,7 @@ void RouteDataSet::importTechnologyRoute (xmlNodePtr& element, Database& databas
         data->mNfaEeHandle = strtol ((char*) value, NULL, 16);
         xmlFree (value);
         data->mNfaEeHandle = data->mNfaEeHandle | NFA_HANDLE_GROUP_EE;
-        ALOGD_IF (sDebug, "%s: %s=0x%X", fn, secElem, data->mNfaEeHandle);
+        ALOGV_IF(sDebug, "%s: %s=0x%X", "RouteDataSet::importTechnologyRoute", secElem, data->mNfaEeHandle);
     }
 
     value = xmlGetProp (element, switchOn);
@@ -499,7 +495,7 @@ bool RouteDataSet::deleteFile ()
     std::string filename (bcm_nfc_location);
     filename.append (sConfigFile);
     int stat = remove (filename.c_str());
-    ALOGD ("%s: exit %u", fn, stat==0);
+    ALOGV("%s: exit %u", fn, stat==0);
     return stat == 0;
 }
 
@@ -541,7 +537,7 @@ void RouteDataSet::printDiagnostic ()
     static const char fn [] = "RouteDataSet::printDiagnostic";
     Database* db = getDatabase (DefaultRouteDatabase);
 
-    ALOGD ("%s: default route database", fn);
+    ALOGV("%s: default route database", fn);
     for (Database::iterator iter = db->begin(); iter != db->end(); iter++)
     {
         RouteData* routeData = *iter;
@@ -550,19 +546,19 @@ void RouteDataSet::printDiagnostic ()
         case RouteData::ProtocolRoute:
             {
                 RouteDataForProtocol* proto = (RouteDataForProtocol*) routeData;
-                ALOGD ("%s: ee h=0x%X; protocol=0x%X", fn, proto->mNfaEeHandle, proto->mProtocol);
+                ALOGV("%s: ee h=0x%X; protocol=0x%X", fn, proto->mNfaEeHandle, proto->mProtocol);
             }
             break;
         case RouteData::TechnologyRoute:
             {
                 RouteDataForTechnology* tech = (RouteDataForTechnology*) routeData;
-                ALOGD ("%s: ee h=0x%X; technology=0x%X", fn, tech->mNfaEeHandle, tech->mTechnology);
+                ALOGV("%s: ee h=0x%X; technology=0x%X", fn, tech->mNfaEeHandle, tech->mTechnology);
             }
             break;
         }
     }
 
-    ALOGD ("%s: sec elem route database", fn);
+    ALOGV("%s: sec elem route database", fn);
     db = getDatabase (SecElemRouteDatabase);
     for (Database::iterator iter2 = db->begin(); iter2 != db->end(); iter2++)
     {
@@ -572,13 +568,13 @@ void RouteDataSet::printDiagnostic ()
         case RouteData::ProtocolRoute:
             {
                 RouteDataForProtocol* proto = (RouteDataForProtocol*) routeData;
-                ALOGD ("%s: ee h=0x%X; protocol=0x%X", fn, proto->mNfaEeHandle, proto->mProtocol);
+                ALOGV("%s: ee h=0x%X; protocol=0x%X", fn, proto->mNfaEeHandle, proto->mProtocol);
             }
             break;
         case RouteData::TechnologyRoute:
             {
                 RouteDataForTechnology* tech = (RouteDataForTechnology*) routeData;
-                ALOGD ("%s: ee h=0x%X; technology=0x%X", fn, tech->mNfaEeHandle, tech->mTechnology);
+                ALOGV("%s: ee h=0x%X; technology=0x%X", fn, tech->mNfaEeHandle, tech->mTechnology);
             }
             break;
         }

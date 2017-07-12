@@ -98,7 +98,7 @@ HciRFParams& HciRFParams::getInstance()
 bool HciRFParams::initialize ()
 {
     static const char fn [] = "HciRFParams::initialize";
-    ALOGD ("%s: enter", fn);
+    ALOGV("%s: enter", fn);
 
     tNFA_PMID param_ids[] = {0xA0, 0xF0};
     {
@@ -114,9 +114,9 @@ bool HciRFParams::initialize ()
             return false;
         }
     }
-    ALOGD ("%s: status %x", __FUNCTION__,get_config->status);
-    ALOGD ("%s: tlv_size %d", __FUNCTION__,get_config->tlv_size);
-    ALOGD ("%s: param_tlvs %x", __FUNCTION__,get_config->param_tlvs[0]);
+    ALOGV("%s: status %x", __func__,get_config->status);
+    ALOGV("%s: tlv_size %d", __func__,get_config->tlv_size);
+    ALOGV("%s: param_tlvs %x", __func__,get_config->param_tlvs[0]);
 
     uint8_t *params = get_config->param_tlvs;
     params+=VAL_START_IDX;
@@ -172,7 +172,7 @@ bool HciRFParams::initialize ()
 
     mIsInit = true;
 
-    ALOGD ("%s: exit", fn);
+    ALOGV("%s: exit", fn);
     return (true);
 }
 
@@ -188,15 +188,15 @@ bool HciRFParams::initialize ()
 void HciRFParams::finalize ()
 {
     static const char fn [] = "HciRFParams::finalize";
-    ALOGD ("%s: enter", fn);
+    ALOGV("%s: enter", fn);
 
     mIsInit       = false;
 
-    ALOGD ("%s: exit", fn);
+    ALOGV("%s: exit", fn);
 }
 
 
-void HciRFParams::connectionEventHandler (UINT8 event, tNFA_DM_CBACK_DATA* eventData)
+void HciRFParams::connectionEventHandler (uint8_t event, tNFA_DM_CBACK_DATA* eventData)
 {
 //    static const char fn [] = "HciRFParams::connectionEventHandler";  /*commented to eliminate unused variable warning*/
 

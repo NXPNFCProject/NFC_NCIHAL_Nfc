@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#define LOG_TAG "pn54x"
 
+#include <stdio.h>
 #include <string.h>
 #if !defined (NXPLOG__H_INCLUDED)
 #include "phNxpLog.h"
 #include "phNxpConfig.h"
 #endif
 #include <cutils/properties.h>
+#include <log/log.h>
 
 const char * NXPLOG_ITEM_EXTNS   = "NxpExtns";
 const char * NXPLOG_ITEM_NCIHAL  = "NxpHal";
@@ -257,10 +260,10 @@ void phNxpLog_InitializeLogLevel(void)
     phNxpLog_SetDnldLogLevel (level);
     phNxpLog_SetNciTxLogLevel (level);
 
-    ALOGD ("%s: global =%u, Fwdnld =%u, extns =%u, \
+    ALOGV("%s: global =%u, Fwdnld =%u, extns =%u, \
                 hal =%u, tml =%u, ncir =%u, \
                 ncix =%u", \
-                __FUNCTION__, gLog_level.global_log_level, gLog_level.dnld_log_level,
+                __func__, gLog_level.global_log_level, gLog_level.dnld_log_level,
                     gLog_level.extns_log_level, gLog_level.hal_log_level, gLog_level.tml_log_level,
                     gLog_level.ncir_log_level, gLog_level.ncix_log_level);
 

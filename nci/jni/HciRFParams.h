@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "OverrideLog.h"
+#include "_OverrideLog.h"
 #include "SyncEvent.h"
 #include <cstdlib>
 #include <cstring>
@@ -70,7 +70,7 @@ public:
 
     bool isTypeBSupported();
 
-    void connectionEventHandler (UINT8 dmEvent, tNFA_DM_CBACK_DATA* eventData);
+    void connectionEventHandler (uint8_t dmEvent, tNFA_DM_CBACK_DATA* eventData);
 
     void getESeUid(uint8_t* uidbuff, uint8_t* uidlen);
     uint8_t getESeSak();

@@ -73,6 +73,7 @@ public class RegisteredNfcFServicesCache {
     final Callback mCallback;
     final AtomicFile mDynamicSystemCodeNfcid2File;
     boolean mActivated = false;
+    boolean mUserSwitched = false;
 
     public interface Callback {
         void onNfcFServicesUpdated(int userId, final List<NfcFServiceInfo> services);
@@ -301,7 +302,10 @@ public class RegisteredNfcFServicesCache {
                 }
                 matched = false;
             }
-            if (toBeAdded.size() == 0 && toBeRemoved.size() == 0) {
+            if (mUserSwitched) {
+                Log.d(TAG, "User switched, rebuild internal cache");
+                mUserSwitched = false;
+            } else if (toBeAdded.size() == 0 && toBeRemoved.size() == 0) {
                 Log.d(TAG, "Service unchanged, not updating");
                 return;
             }
@@ -690,6 +694,12 @@ public class RegisteredNfcFServicesCache {
     public void onNfcDisabled() {
         synchronized (mLock) {
             mActivated = false;
+        }
+    }
+
+    public void onUserSwitched() {
+        synchronized (mLock) {
+            mUserSwitched = true;
         }
     }
 

@@ -153,12 +153,12 @@ public:
     ~AidBuffer ();
 
 
-    UINT8* buffer () {return mBuffer;};
+    uint8_t* buffer () {return mBuffer;};
     int length () {return mBufferLen;};
 
 private:
-    UINT8* mBuffer;
-    UINT32 mBufferLen;
+    uint8_t* mBuffer;
+    uint32_t mBufferLen;
 };
 
 

@@ -30,7 +30,7 @@ import android.util.Log;
 import com.nxp.nfc.gsma.internal.INxpNfcController;
 import com.android.nfc.cardemulation.CardEmulationManager;
 import com.android.nfc.cardemulation.RegisteredAidCache;
-import android.nfc.cardemulation.ApduServiceInfo;
+import android.nfc.cardemulation.NxpApduServiceInfo;
 import android.os.Binder;
 import android.content.ComponentName;
 import android.content.pm.PackageManager;
@@ -207,7 +207,7 @@ public class NxpNfcController {
 
     private void getPackageListUnicastMode () {
         unicastPkg = null;
-        List<ApduServiceInfo> regServices = mCardEmulationManager.getAllServices();
+        List<NxpApduServiceInfo> regServices = mCardEmulationManager.getAllServices();
         PackageManager pm = mContext.getPackageManager();
         List<ResolveInfo> intentServices = pm.queryIntentActivities(
                 new Intent(NxpConstants.ACTION_MULTI_EVT_TRANSACTION),
@@ -219,7 +219,7 @@ public class NxpNfcController {
         long minInstallTime;
         ResolveInfo resolveInfoService = null;
 
-        for(ApduServiceInfo service : regServices) {
+        for(NxpApduServiceInfo service : regServices) {
             packageName = service.getComponent().getPackageName();
             for(ResolveInfo resInfo : intentServices){
                 resolveInfoService = null;
@@ -284,18 +284,18 @@ public class NxpNfcController {
     final class NxpNfcControllerInterface extends INxpNfcController.Stub {
 
         @Override
-        public boolean deleteOffHostService(int userId, String packageName, ApduServiceInfo service) {
+        public boolean deleteOffHostService(int userId, String packageName, NxpApduServiceInfo service) {
             return mServiceCache.deleteApduService(userId, Binder.getCallingUid(), packageName, service);
         }
 
         @Override
-        public ArrayList<ApduServiceInfo> getOffHostServices(int userId, String packageName) {
+        public ArrayList<NxpApduServiceInfo> getOffHostServices(int userId, String packageName) {
             return mServiceCache.getApduServices(userId, Binder.getCallingUid(), packageName);
         }
 
         @Override
-        public ApduServiceInfo getDefaultOffHostService(int userId, String packageName) {
-            HashMap<ComponentName, ApduServiceInfo> mapServices = mServiceCache.getApduservicesMaps();
+        public NxpApduServiceInfo getDefaultOffHostService(int userId, String packageName) {
+            HashMap<ComponentName, NxpApduServiceInfo> mapServices = mServiceCache.getApduservicesMaps();
             ComponentName preferredPaymentService = mRegisteredAidCache.getPreferredPaymentService();
             if(preferredPaymentService != null) {
                 if(preferredPaymentService.getPackageName() != null &&
@@ -306,7 +306,7 @@ public class NxpNfcController {
                 String defaultservice = preferredPaymentService.getClassName();
 
                 //If Default is Dynamic Service
-                for (Map.Entry<ComponentName, ApduServiceInfo> entry : mapServices.entrySet())
+                for (Map.Entry<ComponentName, NxpApduServiceInfo> entry : mapServices.entrySet())
                 {
                     if(defaultservice.equals(entry.getKey().getClassName())) {
                         Log.d(TAG, "getDefaultOffHostService: Dynamic: "+ entry.getValue().getAids().size());
@@ -315,8 +315,8 @@ public class NxpNfcController {
                 }
 
                 //If Default is Static Service
-                HashMap<ComponentName, ApduServiceInfo>  staticServices = mServiceCache.getInstalledStaticServices();
-                for (Map.Entry<ComponentName, ApduServiceInfo> entry : staticServices.entrySet()) {
+                HashMap<ComponentName, NxpApduServiceInfo>  staticServices = mServiceCache.getInstalledStaticServices();
+                for (Map.Entry<ComponentName, NxpApduServiceInfo> entry : staticServices.entrySet()) {
                     if(defaultservice.equals(entry.getKey().getClassName())) {
                         Log.d(TAG, "getDefaultOffHostService: Static: "+ entry.getValue().getAids().size());
                         return entry.getValue();
@@ -327,7 +327,7 @@ public class NxpNfcController {
         }
 
         @Override
-        public boolean commitOffHostService(int userId, String packageName, String serviceName, ApduServiceInfo service) {
+        public boolean commitOffHostService(int userId, String packageName, String serviceName, NxpApduServiceInfo service) {
             int aidLength = 0;
             boolean is_table_size_required = true;
             List<String>  newAidList = new ArrayList<String>();
@@ -338,7 +338,7 @@ public class NxpNfcController {
             }
             Log.d(TAG, "Total commiting aids Length:  "+ aidLength);
 
-            ArrayList<ApduServiceInfo> serviceList = mServiceCache.getApduServices(userId, Binder.getCallingUid(), packageName);
+            ArrayList<NxpApduServiceInfo> serviceList = mServiceCache.getApduServices(userId, Binder.getCallingUid(), packageName);
            for(int i=0; i< serviceList.size(); i++) {
                 Log.d(TAG, "All Service Names["+i +"] "+ serviceList.get(i).getComponent().getClassName());
                 if(serviceName.equalsIgnoreCase(serviceList.get(i).getComponent().getClassName())) {

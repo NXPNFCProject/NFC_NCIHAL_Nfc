@@ -37,6 +37,7 @@ public class BeamManager implements Handler.Callback {
     private static final String TAG = "BeamManager";
     private static final boolean DBG = false;
 
+    private static final String BLUETOOTH_PACKAGE = "com.android.bluetooth";
     private static final String ACTION_WHITELIST_DEVICE =
             "android.btopp.intent.action.WHITELIST_DEVICE";
     public static final int MSG_BEAM_COMPLETE = 0;
@@ -135,6 +136,7 @@ public class BeamManager implements Handler.Callback {
     void whitelistOppDevice(Context context, BluetoothDevice device) {
         if (DBG) Log.d(TAG, "Whitelisting " + device + " for BT OPP");
         Intent intent = new Intent(ACTION_WHITELIST_DEVICE);
+        intent.setPackage(BLUETOOTH_PACKAGE);
         intent.putExtra(BluetoothDevice.EXTRA_DEVICE, device);
         context.sendBroadcastAsUser(intent, UserHandle.CURRENT);
     }

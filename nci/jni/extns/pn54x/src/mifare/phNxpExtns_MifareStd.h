@@ -25,7 +25,7 @@
 #include <semaphore.h>
 #include <pthread.h>
 
-extern UINT8 current_key[];
+extern uint8_t current_key[];
 /* Enable this macro to set key configuration for mifare classic Tag */
 #define PHLIBNFC_NXPETENSION_CONFIGURE_MFKEYS 1
 

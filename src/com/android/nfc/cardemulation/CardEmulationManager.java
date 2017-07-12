@@ -47,7 +47,9 @@ import android.content.Intent;
 import android.nfc.INfcCardEmulation;
 import android.nfc.INfcFCardEmulation;
 import android.nfc.cardemulation.AidGroup;
+import android.nfc.cardemulation.NxpAidGroup;
 import android.nfc.cardemulation.ApduServiceInfo;
+import android.nfc.cardemulation.NxpApduServiceInfo;
 import android.nfc.cardemulation.NfcFServiceInfo;
 import android.nfc.cardemulation.CardEmulation;
 import android.nfc.cardemulation.NfcFCardEmulation;
@@ -187,6 +189,7 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         mHostNfcFEmulationManager.onUserSwitched();
         mT3tIdentifiersCache.onUserSwitched();
         mEnabledNfcFServices.onUserSwitched(userId);
+        mNfcFServicesCache.onUserSwitched();
         mNfcFServicesCache.invalidateCache(userId);
 
     }
@@ -231,7 +234,7 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
     }
 
     @Override
-    public void onServicesUpdated(int userId, List<ApduServiceInfo> services) {
+    public void onServicesUpdated(int userId, List<NxpApduServiceInfo> services) {
         // Verify defaults are still sane
         verifyDefaults(userId, services);
         // Update the AID cache
@@ -248,58 +251,16 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         mEnabledNfcFServices.onServicesUpdated();
     }
 
-    void verifyDefaults(int userId, List<ApduServiceInfo> services) {
+    void verifyDefaults(int userId, List<NxpApduServiceInfo> services) {
         ComponentName defaultPaymentService =
                 getDefaultServiceForCategory(userId, CardEmulation.CATEGORY_PAYMENT, false);
         if (DBG) Log.d(TAG, "Current default: " + defaultPaymentService);
-        if (defaultPaymentService != null) {
-            // Validate the default is still installed and handling payment
-            ApduServiceInfo serviceInfo = mServiceCache.getService(userId, defaultPaymentService);
-            if (serviceInfo == null || !serviceInfo.hasCategory(CardEmulation.CATEGORY_PAYMENT)) {
-                if (serviceInfo == null) {
-                    Log.e(TAG, "Default payment service unexpectedly removed.");
-                } else if (!serviceInfo.hasCategory(CardEmulation.CATEGORY_PAYMENT)) {
-                    if (DBG) Log.d(TAG, "Default payment service had payment category removed");
-                }
-                int numPaymentServices = 0;
-                ComponentName lastFoundPaymentService = null;
-                for (ApduServiceInfo service : services) {
-                    if (service.hasCategory(CardEmulation.CATEGORY_PAYMENT))  {
-                        numPaymentServices++;
-                        lastFoundPaymentService = service.getComponent();
-                    }
-                }
-                if (DBG) Log.d(TAG, "Number of payment services is " +
-                        Integer.toString(numPaymentServices));
-                if (numPaymentServices == 0) {
-                    if (DBG) Log.d(TAG, "Default removed, no services left.");
-                    // No payment services left, unset default and don't ask the user
-                    setDefaultServiceForCategoryChecked(userId, null, CardEmulation.CATEGORY_PAYMENT);
-                } else if (numPaymentServices == 1) {
-                    // Only one left, automatically make it the default
-                    if (DBG) Log.d(TAG, "Default removed, making remaining service default.");
-                    setDefaultServiceForCategoryChecked(userId, lastFoundPaymentService,
-                            CardEmulation.CATEGORY_PAYMENT);
-                } else if (numPaymentServices > 1) {
-                    // More than one left, unset default and ask the user if he wants
-                    // to set a new one
-                    if (DBG) Log.d(TAG, "Default removed, asking user to pick.");
-                    setDefaultServiceForCategoryChecked(userId, null,
-                            CardEmulation.CATEGORY_PAYMENT);
-                    Intent intent = new Intent(mContext, DefaultRemovedActivity.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    mContext.startActivityAsUser(intent, UserHandle.CURRENT);
-                }
-            } else {
-                // Default still exists and handles the category, nothing do
-                if (DBG) Log.d(TAG, "Default payment service still ok.");
-            }
-        } else {
+        if (defaultPaymentService == null) {
             // A payment service may have been removed, leaving only one;
             // in that case, automatically set that app as default.
             int numPaymentServices = 0;
             ComponentName lastFoundPaymentService = null;
-            for (ApduServiceInfo service : services) {
+            for (NxpApduServiceInfo service : services) {
                 if (service.hasCategory(CardEmulation.CATEGORY_PAYMENT))  {
                     numPaymentServices++;
                     lastFoundPaymentService = service.getComponent();
@@ -462,7 +423,7 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
                 return false;
             }
             return mServiceCache.registerAidGroupForService(userId, Binder.getCallingUid(), service,
-                    aidGroup);
+                    new NxpAidGroup(aidGroup));
         }
 
         @Override
@@ -494,7 +455,14 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
                 throws RemoteException {
             NfcPermissions.validateUserId(userId);
             NfcPermissions.enforceAdminPermissions(mContext);
-            return mServiceCache.getServicesForCategory(userId, category);
+            List<NxpApduServiceInfo> nxpApduServices = mServiceCache.getServicesForCategory(userId, category);
+            ArrayList<ApduServiceInfo> apduServices = new ArrayList<ApduServiceInfo>();
+            for(NxpApduServiceInfo nxpApdu : nxpApduServices) {
+                ApduServiceInfo apduService = nxpApdu.createApduServiceInfo();
+                apduServices.add(apduService);
+            }
+            if(DBG) Log.d(TAG, "getServices() size: " + apduServices.size());
+            return apduServices;
         }
 
         @Override
@@ -652,14 +620,14 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         if(category == CardEmulation.CATEGORY_PAYMENT) {
             return null;
         }
-        List<ApduServiceInfo> nonPaymentServices = new ArrayList<ApduServiceInfo>();
+        List<NxpApduServiceInfo> nonPaymentServices = new ArrayList<NxpApduServiceInfo>();
         Map<String , Integer> nonPaymentServiceAidCacheSize= new HashMap<String , Integer>();
         Integer serviceAidCacheSize = 0x00;
         String serviceComponent = null;
         NfcPermissions.validateUserId(userId);
         NfcPermissions.enforceUserPermissions(mContext);
         nonPaymentServices = mServiceCache.getServicesForCategory(userId, CardEmulation.CATEGORY_OTHER);
-        for(ApduServiceInfo serviceinfo : nonPaymentServices) {
+        for(NxpApduServiceInfo serviceinfo : nonPaymentServices) {
             serviceAidCacheSize = 0x00;
             serviceComponent = null;
             if(serviceinfo != null) {
@@ -678,7 +646,7 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         return nonPaymentServiceAidCacheSize;
     }
 
-    public List<ApduServiceInfo> getAllServices() {
+    public List<NxpApduServiceInfo> getAllServices() {
         int userId = ActivityManager.getCurrentUser();
         return mServiceCache.getServices(userId);
     }

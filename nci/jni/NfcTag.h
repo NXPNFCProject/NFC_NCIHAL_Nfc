@@ -129,7 +129,7 @@ public:
     ** Returns:         None
     **
     *******************************************************************************/
-    void connectionEventHandler (UINT8 event, tNFA_CONN_EVT_DATA* data);
+    void connectionEventHandler (uint8_t event, tNFA_CONN_EVT_DATA* data);
 
 
     /*******************************************************************************
@@ -298,7 +298,7 @@ public:
     ** Returns:         True if the response is NACK
     **
     *******************************************************************************/
-    bool isT2tNackResponse (const UINT8* response, UINT32 responseLen);
+    bool isT2tNackResponse (const uint8_t* response, uint32_t responseLen);
 
     /*******************************************************************************
     **
@@ -445,7 +445,7 @@ public:
     ** Returns:         UID in case of TypeA Tag otherwise NULL..
     **
     *******************************************************************************/
-    void getTypeATagUID(UINT8 **uid, UINT32 *len);
+    void getTypeATagUID(uint8_t **uid, uint32_t *len);
 
     /*******************************************************************************
     **
@@ -515,7 +515,7 @@ private:
     tNFC_RF_TECH_PARAMS mTechParams [MAX_NUM_TECHNOLOGY]; //array of technology parameters
     SyncEvent mReadCompleteEvent;
     struct timespec mLastKovioTime; // time of last Kovio tag activation
-    UINT8 mLastKovioUid[NFC_KOVIO_MAX_LEN]; // uid of last Kovio tag activated
+    uint8_t mLastKovioUid[NFC_KOVIO_MAX_LEN]; // uid of last Kovio tag activated
     bool mIsDynamicTagId; // whether the tag has dynamic tag ID
     bool mIsFelicaLite;
     tNFA_RW_PRES_CHK_OPTION mPresenceCheckAlgorithm;

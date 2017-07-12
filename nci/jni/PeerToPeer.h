@@ -133,7 +133,7 @@ public:
     ** Returns:         None
     **
     *******************************************************************************/
-    void connectionEventHandler (UINT8 event, tNFA_CONN_EVT_DATA* eventData);
+    void connectionEventHandler (uint8_t event, tNFA_CONN_EVT_DATA* eventData);
 
 
     /*******************************************************************************
@@ -190,7 +190,7 @@ public:
     ** Returns:         True if ok.
     **
     *******************************************************************************/
-    bool createClient (tJNI_HANDLE jniHandle, UINT16 miu, UINT8 rw);
+    bool createClient (tJNI_HANDLE jniHandle, uint16_t miu, uint8_t rw);
 
 
     /*******************************************************************************
@@ -218,7 +218,7 @@ public:
     ** Returns:         True if ok.
     **
     *******************************************************************************/
-    bool connectConnOriented (tJNI_HANDLE jniHandle, UINT8 destinationSap);
+    bool connectConnOriented (tJNI_HANDLE jniHandle, uint8_t destinationSap);
 
 
     /*******************************************************************************
@@ -233,7 +233,7 @@ public:
     ** Returns:         True if ok.
     **
     *******************************************************************************/
-    bool send (tJNI_HANDLE jniHandle, UINT8* buffer, UINT16 bufferLen);
+    bool send (tJNI_HANDLE jniHandle, uint8_t* buffer, uint16_t bufferLen);
 
 
     /*******************************************************************************
@@ -249,7 +249,7 @@ public:
     ** Returns:         True if ok.
     **
     *******************************************************************************/
-    bool receive (tJNI_HANDLE jniHandle, UINT8* buffer, UINT16 bufferLen, UINT16& actualLen);
+    bool receive (tJNI_HANDLE jniHandle, uint8_t* buffer, uint16_t bufferLen, uint16_t& actualLen);
 
 
     /*******************************************************************************
@@ -275,7 +275,7 @@ public:
     ** Returns:         Peer's max information unit.
     **
     *******************************************************************************/
-    UINT16 getRemoteMaxInfoUnit (tJNI_HANDLE jniHandle);
+    uint16_t getRemoteMaxInfoUnit (tJNI_HANDLE jniHandle);
 
 
     /*******************************************************************************
@@ -288,7 +288,7 @@ public:
     ** Returns:         Peer's receive window size.
     **
     *******************************************************************************/
-    UINT8 getRemoteRecvWindow (tJNI_HANDLE jniHandle);
+    uint8_t getRemoteRecvWindow (tJNI_HANDLE jniHandle);
 
 
     /*******************************************************************************
@@ -396,7 +396,7 @@ private:
     static PeerToPeer sP2p;
 
     // Variables below only accessed from a single thread
-    UINT16          mRemoteWKS;                 // Peer's well known services
+    uint16_t        mRemoteWKS;                 // Peer's well known services
     bool            mIsP2pListening;            // If P2P listening is enabled or not
     tNFA_TECHNOLOGY_MASK    mP2pListenTechMask; // P2P Listen mask
 
@@ -509,7 +509,7 @@ private:
     ** Returns:         True if ok.
     **
     *******************************************************************************/
-    bool        createDataLinkConn (tJNI_HANDLE jniHandle, const char* serviceName, UINT8 destinationSap);
+    bool        createDataLinkConn (tJNI_HANDLE jniHandle, const char* serviceName, uint8_t destinationSap);
 
 
     /*******************************************************************************
@@ -590,10 +590,10 @@ class NfaConn : public android::RefBase
 public:
     tNFA_HANDLE         mNfaConnHandle;         // NFA handle of the P2P connection
     PeerToPeer::tJNI_HANDLE         mJniHandle;             // JNI handle of the P2P connection
-    UINT16              mMaxInfoUnit;
-    UINT8               mRecvWindow;
-    UINT16              mRemoteMaxInfoUnit;
-    UINT8               mRemoteRecvWindow;
+    uint16_t            mMaxInfoUnit;
+    uint8_t             mRecvWindow;
+    uint16_t            mRemoteMaxInfoUnit;
+    uint8_t             mRemoteRecvWindow;
     SyncEvent           mReadEvent;             // event for reading
     SyncEvent           mCongEvent;             // event for congestion
     SyncEvent           mDisconnectingEvent;     // event for disconnecting

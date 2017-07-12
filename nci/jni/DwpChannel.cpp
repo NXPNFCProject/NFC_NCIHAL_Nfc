@@ -25,7 +25,7 @@ static const int EE_ERROR_OPEN_FAIL =  -1;
 bool IsWiredMode_Enable();
 bool eSE_connected = false;
 bool dwpChannelForceClose = false;
-#if(NXP_ESE_JCOP_DWNLD_PROTECTION == TRUE)
+#if(NXP_ESE_JCOP_DWNLD_PROTECTION == true)
 DwpChannel DwpChannel::sDwpChannel;
 #endif
 namespace android
@@ -46,18 +46,18 @@ namespace android
 bool IsWiredMode_Enable()
 {
     static const char fn [] = "DwpChannel::IsWiredMode_Enable";
-    ALOGD ("%s: enter", fn);
+    ALOGV("%s: enter", fn);
     SecureElement &se = SecureElement::getInstance();
     tNFA_STATUS stat = NFA_STATUS_FAILED;
 
-    UINT8 mActualNumEe  = SecureElement::MAX_NUM_EE;
-    UINT16 meSE         = 0x4C0;
+    uint8_t mActualNumEe  = SecureElement::MAX_NUM_EE;
+    uint16_t meSE         = 0x4C0;
     tNFA_EE_INFO EeInfo[mActualNumEe];
 
 #if 0
     if(mIsInit == false)
     {
-        ALOGD ("%s: JcopOs Dwnld is not initialized", fn);
+        ALOGV("%s: JcopOs Dwnld is not initialized", fn);
         goto TheEnd;
     }
 #endif
@@ -66,13 +66,13 @@ bool IsWiredMode_Enable()
     {
         for(int xx = 0; xx <  mActualNumEe; xx++)
         {
-            ALOGE("xx=%d, ee_handle=0x0%x, status=0x0%x", xx, EeInfo[xx].ee_handle,EeInfo[xx].ee_status);
+            ALOGI("xx=%d, ee_handle=0x0%x, status=0x0%x", xx, EeInfo[xx].ee_handle,EeInfo[xx].ee_status);
             if (EeInfo[xx].ee_handle == meSE)
             {
                 if(EeInfo[xx].ee_status == 0x00)
                 {
                     stat = NFA_STATUS_OK;
-                    ALOGD ("%s: status = 0x%x", fn, stat);
+                    ALOGV("%s: status = 0x%x", fn, stat);
                     break;
                 }
                 else if(EeInfo[xx].ee_status == 0x01)
@@ -97,7 +97,7 @@ bool IsWiredMode_Enable()
         }
     }
 //TheEnd: /*commented to eliminate the label defined but not used warning*/
-    ALOGD("%s: exit; status = 0x%X", fn, stat);
+    ALOGV("%s: exit; status = 0x%X", fn, stat);
     if(stat == NFA_STATUS_OK)
         return true;
     else
@@ -114,15 +114,15 @@ bool IsWiredMode_Enable()
 **
 *******************************************************************************/
 
-INT16 open()
+int16_t open()
 {
     static const char fn [] = "DwpChannel::open";
     bool stat = false;
-    INT16 dwpHandle = EE_ERROR_OPEN_FAIL;
+    int16_t dwpHandle = EE_ERROR_OPEN_FAIL;
     SecureElement &se = SecureElement::getInstance();
 
     ALOGE("DwpChannel: Sec Element open Enter");
-#if(NXP_ESE_JCOP_DWNLD_PROTECTION == TRUE)
+#if(NXP_ESE_JCOP_DWNLD_PROTECTION == true)
     DwpChannel::getInstance().Initialize();
 #endif
     ALOGE("DwpChannel: Sec Element open Enter");
@@ -160,13 +160,13 @@ INT16 open()
           */
           if(se.setNfccPwrConfig(se.POWER_ALWAYS_ON) != NFA_STATUS_OK)
           {
-              ALOGD("%s: power link command failed", __FUNCTION__);
+              ALOGV("%s: power link command failed", __func__);
           }
 #endif
         }
     }
 
-    ALOGD("%s: Exit. dwpHandle = 0x%02x", fn,dwpHandle);
+    ALOGV("%s: Exit. dwpHandle = 0x%02x", fn,dwpHandle);
     return dwpHandle;
 }
 /*******************************************************************************
@@ -179,18 +179,18 @@ INT16 open()
 **
 *******************************************************************************/
 
-bool close(INT16 mHandle)
+bool close(int16_t mHandle)
 {
     static const char fn [] = "DwpChannel::close";
-    ALOGD("%s: enter", fn);
+    ALOGV("%s: enter", fn);
     bool stat = false;
     SecureElement &se = SecureElement::getInstance();
-#if(NXP_ESE_JCOP_DWNLD_PROTECTION == TRUE)
+#if(NXP_ESE_JCOP_DWNLD_PROTECTION == true)
     DwpChannel::getInstance().finalize();
 #endif
     if(mHandle == EE_ERROR_OPEN_FAIL)
     {
-        ALOGD("%s: Channel access denied. Returning", fn);
+        ALOGV("%s: Channel access denied. Returning", fn);
         return stat;
     }
     if(eSE_connected != true)
@@ -211,22 +211,22 @@ bool close(INT16 mHandle)
      return stat;
 }
 
-bool transceive (UINT8* xmitBuffer, INT32 xmitBufferSize, UINT8* recvBuffer,
-                 INT32 recvBufferMaxSize, INT32& recvBufferActualSize, INT32 timeoutMillisec)
+bool transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uint8_t* recvBuffer,
+                 int32_t recvBufferMaxSize, int32_t& recvBufferActualSize, int32_t timeoutMillisec)
 {
     static const char fn [] = "DwpChannel::transceive";
     bool stat = false;
     SecureElement &se = SecureElement::getInstance();
-    ALOGD("%s: enter", fn);
+    ALOGV("%s: enter", fn);
 
     /*When Nfc deinitialization triggered*/
     if(dwpChannelForceClose == true)
         return stat;
 
-#if(NXP_ESE_JCOP_DWNLD_PROTECTION == TRUE)
+#if(NXP_ESE_JCOP_DWNLD_PROTECTION == true)
     if(DwpChannel::getInstance().dwpChannelForceClose)
     {
-        ALOGD("%s: exit", fn);
+        ALOGV("%s: exit", fn);
         return stat;
     }
 #endif
@@ -237,11 +237,11 @@ bool transceive (UINT8* xmitBuffer, INT32 xmitBufferSize, UINT8* recvBuffer,
                           recvBufferMaxSize,
                           recvBufferActualSize,
                           timeoutMillisec);
-    ALOGD("%s: exit", fn);
+    ALOGV("%s: exit", fn);
     return stat;
 }
 
-#if(NXP_ESE_JCOP_DWNLD_PROTECTION == TRUE)
+#if(NXP_ESE_JCOP_DWNLD_PROTECTION == true)
 /*******************************************************************************
 **
 ** Function:        DwpChannel Constructor
@@ -322,9 +322,9 @@ void DwpChannel::Initialize()
 void DwpChannel::forceClose()
 {
     static const char fn [] = "DwpChannel::doDwpChannel_ForceExit";
-    ALOGD("%s: Enter:", fn);
+    ALOGV("%s: Enter:", fn);
     dwpChannelForceClose = true;
-    ALOGD("%s: Exit:", fn);
+    ALOGV("%s: Exit:", fn);
 }
 #endif
 
@@ -333,24 +333,24 @@ void doeSE_Reset(void)
     static const char fn [] = "DwpChannel::doeSE_Reset";
     SecureElement &se = SecureElement::getInstance();
     RoutingManager &rm = RoutingManager::getInstance();
-    ALOGD("%s: enter:", fn);
+    ALOGV("%s: enter:", fn);
 
     rm.mResetHandlerMutex.lock();
-    ALOGD("1st mode set calling");
+    ALOGV("1st mode set calling");
     se.SecEle_Modeset(0x00);
     usleep(100 * 1000);
-    ALOGD("1st mode set called");
-    ALOGD("2nd mode set calling");
+    ALOGV("1st mode set called");
+    ALOGV("2nd mode set calling");
 
     se.SecEle_Modeset(0x01);
-    ALOGD("2nd mode set called");
+    ALOGV("2nd mode set called");
 
     usleep(3000 * 1000);
     rm.mResetHandlerMutex.unlock();
-#if (NXP_NFCEE_REMOVED_NTF_RECOVERY == TRUE)
+#if (NXP_NFCEE_REMOVED_NTF_RECOVERY == true)
     if((RoutingManager::getInstance().is_ee_recovery_ongoing()))
     {
-        ALOGE ("%s: is_ee_recovery_ongoing ", fn);
+        ALOGE("%s: is_ee_recovery_ongoing ", fn);
         SyncEventGuard guard (se.mEEdatapacketEvent);
         se.mEEdatapacketEvent.wait(android::gMaxEERecoveryTimeout);
     }
@@ -361,9 +361,9 @@ namespace android
     void doDwpChannel_ForceExit()
     {
         static const char fn [] = "DwpChannel::doDwpChannel_ForceExit";
-        ALOGD("%s: enter:", fn);
+        ALOGV("%s: enter:", fn);
         dwpChannelForceClose = true;
-        ALOGD("%s: exit", fn);
+        ALOGV("%s: exit", fn);
     }
 }
 /*******************************************************************************
@@ -382,46 +382,57 @@ void doeSE_JcopDownLoadReset(void)
     /*tNFA_STATUS nfaStat = NFA_STATUS_FAILED;*/
     SecureElement &se = SecureElement::getInstance();
     RoutingManager &rm = RoutingManager::getInstance();
-#if ((NXP_ESE_RESET_METHOD == TRUE) && (NXP_ESE_POWER_MODE == TRUE))
+#if ((NXP_ESE_RESET_METHOD == true) && (NXP_ESE_POWER_MODE == true))
     unsigned long int num = 0;
 #endif
-    ALOGD("%s: enter:", fn);
+    ALOGV("%s: enter:", fn);
 
     rm.mResetHandlerMutex.lock();
-#if ((NXP_ESE_RESET_METHOD == TRUE) && (NXP_ESE_POWER_MODE == TRUE))
+#if ((NXP_ESE_RESET_METHOD == true) && (NXP_ESE_POWER_MODE == true))
     if (GetNxpNumValue (NAME_NXP_ESE_POWER_DH_CONTROL, (void*)&num, sizeof(num)) == true)
     {
         if(num ==1)
         {
-            ALOGD("1st mode set calling");
+            if(NFA_GetNCIVersion() == NCI_VERSION_2_0)
+            {
+                se.setNfccPwrConfig(se.NFCC_DECIDES);
+            }
+
+            ALOGV("1st mode set calling");
             se.SecEle_Modeset(0x00);
             usleep(100 * 1000);
-            ALOGD("1st mode set called");
-            ALOGD("2nd mode set calling");
+            ALOGV("1st mode set called");
+            ALOGV("2nd mode set calling");
+
+            if(NFA_GetNCIVersion() == NCI_VERSION_2_0)
+            {
+                se.setNfccPwrConfig(se.POWER_ALWAYS_ON|se.COMM_LINK_ACTIVE);
+            }
+
             se.SecEle_Modeset(0x01);
-            ALOGD("2nd mode set called");
+            ALOGV("2nd mode set called");
             usleep(3000 * 1000);
         }
         else if(num ==2)
         {
-            ALOGD("%s: eSE CHIP reset  on DWP Channel:", fn);
+            ALOGV("%s: eSE CHIP reset  on DWP Channel:", fn);
             se.SecEle_Modeset(0x00);
             usleep(100 * 1000);
             se.eSE_Chip_Reset();
             se.SecEle_Modeset(0x01);
-            ALOGD("Chip Reset DONE");
+            ALOGV("Chip Reset DONE");
             usleep(3000 * 1000);
         }
         else
         {
-            ALOGD("%s: Invalid Power scheme:", fn);
+            ALOGV("%s: Invalid Power scheme:", fn);
         }
         /*
         if( (num == 1) || (num == 2))
         {
             if((se.eSE_Compliancy == se.eSE_Compliancy_ETSI_12)&&(se.mDeletePipeHostId == 0xC0))
             {
-                ALOGD("%s: Clear All pipes received.....Create pipe at APDU Gate:", fn);
+                ALOGV("%s: Clear All pipes received.....Create pipe at APDU Gate:", fn);
                 se.mDeletePipeHostId = 0x00;
                 android ::checkforNfceeConfig();
                 SyncEventGuard guard (se.mCreatePipeEvent);
@@ -429,7 +440,7 @@ void doeSE_JcopDownLoadReset(void)
                 if(nfaStat == NFA_STATUS_OK)
                 {
                     se.mCreatePipeEvent.wait();
-                    ALOGD("%s: Created pipe at APDU Gate Open the pipe!!!", fn);
+                    ALOGV("%s: Created pipe at APDU Gate Open the pipe!!!", fn);
                     SyncEventGuard guard (se.mPipeOpenedEvent);
                     nfaStat = NFA_STATUS_FAILED;
                     se.mAbortEventWaitOk = false;
@@ -437,42 +448,42 @@ void doeSE_JcopDownLoadReset(void)
                     if(nfaStat == NFA_STATUS_OK)
                     {
                         se.mPipeOpenedEvent.wait();
-                        ALOGD("%s:Pipe at APDU Gate opened successfully!!!", fn);
+                        ALOGV("%s:Pipe at APDU Gate opened successfully!!!", fn);
                         if(se.mAbortEventWaitOk == false)
                         {
                             SyncEventGuard guard (se.mAbortEvent);
                             se.mAbortEvent.wait();
                         }
-                        ALOGD("%s:ATR received successfully!!!", fn);
+                        ALOGV("%s:ATR received successfully!!!", fn);
                     }
                     else
                     {
-                        ALOGD ("%s: fail open pipe; error=0x%X", fn, nfaStat);
+                        ALOGV("%s: fail open pipe; error=0x%X", fn, nfaStat);
                     }
                 }
                 else
                 {
-                    ALOGE ("%s: fail create pipe; error=0x%X", fn, nfaStat);
+                    ALOGE("%s: fail create pipe; error=0x%X", fn, nfaStat);
                 }
             }
         }
         */
     }
 #else
-    ALOGD("1st mode set calling");
+    ALOGV("1st mode set calling");
     se.SecEle_Modeset(0x00);
     usleep(100 * 1000);
-    ALOGD("1st mode set called");
-    ALOGD("2nd mode set calling");
+    ALOGV("1st mode set called");
+    ALOGV("2nd mode set calling");
 
     se.SecEle_Modeset(0x01);
-    ALOGD("2nd mode set called");
+    ALOGV("2nd mode set called");
 
     usleep(3000 * 1000);
 #endif
     rm.mResetHandlerMutex.unlock();
 
-#if (NXP_NFCEE_REMOVED_NTF_RECOVERY == TRUE)
+#if (NXP_NFCEE_REMOVED_NTF_RECOVERY == true)
     if((RoutingManager::getInstance().is_ee_recovery_ongoing()))
     {
         SyncEventGuard guard (se.mEEdatapacketEvent);

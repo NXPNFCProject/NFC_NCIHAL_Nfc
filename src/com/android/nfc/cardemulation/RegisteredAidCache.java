@@ -39,7 +39,7 @@ import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import com.android.nfc.NfcService;
-import android.nfc.cardemulation.ApduServiceInfo;
+import android.nfc.cardemulation.NxpApduServiceInfo;
 import android.nfc.cardemulation.CardEmulation;
 import android.util.Log;
 import com.nxp.nfc.NxpConstants;
@@ -87,7 +87,7 @@ public class RegisteredAidCache {
 
     // Represents a single AID registration of a service
     final class ServiceAidInfo {
-        ApduServiceInfo service;
+        NxpApduServiceInfo service;
         String aid;
         String category;
 
@@ -126,8 +126,8 @@ public class RegisteredAidCache {
     // Represents a list of services, an optional default and a category that
     // an AID was resolved to.
     final class AidResolveInfo {
-        List<ApduServiceInfo> services = new ArrayList<ApduServiceInfo>();
-        ApduServiceInfo defaultService = null;
+        List<NxpApduServiceInfo> services = new ArrayList<NxpApduServiceInfo>();
+        NxpApduServiceInfo defaultService = null;
         String category = null;
         boolean mustRoute = true; // Whether this AID should be routed at all
 
@@ -167,7 +167,7 @@ public class RegisteredAidCache {
         }
         //TODO:
         //AOSP needs Power Switch On Only for Host AIDs
-        mHostAIDPowerState = 0x40 | POWER_STATE_SWITCH_ON;
+        mHostAIDPowerState = POWER_STATE_SWITCH_ON|0x10;
     }
 
     public AidResolveInfo resolveAid(String aid) {
@@ -207,7 +207,7 @@ public class RegisteredAidCache {
                             resolveInfo.defaultService = entryResolveInfo.defaultService;
                             resolveInfo.category = entryResolveInfo.category;
                         }
-                        for (ApduServiceInfo serviceInfo : entryResolveInfo.services) {
+                        for (NxpApduServiceInfo serviceInfo : entryResolveInfo.services) {
                             if (!resolveInfo.services.contains(serviceInfo)) {
                                 resolveInfo.services.add(serviceInfo);
                             }
@@ -268,8 +268,8 @@ public class RegisteredAidCache {
         AidResolveInfo resolveInfo = new AidResolveInfo();
         resolveInfo.category = CardEmulation.CATEGORY_OTHER;
 
-        ApduServiceInfo matchedForeground = null;
-        ApduServiceInfo matchedPayment = null;
+        NxpApduServiceInfo matchedForeground = null;
+        NxpApduServiceInfo matchedPayment = null;
         for (ServiceAidInfo serviceAidInfo : conflictingServices) {
             boolean serviceClaimsPaymentAid =
                     CardEmulation.CATEGORY_PAYMENT.equals(serviceAidInfo.category);
@@ -392,10 +392,10 @@ public class RegisteredAidCache {
         }
     }
 
-    void generateServiceMapLocked(List<ApduServiceInfo> services) {
+    void generateServiceMapLocked(List<NxpApduServiceInfo> services) {
         // Easiest is to just build the entire tree again
         mAidServices.clear();
-        for (ApduServiceInfo service : services) {
+        for (NxpApduServiceInfo service : services) {
             if (DBG) Log.d(TAG, "generateServiceMap component: " + service.getComponent());
             List<String> prefixAids = service.getPrefixAids();
             for (String aid : service.getAids()) {
@@ -597,7 +597,7 @@ public class RegisteredAidCache {
             } else if (resolveInfo.defaultService != null) {
                 // There is a default service set, route to where that service resides -
                 // either on the host (HCE) or on an SE.
-                ApduServiceInfo.ESeInfo seInfo = resolveInfo.defaultService.getSEInfo();
+                NxpApduServiceInfo.ESeInfo seInfo = resolveInfo.defaultService.getSEInfo();
                 boolean isDefaultPayment = resolveInfo.defaultService.getComponent().equals(mPreferredPaymentService);
                 boolean isForeground = resolveInfo.defaultService.getComponent().equals(mPreferredForegroundService);
                 boolean isOnHost = resolveInfo.defaultService.isOnHost();
@@ -619,11 +619,11 @@ public class RegisteredAidCache {
                 /*If non default off host payment AID ,set screen state*/
                 if (!isOnHost) {
                     Log.d(TAG," set screen off enable for " + aid);
-                    powerstate |= (powerstate | 0x80);
+                    powerstate |= 0x28;
                 }
-
-                powerstate |= 0x40;
-
+                Log.d(TAG," AID power state before adding screen state" + powerstate);
+                powerstate |= 0x10;
+                Log.d(TAG," AID power state after" + powerstate);
                 if (!isOnHost && NfcService.getInstance().isVzwFeatureEnabled()) {
                     String plainAid = "";
                     if(aid.endsWith("*"))
@@ -635,19 +635,20 @@ public class RegisteredAidCache {
                     if (mRoutingManager.GetVzwCache().isAidPresent(plainAid)) {
                         if (mRoutingManager.GetVzwCache().IsAidAllowed(plainAid)){
                             /*if vzw AID reset the previous screen state   */
-                            powerstate &= ~0x80;
+                            powerstate &= ~0x28;
                             /*get the vzw power and screen state  :- SCREEN | L |F */
                             vzwPowerstate = mRoutingManager.GetVzwCache().getPowerState(plainAid);
                             /*merge power state with vzw power state */
                             powerstate &= vzwPowerstate;
                             /*merge the power state with vzw screen state*/
-                            powerstate |= (vzwPowerstate & 0x80);
+                            powerstate |= (vzwPowerstate & 0x28);
                             Log.d(TAG," vzw aid" + aid);
                             Log.d(TAG," vzw merged power state" + powerstate);
                         }
                     }
                 }
                 route = isOnHost ? 0 : seInfo.getSeId();
+                Log.d(TAG," AID power state" + powerstate);
                 if (isForeground) {
                     weight += AidElement.ROUTE_WIEGHT_FOREGROUND;
                 }
@@ -659,18 +660,18 @@ public class RegisteredAidCache {
             } else if (resolveInfo.services.size() == 1) {
                 // Only one service, but not the default, must route to host
                 // to ask the user to choose one.
-                AidElement aidElem = new AidElement(aid, AidElement.ROUTE_WIEGHT_OTHER, 0, mHostAIDPowerState);
+                AidElement aidElem = new AidElement(aid, AidElement.ROUTE_WIEGHT_OTHER, 0, mHostAIDPowerState|0x10);
                 routingEntries.put(aid, aidElem);
             } else if (resolveInfo.services.size() > 1) {
                 // Multiple services, need to route to host to ask
-                AidElement aidElem = new AidElement(aid, AidElement.ROUTE_WIEGHT_OTHER, 0, mHostAIDPowerState);
+                AidElement aidElem = new AidElement(aid, AidElement.ROUTE_WIEGHT_OTHER, 0, mHostAIDPowerState|0x10);
                 routingEntries.put(aid, aidElem);
             }
         }
         mRoutingManager.configureRouting(routingEntries);
     }
 
-    public void onServicesUpdated(int userId, List<ApduServiceInfo> services) {
+    public void onServicesUpdated(int userId, List<NxpApduServiceInfo> services) {
         if (DBG) Log.d(TAG, "onServicesUpdated");
         synchronized (mLock) {
             if (ActivityManager.getCurrentUser() == userId) {
@@ -736,12 +737,12 @@ public class RegisteredAidCache {
     String dumpEntry(Map.Entry<String, AidResolveInfo> entry) {
         StringBuilder sb = new StringBuilder();
         String category = entry.getValue().category;
-        ApduServiceInfo defaultServiceInfo = entry.getValue().defaultService;
+        NxpApduServiceInfo defaultServiceInfo = entry.getValue().defaultService;
         sb.append("    \"" + entry.getKey() + "\" (category: " + category + ")\n");
         ComponentName defaultComponent = defaultServiceInfo != null ?
                 defaultServiceInfo.getComponent() : null;
 
-        for (ApduServiceInfo serviceInfo : entry.getValue().services) {
+        for (NxpApduServiceInfo serviceInfo : entry.getValue().services) {
             sb.append("        ");
             if (serviceInfo.getComponent().equals(defaultComponent)) {
                 sb.append("*DEFAULT* ");

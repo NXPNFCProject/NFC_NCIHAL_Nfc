@@ -41,7 +41,7 @@
 #include <sys/queue.h>
 #include <semaphore.h>
 
-
+#define ALOGV ALOGD
 /* Discovery modes -- keep in sync with NFCManager.DISCOVERY_MODE_* */
 #define DISCOVERY_MODE_TAG_READER         0
 #define DISCOVERY_MODE_NFCIP1             1

@@ -64,7 +64,7 @@ public:
     ** Returns:         True if ok.
     **
     *******************************************************************************/
-    bool enqueue (UINT8* data, UINT16 dataLen);
+    bool enqueue (uint8_t* data, uint16_t dataLen);
 
 
     /*******************************************************************************
@@ -79,7 +79,7 @@ public:
     ** Returns:         True if ok.
     **
     *******************************************************************************/
-    bool dequeue (UINT8* buffer, UINT16 bufferMaxLen, UINT16& actualLen);
+    bool dequeue (uint8_t* buffer, uint16_t bufferMaxLen, uint16_t& actualLen);
 
 
     /*******************************************************************************
@@ -96,8 +96,8 @@ public:
 private:
     struct tHeader
     {
-        UINT16 mDataLen; //number of octets of data
-        UINT16 mOffset; //offset of the first octet of data
+        uint16_t mDataLen; //number of octets of data
+        uint16_t mOffset; //offset of the first octet of data
     };
     typedef std::list<tHeader*> Queue;
 

@@ -35,7 +35,7 @@
 /*
  *  Adjust the controller's power states.
  */
-#include "OverrideLog.h"
+#include "_OverrideLog.h"
 #include "PowerSwitch.h"
 #include "NfcJniUtil.h"
 #include "config.h"
@@ -120,10 +120,10 @@ void PowerSwitch::initialize (PowerLevel level)
 
     mMutex.lock ();
 
-    ALOGD ("%s: level=%s (%u)", fn, powerLevelToString(level), level);
+    ALOGV("%s: level=%s (%u)", fn, powerLevelToString(level), level);
     if (GetNumValue (NAME_SCREEN_OFF_POWER_STATE, &num, sizeof(num)))
         mDesiredScreenOffPowerState = (int) num;
-    ALOGD ("%s: desired screen-off state=%d", fn, mDesiredScreenOffPowerState);
+    ALOGV("%s: desired screen-off state=%d", fn, mDesiredScreenOffPowerState);
 
     switch (level)
     {
@@ -138,7 +138,7 @@ void PowerSwitch::initialize (PowerLevel level)
         break;
 
     default:
-        ALOGE ("%s: not handled", fn);
+        ALOGE("%s: not handled", fn);
         break;
     }
     mMutex.unlock ();
@@ -181,7 +181,7 @@ bool PowerSwitch::setLevel (PowerLevel newLevel)
 
     mMutex.lock ();
 
-    ALOGD ("%s: level=%s (%u)", fn, powerLevelToString(newLevel), newLevel);
+    ALOGV("%s: level=%s (%u)", fn, powerLevelToString(newLevel), newLevel);
     if (mCurrLevel == newLevel)
     {
         retval = true;
@@ -190,7 +190,7 @@ bool PowerSwitch::setLevel (PowerLevel newLevel)
 
     if (mCurrLevel == UNKNOWN_LEVEL)
     {
-        ALOGE ("%s: unknown power level", fn);
+        ALOGE("%s: unknown power level", fn);
         goto TheEnd;
     }
 
@@ -201,7 +201,7 @@ bool PowerSwitch::setLevel (PowerLevel newLevel)
         SyncEventGuard g (gDeactivatedEvent);
         if (gActivated)
         {
-            ALOGD("%s: wait for deactivation", fn);
+            ALOGV("%s: wait for deactivation", fn);
             gDeactivatedEvent.wait ();
         }
         mMutex.lock ();
@@ -226,11 +226,11 @@ bool PowerSwitch::setLevel (PowerLevel newLevel)
         break;
 
     default:
-        ALOGE ("%s: not handled", fn);
+        ALOGE("%s: not handled", fn);
         break;
     }
 
-    ALOGD("%s: actual power level=%s", fn, powerLevelToString(mCurrLevel));
+    ALOGV("%s: actual power level=%s", fn, powerLevelToString(mCurrLevel));
 
 TheEnd:
     mMutex.unlock ();
@@ -240,7 +240,7 @@ TheEnd:
 
 bool PowerSwitch::setScreenOffPowerState (ScreenOffPowerState newState)
 {
-    ALOGD ("PowerSwitch::setScreenOffPowerState: level=%s (%u)",
+    ALOGV("PowerSwitch::setScreenOffPowerState: level=%s (%u)",
         screenOffPowerStateToString(newState), newState);
 
     mMutex.lock ();
@@ -267,7 +267,7 @@ bool PowerSwitch::setModeOff (PowerActivity deactivated)
     mMutex.lock ();
     mCurrActivity &= ~deactivated;
     retVal = mCurrActivity != 0;
-    ALOGD ("PowerSwitch::setModeOff(deactivated=0x%x) : mCurrActivity=0x%x", deactivated, mCurrActivity);
+    ALOGV("PowerSwitch::setModeOff(deactivated=0x%x) : mCurrActivity=0x%x", deactivated, mCurrActivity);
     mMutex.unlock ();
     return retVal;
 }
@@ -289,7 +289,7 @@ bool PowerSwitch::setModeOn (PowerActivity activated)
     mMutex.lock ();
     mCurrActivity |= activated;
     retVal = mCurrActivity != 0;
-    ALOGD ("PowerSwitch::setModeOn(activated=0x%x) : mCurrActivity=0x%x", activated, mCurrActivity);
+    ALOGV("PowerSwitch::setModeOn(activated=0x%x) : mCurrActivity=0x%x", activated, mCurrActivity);
     mMutex.unlock ();
     return retVal;
 }
@@ -308,7 +308,7 @@ bool PowerSwitch::setModeOn (PowerActivity activated)
 bool PowerSwitch::setPowerOffSleepState (bool sleep)
 {
     static const char fn [] = "PowerSwitch::setPowerOffSleepState";
-    ALOGD ("%s: enter; sleep=%u", fn, sleep);
+    ALOGV("%s: enter; sleep=%u", fn, sleep);
     tNFA_STATUS stat = NFA_STATUS_FAILED;
     bool retval = false;
 
@@ -319,8 +319,8 @@ bool PowerSwitch::setPowerOffSleepState (bool sleep)
         {
             SyncEventGuard guard (mPowerStateEvent);
             mExpectedDeviceMgtPowerState = NFA_DM_PWR_MODE_OFF_SLEEP; //if power adjustment is ok, then this is the expected state
-            ALOGD ("%s: try power off", fn);
-            stat = NFA_PowerOffSleepMode (TRUE);
+            ALOGV("%s: try power off", fn);
+            stat = NFA_PowerOffSleepMode (true);
             if (stat == NFA_STATUS_OK)
             {
                 mPowerStateEvent.wait ();
@@ -328,13 +328,13 @@ bool PowerSwitch::setPowerOffSleepState (bool sleep)
             }
             else
             {
-                ALOGE ("%s: API fail; stat=0x%X", fn, stat);
+                ALOGE("%s: API fail; stat=0x%X", fn, stat);
                 goto TheEnd;
             }
         }
         else
         {
-            ALOGE ("%s: power is not ON; curr device mgt power state=%s (%u)", fn,
+            ALOGE("%s: power is not ON; curr device mgt power state=%s (%u)", fn,
                     deviceMgtPowerStateToString (mCurrDeviceMgtPowerState), mCurrDeviceMgtPowerState);
             goto TheEnd;
         }
@@ -347,14 +347,14 @@ bool PowerSwitch::setPowerOffSleepState (bool sleep)
             SyncEventGuard guard (mPowerStateEvent);
             mCurrDeviceMgtPowerState = NFA_DM_PWR_STATE_UNKNOWN;
             mExpectedDeviceMgtPowerState = NFA_DM_PWR_MODE_FULL;  //if power adjustment is ok, then this is the expected state
-            ALOGD ("%s: try full power", fn);
-            stat = NFA_PowerOffSleepMode (FALSE);
+            ALOGV("%s: try full power", fn);
+            stat = NFA_PowerOffSleepMode (false);
             if (stat == NFA_STATUS_OK)
             {
                 mPowerStateEvent.wait ();
                 if (mCurrDeviceMgtPowerState != NFA_DM_PWR_MODE_FULL)
                 {
-                    ALOGE ("%s: unable to full power; curr device mgt power stat=%s (%u)", fn,
+                    ALOGE("%s: unable to full power; curr device mgt power stat=%s (%u)", fn,
                             deviceMgtPowerStateToString (mCurrDeviceMgtPowerState), mCurrDeviceMgtPowerState);
                     goto TheEnd;
                 }
@@ -363,13 +363,13 @@ bool PowerSwitch::setPowerOffSleepState (bool sleep)
             }
             else
             {
-                ALOGE ("%s: API fail; stat=0x%X", fn, stat);
+                ALOGE("%s: API fail; stat=0x%X", fn, stat);
                 goto TheEnd;
             }
         }
         else
         {
-            ALOGE ("%s: not in power-off state; curr device mgt power state=%s (%u)", fn,
+            ALOGE("%s: not in power-off state; curr device mgt power state=%s (%u)", fn,
                     deviceMgtPowerStateToString (mCurrDeviceMgtPowerState), mCurrDeviceMgtPowerState);
             goto TheEnd;
         }
@@ -377,7 +377,7 @@ bool PowerSwitch::setPowerOffSleepState (bool sleep)
 
     retval = true;
 TheEnd:
-    ALOGD ("%s: exit; return %u", fn, retval);
+    ALOGV("%s: exit; return %u", fn, retval);
     return retval;
 }
 
@@ -392,7 +392,7 @@ TheEnd:
 ** Returns:         Text representation of power level.
 **
 *******************************************************************************/
-const char* PowerSwitch::deviceMgtPowerStateToString (UINT8 deviceMgtPowerState)
+const char* PowerSwitch::deviceMgtPowerStateToString (uint8_t deviceMgtPowerState)
 {
     switch (deviceMgtPowerState)
     {
@@ -470,7 +470,7 @@ const char* PowerSwitch::screenOffPowerStateToString (ScreenOffPowerState state)
 void PowerSwitch::abort ()
 {
     static const char fn [] = "PowerSwitch::abort";
-    ALOGD ("%s", fn);
+    ALOGV("%s", fn);
     SyncEventGuard guard (mPowerStateEvent);
     mPowerStateEvent.notifyOne ();
 }
@@ -487,7 +487,7 @@ void PowerSwitch::abort ()
 ** Returns:         None
 **
 *******************************************************************************/
-void PowerSwitch::deviceManagementCallback (UINT8 event, tNFA_DM_CBACK_DATA* eventData)
+void PowerSwitch::deviceManagementCallback (uint8_t event, tNFA_DM_CBACK_DATA* eventData)
 {
     static const char fn [] = "PowerSwitch::deviceManagementCallback";
 
@@ -496,7 +496,7 @@ void PowerSwitch::deviceManagementCallback (UINT8 event, tNFA_DM_CBACK_DATA* eve
     case NFA_DM_PWR_MODE_CHANGE_EVT:
         {
             tNFA_DM_PWR_MODE_CHANGE& power_mode = eventData->power_mode;
-            ALOGD ("%s: NFA_DM_PWR_MODE_CHANGE_EVT; status=0x%X; device mgt power state=%s (0x%X)", fn,
+            ALOGV("%s: NFA_DM_PWR_MODE_CHANGE_EVT; status=0x%X; device mgt power state=%s (0x%X)", fn,
                     power_mode.status, sPowerSwitch.deviceMgtPowerStateToString (power_mode.power_mode),
                     power_mode.power_mode);
             SyncEventGuard guard (sPowerSwitch.mPowerStateEvent);

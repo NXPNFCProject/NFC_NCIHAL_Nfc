@@ -135,8 +135,8 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
         ComponentName newDefault = name != null ? ComponentName.unflattenFromString(name) : null;
         boolean preferForeground = false;
         try {
-            preferForeground = Settings.Secure.getInt(mContext.getContentResolver(),
-                    Settings.Secure.NFC_PAYMENT_FOREGROUND) != 0;
+            preferForeground = Settings.Secure.getIntForUser(mContext.getContentResolver(),
+                    Settings.Secure.NFC_PAYMENT_FOREGROUND, userId) != 0;
         } catch (SettingNotFoundException e) {
         }
         synchronized (mLock) {
@@ -206,7 +206,7 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
             // preferences.
             if (mForegroundCurrent != null) {
                 if (!isForegroundAllowedLocked(mForegroundCurrent))  {
-                    Log.d(TAG, "Removing foreground preferred service because of conflict.");
+                    Log.d(TAG, "Removing foreground preferred service.");
                     mForegroundRequested = null;
                     mForegroundUid = -1;
                     changed = true;
@@ -229,6 +229,10 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
         }
         ApduServiceInfo serviceInfo = mServiceCache.getService(ActivityManager.getCurrentUser(),
                 service);
+        if (serviceInfo == null) {
+            Log.d(TAG, "Requested foreground service unexpectedly removed");
+            return false;
+        }
         // Do some sanity checking
         if (!mPaymentDefaults.preferForeground) {
             // Foreground apps are not allowed to override payment default
@@ -281,7 +285,7 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
                     success = false;
                 }
             } else {
-                Log.e(TAG, "Requested foreground service conflicts with default payment app.");
+                Log.e(TAG, "Requested foreground service conflicts or was removed.");
             }
         }
         if (success) {

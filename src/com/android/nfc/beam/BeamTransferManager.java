@@ -44,6 +44,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 
+import android.support.v4.content.FileProvider;
+
 /**
  * A BeamTransferManager object represents a set of files
  * that were received through NFC connection handover
@@ -99,6 +101,8 @@ public class BeamTransferManager implements Handler.Callback,
     static final int WAIT_FOR_NEXT_TRANSFER_MS = 4000;
 
     static final String BEAM_DIR = "beam";
+
+    static final String BLUETOOTH_PACKAGE = "com.android.bluetooth";
 
     static final String ACTION_WHITELIST_DEVICE =
             "android.btopp.intent.action.WHITELIST_DEVICE";
@@ -174,6 +178,7 @@ public class BeamTransferManager implements Handler.Callback,
     void whitelistOppDevice(BluetoothDevice device) {
         if (DBG) Log.d(TAG, "Whitelisting " + device + " for BT OPP");
         Intent intent = new Intent(ACTION_WHITELIST_DEVICE);
+        intent.setPackage(BLUETOOTH_PACKAGE);
         intent.putExtra(BluetoothDevice.EXTRA_DEVICE, device);
         mContext.sendBroadcastAsUser(intent, UserHandle.CURRENT);
     }
@@ -251,7 +256,8 @@ public class BeamTransferManager implements Handler.Callback,
     }
 
     public boolean isRunning() {
-        if (mState != STATE_NEW && mState != STATE_IN_PROGRESS && mState != STATE_W4_NEXT_TRANSFER) {
+        if (mState != STATE_NEW && mState != STATE_IN_PROGRESS && mState != STATE_W4_NEXT_TRANSFER
+            && mState != STATE_CANCELLING) {
             return false;
         } else {
             return true;
@@ -282,6 +288,7 @@ public class BeamTransferManager implements Handler.Callback,
 
     private void sendBluetoothCancelIntentAndUpdateState() {
         Intent cancelIntent = new Intent(ACTION_STOP_BLUETOOTH_TRANSFER);
+        cancelIntent.setPackage(BLUETOOTH_PACKAGE);
         cancelIntent.putExtra(BeamStatusReceiver.EXTRA_TRANSFER_ID, mBluetoothTransferId);
         mContext.sendBroadcast(cancelIntent);
         updateStateAndNotification(STATE_CANCELLED);
@@ -469,9 +476,11 @@ public class BeamTransferManager implements Handler.Callback,
         String filePath = mPaths.get(0);
         Uri mediaUri = mMediaUris.get(filePath);
         Uri uri =  mediaUri != null ? mediaUri :
-            Uri.parse(ContentResolver.SCHEME_FILE + "://" + filePath);
+            FileProvider.getUriForFile(mContext, "com.google.android.nfc.fileprovider",
+                    new File(filePath));
         viewIntent.setDataAndTypeAndNormalize(uri, mMimeTypes.get(filePath));
-        viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        viewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK |
+                Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
         return viewIntent;
     }
 

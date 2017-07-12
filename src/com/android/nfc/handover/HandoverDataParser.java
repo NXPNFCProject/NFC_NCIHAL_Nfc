@@ -18,19 +18,23 @@ package com.android.nfc.handover;
 
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Random;
 
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothClass;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothUuid;
 import android.bluetooth.OobData;
 import android.content.Context;
 import android.content.Intent;
 import android.nfc.FormatException;
 import android.nfc.NdefMessage;
 import android.nfc.NdefRecord;
+import android.os.ParcelUuid;
 import android.os.UserHandle;
 import android.util.Log;
 
@@ -57,11 +61,24 @@ public class HandoverDataParser {
     private static final int BT_HANDOVER_TYPE_LE_ROLE = 0x1C;
     private static final int BT_HANDOVER_TYPE_LONG_LOCAL_NAME = 0x09;
     private static final int BT_HANDOVER_TYPE_SHORT_LOCAL_NAME = 0x08;
+    private static final int BT_HANDOVER_TYPE_16_BIT_UUIDS_PARTIAL = 0x02;
+    private static final int BT_HANDOVER_TYPE_16_BIT_UUIDS_COMPLETE = 0x03;
+    private static final int BT_HANDOVER_TYPE_32_BIT_UUIDS_PARTIAL = 0x04;
+    private static final int BT_HANDOVER_TYPE_32_BIT_UUIDS_COMPLETE = 0x05;
+    private static final int BT_HANDOVER_TYPE_128_BIT_UUIDS_PARTIAL = 0x06;
+    private static final int BT_HANDOVER_TYPE_128_BIT_UUIDS_COMPLETE = 0x07;
+    private static final int BT_HANDOVER_TYPE_CLASS_OF_DEVICE = 0x0D;
     private static final int BT_HANDOVER_TYPE_SECURITY_MANAGER_TK = 0x10;
+    private static final int BT_HANDOVER_TYPE_APPEARANCE = 0x19;
+    private static final int BT_HANDOVER_TYPE_LE_SC_CONFIRMATION = 0x22;
+    private static final int BT_HANDOVER_TYPE_LE_SC_RANDOM = 0x23;
 
     public static final int BT_HANDOVER_LE_ROLE_CENTRAL_ONLY = 0x01;
 
     public static final int SECURITY_MANAGER_TK_SIZE = 16;
+    public static final int SECURITY_MANAGER_LE_SC_C_SIZE = 16;
+    public static final int SECURITY_MANAGER_LE_SC_R_SIZE = 16;
+    private static final int CLASS_OF_DEVICE_SIZE = 3;
 
     private final BluetoothAdapter mBluetoothAdapter;
 
@@ -77,6 +94,8 @@ public class HandoverDataParser {
         public boolean carrierActivating = false;
         public int transport = BluetoothDevice.TRANSPORT_AUTO;
         public OobData oobData;
+        public ParcelUuid[] uuids = null;
+        public BluetoothClass btClass = null;
     }
 
     public static class IncomingHandoverData {
@@ -374,6 +393,7 @@ public class HandoverDataParser {
            result.valid = true;
 
             while (payload.remaining() > 0) {
+                boolean success = false;
                 byte[] nameBytes;
                 int len = payload.get();
                 int type = payload.get();
@@ -382,16 +402,40 @@ public class HandoverDataParser {
                         nameBytes = new byte[len - 1];
                         payload.get(nameBytes);
                         result.name = new String(nameBytes, StandardCharsets.UTF_8);
+                        success = true;
                         break;
                     case BT_HANDOVER_TYPE_LONG_LOCAL_NAME:
                         if (result.name != null) break;  // prefer short name
                         nameBytes = new byte[len - 1];
                         payload.get(nameBytes);
                         result.name = new String(nameBytes, StandardCharsets.UTF_8);
+                        success = true;
+                        break;
+                    case BT_HANDOVER_TYPE_16_BIT_UUIDS_PARTIAL:
+                    case BT_HANDOVER_TYPE_16_BIT_UUIDS_COMPLETE:
+                    case BT_HANDOVER_TYPE_32_BIT_UUIDS_PARTIAL:
+                    case BT_HANDOVER_TYPE_32_BIT_UUIDS_COMPLETE:
+                    case BT_HANDOVER_TYPE_128_BIT_UUIDS_PARTIAL:
+                    case BT_HANDOVER_TYPE_128_BIT_UUIDS_COMPLETE:
+                        result.uuids = parseUuidFromBluetoothRecord(payload, type, len - 1);
+                        if (result.uuids != null) {
+                            success = true;
+                        }
+                        break;
+                    case BT_HANDOVER_TYPE_CLASS_OF_DEVICE:
+                        if (len - 1 != CLASS_OF_DEVICE_SIZE) {
+                            Log.i(TAG, "BT OOB: invalid size of Class of Device, should be " +
+                                  CLASS_OF_DEVICE_SIZE + " bytes.");
+                            break;
+                        }
+                        result.btClass = parseBluetoothClassFromBluetoothRecord(payload);
+                        success = true;
                         break;
                     default:
-                        payload.position(payload.position() + len - 1);
                         break;
+                }
+                if (!success) {
+                    payload.position(payload.position() + len - 1);
                 }
             }
         } catch (IllegalArgumentException e) {
@@ -415,6 +459,15 @@ public class HandoverDataParser {
                 int type = payload.get();
                switch (type) {
                     case BT_HANDOVER_TYPE_MAC: // mac address
+
+                        int startpos = payload.position();
+                        byte[] bdaddr = new byte[7]; // 6 bytes for mac, 1 for addres type
+                        payload.get(bdaddr);
+                        if (result.oobData == null)
+                            result.oobData = new OobData();
+                        result.oobData.setLeBluetoothDeviceAddress(bdaddr);
+                        payload.position(startpos);
+
                         byte[] address = parseMacFromBluetoothRecord(payload);
                         payload.position(payload.position() + 1); // advance over random byte
                         result.device = mBluetoothAdapter.getRemoteDevice(address);
@@ -439,24 +492,52 @@ public class HandoverDataParser {
                                   SECURITY_MANAGER_TK_SIZE + " bytes.");
                             break;
                         }
-                        byte[] reversedTK = new byte[len - 1];
-                        payload.get(reversedTK);
+
                         byte[] securityManagerTK = new byte[len - 1];
                         //TK in AD is in reverse order
-                        for (int i = 0; i < reversedTK.length; i++) {
-                            securityManagerTK[i] = reversedTK[securityManagerTK.length - 1 - i];
-                        }
-                        result.oobData = new OobData();
+                        payload.get(securityManagerTK);
+
+                        if (result.oobData == null)
+                            result.oobData = new OobData();
                         result.oobData.setSecurityManagerTk(securityManagerTK);
                         break;
 
+                   case BT_HANDOVER_TYPE_LE_SC_CONFIRMATION:
+                       if (len - 1 != SECURITY_MANAGER_LE_SC_C_SIZE) {
+                           Log.i(TAG, "BT OOB: invalid size of LE SC Confirmation, should be " +
+                                   SECURITY_MANAGER_LE_SC_C_SIZE + " bytes.");
+                           break;
+                       }
+
+                       byte[] leScC = new byte[len - 1];
+                       payload.get(leScC);
+
+                       if (result.oobData == null)
+                           result.oobData = new OobData();
+                       result.oobData.setLeSecureConnectionsConfirmation(leScC);
+                       break;
+
+                   case BT_HANDOVER_TYPE_LE_SC_RANDOM:
+                       if (len-1 != SECURITY_MANAGER_LE_SC_R_SIZE) {
+                           Log.i(TAG, "BT OOB: invalid size of LE SC Random, should be " +
+                                   SECURITY_MANAGER_LE_SC_R_SIZE + " bytes.");
+                           break;
+                       }
+
+                       byte[] leScR = new byte[len - 1];
+                       payload.get(leScR);
+
+                       if (result.oobData == null)
+                           result.oobData = new OobData();
+                       result.oobData.setLeSecureConnectionsRandom(leScR);
+                       break;
                     default:
                         payload.position(payload.position() + len - 1);
                         break;
                 }
             }
         } catch (IllegalArgumentException e) {
-            Log.i(TAG, "BT OOB: invalid BT address");
+            Log.i(TAG, "BLE OOB: error parsing OOB data", e);
         } catch (BufferUnderflowException e) {
             Log.i(TAG, "BT OOB: payload shorter than expected");
         }
@@ -488,4 +569,50 @@ public class HandoverDataParser {
 
         return result;
     }
+
+   private ParcelUuid[] parseUuidFromBluetoothRecord(ByteBuffer payload, int type, int len) {
+       int uuidSize;
+       switch (type) {
+       case BT_HANDOVER_TYPE_16_BIT_UUIDS_PARTIAL:
+       case BT_HANDOVER_TYPE_16_BIT_UUIDS_COMPLETE:
+           uuidSize = BluetoothUuid.UUID_BYTES_16_BIT;
+           break;
+       case BT_HANDOVER_TYPE_32_BIT_UUIDS_PARTIAL:
+       case BT_HANDOVER_TYPE_32_BIT_UUIDS_COMPLETE:
+           uuidSize = BluetoothUuid.UUID_BYTES_32_BIT;
+           break;
+       case BT_HANDOVER_TYPE_128_BIT_UUIDS_PARTIAL:
+       case BT_HANDOVER_TYPE_128_BIT_UUIDS_COMPLETE:
+           uuidSize = BluetoothUuid.UUID_BYTES_128_BIT;
+           break;
+       default:
+           Log.i(TAG, "BT OOB: invalid size of UUID");
+           return null;
+       }
+
+       if (len == 0 || len % uuidSize != 0) {
+           Log.i(TAG, "BT OOB: invalid size of UUIDs, should be multiples of UUID bytes length");
+           return null;
+       }
+
+       int num = len / uuidSize;
+       ParcelUuid[] uuids = new ParcelUuid[num];
+       byte[] data = new byte[uuidSize];
+       for (int i = 0; i < num; i++) {
+           payload.get(data);
+           uuids[i] = BluetoothUuid.parseUuidFrom(data);
+       }
+       return uuids;
+   }
+
+   private BluetoothClass parseBluetoothClassFromBluetoothRecord(ByteBuffer payload) {
+       byte[] btClass = new byte[CLASS_OF_DEVICE_SIZE];
+       payload.get(btClass);
+
+       ByteBuffer buffer = ByteBuffer.allocate(Integer.BYTES);
+       buffer.put(btClass);
+       buffer.order(ByteOrder.LITTLE_ENDIAN);
+
+       return new BluetoothClass(buffer.getInt(0));
+   }
 }
