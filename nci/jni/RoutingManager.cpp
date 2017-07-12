@@ -1869,6 +1869,57 @@ bool RoutingManager::removeAidRouting(const uint8_t* aid, uint8_t aidLen)
     }
 }
 
+bool RoutingManager::addApduRouting(uint8_t route, uint8_t powerState,const uint8_t* apduData,
+     uint8_t apduDataLen ,const uint8_t* apduMask, uint8_t apduMaskLen)
+{
+    static const char fn [] = "RoutingManager::addApduRouting";
+    ALOGV("%s: enter, route:%x power:0x%x", fn, route, powerState);
+    tNFA_HANDLE eeHandle;
+#if(NXP_EXTNS == TRUE)
+    SecureElement &se = SecureElement::getInstance();
+    tNFA_HANDLE handle = se.getEseHandleFromGenericId(route);
+    ALOGV("%s: enter, route:%x", fn, handle);
+    if (handle  == NFA_HANDLE_INVALID)
+    {
+        return false;
+    }
+    if(handle == SecureElement::EE_HANDLE_0xF0)
+        eeHandle = SecureElement::DH_ID;
+    else
+    {
+#if(NXP_NFCC_DYNAMIC_DUAL_UICC == true)
+        eeHandle = ((handle == SecureElement::EE_HANDLE_0xF3)?SecureElement::ESE_ID:(handle == se.EE_HANDLE_0xF4)?SecureElement::UICC_ID:SecureElement::UICC2_ID);
+#else
+        eeHandle = ((handle == SecureElement::EE_HANDLE_0xF3)?SecureElement::ESE_ID:SecureElement::UICC_ID);
+#endif
+    }
+#endif
+    SyncEventGuard guard(SecureElement::getInstance().mApduPaternAddRemoveEvent);
+    tNFA_STATUS nfaStat = NFA_EeAddApduPatternRouting(apduDataLen, (uint8_t*)apduData, apduMaskLen, (uint8_t*)apduMask, eeHandle, powerState);
+    if (nfaStat == NFA_STATUS_OK)
+    {
+#if(NXP_EXTNS == TRUE)
+        SecureElement::getInstance().mApduPaternAddRemoveEvent.wait();
+#endif
+        ALOGV("%s: routed APDU pattern successfully", fn);
+    }
+    return ((nfaStat == NFA_STATUS_OK)?true:false);
+}
+
+bool RoutingManager::removeApduRouting(uint8_t apduDataLen, const uint8_t* apduData)
+{
+    static const char fn [] = "RoutingManager::removeApduRouting";
+    ALOGV("%s: enter", fn);
+    SyncEventGuard guard(SecureElement::getInstance().mApduPaternAddRemoveEvent);
+    tNFA_STATUS nfaStat = NFA_EeRemoveApduPatternRouting(apduDataLen, (uint8_t*) apduData);
+    if (nfaStat == NFA_STATUS_OK)
+    {
+        SecureElement::getInstance().mApduPaternAddRemoveEvent.wait();
+        ALOGV("%s: removed APDU pattern successfully", fn);
+    }
+    return ((nfaStat == NFA_STATUS_OK)?true:false);
+}
+
 #if(NXP_EXTNS == TRUE)
 void RoutingManager::setDefaultTechRouting (int seId, int tech_switchon,int tech_switchoff)
 {
@@ -2601,7 +2652,25 @@ void RoutingManager::nfaEeCallback (tNFA_EE_EVT event, tNFA_EE_CBACK_DATA* event
             se.mAidAddRemoveEvent.notifyOne();
         }
         break;
-
+    case NFA_EE_ADD_APDU_EVT:
+    {
+        ALOGV("%s: NFA_EE_ADD_APDU_EVT  status=%u", fn, eventData->status);
+        if(eventData->status == NFA_STATUS_BUFFER_FULL)
+        {
+            ALOGV("%s: routing table is FULL!!!", fn);
+            RoutingManager::getInstance().notifyLmrtFull();
+        }
+        SyncEventGuard guard(se.mApduPaternAddRemoveEvent);
+        se.mApduPaternAddRemoveEvent.notifyOne();
+    }
+        break;
+    case NFA_EE_REMOVE_APDU_EVT:
+    {
+        ALOGV("%s: NFA_EE_REMOVE_APDU_EVT  status=%u", fn, eventData->status);
+        SyncEventGuard guard(se.mApduPaternAddRemoveEvent);
+        se.mApduPaternAddRemoveEvent.notifyOne();
+    }
+        break;
     case NFA_EE_NEW_EE_EVT:
         {
             ALOGV("%s: NFA_EE_NEW_EE_EVT  h=0x%X; status=%u", fn,

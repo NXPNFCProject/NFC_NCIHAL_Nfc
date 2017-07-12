@@ -321,6 +321,8 @@ public interface DeviceHost {
 
     public boolean clearRoutingEntry(int type);
 
+    public boolean routeApduPattern(int route, int powerState, byte[] apduData, byte[] apduMask);
+
     public LlcpConnectionlessSocket createLlcpConnectionlessSocket(int nSap, String sn)
             throws LlcpException;
 
@@ -329,6 +331,8 @@ public interface DeviceHost {
 
     public LlcpSocket createLlcpSocket(int sap, int miu, int rw,
             int linearBufferLength) throws LlcpException;
+
+    public boolean unrouteApduPattern(byte[] apduData);
 
     public boolean doCheckLlcp();
 

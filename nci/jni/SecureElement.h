@@ -226,6 +226,7 @@ public:
     static const tNFA_HANDLE EE_HANDLE_0xF3 = 0x4C0;//0x401; //handle to secure element in slot 0
     static const tNFA_HANDLE EE_HANDLE_0xF8 = 0x481; //handle to secure element in slot 2
     tNFA_HANDLE EE_HANDLE_0xF4;               //handle to secure element in slot 1
+    static const tNFA_HANDLE EE_HANDLE_0xF0 = 0x400;//NFCEE handle for host
 #endif
 
     static const int MAX_NUM_EE = NFA_EE_MAX_EE_SUPPORTED;    /*max number of EE's*/
@@ -761,6 +762,7 @@ public:
     SyncEvent       mEeSetModeEvent;
     SyncEvent       mModeSetNtf;
     SyncEvent       mHciAddStaticPipe;
+    SyncEvent       mApduPaternAddRemoveEvent;
 #if ((NXP_EXTNS == TRUE) && (NXP_WIRED_MODE_STANDBY == true))
     SyncEvent       mPwrLinkCtrlEvent;
 #endif

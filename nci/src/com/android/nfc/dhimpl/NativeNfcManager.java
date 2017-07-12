@@ -252,6 +252,9 @@ public class NativeNfcManager implements DeviceHost {
     public native boolean doRouteAid(byte[] aid, int route, int powerState, int aidInfo);
 
     @Override
+    public native boolean routeApduPattern(int route, int powerState, byte[] apduData, byte[] apduMask);
+
+    @Override
     public native boolean setDefaultRoute(int defaultRouteEntry, int defaultProtoRouteEntry, int defaultTechRouteEntry);
 
     @Override
@@ -294,6 +297,9 @@ public class NativeNfcManager implements DeviceHost {
 
     @Override
     public native int   getDefaultMifareCLTPowerState();
+
+    @Override
+    public native boolean unrouteApduPattern(byte[] apduData);
 
     @Override
     public native void doSetScreenOrPowerState(int state);
