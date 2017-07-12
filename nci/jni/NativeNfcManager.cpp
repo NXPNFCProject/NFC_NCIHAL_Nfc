@@ -345,9 +345,11 @@ typedef enum dual_uicc_error_states{
 }dual_uicc_error_state_t;
 #endif
 
-static int screenstate = 0x00;
+static int screenstate = NFA_SCREEN_STATE_OFF_LOCKED;
 static bool pendingScreenState = false;
-static void nfcManager_doSetScreenState(JNIEnv* e, jobject o, jint state);
+static void nfcManager_doSetScreenState(JNIEnv* e, jobject o, jint screen_state_mask);
+static jint nfcManager_doGetNciVersion(JNIEnv* , jobject);
+static int NFA_SCREEN_POLLING_TAG_MASK = 0x10;
 static void nfcManager_doSetScreenOrPowerState (JNIEnv* e, jobject o, jint state);
 static void StoreScreenState(int state);
 int getScreenState();
@@ -386,6 +388,7 @@ IChannel_t Dwp;
 #endif
 static uint16_t sCurrentConfigLen;
 static uint8_t sConfig[256];
+static int prevScreenState = NFA_SCREEN_STATE_OFF_LOCKED;
 #if((NXP_EXTNS == TRUE) && (NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH == true))
 typedef struct
 {
@@ -5076,6 +5079,8 @@ static JNINativeMethod gMethods[] =
 
     {"doSetSecureElementListenTechMask", "(I)V",
             (void *)nfcManager_setSecureElementListenTechMask},
+    {"getNciVersion","()I",
+            (void *)nfcManager_doGetNciVersion},
     {"doSetScreenState", "(I)V",
             (void*)nfcManager_doSetScreenState},
     {"doSetScreenOrPowerState", "(I)V",
@@ -5711,6 +5716,19 @@ bool isp2pActivated()
 
 /*******************************************************************************
 **
+** Function:        nfcManager_doGetNciVersion
+**
+** Description:     get the nci version.
+**
+** Returns:         int
+**
+*******************************************************************************/
+static jint nfcManager_doGetNciVersion(JNIEnv* , jobject)
+{
+   return NFC_GetNCIVersion();
+}
+/*******************************************************************************
+**
 ** Function:        nfcManager_doSetScreenState
 **
 ** Description:     Set screen state
@@ -5718,7 +5736,7 @@ bool isp2pActivated()
 ** Returns:         None
 **
 *******************************************************************************/
-static void nfcManager_doSetScreenState (JNIEnv* e, jobject o, jint state)
+static void nfcManager_doSetScreenState (JNIEnv* e, jobject o, jint screen_state_mask)
 {
     tNFA_STATUS status = NFA_STATUS_OK;
     unsigned long auto_num = 0;
@@ -5729,8 +5747,11 @@ static void nfcManager_doSetScreenState (JNIEnv* e, jobject o, jint state)
     int isfound;
     uint8_t core_reset_cfg[8] = {0x20,0x00,0x01,0x00};
     uint8_t core_init_cfg[8] = {0x20,0x01,0x00};
+    uint8_t  discovry_param = NFA_LISTEN_DH_NFCEE_ENABLE_MASK | NFA_POLLING_DH_ENABLE_MASK;
+    uint8_t state = (screen_state_mask & NFA_SCREEN_STATE_MASK);
 
     ALOGV("%s: state = %d", __func__, state);
+
     if (sIsDisabling || !sIsNfaEnabled)
         return;
 
@@ -5740,14 +5761,55 @@ static void nfcManager_doSetScreenState (JNIEnv* e, jobject o, jint state)
         return;
     }
     if(NFC_GetNCIVersion() == NCI_VERSION_2_0) {
-        SyncEventGuard guard (sNfaSetPowerSubState);
-        status = NFA_SetPowerSubState(state);
-        if (status != NFA_STATUS_OK) {
-            ALOGE ("%s: fail enable SetScreenState; error=0x%X", __FUNCTION__, status);
-        }
-        else
+        if(prevScreenState == NFA_SCREEN_STATE_OFF_LOCKED || prevScreenState == NFA_SCREEN_STATE_OFF_UNLOCKED)
         {
-            sNfaSetPowerSubState.wait();
+            SyncEventGuard guard (sNfaSetPowerSubState);
+            status = NFA_SetPowerSubState(state);
+            if (status != NFA_STATUS_OK) {
+                ALOGE ("%s: fail enable SetScreenState; error=0x%X", __FUNCTION__, status);
+            }
+            else
+            {
+                sNfaSetPowerSubState.wait();
+            }
+        }
+
+        if( state == NFA_SCREEN_STATE_OFF_LOCKED || state == NFA_SCREEN_STATE_OFF_UNLOCKED) {
+            // disable both poll and listen on DH 0x02
+            discovry_param = NFA_POLLING_DH_DISABLE_MASK | NFA_LISTEN_DH_NFCEE_DISABLE_MASK;
+         }
+
+        if( state == NFA_SCREEN_STATE_ON_LOCKED) {
+            // disable poll and enable listen on DH 0x00
+            discovry_param = (screen_state_mask & NFA_SCREEN_POLLING_TAG_MASK) ? (NFA_LISTEN_DH_NFCEE_ENABLE_MASK | NFA_POLLING_DH_ENABLE_MASK):
+                (NFA_POLLING_DH_DISABLE_MASK | NFA_LISTEN_DH_NFCEE_ENABLE_MASK);
+         }
+
+        if( state == NFA_SCREEN_STATE_ON_UNLOCKED) {
+           // enable both poll and listen on DH 0x01
+           discovry_param = NFA_LISTEN_DH_NFCEE_ENABLE_MASK | NFA_POLLING_DH_ENABLE_MASK;
+        }
+
+        SyncEventGuard guard (sNfaSetConfigEvent);
+        status = NFA_SetConfig(NFC_PMID_CON_DISCOVERY_PARAM, NCI_PARAM_LEN_CON_DISCOVERY_PARAM, &discovry_param);
+        if (status == NFA_STATUS_OK) {
+            sNfaSetConfigEvent.wait ();
+            ALOGD ("%s: Disabled RF field events", __FUNCTION__);
+        } else {
+            ALOGE ("%s: Failed to disable RF field events", __FUNCTION__);
+        }
+
+        if(prevScreenState == NFA_SCREEN_STATE_ON_LOCKED || prevScreenState == NFA_SCREEN_STATE_ON_UNLOCKED)
+        {
+            SyncEventGuard guard (sNfaSetPowerSubState);
+            status = NFA_SetPowerSubState(state);
+            if (status != NFA_STATUS_OK) {
+            ALOGE ("%s: fail enable SetScreenState; error=0x%X", __FUNCTION__, status);
+            }
+            else
+            {
+                sNfaSetPowerSubState.wait();
+            }
         }
         StoreScreenState(state);
         return;

@@ -15,6 +15,10 @@ class ScreenStateHelper {
     static final int SCREEN_STATE_ON_LOCKED = 0x04;
     static final int SCREEN_STATE_ON_UNLOCKED = 0x08;
 
+    //Polling mask
+    static final int SCREEN_POLLING_TAG_MASK = 0x10;
+    static final int SCREEN_POLLING_P2P_MASK = 0x20;
+    static final int SCREEN_POLLING_READER_MASK = 0x40;
     static final int POWER_STATE_ON = 0x09;
     static final int POWER_STATE_OFF = 0x0A;
 

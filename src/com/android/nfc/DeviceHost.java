@@ -258,7 +258,9 @@ public interface DeviceHost {
 
     public void enableDiscovery(NfcDiscoveryParameters params, boolean restart);
 
-    public void doSetScreenState(int mScreenState);
+    public int getNciVersion();
+
+    public void doSetScreenState(int screen_state_mask);
 
     public void doEnablep2p(boolean p2pFlag);
 

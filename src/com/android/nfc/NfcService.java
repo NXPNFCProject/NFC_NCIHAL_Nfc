@@ -264,7 +264,7 @@ public class NfcService implements DeviceHostListener {
     static final int MSG_ETSI_START_CONFIG = 48;
     static final int MSG_ETSI_STOP_CONFIG = 49;
     static final int MSG_ETSI_SWP_TIMEOUT = 50;
-    static final int MSG_APPLY_SREEN_STATE = 51;
+    static final int MSG_APPLY_SCREEN_STATE = 51;
     static final int MSG_REGISTER_T3T_IDENTIFIER = 54;
     static final int MSG_DEREGISTER_T3T_IDENTIFIER = 55;
     static final int MSG_TAG_DEBOUNCE = 56;
@@ -339,6 +339,9 @@ public class NfcService implements DeviceHostListener {
     public static final int SOUND_END = 1;
     public static final int SOUND_ERROR = 2;
 
+    public static final int NCI_VERSION_2_0 = 0x20;
+
+    public static final int NCI_VERSION_1_0 = 0x10;
     //ETSI Reader Events
     public static final int ETSI_READER_REQUESTED   = 0;
     public static final int ETSI_READER_START       = 1;
@@ -439,6 +442,7 @@ public class NfcService implements DeviceHostListener {
     private static final int APPLY_ROUTING_RETRY_TIMEOUT_MS = 5000;
 
     private final UserManager mUserManager;
+    private static int nci_version = NCI_VERSION_1_0;
     // NFC Execution Environment
     // fields below are protected by this
     private NativeNfcSecureElement mSecureElement;
@@ -1464,6 +1468,7 @@ public class NfcService implements DeviceHostListener {
                 mCardEmulationManager.onNfcEnabled();
             }
             mIsRouteForced = false;
+            nci_version = getNciVersion();
 
             synchronized (NfcService.this) {
                 mObjectMap.clear();
@@ -1483,7 +1488,13 @@ public class NfcService implements DeviceHostListener {
             /* Start polling loop */
             Log.e(TAG, "applyRouting -3");
             mScreenState = mScreenStateHelper.checkScreenState();
-            mDeviceHost.doSetScreenOrPowerState(mScreenState);
+            int screen_state_mask = (mNfcUnlockManager.isLockscreenPollingEnabled()) ?
+                             (ScreenStateHelper.SCREEN_POLLING_TAG_MASK | mScreenState) : mScreenState;
+
+            if(mNfcUnlockManager.isLockscreenPollingEnabled())
+                applyRouting(false);
+
+            mDeviceHost.doSetScreenOrPowerState(screen_state_mask);
             mIsRoutingTableDirty = true;
             if((mScreenState < NFC_POLLING_MODE) && mIsTaskBoot)
             {
@@ -4168,6 +4179,7 @@ public class NfcService implements DeviceHostListener {
     private NfcDiscoveryParameters computeDiscoveryParameters(int screenState) {
         // Recompute discovery parameters based on screen state
         NfcDiscoveryParameters.Builder paramsBuilder = NfcDiscoveryParameters.newBuilder();
+
         // Polling
         if ((screenState >= NFC_POLLING_MODE)||mIsTaskBoot) {
             // Check if reader-mode is enabled
@@ -4190,18 +4202,23 @@ public class NfcService implements DeviceHostListener {
                 paramsBuilder.setTechMask(NfcDiscoveryParameters.NFC_POLL_DEFAULT);
                 paramsBuilder.setEnableP2p(true);
             }
-        } else if (screenState == ScreenStateHelper.SCREEN_STATE_ON_LOCKED && mInProvisionMode) {
+        }
+        if ((screenState == ScreenStateHelper.SCREEN_STATE_ON_LOCKED && mInProvisionMode) &&
+            !mNfcUnlockManager.isLockscreenPollingEnabled()) {
+            if (mReaderModeParams != null)
             paramsBuilder.setTechMask(NfcDiscoveryParameters.NFC_POLL_DEFAULT);
             // enable P2P for MFM/EDU/Corp provisioning
             paramsBuilder.setEnableP2p(true);
-        } else if (screenState == ScreenStateHelper.SCREEN_STATE_ON_LOCKED &&
+        } else if ((screenState == ScreenStateHelper.SCREEN_STATE_ON_LOCKED) &&
                 (mIsLiveCaseEnabled || mNfcUnlockManager.isLockscreenPollingEnabled())) {
             int techMask = 0;
             // enable polling for Live Case technologies
             if (mIsLiveCaseEnabled)
                 techMask |= mLiveCaseTechnology;
             if (mNfcUnlockManager.isLockscreenPollingEnabled())
+            {
                 techMask |= mNfcUnlockManager.getLockscreenPollMask();
+            }
             paramsBuilder.setTechMask(techMask);
             paramsBuilder.setEnableLowPowerDiscovery(false);
             paramsBuilder.setEnableP2p(false);
@@ -4387,6 +4404,9 @@ public class NfcService implements DeviceHostListener {
 
     public void unrouteAids(String aid) {
         sendMessage(MSG_UNROUTE_AID, aid);
+    }
+    public int getNciVersion() {
+        return mDeviceHost.getNciVersion();
     }
     private byte[] getT3tIdentifierBytes(String systemCode, String nfcId2, String t3tPmm) {
          ByteBuffer buffer = ByteBuffer.allocate(2 + 8 + 8);
@@ -5171,17 +5191,28 @@ public class NfcService implements DeviceHostListener {
                     etsiStopConfig((int)msg.obj);
 
                     break;
-                case MSG_APPLY_SREEN_STATE:
+                case MSG_APPLY_SCREEN_STATE:
 
                     mScreenState = (int)msg.obj;
-                    mDeviceHost.doSetScreenOrPowerState(mScreenState);
-                    mRoutingWakeLock.acquire();
+
+                    if(mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED)
+                    {
+                      applyRouting(false);
+                    }
+                    int screen_state_mask = (mNfcUnlockManager.isLockscreenPollingEnabled()) ?
+                                (ScreenStateHelper.SCREEN_POLLING_TAG_MASK | mScreenState) : mScreenState;
+
+                   if(mNfcUnlockManager.isLockscreenPollingEnabled())
+                        applyRouting(false);
+                   mDeviceHost.doSetScreenOrPowerState(screen_state_mask);
+
+/*                    mRoutingWakeLock.acquire();
                     try {
                         Log.e(TAG, "applyRouting -20");
                         applyRouting(false);
                     } finally {
                         mRoutingWakeLock.release();
-                    }
+                    }*/
                     break;
                 case MSG_TAG_DEBOUNCE:
                     // Didn't see the tag again, tag is gone
@@ -5414,7 +5445,6 @@ public class NfcService implements DeviceHostListener {
                     return null;
                 }
                 mScreenState = params[0].intValue();
-                mDeviceHost.doSetScreenOrPowerState(mScreenState);
                 mRoutingWakeLock.acquire();
                 try {
                     Log.e(TAG, "applyRouting -2");
@@ -5527,7 +5557,10 @@ public class NfcService implements DeviceHostListener {
                         return;
                     }
                 }
-                sendMessage(NfcService.MSG_APPLY_SREEN_STATE, screenState);
+                if(nci_version != NCI_VERSION_2_0) {
+                    new ApplyRoutingTask().execute(Integer.valueOf(screenState));
+                }
+                sendMessage(NfcService.MSG_APPLY_SCREEN_STATE, screenState);
                 Log.e(TAG, "screen state "+screenState);
                 Log.e(TAG, "screen state mScreenState "+mScreenState);
             } else if (action.equals(Intent.ACTION_USER_SWITCHED)) {
@@ -5540,11 +5573,7 @@ public class NfcService implements DeviceHostListener {
                 if (mIsHceCapable) {
                     mCardEmulationManager.onUserSwitched(getUserId());
                 }
-                if (mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED) {
-                    screenState = ScreenStateHelper.SCREEN_STATE_ON_LOCKED;
-                    }else {
-                        return;
-                }
+                screenState = mScreenStateHelper.checkScreenState();
                 new ApplyRoutingTask().execute(Integer.valueOf(screenState));
             }
         }

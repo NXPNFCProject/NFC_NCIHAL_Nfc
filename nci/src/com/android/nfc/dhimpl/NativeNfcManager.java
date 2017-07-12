@@ -299,7 +299,7 @@ public class NativeNfcManager implements DeviceHost {
     public native void doSetScreenOrPowerState(int state);
 
     @Override
-    public native void doSetScreenState(int mScreenState);
+    public native void doSetScreenState(int screen_state_mask);
 
     @Override
     public native void doEnablep2p(boolean p2pFlag);
@@ -319,6 +319,8 @@ public class NativeNfcManager implements DeviceHost {
     @Override
     public native void doSetSecureElementListenTechMask(int tech_mask);
 
+    @Override
+    public native int getNciVersion();
 
     private native void doEnableDiscovery(int techMask,
                                           boolean enableLowPowerPolling,
