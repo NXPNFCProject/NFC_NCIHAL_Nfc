@@ -293,7 +293,7 @@ public interface DeviceHost {
 
     public boolean sendRawFrame(byte[] data);
 
-    public boolean routeAid(byte[] aid, int route, int powerState, boolean isprefix);
+    public boolean routeAid(byte[] aid, int route, int powerState, int aidInfo);
 
     public boolean setDefaultRoute(int defaultRouteEntry, int defaultProtoRouteEntry, int defaultTechRouteEntry);
 

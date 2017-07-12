@@ -4393,11 +4393,14 @@ public class NfcService implements DeviceHostListener {
         return aidTableSize;
     }
 
-    public void routeAids(String aid, int route, int powerState) {
+    public void routeAids(String aid, int route, int powerState, int aidInfo) {
             Message msg = mHandler.obtainMessage();
             msg.what = MSG_ROUTE_AID;
             msg.arg1 = route;
             msg.arg2 = powerState;
+            Bundle aidbundle = new Bundle();
+            aidbundle.putInt("aidinfo",aidInfo);
+            msg.setData(aidbundle);
             msg.obj = aid;
             mHandler.sendMessage(msg);
     }
@@ -4650,13 +4653,16 @@ public class NfcService implements DeviceHostListener {
                 case MSG_ROUTE_AID: {
                     int route = msg.arg1;
                     int power = msg.arg2;
+                    int aidInfo = 0x00;
+                    Bundle dataBundle = msg.getData();
+                    if (dataBundle != null)
+                        aidInfo = dataBundle.getInt("aidinfo");
                     String aid = (String) msg.obj;
-                    if(aid.endsWith("*")) {
-                      String cuttedAid = aid.substring(0, aid.length() - 1);
-                      mDeviceHost.routeAid(hexStringToBytes(cuttedAid), route, power, true);
-                    } else {
-                        mDeviceHost.routeAid(hexStringToBytes(aid), route, power, false);
+                    String cuttedAid = aid;
+                    if(aid.endsWith("*")||aid.endsWith("#")) {
+                      cuttedAid = aid.substring(0, aid.length() - 1);
                     }
+                    mDeviceHost.routeAid(hexStringToBytes(cuttedAid), route, power, aidInfo);
                     // Restart polling config
                     break;
                 }

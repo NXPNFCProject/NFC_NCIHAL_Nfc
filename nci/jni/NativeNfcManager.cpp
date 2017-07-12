@@ -1873,7 +1873,7 @@ static jboolean nfcManager_sendRawFrame (JNIEnv* e, jobject, jbyteArray data)
 ** Returns:         True if ok.
 **
 *******************************************************************************/
-static jboolean nfcManager_routeAid (JNIEnv* e, jobject, jbyteArray aid, jint route, jint power, jboolean isprefix)
+static jboolean nfcManager_routeAid (JNIEnv* e, jobject, jbyteArray aid, jint route, jint power, jint aidInfo)
 {
     ScopedByteArrayRO bytes(e, aid);
     uint8_t* buf = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
@@ -1889,7 +1889,7 @@ static jboolean nfcManager_routeAid (JNIEnv* e, jobject, jbyteArray aid, jint ro
     {
        return false;
     }
-    bool result = RoutingManager::getInstance().addAidRouting(buf, bufLen, route, power, isprefix);
+    bool result = RoutingManager::getInstance().addAidRouting(buf, bufLen, route, power, aidInfo);
 #else
     bool result = RoutingManager::getInstance().addAidRouting(buf, bufLen, route);
 
@@ -4929,7 +4929,7 @@ static JNINativeMethod gMethods[] =
     {"sendRawFrame", "([B)Z",
             (void*) nfcManager_sendRawFrame},
 
-    {"doRouteAid", "([BIIZ)Z",
+    {"doRouteAid", "([BIII)Z",
             (void*) nfcManager_routeAid},
 
     {"doUnrouteAid", "([B)Z",

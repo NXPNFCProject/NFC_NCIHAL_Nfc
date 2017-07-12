@@ -162,7 +162,7 @@ public:
     bool setDefaultRoute(const int defaultRoute, const int protoRoute, const int techRoute);
     bool clearAidTable ();
     bool removeNfcid2Routing(uint8_t* nfcID2);
-    bool addAidRouting(const uint8_t* aid, uint8_t aidLen, int route, int power, bool isprefix);
+    bool addAidRouting(const uint8_t* aid, uint8_t aidLen, int route, int power, int aidInfo);
     int  addNfcid2Routing(uint8_t* nfcid2, uint8_t aidLen,const uint8_t* syscode,
     int  syscodelen,const uint8_t* optparam, int optparamlen);
 #if (NXP_NFCEE_REMOVED_NTF_RECOVERY == true)

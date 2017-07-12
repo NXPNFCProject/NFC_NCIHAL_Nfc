@@ -1794,7 +1794,7 @@ bool RoutingManager::clearRoutingEntry(int type)
 }
 #endif
 #if(NXP_EXTNS == TRUE)
-bool RoutingManager::addAidRouting(const uint8_t* aid, uint8_t aidLen, int route, int power, bool isprefix)
+bool RoutingManager::addAidRouting(const uint8_t* aid, uint8_t aidLen, int route, int power, int aidInfo)
 #else
 bool RoutingManager::addAidRouting(const uint8_t* aid, uint8_t aidLen, int route)
 #endif
@@ -1805,7 +1805,7 @@ bool RoutingManager::addAidRouting(const uint8_t* aid, uint8_t aidLen, int route
     tNFA_HANDLE handle;
     tNFA_HANDLE current_handle;
     SecureElement &se = SecureElement::getInstance();
-    ALOGV("%s: enter, route:%x power:0x%x isprefix:%x", fn, route, power, isprefix);
+    ALOGV("%s: enter, route:%x power:0x%x aidInfo:%x", fn, route, power, aidInfo);
     handle = SecureElement::getInstance().getEseHandleFromGenericId(route);
     ALOGV("%s: enter, route:%x", fn, handle);
     if (handle  == NFA_HANDLE_INVALID)
@@ -1832,12 +1832,8 @@ bool RoutingManager::addAidRouting(const uint8_t* aid, uint8_t aidLen, int route
 
 
     SyncEventGuard guard(SecureElement::getInstance().mAidAddRemoveEvent);
-    uint8_t vs_info = 0x00;
-    if(isprefix) {
-        vs_info = NFA_EE_AE_NXP_PREFIX_MATCH;
-    }
 
-    tNFA_STATUS nfaStat = NFA_EeAddAidRouting(handle, aidLen, (uint8_t*) aid, power, vs_info);
+    tNFA_STATUS nfaStat = NFA_EeAddAidRouting(handle, aidLen, (uint8_t*) aid, power, aidInfo);
 #else
     tNFA_STATUS nfaStat = NFA_EeAddAidRouting(route, aidLen, (uint8_t*) aid, 0x01);
 #endif

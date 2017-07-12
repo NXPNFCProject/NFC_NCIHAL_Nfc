@@ -32,12 +32,13 @@ public class AidElement implements Comparable {
     private int mWeight;
     private int mRouteLocation;
     private int mPowerState;
-
-    public AidElement(String aid, int weight, int route, int power) {
+    private int mAidInfo;
+    public AidElement(String aid, int weight, int route, int power, int aidInfo) {
         mAid = aid;
         mWeight = weight;
         mRouteLocation = route;
         mPowerState = power;
+        mAidInfo = aidInfo;
     }
 
     public int getWeight() {
@@ -52,6 +53,9 @@ public class AidElement implements Comparable {
         mAid = aid;
     }
 
+    public int getAidInfo() {
+        return mAidInfo;
+    }
     public void setPowerState(int powerState) {
         mPowerState = powerState;
     }

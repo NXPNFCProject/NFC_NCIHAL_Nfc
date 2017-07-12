@@ -234,7 +234,7 @@ public class NativeNfcManager implements DeviceHost {
     public native boolean sendRawFrame(byte[] data);
 
     @Override
-    public boolean routeAid(byte[] aid, int route, int powerState, boolean isprefix) {
+    public boolean routeAid(byte[] aid, int route, int powerState, int aidInfo) {
 
         boolean status = true;
         //if(mIsAidFilterSupported) {
@@ -242,14 +242,14 @@ public class NativeNfcManager implements DeviceHost {
           //  mAidFilter.addAppAidToCache(aid, route, powerState);
        // } else {
 
-            status = doRouteAid(aid, route, powerState, isprefix);
+            status = doRouteAid(aid, route, powerState, aidInfo);
 
         //}
 
         return status;
     }
 
-    public native boolean doRouteAid(byte[] aid, int route, int powerState, boolean isprefix);
+    public native boolean doRouteAid(byte[] aid, int route, int powerState, int aidInfo);
 
     @Override
     public native boolean setDefaultRoute(int defaultRouteEntry, int defaultProtoRouteEntry, int defaultTechRouteEntry);
