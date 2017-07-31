@@ -5850,6 +5850,12 @@ static void nfcManager_doSetScreenState (JNIEnv* e, jobject o, jint screen_state
     int prevScreenState = getScreenState();
     if(prevScreenState == state) {
         ALOGV("Screen state is not changed. ");
+#if (NXP_EXTNS == TRUE)
+    if(!update_transaction_stat("setScreenState",RESET_TRANSACTION_STATE))
+    {
+        ALOGE("%s: Can not reset transaction state", __func__);
+    }
+#endif
         return;
     }
     if(NFC_GetNCIVersion() == NCI_VERSION_2_0) {
