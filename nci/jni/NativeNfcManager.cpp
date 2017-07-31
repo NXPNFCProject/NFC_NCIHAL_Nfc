@@ -5818,6 +5818,16 @@ static void nfcManager_doSetScreenState (JNIEnv* e, jobject o, jint screen_state
     if (sIsDisabling || !sIsNfaEnabled)
         return;
 
+#if (NXP_EXTNS == TRUE)
+    if(!update_transaction_stat("setScreenState",SET_TRANSACTION_STATE))
+    {
+        ALOGE("Payment is in progress!!!");
+        set_lastScreenStateRequest((eScreenState_t)state);
+        pendingScreenState = true;
+        return;
+    }
+#endif
+
     int prevScreenState = getScreenState();
     if(prevScreenState == state) {
         ALOGV("Screen state is not changed. ");
@@ -5875,17 +5885,14 @@ static void nfcManager_doSetScreenState (JNIEnv* e, jobject o, jint screen_state
             }
         }
         StoreScreenState(state);
-        return;
-    }
 #if (NXP_EXTNS == TRUE)
-    if(!update_transaction_stat("setScreenState",SET_TRANSACTION_STATE))
-    {
-        ALOGE("Payment is in progress stopping enable/disable discovery");
-        set_lastScreenStateRequest((eScreenState_t)state);
-        pendingScreenState = true;
+        if(!update_transaction_stat("setScreenState",RESET_TRANSACTION_STATE))
+        {
+            ALOGE("%s: Can not reset transaction state", __func__);
+        }
+#endif
         return;
     }
-#endif
     acquireRfInterfaceMutexLock();
     if (state) {
         if (sRfEnabled) {
