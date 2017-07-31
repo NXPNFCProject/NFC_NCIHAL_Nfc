@@ -84,7 +84,9 @@ public class RegisteredAidCache {
     static final int POWER_STATE_SWITCH_OFF = 2;
     static final int POWER_STATE_BATTERY_OFF = 4;
     static final int POWER_STATE_ALL = POWER_STATE_SWITCH_ON | POWER_STATE_SWITCH_OFF |POWER_STATE_BATTERY_OFF ;
-
+    static final int SCREEN_STATE_OFF_UNLOCKED = 0x08;
+    static final int SCREEN_STATE_ON_LOCKED = 0x10;
+    static final int SCREEN_STATE_OFF_LOCKED = 0x20;
     // Represents a single AID registration of a service
     final class ServiceAidInfo {
         NxpApduServiceInfo service;
@@ -170,6 +172,7 @@ public class RegisteredAidCache {
         if (mSupportsSubset) {
             if (DBG) Log.d(TAG, "Controller supports AID subset routing");
         }
+        mHostAIDPowerState = POWER_STATE_SWITCH_ON | SCREEN_STATE_ON_LOCKED;
     }
 
     public AidResolveInfo resolveAid(String aid) {
@@ -861,7 +864,7 @@ public class RegisteredAidCache {
                 /*If non default off host payment AID ,set screen state*/
                 if (!isOnHost) {
                     Log.d(TAG," set screen off enable for " + aid);
-                    powerstate |= 0x28;
+                    powerstate |= SCREEN_STATE_OFF_UNLOCKED | SCREEN_STATE_OFF_LOCKED;
                 }
                 Log.d(TAG," AID power state before adding screen state" + powerstate);
                 powerstate |= 0x10;
@@ -877,13 +880,13 @@ public class RegisteredAidCache {
                     if (mRoutingManager.GetVzwCache().isAidPresent(plainAid)) {
                         if (mRoutingManager.GetVzwCache().IsAidAllowed(plainAid)){
                             /*if vzw AID reset the previous screen state   */
-                            powerstate &= ~0x28;
+                            powerstate &= ~(SCREEN_STATE_OFF_UNLOCKED|SCREEN_STATE_OFF_LOCKED);
                             /*get the vzw power and screen state  :- SCREEN | L |F */
                             vzwPowerstate = mRoutingManager.GetVzwCache().getPowerState(plainAid);
                             /*merge power state with vzw power state */
                             powerstate &= vzwPowerstate;
                             /*merge the power state with vzw screen state*/
-                            powerstate |= (vzwPowerstate & 0x28);
+                            powerstate |= (vzwPowerstate & (SCREEN_STATE_OFF_UNLOCKED | SCREEN_STATE_OFF_LOCKED));
                             Log.d(TAG," vzw aid" + aid);
                             Log.d(TAG," vzw merged power state" + powerstate);
                         }
@@ -902,11 +905,11 @@ public class RegisteredAidCache {
             } else if (resolveInfo.services.size() == 1) {
                 // Only one service, but not the default, must route to host
                 // to ask the user to choose one.
-                AidElement aidElem = new AidElement(aid, AidElement.ROUTE_WIEGHT_OTHER, 0, mHostAIDPowerState|0x10,aidInfo);
+                AidElement aidElem = new AidElement(aid, AidElement.ROUTE_WIEGHT_OTHER, 0, mHostAIDPowerState,aidInfo);
                 routingEntries.put(aid, aidElem);
             } else if (resolveInfo.services.size() > 1) {
                 // Multiple services, need to route to host to ask
-                AidElement aidElem = new AidElement(aid, AidElement.ROUTE_WIEGHT_OTHER, 0, mHostAIDPowerState|0x10,aidInfo);
+                AidElement aidElem = new AidElement(aid, AidElement.ROUTE_WIEGHT_OTHER, 0, mHostAIDPowerState,aidInfo);
                 routingEntries.put(aid, aidElem);
             }
         }
