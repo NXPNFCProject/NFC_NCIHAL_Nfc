@@ -97,7 +97,5 @@ int updateNxpConfigTimestamp ();
 #define NAME_NXP_ESE_POWER_DH_CONTROL       "NXP_ESE_POWER_DH_CONTROL"
 #endif
 #define NAME_NXP_DWP_INTF_RESET_ENABLE      "NXP_DWP_INTF_RESET_ENABLE"
-/* default configuration */
-#define default_storage_location "/data/nfc"
 
 #endif //_NXP_CONFIG_H

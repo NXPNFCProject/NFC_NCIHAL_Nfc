@@ -95,7 +95,7 @@ bool                          sHCEEnabled = true;
 /* Delay to wait for SE intialization */
 #define SE_INIT_DELAY       50*1000
 #define NFCEE_DISC_TIMEOUT_SEC      2
-#define JCOP_INFO_PATH              "/data/nfc/jcop_info.txt"
+#define JCOP_INFO_PATH              "/data/vendor/nfc/jcop_info.txt"
 #define OSU_NOT_STARTED             00
 #define OSU_COMPLETE                03
 #define NFC_PIPE_STATUS_OFFSET       4
@@ -7310,7 +7310,7 @@ void write_uicc_context(uint8_t *uiccContext, uint16_t uiccContextLen, uint8_t *
 
     memset (filename, 0, sizeof(filename));
     memset (filename2, 0, sizeof(filename2));
-    strcpy(filename2, "/data/nfc");
+    strcpy(filename2, "/data/vendor/nfc");
     strncat(filename2, "/nxpStorage.bin", sizeof(filename2)-strlen(filename2)-1);
 
     if (strlen(filename2) > 200)
@@ -7393,7 +7393,7 @@ void read_uicc_context(uint8_t *uiccContext, uint16_t uiccContextLen, uint8_t *u
 
     memset (filename, 0, sizeof(filename));
     memset (filename2, 0, sizeof(filename2));
-    strcpy(filename2, "/data/nfc");
+    strcpy(filename2, "/data/vendor/nfc");
     strncat(filename2, "/nxpStorage.bin", sizeof(filename2)-strlen(filename2)-1);
     if (strlen(filename2) > 200)
     {
