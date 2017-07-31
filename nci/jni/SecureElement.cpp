@@ -4199,6 +4199,7 @@ static void nfaVSC_ForceDwpOnOff(bool type)
 #if(NXP_WIRED_MODE_STANDBY == TRUE)
         SecureElement::getInstance().setNfccPwrConfig(SecureElement::getInstance().POWER_ALWAYS_ON | SecureElement::getInstance().COMM_LINK_ACTIVE);
         SecureElement::getInstance().SecEle_Modeset(0x1);
+        spiDwpSyncState |= STATE_WK_ENBLE;
 #else
         spiDwpSyncState |= STATE_WK_ENBLE;
         memset(xmitBuffer, 0, sizeof(xmitBuffer));
