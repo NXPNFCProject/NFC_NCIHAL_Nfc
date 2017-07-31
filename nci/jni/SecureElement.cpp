@@ -2362,7 +2362,10 @@ bool SecureElement::getSeVerInfo(int seIndex, char * verInfo, int verInfoSz, uin
 *******************************************************************************/
 uint8_t SecureElement::getActualNumEe()
 {
-    return mActualNumEe;
+    if(NFA_GetNCIVersion() == NCI_VERSION_2_0)
+        return mActualNumEe + 1;
+    else
+        return mActualNumEe;
 }
 
 /*******************************************************************************
