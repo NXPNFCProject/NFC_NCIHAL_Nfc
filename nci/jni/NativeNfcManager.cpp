@@ -2470,7 +2470,7 @@ if ((signal(SIGABRT, sig_handler) == SIG_ERR) &&
 //TODO: Check this in L_OSP_EXT[PN547C2]
 //                NFA_SetCEStrictDisable(num);
                 RoutingManager::getInstance().setCeRouteStrictDisable(num);
-
+                prevScreenState = NFA_SCREEN_STATE_OFF_LOCKED;
 #if(NXP_EXTNS != TRUE)
                 // Do custom NFCA startup configuration.
                 doStartupConfig();
@@ -5835,7 +5835,8 @@ static void nfcManager_doSetScreenState (JNIEnv* e, jobject o, jint screen_state
         return;
     }
     if(NFC_GetNCIVersion() == NCI_VERSION_2_0) {
-        if(prevScreenState == NFA_SCREEN_STATE_OFF_LOCKED || prevScreenState == NFA_SCREEN_STATE_OFF_UNLOCKED)
+        if(prevScreenState == NFA_SCREEN_STATE_OFF_LOCKED || prevScreenState == NFA_SCREEN_STATE_OFF_UNLOCKED ||
+           prevScreenState == NFA_SCREEN_STATE_ON_LOCKED)
         {
             SyncEventGuard guard (sNfaSetPowerSubState);
             status = NFA_SetPowerSubState(state);
@@ -5873,7 +5874,7 @@ static void nfcManager_doSetScreenState (JNIEnv* e, jobject o, jint screen_state
             ALOGE ("%s: Failed to disable RF field events", __FUNCTION__);
         }
 
-        if(prevScreenState == NFA_SCREEN_STATE_ON_LOCKED || prevScreenState == NFA_SCREEN_STATE_ON_UNLOCKED)
+        if(prevScreenState == NFA_SCREEN_STATE_ON_UNLOCKED)
         {
             SyncEventGuard guard (sNfaSetPowerSubState);
             status = NFA_SetPowerSubState(state);
