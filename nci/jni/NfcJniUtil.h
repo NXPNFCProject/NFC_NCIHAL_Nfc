@@ -91,8 +91,8 @@
 #define NDEF_MODE_UNKNOWN                3
 
 #if(NXP_EXTNS == TRUE)
-#define VEN_POWER_STATE_ON                   6
-#define VEN_POWER_STATE_OFF                  7
+#define VEN_POWER_STATE_ON                   9
+#define VEN_POWER_STATE_OFF                  10
 // ESE Suppored Technologies
 #define TARGET_TYPE_ISO14443_3A_3B        11
 #endif
