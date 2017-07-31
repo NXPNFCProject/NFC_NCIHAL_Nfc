@@ -3500,6 +3500,8 @@ void SecureElement::NfccStandByOperation(nfcc_standby_operation_t value)
         {
             ALOGV("%s: SPI is ON-StandBy not allowed", __func__);
             standby_state = STANDBY_MODE_ON;
+            /*To maintain wired session close state during SPI on*/
+            spiDwpSyncState = STATE_DWP_CLOSE;
             break;
         }
 #endif
@@ -4193,7 +4195,7 @@ static void nfaVSC_ForceDwpOnOff(bool type)
         return;
     }
 
-    ALOGV("nfaVSC_ForceDwpOnOff: syncstate = %d", spiDwpSyncState);
+    ALOGV("nfaVSC_ForceDwpOnOff: syncstate = %d, type = %d", spiDwpSyncState, type);
     if((type == true) && !(spiDwpSyncState & STATE_WK_ENBLE))
     {
 #if(NXP_WIRED_MODE_STANDBY == TRUE)
@@ -4236,21 +4238,19 @@ static void nfaVSC_ForceDwpOnOff(bool type)
             return;
         }
         /*If DWP session is closed*/
-        stat = SecureElement::getInstance().setNfccPwrConfig(SecureElement::getInstance().NFCC_DECIDES);
+        (void)SecureElement::getInstance().setNfccPwrConfig(SecureElement::getInstance().NFCC_DECIDES);
 #endif
-        stat = NFA_HciSendEvent (NFA_HANDLE_GROUP_HCI, 0x19, EVT_END_OF_APDU_TRANSFER,
-                0x00, NULL, 0x00,NULL, 0);
-        if(NFA_STATUS_OK != stat)
+        if(spiDwpSyncState & STATE_DWP_CLOSE)
         {
-            ALOGV("%s: NFA_HciSendEvent failed stat = %d, type = %d", __func__,stat, type);
+            stat = NFA_HciSendEvent (NFA_HANDLE_GROUP_HCI, 0x19, EVT_END_OF_APDU_TRANSFER,
+                                    0x00, NULL, 0x00,NULL, 0);
+            if(NFA_STATUS_OK != stat)    
+                ALOGV("%s: NFA_HciSendEvent failed stat = %d, type = %d", __func__,stat, type);
         }
-        else
-            spiDwpSyncState = STATE_IDLE;
+        spiDwpSyncState = STATE_IDLE;
     }
-    if(NFA_STATUS_OK == stat)
-    {
-        ALOGV("%s: NFA_HciSendEvent pass stat = %d, type = %d", __func__,stat, type);
-    }
+
+    ALOGV("nfaVSC_ForceDwpOnOff: syncstate = %d, type = %d", spiDwpSyncState, type);
 }
 
 bool SecureElement::enableDwp(void)

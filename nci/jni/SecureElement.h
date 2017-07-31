@@ -91,7 +91,8 @@ typedef enum {
     STATE_IDLE = 0x00,
     STATE_WK_ENBLE = 0x01,
     STATE_WK_WAIT_RSP = 0x02,
-    STATE_TIME_OUT = 0x04
+    STATE_TIME_OUT = 0x04,
+    STATE_DWP_CLOSE = 0x08,
 }spiDwpSyncState_t;
 
 typedef enum reset_management{
