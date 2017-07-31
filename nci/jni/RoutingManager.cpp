@@ -1874,7 +1874,6 @@ bool RoutingManager::addApduRouting(uint8_t route, uint8_t powerState,const uint
 {
     static const char fn [] = "RoutingManager::addApduRouting";
     ALOGV("%s: enter, route:%x power:0x%x", fn, route, powerState);
-    tNFA_HANDLE eeHandle;
 #if(NXP_EXTNS == TRUE)
     SecureElement &se = SecureElement::getInstance();
     tNFA_HANDLE handle = se.getEseHandleFromGenericId(route);
@@ -1883,19 +1882,9 @@ bool RoutingManager::addApduRouting(uint8_t route, uint8_t powerState,const uint
     {
         return false;
     }
-    if(handle == SecureElement::EE_HANDLE_0xF0)
-        eeHandle = SecureElement::DH_ID;
-    else
-    {
-#if(NXP_NFCC_DYNAMIC_DUAL_UICC == true)
-        eeHandle = ((handle == SecureElement::EE_HANDLE_0xF3)?SecureElement::ESE_ID:(handle == se.EE_HANDLE_0xF4)?SecureElement::UICC_ID:SecureElement::UICC2_ID);
-#else
-        eeHandle = ((handle == SecureElement::EE_HANDLE_0xF3)?SecureElement::ESE_ID:SecureElement::UICC_ID);
-#endif
-    }
 #endif
     SyncEventGuard guard(SecureElement::getInstance().mApduPaternAddRemoveEvent);
-    tNFA_STATUS nfaStat = NFA_EeAddApduPatternRouting(apduDataLen, (uint8_t*)apduData, apduMaskLen, (uint8_t*)apduMask, eeHandle, powerState);
+    tNFA_STATUS nfaStat = NFA_EeAddApduPatternRouting(apduDataLen, (uint8_t*)apduData, apduMaskLen, (uint8_t*)apduMask, handle, powerState);
     if (nfaStat == NFA_STATUS_OK)
     {
 #if(NXP_EXTNS == TRUE)

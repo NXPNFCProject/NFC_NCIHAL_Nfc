@@ -151,6 +151,17 @@ public class AidRoutingManager {
         mAidRoutingTable.clear();
     }
 
+    public boolean configureApduPatternRouting(List<ApduPatternResolveInfo> apduPatternList) {
+        if(apduPatternList.size() == 0x00 || apduPatternList == null)
+            return false;
+        NfcService.getInstance().unrouteApduPattern("FFFFFFFFFFFFFFEF");
+        for(ApduPatternResolveInfo apduPatternInfo : apduPatternList) {
+            NfcService.getInstance().routeApduPattern(apduPatternInfo.referenceData,apduPatternInfo.mask,
+                    apduPatternInfo.route,apduPatternInfo.powerState);
+        }
+        return true;
+    }
+
     public boolean configureRouting(HashMap<String, AidElement> aidMap) {
         mRoutingTableChanged = false;
         mDefaultRoute = NfcService.getInstance().GetDefaultRouteLoc();
@@ -418,6 +429,14 @@ public class AidRoutingManager {
             }
         }
     }
+
+    final class ApduPatternResolveInfo {
+        public String  mask;
+        public String  referenceData;
+        public int route;
+        public int powerState;
+    }
+
     final class DefaultAidRouteResolveCache {
         static final int AID_HDR_LENGTH = 0x04; // TAG + ROUTE + LENGTH_BYTE + POWER
         static final int MAX_AID_ENTRIES = 50;

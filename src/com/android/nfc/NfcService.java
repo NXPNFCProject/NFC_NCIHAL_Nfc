@@ -271,7 +271,8 @@ public class NfcService implements DeviceHostListener {
     static final int MSG_UPDATE_STATS = 57;
     /*Restart Nfc disbale watchdog timer*/
     static final int MSG_RESTART_WATCHDOG = 60;
-
+    static final int MSG_ROUTE_APDU = 61;
+    static final int MSG_UNROUTE_APDU = 62;
     // Update stats every 4 hours
     static final long STATS_UPDATE_INTERVAL_MS = 4 * 60 * 60 * 1000;
     static final long MAX_POLLING_PAUSE_TIMEOUT = 40000;
@@ -4410,6 +4411,24 @@ public class NfcService implements DeviceHostListener {
     public void unrouteAids(String aid) {
         sendMessage(MSG_UNROUTE_AID, aid);
     }
+
+    public void routeApduPattern(String apdu, String mask ,int route, int powerState) {
+        Message msg = mHandler.obtainMessage();
+        msg.what = MSG_ROUTE_APDU;
+        msg.arg1 = route;
+        msg.arg2 = powerState;
+        Bundle apduPatternbundle = new Bundle();
+        apduPatternbundle.putString("apduData",apdu);
+        apduPatternbundle.putString("apduMask",mask);
+        msg.setData(apduPatternbundle);
+        mHandler.sendMessage(msg);
+   }
+
+    public void unrouteApduPattern(String apdu) {
+        //sendMessage(MSG_UNROUTE_APDU, apdu);
+        mDeviceHost.unrouteApduPattern(hexStringToBytes(apdu));
+    }
+
     public int getNciVersion() {
         return mDeviceHost.getNciVersion();
     }
@@ -4696,6 +4715,7 @@ public class NfcService implements DeviceHostListener {
                     mP2pLinkManager.onManualBeamInvoke((BeamShareData)msg.obj);
                     break;
                 }
+
                 case MSG_UNROUTE_AID: {
                     String aid = (String) msg.obj;
                     mDeviceHost.unrouteAid(hexStringToBytes(aid));
@@ -5265,6 +5285,27 @@ public class NfcService implements DeviceHostListener {
                     removeMessages(MSG_UPDATE_STATS);
                     sendEmptyMessageDelayed(MSG_UPDATE_STATS, STATS_UPDATE_INTERVAL_MS);
                     break;
+
+                case MSG_ROUTE_APDU:{
+                    int route = msg.arg1;
+                    int power = msg.arg2;
+                    String apduData = null;
+                    String apduMask = null;
+                    Bundle dataBundle = msg.getData();
+                    if (dataBundle != null) {
+                        apduData = dataBundle.getString("apduData");
+                        apduMask = dataBundle.getString("apduMask");
+                    }
+                    // Send the APDU
+                    if(apduData != null && dataBundle != null)
+                        mDeviceHost.routeApduPattern(route, power, hexStringToBytes(apduData) ,hexStringToBytes(apduMask));
+                    break;
+                }
+                case MSG_UNROUTE_APDU: {
+                    String apdu = (String) msg.obj;
+                    mDeviceHost.unrouteApduPattern(hexStringToBytes(apdu));
+                    break;
+                }
                 default:
                     Log.e(TAG, "Unknown message received");
                     break;
