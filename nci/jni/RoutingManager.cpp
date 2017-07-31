@@ -3003,7 +3003,7 @@ void *ee_removed_ntf_handler_thread(void *data)
 #if(NXP_WIRED_MODE_STANDBY == true)
     if(se.mIsWiredModeOpen)
     {
-        stat = se.setNfccPwrConfig(se.POWER_ALWAYS_ON);
+        stat = se.setNfccPwrConfig(se.POWER_ALWAYS_ON|se.COMM_LINK_ACTIVE);
         if(stat != NFA_STATUS_OK)
         {
             ALOGV("%s: power link command failed", __func__);

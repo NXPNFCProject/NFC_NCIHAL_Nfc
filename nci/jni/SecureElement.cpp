@@ -1757,6 +1757,19 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
     }
 
 #if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
+#if (NXP_WIRED_MODE_STANDBY == true)
+    if(standby_state == STANDBY_MODE_SUSPEND) {
+        if(mNfccPowerMode == 1) {
+            nfaStat = setNfccPwrConfig(POWER_ALWAYS_ON|COMM_LINK_ACTIVE);
+            if(nfaStat != NFA_STATUS_OK) {
+                ALOGV("%s: power link command failed", __func__);
+                goto TheEnd;
+            } else {
+                SecEle_Modeset(0x01);
+            }
+        }
+    }
+#endif
     NfccStandByOperation(STANDBY_TIMER_STOP);
 #endif
     {
@@ -2987,6 +3000,20 @@ bool SecureElement::getAtr(jint seID, uint8_t* recvBuffer, int32_t *recvBufferSi
         return false;
     }
 #endif
+#if (NXP_WIRED_MODE_STANDBY == true)
+    if(standby_state == STANDBY_MODE_SUSPEND) {
+        if(mNfccPowerMode == 1) {
+            nfaStat = setNfccPwrConfig(POWER_ALWAYS_ON|COMM_LINK_ACTIVE);
+            if(nfaStat != NFA_STATUS_OK) {
+                ALOGV("%s: power link command failed", __func__);
+                return false;
+            } else {
+                SecEle_Modeset(0x01);
+            }
+        }
+    }
+#endif
+    NfccStandByOperation(STANDBY_TIMER_STOP);
 
     gateInfo = getApduGateInfo();
     if(gateInfo == PROPREITARY_APDU_GATE)
@@ -3480,6 +3507,10 @@ void SecureElement::NfccStandByOperation(nfcc_standby_operation_t value)
             if(nfccStandbytimeout > 0)
                 mNFCCStandbyModeTimer.kill();
         }
+        standby_state = STANDBY_MODE_OFF;
+        if(spiDwpSyncState & STATE_DWP_CLOSE) {
+            spiDwpSyncState ^= STATE_DWP_CLOSE;
+        }
         break;
     case STANDBY_MODE_ON:
     {
@@ -3542,12 +3573,13 @@ void SecureElement::NfccStandByOperation(nfcc_standby_operation_t value)
         stat = SecureElement::getInstance().sendEvent(SecureElement::EVT_END_OF_APDU_TRANSFER);
 #endif
 #if (NXP_WIRED_MODE_STANDBY == true)
+        setNfccPwrConfig(POWER_ALWAYS_ON);
         stat = SecureElement::getInstance().sendEvent(SecureElement::EVT_SUSPEND_APDU_TRANSFER);
 #endif
         if(stat)
         {
-            standby_state = STANDBY_MODE_ON;
-            ALOGV("%s sending standby mode command EVT_END_OF_APDU_TRANSFER successful", __func__);
+            standby_state = STANDBY_MODE_SUSPEND;
+            ALOGV("%s sending standby command successful", __func__);
 #if ((NXP_ESE_DWP_SPI_SYNC_ENABLE == true) && (NXP_WIRED_MODE_STANDBY_PROP == true))
             spiDwpSyncState = STATE_IDLE;
 #endif
@@ -4230,11 +4262,13 @@ static void nfaVSC_ForceDwpOnOff(bool type)
             {
                 spiDwpSyncState ^= STATE_WK_ENBLE;
             }
+            SecureElement::getInstance().setNfccPwrConfig(SecureElement::getInstance().POWER_ALWAYS_ON);
             stat = SecureElement::getInstance().sendEvent(SecureElement::EVT_SUSPEND_APDU_TRANSFER);
             if(stat)
             {
                 ALOGV("%s sending standby mode command successful", __func__);
             }
+            standby_state = STANDBY_MODE_SUSPEND;
             return;
         }
         /*If DWP session is closed*/
@@ -4244,7 +4278,7 @@ static void nfaVSC_ForceDwpOnOff(bool type)
         {
             stat = NFA_HciSendEvent (NFA_HANDLE_GROUP_HCI, 0x19, EVT_END_OF_APDU_TRANSFER,
                                     0x00, NULL, 0x00,NULL, 0);
-            if(NFA_STATUS_OK != stat)    
+            if(NFA_STATUS_OK != stat)
                 ALOGV("%s: NFA_HciSendEvent failed stat = %d, type = %d", __func__,stat, type);
         }
         spiDwpSyncState = STATE_IDLE;

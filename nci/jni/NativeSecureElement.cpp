@@ -329,7 +329,7 @@ if((RoutingManager::getInstance().is_ee_recovery_ongoing()))
 #if (NXP_WIRED_MODE_STANDBY == true)
         if(se.mNfccPowerMode == 1)
         {
-            status = se.setNfccPwrConfig(se.POWER_ALWAYS_ON);
+            status = se.setNfccPwrConfig(se.POWER_ALWAYS_ON|se.COMM_LINK_ACTIVE);
             if(status != NFA_STATUS_OK)
             {
                 ALOGV("%s: power link command failed", __func__);
@@ -578,16 +578,16 @@ static jboolean nativeNfcSecureElement_doResetSecureElement (JNIEnv*, jobject, j
             if(checkP61Status() && (se.mIsWiredModeOpen == true))
                 se.NfccStandByOperation(STANDBY_GPIO_HIGH);
         }
-        stat = se.SecEle_Modeset(0x01);
-        usleep(2000 * 1000);
 
 #if (NXP_WIRED_MODE_STANDBY == true)
         if(se.mNfccPowerMode == 1)
         {
-            nfaStat = se.setNfccPwrConfig(se.POWER_ALWAYS_ON);
+            stat = se.setNfccPwrConfig(se.POWER_ALWAYS_ON |se.COMM_LINK_ACTIVE);
             ALOGV("%s Power Mode is Legacy", __func__);
         }
 #endif
+        usleep(2000 * 1000);
+        stat = se.SecEle_Modeset(0x01);
     }
 #endif
     ALOGV("%s: exit", __func__);

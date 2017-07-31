@@ -166,7 +166,8 @@ typedef enum operation{
     STANDBY_GPIO_HIGH,
     STANDBY_GPIO_LOW,
     STANDBY_MODE_ON,
-    STANDBY_MODE_OFF
+    STANDBY_MODE_OFF,
+    STANDBY_MODE_SUSPEND
 }nfcc_standby_operation_t;
 void spi_prio_signal_handler (int signum, siginfo_t *info, void *unused);
 
