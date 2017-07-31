@@ -434,7 +434,9 @@ public class NfcService implements DeviceHostListener {
     public static final int PN80T_ID = 8;
 
     public static final int LS_RETRY_CNT = 3;
-    public static final int LOADER_SERVICE_VERSION_21 = 0x21;
+    public static final int LOADER_SERVICE_VERSION_LOW_LIMIT = 0x21;
+    public static final int LOADER_SERVICE_VERSION_HIGH_LIMIT = 0x24;
+
     private int mSelectedSeId = 0;
     private boolean mNfcSecureElementState;
     private boolean mIsSmartCardServiceSupported = false;
@@ -5617,7 +5619,10 @@ public class NfcService implements DeviceHostListener {
                 if (state == NfcAdapter.STATE_ON) {
                     Log.e(TAG, "Loader service update start from NFC_ON Broadcast");
                     NfcAlaService nas = new NfcAlaService();
-                    if(mNfcAla.doGetLSConfigVersion() == LOADER_SERVICE_VERSION_21)
+                    int lsVersion = mNfcAla.doGetLSConfigVersion();
+
+                    if(lsVersion >= LOADER_SERVICE_VERSION_LOW_LIMIT &&
+                        lsVersion <= LOADER_SERVICE_VERSION_HIGH_LIMIT)
                         nas.updateLoaderService();
             }
         }
