@@ -3321,6 +3321,14 @@ static jboolean nfcManager_doDeinitialize (JNIEnv* e, jobject obj)
 {
     ALOGV("%s: enter", __func__);
     sIsDisabling = true;
+
+#if (NXP_EXTNS == TRUE) && (NFC_NXP_ESE == TRUE)
+#if ((NXP_ESE_DWP_SPI_SYNC_ENABLE == TRUE)||(NXP_ESE_SVDD_SYNC == TRUE) || (NXP_ESE_JCOP_DWNLD_PROTECTION == TRUE) ||\
+        (NXP_NFCC_SPI_FW_DOWNLOAD_SYNC == TRUE))
+    releaseSPIEvtHandlerThread();
+#endif
+#endif
+
 #if((NXP_ESE_JCOP_DWNLD_PROTECTION == true) && (NXP_EXTNS == TRUE))
     if(SecureElement::getInstance().mDownloadMode == JCOP_DOWNLOAD)
     {
@@ -3433,12 +3441,6 @@ static jboolean nfcManager_doDeinitialize (JNIEnv* e, jobject obj)
         SyncEventGuard guard (sNfaEnableDisablePollingEvent);
         sNfaEnableDisablePollingEvent.notifyOne ();
     }
-#if (NXP_EXTNS == TRUE) && (NFC_NXP_ESE == TRUE)
-#if ((NXP_ESE_DWP_SPI_SYNC_ENABLE == true)||(NXP_ESE_SVDD_SYNC == true) || (NXP_ESE_JCOP_DWNLD_PROTECTION == true) ||\
-     (NXP_NFCC_SPI_FW_DOWNLOAD_SYNC == true))
-    releaseSPIEvtHandlerThread();
-#endif
-#endif
     NfcAdaptation& theInstance = NfcAdaptation::GetInstance();
     theInstance.Finalize();
 
@@ -5375,6 +5377,22 @@ bool nfcManager_isNfcActive()
 {
     return sIsNfaEnabled;
 }
+
+#if(NXP_EXTNS == TRUE)
+/*******************************************************************************
+**
+** Function:        nfcManager_isNfcDisabling
+**
+** Description:     Used externaly to determine if NFC is deinit is ongoing or not.
+**
+** Returns:         'true' if the NFC deinit is running, else 'false'.
+**
+*******************************************************************************/
+bool nfcManager_isNfcDisabling()
+{
+    return sIsDisabling;
+}
+#endif
 
 /*******************************************************************************
 **

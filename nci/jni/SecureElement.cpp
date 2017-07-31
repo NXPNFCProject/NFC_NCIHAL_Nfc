@@ -113,6 +113,7 @@ namespace android
     extern void start_timer_msec(struct timeval  *start_tv);
     extern long stop_timer_getdifference_msec(struct timeval  *start_tv, struct timeval  *stop_tv);
     extern bool nfcManager_isNfcActive();
+    extern bool nfcManager_isNfcDisabling();
 #if(NXP_EXTNS == TRUE)
     extern int gMaxEERecoveryTimeout;
     extern bool update_transaction_stat(const char * req_handle, transaction_state_t req_state);
@@ -400,6 +401,10 @@ bool SecureElement::initialize (nfc_jni_native_data* native)
     {
         nfccStandbytimeout = 20000;
     }
+    standby_state = STANDBY_MODE_ON;
+#if ((NXP_ESE_JCOP_DWNLD_PROTECTION == TRUE) || (NXP_ESE_SVDD_SYNC == TRUE)||(NXP_ESE_DWP_SPI_SYNC_ENABLE == TRUE))
+    spiDwpSyncState = STATE_IDLE;
+#endif
     dual_mode_current_state = SPI_DWPCL_NOT_ACTIVE;
     hold_the_transceive = false;
     active_ese_reset_control = 0;
@@ -3981,7 +3986,7 @@ void *spiEventHandlerThread(void *arg)
 #endif
 
     ALOGV("%s: enter", __func__);
-    while(android::nfcManager_isNfcActive())
+    while(android::nfcManager_isNfcActive() && !android::nfcManager_isNfcDisabling())
     {
         if(true == gSPIEvtQueue.isEmpty()) /* Wait for the event only if the queue is empty */
         { /* scope of the guard start */
@@ -4182,9 +4187,19 @@ static void nfaVSC_ForceDwpOnOff(bool type)
         return;
     }
 
+    if(!android::nfcManager_isNfcActive() || android::nfcManager_isNfcDisabling())
+    {
+        ALOGV ("%s: NFC is not activated", __FUNCTION__);
+        return;
+    }
+
     ALOGV("nfaVSC_ForceDwpOnOff: syncstate = %d", spiDwpSyncState);
     if((type == true) && !(spiDwpSyncState & STATE_WK_ENBLE))
     {
+#if(NXP_WIRED_MODE_STANDBY == TRUE)
+        SecureElement::getInstance().setNfccPwrConfig(SecureElement::getInstance().POWER_ALWAYS_ON | SecureElement::getInstance().COMM_LINK_ACTIVE);
+        SecureElement::getInstance().SecEle_Modeset(0x1);
+#else
         spiDwpSyncState |= STATE_WK_ENBLE;
         memset(xmitBuffer, 0, sizeof(xmitBuffer));
         stat = NFA_HciSendEvent (NFA_HANDLE_GROUP_HCI, 0x19, EVT_SEND_DATA, sizeof(xmitBuffer), xmitBuffer,
@@ -4199,6 +4214,7 @@ static void nfaVSC_ForceDwpOnOff(bool type)
         {
             ALOGV("%s: NFA_HciSendEvent failed stat = %d type = %d", __func__,stat, type);
         }
+#endif
     }
     else if (type == false)
     {
@@ -4581,7 +4597,7 @@ tNFA_STATUS SecureElement::SecElem_EeModeSet(uint16_t handle, uint8_t mode)
 #endif
     SyncEventGuard guard (sSecElem.mEeSetModeEvent);
     stat =  NFA_EeModeSet(handle, mode);
-    if(stat == NFA_STATUS_OK)
+    if(stat == NFA_STATUS_OK && !android::nfcManager_isNfcDisabling())
     {
         sSecElem.mEeSetModeEvent.wait ();
     }
@@ -4917,7 +4933,7 @@ tNFA_STATUS SecureElement::setNfccPwrConfig(uint8_t value)
         cur_value = value;
         SyncEventGuard guard (mPwrLinkCtrlEvent);
         nfaStat = NFC_Nfcee_PwrLinkCtrl((uint8_t)EE_HANDLE_0xF3, value);
-        if(nfaStat == NFA_STATUS_OK)
+        if(nfaStat ==  NFA_STATUS_OK && !android::nfcManager_isNfcDisabling())
             mPwrLinkCtrlEvent.wait();
     }
     return mPwrCmdstatus;
