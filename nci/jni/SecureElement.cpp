@@ -1093,8 +1093,6 @@ bool SecureElement::activate (jint seID)
     mActiveEeHandle = getDefaultEeHandle();
 #endif
 
-    mActiveEeHandle = getDefaultEeHandle();
-
     if (mActiveEeHandle == NFA_HANDLE_INVALID)
         ALOGE("%s: ee handle not found", fn);
     ALOGV("%s: exit; active ee h=0x%X", fn, mActiveEeHandle);
