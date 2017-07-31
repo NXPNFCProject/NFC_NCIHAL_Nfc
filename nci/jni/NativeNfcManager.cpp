@@ -523,6 +523,7 @@ void sig_handler(int signo);
 #endif
 void cleanup_timer();
 /* Transaction Events in order */
+static IntervalTimer scleanupTimerProc_rffield;
 typedef enum transcation_events
 {
     NFA_TRANS_DEFAULT = 0x00,
@@ -6349,7 +6350,8 @@ void checkforTranscation(uint8_t connEvent, void* eventData)
     case NFA_TRANS_DM_RF_FIELD_EVT:
         if (eventDM_Conn_data->rf_field.status == NFA_STATUS_OK &&
                 (transaction_data.current_transcation_state == NFA_TRANS_EE_ACTION_EVT
-                        || transaction_data.current_transcation_state == NFA_TRANS_CE_DEACTIVATED)
+                        || transaction_data.current_transcation_state == NFA_TRANS_CE_DEACTIVATED
+                        || transaction_data.current_transcation_state == NFA_TRANS_CE_ACTIVATED)
                 && eventDM_Conn_data->rf_field.rf_field_status == 0)
         {
             ALOGV("start_timer");
@@ -6357,7 +6359,7 @@ void checkforTranscation(uint8_t connEvent, void* eventData)
             set_AGC_process_state(false);
 #endif
             transaction_data.current_transcation_state = NFA_TRANS_DM_RF_FIELD_EVT_OFF;
-            scleanupTimerProc_transaction.set (50, cleanupTimerProc_transaction);
+            scleanupTimerProc_rffield.set (50, cleanupTimerProc_transaction);
         }
         else if (eventDM_Conn_data->rf_field.status == NFA_STATUS_OK &&
                 transaction_data.current_transcation_state == NFA_TRANS_DM_RF_FIELD_EVT_OFF &&
@@ -6369,7 +6371,7 @@ void checkforTranscation(uint8_t connEvent, void* eventData)
             transaction_data.current_transcation_state = NFA_TRANS_DM_RF_FIELD_EVT_ON;
             ALOGV("Payment is in progress hold the screen on/off request ");
             transaction_data.current_transcation_state = NFA_TRANS_DM_RF_TRANS_START;
-            scleanupTimerProc_transaction.kill ();
+            scleanupTimerProc_rffield.kill ();
 
         }
         else if (eventDM_Conn_data->rf_field.status == NFA_STATUS_OK &&
@@ -6481,7 +6483,7 @@ void *enableThread(void *arg)
         if(!transaction_data.isInstallRequest)
         {
             RoutingManager::getInstance().clearAidTable();
-            nfcManager_doCommitRouting(NULL,NULL);
+            //nfcManager_doCommitRouting(NULL,NULL);
         }
         RoutingManager::getInstance().notifyReRoutingEntry();
     }
