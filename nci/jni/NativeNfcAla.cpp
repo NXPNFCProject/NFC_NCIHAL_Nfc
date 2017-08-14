@@ -107,7 +107,7 @@ int nfcManager_GetAppletsList(JNIEnv* e, jobject o, jobjectArray list)
         startRfDiscovery (true);
     }
     else {
-        int xx = -1;
+        xx = -1;
         ALOGV("%s: No p61", __func__);
     }
 #endif
@@ -185,7 +185,7 @@ int nfcManager_doAppletLoadApplet(JNIEnv* e, jobject o, jstring name, jbyteArray
     }
     else {
 
-        tNFA_STATUS wStatus = 0x0F;
+        wStatus = 0x0F;
         ALOGV("%s: No p61", __func__);
     }
 #endif
@@ -216,7 +216,7 @@ jbyteArray nfcManager_lsExecuteScript(JNIEnv* e, jobject o, jstring name, jstrin
     const uint8_t lsExecuteResponseSize = 4;
     uint8_t resSW [4]={0x4e,0x02,0x69,0x87};
     jbyteArray result = e->NewByteArray(0);
-    #if (NXP_LDR_SVC_VER_2 == FALSE)
+    #if (NXP_LDR_SVC_VER_2 == TRUE)
     if(nfcFL.nfcNxpEse) {
 
         ALOGV("%s: enter", __func__);
@@ -387,7 +387,7 @@ jbyteArray nfcManager_GetCertificateKey(JNIEnv* e, jobject)
 jbyteArray nfcManager_lsGetVersion(JNIEnv* e, jobject)
 {
     jbyteArray result;
-#if (NXP_LDR_SVC_VER_2 == FALSE)
+#if (NXP_LDR_SVC_VER_2 == TRUE)
     if(nfcFL.nfcNxpEse) {
         ALOGV("%s: enter", __func__);
         tNFA_STATUS wStatus = NFA_STATUS_FAILED;
@@ -438,7 +438,7 @@ jbyteArray nfcManager_lsGetVersion(JNIEnv* e, jobject)
     }
     else
     {
-        jbyteArray result = e->NewByteArray(0);
+        result = e->NewByteArray(0);
         ALOGV("%s: No p61", __func__);
     }
 #endif
@@ -460,7 +460,7 @@ jbyteArray nfcManager_lsGetVersion(JNIEnv* e, jobject)
 jbyteArray nfcManager_lsGetAppletStatus(JNIEnv* e, jobject)
 {
     jbyteArray result = e->NewByteArray(0);
-#if (NXP_LDR_SVC_VER_2 == FALSE)
+#if (NXP_LDR_SVC_VER_2 == TRUE)
     if(nfcFL.nfcNxpEse) {
         ALOGV("%s: enter", __func__);
         tNFA_STATUS wStatus = NFA_STATUS_FAILED;
@@ -522,7 +522,7 @@ jbyteArray nfcManager_lsGetAppletStatus(JNIEnv* e, jobject)
 jbyteArray nfcManager_lsGetStatus(JNIEnv* e, jobject)
 {
     jbyteArray result = e->NewByteArray(0);
-#if (NXP_LDR_SVC_VER_2 == FALSE)
+#if (NXP_LDR_SVC_VER_2 == TRUE)
     if(nfcFL.nfcNxpEse) {
         ALOGV("%s: enter", __func__);
         tNFA_STATUS wStatus = NFA_STATUS_FAILED;
@@ -564,7 +564,7 @@ int nfcManager_getLoaderServiceConfVersion(JNIEnv* e, jobject o)
     unsigned long num = 0;
     uint8_t ls_version = LS_DEFAULT_VERSION;
     ALOGV("%s: enter", __func__);
-#if (NXP_LDR_SVC_VER_2 == FALSE)
+#if (NXP_LDR_SVC_VER_2 == TRUE)
     if(nfcFL.nfcNxpEse) {
         if(GetNxpNumValue (NAME_NXP_LOADER_SERICE_VERSION, (void*)&num, sizeof(num))==false)
         {

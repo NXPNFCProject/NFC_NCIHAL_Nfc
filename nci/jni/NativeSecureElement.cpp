@@ -226,10 +226,9 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection (JNIEnv*, jobje
         }
     }
 
-#if(NFC_NXP_ESE_VER == JCOP_VER_3_1)
-    if (!(p61_current_state & P61_STATE_SPI) && !(p61_current_state & P61_STATE_SPI_PRIO))
+
+    if (((nfcFL.eseFL._NXP_ESE_VER == JCOP_VER_3_1)) &&(!(p61_current_state & P61_STATE_SPI) && !(p61_current_state & P61_STATE_SPI_PRIO))||(nfcFL.eseFL._NXP_ESE_VER != JCOP_VER_3_1))
     {
-#endif
         if(p61_current_state & (P61_STATE_SPI)||(p61_current_state & (P61_STATE_SPI_PRIO)))
         {
             dual_mode_current_state |= SPI_ON;
@@ -274,7 +273,6 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection (JNIEnv*, jobje
                 }
             }
         }
-#if(NFC_NXP_ESE_VER == JCOP_VER_3_1)
     }
     else
     {
@@ -282,7 +280,6 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection (JNIEnv*, jobje
         goto TheEnd;
 
     }
-#endif
 #endif
 /* Tell the controller to power up to get ready for sec elem operations */
 PowerSwitch::getInstance ().setLevel (PowerSwitch::FULL_POWER);

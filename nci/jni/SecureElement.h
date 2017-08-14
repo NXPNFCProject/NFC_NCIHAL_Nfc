@@ -741,9 +741,7 @@ public:
     void        NfccStandByOperation(nfcc_standby_operation_t value);
     NFCSTATUS   eSE_Chip_Reset(void);
     tNFA_STATUS SecElem_sendEvt_Abort();
-#if (JCOP_WA_ENABLE == TRUE)
     tNFA_STATUS reconfigureEseHciInit();
-#endif
 #endif
     bool checkForWiredModeAccess();
 #if(NXP_EXTNS == TRUE)
@@ -848,10 +846,8 @@ private:
     tNFA_HCI_GET_GATE_PIPE_LIST mHciCfg;
     SyncEvent       mEeRegisterEvent;
     SyncEvent       mHciRegisterEvent;
-#if (JCOP_WA_ENABLE == TRUE)
     SyncEvent       mResetEvent;
     SyncEvent       mResetOngoingEvent;
-#endif
     SyncEvent       mPipeListEvent;
 #if(NXP_EXTNS != TRUE)
     SyncEvent       mCreatePipeEvent;

@@ -1938,7 +1938,7 @@ void RoutingManager::setDefaultTechRouting (int seId, int tech_switchon,int tech
         }
     }
 
-    if(nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH &&
+    if(nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH ||
             nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC)
     {
         SyncEventGuard guard (mRoutingEvent);
@@ -2438,8 +2438,7 @@ void RoutingManager::nfaEeCallback (tNFA_EE_EVT event, tNFA_EE_CBACK_DATA* event
             tNFA_EE_DISCOVER ee_disc_info = eventData->ee_discover;
             ALOGV("%s: NFA_EE_DISCOVER_EVT; status=0x%X; num ee=%u", __func__,eventData->status, eventData->ee_discover.num_ee);
             if((nfcFL.nfccFL._NFCEE_REMOVED_NTF_RECOVERY) &&
-                    ((mChipId != pn80T && android::isNfcInitializationDone() == true) ||
-                            (mChipId == pn80T && SecureElement::getInstance().mETSI12InitStatus == NFA_STATUS_OK))) {
+                    ((mChipId == pn80T || mChipId == pn65T || mChipId == pn66T || mChipId == pn67T || mChipId == pn81T) && android::isNfcInitializationDone() == true)) {
                 for(int xx = 0; xx <  num_ee; xx++)
                 {
                     ALOGE("xx=%d, ee_handle=0x0%x, status=0x0%x", xx, ee_disc_info.ee_info[xx].ee_handle,ee_disc_info.ee_info[xx].ee_status);
