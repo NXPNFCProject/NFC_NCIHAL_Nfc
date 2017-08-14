@@ -610,7 +610,7 @@ void SecureElement::finalize ()
 /*    if (mNfaHciHandle != NFA_HANDLE_INVALID)
         NFA_HciDeregister (const_cast<char*>(APP_NAME));*/
 #if(NXP_EXTNS == TRUE)
-    if(nfcFL.chipType) {
+    if(nfcFL.nfcNxpEse) {
         NfccStandByOperation(STANDBY_TIMER_STOP);
     }
 #endif
@@ -2608,25 +2608,25 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
             SyncEventGuard guard (sSecElem.mTransceiveEvent);
             sSecElem.mActualResponseSize = (eventData->rcvd_evt.evt_len > MAX_RESPONSE_SIZE) ? MAX_RESPONSE_SIZE : eventData->rcvd_evt.evt_len;
 #if(NXP_EXTNS == TRUE)
-#if(NFC_NXP_ESE == TRUE)
-            if(eventData->rcvd_evt.evt_len > 0)
-            {
-                sSecElem.mTransceiveWaitOk = true;
-                sSecElem.NfccStandByOperation(STANDBY_TIMER_START);
+            if(nfcFL.nfcNxpEse) {
+                if(eventData->rcvd_evt.evt_len > 0)
+                {
+                    sSecElem.mTransceiveWaitOk = true;
+                    sSecElem.NfccStandByOperation(STANDBY_TIMER_START);
+                }
+                /*If there is pending reset event to process*/
+                if((nfcFL.eseFL._JCOP_WA_ENABLE) &&(active_ese_reset_control&RESET_BLOCKED)&&
+                        (!(active_ese_reset_control &(TRANS_CL_ONGOING))))
+                {
+                    SyncEventGuard guard (sSecElem.mResetEvent);
+                    sSecElem.mResetEvent.notifyOne();
+                }
+            } else {
+                if(eventData->rcvd_evt.evt_len > 0)
+                {
+                    sSecElem.mTransceiveWaitOk = true;
+                }
             }
-            /*If there is pending reset event to process*/
-            if((nfcFL.eseFL._JCOP_WA_ENABLE) &&(active_ese_reset_control&RESET_BLOCKED)&&
-            (!(active_ese_reset_control &(TRANS_CL_ONGOING))))
-            {
-                SyncEventGuard guard (sSecElem.mResetEvent);
-                sSecElem.mResetEvent.notifyOne();
-            }
-#else
-            if(eventData->rcvd_evt.evt_len > 0)
-            {
-                sSecElem.mTransceiveWaitOk = true;
-	        }
-#endif
 #endif
             sSecElem.mTransceiveEvent.notifyOne ();
         }
