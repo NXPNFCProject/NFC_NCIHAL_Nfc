@@ -1488,7 +1488,6 @@ static jboolean nfcManager_initNativeStruc (JNIEnv* e, jobject o)
 #if(NXP_EXTNS == TRUE)
     gCachedNfcManagerNotifyReRoutingEntry = e->GetMethodID(cls.get(),
             "notifyReRoutingEntry", "()V");
-    if(nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
         gCachedNfcManagerNotifyETSIReaderModeStartConfig = e->GetMethodID (cls.get(),
                 "notifyonETSIReaderModeStartConfig", "(I)V");
 
@@ -1497,24 +1496,20 @@ static jboolean nfcManager_initNativeStruc (JNIEnv* e, jobject o)
 
         gCachedNfcManagerNotifyETSIReaderModeSwpTimeout = e->GetMethodID (cls.get(),
                 "notifyonETSIReaderModeSwpTimeout", "(I)V");
-    }
-    if(nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH) {
+
         gCachedNfcManagerNotifyUiccStatusEvent= e->GetMethodID (cls.get(),
                 "notifyUiccStatusEvent", "(I)V");
-    }
+
 #if(NXP_NFCC_HCE_F == TRUE)
         gCachedNfcManagerNotifyT3tConfigure = e->GetMethodID(cls.get(),
                 "notifyT3tConfigure", "()V");
 #endif
-    if(nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION) {
         gCachedNfcManagerNotifyJcosDownloadInProgress = e->GetMethodID(cls.get(),
                 "notifyJcosDownloadInProgress", "(I)V");
-    }
 
-    if(nfcFL.nfccFL._NFCC_SPI_FW_DOWNLOAD_SYNC) {
         gCachedNfcManagerNotifyFwDwnldRequested = e->GetMethodID(cls.get(),
                 "notifyFwDwnldRequested", "()V");
-    }
+
 #endif
     if (nfc_jni_cache_object(e, gNativeNfcTagClassName, &(nat->cached_NfcTag)) == -1)
     {
