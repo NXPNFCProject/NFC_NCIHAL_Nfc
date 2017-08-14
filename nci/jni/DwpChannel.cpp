@@ -48,7 +48,7 @@ bool IsWiredMode_Enable()
     SecureElement &se = SecureElement::getInstance();
     tNFA_STATUS stat = NFA_STATUS_FAILED;
 
-    uint8_t mActualNumEe  = SecureElement::MAX_NUM_EE;
+    uint8_t mActualNumEe  = nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED;
     uint16_t meSE         = 0x4C0;
     tNFA_EE_INFO EeInfo[mActualNumEe];
 

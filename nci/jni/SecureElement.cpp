@@ -277,7 +277,7 @@ SecureElement::SecureElement ()
     mRfFieldIsOn(false),
     mTransceiveWaitOk(false)
 {
-    memset (&mEeInfo, 0, sizeof(mEeInfo));
+    memset (&mEeInfo, 0, nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED *sizeof(tNFA_EE_INFO));
     memset (&mUiccInfo, 0, sizeof(mUiccInfo));
     memset (&mHciCfg, 0, sizeof(mHciCfg));
     memset (mResponseData, 0, sizeof(mResponseData));
@@ -352,7 +352,6 @@ bool SecureElement::initialize (nfc_jni_native_data* native)
     unsigned long retValue;
 
     ALOGV("%s: enter", fn);
-
     if (GetNumValue("NFA_HCI_DEFAULT_DEST_GATE", &num, sizeof(num)))
         mDestinationGate = num;
     ALOGV("%s: Default destination gate: 0x%X", fn, mDestinationGate);
@@ -444,7 +443,7 @@ bool SecureElement::initialize (nfc_jni_native_data* native)
 
     mNativeData     = native;
     mthreadnative    = native;
-    mActualNumEe    = MAX_NUM_EE;
+    mActualNumEe    = nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED;;
     mbNewEE         = true;
     mNewPipeId      = 0;
     mNewSourceGate  = 0;
@@ -523,7 +522,7 @@ bool SecureElement::initialize (nfc_jni_native_data* native)
 bool SecureElement::updateEEStatus ()
 {
     tNFA_STATUS nfaStat;
-    mActualNumEe    = MAX_NUM_EE;
+    mActualNumEe    = nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED;
     ALOGV("%s: Enter", __func__);
 
     if (! getEeInfo())
@@ -661,7 +660,7 @@ bool SecureElement::getEeInfo()
         memset (&mNfceeData_t, 0, sizeof (mNfceeData_t));
 #endif
 
-        mActualNumEe = MAX_NUM_EE;
+        mActualNumEe = nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED;
 
         if ((nfaStat = NFA_EeGetInfo (&mActualNumEe, mEeInfo)) != NFA_STATUS_OK)
         {
@@ -4818,7 +4817,7 @@ uicc_stat_t SecureElement::getUiccStatus(uint8_t selected_uicc)
  **********************************************************************************/
 uint8_t SecureElement::updateNfceeDiscoverInfo()
 {
-    uint8_t numEe = SecureElement::MAX_NUM_EE;
+    uint8_t numEe = nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED;
     tNFA_EE_INFO mEeInfo[numEe];
     tNFA_STATUS nfaStat;
 

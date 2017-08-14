@@ -192,7 +192,7 @@ bool RoutingManager::initialize (nfc_jni_native_data* native)
     static const char fn [] = "RoutingManager::initialize()";
     unsigned long num = 0, tech = 0;
     mNativeData = native;
-    uint8_t ActualNumEe = SecureElement::MAX_NUM_EE;
+    uint8_t ActualNumEe = nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED;
     tNFA_EE_INFO mEeInfo [ActualNumEe];
 
     ALOGV("%s: enter", fn);
@@ -447,13 +447,13 @@ void RoutingManager::cleanRouting()
 {
     tNFA_STATUS nfaStat;
     //tNFA_HANDLE seHandle = NFA_HANDLE_INVALID;        /*commented to eliminate unused variable warning*/
-    tNFA_HANDLE ee_handleList[SecureElement::MAX_NUM_EE];
+    tNFA_HANDLE ee_handleList[nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED];
     uint8_t i, count;
    // static const char fn [] = "SecureElement::cleanRouting";   /*commented to eliminate unused variable warning*/
     SyncEventGuard guard (mRoutingEvent);
     SecureElement::getInstance().getEeHandleList(ee_handleList, &count);
-    if (count > SecureElement::MAX_NUM_EE) {
-        count = SecureElement::MAX_NUM_EE;
+    if (count > nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED) {
+        count = nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED;
         ALOGV("Count is more than SecureElement::MAX_NUM_EE,Forcing to SecureElement::MAX_NUM_EE");
     }
     for ( i = 0; i < count; i++)
@@ -509,7 +509,7 @@ void RoutingManager::setRouting(bool isHCEEnabled)
 {
     tNFA_STATUS nfaStat;
     tNFA_HANDLE defaultHandle = NFA_HANDLE_INVALID;
-    tNFA_HANDLE ee_handleList[SecureElement::MAX_NUM_EE];
+    tNFA_HANDLE ee_handleList[nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED];
     uint8_t i = 0, count;
     static const char fn [] = "SecureElement::setRouting";
     unsigned long num = 0;
@@ -871,7 +871,7 @@ void RoutingManager::checkProtoSeID(void)
     if(check_default_proto_se_id_req == 0x01)
     {
         uint8_t count,seId=0;
-        tNFA_HANDLE ee_handleList[SecureElement::MAX_NUM_EE];
+        tNFA_HANDLE ee_handleList[nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED];
         SecureElement::getInstance().getEeHandleList(ee_handleList, &count);
         ALOGV("%s: count : %d", fn, count);
         for (int  i = 0; ((count != 0 ) && (i < count)); i++)
@@ -918,7 +918,7 @@ void RoutingManager::configureOffHostNfceeTechMask(void)
     uint8_t           count           = 0x00;
     tNFA_HANDLE       preferredHandle = SecureElement::getInstance().EE_HANDLE_0xF4;
     tNFA_HANDLE       defaultHandle   = NFA_HANDLE_INVALID;
-    tNFA_HANDLE       ee_handleList[SecureElement::MAX_NUM_EE];
+    tNFA_HANDLE       ee_handleList[nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED];
 
     ALOGV("%s: enter", fn);
 
@@ -1547,7 +1547,7 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
     tNFA_HANDLE ActDevHandle = NFA_HANDLE_INVALID;
     uint8_t count,seId=0;
     uint8_t isSeIDPresent = 0;
-    tNFA_HANDLE ee_handleList[SecureElement::MAX_NUM_EE];
+    tNFA_HANDLE ee_handleList[nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED];
     SecureElement::getInstance().getEeHandleList(ee_handleList, &count);
 
 
@@ -2040,7 +2040,7 @@ void RoutingManager::onNfccShutdown ()
 {
     static const char fn [] = "RoutingManager:onNfccShutdown";
     tNFA_STATUS nfaStat     = NFA_STATUS_FAILED;
-    uint8_t actualNumEe       = SecureElement::MAX_NUM_EE;
+    uint8_t actualNumEe       = nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED;
     tNFA_EE_INFO eeInfo[actualNumEe];
 
     if (mActiveSe == 0x00)
@@ -2406,7 +2406,7 @@ void RoutingManager::nfaEeCallback (tNFA_EE_EVT event, tNFA_EE_CBACK_DATA* event
                 ALOGV("%s: NFA_EE_ACTION_EVT; h=0x%X; trigger=rf tech (0x%X)", fn, action.ee_handle, action.trigger);
             else
                 ALOGE("%s: NFA_EE_ACTION_EVT; h=0x%X; unknown trigger (0x%X)", fn, action.ee_handle, action.trigger);
-#if ((NXP_EXTNS == TRUE) && (NFC_NXP_ESE == TRUE))
+#if ((NXP_EXTNS == TRUE))
             if(nfcFL.nfcNxpEse) {
                 if(action.ee_handle == SecureElement::EE_HANDLE_0xF3)
                 {
@@ -2981,7 +2981,6 @@ void *ee_removed_ntf_handler_thread(void *data)
         SyncEventGuard guard (se.mEeSetModeEvent);
         se.mEeSetModeEvent.wait ();
     }
-#if(NFC_NXP_ESE == TRUE)
     if(nfcFL.nfcNxpEse) {
         se.NfccStandByOperation(STANDBY_GPIO_LOW);
         usleep(10*1000);
@@ -2995,7 +2994,6 @@ void *ee_removed_ntf_handler_thread(void *data)
             }
         }
     }
-#endif
     stat = NFA_EeModeSet(SecureElement::EE_HANDLE_0xF3, NFA_EE_MD_ACTIVATE);
 
     if(stat == NFA_STATUS_OK)
@@ -3228,7 +3226,7 @@ void RoutingManager::handleSERemovedNtf()
         return;
     }
     static const char fn [] = "RoutingManager::handleSERemovedNtf()";
-    uint8_t ActualNumEe = SecureElement::MAX_NUM_EE;
+    uint8_t ActualNumEe = nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED;
     tNFA_EE_INFO mEeInfo [ActualNumEe];
     tNFA_STATUS nfaStat;
     ALOGE("%s:Enter", __func__);
