@@ -58,7 +58,7 @@ typedef struct nxp_feature_data
 
 extern int32_t gActualSeCount;
 uint8_t swp_getconfig_status;
-#if((NXP_EXTNS == TRUE) && (NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH == true))
+#if(NXP_EXTNS == TRUE)
 extern uint8_t sSelectedUicc;
 #endif
 namespace android
@@ -160,7 +160,6 @@ static void NxpResponse_SetSWPBitRate_Cb(uint8_t event, uint16_t param_len, uint
 }
 
 #if(NXP_EXTNS == TRUE)
-#if(NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH == true)
 /*******************************************************************************
  **
  ** Function:        NxpResponse_SwitchUICC_Cb
@@ -173,6 +172,10 @@ static void NxpResponse_SetSWPBitRate_Cb(uint8_t event, uint16_t param_len, uint
  *******************************************************************************/
 static void NxpResponse_SwitchUICC_Cb(uint8_t event, uint16_t param_len, uint8_t *p_param)
 {
+    if(!nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH) {
+        ALOGV("%s STAT_DUAL_UICC_EXT_SWITCH not available. Returning",__func__);
+        return ;
+    }
     ALOGV("NxpResponse_SwitchUICC_Cb length data = 0x%x status = 0x%x", param_len, p_param[3]);
     if(p_param[3] == 0x00)
     {
@@ -185,8 +188,6 @@ static void NxpResponse_SwitchUICC_Cb(uint8_t event, uint16_t param_len, uint8_t
     SyncEventGuard guard(gnxpfeature_conf.NxpFeatureConfigEvt);
     gnxpfeature_conf.NxpFeatureConfigEvt.notifyOne ();
 }
-#endif
-#if(NFC_NXP_CHIP_TYPE != PN547C2)
 /*******************************************************************************
  **
  ** Function:        NxpResponse_EnableAGCDebug_Cb()
@@ -198,6 +199,11 @@ static void NxpResponse_SwitchUICC_Cb(uint8_t event, uint16_t param_len, uint8_t
  *******************************************************************************/
 static void NxpResponse_EnableAGCDebug_Cb(uint8_t event, uint16_t param_len, uint8_t *p_param)
 {
+    if(nfcFL.chipType == pn547C2) {
+        ALOGV("%s chipType : pn547C2. Not allowed. Returning", __func__);
+        return;
+    }
+
     ALOGV("NxpResponse_EnableAGCDebug_Cb Received length data = 0x%x", param_len);
     SetCbStatus(NFA_STATUS_FAILED);
     if(param_len > 0)
@@ -220,6 +226,10 @@ static void NxpResponse_EnableAGCDebug_Cb(uint8_t event, uint16_t param_len, uin
  *******************************************************************************/
 static void printDataByte(uint16_t param_len, uint8_t *p_param)
 {
+    if(nfcFL.chipType == pn547C2) {
+            ALOGV("%s chipType : pn547C2. Not allowed. Returning", __func__);
+            return;
+        }
     char print_buffer[param_len * 3 + 1];
     memset (print_buffer, 0, sizeof(print_buffer));
     for (int i = 0; i < param_len; i++)
@@ -242,17 +252,23 @@ static void printDataByte(uint16_t param_len, uint8_t *p_param)
 tNFA_STATUS SendAGCDebugCommand()
 {
     tNFA_STATUS status = NFA_STATUS_FAILED;
-#if ((NFC_NXP_CHIP_TYPE == PN548C2) || (NFC_NXP_CHIP_TYPE == PN551))
-    uint8_t cmd_buf[] = {0x2F, 0x33, 0x04, 0x40, 0x00, 0x40, 0xD8};
-#elif(NFC_NXP_CHIP_TYPE == PN553 || NFC_NXP_CHIP_TYPE == PN557)
-    uint8_t cmd_buf[] = {0x2F, 0x32, 0x01, 0x01};
-#endif
+    if(nfcFL.chipType == pn547C2) {
+        ALOGV("%s chipType : pn547C2. Not allowed. Returning", __func__);
+        return NFA_STATUS_FAILED;
+    }
+
+        uint8_t cmd_buf[] = {0x2F, 0x33, 0x04, 0x40, 0x00, 0x40, 0xD8};
+
+        uint8_t cmd_buf2[] = {0x2F, 0x32, 0x01, 0x01};
     ALOGV("%s: enter", __func__);
     SetCbStatus(NFA_STATUS_FAILED);
     gnxpfeature_conf.rsp_len = 0;
     memset(gnxpfeature_conf.rsp_data, 0, 50);
     SyncEventGuard guard (gnxpfeature_conf.NxpFeatureConfigEvt);
-    status = NFA_SendNxpNciCommand(sizeof(cmd_buf), cmd_buf, NxpResponse_EnableAGCDebug_Cb);
+    if(nfcFL.chipType == pn547C2 || nfcFL.chipType == pn551)
+        status = NFA_SendNxpNciCommand(sizeof(cmd_buf), cmd_buf, NxpResponse_EnableAGCDebug_Cb);
+    else if(nfcFL.chipType == pn553 || nfcFL.chipType == pn557)
+        status = NFA_SendNxpNciCommand(sizeof(cmd_buf2), cmd_buf2, NxpResponse_EnableAGCDebug_Cb);
     if (status == NFA_STATUS_OK)
     {
         ALOGV("%s: Success NFA_SendNxpNciCommand", __func__);
@@ -269,7 +285,6 @@ tNFA_STATUS SendAGCDebugCommand()
     }
     return status;
 }
-#endif
 /*******************************************************************************
  **
  ** Function:        EmvCo_dosetPoll
@@ -427,13 +442,10 @@ tNFA_STATUS Nxp_SelfTest(uint8_t testcase, uint8_t* param)
 {
     tNFA_STATUS status = NFA_STATUS_FAILED;
     uint8_t swp_test[] ={0x2F, 0x3E, 0x01, 0x00};   //SWP SelfTest
-#if(NFC_NXP_CHIP_TYPE != PN547C2)
     uint8_t prbs_test[] ={0x2F, 0x30, 0x06, 0x00, 0x00, 0x00, 0x00, 0x01, 0xFF};    //PRBS SelfTest
     uint8_t cmd_buf[9] = {0,};
-#else
-    uint8_t prbs_test[] ={0x2F, 0x30, 0x04, 0x00, 0x00, 0x01, 0xFF};    //PRBS SelfTest
-    uint8_t cmd_buf[7] = {0,};
-#endif
+    uint8_t prbs_test_stat[] ={0x2F, 0x30, 0x04, 0x00, 0x00, 0x01, 0xFF};    //PRBS SelfTest
+    uint8_t cmd_buf_stat[7] = {0,};
     //Factory Test Code for PRBS STOP --/
 //    uint8_t prbs_stop[] ={0x2F, 0x30, 0x04, 0x53, 0x54, 0x4F, 0x50};  //STOP!!    /*commented to eliminate unused variable warning*/
     uint8_t rst_cmd[] ={0x20, 0x00, 0x01, 0x00};    //CORE_RESET_CMD
@@ -450,22 +462,40 @@ tNFA_STATUS Nxp_SelfTest(uint8_t testcase, uint8_t* param)
 
     SetCbStatus(NFA_STATUS_FAILED);
     SyncEventGuard guard (gnxpfeature_conf.NxpFeatureConfigEvt);
-
+    if(nfcFL.chipType != pn547C2) {
     memset(cmd_buf, 0x00, sizeof(cmd_buf));
-
+    }
+    else {
+        memset(cmd_buf_stat, 0x00, sizeof(cmd_buf_stat));
+    }
     switch(testcase){
     case 0 ://SWP Self-Test
         cmd_len = sizeof(swp_test);
         swp_test[3] = param[0];  //select channel 0x00:UICC(SWP1) 0x01:eSE(SWP2)
-        memcpy(cmd_buf, swp_test, 4);
+        if(nfcFL.chipType != pn547C2) {
+            memcpy(cmd_buf, swp_test, 4);
+        }
+        else {
+            memcpy(cmd_buf_stat, swp_test, 4);
+        }
         break;
 
     case 1 ://PRBS Test start
-        cmd_len = sizeof(prbs_test);
-        //Technology to stream 0x00:TypeA 0x01:TypeB 0x02:TypeF
-        //Bitrate                       0x00:106kbps 0x01:212kbps 0x02:424kbps 0x03:848kbps
-        memcpy(&prbs_test[3], param, (cmd_len-5));
-        memcpy(cmd_buf, prbs_test, cmd_len);
+        if(nfcFL.chipType != pn547C2) {
+            cmd_len = sizeof(prbs_test);
+            //Technology to stream 0x00:TypeA 0x01:TypeB 0x02:TypeF
+            //Bitrate                       0x00:106kbps 0x01:212kbps 0x02:424kbps 0x03:848kbps
+            memcpy(&prbs_test[3], param, (cmd_len-5));
+            memcpy(cmd_buf, prbs_test, cmd_len);
+        }
+        else {
+            cmd_len = sizeof(prbs_test_stat);
+            //Technology to stream 0x00:TypeA 0x01:TypeB 0x02:TypeF
+            //Bitrate                       0x00:106kbps 0x01:212kbps 0x02:424kbps 0x03:848kbps
+            memcpy(&prbs_test_stat[3], param, (cmd_len-5));
+            memcpy(cmd_buf_stat, prbs_test_stat, cmd_len);
+        }
+
         break;
 
         //Factory Test Code
@@ -476,18 +506,33 @@ tNFA_STATUS Nxp_SelfTest(uint8_t testcase, uint8_t* param)
 
     case 3 ://step2. PRBS Test stop : CORE RESET
         cmd_len = sizeof(rst_cmd);
+        if(nfcFL.chipType != pn547C2) {
         memcpy(cmd_buf, rst_cmd, 4);
+        }
+        else {
+            memcpy(cmd_buf_stat, rst_cmd, 4);
+        }
         break;
 
     case 4 ://step3. PRBS Test stop : CORE_INIT
         cmd_len = sizeof(init_cmd);
-        memcpy(cmd_buf, init_cmd, cmd_len);
+        if(nfcFL.chipType != pn547C2) {
+            memcpy(cmd_buf, init_cmd, cmd_len);
+        }
+        else {
+            memcpy(cmd_buf_stat, init_cmd, cmd_len);
+        }
         break;
         //Factory Test Code
 
     case 5 ://step5. : NXP_ACT_PROP_EXTN
         cmd_len = sizeof(prop_ext_act_cmd);
-        memcpy(cmd_buf, prop_ext_act_cmd, 3);
+        if(nfcFL.chipType != pn547C2) {
+            memcpy(cmd_buf, prop_ext_act_cmd, 3);
+        }
+        else {
+            memcpy(cmd_buf_stat, prop_ext_act_cmd, 3);
+        }
         break;
 
     default :
@@ -495,7 +540,13 @@ tNFA_STATUS Nxp_SelfTest(uint8_t testcase, uint8_t* param)
         return status;
     }
 
-    status = NFA_SendNxpNciCommand(cmd_len, cmd_buf, NxpResponse_SetDhlf_Cb);
+    if(nfcFL.chipType != pn547C2) {
+        status = NFA_SendNxpNciCommand(cmd_len, cmd_buf, NxpResponse_SetDhlf_Cb);
+    }
+    else {
+        status = NFA_SendNxpNciCommand(cmd_len, cmd_buf_stat, NxpResponse_SetDhlf_Cb);
+    }
+
     if (status == NFA_STATUS_OK) {
         ALOGV("%s: Success NFA_SendNxpNciCommand", __func__);
         gnxpfeature_conf.NxpFeatureConfigEvt.wait(); /* wait for callback */
@@ -563,13 +614,12 @@ static void NxpResponse_GetNumNFCEEValueCb(uint8_t event, uint16_t param_len, ui
     {
         while(cfg_param_offset < param_len)
         {
-#if(NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH == true)
-            if(p_param[5] == 0xA0 && p_param[6] == 0xEC)
-            {
+            if(nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH &&
+                    (p_param[5] == 0xA0 && p_param[6] == 0xEC)) {
                 sSelectedUicc = (p_param[8] & 0x0F);
                 ALOGV("Selected Uicc:%d",sSelectedUicc);
             }
-#endif
+
             if(p_param[cfg_param_offset] == NXP_NFC_SET_CONFIG_PARAM_EXT && p_param[cfg_param_offset+1] == NXP_NFC_PARAM_ID_SWP1)
             {
                 if(p_param[cfg_param_offset+3] != NXP_FEATURE_DISABLED)
@@ -627,14 +677,12 @@ tNFA_STATUS GetNumNFCEEConfigured(void)
     uint8_t cmd_buf_len = 0x08;
     uint8_t num_config_params = 0x02;
     uint8_t config_param_len = 0x05;
-#if(NXP_NFCC_DYNAMIC_DUAL_UICC == true)
     uint8_t buf_offset = 0x08;
     cmd_buf[buf_offset++] = NXP_NFC_SET_CONFIG_PARAM_EXT;
     cmd_buf[buf_offset++] = NXP_NFC_PARAM_ID_SWP1A;
     cmd_buf_len += 0x02;
     num_config_params++;
     config_param_len += 0x02;
-#endif
     cmd_buf[2] = config_param_len;
     cmd_buf[3] = num_config_params;
 
@@ -771,14 +819,11 @@ tNFA_STATUS enableSWPInterface()
 {
     tNFA_STATUS status = NFA_STATUS_FAILED;
     static uint8_t get_eeprom_data[6] = {0x20, 0x03,  0x03 , 0x01 ,0xA0, 0x14};
-#if (NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH == true)
-    uint8_t cmd_buf[] = { 0x20, 0x02, 0x09, 0x02,
-                          0xA0, 0xEC, 0x01, 0x00,
-                          0xA0, 0xD4, 0x01, 0x00 };
-#else
+    uint8_t dual_uicc_cmd_buf[] = { 0x20, 0x02, 0x09, 0x02,
+            0xA0, 0xEC, 0x01, 0x00,
+            0xA0, 0xD4, 0x01, 0x00 };
     uint8_t cmd_buf[] = { 0x20, 0x02, 0x05, 0x01,
-                          0xA0, 0xEC, 0x01, 0x00 };
-#endif
+            0xA0, 0xEC, 0x01, 0x00 };
     ALOGV("%s: enter", __func__);
 
     status = NxpNfc_Write_Cmd(sizeof(get_eeprom_data), get_eeprom_data, NxpResponse_Cb);
@@ -786,21 +831,22 @@ tNFA_STATUS enableSWPInterface()
     {
         if(gnxpfeature_conf.rsp_data[8] == 0x01 && !(swp_getconfig_status & SWP1_UICC1) ) //SWP status read
         {
-            cmd_buf[7] = 0x01;
+            if(nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH) {
+                dual_uicc_cmd_buf[7] = 0x01;
+            }
+            else {
+                cmd_buf[7] = 0x01;
+            }
         }
-#if (NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH == true)
-        if(gnxpfeature_conf.rsp_data[9] == 0x01 && !(swp_getconfig_status & SWP1A_UICC2) ) //SWP1A status read
-        {
-            cmd_buf[11] = 0x01;
+        if(nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH) {
+            if(gnxpfeature_conf.rsp_data[9] == 0x01 && !(swp_getconfig_status & SWP1A_UICC2) ) //SWP1A status read
+            {
+                dual_uicc_cmd_buf[11] = 0x01;
+            }
         }
-#endif
-        if(cmd_buf[7] == 0x00
-#if (NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH == true)
-            &&  cmd_buf[11] == 0x00)
-#else
-    )
-#endif
-        {
+        if((!nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH) && (cmd_buf[7] == 0x00) ||
+                (nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH) &&
+                (dual_uicc_cmd_buf[7] == 0x00 && dual_uicc_cmd_buf[11] == 0x00)) {
             ALOGV("%s: No mismatch in UICC SWP and configuration set", __func__);
             status = NFA_STATUS_FAILED;
         }
@@ -809,7 +855,14 @@ tNFA_STATUS enableSWPInterface()
             SetCbStatus(NFA_STATUS_FAILED);
             {
                 SyncEventGuard guard (gnxpfeature_conf.NxpFeatureConfigEvt);
-                status = NFA_SendNxpNciCommand(sizeof(cmd_buf), cmd_buf, NxpResponse_Cb);
+                if(nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH) {
+                    status = NFA_SendNxpNciCommand(sizeof(dual_uicc_cmd_buf),
+                            dual_uicc_cmd_buf, NxpResponse_Cb);
+                }
+                else {
+                    status = NFA_SendNxpNciCommand(sizeof(cmd_buf), cmd_buf, NxpResponse_Cb);
+                }
+
                 if (status == NFA_STATUS_OK)
                 {
                     ALOGV("%s: Success NFA_SendNxpNciCommand", __func__);
@@ -913,7 +966,6 @@ long stop_timer_getdifference_msec(struct timeval  *start_tv, struct timeval  *s
 }
 
 #endif
-#if(NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH == true)
 /*******************************************************************************
  **
  ** Function:        Set_EERegisterValue()
@@ -926,6 +978,10 @@ long stop_timer_getdifference_msec(struct timeval  *start_tv, struct timeval  *s
  *******************************************************************************/
 tNFA_STATUS Set_EERegisterValue(uint16_t RegAddr, uint8_t bitVal)
 {
+    if(!nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH) {
+        ALOGV("%s STAT_DUAL_UICC_EXT_SWITCH not available. Returning",__func__);
+        return NFC_STATUS_FAILED;
+    }
     tNFA_STATUS status = NFC_STATUS_FAILED;
     uint8_t swp1conf[] = {0x20,0x02,0x05,0x01,0x00,0x00,0x01,0x00};
     ALOGV("Enter: Prepare SWP1 configurations");
@@ -953,7 +1009,6 @@ tNFA_STATUS Set_EERegisterValue(uint16_t RegAddr, uint8_t bitVal)
     return status;
 }
 
-#endif
 #if(NXP_EXTNS == TRUE)
 /*******************************************************************************
 + **

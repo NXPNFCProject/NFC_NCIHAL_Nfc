@@ -19,7 +19,6 @@ extern "C"
     #include "nfa_ee_api.h"
 }
 #define ALOGV ALOGD
-#if(NXP_ESE_JCOP_DWNLD_PROTECTION == true)
 class DwpChannel
 {
 public:
@@ -97,7 +96,6 @@ DwpChannel () ;
 ~DwpChannel () ;
 
 };
-#endif
 
 /*******************************************************************************
 **

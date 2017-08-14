@@ -50,10 +50,9 @@
 #include "DataQueue.h"
 #if(NXP_EXTNS == TRUE)
 #include "RoutingManager.h"
-#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
+
 #include <signal.h>
 #include <sys/types.h>
-#endif
 extern "C"{
 #include "nfa_api.h"
 }
@@ -76,12 +75,8 @@ nfc_jni_native_data* mthreadnative;
 nfcee_disc_state sNfcee_disc_state;
 extern uint8_t nfcee_swp_discovery_status;
 extern int32_t gSeDiscoverycount;
-#if (NFC_NXP_ESE == TRUE)
 static void rfFeildEventTimeoutCallback(union sigval);
-#if(NXP_ESE_ETSI_READER_ENABLE == true)
 extern Rdr_req_ntf_info_t swp_rdr_req_ntf_info ;
-#endif
-#if(NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == true)
 pthread_t passiveListenEnable_thread;
 void *passiveListenEnableThread(void *arg);
 bool ceTransactionPending = false;
@@ -89,19 +84,15 @@ static uint8_t passiveListenState = 0x00;
 static bool isTransceiveOngoing = false;
 static void passiveListenDisablecallBack(union sigval);
 #endif
-#endif
-#endif
 namespace android
 {
     extern void startRfDiscovery (bool isStart);
     extern void setUiccIdleTimeout (bool enable);
     extern bool isDiscoveryStarted();
-#if(NXP_NFCC_SPI_FW_DOWNLOAD_SYNC == true)
     extern void requestFwDownload();
-#endif
     extern int getScreenState();
     extern void checkforNfceeConfig(uint8_t type);
-#if (NXP_ESE_JCOP_DWNLD_PROTECTION == true && NXP_EXTNS == TRUE)
+#if (NXP_EXTNS == TRUE)
     extern bool nfcManager_checkNfcStateBusy();
 #endif
     extern bool isp2pActivated();
@@ -119,7 +110,7 @@ namespace android
     extern bool update_transaction_stat(const char * req_handle, transaction_state_t req_state);
 #endif
 }
-#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
+#if(NXP_EXTNS == TRUE)
     static    uint32_t        nfccStandbytimeout;        // timeout for secelem standby mode detection
     int       active_ese_reset_control = 0;
     bool      hold_wired_mode = false;
@@ -129,7 +120,6 @@ namespace android
     /*  hold the transceive flag should be set when the prio session is actrive/about to active*/
     /*  Event used to inform the prio session end and transceive resume*/
         SyncEvent sSPIPrioSessionEndEvent;
-#if ((NXP_ESE_JCOP_DWNLD_PROTECTION == true) || (NXP_ESE_SVDD_SYNC == true)||(NXP_ESE_DWP_SPI_SYNC_ENABLE == true))
     SyncEvent sSPISignalHandlerEvent;
     SyncEvent sSPIForceEnableDWPEvent;
     SyncEvent sSPISVDDSyncOnOffEvent;
@@ -143,7 +133,6 @@ namespace android
     void releaseSPIEvtHandlerThread();
     static void nfaVSC_SVDDSyncOnOff(bool type);
     static void nfaVSC_ForceDwpOnOff(bool type);
-#endif
 #endif
     SyncEvent mDualModeEvent;
     static void setSPIState(bool mState);
@@ -180,7 +169,7 @@ static const tNCI_DISCOVER_MAPS nfc_interface_mapping_uicc[NFC_SWP_RD_NUM_INTERF
         {
                 NCI_PROTOCOL_ISO_DEP,
                 NCI_INTERFACE_MODE_POLL,
-                NCI_INTERFACE_UICC_DIRECT
+                NCI_INTERFACE_UICC_DIRECT_STAT
         }
 
 };
@@ -191,12 +180,11 @@ static const tNCI_DISCOVER_MAPS nfc_interface_mapping_ese[NFC_SWP_RD_NUM_INTERFA
         {
                 NCI_PROTOCOL_ISO_DEP,
                 NCI_INTERFACE_MODE_POLL,
-                NCI_INTERFACE_ESE_DIRECT
+                NCI_INTERFACE_ESE_DIRECT_STAT
         }
 
 };
 
-#if((NFC_NXP_ESE == TRUE) && (NXP_EXTNS == TRUE) && (NXP_ESE_ETSI_READER_ENABLE == true))
 /*******************************************************************************
 **
 ** Function:        startStopSwpReaderProc
@@ -208,6 +196,10 @@ static const tNCI_DISCOVER_MAPS nfc_interface_mapping_ese[NFC_SWP_RD_NUM_INTERFA
 *******************************************************************************/
 static void startStopSwpReaderProc (union sigval)
 {
+    if(!nfcFL.nfcNxpEse || !nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
+        ALOGV("%s: nfcNxpEse or ETSI_READER not enabled. Returning", __func__);
+        return;
+    }
     ALOGV("%s: Timeout!!!", __func__);
     JNIEnv* e = NULL;
     int disc_ntf_timeout = 10;
@@ -223,8 +215,6 @@ static void startStopSwpReaderProc (union sigval)
         e->CallVoidMethod (RoutingManager::getInstance().mNativeData->manager, android::gCachedNfcManagerNotifyETSIReaderModeSwpTimeout,disc_ntf_timeout);
 
 }
-#endif
-
 void SecureElement::discovery_map_cb (tNFC_DISCOVER_EVT event, tNFC_DISCOVER *p_data)
 {
     (void)event;
@@ -258,18 +248,12 @@ SecureElement::SecureElement ()
     mIsIntfRstEnabled (false),
     mETSI12InitStatus (NFA_STATUS_FAILED),
     mModeSetInfo(NFA_STATUS_FAILED),
-#if(NFC_NXP_ESE == TRUE)
     meseETSI12Recovery(false),
     meSESessionIdOk (false),
-#endif
-#if (NXP_WIRED_MODE_STANDBY == true)
     mPwrCmdstatus(NFA_STATUS_FAILED),
     mNfccPowerMode(0),
-#endif
-#if((NFC_NXP_ESE == TRUE) && (NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == true))
     mPassiveListenCnt(0),
     mPassiveListenTimeout(0),
-#endif
 #endif
     mDestinationGate (4), //loopback gate
     mNfaHciHandle (NFA_HANDLE_INVALID),
@@ -379,68 +363,73 @@ bool SecureElement::initialize (nfc_jni_native_data* native)
         mActiveSeOverride = num;
         ALOGV("%s: Active SE override: 0x%X", fn, mActiveSeOverride);
     }
-#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
-#if(NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == true)
-    if (GetNxpNumValue(NAME_NXP_NFCC_PASSIVE_LISTEN_TIMEOUT, &mPassiveListenTimeout, sizeof(mPassiveListenTimeout)) == false)
-    {
-        mPassiveListenTimeout = 2500;
-        ALOGV("%s: NFCC Passive Listen Disable timeout =%ld", fn, mPassiveListenTimeout);
-    }
-    ALOGV("%s: NFCC Passive Listen Disable timeout =%ld", fn, mPassiveListenTimeout);
-#endif
-    if (GetNxpNumValue(NAME_NXP_NFCC_STANDBY_TIMEOUT, &nfccStandbytimeout, sizeof(nfccStandbytimeout)) == false)
-    {
-        nfccStandbytimeout = 20000;
-    }
-    ALOGV("%s: NFCC standby mode timeout =0x%lx", fn, nfccStandbytimeout);
-    if(nfccStandbytimeout > 0 && nfccStandbytimeout < 5000 )
-    {
-        nfccStandbytimeout = 5000;
-    }
-    else if (nfccStandbytimeout > 20000)
-    {
-        nfccStandbytimeout = 20000;
-    }
-    standby_state = STANDBY_MODE_ON;
-#if ((NXP_ESE_JCOP_DWNLD_PROTECTION == TRUE) || (NXP_ESE_SVDD_SYNC == TRUE)||(NXP_ESE_DWP_SPI_SYNC_ENABLE == TRUE))
-    spiDwpSyncState = STATE_IDLE;
-#endif
-    dual_mode_current_state = SPI_DWPCL_NOT_ACTIVE;
-    hold_the_transceive = false;
-    active_ese_reset_control = 0;
-    hold_wired_mode = false;
-    mlistenDisabled = false;
-    mIsExclusiveWiredMode = false;
+#if(NXP_EXTNS == TRUE)
+    if(nfcFL.nfcNxpEse) {
+        if(nfcFL.eseFL._NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION) {
+            if (GetNxpNumValue(NAME_NXP_NFCC_PASSIVE_LISTEN_TIMEOUT, &mPassiveListenTimeout, sizeof(mPassiveListenTimeout)) == false)
+            {
+                mPassiveListenTimeout = 2500;
+                ALOGV("%s: NFCC Passive Listen Disable timeout =%ld", fn, mPassiveListenTimeout);
+            }
+            ALOGV("%s: NFCC Passive Listen Disable timeout =%ld", fn, mPassiveListenTimeout);
+        }
+        if (GetNxpNumValue(NAME_NXP_NFCC_STANDBY_TIMEOUT, &nfccStandbytimeout, sizeof(nfccStandbytimeout)) == false)
+        {
+            nfccStandbytimeout = 20000;
+        }
+        ALOGV("%s: NFCC standby mode timeout =0x%lx", fn, nfccStandbytimeout);
+        if(nfccStandbytimeout > 0 && nfccStandbytimeout < 5000 )
+        {
+            nfccStandbytimeout = 5000;
+        }
+        else if (nfccStandbytimeout > 20000)
+        {
+            nfccStandbytimeout = 20000;
+        }
+        standby_state = STANDBY_MODE_ON;
+        if(nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION || nfcFL.eseFL._ESE_SVDD_SYNC
+                || nfcFL.eseFL._ESE_DWP_SPI_SYNC_ENABLE) {
+            spiDwpSyncState = STATE_IDLE;
+        }
+        dual_mode_current_state = SPI_DWPCL_NOT_ACTIVE;
+        hold_the_transceive = false;
+        active_ese_reset_control = 0;
+        hold_wired_mode = false;
+        mlistenDisabled = false;
+        mIsExclusiveWiredMode = false;
 
-    if (GetNxpNumValue(NAME_NXP_NFCC_RF_FIELD_EVENT_TIMEOUT, &mRfFieldEventTimeout, sizeof(mRfFieldEventTimeout)) == false)
-    {
-        mRfFieldEventTimeout = 2000;
-        ALOGV("%s: RF Field Off event timeout =%ld", fn, mRfFieldEventTimeout);
-    }
+        if (GetNxpNumValue(NAME_NXP_NFCC_RF_FIELD_EVENT_TIMEOUT, &mRfFieldEventTimeout, sizeof(mRfFieldEventTimeout)) == false)
+        {
+            mRfFieldEventTimeout = 2000;
+            ALOGV("%s: RF Field Off event timeout =%ld", fn, mRfFieldEventTimeout);
+        }
 
-    if (GetNxpNumValue(NAME_NXP_ALLOW_WIRED_IN_MIFARE_DESFIRE_CLT, &retValue, sizeof(retValue)) == false)
-    {
-        mIsAllowWiredInDesfireMifareCE = false;
-    }
-    else
-    {
-        mIsAllowWiredInDesfireMifareCE = (retValue == 0x00)? false: true;
-    }
-#if (NXP_WIRED_MODE_STANDBY == true)
-    if (GetNxpNumValue (NAME_NXP_ESE_POWER_DH_CONTROL, (void*)&num, sizeof(num)) == false)
-    {
-        mNfccPowerMode = 0;
-    }
-    else
-    {
-        mNfccPowerMode = (uint8_t)num;
-    }
-#endif
-    retValue = 0;
-    if (GetNxpNumValue(NAME_NXP_DWP_INTF_RESET_ENABLE, &retValue, sizeof(retValue)))
-    {
-        mIsIntfRstEnabled = (retValue == 0x00)? false: true;
-    }
+        if (GetNxpNumValue(NAME_NXP_ALLOW_WIRED_IN_MIFARE_DESFIRE_CLT, &retValue, sizeof(retValue)) == false)
+        {
+            mIsAllowWiredInDesfireMifareCE = false;
+        }
+        else
+        {
+            mIsAllowWiredInDesfireMifareCE = (retValue == 0x00)? false: true;
+        }
+
+        if(nfcFL.eseFL._WIRED_MODE_STANDBY) {
+            if (GetNxpNumValue (NAME_NXP_ESE_POWER_DH_CONTROL, (void*)&num, sizeof(num)) == false)
+            {
+                mNfccPowerMode = 0;
+            }
+            else
+            {
+                mNfccPowerMode = (uint8_t)num;
+            }
+        }
+
+        retValue = 0;
+        if (GetNxpNumValue(NAME_NXP_DWP_INTF_RESET_ENABLE, &retValue, sizeof(retValue)))
+        {
+            mIsIntfRstEnabled = (retValue == 0x00)? false: true;
+        }
+}
 #endif
     /*
      * Since NXP doesn't support OBERTHUR RESET COMMAND, Hence commented
@@ -462,10 +451,11 @@ bool SecureElement::initialize (nfc_jni_native_data* native)
     mRfFieldIsOn    = false;
     mActivatedInListenMode = false;
     mCurrentRouteSelection = NoRoute;
-#if((NFC_NXP_ESE == TRUE)&&(NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == true))
-    mPassiveListenEnabled = true;
-    meseUiccConcurrentAccess = false;
-#endif
+    if(nfcFL.nfcNxpEse && nfcFL.eseFL._NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION) {
+        mPassiveListenEnabled = true;
+        meseUiccConcurrentAccess = false;
+    }
+
     memset (mEeInfo, 0, sizeof(mEeInfo));
     memset (&mUiccInfo, 0, sizeof(mUiccInfo));
     memset (&mHciCfg, 0, sizeof(mHciCfg));
@@ -622,9 +612,12 @@ void SecureElement::finalize ()
 
 /*    if (mNfaHciHandle != NFA_HANDLE_INVALID)
         NFA_HciDeregister (const_cast<char*>(APP_NAME));*/
-#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
-    NfccStandByOperation(STANDBY_TIMER_STOP);
+#if(NXP_EXTNS == TRUE)
+    if(nfcFL.chipType) {
+        NfccStandByOperation(STANDBY_TIMER_STOP);
+    }
 #endif
+
     mNfaHciHandle = NFA_HANDLE_INVALID;
     mNativeData   = NULL;
     mIsInit       = false;
@@ -1042,23 +1035,18 @@ bool SecureElement::activate (jint seID)
 
     ALOGV("%s: override ee h=0x%X", fn, overrideEeHandle );
 
-#if (NFC_NXP_ESE != TRUE)
-    if (mRfFieldIsOn) {
+    if (!nfcFL.nfcNxpEse && mRfFieldIsOn) {
         ALOGE("%s: RF field indication still on, resetting", fn);
         mRfFieldIsOn = false;
     }
-#endif
 
     //activate every discovered secure element
     for (int index=0; index < mActualNumEe; index++)
     {
         tNFA_EE_INFO& eeItem = mEeInfo[index];
 
-        if ((eeItem.ee_handle == EE_HANDLE_0xF3) || (eeItem.ee_handle == EE_HANDLE_0xF4)
-#if(NXP_NFCC_DYNAMIC_DUAL_UICC == true)
-                         || (eeItem.ee_handle == EE_HANDLE_0xF8)
-#endif
-            )
+        if ((eeItem.ee_handle == EE_HANDLE_0xF3) || (eeItem.ee_handle == EE_HANDLE_0xF4) ||
+                (nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC && (eeItem.ee_handle == EE_HANDLE_0xF8)))
         {
             if (overrideEeHandle && (overrideEeHandle != eeItem.ee_handle) )
                 continue;   // do not enable all SEs; only the override one
@@ -1161,14 +1149,9 @@ bool SecureElement::deactivate (jint seID)
     {
         tNFA_EE_INFO& eeItem = mEeInfo[index];
 
-        if ( eeItem.ee_handle == handle &&
-                ((eeItem.ee_handle == EE_HANDLE_0xF3) || (eeItem.ee_handle == EE_HANDLE_0xF4)
-#if(NXP_NFCC_DYNAMIC_DUAL_UICC == true)
-                 || (eeItem.ee_handle == EE_HANDLE_0xF8)
-#endif
-           ))
-        {
-
+        if (eeItem.ee_handle == handle &&
+                ((eeItem.ee_handle == EE_HANDLE_0xF3) || (eeItem.ee_handle == EE_HANDLE_0xF4) ||
+                        (nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC && (eeItem.ee_handle == EE_HANDLE_0xF8)))) {
             if (eeItem.ee_status == NFC_NFCEE_STATUS_INACTIVE)
             {
                 ALOGV("%s: h=0x%X already deactivated", fn, eeItem.ee_handle);
@@ -1426,11 +1409,16 @@ bool SecureElement::connectEE ()
         return (false);
     }
 
-#if (((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE)))
-#if (NXP_ESE_WIRED_MODE_DISABLE_DISCOVERY == true)
-    // Disable RF discovery completely while the DH is connected
-    android::startRfDiscovery(false);
-#endif
+#if (NXP_EXTNS == TRUE)
+    if(nfcFL.nfcNxpEse) {
+        if(nfcFL.eseFL._ESE_WIRED_MODE_DISABLE_DISCOVERY) {
+            // Disable RF discovery completely while the DH is connected
+            android::startRfDiscovery(false);
+        }
+    }
+    else {
+        android::startRfDiscovery(false);
+    }
 #else
     android::startRfDiscovery(false);
 #endif
@@ -1504,8 +1492,7 @@ bool SecureElement::connectEE ()
 #if(NXP_EXTNS == TRUE)
         ALOGV("%s: Using host id : 0x%X,gate id : 0x%X,pipe id : 0x%X", __func__,host,gate, mNewPipeId);
 #endif
-#if(NXP_LEGACY_APDU_GATE == true)
-        if(getApduGateInfo() != ETSI_12_APDU_GATE)
+        if(nfcFL.eseFL._LEGACY_APDU_GATE && (getApduGateInfo() != ETSI_12_APDU_GATE))
         {
             nfaStat = NFA_HciAddStaticPipe(mNfaHciHandle, host, gate, mNewPipeId);
             if (nfaStat != NFA_STATUS_OK)
@@ -1515,7 +1502,6 @@ bool SecureElement::connectEE ()
                 goto TheEnd;
             }
         }
-#endif
     }
     else
     {
@@ -1657,16 +1643,19 @@ bool SecureElement::disconnectEE (jint seID)
     }
 
     mIsPiping = false;
-#if ((NXP_ESE_DWP_SPI_SYNC_ENABLE == true) || (NXP_ESE_SVDD_SYNC == true))
-    /*The state of the SPI should not be cleared based on DWP state close. dual_mode_current_state updated in spi_prio_signal_handler function.*/
-    /*clear the SPI transaction flag*/
-    if(dual_mode_current_state & SPI_ON)
+
+    if(nfcFL.eseFL._ESE_DWP_SPI_SYNC_ENABLE && nfcFL.eseFL._ESE_SVDD_SYNC &&
+            (dual_mode_current_state & SPI_ON)) {
+        /*The state of the SPI should not be cleared based on DWP state close. dual_mode_current_state updated in spi_prio_signal_handler function.*/
+        /*clear the SPI transaction flag*/
         dual_mode_current_state ^= SPI_ON;
-#endif
+}
 
     hold_the_transceive = false;
-#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
-    hold_wired_mode = false;
+#if(NXP_EXTNS == TRUE)
+    if(nfcFL.nfcNxpEse) {
+        hold_wired_mode = false;
+    }
 #endif
 
     // Re-enable UICC low-power mode
@@ -1675,12 +1664,13 @@ bool SecureElement::disconnectEE (jint seID)
     // so if polling/listening were configured OFF (forex because
     // the screen was off), they will stay OFF with this call.
     /*Blocked as part  done in connectEE, to allow wired mode during reader mode.*/
-#if(NFC_NXP_ESE == TRUE && NFC_NXP_CHIP_TYPE != PN547C2)
-    // Do Nothing
-#else
-    android::setUiccIdleTimeout (true);
-    android::startRfDiscovery(true);
-#endif
+    if(nfcFL.nfcNxpEse && nfcFL.chipType != pn547C2) {
+        // Do Nothing
+    }
+    else {
+        android::setUiccIdleTimeout (true);
+        android::startRfDiscovery(true);
+    }
 
     return true;
 }
@@ -1704,12 +1694,14 @@ bool SecureElement::disconnectEE (jint seID)
 bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uint8_t* recvBuffer,
         int32_t recvBufferMaxSize, int32_t& recvBufferActualSize, int32_t timeoutMillisec)
 {
+
+
     static const char fn [] = "SecureElement::transceive";
     tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
     bool isSuccess = false;
     mTransceiveWaitOk = false;
     uint8_t newSelectCmd[NCI_MAX_AID_LEN + 10];
-#if((NXP_EXTNS == TRUE) && ((NFC_NXP_ESE_VER == JCOP_VER_3_1) || (NFC_NXP_ESE_VER == JCOP_VER_3_2)))
+#if(NXP_EXTNS == TRUE)
     bool isEseAccessSuccess = false;
 #endif
 
@@ -1726,11 +1718,11 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
     // Note, the length of the configured AID is in the first
     //   byte, and AID starts from the 2nd byte.
     if (mAidForEmptySelect[0]                           // 1
-        && (mAidForEmptySelect[0] <= NCI_MAX_AID_LEN)   // 2
-        && (xmitBufferSize >= 4)                        // 3
-        && (xmitBuffer[1] == 0xA4)                      // 4
-        && (xmitBuffer[2] == 0x04)                      // 5
-        && (xmitBufferSize <= 5))                       // 6
+                           && (mAidForEmptySelect[0] <= NCI_MAX_AID_LEN)   // 2
+                           && (xmitBufferSize >= 4)                        // 3
+                           && (xmitBuffer[1] == 0xA4)                      // 4
+                           && (xmitBuffer[2] == 0x04)                      // 5
+                           && (xmitBufferSize <= 5))                       // 6
     {
         uint8_t idx = 0;
 
@@ -1756,80 +1748,86 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
         ALOGV("%s: Empty AID SELECT cmd detected, substituting AID from config file, new length=%d", fn, idx);
     }
 
-#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
-#if (NXP_WIRED_MODE_STANDBY == true)
-    if(standby_state == STANDBY_MODE_SUSPEND) {
-        if(mNfccPowerMode == 1) {
-            nfaStat = setNfccPwrConfig(POWER_ALWAYS_ON|COMM_LINK_ACTIVE);
-            if(nfaStat != NFA_STATUS_OK) {
-                ALOGV("%s: power link command failed", __func__);
-                goto TheEnd;
-            } else {
-                SecEle_Modeset(0x01);
+#if(NXP_EXTNS == TRUE)
+    if(nfcFL.nfcNxpEse) {
+        if(nfcFL.eseFL._WIRED_MODE_STANDBY) {
+            if(standby_state == STANDBY_MODE_SUSPEND) {
+                if(mNfccPowerMode == 1) {
+                    nfaStat = setNfccPwrConfig(POWER_ALWAYS_ON|COMM_LINK_ACTIVE);
+                    if(nfaStat != NFA_STATUS_OK) {
+                        ALOGV("%s: power link command failed", __func__);
+                        goto TheEnd;
+                    } else {
+                        SecEle_Modeset(0x01);
+                    }
+                }
             }
         }
+        NfccStandByOperation(STANDBY_TIMER_STOP);
     }
-#endif
-    NfccStandByOperation(STANDBY_TIMER_STOP);
 #endif
     {
         SyncEventGuard guard (mTransceiveEvent);
         mActualResponseSize = 0;
         memset (mResponseData, 0, sizeof(mResponseData));
-#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
-        struct timeval start_timer, end_timer;
-        int32_t time_elapsed = 0;
-        while(hold_the_transceive == true)
-        {
-             android::start_timer_msec(&start_timer);
-             ALOGV("%s: holding the transceive for %ld ms.\n", fn, (timeoutMillisec - time_elapsed));
-             SyncEventGuard guard(sSPIPrioSessionEndEvent);
-             if(sSPIPrioSessionEndEvent.wait(timeoutMillisec - time_elapsed)== false)
-             {
-                 ALOGE("%s: wait response timeout \n", fn);
-                 time_elapsed = android::stop_timer_getdifference_msec(&start_timer, &end_timer);
-                 time_elapsed = 0;
-                 goto TheEnd;
-             }
-             time_elapsed += android::stop_timer_getdifference_msec(&start_timer, &end_timer);
-             if((timeoutMillisec - time_elapsed) <= 0)
-             {
-                 ALOGE("%s: wait response timeout - time_elapsed \n", fn);
-                 time_elapsed = 0;
-                 goto TheEnd;
-             }
+#if(NXP_EXTNS == TRUE)
+        if(nfcFL.nfcNxpEse) {
+            struct timeval start_timer, end_timer;
+            int32_t time_elapsed = 0;
+            while(hold_the_transceive == true)
+            {
+                android::start_timer_msec(&start_timer);
+                ALOGV("%s: holding the transceive for %ld ms.\n", fn, (timeoutMillisec - time_elapsed));
+                SyncEventGuard guard(sSPIPrioSessionEndEvent);
+                if(sSPIPrioSessionEndEvent.wait(timeoutMillisec - time_elapsed)== false)
+                {
+                    ALOGE("%s: wait response timeout \n", fn);
+                    time_elapsed = android::stop_timer_getdifference_msec(&start_timer, &end_timer);
+                    time_elapsed = 0;
+                    goto TheEnd;
+                }
+                time_elapsed += android::stop_timer_getdifference_msec(&start_timer, &end_timer);
+                if((timeoutMillisec - time_elapsed) <= 0)
+                {
+                    ALOGE("%s: wait response timeout - time_elapsed \n", fn);
+                    time_elapsed = 0;
+                    goto TheEnd;
+                }
+            }
         }
 #endif
         if ((mNewPipeId == STATIC_PIPE_0x70) || (mNewPipeId == STATIC_PIPE_0x71))
 #if(NXP_EXTNS == TRUE)
         {
-#if (NXP_NFCEE_REMOVED_NTF_RECOVERY == true)
-            if((RoutingManager::getInstance().is_ee_recovery_ongoing()))
-            {
-                SyncEventGuard guard (mEEdatapacketEvent);
-                if(mEEdatapacketEvent.wait(timeoutMillisec) == false)
+            if (nfcFL.nfccFL._NFCEE_REMOVED_NTF_RECOVERY) {
+                if((RoutingManager::getInstance().is_ee_recovery_ongoing()))
+                {
+                    SyncEventGuard guard (mEEdatapacketEvent);
+                    if(mEEdatapacketEvent.wait(timeoutMillisec) == false)
+                        goto TheEnd;
+                }
+            }
+        if(nfcFL.nfcNxpEse) {
+            if(nfcFL.eseFL._ESE_DUAL_MODE_PRIO_SCHEME == nfcFL.eseFL._ESE_WIRED_MODE_RESUME ||
+                    nfcFL.eseFL._ESE_DUAL_MODE_PRIO_SCHEME == nfcFL.eseFL._ESE_WIRED_MODE_RESUME ) {
+                if(!checkForWiredModeAccess())
+                {
+                    ALOGV("%s, Dont allow wired mode in this RF state", fn);
                     goto TheEnd;
+                }
             }
-#endif
-#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
-#if((NXP_ESE_DUAL_MODE_PRIO_SCHEME == NXP_ESE_WIRED_MODE_RESUME)||\
-    (NXP_ESE_DUAL_MODE_PRIO_SCHEME == NXP_ESE_WIRED_MODE_TIMEOUT))
-            if(!checkForWiredModeAccess())
-            {
-                ALOGV("%s, Dont allow wired mode in this RF state", fn);
-                goto TheEnd;
-            }
-#endif
-#endif
-#if((NFC_NXP_TRIPLE_MODE_PROTECTION==true)&&((NFC_NXP_ESE_VER == JCOP_VER_3_2)||(NFC_NXP_ESE_VER == JCOP_VER_3_3)))
+        }
+#if((NFC_NXP_ESE_VER == JCOP_VER_3_2)||(NFC_NXP_ESE_VER == JCOP_VER_3_3))
+        if(nfcFL.eseFL._NFC_NXP_TRIPLE_MODE_PROTECTION){
             if((dual_mode_current_state == SPI_DWPCL_BOTH_ACTIVE))
             {
                 ALOGV("%s, Dont allow wired mode...Dual Mode..", fn);
                 SyncEventGuard guard (mDualModeEvent);
                 mDualModeEvent.wait();
             }
+        }
 #endif
-#if(NFC_NXP_ESE == TRUE)
+        if(nfcFL.nfcNxpEse) {
             active_ese_reset_control |= TRANS_WIRED_ONGOING;
 #if((NFC_NXP_ESE_VER == JCOP_VER_3_1) || (NFC_NXP_ESE_VER == JCOP_VER_3_2))
             if (NFC_GetEseAccess((void *)&timeoutMillisec) != 0)
@@ -1839,11 +1837,11 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
             }
             isEseAccessSuccess = true;
 #endif
+        }
 #endif
-#endif
-#if((NFC_NXP_ESE == TRUE)&&(NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == true))
+        if(nfcFL.nfcNxpEse && nfcFL.eseFL._NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION) {
             isTransceiveOngoing = true;
-#endif
+        } 
             nfaStat = NFA_HciSendEvent (mNfaHciHandle, mNewPipeId, EVT_SEND_DATA, xmitBufferSize, xmitBuffer, sizeof(mResponseData), mResponseData, timeoutMillisec);
 #if(NXP_EXTNS == TRUE)
         }
@@ -1856,56 +1854,58 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
         else
 #if(NXP_EXTNS == TRUE)
         {
-#if(NFC_NXP_ESE == TRUE)
-            active_ese_reset_control |= TRANS_WIRED_ONGOING;
+            if(nfcFL.nfcNxpEse) {
+                active_ese_reset_control |= TRANS_WIRED_ONGOING;
 #if((NFC_NXP_ESE_VER == JCOP_VER_3_1) || (NFC_NXP_ESE_VER == JCOP_VER_3_2))
-            if (NFC_GetEseAccess((void *)&timeoutMillisec) != 0)
-            {
-                ALOGE("%s: NFC_ReqWiredAccess timeout", fn);
-                goto TheEnd;
+                if (NFC_GetEseAccess((void *)&timeoutMillisec) != 0)
+                {
+                    ALOGE("%s: NFC_ReqWiredAccess timeout", fn);
+                    goto TheEnd;
+                }
+                isEseAccessSuccess = true;
+#endif
             }
-            isEseAccessSuccess = true;
 #endif
-#endif
-#endif
-#if((NFC_NXP_ESE == TRUE)&&(NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == true))
-            isTransceiveOngoing = true;
-#endif
+            if(nfcFL.nfcNxpEse && nfcFL.eseFL._NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION) {
+                isTransceiveOngoing = true;
+            }
             nfaStat = NFA_HciSendEvent (mNfaHciHandle, mNewPipeId, NFA_HCI_EVT_POST_DATA, xmitBufferSize, xmitBuffer, sizeof(mResponseData), mResponseData, timeoutMillisec);
 #if(NXP_EXTNS == TRUE)
         }
 #endif
         if (nfaStat == NFA_STATUS_OK)
         {
-//          waitOk = mTransceiveEvent.wait (timeoutMillisec);
+            //          waitOk = mTransceiveEvent.wait (timeoutMillisec);
             mTransceiveEvent.wait ();
-#if((NFC_NXP_ESE == TRUE)&&(NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == true))
-            isTransceiveOngoing = false;
-#endif
-
-#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
-#if (JCOP_WA_ENABLE == TRUE)
-            if(active_ese_reset_control & TRANS_WIRED_ONGOING)
-            {
-                active_ese_reset_control ^= TRANS_WIRED_ONGOING;
-
-                /*If only reset event is pending*/
-                if((active_ese_reset_control&RESET_BLOCKED))
-                {
-                    SyncEventGuard guard (mResetOngoingEvent);
-                    mResetOngoingEvent.wait();
-                }
-                if(!(active_ese_reset_control&TRANS_CL_ONGOING) &&
-                (active_ese_reset_control&RESET_BLOCKED))
-                {
-                    active_ese_reset_control ^= RESET_BLOCKED;
-                }
+            if(nfcFL.nfcNxpEse && nfcFL.eseFL._NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION) {
+                isTransceiveOngoing = false;
             }
+
+#if(NXP_EXTNS == TRUE)
+            if(nfcFL.nfcNxpEse) {
+#if (JCOP_WA_ENABLE == TRUE)
+                if(active_ese_reset_control & TRANS_WIRED_ONGOING)
+                {
+                    active_ese_reset_control ^= TRANS_WIRED_ONGOING;
+
+                    /*If only reset event is pending*/
+                    if((active_ese_reset_control&RESET_BLOCKED))
+                    {
+                        SyncEventGuard guard (mResetOngoingEvent);
+                        mResetOngoingEvent.wait();
+                    }
+                    if(!(active_ese_reset_control&TRANS_CL_ONGOING) &&
+                            (active_ese_reset_control&RESET_BLOCKED))
+                    {
+                        active_ese_reset_control ^= RESET_BLOCKED;
+                    }
+                }
 #endif
-             if(mTransceiveWaitOk == false)
-            {
-                ALOGE("%s: transceive timed out", fn);
-                goto TheEnd;
+                if(mTransceiveWaitOk == false)
+                {
+                    ALOGE("%s: transceive timed out", fn);
+                    goto TheEnd;
+                }
             }
 #endif
         }
@@ -1915,33 +1915,34 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
             goto TheEnd;
         }
     }
+        if (mActualResponseSize > recvBufferMaxSize)
+            recvBufferActualSize = recvBufferMaxSize;
+        else
+            recvBufferActualSize = mActualResponseSize;
 
-    if (mActualResponseSize > recvBufferMaxSize)
-        recvBufferActualSize = recvBufferMaxSize;
-    else
-        recvBufferActualSize = mActualResponseSize;
+        memcpy (recvBuffer, mResponseData, recvBufferActualSize);
+        isSuccess = true;
 
-    memcpy (recvBuffer, mResponseData, recvBufferActualSize);
-    isSuccess = true;
-
-TheEnd:
-#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
+        TheEnd:
+#if(NXP_EXTNS == TRUE)
+        if(nfcFL.nfcNxpEse) {
 #if((NFC_NXP_ESE_VER == JCOP_VER_3_1) || (NFC_NXP_ESE_VER == JCOP_VER_3_2))
-    if (isEseAccessSuccess == true)
-    {
-        if (NFC_RelEseAccess((void *)&nfaStat) != 0)
-        {
-            ALOGE("%s: NFC_RelEseAccess failed", fn);
-        }
-    }
+            if (isEseAccessSuccess == true)
+            {
+                if (NFC_RelEseAccess((void *)&nfaStat) != 0)
+                {
+                    ALOGE("%s: NFC_RelEseAccess failed", fn);
+                }
+            }
 #endif
 #if (JCOP_WA_ENABLE == TRUE)
-    if((active_ese_reset_control&TRANS_WIRED_ONGOING))
-        active_ese_reset_control ^= TRANS_WIRED_ONGOING;
+            if((active_ese_reset_control&TRANS_WIRED_ONGOING))
+                active_ese_reset_control ^= TRANS_WIRED_ONGOING;
 #endif
+        }
 #endif
-    ALOGV("%s: exit; isSuccess: %d; recvBufferActualSize: %ld", fn, isSuccess, recvBufferActualSize);
-    return (isSuccess);
+        ALOGV("%s: exit; isSuccess: %d; recvBufferActualSize: %ld", fn, isSuccess, recvBufferActualSize);
+        return (isSuccess);
 }
 /*******************************************************************************
  **
@@ -1959,11 +1960,13 @@ void SecureElement::setCLState(bool mState)
     bool inDualModeAlready = (dual_mode_current_state == SPI_DWPCL_BOTH_ACTIVE);
     if(mState)
     {
-       dual_mode_current_state |= CL_ACTIVE;
-#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
+        dual_mode_current_state |= CL_ACTIVE;
+#if(NXP_EXTNS == TRUE)
+        if(nfcFL.nfcNxpEse) {
 #if (JCOP_WA_ENABLE == TRUE)
-       active_ese_reset_control |= TRANS_CL_ONGOING;
+            active_ese_reset_control |= TRANS_CL_ONGOING;
 #endif
+        }
 #endif
     }
     else
@@ -1971,7 +1974,8 @@ void SecureElement::setCLState(bool mState)
        if(dual_mode_current_state & CL_ACTIVE)
        {
            dual_mode_current_state ^= CL_ACTIVE;
-#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
+#if(NXP_EXTNS == TRUE)
+           if(nfcFL.nfcNxpEse) {
 #if (JCOP_WA_ENABLE == TRUE)
                if((active_ese_reset_control&TRANS_CL_ONGOING))
                {
@@ -1979,7 +1983,7 @@ void SecureElement::setCLState(bool mState)
 
                    /*If there is no pending wired rapdu or CL session*/
                    if(((active_ese_reset_control&RESET_BLOCKED))&&
-                   (!(active_ese_reset_control &(TRANS_WIRED_ONGOING))))
+                           (!(active_ese_reset_control &(TRANS_WIRED_ONGOING))))
                    {
                        /*unblock pending reset event*/
                        SyncEventGuard guard (sSecElem.mResetEvent);
@@ -1988,6 +1992,7 @@ void SecureElement::setCLState(bool mState)
                    }
                }
 #endif
+           }
 #endif
            if(inDualModeAlready)
            {
@@ -2017,9 +2022,13 @@ void SecureElement::notifyModeSet (tNFA_HANDLE eeHandle, bool success, tNFA_EE_S
     sSecElem.mEeSetModeEvent.notifyOne();
 }
 
-#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
+#if(NXP_EXTNS == TRUE)
 static void NFCC_StandbyModeTimerCallBack (union sigval)
 {
+    if(!nfcFL.nfcNxpEse) {
+        ALOGV("%s tnfcNxpEse not available. Returning", __func__);
+        return;
+    }
     ALOGV("%s timer timedout , sending standby mode cmd", __func__);
     SecureElement::getInstance().NfccStandByOperation(STANDBY_TIMER_TIMEOUT);
 }
@@ -2055,20 +2064,22 @@ void SecureElement::notifyListenModeState (bool isActivated) {
     }
 
     mActivatedInListenMode = isActivated;
-#if ((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
-    if(!isActivated)
-    {
-        setCLState(false);
-#if(NXP_ESE_DUAL_MODE_PRIO_SCHEME != NXP_ESE_WIRED_MODE_RESUME)
-        setDwpTranseiveState(false, NFCC_DEACTIVATED_NTF);
-#endif
-    }
-    else
-    {
-        /* activated in listen mode */
-#if(NXP_ESE_DUAL_MODE_PRIO_SCHEME != NXP_ESE_WIRED_MODE_RESUME)
-        setDwpTranseiveState(true, NFCC_ACTIVATED_NTF);
-#endif
+#if (NXP_EXTNS == TRUE)
+    if(nfcFL.nfcNxpEse) {
+        if(!isActivated)
+        {
+            setCLState(false);
+            if(nfcFL.eseFL._ESE_DUAL_MODE_PRIO_SCHEME != nfcFL.eseFL._ESE_WIRED_MODE_RESUME) {
+                setDwpTranseiveState(false, NFCC_DEACTIVATED_NTF);
+            }
+        }
+        else
+        {
+            /* activated in listen mode */
+            if(nfcFL.eseFL._ESE_DUAL_MODE_PRIO_SCHEME != nfcFL.eseFL._ESE_WIRED_MODE_RESUME) {
+                setDwpTranseiveState(true, NFCC_ACTIVATED_NTF);
+            }
+        }
     }
 #endif
     if (mNativeData != NULL) {
@@ -2123,17 +2134,17 @@ void SecureElement::notifyRfFieldEvent (bool isActive)
     {
         mRfFieldIsOn = true;
 #if (NXP_EXTNS == TRUE)
-#if (NFC_NXP_ESE == TRUE)
-#if (NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == true)
-    if(isTransceiveOngoing == false && meseUiccConcurrentAccess == true && mPassiveListenEnabled == false)
-    {
-        startThread(0x01);
-    }
-#endif
-#if(NXP_ESE_DUAL_MODE_PRIO_SCHEME != NXP_ESE_WIRED_MODE_RESUME)
-    setDwpTranseiveState(true, NFCC_RF_FIELD_EVT);
-#endif
-#endif
+        if(nfcFL.nfcNxpEse) {
+            if(nfcFL.eseFL._NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION &&
+                    (isTransceiveOngoing == false && meseUiccConcurrentAccess == true &&
+                            mPassiveListenEnabled == false))
+            {
+                startThread(0x01);
+            }
+            if(nfcFL.eseFL._ESE_DUAL_MODE_PRIO_SCHEME != nfcFL.eseFL._ESE_WIRED_MODE_RESUME) {
+                setDwpTranseiveState(true, NFCC_RF_FIELD_EVT);
+            }
+        }
 #endif
         e->CallVoidMethod (mNativeData->manager, android::gCachedNfcManagerNotifySeFieldActivated);
     }
@@ -2142,11 +2153,11 @@ void SecureElement::notifyRfFieldEvent (bool isActive)
         mRfFieldIsOn = false;
         setCLState(false);
 #if (NXP_EXTNS == TRUE)
-#if (NFC_NXP_ESE == TRUE)
-#if (NXP_ESE_DUAL_MODE_PRIO_SCHEME != NXP_ESE_WIRED_MODE_RESUME)
-        setDwpTranseiveState(false, NFCC_RF_FIELD_EVT);
-#endif
-#endif
+        if(nfcFL.nfcNxpEse &&
+                (nfcFL.eseFL._ESE_DUAL_MODE_PRIO_SCHEME !=
+                        nfcFL.eseFL._ESE_WIRED_MODE_RESUME)) {
+            setDwpTranseiveState(false, NFCC_RF_FIELD_EVT);
+        }
 #endif
         e->CallVoidMethod (mNativeData->manager, android::gCachedNfcManagerNotifySeFieldDeactivated);
     }
@@ -2160,10 +2171,14 @@ void SecureElement::notifyRfFieldEvent (bool isActive)
     ALOGV("%s: exit", fn);
 }
 
-#if((NFC_NXP_ESE == TRUE) && (NXP_EXTNS == TRUE) && (NXP_ESE_ETSI_READER_ENABLE == true))
+#if(NXP_EXTNS == TRUE)
 /*Reader over SWP*/
 void SecureElement::notifyEEReaderEvent (int evt, int data)
 {
+    if(!nfcFL.nfcNxpEse || !nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
+        ALOGV("%s: nfcNxpEse or ETSI_READER not available. Returning", __func__);
+        return;
+    }
     static const char fn [] = "SecureElement::notifyEEReaderEvent";
     ALOGV("%s: enter; event=%x", fn, evt);
 
@@ -2245,7 +2260,6 @@ void SecureElement::notifyEEReaderEvent (int evt, int data)
 
     ALOGV("%s: exit", fn);
 }
-
 #endif
 /*******************************************************************************
 **
@@ -2559,13 +2573,11 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
             ALOGV("%s: NFA_HCI_EVENT_RCVD_EVT; source ESE",fn);
             evtSrc = SecureElement::getInstance().getGenericEseId(EE_HANDLE_0xF3 & ~NFA_HANDLE_GROUP_EE); //ESE
         }
-#if(NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH == true)
-        else if(eventData->rcvd_evt.pipe == 0x23) /*UICC2*/
+        else if(nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH && (eventData->rcvd_evt.pipe == 0x23)) /*UICC2*/
         {
             ALOGV("%s: NFA_HCI_EVENT_RCVD_EVT; source UICC2",fn);
             evtSrc = SecureElement::getInstance().getGenericEseId(EE_HANDLE_0xF8 & ~NFA_HANDLE_GROUP_EE); /*UICC2*/
         }
-#endif
         ALOGV("%s: NFA_HCI_EVENT_RCVD_EVT; ################################### ", fn);
 
         if(eventData->rcvd_evt.evt_code == NFA_HCI_EVT_WTX)
@@ -2598,8 +2610,9 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
         else if ((eventData->rcvd_evt.pipe == STATIC_PIPE_0x70) || (eventData->rcvd_evt.pipe == STATIC_PIPE_0x71))
         {
             ALOGV("%s: NFA_HCI_EVENT_RCVD_EVT; data from static pipe", fn);
-#if ((NXP_EXTNS == TRUE) && (NXP_ESE_DWP_SPI_SYNC_ENABLE == true))
-            if((spiDwpSyncState & STATE_WK_WAIT_RSP) && (eventData->rcvd_evt.evt_len == 2))
+#if (NXP_EXTNS == TRUE)
+            if(nfcFL.eseFL._ESE_DWP_SPI_SYNC_ENABLE &&
+                    ((spiDwpSyncState & STATE_WK_WAIT_RSP) && (eventData->rcvd_evt.evt_len == 2)))
             {
                 spiDwpSyncState ^= STATE_WK_WAIT_RSP;
                 SyncEventGuard guard (sSPIForceEnableDWPEvent);
@@ -2820,17 +2833,13 @@ tNFA_HANDLE SecureElement::getDefaultEeHandle ()
 
 #ifndef GEMALTO_SE_SUPPORT
 
-            if(((mEeInfo[xx].ee_interface[0] != NCI_NFCEE_INTERFACE_HCI_ACCESS)
+            if((mEeInfo[xx].ee_interface[0] != NCI_NFCEE_INTERFACE_HCI_ACCESS)
 #else
-
             if(((mEeInfo[xx].ee_handle == EE_HANDLE_0xF3 || mEeInfo[xx].ee_handle == SecureElement::getInstance().EE_HANDLE_0xF4
-#if(NXP_NFCC_DYNAMIC_DUAL_UICC == true)
-                || mEeInfo[xx].ee_handle == EE_HANDLE_0xF8
+                || (mEeInfo[xx].ee_handle == EE_HANDLE_0xF8 && nfcFL.nfccFL._NXP_NFCC_DYNAMIC_DUAL_UICC))
+                && (mEeInfo[xx].ee_status != NFC_NFCEE_STATUS_INACTIVE))
 #endif
-            )
-#endif
-            &&
-            (mEeInfo[xx].ee_status != NFC_NFCEE_STATUS_INACTIVE)))
+                )
             return (mEeInfo[xx].ee_handle);
     }
     return NFA_HANDLE_INVALID;
@@ -2867,10 +2876,7 @@ tNFA_HANDLE SecureElement::getActiveEeHandle (tNFA_HANDLE handle)
 #else
 
             if((mEeInfo[xx].ee_handle == EE_HANDLE_0xF3 || mEeInfo[xx].ee_handle == SecureElement::getInstance().EE_HANDLE_0xF4
-#if(NXP_NFCC_DYNAMIC_DUAL_UICC == true)
-                || mEeInfo[xx].ee_handle == EE_HANDLE_0xF8
-#endif
-)
+                || (mEeInfo[xx].ee_handle == EE_HANDLE_0xF8 && nfcFL.nfccFL._NXP_NFCC_DYNAMIC_DUAL_UICC))
 
 #endif
             &&
@@ -2976,81 +2982,83 @@ bool SecureElement::getAtr(jint seID, uint8_t* recvBuffer, int32_t *recvBufferSi
     uint8_t reg_index = 0x01;
     int timeoutMillisec = 10000;
     ALOGV("%s: enter; seID=0x%X", fn, seID);
-#if ((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
-    se_apdu_gate_info gateInfo = NO_APDU_GATE;
-#if (NXP_NFCEE_REMOVED_NTF_RECOVERY == true)
-    if((RoutingManager::getInstance().is_ee_recovery_ongoing()))
-    {
-        SyncEventGuard guard (mEEdatapacketEvent);
-        if(mEEdatapacketEvent.wait(android::gMaxEERecoveryTimeout) == false)
-        {
-            return false;
-        }
-    }
-#endif
-    if(!checkForWiredModeAccess())
-    {
-        ALOGV("Denying /atr in SE listen mode active");
-        return false;
-    }
-#if((NFC_NXP_ESE_VER == JCOP_VER_3_1) || (NFC_NXP_ESE_VER == JCOP_VER_3_2))
-    if (NFC_GetEseAccess((void *)&timeoutMillisec) != 0)
-    {
-        ALOGE("%s: NFC_ReqWiredAccess timeout", fn);
-        return false;
-    }
-#endif
-#if (NXP_WIRED_MODE_STANDBY == true)
-    if(standby_state == STANDBY_MODE_SUSPEND) {
-        if(mNfccPowerMode == 1) {
-            nfaStat = setNfccPwrConfig(POWER_ALWAYS_ON|COMM_LINK_ACTIVE);
-            if(nfaStat != NFA_STATUS_OK) {
-                ALOGV("%s: power link command failed", __func__);
-                return false;
-            } else {
-                SecEle_Modeset(0x01);
+#if (NXP_EXTNS == TRUE)
+    if(nfcFL.nfcNxpEse) {
+        se_apdu_gate_info gateInfo = NO_APDU_GATE;
+
+        if(nfcFL.nfccFL._NFCEE_REMOVED_NTF_RECOVERY) {
+            if((RoutingManager::getInstance().is_ee_recovery_ongoing()))
+            {
+                SyncEventGuard guard (mEEdatapacketEvent);
+                if(mEEdatapacketEvent.wait(android::gMaxEERecoveryTimeout) == false)
+                {
+                    return false;
+                }
             }
         }
-    }
+        if(!checkForWiredModeAccess())
+        {
+            ALOGV("Denying /atr in SE listen mode active");
+            return false;
+        }
+#if((NFC_NXP_ESE_VER == JCOP_VER_3_1) || (NFC_NXP_ESE_VER == JCOP_VER_3_2))
+        if (NFC_GetEseAccess((void *)&timeoutMillisec) != 0)
+        {
+            ALOGE("%s: NFC_ReqWiredAccess timeout", fn);
+            return false;
+        }
 #endif
-    NfccStandByOperation(STANDBY_TIMER_STOP);
+        if(nfcFL.eseFL._WIRED_MODE_STANDBY) {
+            if(standby_state == STANDBY_MODE_SUSPEND) {
+                if(mNfccPowerMode == 1) {
+                    nfaStat = setNfccPwrConfig(POWER_ALWAYS_ON|COMM_LINK_ACTIVE);
+                    if(nfaStat != NFA_STATUS_OK) {
+                        ALOGV("%s: power link command failed", __func__);
+                        return false;
+                    } else {
+                        SecEle_Modeset(0x01);
+                    }
+                }
+            }
+        }
+        NfccStandByOperation(STANDBY_TIMER_STOP);
 
-    gateInfo = getApduGateInfo();
-    if(gateInfo == PROPREITARY_APDU_GATE)
-    {
-        SyncEventGuard guard (mGetRegisterEvent);
-        nfaStat = NFA_HciGetRegistry (mNfaHciHandle, mNewPipeId, reg_index);
-        if(nfaStat == NFA_STATUS_OK)
+        gateInfo = getApduGateInfo();
+        if(gateInfo == PROPREITARY_APDU_GATE)
         {
-            mGetAtrRspwait = true;
-            mGetRegisterEvent.wait();
-            ALOGV("%s: Received ATR response on pipe 0x%x ", fn, mNewPipeId);
-        }
-        *recvBufferSize = mAtrInfolen;
-        memcpy(recvBuffer, mAtrInfo, mAtrInfolen);
-    }
-    else if(gateInfo == ETSI_12_APDU_GATE)
-    {
-        mAbortEventWaitOk = false;
-        uint8_t mAtrInfo1[EVT_ABORT_MAX_RSP_LEN]={0};
-        uint8_t atr_len = EVT_ABORT_MAX_RSP_LEN;
-        SyncEventGuard guard (mAbortEvent);
-        nfaStat = NFA_HciSendEvent(mNfaHciHandle, mNewPipeId, EVT_ABORT, 0, NULL, atr_len, mAtrInfo1, timeoutMillisec);
-        if(nfaStat == NFA_STATUS_OK)
-        {
-            mAbortEvent.wait();
-        }
-        if(mAbortEventWaitOk == false)
-        {
-            ALOGE("%s (EVT_ABORT)Wait reposne timeout", fn);
-            nfaStat = NFA_STATUS_FAILED;
-        }
-        else
-        {
+            SyncEventGuard guard (mGetRegisterEvent);
+            nfaStat = NFA_HciGetRegistry (mNfaHciHandle, mNewPipeId, reg_index);
+            if(nfaStat == NFA_STATUS_OK)
+            {
+                mGetAtrRspwait = true;
+                mGetRegisterEvent.wait();
+                ALOGV("%s: Received ATR response on pipe 0x%x ", fn, mNewPipeId);
+            }
             *recvBufferSize = mAtrInfolen;
             memcpy(recvBuffer, mAtrInfo, mAtrInfolen);
         }
-    }
+        else if(gateInfo == ETSI_12_APDU_GATE)
+        {
+            mAbortEventWaitOk = false;
+            uint8_t mAtrInfo1[EVT_ABORT_MAX_RSP_LEN]={0};
+            uint8_t atr_len = EVT_ABORT_MAX_RSP_LEN;
+            SyncEventGuard guard (mAbortEvent);
+            nfaStat = NFA_HciSendEvent(mNfaHciHandle, mNewPipeId, EVT_ABORT, 0, NULL, atr_len, mAtrInfo1, timeoutMillisec);
+            if(nfaStat == NFA_STATUS_OK)
+            {
+                mAbortEvent.wait();
+            }
+            if(mAbortEventWaitOk == false)
+            {
+                ALOGE("%s (EVT_ABORT)Wait reposne timeout", fn);
+                nfaStat = NFA_STATUS_FAILED;
+            }
+            else
+            {
+                *recvBufferSize = mAtrInfolen;
+                memcpy(recvBuffer, mAtrInfo, mAtrInfolen);
+            }
+        }
 
 #if (JCOP_WA_ENABLE == TRUE)
         if(mAtrStatus == NFA_HCI_ANY_E_NOK)
@@ -3063,7 +3071,8 @@ bool SecureElement::getAtr(jint seID, uint8_t* recvBuffer, int32_t *recvBufferSi
         }
 #endif
 #endif
-        return (nfaStat == NFA_STATUS_OK)?true:false;
+    }
+    return (nfaStat == NFA_STATUS_OK)?true:false;
 }
 
 /*******************************************************************************
@@ -3156,13 +3165,12 @@ jint SecureElement::getGenericEseId(tNFA_HANDLE handle)
     {
         ret = UICC_ID;
     }
-#if(NXP_NFCC_DYNAMIC_DUAL_UICC == true || NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH == true)
-
-    else if(handle ==  (EE_HANDLE_0xF8 & ~NFA_HANDLE_GROUP_EE) ) //UICC2 - 0x04
+    else if(nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC &&
+            nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH &&
+            (handle ==  (EE_HANDLE_0xF8 & ~NFA_HANDLE_GROUP_EE))) //UICC2 - 0x04
     {
         ret = UICC2_ID;
     }
-#endif
     ALOGV("%s: exit; ESE-Generic-ID = 0x%02X", fn, ret);
     return ret;
 }
@@ -3192,12 +3200,11 @@ tNFA_HANDLE SecureElement::getEseHandleFromGenericId(jint eseId)
     {
         handle = SecureElement::getInstance().EE_HANDLE_0xF4; //0x402;
     }
-#if(NXP_NFCC_DYNAMIC_DUAL_UICC == true || NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH == true)
-    else if(eseId == UICC2_ID) //UICC
+    else if(nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC &&
+            nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH && (eseId == UICC2_ID)) //UICC
     {
         handle = EE_HANDLE_0xF8; //0x481;
     }
-#endif
     else if(eseId == DH_ID) //Host
     {
         handle = NFA_EE_HANDLE_DH; //0x400;
@@ -3475,7 +3482,7 @@ void SecureElement::eSE_ClearAllPipe_handler(uint8_t host)
 #endif
 
 
-#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
+#if(NXP_EXTNS == TRUE)
 /*******************************************************************************
 **
 ** Function         NfccStandByTimerOperation
@@ -3487,11 +3494,13 @@ void SecureElement::eSE_ClearAllPipe_handler(uint8_t host)
 *******************************************************************************/
 void SecureElement::NfccStandByOperation(nfcc_standby_operation_t value)
 {
+    if(!nfcFL.nfcNxpEse) {
+        ALOGV("%s  nfcNxpEse not available. Returning",__func__);
+        return;
+    }
     static IntervalTimer   mNFCCStandbyModeTimer; // timer to enable standby mode for NFCC
-#if (NXP_WIRED_MODE_STANDBY == true)
     tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
     bool stat = false;
-#endif
     ALOGV("In SecureElement::NfccStandByOperation value = %d, state = %d", value, standby_state);
     switch(value)
     {
@@ -3514,75 +3523,73 @@ void SecureElement::NfccStandByOperation(nfcc_standby_operation_t value)
         break;
     case STANDBY_MODE_ON:
     {
-#if (NXP_WIRED_MODE_STANDBY_PROP == true)
-        if(standby_state == STANDBY_MODE_ON)
-            break;
-        else if(nfccStandbytimeout > 0)
-#endif
-#if (NXP_WIRED_MODE_STANDBY == true)
-        if(nfccStandbytimeout > 0)
-#endif
-        mNFCCStandbyModeTimer.kill();
-#if (NXP_WIRED_MODE_STANDBY == true)
-#if (NXP_ESE_DWP_SPI_SYNC_ENABLE == true)
-        /*To maintain dwp standby mode on case when spi is close later*/
-        spiDwpSyncState = STATE_IDLE;
-        if(dual_mode_current_state & SPI_ON)
-        {
-            ALOGV("%s: SPI is ON-StandBy not allowed", __func__);
-            standby_state = STANDBY_MODE_ON;
-            /*To maintain wired session close state during SPI on*/
-            spiDwpSyncState = STATE_DWP_CLOSE;
-            break;
+        if(nfcFL.eseFL._WIRED_MODE_STANDBY_PROP) {
+            if(standby_state == STANDBY_MODE_ON)
+                break;
+            else if(nfccStandbytimeout > 0)
+                mNFCCStandbyModeTimer.kill();
         }
-#endif
-        nfaStat = setNfccPwrConfig(NFCC_DECIDES);
-        stat = SecureElement::getInstance().sendEvent(SecureElement::EVT_END_OF_APDU_TRANSFER);
-        if(stat)
-        {
-            standby_state = STANDBY_MODE_ON;
-            ALOGV("%s sending standby mode command EVT_END_OF_APDU_TRANSFER successful", __func__);
+        if(nfcFL.eseFL._WIRED_MODE_STANDBY)
+            if(nfccStandbytimeout > 0)
+                mNFCCStandbyModeTimer.kill();
+
+        if (nfcFL.eseFL._WIRED_MODE_STANDBY) {
+            if (nfcFL.eseFL._ESE_DWP_SPI_SYNC_ENABLE) {
+                /*To maintain dwp standby mode on case when spi is close later*/
+                spiDwpSyncState = STATE_IDLE;
+            if(dual_mode_current_state & SPI_ON)
+            {
+                ALOGV("%s: SPI is ON-StandBy not allowed", __func__);
+                standby_state = STANDBY_MODE_ON;
+                /*To maintain wired session close state during SPI on*/
+                spiDwpSyncState = STATE_DWP_CLOSE;
+                break;
+            }
+            nfaStat = setNfccPwrConfig(NFCC_DECIDES);
+            stat = SecureElement::getInstance().sendEvent(SecureElement::EVT_END_OF_APDU_TRANSFER);
+            if(stat)
+            {
+                standby_state = STANDBY_MODE_ON;
+                ALOGV("%s sending standby mode command EVT_END_OF_APDU_TRANSFER successful", __func__);
+            }
         }
-#endif
     }
-#if (NXP_WIRED_MODE_STANDBY == true)
-    break;
-#endif
+}
+    if(nfcFL.eseFL._WIRED_MODE_STANDBY == true)
+        break;
     case STANDBY_TIMER_TIMEOUT:
     {
         bool stat = false;
-#if (NXP_ESE_DWP_SPI_SYNC_ENABLE == true)
-#if (NXP_WIRED_MODE_STANDBY == true)
-        /*Maintain suspend apdu state to send when spi is closed later*/
-        spiDwpSyncState |= STATE_TIME_OUT;
+        if (nfcFL.eseFL._ESE_DWP_SPI_SYNC_ENABLE) {
+            if (nfcFL.eseFL._WIRED_MODE_STANDBY) {
+                /*Maintain suspend apdu state to send when spi is closed later*/
+                spiDwpSyncState |= STATE_TIME_OUT;
         /*Clear apdu state to activate DWP link once spi stand-alone triggered */
         if(spiDwpSyncState & STATE_WK_ENBLE)
         {
             spiDwpSyncState ^= STATE_WK_ENBLE;
         }
-#endif
-        if(dual_mode_current_state & SPI_ON)
-        {
-            ALOGV("%s: SPI is ON-StandBy not allowed", __func__);
-            standby_state = STANDBY_MODE_ON;
-            return;
-        }
-#endif
-#if (NXP_WIRED_MODE_STANDBY_PROP == true)
+    }
+    if(dual_mode_current_state & SPI_ON)
+    {
+        ALOGV("%s: SPI is ON-StandBy not allowed", __func__);
+        standby_state = STANDBY_MODE_ON;
+        return;
+    }
+    }
+    if(nfcFL.eseFL._WIRED_MODE_STANDBY_PROP)
         /*Send the EVT_END_OF_APDU_TRANSFER  after the transceive timer timed out*/
         stat = SecureElement::getInstance().sendEvent(SecureElement::EVT_END_OF_APDU_TRANSFER);
-#endif
-#if (NXP_WIRED_MODE_STANDBY == true)
+    if (nfcFL.eseFL._WIRED_MODE_STANDBY) {
         setNfccPwrConfig(POWER_ALWAYS_ON);
         stat = SecureElement::getInstance().sendEvent(SecureElement::EVT_SUSPEND_APDU_TRANSFER);
-#endif
+    }
         if(stat)
         {
             standby_state = STANDBY_MODE_SUSPEND;
             ALOGV("%s sending standby command successful", __func__);
-#if ((NXP_ESE_DWP_SPI_SYNC_ENABLE == true) && (NXP_WIRED_MODE_STANDBY_PROP == true))
-            spiDwpSyncState = STATE_IDLE;
-#endif
+            if (nfcFL.eseFL._ESE_DWP_SPI_SYNC_ENABLE && nfcFL.eseFL._WIRED_MODE_STANDBY_PROP)
+                spiDwpSyncState = STATE_IDLE;
         }
     }
     break;
@@ -3786,7 +3793,6 @@ bool SecureElement::checkForWiredModeAccess()
     return status;
 }
 #endif
-#if(NXP_ESE_ETSI_READER_ENABLE == true)
 /*******************************************************************************
 **
 ** Function:        etsiInitConfig
@@ -3798,6 +3804,11 @@ bool SecureElement::checkForWiredModeAccess()
 *******************************************************************************/
 void SecureElement::etsiInitConfig()
 {
+    if(!nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
+        ALOGV("%s: ETSI_READER not available. Returning", __func__);
+        return;
+    }
+
     ALOGV("%s: Enter", __func__);
     swp_rdr_req_ntf_info.mMutex.lock();
 
@@ -3844,6 +3855,10 @@ void SecureElement::etsiInitConfig()
 *******************************************************************************/
 tNFC_STATUS SecureElement::etsiReaderConfig(int eeHandle)
 {
+    if(!nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
+        ALOGV("%s: ETSI_READER not available. Returning", __func__);
+        return NFA_STATUS_FAILED;
+    }
     tNFC_STATUS status;
 
     ALOGV("%s: Enter", __func__);
@@ -3903,6 +3918,10 @@ tNFC_STATUS SecureElement::etsiReaderConfig(int eeHandle)
 *******************************************************************************/
 tNFC_STATUS SecureElement::etsiResetReaderConfig()
 {
+    if(!nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
+        ALOGV("%s: ETSI_READER not available. Returning", __func__);
+        return NFA_STATUS_FAILED;
+    }
     tNFC_STATUS status;
     ALOGV("%s: Enter", __func__);
 
@@ -3925,7 +3944,6 @@ tNFC_STATUS SecureElement::etsiResetReaderConfig()
         return NFA_STATUS_OK;
     }
 }
-#endif
 
 int SecureElement::decodeBerTlvLength(uint8_t* data,int index, int data_length )
 {
@@ -3998,9 +4016,7 @@ TheEnd:
 
     return decoded_length;
 }
-#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
-#if((NXP_ESE_SVDD_SYNC == true) || (NXP_ESE_JCOP_DWNLD_PROTECTION == true) || (NXP_NFCC_SPI_FW_DOWNLOAD_SYNC == true) || (NXP_ESE_DWP_SPI_SYNC_ENABLE == true))
-
+#if(NXP_EXTNS == TRUE)
 /*******************************************************************************
 **
 ** Function:       spiEventHandlerThread
@@ -4012,12 +4028,20 @@ TheEnd:
 *******************************************************************************/
 void *spiEventHandlerThread(void *arg)
 {
+    if(!nfcFL.nfcNxpEse) {
+        ALOGV("%s: nfcNxpEse not available. Returning", __func__);
+        return NULL;
+    }
+    if(!nfcFL.eseFL._ESE_SVDD_SYNC && !nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION &&
+            !nfcFL.nfccFL._NFCC_SPI_FW_DOWNLOAD_SYNC && !nfcFL.eseFL._ESE_DWP_SPI_SYNC_ENABLE) {
+        ALOGV("%s: Not allowed. Returning", __func__);
+        return NULL;
+    }
     (void)arg;
     uint16_t usEvent = 0, usEvtLen = 0;
 
-#if (NXP_ESE_JCOP_DWNLD_PROTECTION == true)
+
     NFCSTATUS ese_status = NFA_STATUS_FAILED;
-#endif
 
     ALOGV("%s: enter", __func__);
     while(android::nfcManager_isNfcActive() && !android::nfcManager_isNfcDisabling())
@@ -4037,72 +4061,71 @@ void *spiEventHandlerThread(void *arg)
             break;
         }
         if((usEvent & P61_STATE_SPI_SVDD_SYNC_START) ||
-           (usEvent & P61_STATE_DWP_SVDD_SYNC_START))
+                (usEvent & P61_STATE_DWP_SVDD_SYNC_START))
         {
-#if (NXP_ESE_DWP_SPI_SYNC_ENABLE == true)
-            if((usEvent & P61_STATE_SPI_PRIO) ||
-               (usEvent & P61_STATE_SPI))
-            {
-                nfaVSC_ForceDwpOnOff(true);
+            if(nfcFL.eseFL._ESE_DWP_SPI_SYNC_ENABLE) {
+                if((usEvent & P61_STATE_SPI_PRIO) ||
+                        (usEvent & P61_STATE_SPI))
+                {
+                    nfaVSC_ForceDwpOnOff(true);
+                }
+                else if((usEvent & P61_STATE_SPI_PRIO_END) ||
+                        (usEvent & P61_STATE_SPI_END))
+                {
+                    nfaVSC_ForceDwpOnOff(false);
+                }
             }
-            else if((usEvent & P61_STATE_SPI_PRIO_END) ||
-                    (usEvent & P61_STATE_SPI_END))
-            {
-                nfaVSC_ForceDwpOnOff(false);
+
+            if(nfcFL.eseFL._ESE_SVDD_SYNC) {
+                nfaVSC_SVDDSyncOnOff(true);
             }
-#endif
-#if (NXP_ESE_SVDD_SYNC == true)
-            nfaVSC_SVDDSyncOnOff(true);
-#endif
         }
-#if (NXP_ESE_SVDD_SYNC == true)
-        else if((usEvent & P61_STATE_SPI_SVDD_SYNC_END) ||
-                (usEvent & P61_STATE_DWP_SVDD_SYNC_END))
-        {
+        else if(nfcFL.eseFL._ESE_SVDD_SYNC &&
+                ((usEvent & P61_STATE_SPI_SVDD_SYNC_END) ||
+                        (usEvent & P61_STATE_DWP_SVDD_SYNC_END))) {
             nfaVSC_SVDDSyncOnOff(false);
         }
-#endif
-#if (NXP_ESE_DWP_SPI_SYNC_ENABLE == true)
-        else if((usEvent & P61_STATE_SPI_PRIO) ||
-                (usEvent & P61_STATE_SPI))
+
+        else if(nfcFL.eseFL._ESE_DWP_SPI_SYNC_ENABLE &&
+                ((usEvent & P61_STATE_SPI_PRIO) ||
+                        (usEvent & P61_STATE_SPI)))
         {
             nfaVSC_ForceDwpOnOff(true);
         }
-        else if((usEvent & P61_STATE_SPI_PRIO_END) ||
-                (usEvent & P61_STATE_SPI_END))
+        else if(nfcFL.eseFL._ESE_DWP_SPI_SYNC_ENABLE &&
+                ((usEvent & P61_STATE_SPI_PRIO_END) ||
+                        (usEvent & P61_STATE_SPI_END)))
         {
             nfaVSC_ForceDwpOnOff(false);
         }
-#endif
-#if (NXP_ESE_JCOP_DWNLD_PROTECTION == true)
-        if(usEvent == JCP_DWNLD_INIT)
-        {
-            ALOGV("%s: JCOP OS download  init request....=%d\n", __func__, usEvent);
-            if(android::nfcManager_checkNfcStateBusy() ==  false)
+
+        if(nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION) {
+            if(usEvent == JCP_DWNLD_INIT)
             {
-                if(android::isDiscoveryStarted() == true)
+                ALOGV("%s: JCOP OS download  init request....=%d\n", __func__, usEvent);
+                if(android::nfcManager_checkNfcStateBusy() ==  false)
                 {
-                    android::startRfDiscovery(false);
+                    if(android::isDiscoveryStarted() == true)
+                    {
+                        android::startRfDiscovery(false);
+                    }
+                    NFC_SetP61Status ((void *)&ese_status, JCP_DWNLD_START);
                 }
-                NFC_SetP61Status ((void *)&ese_status, JCP_DWNLD_START);
             }
-        }
-        else if(usEvent == JCP_DWP_DWNLD_COMPLETE)
-        {
-            ALOGV("%s: JCOP OS download  end request...=%d\n", __func__, usEvent);
-            if(android::isDiscoveryStarted() == false)
+            else if(usEvent == JCP_DWP_DWNLD_COMPLETE)
             {
-                android::startRfDiscovery(true);
+                ALOGV("%s: JCOP OS download  end request...=%d\n", __func__, usEvent);
+                if(android::isDiscoveryStarted() == false)
+                {
+                    android::startRfDiscovery(true);
+                }
             }
         }
-#endif
-#if(NXP_NFCC_SPI_FW_DOWNLOAD_SYNC == true)
-        else if((usEvent & P61_STATE_SPI_PRIO_END) ||
-                (usEvent & P61_STATE_SPI_END))
-        {
+        else if(nfcFL.nfccFL._NFCC_SPI_FW_DOWNLOAD_SYNC &&
+                ((usEvent & P61_STATE_SPI_PRIO_END) ||
+                        (usEvent & P61_STATE_SPI_END))) {
             android::requestFwDownload();
         }
-#endif
     }
     ALOGV("%s: exit", __func__);
     pthread_exit(NULL);
@@ -4111,6 +4134,16 @@ void *spiEventHandlerThread(void *arg)
 
 bool createSPIEvtHandlerThread()
 {
+    if(!nfcFL.nfcNxpEse) {
+        ALOGV("%s: nfcNxpEse not available. Returning", __func__);
+        return false;
+    }
+    if(!nfcFL.eseFL._ESE_SVDD_SYNC && !nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION &&
+            !nfcFL.nfccFL._NFCC_SPI_FW_DOWNLOAD_SYNC && !nfcFL.eseFL._ESE_DWP_SPI_SYNC_ENABLE) {
+        ALOGV("%s: Not allowed. Returning", __func__);
+        return false;
+    }
+
     bool stat = true;
     pthread_attr_t attr;
     pthread_attr_init(&attr);
@@ -4126,6 +4159,16 @@ bool createSPIEvtHandlerThread()
 
 void releaseSPIEvtHandlerThread()
 {
+    if(!nfcFL.nfcNxpEse) {
+        ALOGV("%s: nfcNxpEse not available. Returning", __func__);
+        return;
+    }
+    if(!nfcFL.eseFL._ESE_SVDD_SYNC && !nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION &&
+            !nfcFL.nfccFL._NFCC_SPI_FW_DOWNLOAD_SYNC && !nfcFL.eseFL._ESE_DWP_SPI_SYNC_ENABLE) {
+        ALOGV("%s: Not allowed. Returning", __func__);
+        return;
+    }
+
     uint16_t usEvent = 0;
     ALOGV("releaseSPIEvtHandlerThread");
     /* Posting session close event to exit the signal handler thread */
@@ -4134,8 +4177,6 @@ void releaseSPIEvtHandlerThread()
     SyncEventGuard guard(sSPISignalHandlerEvent);
     sSPISignalHandlerEvent.notifyOne ();
 }
-#endif
-#if(NXP_ESE_SVDD_SYNC == true)
 /*******************************************************************************
 **
 ** Function:        nfaVSC_SVDDSyncOnOffCallback
@@ -4148,6 +4189,11 @@ void releaseSPIEvtHandlerThread()
 *******************************************************************************/
 static void nfaVSC_SVDDSyncOnOffCallback(uint8_t event, uint16_t param_len, uint8_t *p_param)
 {
+    if(!nfcFL.nfcNxpEse || !nfcFL.eseFL._ESE_SVDD_SYNC) {
+        ALOGV("%s: nfcNxpEse or ESE_SVDD_SYNC not available. Returning", __func__);
+        return;
+    }
+
     (void)event;
     tNFC_STATUS nfaStat;
     char fn[] = "nfaVSC_SVDDProtectionCallback";
@@ -4173,6 +4219,10 @@ static void nfaVSC_SVDDSyncOnOffCallback(uint8_t event, uint16_t param_len, uint
 *******************************************************************************/
 static void nfaVSC_SVDDSyncOnOff(bool type)
 {
+    if(!nfcFL.nfcNxpEse || !nfcFL.eseFL._ESE_SVDD_SYNC) {
+        ALOGV("%s: nfcNxpEse or ESE_SVDD_SYNC not available. Returning", __func__);
+        return;
+    }
     tNFC_STATUS stat;
     uint8_t param = 0x00;
     if(type == true)
@@ -4196,8 +4246,7 @@ static void nfaVSC_SVDDSyncOnOff(bool type)
         ALOGV("%s: NFA_SendVsCommand failed stat = %d", __func__,stat);
     }
 }
-#endif
-#if (NXP_ESE_DWP_SPI_SYNC_ENABLE == true)
+
 /*******************************************************************************
  **
  ** Function:        nfaVSC_ForceDwpOnOff
@@ -4210,6 +4259,11 @@ static void nfaVSC_SVDDSyncOnOff(bool type)
 *******************************************************************************/
 static void nfaVSC_ForceDwpOnOff(bool type)
 {
+    if(!nfcFL.nfcNxpEse || !nfcFL.eseFL._ESE_DWP_SPI_SYNC_ENABLE) {
+        ALOGV("%s: nfcNxpEse or DWP_SPI_SYNC_ENABLE not available."
+                " Returning", __func__);
+        return;
+    }
     tNFC_STATUS stat = NFA_STATUS_FAILED;
     uint8_t xmitBuffer[] = {0x00, 0x00, 0x00, 0x00};
     uint8_t EVT_SEND_DATA = 0x10;
@@ -4230,54 +4284,55 @@ static void nfaVSC_ForceDwpOnOff(bool type)
     ALOGV("nfaVSC_ForceDwpOnOff: syncstate = %d, type = %d", spiDwpSyncState, type);
     if((type == true) && !(spiDwpSyncState & STATE_WK_ENBLE))
     {
-#if(NXP_WIRED_MODE_STANDBY == TRUE)
-        SecureElement::getInstance().setNfccPwrConfig(SecureElement::getInstance().POWER_ALWAYS_ON | SecureElement::getInstance().COMM_LINK_ACTIVE);
-        SecureElement::getInstance().SecEle_Modeset(0x1);
-        spiDwpSyncState |= STATE_WK_ENBLE;
-#else
-        spiDwpSyncState |= STATE_WK_ENBLE;
-        memset(xmitBuffer, 0, sizeof(xmitBuffer));
-        stat = NFA_HciSendEvent (NFA_HANDLE_GROUP_HCI, 0x19, EVT_SEND_DATA, sizeof(xmitBuffer), xmitBuffer,
-                0, NULL, 0);
-        if(stat == NFA_STATUS_OK)
-        {
-            spiDwpSyncState |= STATE_WK_WAIT_RSP;
-            SyncEventGuard guard(sSPIForceEnableDWPEvent);
-            sSPIForceEnableDWPEvent.wait(50);
+        if(nfcFL.eseFL._WIRED_MODE_STANDBY) {
+            SecureElement::getInstance().setNfccPwrConfig(SecureElement::getInstance().POWER_ALWAYS_ON | SecureElement::getInstance().COMM_LINK_ACTIVE);
+            SecureElement::getInstance().SecEle_Modeset(0x1);
+            spiDwpSyncState |= STATE_WK_ENBLE;
         }
-        else
-        {
-            ALOGV("%s: NFA_HciSendEvent failed stat = %d type = %d", __func__,stat, type);
+        else  {
+            spiDwpSyncState |= STATE_WK_ENBLE;
+            memset(xmitBuffer, 0, sizeof(xmitBuffer));
+            stat = NFA_HciSendEvent (NFA_HANDLE_GROUP_HCI, 0x19, EVT_SEND_DATA, sizeof(xmitBuffer), xmitBuffer,
+                    0, NULL, 0);
+            if(stat == NFA_STATUS_OK)
+            {
+                spiDwpSyncState |= STATE_WK_WAIT_RSP;
+                SyncEventGuard guard(sSPIForceEnableDWPEvent);
+                sSPIForceEnableDWPEvent.wait(50);
+            }
+            else
+            {
+                ALOGV("%s: NFA_HciSendEvent failed stat = %d type = %d", __func__,stat, type);
+            }
         }
-#endif
     }
     else if (type == false)
     {
-#if (NXP_WIRED_MODE_STANDBY == true)
+        if(nfcFL.eseFL._WIRED_MODE_STANDBY) {
             /*Just stand by timer expired*/
-        if(spiDwpSyncState & STATE_TIME_OUT)
-        {
-            /*Clear APDU state to activate DWP link once spi standalone is triggered*/
-            if(spiDwpSyncState & STATE_WK_ENBLE)
+            if(spiDwpSyncState & STATE_TIME_OUT)
             {
-                spiDwpSyncState ^= STATE_WK_ENBLE;
+                /*Clear APDU state to activate DWP link once spi standalone is triggered*/
+                if(spiDwpSyncState & STATE_WK_ENBLE)
+                {
+                    spiDwpSyncState ^= STATE_WK_ENBLE;
+                }
+                SecureElement::getInstance().setNfccPwrConfig(SecureElement::getInstance().POWER_ALWAYS_ON);
+                stat = SecureElement::getInstance().sendEvent(SecureElement::EVT_SUSPEND_APDU_TRANSFER);
+                if(stat)
+                {
+                    ALOGV("%s sending standby mode command successful", __func__);
+                }
+                standby_state = STANDBY_MODE_SUSPEND;
+                return;
             }
-            SecureElement::getInstance().setNfccPwrConfig(SecureElement::getInstance().POWER_ALWAYS_ON);
-            stat = SecureElement::getInstance().sendEvent(SecureElement::EVT_SUSPEND_APDU_TRANSFER);
-            if(stat)
-            {
-                ALOGV("%s sending standby mode command successful", __func__);
-            }
-            standby_state = STANDBY_MODE_SUSPEND;
-            return;
+            /*If DWP session is closed*/
+            (void)SecureElement::getInstance().setNfccPwrConfig(SecureElement::getInstance().NFCC_DECIDES);
         }
-        /*If DWP session is closed*/
-        (void)SecureElement::getInstance().setNfccPwrConfig(SecureElement::getInstance().NFCC_DECIDES);
-#endif
         if(spiDwpSyncState & STATE_DWP_CLOSE)
         {
             stat = NFA_HciSendEvent (NFA_HANDLE_GROUP_HCI, 0x19, EVT_END_OF_APDU_TRANSFER,
-                                    0x00, NULL, 0x00,NULL, 0);
+                    0x00, NULL, 0x00,NULL, 0);
             if(NFA_STATUS_OK != stat)
                 ALOGV("%s: NFA_HciSendEvent failed stat = %d, type = %d", __func__,stat, type);
         }
@@ -4289,6 +4344,11 @@ static void nfaVSC_ForceDwpOnOff(bool type)
 
 bool SecureElement::enableDwp(void)
 {
+    if(!nfcFL.nfcNxpEse || !nfcFL.eseFL._ESE_DWP_SPI_SYNC_ENABLE) {
+        ALOGV("%s: nfcNxpEse or DWP_SPI_SYNC_ENABLE not available."
+                " Returning", __func__);
+        return false;
+    }
     bool stat = false;
     static const char fn [] = "SecureElement::enableDwp";
     ALOGV("enter %s", fn);
@@ -4302,7 +4362,6 @@ bool SecureElement::enableDwp(void)
     ALOGV("exit %s.. stat = %d", fn, stat);
     return stat;
 }
-#endif
 
 void spi_prio_signal_handler (int signum, siginfo_t *info, void *unused)
 {
@@ -4342,13 +4401,14 @@ void spi_prio_signal_handler (int signum, siginfo_t *info, void *unused)
             setSPIState(false);
         }
 
-#if ((NXP_ESE_SVDD_SYNC == true) || (NXP_ESE_JCOP_DWNLD_PROTECTION == true) || (NXP_NFCC_SPI_FW_DOWNLOAD_SYNC == true)||(NXP_ESE_DWP_SPI_SYNC_ENABLE == true))
-        usEvent = info->si_int;
-        gSPIEvtQueue.enqueue((uint8_t*)&usEvent, (uint16_t)SIGNAL_EVENT_SIZE);
-        SyncEventGuard guard(sSPISignalHandlerEvent);
-        sSPISignalHandlerEvent.notifyOne ();
-#endif
-     }
+        if(nfcFL.eseFL._ESE_SVDD_SYNC || nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION ||
+                nfcFL.nfccFL._NFCC_SPI_FW_DOWNLOAD_SYNC || nfcFL.eseFL._ESE_DWP_SPI_SYNC_ENABLE) {
+            usEvent = info->si_int;
+            gSPIEvtQueue.enqueue((uint8_t*)&usEvent, (uint16_t)SIGNAL_EVENT_SIZE);
+            SyncEventGuard guard(sSPISignalHandlerEvent);
+            sSPISignalHandlerEvent.notifyOne ();
+        }
+    }
 }
 
 /*******************************************************************************
@@ -4438,7 +4498,6 @@ void SecureElement::setCPTimeout()
 
 }
 
-#if(NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == true)
 /*******************************************************************************
 **
 ** Function:        enablePassiveListen
@@ -4450,6 +4509,12 @@ void SecureElement::setCPTimeout()
 *******************************************************************************/
 uint16_t SecureElement::enablePassiveListen (uint8_t event)
 {
+    if(!nfcFL.eseFL._NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION) {
+        ALOGV("%s NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION not available."
+                " Returning",__func__);
+        return NFA_STATUS_FAILED;
+    }
+
     tNFA_STATUS status = NFA_STATUS_FAILED;
 
     mPassiveListenMutex.lock();
@@ -4510,6 +4575,11 @@ uint16_t SecureElement::enablePassiveListen (uint8_t event)
  *******************************************************************************/
 void *passiveListenEnableThread(void *arg)
 {
+    if(!nfcFL.eseFL._NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION) {
+        ALOGV("%s NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION not available."
+                " Returning",__func__);
+        return NULL;
+    }
     ALOGV(" passiveListenEnableThread  %d",*((uint8_t*)arg));
     if (*((uint8_t*)arg))
     {
@@ -4549,6 +4619,11 @@ uint16_t SecureElement::startThread(uint8_t thread_arg)
 *******************************************************************************/
 static void passiveListenDisablecallBack(union sigval)
 {
+    if(!nfcFL.eseFL._NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION) {
+        ALOGV("%s NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION not available."
+                " Returning",__func__);
+        return;
+    }
     ALOGV(" passiveListenDisablecallBack enter");
 
     if(SecureElement::getInstance().isRfFieldOn() == true)
@@ -4568,7 +4643,6 @@ static void passiveListenDisablecallBack(union sigval)
     }
     SecureElement::getInstance().enablePassiveListen (0x00);
 }
-#endif
 
 #endif
 
@@ -4620,16 +4694,16 @@ tNFA_STATUS SecureElement::SecElem_EeModeSet(uint16_t handle, uint8_t mode)
     tNFA_STATUS stat = NFA_STATUS_FAILED;
     ALOGV("%s:Enter mode = %d", __func__, mode);
 
-#if((NFC_NXP_ESE == TRUE))
+    if(nfcFL.nfcNxpEse) {
 #if (JCOP_WA_ENABLE == TRUE)
-    if((mode == NFA_EE_MD_DEACTIVATE)&&(active_ese_reset_control&(TRANS_WIRED_ONGOING|TRANS_CL_ONGOING)))
-    {
-        active_ese_reset_control |= RESET_BLOCKED;
-        SyncEventGuard guard (sSecElem.mResetEvent);
-        sSecElem.mResetEvent.wait();
+        if((mode == NFA_EE_MD_DEACTIVATE)&&(active_ese_reset_control&(TRANS_WIRED_ONGOING|TRANS_CL_ONGOING)))
+        {
+            active_ese_reset_control |= RESET_BLOCKED;
+            SyncEventGuard guard (sSecElem.mResetEvent);
+            sSecElem.mResetEvent.wait();
+        }
+#endif
     }
-#endif
-#endif
     SyncEventGuard guard (sSecElem.mEeSetModeEvent);
     stat =  NFA_EeModeSet(handle, mode);
     if(stat == NFA_STATUS_OK && !android::nfcManager_isNfcDisabling())
@@ -4637,15 +4711,15 @@ tNFA_STATUS SecureElement::SecElem_EeModeSet(uint16_t handle, uint8_t mode)
         sSecElem.mEeSetModeEvent.wait ();
     }
 
-#if((NFC_NXP_ESE == TRUE))
+    if(nfcFL.nfcNxpEse) {
 #if (JCOP_WA_ENABLE == TRUE)
-    if((active_ese_reset_control&RESET_BLOCKED))
-    {
-        SyncEventGuard guard (sSecElem.mResetOngoingEvent);
-        sSecElem.mResetOngoingEvent.notifyOne();
+        if((active_ese_reset_control&RESET_BLOCKED))
+        {
+            SyncEventGuard guard (sSecElem.mResetOngoingEvent);
+            sSecElem.mResetOngoingEvent.notifyOne();
+        }
+#endif
     }
-#endif
-#endif
     return stat;
 }
 /**********************************************************************************
@@ -4688,16 +4762,15 @@ uicc_stat_t SecureElement::getUiccStatus(uint8_t selected_uicc)
 {
     uint16_t ee_stat = NFA_EE_STATUS_REMOVED;
 
-#if(NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH == true)
-    if(selected_uicc == 0x01)
+    if(nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH)
+    {
+        if(selected_uicc == 0x01)
+            ee_stat = getEeStatus(EE_HANDLE_0xF4);
+        else if(selected_uicc == 0x02)
+            ee_stat = getEeStatus(EE_HANDLE_0xF8);
+    }
+    if(nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH)
         ee_stat = getEeStatus(EE_HANDLE_0xF4);
-    else if(selected_uicc == 0x02)
-        ee_stat = getEeStatus(EE_HANDLE_0xF8);
-#endif
-
-#if(NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH == true)
-    ee_stat = getEeStatus(EE_HANDLE_0xF4);
-#endif
 
     uicc_stat_t uicc_stat = UICC_STATUS_UNKNOWN;
 
@@ -4803,7 +4876,7 @@ uint8_t SecureElement::updateNfceeDiscoverInfo()
 }
 
 #endif
-#if((NFC_NXP_ESE == TRUE)&&(NXP_EXTNS == TRUE))
+#if(NXP_EXTNS == TRUE)
 /*******************************************************************************
  **
  ** Function:       SecElem_sendEvt_Abort
@@ -4816,6 +4889,10 @@ uint8_t SecureElement::updateNfceeDiscoverInfo()
 
 tNFA_STATUS SecureElement::SecElem_sendEvt_Abort()
 {
+    if(!nfcFL.nfcNxpEse) {
+        ALOGE("%s nfcNxpEse not available. Returning",__func__);
+        return NFA_STATUS_FAILED;
+    }
     static const char fn[] = "SecureElement::SecElem_sendEvt_Abort";
     tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
     int32_t timeoutMillisec = 10000;
@@ -4823,16 +4900,15 @@ tNFA_STATUS SecureElement::SecElem_sendEvt_Abort()
     uint8_t recvBuffer[MAX_RESPONSE_SIZE];
     mAbortEventWaitOk = false;
 
-#if (NXP_NFCEE_REMOVED_NTF_RECOVERY == true)
-    if((RoutingManager::getInstance().is_ee_recovery_ongoing()))
-    {
+    if(nfcFL.nfccFL._NFCEE_REMOVED_NTF_RECOVERY &&
+            (RoutingManager::getInstance().is_ee_recovery_ongoing())) {
         SyncEventGuard guard (mEEdatapacketEvent);
         if(mEEdatapacketEvent.wait(android::gMaxEERecoveryTimeout) == false)
         {
             return nfaStat;
         }
     }
-#endif
+
     SyncEventGuard guard (mAbortEvent);
     nfaStat = NFA_HciSendEvent(mNfaHciHandle, mNewPipeId, EVT_ABORT, 0, NULL, atr_len, recvBuffer, timeoutMillisec);
     if(nfaStat == NFA_STATUS_OK)
@@ -4859,6 +4935,10 @@ tNFA_STATUS SecureElement::SecElem_sendEvt_Abort()
 
 void SecureElement::setDwpTranseiveState(bool block, tNFCC_EVTS_NTF action)
 {
+    if(!nfcFL.nfcNxpEse) {
+        ALOGE("%s nfcNxpEse not available. Returning",__func__);
+        return;
+    }
     ALOGV("%s  block = %d action = %d ",__func__,block,action);
 
     switch(action)
@@ -4876,23 +4956,35 @@ void SecureElement::setDwpTranseiveState(bool block, tNFCC_EVTS_NTF action)
                 mIsWiredModeBlocked = true;
                 if(action == NFCC_RF_FIELD_EVT)
                 {
-#if((NFC_NXP_ESE == TRUE)&&(NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == true))
-                    if(meseUiccConcurrentAccess == false)
-#endif
-#if(NXP_ESE_DUAL_MODE_PRIO_SCHEME != NXP_ESE_WIRED_MODE_RESUME)
-                    SecureElement::getInstance().mRfFieldEventTimer.set(SecureElement::getInstance().mRfFieldEventTimeout, rfFeildEventTimeoutCallback);
-#endif
+                    if(nfcFL.nfcNxpEse &&
+                            nfcFL.eseFL._NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION &&
+                            (meseUiccConcurrentAccess == false)) {
+                        if(nfcFL.eseFL._ESE_DUAL_MODE_PRIO_SCHEME != nfcFL.eseFL._ESE_WIRED_MODE_RESUME) {
+                            SecureElement::getInstance().mRfFieldEventTimer.set(
+                                    SecureElement::getInstance().mRfFieldEventTimeout, rfFeildEventTimeoutCallback);
+                        }
+                    }
+                    else if(nfcFL.eseFL._ESE_DUAL_MODE_PRIO_SCHEME == nfcFL.eseFL._ESE_WIRED_MODE_RESUME) {
+                        SecureElement::getInstance().mRfFieldEventTimer.set(
+                                SecureElement::getInstance().mRfFieldEventTimeout, rfFeildEventTimeoutCallback);
+
+                    }
                 }
             }
             else
             {
                 mIsWiredModeBlocked = false;
-#if((NFC_NXP_ESE == TRUE)&&(NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == true))
-                if(meseUiccConcurrentAccess == false)
-#endif
-#if(NXP_ESE_DUAL_MODE_PRIO_SCHEME != NXP_ESE_WIRED_MODE_RESUME)
+
+                if(nfcFL.nfcNxpEse &&
+                        nfcFL.eseFL._NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION &&
+                        (meseUiccConcurrentAccess == false)) {
+                    if(nfcFL.eseFL._ESE_DUAL_MODE_PRIO_SCHEME != nfcFL.eseFL._ESE_WIRED_MODE_RESUME) {
+                        SecureElement::getInstance().mRfFieldEventTimer.kill();
+                    }
+                }
+                else if(nfcFL.eseFL._ESE_DUAL_MODE_PRIO_SCHEME == nfcFL.eseFL._ESE_WIRED_MODE_RESUME) {
                     SecureElement::getInstance().mRfFieldEventTimer.kill();
-#endif
+                }
                 if(hold_wired_mode)
                 {
                     SyncEventGuard guard (mWiredModeHoldEvent);
@@ -4903,13 +4995,17 @@ void SecureElement::setDwpTranseiveState(bool block, tNFCC_EVTS_NTF action)
             break;
         case NFCC_ACTIVATED_NTF:
         case NFCC_ACTION_NTF:
-#if((NFC_NXP_ESE == TRUE)&&(NXP_NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION == true))
         case NFCC_RF_TIMEOUT_EVT:
-            if(meseUiccConcurrentAccess == false)
-#endif
-#if(NXP_ESE_DUAL_MODE_PRIO_SCHEME != NXP_ESE_WIRED_MODE_RESUME)
+            if(nfcFL.nfcNxpEse &&
+                    nfcFL.eseFL._NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION &&
+                    (meseUiccConcurrentAccess == false)) {
+                if(nfcFL.eseFL._ESE_DUAL_MODE_PRIO_SCHEME != nfcFL.eseFL._ESE_WIRED_MODE_RESUME) {
+                    SecureElement::getInstance().mRfFieldEventTimer.kill();
+                }
+            }
+            else if(nfcFL.eseFL._ESE_DUAL_MODE_PRIO_SCHEME == nfcFL.eseFL._ESE_WIRED_MODE_RESUME) {
                 SecureElement::getInstance().mRfFieldEventTimer.kill();
-#endif
+            }
             if(!block)
             {
                 mIsWiredModeBlocked = false;
@@ -4944,7 +5040,6 @@ static void rfFeildEventTimeoutCallback(union sigval)
 }
 #endif
 
-#if (NXP_WIRED_MODE_STANDBY == true)
 /*******************************************************************************
 **
 ** Function         setNfccPwrConfig
@@ -4956,6 +5051,11 @@ static void rfFeildEventTimeoutCallback(union sigval)
 *******************************************************************************/
 tNFA_STATUS SecureElement::setNfccPwrConfig(uint8_t value)
 {
+    if(!nfcFL.eseFL._WIRED_MODE_STANDBY) {
+        ALOGV("WIRED_MODE_STANDBY not enabled. Returning");
+        return NFA_STATUS_FAILED;
+    }
+
     tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
     static uint8_t cur_value = 0xFF;
 
@@ -4974,5 +5074,4 @@ tNFA_STATUS SecureElement::setNfccPwrConfig(uint8_t value)
     return mPwrCmdstatus;
 }
 
-#endif
 #endif

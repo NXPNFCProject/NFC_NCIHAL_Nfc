@@ -25,9 +25,7 @@ static const int EE_ERROR_OPEN_FAIL =  -1;
 bool IsWiredMode_Enable();
 bool eSE_connected = false;
 bool dwpChannelForceClose = false;
-#if(NXP_ESE_JCOP_DWNLD_PROTECTION == true)
 DwpChannel DwpChannel::sDwpChannel;
-#endif
 namespace android
 {
     extern void checkforNfceeConfig();
@@ -122,9 +120,9 @@ int16_t open()
     SecureElement &se = SecureElement::getInstance();
 
     ALOGE("DwpChannel: Sec Element open Enter");
-#if(NXP_ESE_JCOP_DWNLD_PROTECTION == true)
+if(nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION) {
     DwpChannel::getInstance().Initialize();
-#endif
+}
     ALOGE("DwpChannel: Sec Element open Enter");
     if (se.isBusy())
     {
@@ -151,18 +149,23 @@ int16_t open()
           se.deactivate (0);
         }else
         {
-          dwpChannelForceClose = false;
-          dwpHandle = se.mActiveEeHandle;
-#if(NXP_ESE_DUAL_MODE_PRIO_SCHEME == NXP_ESE_WIRED_MODE_RESUME)
-          /*NFCC shall keep secure element always powered on ; however NFCC may deactivate communication link with secure element.
-          **NOTE: Since open() api does not call nativeNfcSecureElement_doOpenSecureElementConnection() and LS application can invoke
-          **open(), POWER_ALWAYS_ON is needed.
-          */
-          if(se.setNfccPwrConfig(se.POWER_ALWAYS_ON) != NFA_STATUS_OK)
-          {
-              ALOGV("%s: power link command failed", __func__);
-          }
-#endif
+            dwpChannelForceClose = false;
+            dwpHandle = se.mActiveEeHandle;
+            if(nfcFL.eseFL._ESE_DUAL_MODE_PRIO_SCHEME ==
+                    nfcFL.eseFL._ESE_WIRED_MODE_RESUME) {
+                /*NFCC shall keep secure element always powered on ;
+                 * however NFCC may deactivate communication link with
+                 * secure element.
+                 * NOTE: Since open() api does not call
+                 * nativeNfcSecureElement_doOpenSecureElementConnection()
+                 * and LS application can invoke
+                 * open(), POWER_ALWAYS_ON is needed.
+                 */
+                if(se.setNfccPwrConfig(se.POWER_ALWAYS_ON) != NFA_STATUS_OK)
+                {
+                    ALOGV("%s: power link command failed", __func__);
+                }
+            }
         }
     }
 
@@ -185,9 +188,9 @@ bool close(int16_t mHandle)
     ALOGV("%s: enter", fn);
     bool stat = false;
     SecureElement &se = SecureElement::getInstance();
-#if(NXP_ESE_JCOP_DWNLD_PROTECTION == true)
-    DwpChannel::getInstance().finalize();
-#endif
+    if(nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION) {
+        DwpChannel::getInstance().finalize();
+    }
     if(mHandle == EE_ERROR_OPEN_FAIL)
     {
         ALOGV("%s: Channel access denied. Returning", fn);
@@ -196,18 +199,20 @@ bool close(int16_t mHandle)
     if(eSE_connected != true)
         return true;
 
-#if((NFC_NXP_ESE == TRUE) && (NXP_EXTNS == TRUE))
-    se.NfccStandByOperation(STANDBY_MODE_ON);
+#if(NXP_EXTNS == TRUE)
+    if(nfcFL.nfcNxpEse) {
+        se.NfccStandByOperation(STANDBY_MODE_ON);
+    }
 #endif
 
     stat = se.disconnectEE (SecureElement::ESE_ID);
 
     //if controller is not routing AND there is no pipe connected,
     //then turn off the sec elem
-    #if((NFC_NXP_CHIP_TYPE == PN547C2)&&(NFC_NXP_ESE == TRUE))
-    if (! se.isBusy())
+    if(((nfcFL.chipType == pn547C2) && (nfcFL.nfcNxpEse)) &&
+            (! se.isBusy())) {
         se.deactivate (SecureElement::ESE_ID);
-    #endif
+    }
      return stat;
 }
 
@@ -223,13 +228,11 @@ bool transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uint8_t* recvBuffe
     if(dwpChannelForceClose == true)
         return stat;
 
-#if(NXP_ESE_JCOP_DWNLD_PROTECTION == true)
-    if(DwpChannel::getInstance().dwpChannelForceClose)
+    if(nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION && DwpChannel::getInstance().dwpChannelForceClose)
     {
         ALOGV("%s: exit", fn);
         return stat;
     }
-#endif
 
     stat = se.transceive (xmitBuffer,
                           xmitBufferSize,
@@ -241,7 +244,6 @@ bool transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uint8_t* recvBuffe
     return stat;
 }
 
-#if(NXP_ESE_JCOP_DWNLD_PROTECTION == true)
 /*******************************************************************************
 **
 ** Function:        DwpChannel Constructor
@@ -323,10 +325,13 @@ void DwpChannel::forceClose()
 {
     static const char fn [] = "DwpChannel::doDwpChannel_ForceExit";
     ALOGV("%s: Enter:", fn);
+    if(!nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION) {
+        ALOGV("%s: ESE_JCOP_DWNLD_PROTECTION not available. Returning", fn);
+        return;
+    }
     dwpChannelForceClose = true;
     ALOGV("%s: Exit:", fn);
 }
-#endif
 
 void doeSE_Reset(void)
 {
@@ -347,14 +352,13 @@ void doeSE_Reset(void)
 
     usleep(3000 * 1000);
     rm.mResetHandlerMutex.unlock();
-#if (NXP_NFCEE_REMOVED_NTF_RECOVERY == true)
-    if((RoutingManager::getInstance().is_ee_recovery_ongoing()))
+    if((nfcFL.nfccFL._NFCEE_REMOVED_NTF_RECOVERY) &&
+            (RoutingManager::getInstance().is_ee_recovery_ongoing()))
     {
         ALOGE("%s: is_ee_recovery_ongoing ", fn);
         SyncEventGuard guard (se.mEEdatapacketEvent);
         se.mEEdatapacketEvent.wait(android::gMaxEERecoveryTimeout);
     }
-#endif
 }
 namespace android
 {
@@ -382,13 +386,11 @@ void doeSE_JcopDownLoadReset(void)
     /*tNFA_STATUS nfaStat = NFA_STATUS_FAILED;*/
     SecureElement &se = SecureElement::getInstance();
     RoutingManager &rm = RoutingManager::getInstance();
-#if ((NXP_ESE_RESET_METHOD == true) && (NXP_ESE_POWER_MODE == true))
-    unsigned long int num = 0;
-#endif
     ALOGV("%s: enter:", fn);
 
     rm.mResetHandlerMutex.lock();
-#if ((NXP_ESE_RESET_METHOD == true) && (NXP_ESE_POWER_MODE == true))
+if (nfcFL.eseFL._ESE_RESET_METHOD && nfcFL.eseFL._ESE_POWER_MODE) {
+    unsigned long int num = 0;
     if (GetNxpNumValue (NAME_NXP_ESE_POWER_DH_CONTROL, (void*)&num, sizeof(num)) == true)
     {
         if(num ==1)
@@ -467,27 +469,26 @@ void doeSE_JcopDownLoadReset(void)
                 }
             }
         }
-        */
+             */
+        }
     }
-#else
-    ALOGV("1st mode set calling");
-    se.SecEle_Modeset(0x00);
-    usleep(100 * 1000);
-    ALOGV("1st mode set called");
-    ALOGV("2nd mode set calling");
+    else {
+        ALOGV("1st mode set calling");
+        se.SecEle_Modeset(0x00);
+        usleep(100 * 1000);
+        ALOGV("1st mode set called");
+        ALOGV("2nd mode set calling");
 
-    se.SecEle_Modeset(0x01);
-    ALOGV("2nd mode set called");
+        se.SecEle_Modeset(0x01);
+        ALOGV("2nd mode set called");
 
-    usleep(3000 * 1000);
-#endif
+        usleep(3000 * 1000);
+    }
     rm.mResetHandlerMutex.unlock();
 
-#if (NXP_NFCEE_REMOVED_NTF_RECOVERY == true)
-    if((RoutingManager::getInstance().is_ee_recovery_ongoing()))
+    if(nfcFL.nfccFL._NFCEE_REMOVED_NTF_RECOVERY && (RoutingManager::getInstance().is_ee_recovery_ongoing()))
     {
         SyncEventGuard guard (se.mEEdatapacketEvent);
         se.mEEdatapacketEvent.wait(android::gMaxEERecoveryTimeout);
     }
-#endif
 }

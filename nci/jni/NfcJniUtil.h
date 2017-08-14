@@ -40,6 +40,7 @@
 #include <pthread.h>
 #include <sys/queue.h>
 #include <semaphore.h>
+#include "Nxp_Features.h"
 
 #define ALOGV ALOGD
 /* Discovery modes -- keep in sync with NFCManager.DISCOVERY_MODE_* */

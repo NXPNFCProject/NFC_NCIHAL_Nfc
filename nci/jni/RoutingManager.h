@@ -165,15 +165,11 @@ public:
     bool addAidRouting(const uint8_t* aid, uint8_t aidLen, int route, int power, int aidInfo);
     int  addNfcid2Routing(uint8_t* nfcid2, uint8_t aidLen,const uint8_t* syscode,
     int  syscodelen,const uint8_t* optparam, int optparamlen);
-#if (NXP_NFCEE_REMOVED_NTF_RECOVERY == true)
     void handleSERemovedNtf();
     bool is_ee_recovery_ongoing();
-#endif
-#if((NFC_NXP_ESE == TRUE) && (NXP_ESE_ETSI_READER_ENABLE == true))
     void setEtsiReaederState(se_rd_req_state_t newState);
     se_rd_req_state_t getEtsiReaederState();
     Rdr_req_ntf_info_t getSwpRrdReqInfo();
-#endif
 #if(NXP_NFCC_HCE_F == TRUE)
     void notifyT3tConfigure();
 #endif
