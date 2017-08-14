@@ -3143,8 +3143,8 @@ jint SecureElement::getGenericEseId(tNFA_HANDLE handle)
     {
         ret = UICC_ID;
     }
-    else if(nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC ||
-            nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH &&
+    else if((nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC ||
+            nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH) &&
             (handle ==  (EE_HANDLE_0xF8 & ~NFA_HANDLE_GROUP_EE))) //UICC2 - 0x04
     {
         ret = UICC2_ID;
@@ -3178,8 +3178,8 @@ tNFA_HANDLE SecureElement::getEseHandleFromGenericId(jint eseId)
     {
         handle = SecureElement::getInstance().EE_HANDLE_0xF4; //0x402;
     }
-    else if(nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC ||
-            nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH && (eseId == UICC2_ID)) //UICC
+    else if((nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC ||
+            nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH) && (eseId == UICC2_ID)) //UICC
     {
         handle = EE_HANDLE_0xF8; //0x481;
     }

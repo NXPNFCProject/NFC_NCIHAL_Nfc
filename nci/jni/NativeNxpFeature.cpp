@@ -844,9 +844,9 @@ tNFA_STATUS enableSWPInterface()
                 dual_uicc_cmd_buf[11] = 0x01;
             }
         }
-        if((!nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH) && (cmd_buf[7] == 0x00) ||
-                (nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH) &&
-                (dual_uicc_cmd_buf[7] == 0x00 && dual_uicc_cmd_buf[11] == 0x00)) {
+        if(((!nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH) && (cmd_buf[7] == 0x00)) ||
+                ((nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH) &&
+                (dual_uicc_cmd_buf[7] == 0x00 && dual_uicc_cmd_buf[11] == 0x00))) {
             ALOGV("%s: No mismatch in UICC SWP and configuration set", __func__);
             status = NFA_STATUS_FAILED;
         }
