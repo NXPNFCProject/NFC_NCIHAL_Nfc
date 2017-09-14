@@ -48,6 +48,8 @@
 #include "phNxpConfig.h"
 #include "PeerToPeer.h"
 #include "DataQueue.h"
+#include "TransactionController.h"
+
 #if(NXP_EXTNS == TRUE)
 #include "RoutingManager.h"
 
@@ -105,7 +107,6 @@ namespace android
     extern bool nfcManager_isNfcDisabling();
 #if(NXP_EXTNS == TRUE)
     extern int gMaxEERecoveryTimeout;
-    extern bool update_transaction_stat(const char * req_handle, transaction_state_t req_state);
     extern uint8_t nfcManager_getNfcState();
 #endif
 }
@@ -3816,10 +3817,7 @@ void SecureElement::etsiInitConfig()
     else if((swp_rdr_req_ntf_info.swp_rd_state == STATE_SE_RDR_MODE_STOP_CONFIG) &&
             (swp_rdr_req_ntf_info.swp_rd_req_current_info.src == swp_rdr_req_ntf_info.swp_rd_req_info.src))
     {
-        if(!android::update_transaction_stat("etsiReader", RESET_TRANSACTION_STATE))
-        {
-            ALOGE("%s: Can not reset transaction stat", __func__);
-        }
+        pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(etsiReader));
         swp_rdr_req_ntf_info.swp_rd_state = STATE_SE_RDR_MODE_STOP_IN_PROGRESS;
         ALOGV("%s: new ETSI state : STATE_SE_RDR_MODE_STOP_IN_PROGRESS", __func__);
 

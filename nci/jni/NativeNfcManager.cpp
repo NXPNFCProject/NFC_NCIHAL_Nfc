@@ -57,6 +57,7 @@
 #include <sys/types.h>
 #endif
 #include "DwpChannel.h"
+#include "TransactionController.h"
 #include <fcntl.h>
 extern "C"
 {
@@ -1625,19 +1626,16 @@ void nfaDeviceManagementCallback (uint8_t dmEvent, tNFA_DM_CBACK_DATA* eventData
             }
             if (eventData->rf_field.rf_field_status == NFA_DM_RF_FIELD_ON)
              {
-                if(!update_transaction_stat("RF_FIELD_EVT",SET_TRANSACTION_STATE))
+                if(!pTransactionController->transactionAttempt(TRANSACTION_REQUESTOR(RF_FIELD_EVT)))
                 {
-                    ALOGV("%s: RF field on evnt Not allowing to set", __func__);
+                    ALOGD ("%s: RF field on evnt Not allowing to set", __FUNCTION__);
                 }
                 sRfFieldOff = false;
                 e->CallVoidMethod (nat->manager, android::gCachedNfcManagerNotifyRfFieldActivated);
              }
             else
             {
-                if(!update_transaction_stat("RF_FIELD_EVT",RESET_TRANSACTION_STATE))
-                {
-                    ALOGV("%s: RF field off evnt Not allowing to reset", __func__);
-                }
+                pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(RF_FIELD_EVT));
                 sRfFieldOff = true;
                 e->CallVoidMethod (nat->manager, android::gCachedNfcManagerNotifyRfFieldDeactivated);
             }
@@ -1984,9 +1982,9 @@ static jboolean nfcManager_setDefaultRoute (JNIEnv*, jobject, jint defaultRouteE
     jboolean result = false;
     ALOGV("%s : enter", __func__);
 #if (NXP_EXTNS == TRUE)
-    if(!update_transaction_stat("setDefaultRoute",SET_TRANSACTION_STATE))
+    if(!pTransactionController->transactionAttempt(TRANSACTION_REQUESTOR(setDefaultRoute)))
     {
-        ALOGE("%s : Transaction in progress, Store the request",__func__);
+        ALOGE("%s : Transaction in progress, Store the request",__FUNCTION__);
         set_last_request(RE_ROUTING, NULL);
         return result;
     }
@@ -2009,10 +2007,7 @@ static jboolean nfcManager_setDefaultRoute (JNIEnv*, jobject, jint defaultRouteE
 
     startRfDiscovery(true);
 #if (NXP_EXTNS == TRUE)
-    if(!update_transaction_stat("setDefaultRoute",RESET_TRANSACTION_STATE))
-    {
-        ALOGE("%s: Can not reset transaction state", __func__);
-    }
+    pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(setDefaultRoute));
 #endif
     ALOGV("%s : exit", __func__);
     return result;
@@ -2347,7 +2342,8 @@ static jboolean nfcManager_doInitialize (JNIEnv* e, jobject o)
                         }
                     }
 #endif
-                    update_transaction_stat(NULL, RESET_TRANSACTION_STATE);
+                    //Create transaction controller
+                    (void)transactionController::controller();
                     pendingScreenState = false;
                     {
                         SyncEventGuard guard (android::sNfaGetConfigEvent);
@@ -2574,9 +2570,9 @@ static void nfcManager_Enablep2p(JNIEnv* e, jobject o, jboolean p2pFlag)
 {
     ALOGV("Enter :%s  p2pFlag = %d", __func__, p2pFlag);
     /* if another transaction is already in progress, store this request */
-    if(!update_transaction_stat("enablep2p",SET_TRANSACTION_STATE))
+    if(!pTransactionController->transactionAttempt(TRANSACTION_REQUESTOR(enablep2p)))
     {
-        ALOGV("Transaction in progress, Store the request");
+        ALOGD("Transaction in progress, Store the request");
         set_last_request(ENABLE_P2P, NULL);
         transaction_data.discovery_params.enable_p2p = p2pFlag;
         return;
@@ -2603,10 +2599,7 @@ static void nfcManager_Enablep2p(JNIEnv* e, jobject o, jboolean p2pFlag)
         NFA_ResumeP2p();
         startRfDiscovery (p2pFlag);
     }
-    if(!update_transaction_stat("enablep2p",RESET_TRANSACTION_STATE))
-    {
-        ALOGE("%s: Can not reset transaction state", __func__);
-    }
+    pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(enablep2p));
 }
 #endif
 /*******************************************************************************
@@ -2648,7 +2641,7 @@ static void nfcManager_enableDiscovery (JNIEnv* e, jobject o, jint technologies_
         nat = getNative(e, o);
     }
 #if (NXP_EXTNS == TRUE)
-    if(!update_transaction_stat("enableDiscovery",SET_TRANSACTION_STATE))
+    if(!pTransactionController->transactionAttempt(TRANSACTION_REQUESTOR(enableDiscovery)))
     {
         ALOGV("Transaction is in progress store the request");
         set_last_request(ENABLE_DISCOVERY, nat);
@@ -2699,14 +2692,11 @@ static void nfcManager_enableDiscovery (JNIEnv* e, jobject o, jint technologies_
             }
         }
         startRfDiscovery (true);
-        if(!update_transaction_stat("enableDiscovery",RESET_TRANSACTION_STATE))
-        {
-            ALOGE("%s: Can not reset transaction state", __func__);
-        }
+        pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(enableDiscovery));
 
-        if(!update_transaction_stat("etsiReader", SET_TRANSACTION_STATE))
+        if(!pTransactionController->transactionAttempt(TRANSACTION_REQUESTOR(etsiReader)))
         {
-            ALOGE("%s: update_transaction_stat Failed", __func__);
+            ALOGE ("%s: transaction attempt failed", __FUNCTION__);
         }
         goto TheEnd;
     }
@@ -2912,10 +2902,7 @@ static void nfcManager_enableDiscovery (JNIEnv* e, jobject o, jint technologies_
 
 #if (NXP_EXTNS == TRUE)
 TheEnd:
-    if(!update_transaction_stat("enableDiscovery",RESET_TRANSACTION_STATE))
-    {
-        ALOGE("%s: Can not reset transaction state", __func__);
-    }
+    pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(enableDiscovery));
     /* Set this state only during initialization and in all the other cases
     NfcState should remain at NFC_ON  except during Nfc deinit */
     if(NFC_INITIALIZING_IN_PROGRESS == sNfcState)
@@ -2961,7 +2948,7 @@ void nfcManager_disableDiscovery (JNIEnv* e, jobject o)
     tNFA_HANDLE handle = NFA_HANDLE_INVALID;
     ALOGV("%s: enter;", __func__);
 #if (NXP_EXTNS == TRUE)
-    if(!update_transaction_stat("disableDiscovery",SET_TRANSACTION_STATE))
+    if(!pTransactionController->transactionAttempt(TRANSACTION_REQUESTOR(disableDiscovery)))
     {
         ALOGV("Transaction in progress, Store the request");
         set_last_request(DISABLE_DISCOVERY, NULL);
@@ -3067,10 +3054,7 @@ void nfcManager_disableDiscovery (JNIEnv* e, jobject o)
     releaseRfInterfaceMutexLock();
 TheEnd:
 #if (NXP_EXTNS == TRUE)
-if(!update_transaction_stat("disableDiscovery",RESET_TRANSACTION_STATE))
-{
-    ALOGE("%s: Can not reset transaction state", __func__);
-}
+    pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(disableDiscovery));
 #endif
     ALOGV("%s: exit", __func__);
 }
@@ -4872,16 +4856,14 @@ static int nfcManager_doSelectUicc(JNIEnv* e, jobject o, jint uiccSlot)
         endSwitch:
         if((retStat == UICC_CONFIGURED) || (retStat == UICC_NOT_CONFIGURED))
         {
-            if(update_transaction_stat("staticDualUicc",RESET_TRANSACTION_STATE))
+            pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(staticDualUicc));
+            /*Apply screen state if pending*/
+            ALOGV("%s: Apply screen state if pending", __func__);
+            if(pendingScreenState == true)
             {
-                /*Apply screen state if pending*/
-                ALOGV("%s: Apply screen state if pending", __func__);
-                if(pendingScreenState == true)
-                {
-                    pendingScreenState = false;
-                    last_screen_state_request = get_lastScreenStateRequest();
-                    nfcManager_doSetScreenState(NULL,NULL,last_screen_state_request);
-                }
+                pendingScreenState = false;
+                last_screen_state_request = get_lastScreenStateRequest();
+                nfcManager_doSetScreenState(NULL,NULL,last_screen_state_request);
             }
             else
             {
@@ -4912,10 +4894,7 @@ static int nfcManager_doSelectUicc(JNIEnv* e, jobject o, jint uiccSlot)
         nfcManager_setPreferredSimSlot(NULL, NULL,uiccSlot);
         retStat = UICC_CONFIGURED;
         RoutingManager::getInstance().cleanRouting();
-        if(!update_transaction_stat("staticDualUicc",RESET_TRANSACTION_STATE))
-        {
-            ALOGE("%s: Transaction in progress. Can not reset", __func__);
-        }
+       pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(staticDualUicc));
     }
     else
     {
@@ -5611,7 +5590,7 @@ static int nfcManager_doJcosDownload(JNIEnv* e, jobject o)
                 }
                 else
                 {
-                    if(!update_transaction_stat("jcosDownload",SET_TRANSACTION_STATE))
+                    if(!pTransactionController->transactionAttempt(TRANSACTION_REQUESTOR(jcosDownload)))
                     {
                         ALOGE("%s: Transaction in progress. Returning", __func__);
                         return NFA_STATUS_FAILED;
@@ -5653,18 +5632,12 @@ static int nfcManager_doJcosDownload(JNIEnv* e, jobject o)
                 }
                 stat = JCDNLD_DeInit();
                 if(nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION) {
-                    if(update_transaction_stat("jcosDownload",RESET_TRANSACTION_STATE))
+                    pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(jcosDownload));
+                    if(pendingScreenState == true)
                     {
-                        if(pendingScreenState == true)
-                        {
-                            pendingScreenState = false;
-                            last_screen_state_request = get_lastScreenStateRequest();
-                            nfcManager_doSetScreenState(NULL,NULL,last_screen_state_request);
-                        }
-                    }
-                    else
-                    {
-                        ALOGE("%s: Can not reset transaction state", __func__);
+                        pendingScreenState = false;
+                        last_screen_state_request = get_lastScreenStateRequest();
+                        nfcManager_doSetScreenState(NULL,NULL,last_screen_state_request);
                     }
                 }
             }
@@ -5723,7 +5696,7 @@ static void nfcManager_doCommitRouting(JNIEnv* e, jobject o)
     PowerSwitch::getInstance ().setLevel (PowerSwitch::FULL_POWER);
     PowerSwitch::getInstance ().setModeOn (PowerSwitch::HOST_ROUTING);
 #if(NXP_EXTNS == TRUE && NXP_NFCC_HCE_F == TRUE)
-    if(!update_transaction_stat("commitRouting",SET_TRANSACTION_STATE))
+    if(!pTransactionController->transactionAttempt(TRANSACTION_REQUESTOR(commitRouting)))
     {
         ALOGV("%s: Not allowing to commit the routing", __func__);
     }
@@ -5743,10 +5716,7 @@ static void nfcManager_doCommitRouting(JNIEnv* e, jobject o)
     RoutingManager::getInstance().commitRouting();
     startRfDiscovery(true);
 #if(NXP_EXTNS == TRUE && NXP_NFCC_HCE_F == TRUE)
-    if(!update_transaction_stat("commitRouting",RESET_TRANSACTION_STATE))
-    {
-        ALOGE("%s: Can not reset transaction state", __func__);
-    }
+    pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(commitRouting));
 #endif
     ALOGV("%s: exit", __func__);
 }
@@ -5860,7 +5830,7 @@ static void nfcManager_doSetScreenState (JNIEnv* e, jobject o, jint screen_state
         return;
 
 #if (NXP_EXTNS == TRUE)
-    if(!update_transaction_stat("setScreenState",SET_TRANSACTION_STATE))
+    if(!pTransactionController->transactionAttempt(TRANSACTION_REQUESTOR(setScreenState)))
     {
         ALOGE("Payment is in progress!!!");
         set_lastScreenStateRequest((eScreenState_t)state);
@@ -5873,10 +5843,7 @@ static void nfcManager_doSetScreenState (JNIEnv* e, jobject o, jint screen_state
     if(prevScreenState == state) {
         ALOGV("Screen state is not changed. ");
 #if (NXP_EXTNS == TRUE)
-    if(!update_transaction_stat("setScreenState",RESET_TRANSACTION_STATE))
-    {
-        ALOGE("%s: Can not reset transaction state", __func__);
-    }
+    pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(setScreenState));
 #endif
         return;
     }
@@ -5934,10 +5901,7 @@ static void nfcManager_doSetScreenState (JNIEnv* e, jobject o, jint screen_state
         }
         StoreScreenState(state);
 #if (NXP_EXTNS == TRUE)
-        if(!update_transaction_stat("setScreenState",RESET_TRANSACTION_STATE))
-        {
-            ALOGE("%s: Can not reset transaction state", __func__);
-        }
+        pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(setScreenState));
 #endif
         return;
     }
@@ -6028,10 +5992,7 @@ static void nfcManager_doSetScreenState (JNIEnv* e, jobject o, jint screen_state
     }
     releaseRfInterfaceMutexLock();
 #if (NXP_EXTNS == TRUE)
-    if(!update_transaction_stat("setScreenState",RESET_TRANSACTION_STATE))
-    {
-        ALOGE("%s: Can not reset transaction state", __func__);
-    }
+    pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(setScreenState));
 #endif
 }
 #if(NXP_EXTNS == TRUE)
@@ -6155,6 +6116,7 @@ static void set_lastScreenStateRequest(eScreenState_t status)
 ** Returns:         None
 **
 *******************************************************************************/
+#if 0
 static void cleanupTimerProc_transaction(union sigval)
 {
     ALOGV("Inside cleanupTimerProc");
@@ -6180,6 +6142,8 @@ ALOGV("Inside cleanup");
     pthread_attr_destroy(&attr);
     transaction_data.current_transcation_state = NFA_TRANS_DM_RF_TRANS_END;
 }
+#endif
+
 #if (NXP_EXTNS == TRUE)
 /*******************************************************************************
  **
@@ -6193,6 +6157,7 @@ ALOGV("Inside cleanup");
  **                 ret_stat : true/false
  **
  *******************************************************************************/
+#if 0
 bool update_transaction_stat(const char * req_handle, transaction_state_t req_state)
 {
     bool ret_stat = false;
@@ -6285,6 +6250,7 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
     return ret_stat;
 }
 #endif
+#endif
 /*******************************************************************************
  **
  ** Function:        checkforTranscation
@@ -6313,7 +6279,7 @@ void checkforTranscation(uint8_t connEvent, void* eventData)
             ALOGV("ACTIVATED_EVT setting flag");
             transaction_data.current_transcation_state = NFA_TRANS_ACTIVATED_EVT;
 #if (NXP_EXTNS == TRUE)
-            if(!update_transaction_stat("NFA_ACTIVATED_EVT",SET_TRANSACTION_STATE))
+            if(!pTransactionController->transactionAttempt(TRANSACTION_REQUESTOR(NFA_ACTIVATED_EVENT)))
             {
                 ALOGE("%s: Transaction in progress. Can not set", __func__);
             }
@@ -6337,7 +6303,7 @@ void checkforTranscation(uint8_t connEvent, void* eventData)
                 {
                     transaction_data.current_transcation_state = NFA_TRANS_MIFARE_ACT_EVT;
 #if (NXP_EXTNS == TRUE)
-                    if(!update_transaction_stat("NFA_EE_ACTION_EVT",SET_TRANSACTION_STATE))
+                    if(!pTransactionController->transactionAttempt(TRANSACTION_REQUESTOR(NFA_EE_ACTION_EVENT)))
                     {
                         ALOGE("%s: Transaction in progress. Can not set", __func__);
                     }
@@ -6348,7 +6314,7 @@ void checkforTranscation(uint8_t connEvent, void* eventData)
             {
                 transaction_data.current_transcation_state = NFA_TRANS_EE_ACTION_EVT;
 #if (NXP_EXTNS == TRUE)
-                if(!update_transaction_stat("NFA_EE_ACTION_EVT",SET_TRANSACTION_STATE))
+                if(!pTransactionController->transactionAttempt(TRANSACTION_REQUESTOR(NFA_EE_ACTION_EVENT)))
                 {
                     ALOGE("%s: Transaction in progress. Can not set", __func__);
                 }
@@ -6366,7 +6332,7 @@ void checkforTranscation(uint8_t connEvent, void* eventData)
             }
                 transaction_data.current_transcation_state = NFA_TRANS_CE_ACTIVATED;
 #if (NXP_EXTNS == TRUE)
-                if(!update_transaction_stat("NFA_TRANS_CE_ACTIVATED",SET_TRANSACTION_STATE))
+                if(!pTransactionController->transactionAttempt(TRANSACTION_REQUESTOR(NFA_TRANS_CE_ACTIVATED_EVENT)))
                 {
                     ALOGE("%s: Transaction in progress. Can not set", __func__);
                 }
@@ -6387,7 +6353,7 @@ void checkforTranscation(uint8_t connEvent, void* eventData)
         if(nfcFL.chipType == pn547C2) {
             if(transaction_data.current_transcation_state == NFA_TRANS_MIFARE_ACT_EVT)
             {
-                cleanup_timer();
+                pTransactionController->lastRequestResume();
             }
         }
         break;
@@ -6403,7 +6369,7 @@ void checkforTranscation(uint8_t connEvent, void* eventData)
                 set_AGC_process_state(false);
             }
             transaction_data.current_transcation_state = NFA_TRANS_DM_RF_FIELD_EVT_OFF;
-            scleanupTimerProc_rffield.set (50, cleanupTimerProc_transaction);
+            pTransactionController->setAbortTimer(50/*msec*/);
         }
         else if (eventDM_Conn_data->rf_field.status == NFA_STATUS_OK &&
                 transaction_data.current_transcation_state == NFA_TRANS_DM_RF_FIELD_EVT_OFF &&
@@ -6415,7 +6381,7 @@ void checkforTranscation(uint8_t connEvent, void* eventData)
             transaction_data.current_transcation_state = NFA_TRANS_DM_RF_FIELD_EVT_ON;
             ALOGV("Payment is in progress hold the screen on/off request ");
             transaction_data.current_transcation_state = NFA_TRANS_DM_RF_TRANS_START;
-            scleanupTimerProc_rffield.kill ();
+            pTransactionController->killAbortTimer();
 
         }
         else if (eventDM_Conn_data->rf_field.status == NFA_STATUS_OK &&
@@ -6427,14 +6393,14 @@ void checkforTranscation(uint8_t connEvent, void* eventData)
                 set_AGC_process_state(false);
             }
             transaction_data.current_transcation_state = NFA_TRANS_DM_RF_TRANS_PROGRESS;
-            cleanup_timer();
+            pTransactionController->lastRequestResume();
         }else if(eventDM_Conn_data->rf_field.status == NFA_STATUS_OK &&
                 transaction_data.current_transcation_state == NFA_TRANS_ACTIVATED_EVT &&
                 eventDM_Conn_data->rf_field.rf_field_status == 0)
         {
 
-            ALOGV("No transaction done cleaning up the variables");
-            cleanup_timer();
+            ALOGD("No transaction done cleaning up the variables");
+            pTransactionController->lastRequestResume();
         }
         break;
     default:
@@ -6464,7 +6430,7 @@ void *enableThread(void *arg)
         set_AGC_process_state(false);
     }
 #if (NXP_EXTNS == TRUE)
-    if(!update_transaction_stat("exec_pending_req",RESET_TRANSACTION_STATE))
+    if(!pTransactionController->transactionTerminate(TRANSACTION_REQUESTOR(exec_pending_req)))
     {
         ALOGE("%s: Transaction in progress. Can not reset", __func__);
     }
@@ -7756,7 +7722,7 @@ if(!nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH && !nfcFL.nfccFL._NFC_NXP_ST
     }
     else if(sDiscoveryEnabled || sRfEnabled)
     {
-        if(!update_transaction_stat("staticDualUicc",SET_TRANSACTION_STATE))
+        if(!pTransactionController->transactionAttempt(TRANSACTION_REQUESTOR(staticDualUicc)))
         {
             ALOGE("%s: Transaction in progress. Can not set", __func__);
             retStat = DUAL_UICC_ERROR_NFCC_BUSY;
@@ -8361,7 +8327,7 @@ bool nfcManager_getTransanctionRequest(int t3thandle, bool registerRequest)
 {
     bool    stat = false;
 
-    if(!update_transaction_stat("getTransanctionRequest",SET_TRANSACTION_STATE))
+    if(!pTransactionController->transactionAttempt(TRANSACTION_REQUESTOR(getTransanctionRequest)))
     {
         ALOGV("Transcation is in progress store the requst %d %d", t3thandle ,registerRequest);
         set_last_request(T3T_CONFIGURE, NULL);
@@ -8371,10 +8337,7 @@ bool nfcManager_getTransanctionRequest(int t3thandle, bool registerRequest)
     }
     else
     {
-        if(!update_transaction_stat("getTransanctionRequest",RESET_TRANSACTION_STATE))
-        {
-            ALOGE("%s: Can not reset transaction state", __func__);
-        }
+        pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(getTransanctionRequest));
     }
     return stat;
 }
@@ -8392,7 +8355,7 @@ bool nfcManager_getTransanctionRequest(int t3thandle, bool registerRequest)
  *******************************************************************************/
 bool nfcManager_isTransanctionOnGoing(bool isInstallRequest)
 {
-    if(!update_transaction_stat("isTransanctionOnGoing",SET_TRANSACTION_STATE))
+    if(!pTransactionController->transactionAttempt(TRANSACTION_REQUESTOR(isTransanctionOnGoing)))
     {
         ALOGV(" Transcation is in progress store the requst");
         set_last_request(RE_ROUTING, NULL);
@@ -8402,10 +8365,7 @@ bool nfcManager_isTransanctionOnGoing(bool isInstallRequest)
     }
     else
     {
-        if(!update_transaction_stat("isTransanctionOnGoing",RESET_TRANSACTION_STATE))
-        {
-            ALOGE("%s: Can not reset transaction state", __func__);
-        }
+        pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(isTransanctionOnGoing));
     }
     return false;
 }
@@ -8466,7 +8426,19 @@ bool nfcManager_sendEmptyDataMsg()
 
     return (status == NFA_STATUS_OK);
 }
-
+/*******************************************************************************
+ **
+ ** Function:        nfcManager_transactionDetail()
+ **
+ ** Description:     Provides transaction detail data reference
+ **
+ ** Returns:         Pointer to transaction data
+ **
+*******************************************************************************/
+Transcation_Check_t* nfcManager_transactionDetail(void)
+{
+    return &android::transaction_data;
+}
 void nfcManager_getFeatureList() {
     tNFC_chipType chipType;// = pn553;
     chipType = NFC_GetChipType();
@@ -8474,6 +8446,30 @@ void nfcManager_getFeatureList() {
     CONFIGURE_FEATURELIST(chipType);
 }
 
+/*******************************************************************************
++ **
++ ** Function:        nfcManager_isRequestPending()
++ **
++ ** Description:     Checks If any pending request
++ **
++ ** Returns:         true if any request pending else false
++ **
++*******************************************************************************/
+bool nfcManager_isRequestPending(void)
+{
+    bool isPending = false;
+
+    if((transaction_data.current_transcation_state != NFA_TRANS_ACTIVATED_EVT) &&
+            ((pendingScreenState == true) || (get_last_request() != 0x00)))
+    {
+        isPending = true;
+    }
+    return isPending;
+}
+
+
 #endif
 }
 /* namespace android */
+
+

@@ -20,7 +20,7 @@
 #include <ScopedPrimitiveArray.h>
 #include "DwpChannel.h"
 #include "SecureElement.h"
-
+#include "TransactionController.h"
 extern "C"
 {
     #include "AlaLib.h"
@@ -34,7 +34,6 @@ extern SyncEvent            sNfaVSCResponseEvent;
 extern void startRfDiscovery (bool isStart);
 extern bool isDiscoveryStarted();
 extern void nfaVSCCallback(uint8_t event, uint16_t param_len, uint8_t *p_param);
-extern bool update_transaction_stat(const char * req_handle, transaction_state_t req_state);
 
 }
 
@@ -144,9 +143,11 @@ int nfcManager_doAppletLoadApplet(JNIEnv* e, jobject o, jstring name, jbyteArray
 
         sRfEnabled = isDiscoveryStarted();
         wStatus = status = NFA_STATUS_FAILED;
-        if(!update_transaction_stat("AppletLoadApplet",SET_TRANSACTION_STATE))
+
+        if(!pTransactionController->transactionAttempt(TRANSACTION_REQUESTOR(AppletLoadApplet),
+                                                    TRANSACTION_ATTEMPT_FOR_SECONDS(5)))
         {
-            ALOGE("%s: Transaction in progress. Returning", __func__);
+            ALOGE("%s ERROR: attempt to start transaction has failed", __FUNCTION__);
             return wStatus;
         }
         if (sRfEnabled) {
@@ -176,10 +177,7 @@ int nfcManager_doAppletLoadApplet(JNIEnv* e, jobject o, jstring name, jbyteArray
         if(dwpChannelForceClose == false)
             startRfDiscovery (true);
 
-        if(!update_transaction_stat("AppletLoadApplet",RESET_TRANSACTION_STATE))
-        {
-            ALOGE("%s: Can not reset transaction state", __func__);
-        }
+        pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(AppletLoadApplet));
 
         ALOGV("%s: exit; status =0x%X", __func__,wStatus);
     }
@@ -228,9 +226,10 @@ jbyteArray nfcManager_lsExecuteScript(JNIEnv* e, jobject o, jstring name, jstrin
         sRfEnabled = isDiscoveryStarted();
         wStatus = status = NFA_STATUS_FAILED;
 
-        if(!update_transaction_stat("lsExecuteScript",SET_TRANSACTION_STATE))
+        if(!pTransactionController->transactionAttempt(TRANSACTION_REQUESTOR(lsExecuteScript),
+                                                    TRANSACTION_ATTEMPT_FOR_SECONDS(5)))
         {
-            ALOGE("%s: update_transaction_state falied. Returning", __func__);
+            ALOGE("%s ERROR: Attempt to start transaction failed", __FUNCTION__);
             return result;
         }
         if (sRfEnabled) {
@@ -291,10 +290,7 @@ jbyteArray nfcManager_lsExecuteScript(JNIEnv* e, jobject o, jstring name, jstrin
         if(dwpChannelForceClose == false)
             startRfDiscovery (true);
 
-        if(!update_transaction_stat("lsExecuteScript",RESET_TRANSACTION_STATE))
-        {
-            ALOGE("%s: Can not reset transaction state", __func__);
-        }
+        pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(lsExecuteScript));
 
         ALOGV("%s: exit; status =0x%X", __func__,wStatus);
     }
@@ -397,9 +393,10 @@ jbyteArray nfcManager_lsGetVersion(JNIEnv* e, jobject)
         uint8_t recvBuffer [recvBufferMaxSize];
         result = e->NewByteArray(0);
         sRfEnabled = isDiscoveryStarted();
-        if(!update_transaction_stat("lsGetVersion",SET_TRANSACTION_STATE))
+
+        if(!pTransactionController->transactionAttempt(TRANSACTION_REQUESTOR(lsGetVersion),TRANSACTION_ATTEMPT_FOR_SECONDS(5)))
         {
-            ALOGE("%s: update_transaction_state falied. Returning", __func__);
+            ALOGE("%s ERRROR: Attempt to start transaction, failed",__FUNCTION__);
             return result;
         }
         if (sRfEnabled) {
@@ -429,10 +426,7 @@ jbyteArray nfcManager_lsGetVersion(JNIEnv* e, jobject)
         if(dwpChannelForceClose == false)
             startRfDiscovery (true);
 
-        if(!update_transaction_stat("lsGetVersion",RESET_TRANSACTION_STATE))
-        {
-            ALOGE("%s: Can not reset transaction state", __func__);
-        }
+        pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(lsGetVersion));
 
         ALOGV("%s: exit: recv len=%ld", __func__, recvBufferMaxSize);
     }
