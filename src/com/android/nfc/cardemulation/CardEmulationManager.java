@@ -261,7 +261,7 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
             int numPaymentServices = 0;
             ComponentName lastFoundPaymentService = null;
             for (NxpApduServiceInfo service : services) {
-                if (service.hasCategory(CardEmulation.CATEGORY_PAYMENT))  {
+                if ((service.hasCategory(CardEmulation.CATEGORY_PAYMENT))&&(!service.getAids().isEmpty())) {
                     numPaymentServices++;
                     lastFoundPaymentService = service.getComponent();
                 }
