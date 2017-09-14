@@ -22,6 +22,7 @@ import android.app.Application;
 import android.os.Process;
 import android.os.UserHandle;
 import android.view.ThreadedRenderer;
+import android.content.pm.PackageManager;
 
 import java.util.Iterator;
 import java.util.List;
@@ -40,6 +41,12 @@ public class NfcApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        PackageManager pm = getApplicationContext().getPackageManager();
+        if (!pm.hasSystemFeature(PackageManager.FEATURE_NFC_ANY)) {
+            pm.setApplicationEnabledSetting(getApplicationContext().getPackageName(),
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED, 0);
+                return;
+        }
 
         boolean isMainProcess = false;
         // We start a service in a separate process to do
