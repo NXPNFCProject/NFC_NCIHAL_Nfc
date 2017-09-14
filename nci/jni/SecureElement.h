@@ -889,7 +889,7 @@ private:
     bool            mTransceiveWaitOk;
 
 #if(NXP_EXTNS == TRUE)
-#define             WIRED_MODE_TRANSCEIVE_TIMEOUT 30000
+#define             WIRED_MODE_TRANSCEIVE_TIMEOUT 120000
 #endif
     /*******************************************************************************
     **
