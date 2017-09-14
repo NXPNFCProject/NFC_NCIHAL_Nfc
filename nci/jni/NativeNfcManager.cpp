@@ -285,6 +285,7 @@ static uint8_t              sAutonomousSet = 0;
 #define READER_MODE_DISCOVERY_DURATION   200
 #if(NXP_EXTNS == TRUE)
 static bool                 gsNfaPartialEnabled = false;
+static uint16_t             sEnableStatus = false;
 SyncEvent                   sNfaGetRoutingEvent;  // event for Get_Routing....
 static bool                 sProvisionMode = false;
 SyncEvent                   sNfceeHciCbEnableEvent;
@@ -304,6 +305,7 @@ typedef enum dual_uicc_error_states{
     DUAL_UICC_ERROR_INVALID_SLOT,
     DUAL_UICC_ERROR_STATUS_UNKNOWN
 }dual_uicc_error_state_t;
+static tNFA_STATUS nfcManagerEnableNfc(NfcAdaptation& theInstance);
 #endif
 
 static int screenstate = NFA_SCREEN_STATE_OFF_LOCKED;
@@ -1557,6 +1559,9 @@ void nfaDeviceManagementCallback (uint8_t dmEvent, tNFA_DM_CBACK_DATA* eventData
             ALOGV("%s: NFA_DM_ENABLE_EVT; status=0x%X",
                     __func__, eventData->status);
             sIsNfaEnabled = eventData->status == NFA_STATUS_OK;
+#if(NXP_EXTNS == TRUE)
+            sEnableStatus = eventData->status;
+#endif
             sIsDisabling = false;
             sNfaEnableEvent.notifyOne ();
         }
@@ -2213,22 +2218,7 @@ static jboolean nfcManager_doInitialize (JNIEnv* e, jobject o)
                 NFA_SetBootMode(NFA_NORMAL_BOOT_MODE);
             }
 #endif
-            SyncEventGuard guard (sNfaEnableEvent);
-            tHAL_NFC_ENTRY* halFuncEntries = theInstance.GetHalEntryFuncs ();
-            NFA_Init (halFuncEntries);
-            stat = NFA_Enable (nfaDeviceManagementCallback, nfaConnectionCallback);
-            if (stat == NFA_STATUS_OK)
-            {
-                num = initializeGlobalAppLogLevel ();
-                CE_SetTraceLevel (num);
-                LLCP_SetTraceLevel (num);
-                NFC_SetTraceLevel (num);
-                RW_SetTraceLevel (num);
-                NFA_SetTraceLevel (num);
-                NFA_P2pSetTraceLevel (num);
-                sNfaEnableEvent.wait(); //wait for NFA command to finish
-            }
-            nfcManager_getFeatureList();
+            stat = nfcManagerEnableNfc(theInstance);
             EXTNS_Init (nfaDeviceManagementCallback, nfaConnectionCallback);
         }
 
@@ -2468,6 +2458,42 @@ static void nfcManager_doEnableDtaMode (JNIEnv* e, jobject o)
 }
 
 #if (NXP_EXTNS == TRUE)
+/*******************************************************************************
+**
+** Function:        nfcManagerEnableNfc
+**
+** Description:     Enables Nfc submodules in libnfc
+**
+** Returns:         Status
+**
+*******************************************************************************/
+static tNFA_STATUS nfcManagerEnableNfc(NfcAdaptation& theInstance)
+{
+    uint8_t retryCount = 0;
+    unsigned long num = 0;
+    tNFA_STATUS stat = NFA_STATUS_OK;
+    do {
+        SyncEventGuard guard (sNfaEnableEvent);
+        tHAL_NFC_ENTRY* halFuncEntries = theInstance.GetHalEntryFuncs ();
+        NFA_Init (halFuncEntries);
+        stat = NFA_Enable (nfaDeviceManagementCallback, nfaConnectionCallback);
+        if (stat == NFA_STATUS_OK)
+        {
+            num = initializeGlobalAppLogLevel ();
+            CE_SetTraceLevel (num);
+            LLCP_SetTraceLevel (num);
+            NFC_SetTraceLevel (num);
+            RW_SetTraceLevel (num);
+            NFA_SetTraceLevel (num);
+            NFA_P2pSetTraceLevel (num);
+            sNfaEnableEvent.wait(); //wait for NFA command to finish
+        }
+        retryCount++;
+        ALOGV("%s: sEnableStatus =0x%X", __func__, sEnableStatus);
+    }while((sEnableStatus == NFA_STATUS_NOT_INITIALIZED) && (retryCount < 3));
+
+   return stat;
+}
 /*******************************************************************************
  **
  ** Function:        nfcManager_checkNfcStateBusy()
