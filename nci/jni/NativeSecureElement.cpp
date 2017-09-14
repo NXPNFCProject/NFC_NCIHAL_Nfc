@@ -288,7 +288,7 @@ PowerSwitch::getInstance ().setModeOn (PowerSwitch::SE_CONNECTED);
        then turn on the sec elem */
 #if(NXP_EXTNS == TRUE)
 if(nfcFL.nfcNxpEse) {
-    if((!(p61_current_state & (P61_STATE_SPI | P61_STATE_SPI_PRIO))) && (!(dual_mode_current_state & CL_ACTIVE)))
+    if(nfcFL.eseFL._ESE_FORCE_ENABLE && (!(p61_current_state & (P61_STATE_SPI | P61_STATE_SPI_PRIO))) && (!(dual_mode_current_state & CL_ACTIVE)))
         stat = se.SecEle_Modeset(0x01); //Workaround
     usleep(150000); /*provide enough delay if NFCC enter in recovery*/
 }
@@ -449,7 +449,7 @@ static jboolean nativeNfcSecureElement_doDisconnectSecureElementConnection (JNIE
     if (! PowerSwitch::getInstance ().setModeOff (PowerSwitch::SE_CONNECTED))
         PowerSwitch::getInstance ().setLevel (PowerSwitch::LOW_POWER);
 #if(NXP_EXTNS == TRUE)
-    if((nfcFL.nfcNxpEse) && (nfcFL.eseFL._ESE_FORCE_ENABLE)) {
+    if(nfcFL.nfcNxpEse) {
         ret_val = NFC_RelWiredAccess ((void *)&status);
         if (ret_val < 0)
         {
