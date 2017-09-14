@@ -5572,10 +5572,10 @@ static int nfcManager_doJcosDownload(JNIEnv* e, jobject o)
                 ALOGV("NFC_GetP61Status failed");
                 return NFA_STATUS_FAILED;
             }
-
             if(p61_current_state & P61_STATE_JCP_DWNLD || p61_current_state & P61_STATE_WIRED
-                    ||p61_current_state & P61_STATE_SPI || p61_current_state & P61_STATE_SPI_PRIO)
+                    ||p61_current_state & P61_STATE_SPI || p61_current_state & P61_STATE_SPI_PRIO) {
                 return NFA_STATUS_BUSY;
+        }
 
             if (sIsDisabling || !sIsNfaEnabled || nfcManager_checkNfcStateBusy())
             {
@@ -5618,9 +5618,6 @@ static int nfcManager_doJcosDownload(JNIEnv* e, jobject o)
                 {
                     ALOGE("%s: start JcopOs_Download", __func__);
                     se.mDownloadMode = JCOP_DOWNLOAD;
-                    if(nfcFL.eseFL._WIRED_MODE_STANDBY) {
-                        se.setNfccPwrConfig(se.NFCC_DECIDES);
-                    }
                     status = JCDNLD_StartDownload();
                 }
                 if(nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION) {

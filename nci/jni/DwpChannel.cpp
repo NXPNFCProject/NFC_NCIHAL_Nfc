@@ -161,10 +161,11 @@ if(nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION) {
                  * and LS application can invoke
                  * open(), POWER_ALWAYS_ON is needed.
                  */
-                if(se.setNfccPwrConfig(se.POWER_ALWAYS_ON) != NFA_STATUS_OK)
+                if(se.setNfccPwrConfig(se.POWER_ALWAYS_ON|se.COMM_LINK_ACTIVE) != NFA_STATUS_OK)
                 {
                     ALOGV("%s: power link command failed", __func__);
                 }
+                se.SecEle_Modeset(0x01);
             }
         }
     }
