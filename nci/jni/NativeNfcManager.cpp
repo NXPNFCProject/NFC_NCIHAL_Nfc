@@ -5209,7 +5209,11 @@ void startRfDiscovery(bool isStart)
         ALOGV("Autonomous mode set don't start RF disc %d",isStart);
         return;
     }
-
+    if(isStart == sRfEnabled)
+    {
+        ALOGD("%s Already in RF state: %d", __FUNCTION__, isStart);
+        return;
+    }
 #if(NXP_EXTNS == TRUE)
     if(nfcFL.nfcNxpEse && nfcFL.eseFL._NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION) {
         gDiscMutex.lock();
