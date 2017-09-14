@@ -251,8 +251,12 @@ public class HostEmulationManager {
                     // Ask the user to confirm.
                     // Just ignore all future APDUs until we resolve to only one
                     mState = STATE_W4_DEACTIVATE;
-                    launchResolver((ArrayList<NxpApduServiceInfo>)resolveInfo.services, null,
-                            resolveInfo.category);
+                    try{
+                        launchResolver((ArrayList<NxpApduServiceInfo>)resolveInfo.services, null,
+                                resolveInfo.category);
+                    }catch(Exception e){
+                        e.printStackTrace();
+                    }
                     return;
                 }
             }
