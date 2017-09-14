@@ -4739,16 +4739,22 @@ public class NfcService implements DeviceHostListener {
                 case MSG_COMMIT_ROUTING: {
                     Log.e(TAG, "applyRouting -9");
                    boolean commit = false;
+                   boolean enForced = false;
                     synchronized (NfcService.this) {
                         if (mCurrentDiscoveryParameters.shouldEnableDiscovery()) {
                             commit = true;
-                        } else {
+                        }else if(mAidRoutingManager.isRoutingTableUpdated()){
+                            commit = true;
+                            enForced = true;
+                            Log.d(TAG, "Routing table is updated thus needs to be committed.");
+                        }
+                        else {
                             Log.d(TAG, "Not committing routing because discovery is disabled.");
                         }
                     }
                     if (commit) {
                         mIsRoutingTableDirty = true;
-                        applyRouting(false);
+                        applyRouting(enForced);
                     }
 
 
