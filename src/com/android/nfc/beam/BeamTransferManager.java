@@ -19,6 +19,7 @@ package com.android.nfc.beam;
 import com.android.nfc.R;
 
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Notification.Builder;
@@ -102,6 +103,8 @@ public class BeamTransferManager implements Handler.Callback,
 
     static final String BEAM_DIR = "beam";
 
+    static final String BEAM_NOTIFICATION_CHANNEL = "beam_notification_channel";
+
     static final String BLUETOOTH_PACKAGE = "com.android.bluetooth";
 
     static final String ACTION_WHITELIST_DEVICE =
@@ -173,6 +176,10 @@ public class BeamTransferManager implements Handler.Callback,
         mHandler.sendEmptyMessageDelayed(MSG_TRANSFER_TIMEOUT, ALIVE_CHECK_MS);
         mNotificationManager = (NotificationManager) mContext.getSystemService(
                 Context.NOTIFICATION_SERVICE);
+        NotificationChannel notificationChannel = new NotificationChannel(
+                BEAM_NOTIFICATION_CHANNEL, mContext.getString(R.string.app_name),
+                NotificationManager.IMPORTANCE_HIGH);
+        mNotificationManager.createNotificationChannel(notificationChannel);
     }
 
     void whitelistOppDevice(BluetoothDevice device) {
@@ -295,11 +302,12 @@ public class BeamTransferManager implements Handler.Callback,
     }
 
     void updateNotification() {
-        Builder notBuilder = new Notification.Builder(mContext);
+        Builder notBuilder = new Notification.Builder(mContext, BEAM_NOTIFICATION_CHANNEL);
         notBuilder.setColor(mContext.getResources().getColor(
                 com.android.internal.R.color.system_notification_accent_color));
         notBuilder.setWhen(mStartTime);
         notBuilder.setVisibility(Notification.VISIBILITY_PUBLIC);
+        notBuilder.setOnlyAlertOnce(true);
         String beamString;
         if (mIncoming) {
             beamString = mContext.getString(R.string.beam_progress);
