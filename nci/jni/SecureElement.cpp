@@ -4083,6 +4083,33 @@ void *spiEventHandlerThread(void *arg)
         /* Dequeue the received signal */
         gSPIEvtQueue.dequeue((uint8_t*)&usEvent, (uint16_t)SIGNAL_EVENT_SIZE, usEvtLen);
         ALOGV("%s: evt received %x len %x", __FUNCTION__, usEvent, usEvtLen);
+
+        if(usEvent & P61_STATE_SPI_PRIO)
+        {
+            ALOGV("%s: SPI PRIO request Signal....\n", __func__);
+            hold_the_transceive = true;
+            setSPIState(true);
+         }
+         else if(usEvent & P61_STATE_SPI_PRIO_END)
+         {
+             ALOGV("%s: SPI PRIO End Signal\n", __func__);
+             hold_the_transceive = false;
+             setSPIState(false);
+             SyncEventGuard guard (sSPIPrioSessionEndEvent);
+             sSPIPrioSessionEndEvent.notifyOne ();
+         }
+        else if(usEvent & P61_STATE_SPI)
+        {
+            ALOGV("%s: SPI OPEN request Signal....\n", __func__);
+            setSPIState(true);
+        }
+        else if(usEvent & P61_STATE_SPI_END)
+        {
+            ALOGV("%s: SPI End Signal\n", __func__);
+            hold_the_transceive = false;
+            setSPIState(false);
+        }
+
         if((usEvent & P61_STATE_SPI_SVDD_SYNC_START) ||
                 (usEvent & P61_STATE_DWP_SVDD_SYNC_START))
         {
@@ -4262,7 +4289,9 @@ static void nfaVSC_SVDDSyncOnOff(bool type)
     {
         param = 0x01; //SVDD protection on
     }
-    if (android::nfcManager_isNfcActive() == false)
+    if (!android::nfcManager_isNfcActive()||
+            android::nfcManager_isNfcDisabling() ||
+                (android::nfcManager_getNfcState() == NFC_OFF))
     {
         ALOGE("%s: NFC is no longer active.", __func__);
         return;
@@ -4308,7 +4337,9 @@ static void nfaVSC_ForceDwpOnOff(bool type)
         return;
     }
 
-    if(!android::nfcManager_isNfcActive() || android::nfcManager_isNfcDisabling())
+    if(!android::nfcManager_isNfcActive()||
+            android::nfcManager_isNfcDisabling() ||
+                (android::nfcManager_getNfcState() == NFC_OFF))
     {
         ALOGV ("%s: NFC is not activated", __FUNCTION__);
         return;
@@ -4401,40 +4432,9 @@ void spi_prio_signal_handler (int signum, siginfo_t *info, void *unused)
 {
     ALOGV("%s: Inside the Signal Handler %d\n", __func__, SIG_NFC);
     uint16_t usEvent = 0;
-    if ((android::nfcManager_isNfcActive() == false) || (android::nfcManager_getNfcState() != NFC_ON))
-    {
-        ALOGE("%s: NFC is no longer active.", __func__);
-        return;
-    }
     if (signum == SIG_NFC)
     {
         ALOGV("%s: Signal is SIG_NFC\n", __func__);
-        if(info->si_int & P61_STATE_SPI_PRIO)
-        {
-            ALOGV("%s: SPI PRIO request Signal....=%d\n", __func__,info->si_int);
-            hold_the_transceive = true;
-            setSPIState(true);
-         }
-         else if(info->si_int & P61_STATE_SPI_PRIO_END)
-         {
-             ALOGV("%s: SPI PRIO End Signal\n", __func__);
-             hold_the_transceive = false;
-             setSPIState(false);
-             SyncEventGuard guard (sSPIPrioSessionEndEvent);
-             sSPIPrioSessionEndEvent.notifyOne ();
-         }
-        else if(info->si_int & P61_STATE_SPI)
-        {
-            ALOGV("%s: SPI OPEN request Signal....=%d\n", __func__,info->si_int);
-            setSPIState(true);
-        }
-        else if(info->si_int & P61_STATE_SPI_END)
-        {
-            ALOGV("%s: SPI End Signal\n", __func__);
-            hold_the_transceive = false;
-            setSPIState(false);
-        }
-
         if(nfcFL.eseFL._ESE_SVDD_SYNC || nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION ||
                 nfcFL.nfccFL._NFCC_SPI_FW_DOWNLOAD_SYNC || nfcFL.eseFL._ESE_DWP_SPI_SYNC_ENABLE) {
             usEvent = info->si_int;
@@ -5095,6 +5095,14 @@ tNFA_STATUS SecureElement::setNfccPwrConfig(uint8_t value)
         mPwrCmdstatus = NFA_STATUS_OK;
     }
     else*/
+    if(!android::nfcManager_isNfcActive()||
+            android::nfcManager_isNfcDisabling() ||
+                (android::nfcManager_getNfcState() == NFC_OFF))
+    {
+       ALOGE("%s: NFC is no longer active.", __func__);
+       return NFA_STATUS_OK;
+    }
+    else
     {
         cur_value = value;
         SyncEventGuard guard (mPwrLinkCtrlEvent);

@@ -2875,6 +2875,7 @@ static void nfcManager_enableDiscovery (JNIEnv* e, jobject o, jint technologies_
                 }
             }
         }
+        NFC_SetNfcServicePid();
     }
     else
     {
@@ -7122,7 +7123,6 @@ void performNfceeETSI12Config()
     SecureElement::getInstance().setNfccPwrConfig
         (SecureElement::getInstance().POWER_ALWAYS_ON|
             SecureElement::getInstance().COMM_LINK_ACTIVE);
-    SecureElement::getInstance().SecEle_Modeset(0x01);
 
     status = SecureElement::getInstance().configureNfceeETSI12();
     if(status == true)

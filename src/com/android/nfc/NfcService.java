@@ -1049,6 +1049,8 @@ public class NfcService implements DeviceHostListener {
         new EnableDisableTask().execute(TASK_BOOT);  // do blocking boot tasks
 
         mHandler.sendEmptyMessageDelayed(MSG_UPDATE_STATS, STATS_UPDATE_INTERVAL_MS);
+        /*SoundPool clean up before NFC state updated*/
+        initSoundPool();
     }
 
     void initSoundPool() {
@@ -1487,7 +1489,6 @@ public class NfcService implements DeviceHostListener {
                 }
             }
 
-            initSoundPool();
             /* Start polling loop */
             Log.e(TAG, "applyRouting -3");
             mScreenState = mScreenStateHelper.checkScreenState();
@@ -1522,6 +1523,8 @@ public class NfcService implements DeviceHostListener {
             }
             Log.i(TAG, "Disabling NFC");
             updateState(NfcAdapter.STATE_TURNING_OFF);
+            /*SoundPool clean up before NFC state updated
+            releaseSoundPool();*/
 
             /* Sometimes mDeviceHost.deinitialize() hangs, use a watch-dog.
              * Implemented with a new thread (instead of a Handler or AsyncTask),
@@ -1581,7 +1584,6 @@ public class NfcService implements DeviceHostListener {
                 updateState(NfcAdapter.STATE_OFF);
             }
 
-            releaseSoundPool();
 
             return result;
         }
