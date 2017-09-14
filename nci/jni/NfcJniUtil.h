@@ -124,6 +124,14 @@
 #if(NXP_EXTNS == TRUE)
 /*NFCEE recovery maximum timeout value*/
 #define MAX_EE_RECOVERY_TIMEOUT    10000
+/* NFC states: Primarily used to decide SPI signal handling (whether to discard or accept)*/
+typedef enum eNfcState
+{
+    NFC_OFF = 0x00, /* Default state */
+    NFC_INITIALIZING_IN_PROGRESS = 0x01, /* Initializing not complete (RF discovery not enabled yet) */
+    NFC_ON = 0x02 /* NFC is fully ON*/
+};
+#define NFC_CMD_TIMEOUT 100 /* 100ms timeout to wait on the semaphore for the command sent */
 #endif
 
 struct nfc_jni_native_data

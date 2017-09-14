@@ -339,6 +339,7 @@ static uint16_t sCurrentConfigLen;
 static uint8_t sConfig[256];
 static int prevScreenState = NFA_SCREEN_STATE_OFF_LOCKED;
 #if(NXP_EXTNS == TRUE)
+static uint8_t sNfcState = NFC_OFF;
 bool isp2pActivated();
 static void nfcManager_doSetNfcMode (JNIEnv *e, jobject o, jint nfcMode);
 static bool nfcManager_doCheckJCOPOsDownLoad();
@@ -2145,6 +2146,10 @@ static jboolean nfcManager_doInitialize (JNIEnv* e, jobject o)
     tNFA_PMID ven_config_addr[]  = {0xA0, 0x07};
     bool isSuccess = false;
     sNfcee_disc_state = UICC_SESSION_NOT_INTIALIZED;
+
+    /* NFC initialization in progress */
+    if(NFC_OFF == sNfcState)
+        sNfcState = NFC_INITIALIZING_IN_PROGRESS;
 #endif
     ALOGV("%s: enter; ver=%s nfa=%s NCI_VERSION=0x%02X",
         __func__, nfca_version_string, nfa_version_string, NCI_VERSION);
@@ -2631,6 +2636,8 @@ static void nfcManager_enableDiscovery (JNIEnv* e, jobject o, jint technologies_
 
 #if(NXP_EXTNS == TRUE)
     tNFA_TECHNOLOGY_MASK etsi_tech_mask = 0;
+    p61_access_state_t p61_current_state = P61_STATE_INVALID;
+    long ret_val = -1;
 #endif
     if(e == NULL && o == NULL)
     {
@@ -2650,7 +2657,7 @@ static void nfcManager_enableDiscovery (JNIEnv* e, jobject o, jint technologies_
         transaction_data.discovery_params.reader_mode = reader_mode;
         transaction_data.discovery_params.enable_p2p = enable_p2p;
         transaction_data.discovery_params.restart = restart;
-        return;
+        goto TheEnd;
     }
 #endif
 
@@ -2909,6 +2916,25 @@ TheEnd:
     {
         ALOGE("%s: Can not reset transaction state", __func__);
     }
+    /* Set this state only during initialization and in all the other cases
+    NfcState should remain at NFC_ON  except during Nfc deinit */
+    if(NFC_INITIALIZING_IN_PROGRESS == sNfcState)
+    {
+        sNfcState = NFC_ON;
+        ret_val = NFC_GetP61Status ((void *)&p61_current_state);
+        if (ret_val < 0)
+        {
+            ALOGV("NFC_GetP61Status failed");
+        }
+        if(!(p61_current_state & (P61_STATE_SPI)&&
+            !(p61_current_state & (P61_STATE_SPI_PRIO))))
+        {
+            SecureElement::getInstance().
+                setNfccPwrConfig(SecureElement::getInstance().
+                    NFCC_DECIDES);
+        }
+    }
+
 #endif
     ALOGV("%s: exit", __func__);
 }
@@ -3277,7 +3303,9 @@ static jboolean nfcManager_doDeinitialize (JNIEnv* e, jobject obj)
     if(nfcFL.nfcNxpEse && (nfcFL.eseFL._ESE_DWP_SPI_SYNC_ENABLE ||
             nfcFL.eseFL._ESE_SVDD_SYNC || nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION ||
             nfcFL.nfccFL._NFCC_SPI_FW_DOWNLOAD_SYNC)) {
-    releaseSPIEvtHandlerThread();
+        /* NFC state is put to NFC_OFF, no more request on NFC accepted(no signal events)*/
+        sNfcState = NFC_OFF;
+        releaseSPIEvtHandlerThread();
     }
 
     if(nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION &&
@@ -5229,7 +5257,7 @@ void startRfDiscovery(bool isStart)
     {
         if(gGeneralPowershutDown == NFC_MODE_OFF)
             sDiscCmdwhleNfcOff = true;
-        sNfaEnableDisablePollingEvent.wait (); //wait for NFA_RF_DISCOVERY_xxxx_EVT
+        sNfaEnableDisablePollingEvent.wait (NFC_CMD_TIMEOUT); //wait for NFA_RF_DISCOVERY_xxxx_EVT
         sRfEnabled = isStart;
         sDiscCmdwhleNfcOff = false;
     }
@@ -5354,6 +5382,21 @@ bool nfcManager_isNfcActive()
 bool nfcManager_isNfcDisabling()
 {
     return sIsDisabling;
+}
+
+/*******************************************************************************
+**
+** Function:        nfcManager_getNfcState
+**
+** Description:     Used internally and externally to check the current NFC state
+**
+** Returns:         Returns the current state of NFC.
+**
+*******************************************************************************/
+uint8_t nfcManager_getNfcState()
+{
+    ALOGV("%s: sNfcState = %d", __func__, sNfcState);
+    return sNfcState;
 }
 #endif
 
@@ -7059,8 +7102,12 @@ void performNfceeETSI12Config()
     tNFA_STATUS configstatus = NFA_STATUS_FAILED;
     ALOGV("%s", __func__);
 
-    status = SecureElement::getInstance().configureNfceeETSI12();
+    SecureElement::getInstance().setNfccPwrConfig
+        (SecureElement::getInstance().POWER_ALWAYS_ON|
+            SecureElement::getInstance().COMM_LINK_ACTIVE);
+    SecureElement::getInstance().SecEle_Modeset(0x01);
 
+    status = SecureElement::getInstance().configureNfceeETSI12();
     if(status == true)
     {
         {
@@ -7082,11 +7129,6 @@ void performNfceeETSI12Config()
                 SecureElement::getInstance().SecEle_Modeset(0x01);
                 SecureElement::getInstance().meseETSI12Recovery = false;
             }
-        }
-        if(nfcFL.eseFL._WIRED_MODE_STANDBY) {
-            SecureElement::getInstance().
-                    setNfccPwrConfig(SecureElement::getInstance().
-                            NFCC_DECIDES);
         }
     }
 

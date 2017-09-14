@@ -106,6 +106,7 @@ namespace android
 #if(NXP_EXTNS == TRUE)
     extern int gMaxEERecoveryTimeout;
     extern bool update_transaction_stat(const char * req_handle, transaction_state_t req_state);
+    extern uint8_t nfcManager_getNfcState();
 #endif
 }
 #if(NXP_EXTNS == TRUE)
@@ -4026,7 +4027,9 @@ void *spiEventHandlerThread(void *arg)
     NFCSTATUS ese_status = NFA_STATUS_FAILED;
 
     ALOGV("%s: enter", __func__);
-    while(android::nfcManager_isNfcActive() && !android::nfcManager_isNfcDisabling())
+    while(android::nfcManager_isNfcActive()&&
+            !android::nfcManager_isNfcDisabling() &&
+            (android::nfcManager_getNfcState() != NFC_OFF))
     {
         if(true == gSPIEvtQueue.isEmpty()) /* Wait for the event only if the queue is empty */
         { /* scope of the guard start */
@@ -4037,11 +4040,6 @@ void *spiEventHandlerThread(void *arg)
         /* Dequeue the received signal */
         gSPIEvtQueue.dequeue((uint8_t*)&usEvent, (uint16_t)SIGNAL_EVENT_SIZE, usEvtLen);
         ALOGV("%s: evt received %x len %x", __FUNCTION__, usEvent, usEvtLen);
-        if(usEvent == P61_STATE_DWP_SESSION_CLOSE)
-        {
-            ALOGV("%s: release handler", __func__);
-            break;
-        }
         if((usEvent & P61_STATE_SPI_SVDD_SYNC_START) ||
                 (usEvent & P61_STATE_DWP_SVDD_SYNC_START))
         {
@@ -4106,7 +4104,11 @@ void *spiEventHandlerThread(void *arg)
         else if(nfcFL.nfccFL._NFCC_SPI_FW_DOWNLOAD_SYNC &&
                 ((usEvent & P61_STATE_SPI_PRIO_END) ||
                         (usEvent & P61_STATE_SPI_END))) {
-            android::requestFwDownload();
+            if(android::nfcManager_isNfcActive()&&
+                !android::nfcManager_isNfcDisabling() &&
+                    (android::nfcManager_getNfcState() != NFC_OFF)) {
+                android::requestFwDownload();
+            }
         }
     }
     ALOGV("%s: exit", __func__);
@@ -4152,10 +4154,16 @@ void releaseSPIEvtHandlerThread()
     }
 
     uint16_t usEvent = 0;
+    uint16_t usEvtLen = 0;
     ALOGV("releaseSPIEvtHandlerThread");
-    /* Posting session close event to exit the signal handler thread */
-    usEvent = P61_STATE_DWP_SESSION_CLOSE;
-    gSPIEvtQueue.enqueue((uint8_t*)&usEvent, (uint16_t)SIGNAL_EVENT_SIZE);
+    while(!gSPIEvtQueue.isEmpty()) /* Wait for the event only if the queue is empty */
+    { /* scope of the guard start */
+        /* Dequeue the received signal */
+        gSPIEvtQueue.dequeue((uint8_t*)&usEvent, (uint16_t)SIGNAL_EVENT_SIZE, usEvtLen);
+        ALOGE("%s: Clearing queue ", __func__);
+    } /* scope of the guard end */
+
+    /* Notifying the signal handler thread to exit if it is waiting */
     SyncEventGuard guard(sSPISignalHandlerEvent);
     sSPISignalHandlerEvent.notifyOne ();
 }
@@ -4349,7 +4357,7 @@ void spi_prio_signal_handler (int signum, siginfo_t *info, void *unused)
 {
     ALOGV("%s: Inside the Signal Handler %d\n", __func__, SIG_NFC);
     uint16_t usEvent = 0;
-    if (android::nfcManager_isNfcActive() == false)
+    if ((android::nfcManager_isNfcActive() == false) || (android::nfcManager_getNfcState() != NFC_ON))
     {
         ALOGE("%s: NFC is no longer active.", __func__);
         return;
@@ -5048,7 +5056,7 @@ tNFA_STATUS SecureElement::setNfccPwrConfig(uint8_t value)
         SyncEventGuard guard (mPwrLinkCtrlEvent);
         nfaStat = NFC_Nfcee_PwrLinkCtrl((uint8_t)EE_HANDLE_0xF3, value);
         if(nfaStat ==  NFA_STATUS_OK && !android::nfcManager_isNfcDisabling())
-            mPwrLinkCtrlEvent.wait();
+            mPwrLinkCtrlEvent.wait(NFC_CMD_TIMEOUT);
     }
     return mPwrCmdstatus;
 }
