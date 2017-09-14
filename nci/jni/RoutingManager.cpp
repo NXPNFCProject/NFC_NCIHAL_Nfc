@@ -743,6 +743,12 @@ bool RoutingManager::setDefaultRoute(const int defaultRoute, const int protoRout
 
     extractRouteLocationAndPowerStates(defaultRoute,protoRoute,techRoute);
 
+#if(NXP_EXTNS == TRUE)
+    if(NFA_GetNCIVersion() == NCI_VERSION_2_0) {
+        setEmptyAidEntry();
+    }
+#endif
+
     if (mHostListnTechMask)
     {
        nfaStat = NFA_CeSetIsoDepListenTech(mHostListnTechMask & 0xB);
@@ -995,13 +1001,16 @@ void RoutingManager::initialiseTableEntries(void)
 
     mProtoTableEntries[PROTO_T3T_IDX].protocol     = NFA_PROTOCOL_MASK_T3T;
     mProtoTableEntries[PROTO_ISODEP_IDX].protocol  = NFA_PROTOCOL_MASK_ISO_DEP;
-    mProtoTableEntries[PROTO_ISO7816_IDX].protocol = NFC_PROTOCOL_MASK_ISO7816;
+    if(NFA_GetNCIVersion() == NCI_VERSION_1_0) {
+        mProtoTableEntries[PROTO_ISO7816_IDX].protocol = NFC_PROTOCOL_MASK_ISO7816;
+    }
 
     mTechTableEntries[TECH_A_IDX].technology       = NFA_TECHNOLOGY_MASK_A;
     mTechTableEntries[TECH_B_IDX].technology       = NFA_TECHNOLOGY_MASK_B;
     mTechTableEntries[TECH_F_IDX].technology       = NFA_TECHNOLOGY_MASK_F;
 
-    for(int xx = 0; xx < MAX_PROTO_ENTRIES; xx++)
+
+    for(int xx = 0; xx < AVAILABLE_PROTO_ENTRIES(); xx++)
     {
         mProtoTableEntries[xx].routeLoc = mTechTableEntries[xx].routeLoc = 0x00;
         mProtoTableEntries[xx].power    = mTechTableEntries[xx].power    = 0x00;
@@ -1048,9 +1057,11 @@ void RoutingManager::compileProtoEntries(void)
     mProtoTableEntries[PROTO_ISODEP_IDX].power    = mCeRouteStrictDisable ? mDefaultIsoDepPowerstate : (mDefaultIsoDepPowerstate & POWER_STATE_MASK);
     mProtoTableEntries[PROTO_ISODEP_IDX].enable   = ((mHostListnTechMask & 0x03) != 0x00) ? true : false;
 
+    if(NFA_GetNCIVersion() == NCI_VERSION_1_0) {
     mProtoTableEntries[PROTO_ISO7816_IDX].routeLoc = mDefaultIso7816SeID;
     mProtoTableEntries[PROTO_ISO7816_IDX].power    = mCeRouteStrictDisable ? mDefaultIso7816Powerstate : (mDefaultIso7816Powerstate & POWER_STATE_MASK);
     mProtoTableEntries[PROTO_ISO7816_IDX].enable   = (mDefaultIso7816SeID == ROUTE_LOC_HOST_ID) ? (((mHostListnTechMask & 0x03) != 0x00) ? true : false):(true);
+    }
     dumpTables(1);
 
     ALOGV("%s: exit", fn);
@@ -1070,7 +1081,7 @@ void RoutingManager::consolidateProtoEntries(void)
 
     int index = -1;
 
-    for(int xx=0;xx<MAX_PROTO_ENTRIES;xx++)
+    for(int xx=0;xx<AVAILABLE_PROTO_ENTRIES();xx++)
     {
         if(mProtoTableEntries[xx].enable)
         {
@@ -1162,6 +1173,36 @@ void RoutingManager::setProtoRouting()
     }
     ALOGV("%s: exit", fn);
 }
+#if(NXP_EXTNS == TRUE)
+/*
+ * In NCI2.0 Protocol 7816 routing is replaced with empty AID
+ * Routing entry Format :
+ *  Type   = [0x12]
+ *  Length = 2 [0x02]
+ *  Value  = [Route_loc, Power_state]
+ * */
+void RoutingManager::setEmptyAidEntry() {
+
+    ALOGV("%s: enter, ", __func__);
+    tNFA_HANDLE current_handle;
+
+    uint16_t routeLoc;
+    uint8_t power;
+
+    routeLoc = mDefaultIso7816SeID;
+    power    = mCeRouteStrictDisable ? mDefaultIso7816Powerstate : (mDefaultIso7816Powerstate & POWER_STATE_MASK);
+
+    ALOGV("%s: routeLoc 0x%x", __func__,routeLoc);
+    if (routeLoc  == NFA_HANDLE_INVALID)
+    {
+        ALOGV("%s: Invalid routeLoc. Return.", __func__);
+        return;
+    }
+
+    tNFA_STATUS nfaStat = NFA_EeAddAidRouting(routeLoc, 0, NULL, power, 0x10);
+    ALOGV("%s: Status :0x%2x", __func__, nfaStat);
+}
+#endif
 
 /* Compilation of Tech Table entries strictly based on config file parameters
  * Each entry in tech table consistes of route location, technology and power state
@@ -1448,11 +1489,13 @@ void RoutingManager::setTechRouting(void)
 
 void RoutingManager::dumpTables(int xx)
 {
+
+
     switch(xx)
     {
     case 1://print only proto table
         ALOGV("--------------------Proto Table Entries------------------" );
-        for(int xx=0;xx<MAX_PROTO_ENTRIES;xx++)
+        for(int xx=0;xx<AVAILABLE_PROTO_ENTRIES();xx++)
         {
             ALOGV("|Index=%d|RouteLoc=0x%03X|Proto=0x%02X|Power=0x%02X|Enable=0x%01X|",
                     xx,mProtoTableEntries[xx].routeLoc,
@@ -1464,7 +1507,7 @@ void RoutingManager::dumpTables(int xx)
         break;
     case 2://print Lmrt proto table
         ALOGV("----------------------------------------Lmrt Proto Entries------------------------------------" );
-        for(int xx=0;xx<MAX_PROTO_ENTRIES;xx++)
+        for(int xx=0;xx<AVAILABLE_PROTO_ENTRIES();xx++)
         {
             ALOGV("|Index=%d|nfceeID=0x%03X|SWTCH-ON=0x%02X|SWTCH-OFF=0x%02X|BAT-OFF=0x%02X|SCRN-LOCK=0x%02X|SCRN-OFF=0x%02X|SCRN-OFF_LOCK=0x%02X",
                     xx,
