@@ -18,7 +18,7 @@ package com.android.nfc;
 import java.util.ArrayList;
 import java.util.List;
 
-import android.app.ActivityManagerNative;
+import android.app.ActivityManager;
 import android.app.IActivityManager;
 import android.app.IProcessObserver;
 import android.os.RemoteException;
@@ -45,7 +45,7 @@ public class ForegroundUtils extends IProcessObserver.Stub {
     }
 
     private ForegroundUtils() {
-        mIActivityManager = ActivityManagerNative.getDefault();
+        mIActivityManager = ActivityManager.getService();
         try {
             mIActivityManager.registerProcessObserver(this);
         } catch (RemoteException e) {
