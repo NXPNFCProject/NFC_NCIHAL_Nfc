@@ -572,25 +572,28 @@ nfc_jni_native_data *getNative (JNIEnv* e, jobject o)
 *******************************************************************************/
 static void handleRfDiscoveryEvent (tNFC_RESULT_DEVT* discoveredDevice)
 {
-int thread_ret;
+    int thread_ret;
+
     if(discoveredDevice->more == NCI_DISCOVER_NTF_MORE)
     {
-
         //there is more discovery notification coming
         NfcTag::getInstance ().mNumDiscNtf++;
         return;
     }
+
     NfcTag::getInstance ().mNumDiscNtf++;
-    ALOGV("Total Notifications - %d ", NfcTag::getInstance ().mNumDiscNtf);
+    ALOGD("%s: Total Notifications - %d ", __FUNCTION__, NfcTag::getInstance ().mNumDiscNtf);
+
     if(NfcTag::getInstance ().mNumDiscNtf > 1)
     {
         NfcTag::getInstance().mIsMultiProtocolTag = true;
     }
+
     bool isP2p = NfcTag::getInstance ().isP2pDiscovered ();
+
     if (!sReaderModeEnabled && isP2p)
     {
-        //select the peer that supports P2P
-        ALOGV(" select P2P");
+        ALOGD("%s: Select peer device", __FUNCTION__);
 #if(NXP_EXTNS == TRUE)
         if(multiprotocol_detected == 1)
         {
@@ -605,92 +608,92 @@ int thread_ret;
         NfcTag::getInstance ().mNumDiscNtf = 0x00;
         multiprotocol_flag = 0;
         multiprotocol_detected = 1;
-        ALOGV("Prio_Logic_multiprotocol Logic");
         pthread_attr_t attr;
         pthread_attr_init(&attr);
+        ALOGD("%s: starting p2p prio logic for multiprotocol tags", __FUNCTION__);
         pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
         thread_ret = pthread_create(&multiprotocol_thread, &attr,
                 p2p_prio_logic_multiprotocol, NULL);
         if(thread_ret != 0)
-            ALOGV("unable to create the thread");
+            ALOGE("%s: unable to create the thread", __FUNCTION__);
         pthread_attr_destroy(&attr);
-        ALOGV("Prio_Logic_multiprotocol start timer");
+        ALOGD("%s: starting timer for reconfigure default polling callback", __FUNCTION__);
         multiprotocol_timer.set (300, reconfigure_poll_cb);
     }
 #endif
     else
     {
+        multiprotocol_flag = 1;
 #if(NXP_EXTNS == TRUE)
         NfcTag::getInstance ().mNumDiscNtf--;
 #endif
-        //select the first of multiple tags that is discovered
         NfcTag::getInstance ().selectFirstTag();
-        multiprotocol_flag = 1;
     }
 }
 
 #if(NXP_EXTNS == TRUE)
 void *p2p_prio_logic_multiprotocol(void *arg)
 {
-tNFA_STATUS status = NFA_STATUS_FAILED;
-tNFA_TECHNOLOGY_MASK tech_mask = 0;
+    tNFA_STATUS status             = NFA_STATUS_FAILED;
+    tNFA_TECHNOLOGY_MASK tech_mask = 0x00;
 
-    ALOGV("%s  ", __func__);
-/* Do not need if it is already in screen off state */
-if ((getScreenState() != NFA_SCREEN_STATE_OFF_LOCKED)&&(getScreenState() != NFA_SCREEN_STATE_OFF_UNLOCKED))
-{
-    if (sRfEnabled) {
-        // Stop RF discovery to reconfigure
-        startRfDiscovery(false);
-    }
-
+    ALOGD ("%s: enter", __FUNCTION__);
+    /* Do not need if it is already in screen off state */
+    if ((getScreenState() != (NFA_SCREEN_STATE_OFF_LOCKED || NFA_SCREEN_STATE_OFF_UNLOCKED)))
     {
-        SyncEventGuard guard (sNfaEnableDisablePollingEvent);
-        status = NFA_DisablePolling ();
-        if (status == NFA_STATUS_OK)
+        /* Stop polling */
+        if (sRfEnabled)
         {
-            sNfaEnableDisablePollingEvent.wait (); //wait for NFA_POLL_DISABLED_EVT
-        }else
-        ALOGE("%s: Failed to disable polling; error=0x%X", __func__, status);
-    }
+            startRfDiscovery(false);
+        }
 
-    if(multiprotocol_detected)
-    {
-        ALOGV("Enable Polling for TYPE F");
-        tech_mask = NFA_TECHNOLOGY_MASK_F;
-    }
-    else
-    {
-        ALOGV("Enable Polling for ALL");
-        unsigned long num = 0;
-        if (GetNumValue(NAME_POLLING_TECH_MASK, &num, sizeof(num)))
-            tech_mask = num;
-        else
-            tech_mask = DEFAULT_TECH_MASK;
-    }
-
-    {
-        SyncEventGuard guard (sNfaEnableDisablePollingEvent);
-        status = NFA_EnablePolling (tech_mask);
-        if (status == NFA_STATUS_OK)
         {
-            ALOGV("%s: wait for enable event", __func__);
-            sNfaEnableDisablePollingEvent.wait (); //wait for NFA_POLL_ENABLED_EVT
+            SyncEventGuard guard (sNfaEnableDisablePollingEvent);
+            status = NFA_DisablePolling ();
+            if (status == NFA_STATUS_OK)
+            {
+                sNfaEnableDisablePollingEvent.wait ();
+            }else
+            ALOGE ("%s: Failed to disable polling; error=0x%X", __FUNCTION__, status);
+        }
+
+        if(multiprotocol_detected)
+        {
+            ALOGD ("%s: configure polling to tech F only", __FUNCTION__);
+            tech_mask = NFA_TECHNOLOGY_MASK_F;
         }
         else
         {
-            ALOGE("%s: fail enable polling; error=0x%X", __func__, status);
+            ALOGD ("%s: re-configure polling to default", __FUNCTION__);
+            unsigned long num = 0;
+            if (GetNumValue(NAME_POLLING_TECH_MASK, &num, sizeof(num)))
+                tech_mask = num;
+            else
+                tech_mask = DEFAULT_TECH_MASK;
+        }
+
+        {
+            SyncEventGuard guard (sNfaEnableDisablePollingEvent);
+            status = NFA_EnablePolling (tech_mask);
+            if (status == NFA_STATUS_OK)
+            {
+                ALOGD ("%s: wait for enable event", __FUNCTION__);
+                sNfaEnableDisablePollingEvent.wait ();
+            }
+            else
+            {
+                ALOGE ("%s: fail enable polling; error=0x%X", __FUNCTION__, status);
+            }
+        }
+
+        /* start polling */
+        if (!sRfEnabled)
+        {
+            startRfDiscovery(true);
         }
     }
-
-    /* start polling */
-    if (!sRfEnabled)
-    {
-        // Start RF discovery to reconfigure
-        startRfDiscovery(true);
-    }
-}
-return NULL;
+    ALOGD ("%s: exit", __FUNCTION__);
+    return NULL;
 }
 
 void reconfigure_poll_cb(union sigval)
