@@ -159,6 +159,8 @@ public:
     void setDefaultProtoRouting (int seId, int proto_switchon,int proto_switchoff);
     void processGetRoutingRsp(tNFA_DM_CBACK_DATA* eventData, uint8_t* sRoutingBuff);
     void nfaEEConnect();
+    void nfaEEDisconnect();
+    SyncEvent mEEDisconnectEvt;
     bool setRoutingEntry(int type, int value, int route, int power);
     bool clearRoutingEntry(int type);
     bool setDefaultRoute(const int defaultRoute, const int protoRoute, const int techRoute);

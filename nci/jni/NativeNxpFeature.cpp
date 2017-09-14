@@ -876,8 +876,7 @@ tNFA_STATUS enableSWPInterface()
             status = GetCbStatus();
             if (NFA_STATUS_OK == status)
             {
-                ALOGV("%s: Enable interface SWP1 & SWP1A is Success", __func__);
-                status = NxpNfc_Send_CoreResetInit_Cmd();
+                ALOGV("%s: GetCbStatus():%d", __func__, status);
             }
         }
     }

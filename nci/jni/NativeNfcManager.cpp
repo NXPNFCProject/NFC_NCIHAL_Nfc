@@ -165,10 +165,9 @@ namespace android
     bool nfcManager_isTransanctionOnGoing(bool isInstallRequest);
     bool nfcManager_isRequestPending(void);
     extern tNFA_STATUS enableSWPInterface();
-    jmethodID               gCachedNfcManagerNotifyFwDwnldRequested;
-
+    extern tNFA_STATUS NxpNfc_Send_CoreResetInit_Cmd(void);
+    jmethodID gCachedNfcManagerNotifyFwDwnldRequested;
     extern tNFA_STATUS SendAGCDebugCommand();
-    extern tNFA_STATUS NxpNfc_Send_CoreResetInit_Cmd();
     extern tNFA_STATUS Set_EERegisterValue(uint16_t RegAddr, uint8_t bitVal);
     extern void nativeNfcTag_cacheNonNciCardDetection();
     extern void nativeNfcTag_handleNonNciCardDetection(tNFA_CONN_EVT_DATA* eventData);
@@ -435,7 +434,7 @@ static void write_uicc_context(uint8_t *uiccContext, uint16_t uiccContextLen, ui
 static uint16_t calc_crc16(uint8_t* pBuff, uint16_t wLen);
 
 static int nfcManager_staticDualUicc_Precondition(int uiccSlot);
-
+void checkforESERemoval();
 bool nfcManager_sendEmptyDataMsg();
 bool gIsEmptyRspSentByHceFApk = false;
 
@@ -2241,6 +2240,7 @@ static jboolean nfcManager_doInitialize (JNIEnv* e, jobject o)
                     }
                 }
                 if(nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH) {
+                    checkforESERemoval();
                     GetNxpNumValue (NAME_NXP_DUAL_UICC_ENABLE, (void*)&dualUiccInfo.dualUiccEnable, sizeof(dualUiccInfo.dualUiccEnable));
                     if(dualUiccInfo.dualUiccEnable == 0x01)
                     {
@@ -3294,7 +3294,7 @@ static jboolean nfcManager_doDeinitialize (JNIEnv* e, jobject obj)
             nfcFL.nfccFL._NFCC_SPI_FW_DOWNLOAD_SYNC)) {
         /* NFC state is put to NFC_OFF, no more request on NFC accepted(no signal events)*/
         sNfcState = NFC_OFF;
-		NFC_ResetNfcServicePid();
+        NFC_ResetNfcServicePid();
         releaseSPIEvtHandlerThread();
     }
 
@@ -7141,6 +7141,9 @@ static void performHCIInitialization (JNIEnv* e, jobject o)
     status = android::enableSWPInterface();
     if(status == NFA_STATUS_OK)
     {
+        RoutingManager::getInstance().nfaEEDisconnect();
+        usleep(1000 * 1000);
+        android::NxpNfc_Send_CoreResetInit_Cmd();
         /*Update Actual SE count gActualSeCount*/
         GetNumNFCEEConfigured();
         RoutingManager::getInstance().nfaEEConnect();
@@ -7153,6 +7156,70 @@ static void performHCIInitialization (JNIEnv* e, jobject o)
         ALOGE("No UICC update required/failed to enable SWP interfaces");
     }
 }
+
+void checkforESERemoval()
+{
+    ALOGD("checkforESERemoval enter");
+
+    bool nfaEseRemovedNtf = true;
+    uint8_t numNfceePresent = SecureElement::getInstance().mNfceeData_t.mNfceePresent;
+    tNFA_HANDLE nfceeHandle[MAX_NFCEE];
+    tNFA_EE_STATUS nfceeStatus[MAX_NFCEE];
+
+    uint8_t retry = 0;
+    uint8_t mActualNumEe = SecureElement::MAX_NUM_EE;
+    tNFA_EE_INFO mEeInfo[mActualNumEe];
+    uint8_t eseDetected = 0;
+
+    for(int i = 1; i <= numNfceePresent; i++)
+    {
+        nfceeHandle[i] = SecureElement::getInstance().mNfceeData_t.mNfceeHandle[i];
+        nfceeStatus[i] = SecureElement::getInstance().mNfceeData_t.mNfceeHandle[i];
+
+        if(nfceeHandle[i] == (SecureElement::EE_HANDLE_0xF3) && nfceeStatus[i] == 0x0)
+        {
+            nfaEseRemovedNtf = false;
+            break;
+        }
+    }
+    if(nfaEseRemovedNtf)
+    {
+        ALOGD("nfaEseRemovedNtf true");
+        tNFA_STATUS configstatus = NFA_STATUS_FAILED;
+        do {
+            if ((configstatus = NFA_AllEeGetInfo (&mActualNumEe, mEeInfo)) != NFA_STATUS_OK)
+            {
+                ALOGE ("unable to get the EE status");
+            }
+            else
+            {
+                for(int xx = 0; xx <  mActualNumEe; xx++)
+                {
+                    ALOGE("xx=%d, ee_handle=0x0%x, status=0x0%x", xx, mEeInfo[xx].ee_handle,mEeInfo[xx].ee_status);
+                    if (mEeInfo[xx].ee_handle == 0x4C0)
+                    {
+                        if(mEeInfo[xx].ee_status == 0x02)
+                        {
+                            configstatus = ResetEseSession();
+                            RoutingManager::getInstance().nfaEEDisconnect();
+                            usleep(1000 *1000);
+                            android::NxpNfc_Send_CoreResetInit_Cmd();
+                            RoutingManager::getInstance().nfaEEConnect();
+                            usleep(1000 * 1000);
+                        }
+                        else
+                        {
+                            eseDetected = 0x01;
+                        }
+                        break;
+                    }
+                }
+            }
+        }while((eseDetected == 0x00) && (retry++ < 1));
+    }
+    usleep(1000 * 1000);
+}
+
 /**********************************************************************************
  **
  ** Function:        getUiccContext
