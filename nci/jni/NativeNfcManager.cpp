@@ -543,6 +543,7 @@ static bool gIsDtaEnabled=false;
 
 tNfc_featureList nfcFL;
 static void nfcManager_getFeatureList();
+static void register_signal_handler();
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
@@ -2164,19 +2165,6 @@ static jboolean nfcManager_doInitialize (JNIEnv* e, jobject o)
     tNFA_STATUS stat = NFA_STATUS_OK;
     NfcTag::getInstance ().mNfcDisableinProgress = false;
     PowerSwitch & powerSwitch = PowerSwitch::getInstance ();
-#if(NXP_EXTNS == TRUE)
-    if(nfcFL.nfcNxpEse) {
-        struct sigaction sig;
-
-        memset(&sig, 0, sizeof(struct sigaction));
-        sig.sa_sigaction = spi_prio_signal_handler;
-        sig.sa_flags = SA_SIGINFO;
-        if(sigaction(SIG_NFC, &sig, NULL) < 0)
-        {
-            ALOGE("Failed to register spi prio session signal handler");
-        }
-    }
-#endif
     if (sIsNfaEnabled)
     {
         ALOGV("%s: already enabled", __func__);
@@ -2189,23 +2177,14 @@ static jboolean nfcManager_doInitialize (JNIEnv* e, jobject o)
         nfcManager_doPartialDeInitialize();
     }
 #endif
-   if (nfcFL.eseFL._JCOP_WA_ENABLE && ((signal(SIGABRT, sig_handler) == SIG_ERR) &&
-        (signal(SIGSEGV, sig_handler) == SIG_ERR)))
-    {
-        ALOGE("Failed to register signal handler");
-     }
-
     powerSwitch.initialize (PowerSwitch::FULL_POWER);
-
+    register_signal_handler();
     {
         unsigned long num = 0;
 
         NfcAdaptation& theInstance = NfcAdaptation::GetInstance();
         theInstance.Initialize(); //start GKI, NCI task, NFC task
-
-        {
 #if(NXP_EXTNS == TRUE)
-            if(nfcFL.nfcNxpEse && nfcFL.eseFL._WIRED_MODE_STANDBY) {
                 int state = getJCOPOS_UpdaterState();
                 if((state != OSU_COMPLETE) &&
                         (state != OSU_NOT_STARTED))
@@ -2216,14 +2195,10 @@ static jboolean nfcManager_doInitialize (JNIEnv* e, jobject o)
                 else {
                     NFA_SetBootMode(NFA_NORMAL_BOOT_MODE);
                 }
-            }
-            else {
-                NFA_SetBootMode(NFA_NORMAL_BOOT_MODE);
-            }
 #endif
             stat = nfcManagerEnableNfc(theInstance);
+            nfcManager_getFeatureList();
             EXTNS_Init (nfaDeviceManagementCallback, nfaConnectionCallback);
-        }
 
         if (stat == NFA_STATUS_OK )
         {
@@ -8498,15 +8473,46 @@ Transcation_Check_t* nfcManager_transactionDetail(void)
 {
     return &android::transaction_data;
 }
+/*******************************************************************************
+ **
+ ** Function:        nfcManager_getFeatureList()
+ **
+ ** Description:     Get the Chipe type & Configure Chip type macros
+ **
+ ** Returns:         None
+ **
+*******************************************************************************/
 void nfcManager_getFeatureList() {
     tNFC_chipType chipType;// = pn553;
     chipType = NFC_GetChipType();
     ALOGV("%s : chipType",__func__);
     CONFIGURE_FEATURELIST(chipType);
 }
+/*******************************************************************************
+ **
+ ** Function:        register_signal_handler()
+ **
+ ** Description:     Register Signal handlers
+ **
+ ** Returns:         None .
+ **
+*******************************************************************************/
+void register_signal_handler() {
+    struct sigaction sig;
 
+    memset(&sig, 0, sizeof(struct sigaction));
+    sig.sa_sigaction = spi_prio_signal_handler;
+    sig.sa_flags = SA_SIGINFO;
+    if(sigaction(SIG_NFC, &sig, NULL) < 0) {
+        ALOGE("Failed to register spi prio session signal handler");
+    }
+    if ((signal(SIGABRT, sig_handler) == SIG_ERR) && (signal(SIGSEGV, sig_handler) == SIG_ERR)) {
+        ALOGE("Failed to register signal handler");
+     }
+}
 #endif
 }
+
 /* namespace android */
 
 
