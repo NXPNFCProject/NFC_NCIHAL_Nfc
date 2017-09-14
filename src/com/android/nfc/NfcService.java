@@ -4863,7 +4863,9 @@ public class NfcService implements DeviceHostListener {
                             new DeviceHost.TagDisconnectedCallback() {
                                 @Override
                                 public void onTagDisconnected(long handle) {
-                                    applyRouting(false);
+                                    if(nci_version != NCI_VERSION_2_0) {
+                                      applyRouting(false);
+                                    }
                                 }
                             };
                     synchronized (NfcService.this) {
