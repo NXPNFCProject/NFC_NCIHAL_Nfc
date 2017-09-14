@@ -19,6 +19,8 @@ package com.android.nfc;
 import java.util.ArrayList;
 
 import android.app.Activity;
+import android.app.ActivityManager;
+import android.app.ActivityManagerNative;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -26,6 +28,7 @@ import android.content.DialogInterface;
 import android.content.ClipData;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.nfc.BeamShareData;
 import android.nfc.NdefMessage;
@@ -33,8 +36,11 @@ import android.nfc.NdefRecord;
 import android.nfc.NfcAdapter;
 import android.os.Bundle;
 import android.os.UserHandle;
+import android.os.RemoteException;
 import android.util.Log;
+import android.util.EventLog;
 import android.webkit.URLUtil;
+import android.Manifest.permission;
 
 import com.android.internal.R;
 
@@ -212,16 +218,26 @@ public class BeamShareActivity extends Activity {
             int numValidUris = 0;
             for (Uri uri : mUris) {
                 try {
+                    int uid = ActivityManagerNative.getDefault().getLaunchedFromUid(getActivityToken());
+                    if (uri.getScheme().equalsIgnoreCase("file") &&
+                            getApplicationContext().checkPermission(permission.READ_EXTERNAL_STORAGE, -1, uid) !=
+                            PackageManager.PERMISSION_GRANTED) {
+                        Log.e(TAG, "File based Uri doesn't have External Storage Permission.");
+                        EventLog.writeEvent(0x534e4554, "37287958", uid, uri.getPath());
+                        break;
+                    }
                     grantUriPermission("com.android.nfc", uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
                     uriArray[numValidUris++] = uri;
                     if (DBG) Log.d(TAG, "Found uri: " + uri);
                 } catch (SecurityException e) {
                     Log.e(TAG, "Security exception granting uri permission to NFC process.");
-                    numValidUris = 0;
+                    break;
+                } catch (RemoteException e) {
+                    Log.e(TAG, "Remote exception accessing uid of the calling process.");
                     break;
                 }
             }
-            if (numValidUris > 0) {
+            if (numValidUris != 0 && numValidUris == mUris.size()) {
                 shareData = new BeamShareData(null, uriArray, myUserHandle, 0);
             } else {
                 // No uris left
