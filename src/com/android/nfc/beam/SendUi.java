@@ -26,7 +26,10 @@ import android.animation.PropertyValuesHolder;
 import android.animation.TimeAnimator;
 import android.app.ActivityManager;
 import android.app.StatusBarManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
@@ -322,6 +325,9 @@ public class SendUi implements Animator.AnimatorListener, View.OnTouchListener,
         }
         mState = STATE_W4_SCREENSHOT;
         new ScreenshotTask().execute();
+
+        final IntentFilter filter = new IntentFilter(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
+        mContext.registerReceiver(mReceiver, filter);
     }
 
     /** Show pre-send animation */
@@ -529,6 +535,7 @@ public class SendUi implements Animator.AnimatorListener, View.OnTouchListener,
         mWindowManager.removeView(mDecor);
         mStatusBarManager.disable(StatusBarManager.DISABLE_NONE);
         mScreenshotBitmap = null;
+        mContext.unregisterReceiver(mReceiver);
         if (mToastString != null) {
             Toast toast = Toast.makeText(mContext, mToastString, Toast.LENGTH_LONG);
             toast.getWindowParams().privateFlags |= LayoutParams.PRIVATE_FLAG_SHOW_FOR_ALL_USERS;
@@ -893,4 +900,13 @@ public class SendUi implements Animator.AnimatorListener, View.OnTouchListener,
     @Override
     public void onActionModeFinished(ActionMode mode) {
     }
+
+    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (Intent.ACTION_CLOSE_SYSTEM_DIALOGS.equals(intent.getAction())) {
+                mCallback.onCanceled();
+            }
+        }
+    };
 }
