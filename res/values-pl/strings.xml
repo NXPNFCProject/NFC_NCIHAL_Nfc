@@ -33,7 +33,7 @@
     <string name="could_not_use_app" msgid="8137587876138569083">"Nie można użyć <xliff:g id="APP">%1$s</xliff:g>."</string>
     <string name="pay_with" msgid="5531545488795798945">"Zapłać w"</string>
     <string name="complete_with" msgid="6797459104103012992">"Wykonaj w"</string>
-    <string name="default_pay_app_removed" msgid="4108250545457437360">"Twoja preferowana usługa systemu dotknij i zapłać została usunięta. Wybrać inną?"</string>
+    <string name="default_pay_app_removed" msgid="4108250545457437360">"Twoja preferowana usługa systemu Zbliż i zapłać została usunięta. Wybrać inną?"</string>
     <string name="ask_nfc_tap" msgid="2925239870458286340">"Dotknij innego urządzenia, by zakończyć"</string>
     <string name="wifi_connect" msgid="6250727951843550671">"Połącz"</string>
     <string name="status_unable_to_connect" msgid="9183908200295307657">"Nie można połączyć z siecią"</string>

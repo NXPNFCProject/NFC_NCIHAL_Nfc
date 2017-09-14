@@ -24,7 +24,7 @@
     <string name="pairing_peripheral" msgid="6983626861540899365">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g> 配對中"</string>
     <string name="pairing_peripheral_failed" msgid="6087643307743264679">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g> 無法配對"</string>
     <string name="failed_to_enable_bt" msgid="7229153323594758077">"無法啟用藍牙"</string>
-    <string name="confirm_pairing" msgid="4112568077038265363">"您確定要與藍牙裝置「<xliff:g id="DEVICE_NAME">%1$s</xliff:g>」配對嗎？"</string>
+    <string name="confirm_pairing" msgid="4112568077038265363">"你確定要與藍牙裝置「<xliff:g id="DEVICE_NAME">%1$s</xliff:g>」配對嗎？"</string>
     <string name="pair_yes" msgid="3525614878559994448">"是"</string>
     <string name="pair_no" msgid="5022308368904055020">"否"</string>
     <string name="tap_again_to_pay" msgid="5754988005412859897">"再輕觸一下即可使用「<xliff:g id="APP">%1$s</xliff:g>」付款"</string>
@@ -33,13 +33,13 @@
     <string name="could_not_use_app" msgid="8137587876138569083">"無法使用「<xliff:g id="APP">%1$s</xliff:g>」。"</string>
     <string name="pay_with" msgid="5531545488795798945">"使用以下應用程式完成付款："</string>
     <string name="complete_with" msgid="6797459104103012992">"使用以下應用程式完成操作："</string>
-    <string name="default_pay_app_removed" msgid="4108250545457437360">"您偏好的感應付款服務已遭移除，要選擇其他服務嗎？"</string>
+    <string name="default_pay_app_removed" msgid="4108250545457437360">"你偏好的感應付款服務已遭移除，要選擇其他服務嗎？"</string>
     <string name="ask_nfc_tap" msgid="2925239870458286340">"輕觸另一個裝置即可完成"</string>
     <string name="wifi_connect" msgid="6250727951843550671">"連線"</string>
     <string name="status_unable_to_connect" msgid="9183908200295307657">"無法連線至網路"</string>
     <string name="status_wifi_connected" msgid="5893022897732105739">"已連線"</string>
     <string name="title_connect_to_network" msgid="2474034615817280146">"連線至網路"</string>
     <string name="prompt_connect_to_network" msgid="8511683573657516114">"連線至網路 <xliff:g id="NETWORK_SSID">%1$s</xliff:g>？"</string>
-    <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"需要 NFC 才能啟用 Android Beam。您要啟用嗎？"</string>
+    <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"需要 NFC 才能啟用 Android Beam。你要啟用嗎？"</string>
     <string name="android_beam" msgid="1666446406999492763">"Android Beam"</string>
 </resources>

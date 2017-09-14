@@ -5,9 +5,9 @@
     <string name="nfcUserLabel" msgid="7708535817084357357">"Nfc"</string>
     <string name="accessibility_nfc_enabled" msgid="7796246979948787735">"‏NFC מופעל."</string>
     <string name="tap_to_beam" msgid="5819197866281059878">"הקש כדי להקרין"</string>
-    <string name="beam_progress" msgid="7453634884807323920">"קרן נכנסת..."</string>
+    <string name="beam_progress" msgid="7453634884807323920">"שידור נכנס…"</string>
     <string name="beam_outgoing" msgid="4679536649779123495">"מעביר תוכן..."</string>
-    <string name="beam_complete" msgid="477026736424637435">"הקרנה הושלמה"</string>
+    <string name="beam_complete" msgid="477026736424637435">"העברה הושלמה"</string>
     <string name="beam_failed" msgid="5116241718189888630">"הקרן לא הושלמה"</string>
     <string name="beam_canceled" msgid="5425192751826544741">"הקרן בוטלה"</string>
     <string name="cancel" msgid="61873902552555096">"ביטול"</string>
@@ -24,7 +24,7 @@
     <string name="pairing_peripheral" msgid="6983626861540899365">"מבצע התאמה עם <xliff:g id="DEVICE_NAME">%1$s</xliff:g>"</string>
     <string name="pairing_peripheral_failed" msgid="6087643307743264679">"לא ניתן לבצע התאמה עם <xliff:g id="DEVICE_NAME">%1$s</xliff:g>"</string>
     <string name="failed_to_enable_bt" msgid="7229153323594758077">"‏לא ניתן להפעיל Bluetooth"</string>
-    <string name="confirm_pairing" msgid="4112568077038265363">"‏האם אתה בטוח שאתה רוצה להתאים את מכשיר ה-Bluetooth <xliff:g id="DEVICE_NAME">%1$s</xliff:g>?"</string>
+    <string name="confirm_pairing" msgid="4112568077038265363">"‏האם אתה בטוח שברצונך להתאים את מכשיר ה-Bluetooth <xliff:g id="DEVICE_NAME">%1$s</xliff:g>?"</string>
     <string name="pair_yes" msgid="3525614878559994448">"כן"</string>
     <string name="pair_no" msgid="5022308368904055020">"לא"</string>
     <string name="tap_again_to_pay" msgid="5754988005412859897">"הקש שוב כדי לשלם באמצעות <xliff:g id="APP">%1$s</xliff:g>"</string>

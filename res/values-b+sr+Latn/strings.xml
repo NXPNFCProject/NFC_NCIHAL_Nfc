@@ -14,7 +14,7 @@
     <string name="beam_tap_to_view" msgid="7430394753262448349">"Dodirnite da biste pregledali"</string>
     <string name="beam_handover_not_supported" msgid="4083165921751489015">"Uređaj prijemnika ne podržava prenos velikih datoteka prebacivanjem."</string>
     <string name="beam_try_again" msgid="3364677301009783455">"Ponovo približite uređaje"</string>
-    <string name="beam_busy" msgid="5253335587620612576">"Prebacivanje je trenutno zauzeto. Pokušajte ponovo kada se prethodni prenos završi."</string>
+    <string name="beam_busy" msgid="5253335587620612576">"Prebacivanje je trenutno zauzeto. Probajte ponovo kada se prethodni prenos završi."</string>
     <string name="device" msgid="4459621591392478151">"uređaj"</string>
     <string name="connecting_peripheral" msgid="1296182660525660935">"Povezivanje sa uređajem <xliff:g id="DEVICE_NAME">%1$s</xliff:g>"</string>
     <string name="connected_peripheral" msgid="20748648543160091">"Uređaj <xliff:g id="DEVICE_NAME">%1$s</xliff:g> je povezan"</string>

@@ -4,14 +4,14 @@
     <string name="app_name" msgid="78565911793142902">"Nfc Hizmeti"</string>
     <string name="nfcUserLabel" msgid="7708535817084357357">"Nfc"</string>
     <string name="accessibility_nfc_enabled" msgid="7796246979948787735">"NFC etkin."</string>
-    <string name="tap_to_beam" msgid="5819197866281059878">"Işınlamak için hafifçe dokunun"</string>
+    <string name="tap_to_beam" msgid="5819197866281059878">"Işınlamak için dokunun"</string>
     <string name="beam_progress" msgid="7453634884807323920">"Gelen ışın..."</string>
     <string name="beam_outgoing" msgid="4679536649779123495">"Işınlanıyor..."</string>
     <string name="beam_complete" msgid="477026736424637435">"Işınlama tamamlandı"</string>
     <string name="beam_failed" msgid="5116241718189888630">"Işınlama tamamlanmadı"</string>
     <string name="beam_canceled" msgid="5425192751826544741">"Işınlama iptal edildi"</string>
     <string name="cancel" msgid="61873902552555096">"İptal"</string>
-    <string name="beam_tap_to_view" msgid="7430394753262448349">"Görüntülemek için hafifçe dokunun"</string>
+    <string name="beam_tap_to_view" msgid="7430394753262448349">"Görüntülemek için dokunun"</string>
     <string name="beam_handover_not_supported" msgid="4083165921751489015">"Alıcının cihazı yüksek boyutlu dosyaların ışınlamayla aktarılmasını desteklemiyor."</string>
     <string name="beam_try_again" msgid="3364677301009783455">"Cihazları tekrar bir araya getirin"</string>
     <string name="beam_busy" msgid="5253335587620612576">"Android Beam şu anda meşgul. Önceki aktarım işlemi tamamlandığında tekrar deneyin."</string>
@@ -28,13 +28,13 @@
     <string name="pair_yes" msgid="3525614878559994448">"Evet"</string>
     <string name="pair_no" msgid="5022308368904055020">"Hayır"</string>
     <string name="tap_again_to_pay" msgid="5754988005412859897">"<xliff:g id="APP">%1$s</xliff:g> ile ödemek için tekrar dokundurun"</string>
-    <string name="tap_again_to_complete" msgid="5423640945118279123">"<xliff:g id="APP">%1$s</xliff:g> ile tamamlamak için tekrar hafifçe dokunun"</string>
+    <string name="tap_again_to_complete" msgid="5423640945118279123">"<xliff:g id="APP">%1$s</xliff:g> ile tamamlamak için tekrar dokunun"</string>
     <string name="transaction_failure" msgid="7828102078637936513">"Bu işlem <xliff:g id="APP">%1$s</xliff:g> ile tamamlanamadı."</string>
     <string name="could_not_use_app" msgid="8137587876138569083">"<xliff:g id="APP">%1$s</xliff:g> kullanılamadı."</string>
     <string name="pay_with" msgid="5531545488795798945">"Ödemeyi şu uygulamayla yap:"</string>
     <string name="complete_with" msgid="6797459104103012992">"İşlemi şu uygulamayla tamamla:"</string>
     <string name="default_pay_app_removed" msgid="4108250545457437360">"Dokundur ve öde özelliği için tercih ettiğiniz hizmet kaldırıldı. Başka bir hizmet seçmek ister misiniz?"</string>
-    <string name="ask_nfc_tap" msgid="2925239870458286340">"Tamamlamak için diğer cihaza hafifçe dokunun"</string>
+    <string name="ask_nfc_tap" msgid="2925239870458286340">"Tamamlamak için diğer cihaza dokunun"</string>
     <string name="wifi_connect" msgid="6250727951843550671">"Bağlan"</string>
     <string name="status_unable_to_connect" msgid="9183908200295307657">"Ağa bağlanılamıyor"</string>
     <string name="status_wifi_connected" msgid="5893022897732105739">"Bağlanıldı"</string>
