@@ -85,6 +85,13 @@ typedef enum
     UICC_CLEAR_ALL_PIPE_NTF_RECEIVED = 0x01,
     UICC_SESSION_INTIALIZATION_DONE = 0x02
 }nfcee_disc_state;
+
+typedef enum
+{
+    TRANSCEIVE_STATUS_OK,
+    TRANSCEIVE_STATUS_FAILED,
+    TRANSCEIVE_STATUS_MAX_WTX_REACHED
+} eTransceiveStatus;
 #endif
 typedef enum {
     STATE_IDLE = 0x00,
@@ -211,6 +218,7 @@ public:
     uint8_t     eSE_Compliancy;
     uint8_t     mCreatedPipe;
     uint8_t     mDeletePipeHostId;
+    uint16_t    mWmMaxWtxCount;
     bool        meseETSI12Recovery;
     SyncEvent   mCreatePipeEvent;
     SyncEvent   mPipeOpenedEvent;
@@ -355,8 +363,13 @@ public:
     ** Returns:         True if ok.
     **
     *******************************************************************************/
+#if(NXP_EXTNS == TRUE)
+    eTransceiveStatus transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uint8_t* recvBuffer,
+                     int32_t recvBufferMaxSize, int32_t& recvBufferActualSize, int32_t timeoutMillisec);
+#else
     bool transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uint8_t* recvBuffer,
                      int32_t recvBufferMaxSize, int32_t& recvBufferActualSize, int32_t timeoutMillisec);
+#endif
 
     void notifyModeSet (tNFA_HANDLE eeHandle, bool success, tNFA_EE_STATUS eeStatus);
 

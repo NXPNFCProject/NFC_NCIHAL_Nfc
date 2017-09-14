@@ -220,7 +220,7 @@ bool transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uint8_t* recvBuffe
                  int32_t recvBufferMaxSize, int32_t& recvBufferActualSize, int32_t timeoutMillisec)
 {
     static const char fn [] = "DwpChannel::transceive";
-    bool stat = false;
+    eTransceiveStatus stat = TRANSCEIVE_STATUS_FAILED;
     SecureElement &se = SecureElement::getInstance();
     ALOGV("%s: enter", fn);
 
@@ -241,7 +241,7 @@ bool transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uint8_t* recvBuffe
                           recvBufferActualSize,
                           timeoutMillisec);
     ALOGV("%s: exit", fn);
-    return stat;
+    return ((stat == TRANSCEIVE_STATUS_OK) ? true : false);
 }
 
 /*******************************************************************************

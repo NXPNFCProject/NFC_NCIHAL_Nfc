@@ -678,10 +678,19 @@ static jbyteArray nativeNfcSecureElement_doTransceive (JNIEnv* e, jobject, jint 
     const int32_t recvBufferMaxSize = 0x8800;//1024; 34k
     uint8_t recvBuffer [recvBufferMaxSize];
     int32_t recvBufferActualSize = 0;
+    eTransceiveStatus tranStatus = TRANSCEIVE_STATUS_FAILED;
 
     ScopedByteArrayRW bytes(e, data);
 #if(NXP_EXTNS == TRUE)
     ALOGV("%s: enter; handle=0x%X; buf len=%zu", __func__, handle, bytes.size());
+    tranStatus = SecureElement::getInstance().transceive(reinterpret_cast<uint8_t*>(&bytes[0]), bytes.size(), recvBuffer, recvBufferMaxSize, recvBufferActualSize, WIRED_MODE_TRANSCEIVE_TIMEOUT);
+    if(tranStatus == TRANSCEIVE_STATUS_MAX_WTX_REACHED)
+    {
+        ALOGE ("%s: Wired Mode Max WTX count reached", __FUNCTION__);
+        jbyteArray result = e->NewByteArray(0);
+        nativeNfcSecureElement_doResetSecureElement(e,NULL,handle);
+        return result;
+    }
     SecureElement::getInstance().transceive(reinterpret_cast<uint8_t*>(&bytes[0]), bytes.size(), recvBuffer, recvBufferMaxSize, recvBufferActualSize, WIRED_MODE_TRANSCEIVE_TIMEOUT);
 
     //copy results back to java

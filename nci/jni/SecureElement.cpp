@@ -116,6 +116,7 @@ namespace android
     bool      hold_wired_mode = false;
     static    nfcc_standby_operation_t standby_state = STANDBY_MODE_ON;
     SyncEvent mWiredModeHoldEvent;
+    static int gWtxCount = 0;
     static void NFCC_StandbyModeTimerCallBack (union sigval);
     /*  hold the transceive flag should be set when the prio session is actrive/about to active*/
     /*  Event used to inform the prio session end and transceive resume*/
@@ -275,7 +276,8 @@ SecureElement::SecureElement ()
     mOberthurWarmResetCommand (3),
     mGetAtrRspwait (false),
     mRfFieldIsOn(false),
-    mTransceiveWaitOk(false)
+    mTransceiveWaitOk(false),
+    mWmMaxWtxCount(0)
 {
     memset (&mEeInfo, 0, nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED *sizeof(tNFA_EE_INFO));
     memset (&mUiccInfo, 0, sizeof(mUiccInfo));
@@ -390,6 +392,9 @@ bool SecureElement::initialize (nfc_jni_native_data* native)
                 || nfcFL.eseFL._ESE_DWP_SPI_SYNC_ENABLE) {
             spiDwpSyncState = STATE_IDLE;
         }
+        if (GetNxpNumValue(NAME_NXP_WM_MAX_WTX_COUNT, &mWmMaxWtxCount, sizeof(mWmMaxWtxCount)) == false || (mWmMaxWtxCount == 0))
+            mWmMaxWtxCount = 9000;
+        ALOGD ("%s: NFCC Wired Mode Max WTX Count =%ld", fn, mWmMaxWtxCount);
         dual_mode_current_state = SPI_DWPCL_NOT_ACTIVE;
         hold_the_transceive = false;
         active_ese_reset_control = 0;
@@ -1690,8 +1695,13 @@ bool SecureElement::disconnectEE (jint seID)
 ** Returns:         True if ok.
 **
 *******************************************************************************/
+#if(NXP_EXTNS == TRUE)
+eTransceiveStatus SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uint8_t* recvBuffer,
+        int32_t recvBufferMaxSize, int32_t& recvBufferActualSize, int32_t timeoutMillisec)
+#else
 bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uint8_t* recvBuffer,
         int32_t recvBufferMaxSize, int32_t& recvBufferActualSize, int32_t timeoutMillisec)
+#endif
 {
 
 
@@ -1700,6 +1710,11 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
     bool isSuccess = false;
     mTransceiveWaitOk = false;
     uint8_t newSelectCmd[NCI_MAX_AID_LEN + 10];
+#if(NXP_EXTNS == TRUE)
+    eTransceiveStatus tranStatus    = TRANSCEIVE_STATUS_FAILED;
+#else
+    bool isSuccess                  = false;
+#endif
 #if(NXP_EXTNS == TRUE)
     bool isEseAccessSuccess = false;
 #endif
@@ -1873,6 +1888,14 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
         {
             //          waitOk = mTransceiveEvent.wait (timeoutMillisec);
             mTransceiveEvent.wait ();
+#if(NXP_EXTNS == TRUE)
+            if(nfcFL.nfcNxpEse && (gWtxCount > mWmMaxWtxCount))
+            {
+                tranStatus = TRANSCEIVE_STATUS_MAX_WTX_REACHED;
+                gWtxCount = 0;
+                goto TheEnd;
+            }
+#endif
             if(nfcFL.nfcNxpEse && nfcFL.eseFL._NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION) {
                 isTransceiveOngoing = false;
             }
@@ -1916,8 +1939,11 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
             recvBufferActualSize = mActualResponseSize;
 
         memcpy (recvBuffer, mResponseData, recvBufferActualSize);
-        isSuccess = true;
-
+#if(NXP_EXTNS == TRUE)
+    tranStatus = TRANSCEIVE_STATUS_OK;
+#else
+     isSuccess = true;
+#endif
         TheEnd:
 #if(NXP_EXTNS == TRUE)
         if(nfcFL.nfcNxpEse) {
@@ -1932,8 +1958,14 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
                 active_ese_reset_control ^= TRANS_WIRED_ONGOING;
         }
 #endif
-        ALOGV("%s: exit; isSuccess: %d; recvBufferActualSize: %ld", fn, isSuccess, recvBufferActualSize);
-        return (isSuccess);
+
+#if(NXP_EXTNS == TRUE)
+    ALOGV ("%s: exit; tranStatus: %d; recvBufferActualSize: %ld", fn, tranStatus, recvBufferActualSize);
+    return (tranStatus);
+#else
+     ALOGV ("%s: exit; isSuccess: %d; recvBufferActualSize: %ld", fn, isSuccess, recvBufferActualSize);
+     return (isSuccess);
+#endif
 }
 /*******************************************************************************
  **
@@ -2569,7 +2601,19 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
 
         if(eventData->rcvd_evt.evt_code == NFA_HCI_EVT_WTX)
         {
-            ALOGV("%s: NFA_HCI_EVENT_RCVD_EVT: NFA_HCI_EVT_WTX ", fn);
+#if(NXP_EXTNS == TRUE)
+            gWtxCount++;
+            if(sSecElem.mWmMaxWtxCount >= gWtxCount)
+            {
+                ALOGV ("%s: NFA_HCI_EVENT_RCVD_EVT: NFA_HCI_EVT_WTX gWtxCount:%d", fn, gWtxCount);
+            }
+            else
+            {
+                ALOGV ("%s: NFA_HCI_EVENT_RCVD_EVT: NFA_HCI_EVT_WTX gWtxCount:%d", fn, gWtxCount);
+                sSecElem.mTransceiveEvent.notifyOne ();
+                break;
+            }
+#endif
         }
 #if(NXP_EXTNS == TRUE)
         else if (((eventData->rcvd_evt.evt_code == NFA_HCI_ABORT) || (eventData->rcvd_evt.last_SentEvtType == EVT_ABORT))
@@ -2623,6 +2667,7 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
                     SyncEventGuard guard (sSecElem.mResetEvent);
                     sSecElem.mResetEvent.notifyOne();
                 }
+                gWtxCount = 0;
             } else {
                 if(eventData->rcvd_evt.evt_len > 0)
                 {
