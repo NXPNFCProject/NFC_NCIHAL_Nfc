@@ -8303,6 +8303,14 @@ void *enableAGCThread(void *arg)
             sleep(10000);
             continue;
         }
+
+        if(sIsNfaEnabled != true || sIsDisabling == true)
+        {
+            menableAGC_debug_t.AGCdebugstarted = false;
+            set_AGC_process_state(false);
+            break;
+        }
+
         status = SendAGCDebugCommand();
         if(status == NFA_STATUS_OK)
         {
