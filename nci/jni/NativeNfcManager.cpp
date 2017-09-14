@@ -3294,6 +3294,7 @@ static jboolean nfcManager_doDeinitialize (JNIEnv* e, jobject obj)
             nfcFL.nfccFL._NFCC_SPI_FW_DOWNLOAD_SYNC)) {
         /* NFC state is put to NFC_OFF, no more request on NFC accepted(no signal events)*/
         sNfcState = NFC_OFF;
+		NFC_ResetNfcServicePid();
         releaseSPIEvtHandlerThread();
     }
 
