@@ -691,7 +691,6 @@ static jbyteArray nativeNfcSecureElement_doTransceive (JNIEnv* e, jobject, jint 
         nativeNfcSecureElement_doResetSecureElement(e,NULL,handle);
         return result;
     }
-    SecureElement::getInstance().transceive(reinterpret_cast<uint8_t*>(&bytes[0]), bytes.size(), recvBuffer, recvBufferMaxSize, recvBufferActualSize, WIRED_MODE_TRANSCEIVE_TIMEOUT);
 
     //copy results back to java
     jbyteArray result = e->NewByteArray(recvBufferActualSize);
