@@ -203,7 +203,7 @@ public class RegisteredT3tIdentifiersCache {
     }
 
     public void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
-        pw.println("    T3T Identifier cache entries: ");
+        pw.println("T3T Identifier cache entries: ");
         for (Map.Entry<String, NfcFServiceInfo> entry : mForegroundT3tIdentifiersCache.entrySet()) {
             pw.println("    NFCID2: " + entry.getKey());
             pw.println("    NfcFServiceInfo: ");

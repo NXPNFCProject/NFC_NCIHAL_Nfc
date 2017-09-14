@@ -715,7 +715,7 @@ public class RegisteredNfcFServicesCache {
     }
 
     public void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
-        pw.println("Registered HCE services for current user: ");
+        pw.println("Registered HCE-F services for current user: ");
         synchronized (mLock) {
             UserServices userServices = findOrCreateUserLocked(ActivityManager.getCurrentUser());
             for (NfcFServiceInfo service : userServices.services.values()) {
