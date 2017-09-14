@@ -4314,6 +4314,7 @@ static void nfaVSC_ForceDwpOnOff(bool type)
                     ALOGV("%s sending standby mode command successful", __func__);
                 }
                 standby_state = STANDBY_MODE_SUSPEND;
+                spiDwpSyncState = STATE_IDLE;
                 return;
             }
             /*If DWP session is closed*/
