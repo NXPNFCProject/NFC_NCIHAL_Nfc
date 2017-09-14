@@ -182,10 +182,4 @@ public class ForegroundUtils extends IProcessObserver.Stub {
                 Integer.toString(pid));
         onForegroundActivitiesChanged(pid, uid, false);
     }
-
-    @Override
-    public void onProcessStateChanged(int pid, int uid, int procState)
-            throws RemoteException {
-        // Don't care
-    }
 }
