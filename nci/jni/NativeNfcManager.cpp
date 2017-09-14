@@ -163,6 +163,7 @@ namespace android
     extern bool gIsWaiting4Deact2SleepNtf;
     extern bool gGotDeact2IdleNtf;
     bool nfcManager_isTransanctionOnGoing(bool isInstallRequest);
+    bool nfcManager_isRequestPending(void);
     extern tNFA_STATUS enableSWPInterface();
     jmethodID               gCachedNfcManagerNotifyFwDwnldRequested;
 
@@ -514,6 +515,7 @@ static struct nfc_jni_native_data *gNativeData = NULL;
 #if(NXP_EXTNS == TRUE)
 static struct nfc_jni_native_data* nat = NULL;
 static bool sRfFieldOff = true;
+static bool gsRouteUpdated = false;
 /***P2P-Prio Logic for Multiprotocol***/
 static uint8_t multiprotocol_flag = 1;
 static uint8_t multiprotocol_detected = 0;
@@ -2006,6 +2008,7 @@ static jboolean nfcManager_setDefaultRoute (JNIEnv*, jobject, jint defaultRouteE
         result = RoutingManager::getInstance().commitRouting();
     else
         ALOGV("%s : Commit routing failed ", __func__);
+    gsRouteUpdated = true;
 #else
     result = RoutingManager::getInstance().setDefaultRouting();
 #endif
@@ -3423,6 +3426,9 @@ if(nfcFL.eseFL._JCOP_WA_ENABLE) {
     sIsSecElemSelected = 0;
     gActivated = false;
     sP2pEnabled = false;
+#if(NXP_EXTNS == TRUE)
+    gsRouteUpdated = false;
+#endif
     sLfT3tMax = 0;
     {
         //unblock NFA_EnablePolling() and NFA_DisablePolling()
@@ -5239,18 +5245,20 @@ int register_com_android_nfc_NativeNfcManager (JNIEnv *e)
 *******************************************************************************/
 void startRfDiscovery(bool isStart)
 {
+#if(NXP_EXTNS == TRUE)
     tNFA_STATUS status = NFA_STATUS_FAILED;
-    if(sAutonomousSet == 1)
-    {
+    if(sAutonomousSet == 1) {
         ALOGV("Autonomous mode set don't start RF disc %d",isStart);
         return;
     }
-    if(isStart == sRfEnabled)
-    {
+    if((!gsRouteUpdated) && isStart) {
+        ALOGV("%s: Routing table update pending.Can not start RF disc. Returning..",__FUNCTION__);
+        return;
+    }
+    if(isStart == sRfEnabled) {
         ALOGD("%s Already in RF state: %d", __FUNCTION__, isStart);
         return;
     }
-#if(NXP_EXTNS == TRUE)
     if(nfcFL.nfcNxpEse && nfcFL.eseFL._NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION) {
         gDiscMutex.lock();
     }
@@ -5258,16 +5266,14 @@ void startRfDiscovery(bool isStart)
     ALOGV("%s: is start=%d", __func__, isStart);
     SyncEventGuard guard (sNfaEnableDisablePollingEvent);
     status  = isStart ? NFA_StartRfDiscovery () : NFA_StopRfDiscovery ();
-    if (status == NFA_STATUS_OK)
-    {
+    if (status == NFA_STATUS_OK) {
         if(gGeneralPowershutDown == NFC_MODE_OFF)
             sDiscCmdwhleNfcOff = true;
         sNfaEnableDisablePollingEvent.wait (NFC_CMD_TIMEOUT); //wait for NFA_RF_DISCOVERY_xxxx_EVT
         sRfEnabled = isStart;
         sDiscCmdwhleNfcOff = false;
     }
-    else
-    {
+    else {
         ALOGE("%s: Failed to start/stop RF discovery; error=0x%X", __func__, status);
     }
 #if(NXP_EXTNS == TRUE)
@@ -6062,7 +6068,26 @@ static void nfcManager_doSetScreenOrPowerState (JNIEnv* e, jobject o, jint state
     else
         ALOGE("%s: unknown screen or power state. state=%d", __func__, state);
 }
+/*******************************************************************************
+ **
+ ** Function:        nfcManager_isRequestPending()
+ **
+ ** Description:     Checks If any pending request
+ **
+ ** Returns:         true if any request pending else false
+ **
+*******************************************************************************/
+bool nfcManager_isRequestPending(void)
+{
+    bool isPending = false;
 
+    if((transaction_data.current_transcation_state != NFA_TRANS_ACTIVATED_EVT) &&
+            ((pendingScreenState == true) || (get_last_request() != 0x00)))
+    {
+        isPending = true;
+    }
+    return isPending;
+}
 #endif
 /*******************************************************************************
  **
@@ -8471,28 +8496,6 @@ void nfcManager_getFeatureList() {
     ALOGV("%s : chipType",__func__);
     CONFIGURE_FEATURELIST(chipType);
 }
-
-/*******************************************************************************
-+ **
-+ ** Function:        nfcManager_isRequestPending()
-+ **
-+ ** Description:     Checks If any pending request
-+ **
-+ ** Returns:         true if any request pending else false
-+ **
-+*******************************************************************************/
-bool nfcManager_isRequestPending(void)
-{
-    bool isPending = false;
-
-    if((transaction_data.current_transcation_state != NFA_TRANS_ACTIVATED_EVT) &&
-            ((pendingScreenState == true) || (get_last_request() != 0x00)))
-    {
-        isPending = true;
-    }
-    return isPending;
-}
-
 
 #endif
 }
