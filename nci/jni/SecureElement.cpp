@@ -5106,7 +5106,7 @@ tNFA_STATUS SecureElement::setNfccPwrConfig(uint8_t value)
     {
         cur_value = value;
         SyncEventGuard guard (mPwrLinkCtrlEvent);
-        nfaStat = NFC_Nfcee_PwrLinkCtrl((uint8_t)EE_HANDLE_0xF3, value);
+        nfaStat = NFA_SendPowerLinkCommand((uint8_t)EE_HANDLE_0xF3, value);
         if(nfaStat ==  NFA_STATUS_OK && !android::nfcManager_isNfcDisabling())
             mPwrLinkCtrlEvent.wait(NFC_CMD_TIMEOUT);
     }
