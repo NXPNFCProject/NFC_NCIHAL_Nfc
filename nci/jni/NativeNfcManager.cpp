@@ -540,7 +540,6 @@ void *enableThread(void *arg);
 static IntervalTimer scleanupTimerProc_transaction;
 static bool gIsDtaEnabled=false;
 
-tNfc_featureList nfcFL;
 static void nfcManager_getFeatureList();
 static void register_signal_handler();
 /////////////////////////////////////////////////////////////

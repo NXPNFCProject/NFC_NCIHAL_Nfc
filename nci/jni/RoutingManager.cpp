@@ -2450,7 +2450,7 @@ void RoutingManager::nfaEeCallback (tNFA_EE_EVT event, tNFA_EE_CBACK_DATA* event
             se.mPwrLinkCtrlEvent.notifyOne();
         }
         break;
-
+#endif
     case NFA_EE_SET_TECH_CFG_EVT:
         {
             ALOGV("%s: NFA_EE_SET_TECH_CFG_EVT; status=0x%X", fn, eventData->status);
@@ -3072,7 +3072,6 @@ void *ee_removed_ntf_handler_thread(void *data)
             ALOGV("%s: power link command failed", __func__);
         }
     }
-#endif
     stat = NFA_EeModeSet(SecureElement::EE_HANDLE_0xF3, NFA_EE_MD_DEACTIVATE);
 
     if(stat == NFA_STATUS_OK)
