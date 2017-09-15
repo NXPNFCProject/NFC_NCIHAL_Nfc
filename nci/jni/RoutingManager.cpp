@@ -3227,6 +3227,17 @@ bool RoutingManager::is_ee_recovery_ongoing()
     return recovery;
 }
 
+void RoutingManager::setEERecovery(bool value)
+{
+    static const char fn [] = "RoutingManager::setEERecovery";
+    if(!nfcFL.nfccFL._NFCEE_REMOVED_NTF_RECOVERY) {
+        ALOGV("%s : NFCEE_REMOVED_NTF_RECOVERY not avaialble.Returning",__func__);
+        return;
+    }
+    ALOGV("%s: value %x", __func__,value);
+    recovery = value;
+}
+
 /*******************************************************************************
 **
 ** Function:        getRouting

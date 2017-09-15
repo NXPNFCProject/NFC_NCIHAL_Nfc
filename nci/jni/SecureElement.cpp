@@ -2745,6 +2745,24 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
             sSecElem.mNfceeInitCbEvent.notifyOne();
             break;
         }
+    case NFA_HCI_EE_RECOVERY_EVT:
+    {
+        tNFA_HCI_EE_RECOVERY_EVT &ee_recovery = eventData->ee_recovery;
+        ALOGV("%s: NFA_HCI_EE_RECOVERY_EVT; status=0x%X", fn, ee_recovery.status);
+        if(ee_recovery.status == NFA_HCI_EE_RECOVERY_STARTED)
+            RoutingManager::getInstance().setEERecovery(true);
+        else if(ee_recovery.status == NFA_HCI_EE_RECOVERY_COMPLETED)
+        {
+            ALOGV("%s: NFA_HCI_EE_RECOVERY_EVT; recovery completed status=0x%X", fn, ee_recovery.status);
+            RoutingManager::getInstance().setEERecovery(false);
+            if(active_ese_reset_control & TRANS_WIRED_ONGOING)
+            {
+                SyncEventGuard guard(sSecElem.mTransceiveEvent);
+                sSecElem.mTransceiveEvent.notifyOne();
+            }
+        }
+        break;
+    }
     case NFA_HCI_ADD_STATIC_PIPE_EVT:
     {
         ALOGV("%s: NFA_HCI_ADD_STATIC_PIPE_EVT; status=0x%X", fn, eventData->admin_rsp_rcvd.status);
