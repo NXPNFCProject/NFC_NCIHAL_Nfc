@@ -800,9 +800,16 @@ void RoutingManager::setCeRouteStrictDisable(uint32_t state)
  ********************************************************************************/
 void RoutingManager::nfaEEConnect()
 {
-    if(NFA_STATUS_OK == NFA_EeConnect(EE_HCI_DEFAULT_HANDLE,
-                NFC_NFCEE_INTERFACE_HCI_ACCESS,
-                nfaEeCallback))
+    tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
+    if(NFA_GetNCIVersion() != NCI_VERSION_2_0)
+    {
+      nfaStat = NFA_EeConnect(EE_HCI_DEFAULT_HANDLE, NFC_NFCEE_INTERFACE_HCI_ACCESS, nfaEeCallback);
+    }
+    else
+    {
+      nfaStat = NFA_EeDiscover(nfaEeCallback);
+    }
+    if(nfaStat == NFA_STATUS_OK)
     {
         SyncEventGuard g(gNfceeDiscCbEvent);
         ALOGV("%s, Sem wait for gNfceeDiscCbEvent %d", __FUNCTION__, gdisc_timeout);
