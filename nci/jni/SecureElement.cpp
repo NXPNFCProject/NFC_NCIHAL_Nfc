@@ -1763,22 +1763,7 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
     }
 
 #if(NXP_EXTNS == TRUE)
-    if(nfcFL.nfcNxpEse) {
-        if(nfcFL.eseFL._WIRED_MODE_STANDBY) {
-            if(standby_state == STANDBY_MODE_SUSPEND) {
-                if(mNfccPowerMode == 1) {
-                    nfaStat = setNfccPwrConfig(POWER_ALWAYS_ON|COMM_LINK_ACTIVE);
-                    if(nfaStat != NFA_STATUS_OK) {
-                        ALOGV("%s: power link command failed", __func__);
-                        goto TheEnd;
-                    } else {
-                        SecEle_Modeset(0x01);
-                    }
-                }
-            }
-        }
-        NfccStandByOperation(STANDBY_TIMER_STOP);
-    }
+        NfccStandByOperation(STANDBY_MODE_OFF);
 #endif
     {
         SyncEventGuard guard (mTransceiveEvent);
@@ -3036,20 +3021,7 @@ bool SecureElement::getAtr(jint seID, uint8_t* recvBuffer, int32_t *recvBufferSi
             ALOGE("%s: NFC_ReqWiredAccess timeout", fn);
             return false;
         }
-        if(nfcFL.eseFL._WIRED_MODE_STANDBY) {
-            if(standby_state == STANDBY_MODE_SUSPEND) {
-                if(mNfccPowerMode == 1) {
-                    nfaStat = setNfccPwrConfig(POWER_ALWAYS_ON|COMM_LINK_ACTIVE);
-                    if(nfaStat != NFA_STATUS_OK) {
-                        ALOGV("%s: power link command failed", __func__);
-                        return false;
-                    } else {
-                        SecEle_Modeset(0x01);
-                    }
-                }
-            }
-        }
-        NfccStandByOperation(STANDBY_TIMER_STOP);
+        NfccStandByOperation(STANDBY_MODE_OFF);
 
         gateInfo = getApduGateInfo();
         if(gateInfo == PROPREITARY_APDU_GATE)
@@ -3526,16 +3498,33 @@ void SecureElement::NfccStandByOperation(nfcc_standby_operation_t value)
     static IntervalTimer   mNFCCStandbyModeTimer; // timer to enable standby mode for NFCC
     tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
     bool stat = false;
+    mNfccStandbyMutex.lock();
     ALOGV("In SecureElement::NfccStandByOperation value = %d, state = %d", value, standby_state);
     switch(value)
     {
     case STANDBY_TIMER_START:
-        standby_state = STANDBY_MODE_OFF;
+        standby_state = STANDBY_MODE_TIMER_ON;
         if(nfccStandbytimeout > 0)
         {
             mNFCCStandbyModeTimer.set(nfccStandbytimeout , NFCC_StandbyModeTimerCallBack );
         }
         break;
+    case STANDBY_MODE_OFF:
+    {
+        if(nfcFL.eseFL._WIRED_MODE_STANDBY) {
+            if(standby_state == STANDBY_MODE_SUSPEND) {
+                if(mNfccPowerMode == 1) {
+                    nfaStat = setNfccPwrConfig(POWER_ALWAYS_ON|COMM_LINK_ACTIVE);
+                    if(nfaStat != NFA_STATUS_OK) {
+                        ALOGV("%s: power link command failed", __func__);
+                        break;
+                    } else {
+                        SecEle_Modeset(0x01);
+                    }
+                }
+            }
+        }
+    }// this is to handle stop timer also.
     case STANDBY_TIMER_STOP:
         {
             if(nfccStandbytimeout > 0)
@@ -3545,7 +3534,7 @@ void SecureElement::NfccStandByOperation(nfcc_standby_operation_t value)
         if(spiDwpSyncState & STATE_DWP_CLOSE) {
             spiDwpSyncState ^= STATE_DWP_CLOSE;
         }
-        break;
+    break;
     case STANDBY_MODE_ON:
     {
         if(nfcFL.eseFL._WIRED_MODE_STANDBY_PROP) {
@@ -3599,9 +3588,16 @@ void SecureElement::NfccStandByOperation(nfcc_standby_operation_t value)
     {
         ALOGV("%s: SPI is ON-StandBy not allowed", __func__);
         standby_state = STANDBY_MODE_ON;
+        mNfccStandbyMutex.unlock();
         return;
     }
     }
+        if(nfcFL.eseFL._WIRED_MODE_STANDBY == true) {
+            if(standby_state != STANDBY_MODE_TIMER_ON) {
+                ALOGV("%s the timer must be stopped by next atr/transceive, ignoring timeout", __func__);
+                break;
+            }
+        }
     if(nfcFL.eseFL._WIRED_MODE_STANDBY_PROP)
         /*Send the EVT_END_OF_APDU_TRANSFER  after the transceive timer timed out*/
         stat = SecureElement::getInstance().sendEvent(SecureElement::EVT_END_OF_APDU_TRANSFER);
@@ -3664,6 +3660,7 @@ void SecureElement::NfccStandByOperation(nfcc_standby_operation_t value)
     break;
 
     }
+    mNfccStandbyMutex.unlock();
 }
 /*******************************************************************************
 **

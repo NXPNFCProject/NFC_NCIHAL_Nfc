@@ -169,10 +169,12 @@ typedef enum operation{
     STANDBY_TIMER_TIMEOUT,
     STANDBY_GPIO_HIGH,
     STANDBY_GPIO_LOW,
-    STANDBY_MODE_ON,
-    STANDBY_MODE_OFF,
-    STANDBY_MODE_SUSPEND
+    STANDBY_MODE_ON,      /* standby mode is on */
+    STANDBY_MODE_OFF,     /* standby mode is off */
+    STANDBY_MODE_SUSPEND, /* standby timer timed out */
+    STANDBY_MODE_TIMER_ON /* standby timer running */
 }nfcc_standby_operation_t;
+
 void spi_prio_signal_handler (int signum, siginfo_t *info, void *unused);
 
 typedef enum apdu_gate{
@@ -729,6 +731,7 @@ public:
     uint8_t         mPassiveListenCnt;                 //Retry cnt for passive listen enable timer
     SyncEvent       mPassiveListenEvt;
     Mutex           mPassiveListenMutex;
+    Mutex           mNfccStandbyMutex;
 #endif
     jint getSETechnology(tNFA_HANDLE eeHandle);
     static const uint8_t UICC_ID = 0x02;
