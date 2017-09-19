@@ -353,7 +353,8 @@ if(nfcFL.nfcNxpEse && stat)
 
     if(status != NFA_STATUS_OK)
     {
-        if(nfcFL.eseFL._WIRED_MODE_STANDBY && (se.mNfccPowerMode == 1)) {
+        if(nfcFL.eseFL._WIRED_MODE_STANDBY && (se.mNfccPowerMode == 1) &&
+        !(p61_current_state & (P61_STATE_SPI | P61_STATE_SPI_PRIO))) {
             se.setNfccPwrConfig(se.NFCC_DECIDES);
         }
         se.disconnectEE (secElemHandle);
