@@ -310,7 +310,7 @@ public class HostNfcFEmulationManager {
                     return;
                 }
                 */
-                if (data.length == 0) {
+                if (data == null || data.length == 0) {
                     Log.e(TAG, "Empty response packet");
                     sendEmptyData();
                     return;
