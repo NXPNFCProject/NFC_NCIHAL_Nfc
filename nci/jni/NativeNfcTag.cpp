@@ -1255,6 +1255,7 @@ static jint nativeNfcTag_doReconnect (JNIEnv*, jobject)
 
     uint8_t* uid;
     uint32_t uid_len;
+    tNFC_STATUS stat;
     ALOGV("%s: enter; handle=%x", __func__, handle);
     natTag.getTypeATagUID(&uid,&uid_len);
 
@@ -1294,74 +1295,84 @@ static jint nativeNfcTag_doReconnect (JNIEnv*, jobject)
                     uid_len > 0 && uid[0] == 0x08))
          )
     {
-        ALOGV("%s: reconnect for TypeB / TypeA random uid", __func__);
-        sReconnectNtfTimer.set(500, sReconnectTimerProc);
+        if(NFA_GetNCIVersion() != NCI_VERSION_2_0)
+		{
+            ALOGV("%s: reconnect for TypeB / TypeA random uid", __func__);
+            sReconnectNtfTimer.set(500, sReconnectTimerProc);
 
-        tNFC_STATUS stat = NFA_RegVSCback (true,nfaVSCNtfCallback); //Register CallBack for VS NTF
-        if(NFA_STATUS_OK != stat)
-        {
-            retCode = 0x01;
-            goto TheEnd;
-        }
-
-        SyncEventGuard guard (sNfaVSCResponseEvent);
-        stat = NFA_SendVsCommand (0x11,0x00,NULL,nfaVSCCallback);
-        if(NFA_STATUS_OK == stat)
-        {
-            sIsReconnecting = true;
-            ALOGV("%s: reconnect for TypeB - wait for NFA VS command to finish", __func__);
-            sNfaVSCResponseEvent.wait(); //wait for NFA VS command to finish
-            ALOGV("%s: reconnect for TypeB - Got RSP", __func__);
-        }
-
-        if(false == sVSCRsp)
-        {
-            retCode = 0x01;
-            sIsReconnecting = false;
-        }
-        else
-        {
+            tNFC_STATUS stat = NFA_RegVSCback (true,nfaVSCNtfCallback); //Register CallBack for VS NTF
+            if(NFA_STATUS_OK != stat)
             {
-                ALOGV("%s: reconnect for TypeB - wait for NFA VS NTF to come", __func__);
-                SyncEventGuard guard (sNfaVSCNotificationEvent);
-                sNfaVSCNotificationEvent.wait(); //wait for NFA VS NTF to come
-                ALOGV("%s: reconnect for TypeB - GOT NFA VS NTF", __func__);
-                sReconnectNtfTimer.kill();
+                retCode = 0x01;
+                goto TheEnd;
+            }
+
+            SyncEventGuard guard (sNfaVSCResponseEvent);
+            stat = NFA_SendVsCommand (0x11,0x00,NULL,nfaVSCCallback);
+            if(NFA_STATUS_OK == stat)
+            {
+                sIsReconnecting = true;
+                ALOGV("%s: reconnect for TypeB - wait for NFA VS command to finish", __func__);
+                sNfaVSCResponseEvent.wait(); //wait for NFA VS command to finish
+                ALOGV("%s: reconnect for TypeB - Got RSP", __func__);
+            }
+
+            if(false == sVSCRsp)
+            {
+                retCode = 0x01;
                 sIsReconnecting = false;
             }
-
-            if(false == sIsTagInField)
-            {
-                ALOGV("%s: NxpNci: TAG OUT OF FIELD", __func__);
-                retCode = STATUS_CODE_TARGET_LOST;
-
-                SyncEventGuard g (gDeactivatedEvent);
-
-                //Tag not present, deactivate the TAG.
-                stat = NFA_Deactivate (false);
-                if (stat == NFA_STATUS_OK)
-                {
-                    gDeactivatedEvent.wait ();
-                }
-                else
-                {
-                    ALOGE("%s: deactivate failed; error=0x%X", __func__, stat);
-                }
-            }
-
             else
             {
-                retCode = 0x00;
+                {
+                    ALOGV("%s: reconnect for TypeB - wait for NFA VS NTF to come", __func__);
+                    SyncEventGuard guard (sNfaVSCNotificationEvent);
+                    sNfaVSCNotificationEvent.wait(); //wait for NFA VS NTF to come
+                    ALOGV("%s: reconnect for TypeB - GOT NFA VS NTF", __func__);
+                    sReconnectNtfTimer.kill();
+                    sIsReconnecting = false;
+                }
+
+                if(false == sIsTagInField)
+                {
+                    ALOGV("%s: NxpNci: TAG OUT OF FIELD", __func__);
+                    retCode = STATUS_CODE_TARGET_LOST;
+
+                    SyncEventGuard g (gDeactivatedEvent);
+
+                    //Tag not present, deactivate the TAG.
+                    stat = NFA_Deactivate (false);
+                    if (stat == NFA_STATUS_OK)
+                    {
+                        gDeactivatedEvent.wait ();
+                    }
+                    else
+                    {
+                        ALOGE("%s: deactivate failed; error=0x%X", __func__, stat);
+                    }
+                }
+
+                else
+                {
+                    retCode = 0x00;
+                }
             }
-        }
 
-        stat = NFA_RegVSCback (false,nfaVSCNtfCallback); //DeRegister CallBack for VS NTF
-        if(NFA_STATUS_OK != stat)
-        {
-            retCode = 0x01;
+            stat = NFA_RegVSCback (false,nfaVSCNtfCallback); //DeRegister CallBack for VS NTF
+            if(NFA_STATUS_OK != stat)
+            {
+                retCode = 0x01;
+            }
+            ALOGV("%s: reconnect for TypeB - return", __func__);
+        }else{
+                SyncEventGuard guard (sPresenceCheckEvent);
+                stat = NFA_RwPresenceCheck (NfcTag::getInstance().getPresenceCheckAlgorithm());
+                if (stat == NFA_STATUS_OK)
+                {
+                    sPresenceCheckEvent.wait ();
+                    retCode = sIsTagPresent ? NCI_STATUS_OK : NCI_STATUS_FAILED;
+                }
         }
-        ALOGV("%s: reconnect for TypeB - return", __func__);
-
         goto TheEnd;
     }
      // this is only supported for type 2 or 4 (ISO_DEP) tags
