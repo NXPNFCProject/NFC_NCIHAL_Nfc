@@ -817,13 +817,9 @@ public:
 #endif
 
 private:
+    static uint8_t mStaticPipeProp;
     static const unsigned int MAX_RESPONSE_SIZE = 0x8800;//1024; //34K
     enum RouteSelection {NoRoute, DefaultRoute, SecElemRoute};
-#ifndef GEMATO_SE_SUPPORT
-    static const uint8_t STATIC_PIPE_0x70 = 0x19; //PN54X Gemalto's proprietary static pipe
-#else
-    static const uint8_t STATIC_PIPE_0x70 = 0x70; //Broadcom's proprietary static pipe
-#endif
     static const uint8_t STATIC_PIPE_0x71 = 0x71; //Broadcom's proprietary static pipe
     static const uint8_t EVT_SEND_DATA = 0x10;    //see specification ETSI TS 102 622 v9.0.0 (Host Controller Interface); section 9.3.3.3
 #if(NXP_EXTNS == TRUE)
