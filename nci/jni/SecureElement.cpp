@@ -4077,7 +4077,7 @@ void *spiEventHandlerThread(void *arg)
     }
     (void)arg;
     uint16_t usEvent = 0, usEvtLen = 0;
-
+    tNFC_STATUS stat;
 
     NFCSTATUS ese_status = NFA_STATUS_FAILED;
 
@@ -4130,6 +4130,8 @@ void *spiEventHandlerThread(void *arg)
                         (usEvent & P61_STATE_SPI))
                 {
                     nfaVSC_ForceDwpOnOff(true);
+                    if(android::nfcManager_getNfcState() != NFC_OFF)
+                        NFC_RelForceDwpOnOffWait((void*)&stat);
                 }
                 else if((usEvent & P61_STATE_SPI_PRIO_END) ||
                         (usEvent & P61_STATE_SPI_END))
@@ -4153,6 +4155,8 @@ void *spiEventHandlerThread(void *arg)
                         (usEvent & P61_STATE_SPI)))
         {
             nfaVSC_ForceDwpOnOff(true);
+            if(android::nfcManager_getNfcState() != NFC_OFF)
+                NFC_RelForceDwpOnOffWait((void*)&stat);
         }
         else if(nfcFL.eseFL._ESE_DWP_SPI_SYNC_ENABLE &&
                 ((usEvent & P61_STATE_SPI_PRIO_END) ||
@@ -4248,6 +4252,10 @@ void releaseSPIEvtHandlerThread()
     /* Notifying the signal handler thread to exit if it is waiting */
     SyncEventGuard guard(sSPISignalHandlerEvent);
     sSPISignalHandlerEvent.notifyOne ();
+    {
+        SyncEventGuard guard(SecureElement::getInstance().mModeSetNtf);
+        SecureElement::getInstance().mModeSetNtf.notifyOne();
+    }
 }
 /*******************************************************************************
 **
@@ -4751,7 +4759,8 @@ tNFA_STATUS SecureElement::SecElem_EeModeSet(uint16_t handle, uint8_t mode)
     }
     SyncEventGuard guard (sSecElem.mEeSetModeEvent);
     stat =  NFA_EeModeSet(handle, mode);
-    if(stat == NFA_STATUS_OK && !android::nfcManager_isNfcDisabling())
+    if(stat == NFA_STATUS_OK && !android::nfcManager_isNfcDisabling() &&
+       (android::nfcManager_getNfcState() != NFC_OFF))
     {
         sSecElem.mEeSetModeEvent.wait ();
     }
