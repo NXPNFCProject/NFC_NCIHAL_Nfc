@@ -3244,15 +3244,6 @@ bool SecureElement::SecEle_Modeset(uint8_t type)
             retval = true;
         }
 #endif
-        /*Mode set on wait for ntf*/
-        if(type)
-        {
-            SyncEventGuard guard (SecureElement::getInstance().mEeSetModeEvent);
-            if(SecureElement::getInstance().mEeSetModeEvent.wait(500) == false)
-            {
-                ALOGE("%s: timeout waiting for setModeNtf", __func__);
-            }
-        }
     }
     else
 #endif
