@@ -678,11 +678,13 @@ tNFA_STATUS GetNumNFCEEConfigured(void)
     uint8_t num_config_params = 0x02;
     uint8_t config_param_len = 0x05;
     uint8_t buf_offset = 0x08;
+    if(nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC) {
     cmd_buf[buf_offset++] = NXP_NFC_SET_CONFIG_PARAM_EXT;
     cmd_buf[buf_offset++] = NXP_NFC_PARAM_ID_SWP1A;
     cmd_buf_len += 0x02;
     num_config_params++;
     config_param_len += 0x02;
+}
     cmd_buf[2] = config_param_len;
     cmd_buf[3] = num_config_params;
 
