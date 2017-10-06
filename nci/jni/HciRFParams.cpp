@@ -16,11 +16,17 @@
 
 
 #include "HciRFParams.h"
+#include "SecureElement.h"
 
 #define VAL_START_IDX 4
 #define MAX_AID_SIZE 10
 #define MAX_APP_DATA_SIZE 15
 #define MAX_HIGHER_LAYER_RSP_SIZE 15
+
+#if(NXP_EXTNS == true)
+#define ESE_HANDLE    0x4C0
+bool IsEseCeDisabled;
+#endif
 
 HciRFParams HciRFParams::sHciRFParams;
 
@@ -117,6 +123,15 @@ bool HciRFParams::initialize ()
     ALOGV("%s: status %x", __func__,get_config->status);
     ALOGV("%s: tlv_size %d", __func__,get_config->tlv_size);
     ALOGV("%s: param_tlvs %x", __func__,get_config->param_tlvs[0]);
+
+#if(NXP_EXTNS == true)
+    if((get_config->param_tlvs[1] == 0xA0 && get_config->param_tlvs[2] == 0xF0) &&
+        (get_config->param_tlvs[5] == 0xFF || get_config->param_tlvs[43] == 0xFF) &&
+         SecureElement::getInstance().getEeStatus(ESE_HANDLE) == NFA_EE_STATUS_ACTIVE) {
+        ALOGV("%s: CE with ESE is disabled", __func__);
+        IsEseCeDisabled = true;
+    }
+#endif
 
     uint8_t *params = get_config->param_tlvs;
     params+=VAL_START_IDX;

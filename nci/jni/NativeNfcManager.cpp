@@ -107,6 +107,7 @@ extern bool                 recovery;
 extern uint8_t              swp_getconfig_status;
 extern int                  gUICCVirtualWiredProtectMask;
 extern int                  gEseVirtualWiredProtectMask;
+extern bool                 IsEseCeDisabled;
 static int32_t              gNfcInitTimeout;
 int32_t                     gdisc_timeout;
 int32_t                     gSeDiscoverycount = 0;
@@ -2148,6 +2149,7 @@ static jboolean nfcManager_doInitialize (JNIEnv* e, jobject o)
     tNFA_PMID ven_config_addr[]  = {0xA0, 0x07};
     bool isSuccess = false;
     sNfcee_disc_state = UICC_SESSION_NOT_INTIALIZED;
+    IsEseCeDisabled = false;
 
     /* NFC initialization in progress */
     if(NFC_OFF == sNfcState)
@@ -2295,6 +2297,19 @@ static jboolean nfcManager_doInitialize (JNIEnv* e, jobject o)
                 /////////////////////////////////////////////////////////////////////////////////
                 // Add extra configuration here (work-arounds, etc.)
 #if (NXP_EXTNS == TRUE)
+                    if(IsEseCeDisabled)
+                    {
+                        ALOGV("CE with ESE is disable, Hence reset the session");
+                        stat = android::ResetEseSession();
+                        if(stat == NFA_STATUS_OK)
+                        {
+                            SecureElement::getInstance().SecEle_Modeset(0x00);
+                            usleep(50*1000);
+                            SecureElement::getInstance().SecEle_Modeset(0x01);
+                        }
+                        IsEseCeDisabled = false;
+                    }
+
                     if(nfcFL.nfcNxpEse) {
                         if(nfcFL.eseFL._ESE_SVDD_SYNC || nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION ||
                                 nfcFL.nfccFL._NFCC_SPI_FW_DOWNLOAD_SYNC ||
