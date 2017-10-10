@@ -4748,6 +4748,10 @@ tNFA_STATUS SecureElement::SecElem_EeModeSet(uint16_t handle, uint8_t mode)
             sSecElem.mResetEvent.wait();
         }
     }
+    if((dual_mode_current_state & SPI_ON) && (handle == EE_HANDLE_0xF3) &&
+        (mode == NFA_EE_MD_DEACTIVATE))
+        return NFA_STATUS_OK;
+
     SyncEventGuard guard (sSecElem.mEeSetModeEvent);
     stat =  NFA_EeModeSet(handle, mode);
     if(stat == NFA_STATUS_OK && !android::nfcManager_isNfcDisabling() &&
