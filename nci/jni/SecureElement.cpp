@@ -4046,6 +4046,10 @@ TheEnd:
     return decoded_length;
 }
 #if(NXP_EXTNS == TRUE)
+void cleanupStack(void* p)
+{
+    return;
+}
 /*******************************************************************************
 **
 ** Function:       spiEventHandlerThread
@@ -4057,6 +4061,9 @@ TheEnd:
 *******************************************************************************/
 void *spiEventHandlerThread(void *arg)
 {
+    void (*pCleanupRoutine)(void* ptr) = cleanupStack;
+    __pthread_cleanup_t  __cleanup;
+
     if(!nfcFL.nfcNxpEse) {
         ALOGV("%s: nfcNxpEse not available. Returning", __func__);
         return NULL;
@@ -4189,6 +4196,9 @@ void *spiEventHandlerThread(void *arg)
         }
     }
     ALOGV("%s: exit", __func__);
+    /*Explicit cleanup to avoid any issue due to pthread datastructure corruption*/
+    __pthread_cleanup_push(&__cleanup, pCleanupRoutine, NULL);
+    __pthread_cleanup_pop(&__cleanup, 0);
     pthread_exit(NULL);
     return NULL;
 }
