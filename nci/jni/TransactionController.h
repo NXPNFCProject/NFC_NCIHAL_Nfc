@@ -76,6 +76,7 @@ class transactionController
         static transactionController* pInstance;    //Reference to controller
         sem_t barrier;                             //barrier: Guard for controlling access to NFCC when profile switch happening
         IntervalTimer* abortTimer;                //abortTimer: Used for aborting a stuck transaction
+        IntervalTimer* pendingTransHandleTimer;  //pendingTransHandleTimer: Used to schedule pending transaction handler thread
         Transcation_Check_t* pTransactionDetail; //transactionDetail: holds last transaction detail
         const char* requestor;                  //requestor: Identifier of transaction trigger
 
@@ -91,6 +92,7 @@ class transactionController
         void killAbortTimer(void);
         void setAbortTimer(unsigned int msec);
         static void  transactionAbortTimerCb(union sigval);
+        static void transactionHandlePendingCb(union sigval);
         static transactionController* controller(void);
         static transactionController* getInstance(void);
 };

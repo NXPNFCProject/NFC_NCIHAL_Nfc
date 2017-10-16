@@ -61,7 +61,24 @@ void transactionController::lastRequestResume(void)
     pthread_attr_destroy(&attr);
     pTransactionDetail->current_transcation_state = NFA_TRANS_DM_RF_TRANS_END;
 }
+/*******************************************************************************
+ **
+ ** Function:       transactionHandlePendingCb
+ **
+ ** Description:    This is a callback function registered against
+ **                 pendingTransHandleTimer timer. This timer handler
+ **                 triggers enable_thread for handling pending transactions
+ **
+ ** Returns:       None
+ **
+ *******************************************************************************/
 
+extern "C" void transactionController::transactionHandlePendingCb(union sigval)
+{
+    ALOGD("Inside %s", __FUNCTION__);
+
+    pInstance->lastRequestResume();
+}
 /*******************************************************************************
  **
  ** Function:       transactionAbortTimerCb
@@ -76,7 +93,8 @@ extern "C" void transactionController::transactionAbortTimerCb(union sigval)
 {
     ALOGD("Inside %s", __FUNCTION__);
 
-    pInstance->lastRequestResume();
+    pInstance->transactionTerminate(TRANSACTION_REQUESTOR(exec_pending_req));
+
 }
 
 /*******************************************************************************
@@ -97,6 +115,7 @@ transactionController::transactionController(void)
 
     pTransactionDetail = android::nfcManager_transactionDetail();
     abortTimer = new IntervalTimer();
+    pendingTransHandleTimer = new IntervalTimer();
     requestor = NULL;
 }
 /*******************************************************************************
@@ -139,6 +158,11 @@ bool transactionController::transactionAttempt(const char* transactionRequestor,
     sem_getvalue(&barrier, &semVal);
     ALOGD ("%s: Transaction attempted : %s when barrier is: %d", __FUNCTION__, transactionRequestor, semVal);
 
+    if(pendingTransHandleTimer->isRunning())
+    {
+        ALOGD ("%s: Transaction denied due to pending transaction: %s ", __FUNCTION__, transactionRequestor);
+        return false;
+    }
     //Block wait on barrier
     if(sem_timedwait(&barrier, &timeout) != 0)
     {
@@ -177,6 +201,12 @@ bool transactionController::transactionAttempt(const char* transactionRequestor)
     sem_getvalue(&barrier, &semVal);
     ALOGD ("%s: Transaction attempted : %s when barrier is: %d", __FUNCTION__, transactionRequestor, semVal);
 
+    if(pendingTransHandleTimer->isRunning())
+    {
+        ALOGD ("%s: Transaction denied due to pending transaction: %s ", __FUNCTION__, transactionRequestor);
+        return false;
+    }
+
     if(sem_trywait(&barrier) == 0)
     {
         pTransactionDetail->trans_in_progress = true;
@@ -210,12 +240,13 @@ void transactionController::transactionEnd(const char* transactionRequestor)
 
     if(requestor == transactionRequestor)
     {
+        /*If any abort timer is running for this transaction then stop it*/
+        if(abortTimer != NULL && abortTimer->isRunning())
+        {
+            ALOGD ("%s: Transaction control timer killed", __FUNCTION__);
+            killAbortTimer();
+        }
         pTransactionDetail->trans_in_progress = false;
-
-        sem_getvalue(&barrier, &val);
-
-        if(!val)
-            sem_post(&barrier);
 
         ALOGD ("%s: Transaction ended : %s ", __FUNCTION__, transactionRequestor);
 
@@ -224,9 +255,12 @@ void transactionController::transactionEnd(const char* transactionRequestor)
         **/
         if(android::nfcManager_isRequestPending())
         {
-            abortTimer->set(5, transactionAbortTimerCb);
+            pendingTransHandleTimer->set(1, transactionHandlePendingCb);
         }
 
+        sem_getvalue(&barrier, &val);
+        if(!val)
+            sem_post(&barrier);
     }
 }
 /*******************************************************************************
@@ -249,7 +283,12 @@ bool  transactionController::transactionTerminate(const char* transactionRequest
        (requestor == transactionRequestor || !strcmp(transactionRequestor,"exec_pending_req")))
     {
         pTransactionDetail->trans_in_progress = false;
-        abortTimer->kill();
+        killAbortTimer();
+
+        if(android::nfcManager_isRequestPending())
+        {
+            pendingTransHandleTimer->set(1, transactionHandlePendingCb);
+        }
 
         sem_getvalue(&barrier, &val);
         if(!val)
@@ -308,6 +347,10 @@ transactionController* transactionController::controller(void)
         pInstance->requestor = NULL;
 
         pInstance->abortTimer->kill();
+        pInstance->pendingTransHandleTimer->kill();
+
+        pInstance->abortTimer = new IntervalTimer();
+        pInstance->pendingTransHandleTimer = new IntervalTimer();
 
         sem_destroy(&pInstance->barrier);
 
@@ -332,7 +375,10 @@ void transactionController::killAbortTimer(void)
     ALOGD ("%s: transaction controller abort timer killed", __FUNCTION__);
 
     if(transactionInProgress())
+    {
         abortTimer->kill();
+        abortTimer = new IntervalTimer();
+    }
 }
 /*******************************************************************************
  **

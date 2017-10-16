@@ -31,6 +31,7 @@ public:
     bool set(int ms, TIMER_FUNC cb);
     void kill();
     bool create(TIMER_FUNC );
+    bool isRunning(void);    //This function returns true if a valid timer is running(curTime > 0)
 
 private:
     timer_t mTimerId;

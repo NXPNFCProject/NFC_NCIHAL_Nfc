@@ -118,3 +118,17 @@ bool IntervalTimer::create(TIMER_FUNC cb)
         ALOGE("fail create timer");
     return stat == 0;
 }
+
+bool IntervalTimer::isRunning(void)
+{
+   if (mTimerId == 0)
+       return false;
+
+    int stat = 0;
+    struct itimerspec ts;
+
+    stat = timer_gettime(mTimerId, &ts);
+    if (stat != 0)
+        return false;
+    return ((ts.it_value.tv_sec > 0 || ts.it_value.tv_nsec > 0) ? true : false);
+}

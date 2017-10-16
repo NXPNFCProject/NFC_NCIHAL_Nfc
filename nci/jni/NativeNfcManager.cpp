@@ -6453,12 +6453,7 @@ void *enableThread(void *arg)
     if(nfcFL.chipType != pn547C2) {
         set_AGC_process_state(false);
     }
-#if (NXP_EXTNS == TRUE)
-    if(!pTransactionController->transactionTerminate(TRANSACTION_REQUESTOR(exec_pending_req)))
-    {
-        ALOGE("%s: Transaction in progress. Can not reset", __func__);
-    }
-#endif
+
     bool screen_lock_flag = false;
     bool disable_discovery = false;
 
