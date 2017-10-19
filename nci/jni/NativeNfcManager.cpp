@@ -6061,13 +6061,13 @@ static void nfcManager_doSetScreenState (JNIEnv* e, jobject o, jint screen_state
 static void nfcManager_doSetScreenOrPowerState (JNIEnv* e, jobject o, jint state)
 {
     ALOGE("%s: Enter", __func__);
-    if (state <= NFA_SCREEN_STATE_ON_UNLOCKED ) // SCREEN_STATE
+    if ((state & NFA_SCREEN_STATE_MASK) <= NFA_SCREEN_STATE_ON_UNLOCKED ) // SCREEN_STATE
         nfcManager_doSetScreenState(e, o, state);
-    else if (state == VEN_POWER_STATE_ON) // POWER_ON NFC_OFF
+    else if ((state & NFA_SCREEN_STATE_MASK) == VEN_POWER_STATE_ON) // POWER_ON NFC_OFF
     {
         nfcManager_doSetNfcMode(e , o, NFC_MODE_OFF);
     }
-    else if (state == VEN_POWER_STATE_OFF) // POWER_OFF
+    else if ((state & NFA_SCREEN_STATE_MASK) == VEN_POWER_STATE_OFF) // POWER_OFF
     {
         if(sIsNfaEnabled)
         {
