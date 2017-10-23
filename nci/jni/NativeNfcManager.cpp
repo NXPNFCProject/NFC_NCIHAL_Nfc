@@ -59,6 +59,7 @@
 #include "DwpChannel.h"
 #include "TransactionController.h"
 #include <fcntl.h>
+#include "JcopManager.h"
 extern "C"
 {
     #include "nfc_api.h"
@@ -71,10 +72,6 @@ extern "C"
     #include "phNxpExtns.h"
     #include "phNxpConfig.h"
 
-#if(NXP_EXTNS == TRUE)
-    #include "JcDnld.h"
-    #include "IChannel.h"
-#endif
 }
 #define ALOGV ALOGD
 #define SAK_VALUE_AT 17
@@ -2198,6 +2195,11 @@ static jboolean nfcManager_doInitialize (JNIEnv* e, jobject o)
 #endif
             stat = nfcManagerEnableNfc(theInstance);
             nfcManager_getFeatureList();
+            if(nfcFL.nfcNxpEse){
+                ALOGV("ESE Present Loading p61-jcop-lib");
+                pJcopMgr->JcopInitialize();
+            }else
+                ALOGV("ESE Not Present");
             EXTNS_Init (nfaDeviceManagementCallback, nfaConnectionCallback);
 
         if (stat == NFA_STATUS_OK )
@@ -3364,6 +3366,11 @@ if(nfcFL.eseFL._JCOP_WA_ENABLE) {
     doDwpChannel_ForceExit();
     if(nfcFL.eseFL._JCOP_WA_ENABLE) {
         NFA_HciW4eSETransaction_Complete(Wait);
+    }
+    if(nfcFL.nfcNxpEse){
+        ALOGV("De-Initializing p61-jcop-lib library");
+        pJcopMgr->JcopDeInitialize();
+        pJcopMgr->deleteInstance();
     }
     pn544InteropAbortNow ();
 
@@ -5624,7 +5631,7 @@ static int nfcManager_doJcosDownload(JNIEnv* e, jobject o)
                     startRfDiscovery (false);
                 }
                 DWPChannel_init(&Dwp);
-                status = JCDNLD_Init(&Dwp);
+                status = pJcopMgr->JCDnldInit(&Dwp);
                 if(status != NFA_STATUS_OK)
                 {
                     ALOGE("%s: JCDND initialization failed", __func__);
@@ -5633,7 +5640,7 @@ static int nfcManager_doJcosDownload(JNIEnv* e, jobject o)
                 {
                     ALOGE("%s: start JcopOs_Download", __func__);
                     se.mDownloadMode = JCOP_DOWNLOAD;
-                    status = JCDNLD_StartDownload();
+                    status = pJcopMgr->JCDnldStartDownload();
                 }
                 if(nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION) {
                     ret_val = NFC_SetP61Status ((void *)&ese_status, JCP_DWP_DWNLD_COMPLETE);
@@ -5650,7 +5657,7 @@ static int nfcManager_doJcosDownload(JNIEnv* e, jobject o)
                         }
                     }
                 }
-                stat = JCDNLD_DeInit();
+                stat = pJcopMgr->JCDnldDeInit();
                 if(nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION) {
                     pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(jcosDownload));
                     if(pendingScreenState == true)

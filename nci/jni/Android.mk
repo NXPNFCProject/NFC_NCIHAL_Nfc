@@ -22,8 +22,6 @@ LOCAL_CFLAGS += -DNFC_NXP_HFO_SETTINGS=FALSE
 #Enable HCE-F specific
 LOCAL_CFLAGS += -DNXP_NFCC_HCE_F=TRUE
 
-NFC_NXP_ESE:= TRUE
-
 NFC_POWER_MANAGEMENT:= TRUE
 ifeq ($(NFC_POWER_MANAGEMENT),TRUE)
 LOCAL_CFLAGS += -DNFC_POWER_MANAGEMENT=TRUE
@@ -31,11 +29,7 @@ else
 LOCAL_CFLAGS += -DNFC_POWER_MANAGEMENT=FALSE
 endif
 
-ifeq ($(NFC_NXP_ESE),TRUE)
 LOCAL_CFLAGS += -DNXP_LDR_SVC_VER_2=TRUE
-else
-LOCAL_CFLAGS += -DNXP_LDR_SVC_VER_2=FALSE
-endif
 
 LOCAL_SRC_FILES := $(call all-subdir-cpp-files) $(call all-subdir-c-files)
 
@@ -53,11 +47,6 @@ LOCAL_C_INCLUDES += \
     $(VOB_COMPONENTS)/gki/common \
     vendor/nxp/opensource/hardware/interfaces/nxpnfc/1.0/default/
 
-ifeq ($(NFC_NXP_ESE),TRUE)
-LOCAL_C_INCLUDES +=external/p61-jcop-kit/include
-
-endif
-
 LOCAL_SHARED_LIBRARIES := \
     libicuuc \
     libnativehelper \
@@ -67,10 +56,6 @@ LOCAL_SHARED_LIBRARIES := \
     libnfc-nci \
     android.hardware.nfc@1.0\
     vendor.nxp.nxpnfc@1.0
-
-ifeq ($(NFC_NXP_ESE),TRUE)
-LOCAL_SHARED_LIBRARIES += libp61-jcop-kit
-endif
 
 #LOCAL_STATIC_LIBRARIES := libxml2
 ifeq (true,$(TARGET_IS_64_BIT))

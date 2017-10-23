@@ -21,10 +21,9 @@
 #include "DwpChannel.h"
 #include "SecureElement.h"
 #include "TransactionController.h"
+#include "JcopManager.h"
 extern "C"
 {
-    #include "AlaLib.h"
-    #include "IChannel.h"
     #include "phNxpConfig.h"
 }
 #define LS_DEFAULT_VERSION 0x20
@@ -82,7 +81,7 @@ int nfcManager_GetAppletsList(JNIEnv* e, jobject o, jobjectArray list)
             startRfDiscovery (false);
         }
         ALOGV("%s: list_len=0x%x", __func__, list_len);
-        ALA_GetlistofApplets(name, &num);
+        pJcopMgr->AlaGetlistofApplets(name, &num);
 
         if((num != 0) &&
                 (list_len >= num))
@@ -155,7 +154,7 @@ int nfcManager_doAppletLoadApplet(JNIEnv* e, jobject o, jstring name, jbyteArray
             startRfDiscovery (false);
         }
         DWPChannel_init(&Dwp);
-        wStatus = ALA_Init(&Dwp);
+        wStatus = JcopManager::getInstance().AlaInitialize(&Dwp);
         if(wStatus != NFA_STATUS_OK)
         {
             ALOGE("%s: ALA initialization failed", __func__);
@@ -168,9 +167,9 @@ int nfcManager_doAppletLoadApplet(JNIEnv* e, jobject o, jstring name, jbyteArray
             ScopedByteArrayRO bytes(e, data);
             uint8_t* buf = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
             size_t bufLen = bytes.size();
-            wStatus = ALA_Start(choice, buf, bufLen);
+            wStatus = pJcopMgr->AlaStart(choice, buf, bufLen);
         }
-        stat = ALA_DeInit();
+        stat = pJcopMgr->AlaDeInitialize();
         if(choice != NULL)
             e->ReleaseStringUTFChars(name, choice);
 
@@ -237,7 +236,7 @@ jbyteArray nfcManager_lsExecuteScript(JNIEnv* e, jobject o, jstring name, jstrin
             startRfDiscovery (false);
         }
         DWPChannel_init(&Dwp);
-        wStatus = ALA_Init(&Dwp);
+        wStatus = pJcopMgr->AlaInitialize(&Dwp);
         if(wStatus != NFA_STATUS_OK)
         {
             ALOGE("%s: ALA initialization failed", __func__);
@@ -264,7 +263,7 @@ jbyteArray nfcManager_lsExecuteScript(JNIEnv* e, jobject o, jstring name, jstrin
             ScopedByteArrayRO bytes(e, data);
             uint8_t* buf = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
             size_t bufLen = bytes.size();
-            wStatus = ALA_Start(choice,destpath, buf, bufLen,resSW);
+            wStatus = pJcopMgr->AlaStart(choice,destpath, buf, bufLen,resSW);
 
             //copy results back to java
             result = e->NewByteArray(lsExecuteResponseSize);
@@ -283,7 +282,7 @@ jbyteArray nfcManager_lsExecuteScript(JNIEnv* e, jobject o, jstring name, jstrin
         sNfaVSCResponseEvent.wait(); //wait for NFA VS command to finish
     }*/
 
-        stat = ALA_DeInit();
+        stat = pJcopMgr->AlaDeInitialize();
         if(choice != NULL)
             e->ReleaseStringUTFChars(name, choice);
 
@@ -338,7 +337,7 @@ jbyteArray nfcManager_GetCertificateKey(JNIEnv* e, jobject)
             startRfDiscovery (false);
         }
         DWPChannel_init(&Dwp);
-        wStatus = ALA_Init(&Dwp);
+        wStatus = pJcopMgr->AlaInitialize(&Dwp);
         if(wStatus != NFA_STATUS_OK)
         {
             ALOGE("%s: ALA initialization failed", __func__);
@@ -346,7 +345,7 @@ jbyteArray nfcManager_GetCertificateKey(JNIEnv* e, jobject)
         else
         {
             ALOGE("%s: start Get reference Certificate Key", __func__);
-            wStatus = ALA_GetCertificateKey(recvBuffer, &recvBufferActualSize);
+            wStatus = pJcopMgr->AlaGetCertificateKey(recvBuffer, &recvBufferActualSize);
         }
 
         //copy results back to java
@@ -356,7 +355,7 @@ jbyteArray nfcManager_GetCertificateKey(JNIEnv* e, jobject)
             e->SetByteArrayRegion(result, 0, recvBufferActualSize, (jbyte *) recvBuffer);
         }
 
-        stat = ALA_DeInit();
+        stat = pJcopMgr->AlaDeInitialize();
         startRfDiscovery (true);
 
         ALOGV("%s: exit: recv len=%ld", __func__, recvBufferActualSize);
@@ -404,7 +403,7 @@ jbyteArray nfcManager_lsGetVersion(JNIEnv* e, jobject)
             startRfDiscovery (false);
         }
         DWPChannel_init(&Dwp);
-        wStatus = ALA_Init(&Dwp);
+        wStatus = pJcopMgr->AlaInitialize(&Dwp);
         if(wStatus != NFA_STATUS_OK)
         {
             ALOGE("%s: ALA initialization failed", __func__);
@@ -412,7 +411,7 @@ jbyteArray nfcManager_lsGetVersion(JNIEnv* e, jobject)
         else
         {
             ALOGE("%s: start Get reference Certificate Key", __func__);
-            wStatus = ALA_lsGetVersion(recvBuffer);
+            wStatus = pJcopMgr->AlaLsGetVersion(recvBuffer);
         }
 
         //copy results back to java
@@ -422,7 +421,7 @@ jbyteArray nfcManager_lsGetVersion(JNIEnv* e, jobject)
             e->SetByteArrayRegion(result, 0, recvBufferMaxSize, (jbyte *) recvBuffer);
         }
 
-        stat = ALA_DeInit();
+        stat = pJcopMgr->AlaDeInitialize();
         if(dwpChannelForceClose == false)
             startRfDiscovery (true);
 
@@ -469,7 +468,7 @@ jbyteArray nfcManager_lsGetAppletStatus(JNIEnv* e, jobject)
             startRfDiscovery (false);
         }
         DWPChannel_init(&Dwp);
-        wStatus = ALA_Init(&Dwp);
+        wStatus = pJcopMgr->AlaInitialize(&Dwp);
         if(wStatus != NFA_STATUS_OK)
         {
             ALOGE("%s: ALA initialization failed", __func__);
@@ -477,7 +476,7 @@ jbyteArray nfcManager_lsGetAppletStatus(JNIEnv* e, jobject)
         else
         {
             ALOGE("%s: start Get reference Certificate Key", __func__);
-            wStatus = ALA_lsGetAppletStatus(recvBuffer);
+            wStatus = pJcopMgr->AlaLsGetAppletStatus(recvBuffer);
         }
 
         ALOGV("%s: lsGetAppletStatus values %x %x", __func__, recvBuffer[0], recvBuffer[1]);
@@ -487,7 +486,7 @@ jbyteArray nfcManager_lsGetAppletStatus(JNIEnv* e, jobject)
         {
             e->SetByteArrayRegion(result, 0, recvBufferMaxSize, (jbyte *) recvBuffer);
         }
-        stat = ALA_DeInit();
+        stat = pJcopMgr->AlaDeInitialize();
 
         if(dwpChannelForceClose == false)
             startRfDiscovery (true);
@@ -523,7 +522,7 @@ jbyteArray nfcManager_lsGetStatus(JNIEnv* e, jobject)
         const int32_t recvBufferMaxSize = 2;
         uint8_t recvBuffer [recvBufferMaxSize] = {0x63,0x40};
 
-        wStatus = ALA_lsGetStatus(recvBuffer);
+        wStatus = pJcopMgr->AlaLsGetStatus(recvBuffer);
 
         ALOGV("%s: lsGetStatus values %x %x", __func__, recvBuffer[0], recvBuffer[1]);
         //copy results back to java
