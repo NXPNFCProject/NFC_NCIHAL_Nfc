@@ -1298,7 +1298,6 @@ public class NfcService implements DeviceHostListener {
                         mNxpPrefs.getInt(PREF_SECURE_ELEMENT_ID, SECURE_ELEMENT_ID_DEFAULT);
 
                 if (seList != null) {
-
                     if (secureElementId != ALL_SE_ID_TYPE/* SECURE_ELEMENT_ALL */) {
                         mDeviceHost.doDeselectSecureElement(UICC_ID_TYPE);
                         mDeviceHost.doDeselectSecureElement(UICC2_ID_TYPE);
@@ -1461,8 +1460,8 @@ public class NfcService implements DeviceHostListener {
                 watchDog.cancel();
             }
             int chipVer = mDeviceHost.getChipVer();
-            if((chipVer == PN80T_ID) || (chipVer == PN553_ID)) {
-                ALL_SE_ID_TYPE |= UICC2_ID_TYPE;
+            if(chipVer < PN553_ID) {
+                ALL_SE_ID_TYPE &= ~UICC2_ID_TYPE;
             }
             checkSecureElementConfuration();
 
