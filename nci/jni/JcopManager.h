@@ -41,13 +41,21 @@
 
 extern "C"{
 #include "nfa_api.h"
-#include "AlaLib.h"
-#include "JcDnld.h"
-#include "IChannel.h"
 }
 
+typedef struct IChannel
+{
+    int16_t (*open)();              /* Initialize the channel. */
+    bool (*close)(int16_t mHandle); /* Close the channel. */
+    bool (*transceive) (uint8_t* xmitBuffer, int32_t xmitBufferSize, uint8_t* recvBuffer,
+                     int32_t recvBufferMaxSize, int32_t& recvBufferActualSize, int32_t timeoutMillisec); /* Send/receive data to the secure element*/
+    void (*doeSE_Reset)();          /* Power OFF and ON to eSE */
+    void (*doeSE_JcopDownLoadReset)(); /* Power OFF and ON to eSE during JCOP Update */
+}IChannel_t;
+
+
 #define pJcopMgr     (JcopManager::getInstance ())
-typedef unsigned char (tJCOP_INIT_CBACK)(IChannel *channel);
+typedef unsigned char (tJCOP_INIT_CBACK)(IChannel_t *channel);
 #if (NXP_LDR_SVC_VER_2 == TRUE)
 typedef unsigned char (tALA_START_CBACK)(const char *name, const char *dest, uint8_t *pdata, uint16_t len, uint8_t *respSW);
 #else
@@ -160,7 +168,7 @@ public:
     **                  STATUS_FAILED if unSuccessfull
     **
     *******************************************************************************/
-    tNFC_JBL_STATUS AlaInitialize (IChannel *channel);
+    tNFC_JBL_STATUS AlaInitialize (IChannel_t *channel);
 
     /*******************************************************************************
     **
@@ -261,7 +269,7 @@ public:
     **                  STATUS_FAILED if unSuccessfull
     **
     *******************************************************************************/
-    tNFC_JBL_STATUS JCDnldInit (IChannel *channel);
+    tNFC_JBL_STATUS JCDnldInit (IChannel_t *channel);
 
     /*******************************************************************************
     **

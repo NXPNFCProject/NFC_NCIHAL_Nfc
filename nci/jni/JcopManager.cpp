@@ -199,7 +199,7 @@ tNFA_STATUS JcopManager::JcopDeInitialize ()
 **                  STATUS_FAILED if unSuccessfull
 **
 *******************************************************************************/
-tNFC_JBL_STATUS JcopManager::AlaInitialize (IChannel *channel)
+tNFC_JBL_STATUS JcopManager::AlaInitialize (IChannel_t *channel)
 {
     if(channel == NULL)
     {
@@ -353,7 +353,7 @@ tNFC_JBL_STATUS JcopManager::AlaLsGetStatus (uint8_t *pVersion)
 **                  STATUS_FAILED if unSuccessfull
 **
 *******************************************************************************/
-tNFC_JBL_STATUS JcopManager::JCDnldInit (IChannel *channel)
+tNFC_JBL_STATUS JcopManager::JCDnldInit (IChannel_t *channel)
 {
     if(!channel){
         ALOGE("%s: Invalid Params !!", __func__);
