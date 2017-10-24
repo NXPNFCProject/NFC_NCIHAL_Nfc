@@ -642,7 +642,7 @@ void *p2p_prio_logic_multiprotocol(void *arg)
 
     ALOGD ("%s: enter", __FUNCTION__);
     /* Do not need if it is already in screen off state */
-    if ((getScreenState() != (NFA_SCREEN_STATE_OFF_LOCKED || NFA_SCREEN_STATE_OFF_UNLOCKED)))
+    if (!(getScreenState() & (NFA_SCREEN_STATE_OFF_LOCKED | NFA_SCREEN_STATE_OFF_UNLOCKED)))
     {
         /* Stop polling */
         if (sRfEnabled)
