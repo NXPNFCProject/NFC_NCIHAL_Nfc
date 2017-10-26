@@ -4128,8 +4128,10 @@ void *spiEventHandlerThread(void *arg)
                         (usEvent & P61_STATE_SPI))
                 {
                     nfaVSC_ForceDwpOnOff(true);
+                    if(nfcFL.eseFL._WIRED_MODE_STANDBY) {
                     if(android::nfcManager_getNfcState() != NFC_OFF)
                         NFC_RelForceDwpOnOffWait((void*)&stat);
+                    }
                 }
                 else if((usEvent & P61_STATE_SPI_PRIO_END) ||
                         (usEvent & P61_STATE_SPI_END))
@@ -4153,8 +4155,10 @@ void *spiEventHandlerThread(void *arg)
                         (usEvent & P61_STATE_SPI)))
         {
             nfaVSC_ForceDwpOnOff(true);
+            if(nfcFL.eseFL._WIRED_MODE_STANDBY) {
             if(android::nfcManager_getNfcState() != NFC_OFF)
                 NFC_RelForceDwpOnOffWait((void*)&stat);
+            }
         }
         else if(nfcFL.eseFL._ESE_DWP_SPI_SYNC_ENABLE &&
                 ((usEvent & P61_STATE_SPI_PRIO_END) ||
