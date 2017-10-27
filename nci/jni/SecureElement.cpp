@@ -4063,6 +4063,7 @@ void *spiEventHandlerThread(void *arg)
 {
     void (*pCleanupRoutine)(void* ptr) = cleanupStack;
     __pthread_cleanup_t  __cleanup;
+    SecureElement &se = SecureElement::getInstance();
 
     if(!nfcFL.nfcNxpEse) {
         ALOGV("%s: nfcNxpEse not available. Returning", __func__);
@@ -4104,6 +4105,8 @@ void *spiEventHandlerThread(void *arg)
          {
              ALOGV("%s: SPI PRIO End Signal\n", __func__);
              hold_the_transceive = false;
+             if(!se.mIsWiredModeOpen)
+                spiDwpSyncState = STATE_DWP_CLOSE;
              setSPIState(false);
              SyncEventGuard guard (sSPIPrioSessionEndEvent);
              sSPIPrioSessionEndEvent.notifyOne ();
@@ -4117,6 +4120,8 @@ void *spiEventHandlerThread(void *arg)
         {
             ALOGV("%s: SPI End Signal\n", __func__);
             hold_the_transceive = false;
+            if(!se.mIsWiredModeOpen)
+                spiDwpSyncState = STATE_DWP_CLOSE;
             setSPIState(false);
         }
 
@@ -4419,6 +4424,7 @@ static void nfaVSC_ForceDwpOnOff(bool type)
             /*If DWP session is closed*/
             (void)SecureElement::getInstance().setNfccPwrConfig(SecureElement::getInstance().NFCC_DECIDES);
         }
+
         if(spiDwpSyncState & STATE_DWP_CLOSE)
         {
             stat = NFA_HciSendEvent (NFA_HANDLE_GROUP_HCI, 0x19, EVT_END_OF_APDU_TRANSFER,
