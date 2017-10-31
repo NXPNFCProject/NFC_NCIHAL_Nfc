@@ -159,7 +159,7 @@ tNFA_STATUS JcopManager::JcopInitialize ()
         ALOGE("%s: Error while linking JCOP context (JCDNLD_StartDownload) !!", __func__);
     }
     // Getting pointer to JCDNLD_DeInit function
-    if((pg_mPhJcpCtxt->ala_deinit = (tJCOP_DEINIT_CBACK *)dlsym(Pgpx_Jcop_handle, "JCDNLD_DeInit")) == NULL){
+    if((pg_mPhJcpCtxt->jcdnld_deinit = (tJCOP_DEINIT_CBACK *)dlsym(Pgpx_Jcop_handle, "JCDNLD_DeInit")) == NULL){
         wStatus = NFA_STATUS_FAILED;
         ALOGE("%s: Error while linking JCOP context (JCDNLD_DeInit) !!", __func__);
     }

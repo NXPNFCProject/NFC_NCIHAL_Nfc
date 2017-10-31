@@ -5574,14 +5574,14 @@ static int nfcManager_doJcosDownload(JNIEnv* e, jobject o)
     if(nfcFL.nfcNxpEse) {
         ALOGV("%s: enter", __func__);
         bool stat = false;
+        int ret_val = -1;
+        NFCSTATUS ese_status = NFA_STATUS_FAILED;
+        p61_access_state_t p61_current_state = P61_STATE_INVALID;
+        eScreenState_t last_screen_state_request = get_lastScreenStateRequest();
         SecureElement &se = SecureElement::getInstance();
 
 
         if(nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION) {
-            int ret_val = -1;
-            NFCSTATUS ese_status = NFA_STATUS_FAILED;
-            p61_access_state_t p61_current_state = P61_STATE_INVALID;
-            eScreenState_t last_screen_state_request = get_lastScreenStateRequest();
 
             if (sIsDisabling || !sIsNfaEnabled || nfcManager_checkNfcStateBusy())
             {
@@ -5626,6 +5626,8 @@ static int nfcManager_doJcosDownload(JNIEnv* e, jobject o)
                         return NFA_STATUS_FAILED;
                     }
                 }
+            }
+        }
                 if (sRfEnabled) {
                     // Stop RF Discovery if we were polling
                     startRfDiscovery (false);
@@ -5667,8 +5669,6 @@ static int nfcManager_doJcosDownload(JNIEnv* e, jobject o)
                         nfcManager_doSetScreenState(NULL,NULL,last_screen_state_request);
                     }
                 }
-            }
-        }
         startRfDiscovery (true);
         se.mDownloadMode = NONE;
         ALOGV("%s: exit; status =0x%X", __func__,status);

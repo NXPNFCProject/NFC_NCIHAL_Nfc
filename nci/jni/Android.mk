@@ -35,6 +35,7 @@ LOCAL_SRC_FILES := $(call all-subdir-cpp-files) $(call all-subdir-c-files)
 
 LOCAL_C_INCLUDES += \
     frameworks/native/include \
+    libnativehelper/include/nativehelper \
     $(NFA)/include \
     $(NFA)/brcm \
     $(NFC)/include \
