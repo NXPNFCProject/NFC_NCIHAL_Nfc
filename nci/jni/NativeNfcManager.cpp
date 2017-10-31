@@ -2242,6 +2242,8 @@ static jboolean nfcManager_doInitialize (JNIEnv* e, jobject o)
                         ALOGV("All ESE are discovered ");
                     }
                 }
+                //Create transaction controller
+                (void)transactionController::controller();
                 if(nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH) {
                     checkforESERemoval();
                     GetNxpNumValue (NAME_NXP_DUAL_UICC_ENABLE, (void*)&dualUiccInfo.dualUiccEnable, sizeof(dualUiccInfo.dualUiccEnable));
@@ -2326,8 +2328,6 @@ static jboolean nfcManager_doInitialize (JNIEnv* e, jobject o)
                         }
                     }
 #endif
-                    //Create transaction controller
-                    (void)transactionController::controller();
                     pendingScreenState = false;
                     {
                         SyncEventGuard guard (android::sNfaGetConfigEvent);
