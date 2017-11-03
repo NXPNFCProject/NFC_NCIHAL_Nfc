@@ -5765,11 +5765,6 @@ static void nfcManager_doCommitRouting(JNIEnv* e, jobject o)
         startRfDiscovery(true);
 #if(NXP_EXTNS == TRUE && NXP_NFCC_HCE_F == TRUE)
     }
-#endif
-
-    RoutingManager::getInstance().commitRouting();
-    startRfDiscovery(true);
-#if(NXP_EXTNS == TRUE && NXP_NFCC_HCE_F == TRUE)
     pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(commitRouting));
 #endif
     ALOGV("%s: exit", __func__);
