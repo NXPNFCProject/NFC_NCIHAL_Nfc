@@ -5231,17 +5231,14 @@ public class NfcService implements DeviceHostListener {
                 case MSG_APPLY_SCREEN_STATE:
 
                     mScreenState = (int)msg.obj;
-
-                    if(mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED)
-                    {
-                      applyRouting(false);
-                    }
                     int screen_state_mask = (mNfcUnlockManager.isLockscreenPollingEnabled()) ?
                                 (ScreenStateHelper.SCREEN_POLLING_TAG_MASK | mScreenState) : mScreenState;
+                    mDeviceHost.doSetScreenOrPowerState(screen_state_mask);
 
-                   if(mNfcUnlockManager.isLockscreenPollingEnabled())
+                    if(mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED
+                       || mNfcUnlockManager.isLockscreenPollingEnabled()) {
                         applyRouting(false);
-                   mDeviceHost.doSetScreenOrPowerState(screen_state_mask);
+                    }
 
 /*                    mRoutingWakeLock.acquire();
                     try {

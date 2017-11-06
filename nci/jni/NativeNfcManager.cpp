@@ -2907,7 +2907,7 @@ static void nfcManager_enableDiscovery (JNIEnv* e, jobject o, jint technologies_
         handle = SecureElement::getInstance().getEseHandleFromGenericId(SecureElement::UICC_ID);
 
 #if(NXP_EXTNS == TRUE)
-        if((getScreenState() == (NFA_SCREEN_STATE_ON_LOCKED)) || sProvisionMode)
+        if((getScreenState() == (NFA_SCREEN_STATE_ON_UNLOCKED)) || sProvisionMode)
         {
             ALOGV("%s: Enable p2pListening", __func__);
             PeerToPeer::getInstance().enableP2pListening (true);
