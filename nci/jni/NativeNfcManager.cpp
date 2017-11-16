@@ -1639,7 +1639,17 @@ void nfaDeviceManagementCallback (uint8_t dmEvent, tNFA_DM_CBACK_DATA* eventData
              }
             else
             {
-                pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(RF_FIELD_EVT));
+                /*In case of 66T/67T if Field On is not received before activation, consider NFA_ACTIVATED_EVENT for
+                 locking the transaction and use Field Off received while removing the reader from proximity to end the lock*/
+                if(((nfcFL.chipType == pn548C2) || (nfcFL.chipType == pn551)) &&
+                    pTransactionController->getCurTransactionRequestor() == TRANSACTION_REQUESTOR(NFA_ACTIVATED_EVENT))
+                {
+                    pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(NFA_ACTIVATED_EVENT));
+                }
+                else
+                {
+                    pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(RF_FIELD_EVT));
+                }
                 sRfFieldOff = true;
                 e->CallVoidMethod (nat->manager, android::gCachedNfcManagerNotifyRfFieldDeactivated);
             }
@@ -1828,11 +1838,20 @@ static jboolean nfcManager_routeAid (JNIEnv* e, jobject, jbyteArray aid, jint ro
     ScopedByteArrayRO bytes(e, aid);
     uint8_t* buf = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
     size_t bufLen = bytes.size();
+
 #if (NXP_EXTNS == TRUE)
     if((nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH) &&
             (route == 2 || route == 4)) { //UICC or UICC2 HANDLE
         ALOGV("sCurrentSelectedUICCSlot:  %d", sCurrentSelectedUICCSlot);
         route = (sCurrentSelectedUICCSlot != 0x02) ? 0x02 : 0x04;
+    }
+    /*In case of 66T/67T field on is observed as last field event once reader
+     is removed from proximity, which will hold the transaction lock unnecessarily
+     In such cases end the lock as it is not required*/
+    if(((nfcFL.chipType == pn548C2) || (nfcFL.chipType == pn551)) &&
+        pTransactionController->getCurTransactionRequestor() == TRANSACTION_REQUESTOR(RF_FIELD_EVT))
+    {
+        pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(RF_FIELD_EVT));
     }
     if(nfcManager_isTransanctionOnGoing(true))
     {
@@ -2057,6 +2076,14 @@ static jint nfcManager_getRemainingAidTableSize (JNIEnv* , jobject )
 static bool nfcManager_clearAidTable (JNIEnv*, jobject)
 {
 #if(NXP_EXTNS == TRUE)
+    /*In case of 66T/67T field on is observed as last field event once reader
+     is removed from proximity, which will hold the transaction lock unnecessarily
+     In such cases end the lock as it is not required*/
+    if(((nfcFL.chipType == pn548C2) || (nfcFL.chipType == pn551)) &&
+        pTransactionController->getCurTransactionRequestor() == TRANSACTION_REQUESTOR(RF_FIELD_EVT))
+    {
+        pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(RF_FIELD_EVT));
+    }
     if(nfcManager_isTransanctionOnGoing(true))
     {
        return false;
@@ -5865,7 +5892,7 @@ static void nfcManager_doSetScreenState (JNIEnv* e, jobject o, jint screen_state
         return;
     }
 #endif
-
+    pendingScreenState = false;
     int prevScreenState = getScreenState();
     if(prevScreenState == state) {
         ALOGV("Screen state is not changed. ");
@@ -6075,7 +6102,6 @@ static void nfcManager_doSetScreenOrPowerState (JNIEnv* e, jobject o, jint state
 bool nfcManager_isRequestPending(void)
 {
     bool isPending = false;
-
     if((transaction_data.current_transcation_state != NFA_TRANS_ACTIVATED_EVT) &&
             ((pendingScreenState == true) || (get_last_request() != 0x00)))
     {

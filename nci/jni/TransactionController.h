@@ -95,4 +95,5 @@ class transactionController
         static void transactionHandlePendingCb(union sigval);
         static transactionController* controller(void);
         static transactionController* getInstance(void);
+        const char * getCurTransactionRequestor();
 };

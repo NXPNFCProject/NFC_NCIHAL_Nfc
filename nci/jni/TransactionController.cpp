@@ -247,7 +247,7 @@ void transactionController::transactionEnd(const char* transactionRequestor)
             killAbortTimer();
         }
         pTransactionDetail->trans_in_progress = false;
-
+        requestor = NULL;
         ALOGD ("%s: Transaction ended : %s ", __FUNCTION__, transactionRequestor);
 
         /*
@@ -283,6 +283,7 @@ bool  transactionController::transactionTerminate(const char* transactionRequest
        (requestor == transactionRequestor || !strcmp(transactionRequestor,"exec_pending_req")))
     {
         pTransactionDetail->trans_in_progress = false;
+        requestor = NULL;
         killAbortTimer();
 
         if(android::nfcManager_isRequestPending())
@@ -293,7 +294,6 @@ bool  transactionController::transactionTerminate(const char* transactionRequest
         sem_getvalue(&barrier, &val);
         if(!val)
             sem_post(&barrier);
-
         ALOGD ("%s: Transaction terminated : %s ", __FUNCTION__, transactionRequestor);
         return true;
     }
@@ -395,4 +395,18 @@ void transactionController::setAbortTimer(unsigned int msec)
 
     if(transactionInProgress())
         abortTimer->set(msec, transactionAbortTimerCb);
+}
+
+/*******************************************************************************
+ **
+ ** Function:       getCurTransactionRequestor
+ **
+ ** Description:   This function returns current active requestor
+ **
+ ** Returns:       active requestor
+ **
+ *******************************************************************************/
+const char * transactionController::getCurTransactionRequestor()
+{
+    return requestor;
 }
