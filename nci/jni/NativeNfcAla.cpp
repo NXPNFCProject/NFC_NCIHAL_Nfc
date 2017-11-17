@@ -154,7 +154,7 @@ int nfcManager_doAppletLoadApplet(JNIEnv* e, jobject o, jstring name, jbyteArray
             startRfDiscovery (false);
         }
         DWPChannel_init(&Dwp);
-        wStatus = JcopManager::getInstance().AlaInitialize(&Dwp);
+        wStatus = pJcopMgr->AlaInitialize(&Dwp);
         if(wStatus != NFA_STATUS_OK)
         {
             ALOGE("%s: ALA initialization failed", __func__);
