@@ -469,6 +469,7 @@ public class NfcService implements DeviceHostListener {
     // as SE access is not granted for non-owner users.
     HashSet<String> mSePackages = new HashSet<String>();
     int mScreenState;
+    int mChipVer;
     boolean mIsTaskBoot = false;
     boolean mInProvisionMode; // whether we're in setup wizard and enabled NFC provisioning
     boolean mIsNdefPushEnabled;
@@ -1459,8 +1460,8 @@ public class NfcService implements DeviceHostListener {
             } finally {
                 watchDog.cancel();
             }
-            int chipVer = mDeviceHost.getChipVer();
-            if(chipVer < PN553_ID) {
+            mChipVer = mDeviceHost.getChipVer();
+            if(mChipVer < PN553_ID) {
                 ALL_SE_ID_TYPE &= ~UICC2_ID_TYPE;
             }
             checkSecureElementConfuration();
@@ -2204,7 +2205,9 @@ public class NfcService implements DeviceHostListener {
         @Override
         public int deselectSecureElement(String pkg) throws RemoteException {
             NfcService.this.enforceNfcSeAdminPerm(pkg);
-
+            if(mChipVer < PN553_ID) {
+                mSelectedSeId &= ~UICC2_ID_TYPE;
+            }
             // Check if NFC is enabled
             if (!isNfcEnabled()) {
                 return ErrorCodes.ERROR_NOT_INITIALIZED;
@@ -2244,6 +2247,9 @@ public class NfcService implements DeviceHostListener {
 
         @Override
         public void storeSePreference(int seId) {
+            if(mChipVer < PN553_ID) {
+                seId &= ~UICC2_ID_TYPE;
+            }
             NfcPermissions.enforceAdminPermissions(mContext);
             /* store */
             Log.d(TAG, "SE Preference stored");
@@ -2255,6 +2261,10 @@ public class NfcService implements DeviceHostListener {
         @Override
         public int selectSecureElement(String pkg,int seId) throws RemoteException {
             NfcService.this.enforceNfcSeAdminPerm(pkg);
+
+            if(mChipVer < PN553_ID) {
+                seId &= ~UICC2_ID_TYPE;
+            }
 
             // Check if NFC is enabled
             if (!isNfcEnabled()) {
