@@ -131,7 +131,7 @@ typedef enum eNfcState
     NFC_INITIALIZING_IN_PROGRESS = 0x01, /* Initializing not complete (RF discovery not enabled yet) */
     NFC_ON = 0x02 /* NFC is fully ON*/
 };
-#define NFC_CMD_TIMEOUT 100 /* 100ms timeout to wait on the semaphore for the command sent */
+#define NFC_CMD_TIMEOUT 2000 /* 2 sec timeout to wait on the semaphore for the command sent */
 #endif
 
 struct nfc_jni_native_data
