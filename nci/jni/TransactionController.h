@@ -22,11 +22,33 @@ extern "C"
 {
     #include "nfa_api.h"
 }
-#define TRANSACTION_REQUESTOR(name) #name
+#define TRANSACTION_REQUESTOR(name) name
 #define TRANSACTION_ATTEMPT_FOR_SECONDS(seconds)  (seconds)
 #define pTransactionController      (transactionController::getInstance())
 
-
+typedef enum transactionId
+{
+    NO_REQUESTOR = 0,
+    AppletLoadApplet = 1,
+    lsExecuteScript,
+    lsGetVersion,
+    RF_FIELD_EVT,
+    setDefaultRoute,
+    commitRouting,
+    enablep2p,
+    enableDiscovery,
+    disableDiscovery,
+    NFA_ACTIVATED_EVENT,
+    NFA_EE_ACTION_EVENT,
+    NFA_TRANS_CE_ACTIVATED_EVENT,
+    etsiReader,
+    jcosDownload,
+    setScreenState,
+    staticDualUicc,
+    getTransanctionRequest,
+    isTransanctionOnGoing,
+    exec_pending_req,
+}eTransactionId;
 
 /* Transaction Events in order */
 typedef enum transcation_events
@@ -78,16 +100,16 @@ class transactionController
         IntervalTimer* abortTimer;                //abortTimer: Used for aborting a stuck transaction
         IntervalTimer* pendingTransHandleTimer;  //pendingTransHandleTimer: Used to schedule pending transaction handler thread
         Transcation_Check_t* pTransactionDetail; //transactionDetail: holds last transaction detail
-        const char* requestor;                  //requestor: Identifier of transaction trigger
+        eTransactionId requestor;                  //requestor: Identifier of transaction trigger
 
         transactionController(void);           //Constructor
-        bool transactionLiveLockable(const char* transactionRequestor);
+        bool transactionLiveLockable(eTransactionId transactionRequestor);
     public:
         void lastRequestResume(void);
-        bool transactionAttempt(const char* transactionRequestor, unsigned int timeoutInMsec);
-        bool transactionAttempt(const char* transactionRequestor);
-        bool transactionTerminate(const char* transactionRequestor);
-        void transactionEnd(const char* transactionRequestor);
+        bool transactionAttempt(eTransactionId transactionRequestor, unsigned int timeoutInMsec);
+        bool transactionAttempt(eTransactionId transactionRequestor);
+        bool transactionTerminate(eTransactionId transactionRequestor);
+        void transactionEnd(eTransactionId transactionRequestor);
         bool transactionInProgress(void);
         void killAbortTimer(void);
         void setAbortTimer(unsigned int msec);
@@ -95,5 +117,5 @@ class transactionController
         static void transactionHandlePendingCb(union sigval);
         static transactionController* controller(void);
         static transactionController* getInstance(void);
-        const char * getCurTransactionRequestor();
+      eTransactionId getCurTransactionRequestor();
 };

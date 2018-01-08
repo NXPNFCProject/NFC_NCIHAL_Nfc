@@ -1853,10 +1853,6 @@ static jboolean nfcManager_routeAid (JNIEnv* e, jobject, jbyteArray aid, jint ro
     {
         pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(RF_FIELD_EVT));
     }
-    if(nfcManager_isTransanctionOnGoing(true))
-    {
-       return false;
-    }
     bool result = RoutingManager::getInstance().addAidRouting(buf, bufLen, route, power, aidInfo);
 #else
     bool result = RoutingManager::getInstance().addAidRouting(buf, bufLen, route);
@@ -2083,10 +2079,6 @@ static bool nfcManager_clearAidTable (JNIEnv*, jobject)
         pTransactionController->getCurTransactionRequestor() == TRANSACTION_REQUESTOR(RF_FIELD_EVT))
     {
         pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(RF_FIELD_EVT));
-    }
-    if(nfcManager_isTransanctionOnGoing(true))
-    {
-       return false;
     }
 #endif
     return RoutingManager::getInstance().clearAidTable();
@@ -5764,8 +5756,8 @@ static void nfcManager_doCommitRouting(JNIEnv* e, jobject o)
         RoutingManager::getInstance().commitRouting();
         startRfDiscovery(true);
 #if(NXP_EXTNS == TRUE && NXP_NFCC_HCE_F == TRUE)
+        pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(commitRouting));
     }
-    pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(commitRouting));
 #endif
     ALOGV("%s: exit", __func__);
 }
@@ -6557,6 +6549,7 @@ void *enableThread(void *arg)
             RoutingManager::getInstance().clearAidTable();
             //nfcManager_doCommitRouting(NULL,NULL);
         }
+        transaction_data.last_request &= ~(RE_ROUTING);
         RoutingManager::getInstance().notifyReRoutingEntry();
     }
 #endif
