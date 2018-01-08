@@ -43,8 +43,6 @@ public class NfcApplication extends Application {
         super.onCreate();
         PackageManager pm = getApplicationContext().getPackageManager();
         if (!pm.hasSystemFeature(PackageManager.FEATURE_NFC_ANY)) {
-            pm.setApplicationEnabledSetting(getApplicationContext().getPackageName(),
-                PackageManager.COMPONENT_ENABLED_STATE_DISABLED, 0);
                 return;
         }
 
