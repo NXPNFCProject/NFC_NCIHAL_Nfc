@@ -3079,15 +3079,16 @@ void *ee_removed_ntf_handler_thread(void *data)
             ALOGV("%s: power link command failed", __func__);
         }
     }
-
-    SyncEventGuard guard (se.mEeSetModeEvent);
-    stat = NFA_EeModeSet(SecureElement::EE_HANDLE_0xF3, NFA_EE_MD_DEACTIVATE);
-
-    if(stat == NFA_STATUS_OK)
     {
-        if(se.mEeSetModeEvent.wait (500) == false)
+        SyncEventGuard guard (se.mEeSetModeEvent);
+        stat = NFA_EeModeSet(SecureElement::EE_HANDLE_0xF3, NFA_EE_MD_DEACTIVATE);
+
+        if(stat == NFA_STATUS_OK)
         {
-            ALOGV("%s:SetMode rsp timeout", __func__);
+            if(se.mEeSetModeEvent.wait (500) == false)
+            {
+                ALOGV("%s:SetMode rsp timeout", __func__);
+            }
         }
     }
     if(nfcFL.nfcNxpEse) {
@@ -3103,15 +3104,16 @@ void *ee_removed_ntf_handler_thread(void *data)
             }
         }
     }
-
-    SyncEventGuard guard (se.mEeSetModeEvent);
-    stat = NFA_EeModeSet(SecureElement::EE_HANDLE_0xF3, NFA_EE_MD_ACTIVATE);
-
-    if(stat == NFA_STATUS_OK)
     {
-        if(se.mEeSetModeEvent.wait (500) == false)
+    SyncEventGuard guard (se.mEeSetModeEvent);
+        stat = NFA_EeModeSet(SecureElement::EE_HANDLE_0xF3, NFA_EE_MD_ACTIVATE);
+
+        if(stat == NFA_STATUS_OK)
         {
-            ALOGV("%s:SetMode ntf timeout", __func__);
+            if(se.mEeSetModeEvent.wait (500) == false)
+            {
+                ALOGV("%s:SetMode ntf timeout", __func__);
+            }
         }
     }
     rm.mResetHandlerMutex.unlock();
