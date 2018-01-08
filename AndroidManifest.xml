@@ -112,14 +112,6 @@
             android:multiprocess="true"
         />
 
-        <activity android:name=".cardemulation.DefaultRemovedActivity"
-            android:theme="@*android:style/Theme.Material.Dialog.Alert"
-            android:finishOnCloseSystemDialogs="true"
-            android:excludeFromRecents="true"
-            android:clearTaskOnLaunch="true"
-            android:multiprocess="true"
-        />
-
         <activity android:name=".cardemulation.TapAgainDialog"
             android:finishOnCloseSystemDialogs="true"
             android:excludeFromRecents="true"
