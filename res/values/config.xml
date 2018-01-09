@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="bluetooth_package">com.android.bluetooth</string>
+    <bool name="enable_nfc_url_open_dialog">false</bool>
 </resources>
 
