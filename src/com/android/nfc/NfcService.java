@@ -486,8 +486,10 @@ public class NfcService implements DeviceHostListener {
     private int mUserId;
     boolean mPollingPaused;
 
+    static final int INVALID_NATIVE_HANDLE = -1;
     byte[] mDebounceTagUid;
     int mDebounceTagDebounceMs;
+    int mDebounceTagNativeHandle = INVALID_NATIVE_HANDLE;
     ITagRemovedCallback mDebounceTagRemovedCallback;
 
     // Only accessed on one thread so doesn't need locking
@@ -1926,12 +1928,21 @@ public class NfcService implements DeviceHostListener {
                 throws RemoteException {
             NfcPermissions.enforceUserPermissions(mContext);
 
+            if (debounceMs == 0 && mDebounceTagNativeHandle != INVALID_NATIVE_HANDLE
+                && nativeHandle == mDebounceTagNativeHandle) {
+              // Remove any previous messages and immediately debounce.
+              mHandler.removeMessages(MSG_TAG_DEBOUNCE);
+              mHandler.sendEmptyMessage(MSG_TAG_DEBOUNCE);
+              return true;
+            }
+
             TagEndpoint tag = (TagEndpoint) findAndRemoveObject(nativeHandle);
             if (tag != null) {
                 // Store UID and params
                 int uidLength = tag.getUid().length;
                 synchronized (NfcService.this) {
                     mDebounceTagDebounceMs = debounceMs;
+                    mDebounceTagNativeHandle = nativeHandle;
                     mDebounceTagUid = new byte[uidLength];
                     mDebounceTagRemovedCallback = callback;
                     System.arraycopy(tag.getUid(), 0, mDebounceTagUid, 0, uidLength);
@@ -4954,6 +4965,7 @@ public class NfcService implements DeviceHostListener {
                             synchronized (NfcService.this) {
                                 mDebounceTagUid = null;
                                 mDebounceTagRemovedCallback = null;
+                                mDebounceTagNativeHandle = INVALID_NATIVE_HANDLE;
                             }
                             if (debounceTagRemovedCallback != null) {
                                 try {
@@ -5295,6 +5307,7 @@ public class NfcService implements DeviceHostListener {
                         mDebounceTagUid = null;
                         tagRemovedCallback = mDebounceTagRemovedCallback;
                         mDebounceTagRemovedCallback = null;
+                        mDebounceTagNativeHandle = INVALID_NATIVE_HANDLE;
                     }
                     if (tagRemovedCallback != null) {
                         try {
