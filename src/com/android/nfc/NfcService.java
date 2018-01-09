@@ -5264,6 +5264,13 @@ public class NfcService implements DeviceHostListener {
                 case MSG_APPLY_SCREEN_STATE:
 
                     mScreenState = (int)msg.obj;
+
+                    // If NFC is turning off, we shouldn't need any changes here
+                    synchronized (NfcService.this) {
+                        if (mState == NfcAdapter.STATE_TURNING_OFF)
+                            return;
+                    }
+
                     int screen_state_mask = (mNfcUnlockManager.isLockscreenPollingEnabled()) ?
                                 (ScreenStateHelper.SCREEN_POLLING_TAG_MASK | mScreenState) : mScreenState;
                     mDeviceHost.doSetScreenOrPowerState(screen_state_mask);
