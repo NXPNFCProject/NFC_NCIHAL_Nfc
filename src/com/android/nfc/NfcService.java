@@ -5792,6 +5792,7 @@ public class NfcService implements DeviceHostListener {
             }
             mNfceeAccessControl.dump(fd, pw, args);
             mNfcDispatcher.dump(fd, pw, args);
+            pw.flush();
             pw.println(mDeviceHost.dump());
 
         }
