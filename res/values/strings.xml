@@ -92,4 +92,8 @@
 
     <!-- Used to refer to in the Share Menu Android Beam . This phrase is a trademark. [CHAR LIMIT=32] -->
     <string name="android_beam">Android Beam</string>
+
+    <!-- Message shown in a toast when user wants to Beam a file, but application doesn't have required permission -->
+    <string name="beam_requires_external_storage_permission">Application does not have External Storage Permission. This is required to Beam this file</string>
+
 </resources>
