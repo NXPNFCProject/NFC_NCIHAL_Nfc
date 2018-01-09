@@ -122,6 +122,7 @@ public class ConfirmConnectToWifiNetworkActivity extends Activity
 
     @Override
     protected void onDestroy() {
+        mAlertDialog.dismiss();
         ConfirmConnectToWifiNetworkActivity.this.unregisterReceiver(mBroadcastReceiver);
         super.onDestroy();
     }
