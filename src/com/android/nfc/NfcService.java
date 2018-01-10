@@ -305,7 +305,7 @@ public class NfcService implements DeviceHostListener {
     static final int NFC_POLL_A = 0x01;
     static final int NFC_POLL_B = 0x02;
     static final int NFC_POLL_F = 0x04;
-    static final int NFC_POLL_ISO15693 = 0x08;
+    static final int NFC_POLL_V = 0x08;
     static final int NFC_POLL_B_PRIME = 0x10;
     static final int NFC_POLL_KOVIO = 0x20;
 
@@ -932,7 +932,7 @@ public class NfcService implements DeviceHostListener {
                 } else if (liveCaseTechList[i].equals("TypeF")) {
                     mLiveCaseTechnology |= NFC_POLL_F;
                 } else if (liveCaseTechList[i].equals("TypeV")) {
-                    mLiveCaseTechnology |= NFC_POLL_ISO15693;
+                    mLiveCaseTechnology |= NFC_POLL_V;
                 }
             }
         } catch (NotFoundException e) {
@@ -2119,7 +2119,7 @@ public class NfcService implements DeviceHostListener {
 
             techCodeToMask.put(TagTechnology.NFC_A, NfcService.NFC_POLL_A);
             techCodeToMask.put(TagTechnology.NFC_B, NfcService.NFC_POLL_B);
-            techCodeToMask.put(TagTechnology.NFC_V, NfcService.NFC_POLL_ISO15693);
+            techCodeToMask.put(TagTechnology.NFC_V, NfcService.NFC_POLL_V);
             techCodeToMask.put(TagTechnology.NFC_F, NfcService.NFC_POLL_F);
             techCodeToMask.put(TagTechnology.NFC_BARCODE, NfcService.NFC_POLL_KOVIO);
             techCodeToMask.put(TagTechnology.MIFARE_CLASSIC, NfcService.NFC_POLL_A);
@@ -4240,7 +4240,7 @@ public class NfcService implements DeviceHostListener {
                 if ((mReaderModeParams.flags & NfcAdapter.FLAG_READER_NFC_F) != 0)
                     techMask |= NFC_POLL_F;
                 if ((mReaderModeParams.flags & NfcAdapter.FLAG_READER_NFC_V) != 0)
-                    techMask |= NFC_POLL_ISO15693;
+                    techMask |= NFC_POLL_V;
                 if ((mReaderModeParams.flags & NfcAdapter.FLAG_READER_NFC_BARCODE) != 0)
                     techMask |= NFC_POLL_KOVIO;
 

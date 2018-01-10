@@ -273,7 +273,7 @@ static uint8_t              sAutonomousSet = 0;
 #define DEFAULT_TECH_MASK           (NFA_TECHNOLOGY_MASK_A \
                                      | NFA_TECHNOLOGY_MASK_B \
                                      | NFA_TECHNOLOGY_MASK_F \
-                                     | NFA_TECHNOLOGY_MASK_ISO15693 \
+                                     | NFA_TECHNOLOGY_MASK_V \
                                      | NFA_TECHNOLOGY_MASK_B_PRIME \
                                      | NFA_TECHNOLOGY_MASK_A_ACTIVE \
                                      | NFA_TECHNOLOGY_MASK_F_ACTIVE \

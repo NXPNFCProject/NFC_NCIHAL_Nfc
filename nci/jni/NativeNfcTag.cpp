@@ -32,7 +32,6 @@
  *  limitations under the License.
  *
  ******************************************************************************/
-
 #include <semaphore.h>
 #include <errno.h>
 #include <time.h>
@@ -1732,7 +1731,7 @@ static jint nativeNfcTag_doGetNdefType (JNIEnv*, jobject, jint libnfcType, jint 
     }
     else
     {
-        /* NFA_PROTOCOL_ISO15693 and others */
+        /* NFA_PROTOCOL_T5T and others */
         ndefType = NDEF_UNKNOWN_TYPE;
     }
 
@@ -2243,7 +2242,7 @@ static jboolean nativeNfcTag_doIsNdefFormatable (JNIEnv* e,
     jboolean isFormattable = JNI_FALSE;
 
     tNFC_PROTOCOL protocol = NfcTag::getInstance().getProtocol();
-    if (NFA_PROTOCOL_T1T == protocol || NFA_PROTOCOL_ISO15693 == protocol
+    if (NFA_PROTOCOL_T1T == protocol || NFA_PROTOCOL_T5T == protocol
             || NFA_PROTOCOL_MIFARE == protocol)
     {
         isFormattable = JNI_TRUE;

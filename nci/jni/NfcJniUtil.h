@@ -103,7 +103,7 @@
 #define TARGET_TYPE_ISO14443_3B           2
 #define TARGET_TYPE_ISO14443_4            3
 #define TARGET_TYPE_FELICA                4
-#define TARGET_TYPE_ISO15693              5
+#define TARGET_TYPE_V                     5
 #define TARGET_TYPE_NDEF                  6
 #define TARGET_TYPE_NDEF_FORMATABLE       7
 #define TARGET_TYPE_MIFARE_CLASSIC        8

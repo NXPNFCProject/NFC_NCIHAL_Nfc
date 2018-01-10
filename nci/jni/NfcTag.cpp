@@ -490,10 +490,10 @@ void NfcTag::discoverTechnologies (tNFA_ACTIVATED& activationData)
             memcpy (&(mTechParams[mNumTechList]), &(rfDetail.rf_tech_param), sizeof(rfDetail.rf_tech_param));
         }
     }
-    else if(NFC_PROTOCOL_15693 == rfDetail.protocol)
+    else if(NFC_PROTOCOL_T5T == rfDetail.protocol)
     {
         //is TagTechnology.NFC_V by Java API
-         mTechList [mNumTechList] = TARGET_TYPE_ISO15693;
+         mTechList [mNumTechList] = TARGET_TYPE_V;
     }
     else if(NFC_PROTOCOL_KOVIO == rfDetail.protocol)
     {
@@ -632,10 +632,10 @@ void NfcTag::discoverTechnologies (tNFA_DISC_RESULT& discoveryData)
             }
         }
     }
-    else if(NFC_PROTOCOL_15693 == discovery_ntf.protocol)
+    else if(NFC_PROTOCOL_T5T == discovery_ntf.protocol)
     {
         //is TagTechnology.NFC_V by Java API
-        mTechList [mNumTechList] = TARGET_TYPE_ISO15693;
+        mTechList [mNumTechList] = TARGET_TYPE_V;
     }
     else if (NFC_PROTOCOL_MIFARE == discovery_ntf.protocol)
     {
@@ -969,7 +969,7 @@ void NfcTag::fillNativeNfcTagMembers3 (JNIEnv* e, jclass tag_cls, jobject tag, t
             pollBytes.reset(e->NewByteArray(len));
             e->SetByteArrayRegion(pollBytes.get(), 0, len, (jbyte*) result);
         }
-        else if (NFC_DISCOVERY_TYPE_POLL_ISO15693 == mTechParams [i].mode
+        else if (NFC_DISCOVERY_TYPE_POLL_V == mTechParams [i].mode
               || NFC_DISCOVERY_TYPE_LISTEN_ISO15693 == mTechParams [i].mode)
         {
             ALOGV("%s: tech iso 15693", fn);
@@ -1131,7 +1131,7 @@ void NfcTag::fillNativeNfcTagMembers4 (JNIEnv* e, jclass tag_cls, jobject tag, t
                     actBytes.reset(e->NewByteArray(0));
                 }
         } //case NFC_PROTOCOL_ISO_DEP: //t4t
-        else if (NFC_PROTOCOL_15693 == mTechLibNfcTypes[i])
+        else if (NFC_PROTOCOL_T5T == mTechLibNfcTypes[i])
         {
             ALOGV("%s: tech iso 15693", fn);
             //iso 15693 response flags: 1 octet
@@ -1244,7 +1244,7 @@ void NfcTag::fillNativeNfcTagMembers5 (JNIEnv* e, jclass tag_cls, jobject tag, t
                 (jbyte*) &mTechParams [0].param.pf.nfcid2);
         ALOGV("%s: tech F", fn);
     }
-    else if (NFC_DISCOVERY_TYPE_POLL_ISO15693 == mTechParams [0].mode
+    else if (NFC_DISCOVERY_TYPE_POLL_V == mTechParams [0].mode
           || NFC_DISCOVERY_TYPE_LISTEN_ISO15693 == mTechParams [0].mode)
     {
             ALOGV("%s: tech iso 15693", fn);
@@ -1865,7 +1865,7 @@ void NfcTag::resetAllTransceiveTimeouts ()
     mTechnologyTimeoutsTable [TARGET_TYPE_ISO14443_3B] = 1000; //NfcB
     mTechnologyTimeoutsTable [TARGET_TYPE_ISO14443_4] = 618; //ISO-DEP
     mTechnologyTimeoutsTable [TARGET_TYPE_FELICA] = 255; //Felica
-    mTechnologyTimeoutsTable [TARGET_TYPE_ISO15693] = 1000;//NfcV
+    mTechnologyTimeoutsTable [TARGET_TYPE_V] = 1000;//NfcV
     mTechnologyTimeoutsTable [TARGET_TYPE_NDEF] = 1000;
     mTechnologyTimeoutsTable [TARGET_TYPE_NDEF_FORMATABLE] = 1000;
     mTechnologyTimeoutsTable [TARGET_TYPE_MIFARE_CLASSIC] = 618; //MifareClassic
