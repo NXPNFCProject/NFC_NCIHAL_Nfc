@@ -38,6 +38,7 @@ import android.annotation.Nullable;
 import android.nfc.NdefMessage;
 import android.os.Bundle;
 
+import java.io.FileDescriptor;
 import java.io.IOException;
 
 public interface DeviceHost {
@@ -376,7 +377,7 @@ public interface DeviceHost {
 
     void doSetNfcMode(int nfcMode);
 
-    String dump();
+    void dump(FileDescriptor fd);
 
     boolean enableScreenOffSuspend();
 

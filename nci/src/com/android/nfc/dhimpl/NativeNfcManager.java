@@ -49,6 +49,8 @@ import java.util.Map;
 import com.android.nfc.DeviceHost;
 import com.android.nfc.LlcpException;
 import com.android.nfc.NfcDiscoveryParameters;
+
+import java.io.FileDescriptor;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.HashMap;
@@ -581,10 +583,10 @@ public class NativeNfcManager implements DeviceHost {
         return DEFAULT_LLCP_RWSIZE;
     }
 
-    private native String doDump();
+    private native void doDump(FileDescriptor fd);
     @Override
-    public String dump() {
-        return doDump();
+    public void dump(FileDescriptor fd) {
+        doDump(fd);
     }
 
     private native void doEnableScreenOffSuspend();
