@@ -113,7 +113,6 @@ uint16_t                    sCurrentSelectedUICCSlot = 1;
 SyncEvent                   gNfceeDiscCbEvent;
 uint8_t                     sSelectedUicc = 0;
 extern Rdr_req_ntf_info_t   swp_rdr_req_ntf_info;
-Mutex gDiscMutex;
 bool nfcManager_getTransanctionRequest(int t3thandle, bool registerRequest);
 extern bool createSPIEvtHandlerThread();
 extern void releaseSPIEvtHandlerThread();
@@ -5312,9 +5311,6 @@ void startRfDiscovery(bool isStart)
         ALOGD("%s Already in RF state: %d", __FUNCTION__, isStart);
         return;
     }
-    if(nfcFL.nfcNxpEse && nfcFL.eseFL._NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION) {
-        gDiscMutex.lock();
-    }
 #endif
     ALOGV("%s: is start=%d", __func__, isStart);
     nativeNfcTag_acquireRfInterfaceMutexLock();
@@ -5330,11 +5326,6 @@ void startRfDiscovery(bool isStart)
     else {
         ALOGE("%s: Failed to start/stop RF discovery; error=0x%X", __func__, status);
     }
-#if(NXP_EXTNS == TRUE)
-    if(nfcFL.nfcNxpEse && nfcFL.eseFL._NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION) {
-        gDiscMutex.unlock();
-    }
-#endif
     nativeNfcTag_releaseRfInterfaceMutexLock();
     ALOGV("%s: is exit=%d", __func__, isStart);
 }
