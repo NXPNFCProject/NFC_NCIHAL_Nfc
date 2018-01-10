@@ -5871,7 +5871,7 @@ static void nfcManager_doSetScreenState (JNIEnv* e, jobject o, jint screen_state
 
     ALOGV("%s: state = %d", __func__, state);
 
-    if (sIsDisabling || !sIsNfaEnabled)
+    if (sIsDisabling || !sIsNfaEnabled ||(NFC_GetNCIVersion() != NCI_VERSION_2_0))
         return;
 
 #if (NXP_EXTNS == TRUE)
@@ -5930,6 +5930,7 @@ static void nfcManager_doSetScreenState (JNIEnv* e, jobject o, jint screen_state
             ALOGD ("%s: Disabled RF field events", __FUNCTION__);
         } else {
             ALOGE ("%s: Failed to disable RF field events", __FUNCTION__);
+            return;
         }
 
         if(prevScreenState == NFA_SCREEN_STATE_ON_UNLOCKED)
