@@ -82,8 +82,8 @@ namespace android
     bool    gGotDeact2IdleNtf = false;
 #endif
     bool    fNeedToSwitchBack = false;
-    void    acquireRfInterfaceMutexLock();
-    void    releaseRfInterfaceMutexLock();
+    void    nativeNfcTag_acquireRfInterfaceMutexLock();
+    void    nativeNfcTag_releaseRfInterfaceMutexLock();
 }
 
 
@@ -2684,14 +2684,14 @@ static void sReconnectTimerProc (union sigval)
 
 /*******************************************************************************
 **
-** Function:        acquireRfInterfaceMutexLock
+** Function:        nativeNfcTag_acquireRfInterfaceMutexLock
 **
 ** Description:     acquire lock
 **
 ** Returns:         None
 **
 *******************************************************************************/
-void acquireRfInterfaceMutexLock()
+void nativeNfcTag_acquireRfInterfaceMutexLock()
 {
     ALOGV("%s: try to acquire lock", __func__);
     sRfInterfaceMutex.lock();
@@ -2700,14 +2700,14 @@ void acquireRfInterfaceMutexLock()
 
 /*******************************************************************************
 **
-** Function:       releaseRfInterfaceMutexLock
+** Function:       nativeNfcTag_releaseRfInterfaceMutexLock
 **
 ** Description:    release the lock
 **
 ** Returns:        None
 **
 *******************************************************************************/
-void releaseRfInterfaceMutexLock()
+void nativeNfcTag_releaseRfInterfaceMutexLock()
 {
     sRfInterfaceMutex.unlock();
     ALOGV("%s: sRfInterfaceMutex unlock", __func__);

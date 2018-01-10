@@ -154,8 +154,8 @@ namespace android
     extern tNFA_STATUS SetHfoConfigValue(void);
     extern tNFA_STATUS SetUICC_SWPBitRate(bool);
     extern tNFA_STATUS GetNumNFCEEConfigured(void);
-    extern void acquireRfInterfaceMutexLock();
-    extern void releaseRfInterfaceMutexLock();
+    extern void nativeNfcTag_acquireRfInterfaceMutexLock();
+    extern void nativeNfcTag_releaseRfInterfaceMutexLock();
     extern tNFA_STATUS NxpNfc_Write_Cmd_Common(uint8_t retlen, uint8_t* buffer);
 #if(NXP_EXTNS == TRUE)
     extern bool gIsWaiting4Deact2SleepNtf;
@@ -2758,7 +2758,6 @@ static void nfcManager_enableDiscovery (JNIEnv* e, jobject o, jint technologies_
     }
 
     ALOGV("%s: sIsSecElemSelected=%u", __func__, sIsSecElemSelected);
-    acquireRfInterfaceMutexLock();
     PowerSwitch::getInstance ().setLevel (PowerSwitch::FULL_POWER);
 
     if (sRfEnabled) {
@@ -2938,7 +2937,6 @@ static void nfcManager_enableDiscovery (JNIEnv* e, jobject o, jint technologies_
     sDiscoveryEnabled = true;
 
     PowerSwitch::getInstance ().setModeOn (PowerSwitch::DISCOVERY);
-    releaseRfInterfaceMutexLock();
 
 #if (NXP_EXTNS == TRUE)
 TheEnd:
@@ -3031,7 +3029,6 @@ void nfcManager_disableDiscovery (JNIEnv* e, jobject o)
         ALOGV("%s: already disabled", __func__);
         goto TheEnd;
     }
-    acquireRfInterfaceMutexLock();
     // Stop RF Discovery.
     startRfDiscovery (false);
 
@@ -3091,7 +3088,6 @@ void nfcManager_disableDiscovery (JNIEnv* e, jobject o)
     // field event was indicating a field. To prevent sticking in that
     // state, always reset the rf field status when we disable discovery.
     SecureElement::getInstance().resetRfFieldStatus();
-    releaseRfInterfaceMutexLock();
 TheEnd:
 #if (NXP_EXTNS == TRUE)
     pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(disableDiscovery));
@@ -5285,6 +5281,7 @@ void startRfDiscovery(bool isStart)
     }
 #endif
     ALOGV("%s: is start=%d", __func__, isStart);
+    nativeNfcTag_acquireRfInterfaceMutexLock();
     SyncEventGuard guard (sNfaEnableDisablePollingEvent);
     status  = isStart ? NFA_StartRfDiscovery () : NFA_StopRfDiscovery ();
     if (status == NFA_STATUS_OK) {
@@ -5302,6 +5299,7 @@ void startRfDiscovery(bool isStart)
         gDiscMutex.unlock();
     }
 #endif
+    nativeNfcTag_releaseRfInterfaceMutexLock();
     ALOGV("%s: is exit=%d", __func__, isStart);
 }
 
@@ -5463,6 +5461,7 @@ static tNFA_STATUS startPolling_rfDiscoveryDisabled(tNFA_TECHNOLOGY_MASK tech_ma
         tech_mask = num;
     else if (tech_mask == 0) tech_mask = DEFAULT_TECH_MASK;
 
+    nativeNfcTag_acquireRfInterfaceMutexLock();
     SyncEventGuard guard (sNfaEnableDisablePollingEvent);
     ALOGV("%s: enable polling", __func__);
     stat = NFA_EnablePolling (tech_mask);
@@ -5477,12 +5476,15 @@ static tNFA_STATUS startPolling_rfDiscoveryDisabled(tNFA_TECHNOLOGY_MASK tech_ma
         ALOGE("%s: fail enable polling; error=0x%X", __func__, stat);
     }
 
+    nativeNfcTag_releaseRfInterfaceMutexLock();
+
     return stat;
 }
 
 static tNFA_STATUS stopPolling_rfDiscoveryDisabled() {
     tNFA_STATUS stat = NFA_STATUS_FAILED;
 
+    nativeNfcTag_acquireRfInterfaceMutexLock();
     SyncEventGuard guard (sNfaEnableDisablePollingEvent);
     ALOGV("%s: disable polling", __func__);
     stat = NFA_DisablePolling ();
@@ -5492,6 +5494,8 @@ static tNFA_STATUS stopPolling_rfDiscoveryDisabled() {
     } else {
         ALOGE("%s: fail disable polling; error=0x%X", __func__, stat);
     }
+
+    nativeNfcTag_releaseRfInterfaceMutexLock();
 
     return stat;
 }
@@ -5951,7 +5955,7 @@ static void nfcManager_doSetScreenState (JNIEnv* e, jobject o, jint screen_state
 #endif
         return;
     }
-    acquireRfInterfaceMutexLock();
+    nativeNfcTag_acquireRfInterfaceMutexLock();
     if (state) {
         if (sRfEnabled) {
             // Stop RF discovery to reconfigure
@@ -6036,7 +6040,7 @@ static void nfcManager_doSetScreenState (JNIEnv* e, jobject o, jint screen_state
         }
 
     }
-    releaseRfInterfaceMutexLock();
+    nativeNfcTag_releaseRfInterfaceMutexLock();
 #if (NXP_EXTNS == TRUE)
     pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(setScreenState));
 #endif
