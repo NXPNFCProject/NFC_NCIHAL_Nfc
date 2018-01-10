@@ -991,6 +991,22 @@ static void nfaConnectionCallback (uint8_t connEvent, tNFA_CONN_EVT_DATA* eventD
                     break;
                 }
                 sP2pActive = true;
+#if(NXP_EXTNS == FALSE)
+            ALOGD("%s: NFA_ACTIVATED_EVT; is p2p", __func__);
+            if (NFC_GetNCIVersion() == NCI_VERSION_1_0)
+            {
+                // Disable RF field events in case of p2p
+                uint8_t  nfa_disable_rf_events[] = { 0x00 };
+                ALOGD ("%s: Disabling RF field events", __func__);
+                status = NFA_SetConfig(NCI_PARAM_ID_RF_FIELD_INFO, sizeof(nfa_disable_rf_events),
+                        &nfa_disable_rf_events[0]);
+                if (status == NFA_STATUS_OK) {
+                    ALOGD ("%s: Disabled RF field events", __func__);
+                } else {
+                    ALOGE ("%s: Failed to disable RF field events", __func__);
+                }
+
+#endif
                 ALOGV("%s: NFA_ACTIVATED_EVT: P2P is activated", __func__);
                 if ((nfcFL.nfcNxpEse && nfcFL.eseFL._NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION) &&
                         (SecureElement::getInstance().mIsWiredModeOpen &&
@@ -1161,6 +1177,26 @@ static void nfaConnectionCallback (uint8_t connEvent, tNFA_CONN_EVT_DATA* eventD
                 else if (sP2pActive)
                 {
                     sP2pActive = false;
+#if(NXP_EXTNS == FALSE)
+                ALOGD("%s: NFA_DEACTIVATED_EVT; is p2p", __func__);
+                if (NFC_GetNCIVersion() == NCI_VERSION_1_0)
+                {
+                    // Disable RF field events in case of p2p
+                    uint8_t  nfa_enable_rf_events[] = { 0x01 };
+
+                    if (!sIsDisabling && sIsNfaEnabled)
+                    {
+                        ALOGD ("%s: Enabling RF field events", __func__);
+                        status = NFA_SetConfig(NCI_PARAM_ID_RF_FIELD_INFO, sizeof(nfa_enable_rf_events),
+                                &nfa_enable_rf_events[0]);
+                        if (status == NFA_STATUS_OK) {
+                            ALOGD ("%s: Enabled RF field events", __func__);
+                        } else {
+                            ALOGE ("%s: Failed to enable RF field events", __func__);
+                        }
+                    }
+                }
+#endif
                     SecureElement::getInstance().notifyRfFieldEvent (false);
                     ALOGV("%s: NFA_DEACTIVATED_EVT: is p2p", __func__);
                 }
