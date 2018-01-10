@@ -71,13 +71,15 @@ public class SystemCodeRoutingManager {
                         mConfiguredT3tIdentifiers.size());
                 for (T3tIdentifier t3tIdentifier : mConfiguredT3tIdentifiers) {
                     Log.d(TAG, "    " + t3tIdentifier.systemCode +
-                            "/" + t3tIdentifier.nfcid2);
+                            "/" + t3tIdentifier.t3tPmm);
                 }
                 Log.d(TAG, "(After) mConfiguredT3tIdentifiers: size=" +
                         t3tIdentifiers.size());
                 for (T3tIdentifier t3tIdentifier : t3tIdentifiers) {
                     Log.d(TAG, "    " + t3tIdentifier.systemCode +
-                            "/" + t3tIdentifier.nfcid2);
+                            "/" + t3tIdentifier.nfcid2 +
+                            "/" + t3tIdentifier.t3tPmm);
+
                     Log.d(TAG, "    " + t3tIdentifier.systemCode + "/");
                 }
             }
