@@ -1882,7 +1882,7 @@ bool RoutingManager::clearRoutingEntry(int type)
 #if(NXP_EXTNS == TRUE)
 bool RoutingManager::addAidRouting(const uint8_t* aid, uint8_t aidLen, int route, int power, int aidInfo)
 #else
-bool RoutingManager::addAidRouting(const uint8_t* aid, uint8_t aidLen, int route)
+bool RoutingManager::addAidRouting(const uint8_t* aid, uint8_t aidLen, int route, int aidInfo)
 #endif
 {
     static const char fn [] = "RoutingManager::addAidRouting";
@@ -1921,7 +1921,7 @@ bool RoutingManager::addAidRouting(const uint8_t* aid, uint8_t aidLen, int route
 
     tNFA_STATUS nfaStat = NFA_EeAddAidRouting(handle, aidLen, (uint8_t*) aid, power, aidInfo);
 #else
-    tNFA_STATUS nfaStat = NFA_EeAddAidRouting(route, aidLen, (uint8_t*) aid, 0x01);
+    tNFA_STATUS nfaStat = NFA_EeAddAidRouting(route, aidLen, (uint8_t*) aid, 0x01, aidInfo);
 #endif
     if (nfaStat == NFA_STATUS_OK)
     {

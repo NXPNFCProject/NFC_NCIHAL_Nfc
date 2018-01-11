@@ -1863,7 +1863,10 @@ static jboolean nfcManager_sendRawFrame (JNIEnv* e, jobject, jbyteArray data)
 **
 ** Description:     Route an AID to an EE
 **                  e: JVM environment.
-**                  o: Java object.
+**                  aid: aid to be added to routing table.
+**                  route: aid route location. i.e. DH/eSE/UICC
+**                  power: power state
+**                  aidInfo: prefix or suffix aid.
 **
 ** Returns:         True if ok.
 **
@@ -1890,7 +1893,7 @@ static jboolean nfcManager_routeAid (JNIEnv* e, jobject, jbyteArray aid, jint ro
     }
     bool result = RoutingManager::getInstance().addAidRouting(buf, bufLen, route, power, aidInfo);
 #else
-    bool result = RoutingManager::getInstance().addAidRouting(buf, bufLen, route);
+    bool result = RoutingManager::getInstance().addAidRouting(buf, bufLen, route, aidInfo);
 
 #endif
     return result;

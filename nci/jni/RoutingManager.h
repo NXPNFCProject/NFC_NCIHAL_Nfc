@@ -178,7 +178,7 @@ public:
     void notifyT3tConfigure();
 #endif
 #else
-    bool addAidRouting(const uint8_t* aid, uint8_t aidLen, int route);
+    bool addAidRouting(const uint8_t* aid, uint8_t aidLen, int route, int aidInfo);
 #endif
 
     bool addApduRouting(uint8_t route, uint8_t powerState,const uint8_t* apduData,

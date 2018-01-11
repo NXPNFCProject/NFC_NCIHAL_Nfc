@@ -108,7 +108,7 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         mContext = context;
         mCardEmulationInterface = new CardEmulationInterface();
         mNfcFCardEmulationInterface = new NfcFCardEmulationInterface();
-        mAidCache = new RegisteredAidCache(context, aidRoutingManager);
+        mAidCache = new RegisteredAidCache(context);
         mT3tIdentifiersCache = new RegisteredT3tIdentifiersCache(context);
         mServiceCache = new RegisteredServicesCache(context, this);
         mNfcFServicesCache = new RegisteredNfcFServicesCache(context, this);

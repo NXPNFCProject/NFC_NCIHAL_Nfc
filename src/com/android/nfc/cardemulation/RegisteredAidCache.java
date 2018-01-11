@@ -61,7 +61,10 @@ import android.nfc.cardemulation.NxpAidGroup;
 public class RegisteredAidCache {
     static final String TAG = "RegisteredAidCache";
 
-    static final boolean DBG = true;
+    static final boolean DBG = false;
+
+    static final int AID_ROUTE_QUAL_SUBSET = 0x20;
+    static final int AID_ROUTE_QUAL_PREFIX = 0x10;
 
     // mAidServices maps AIDs to services that have registered them.
     // It's a TreeMap in order to be able to quickly select subsets
@@ -163,9 +166,9 @@ public class RegisteredAidCache {
     boolean mSupportsPrefixes = false;
     boolean mSupportsSubset = false;
 
-    public RegisteredAidCache(Context context, AidRoutingManager aidRoutingManager) {
+    public RegisteredAidCache(Context context) {
         mContext = context;
-        mRoutingManager = aidRoutingManager;
+        mRoutingManager = new AidRoutingManager();
         mPreferredPaymentService = null;
         mPreferredForegroundService = null;
         mSupportsPrefixes = mRoutingManager.supportsAidPrefixRouting();
@@ -851,10 +854,10 @@ public class RegisteredAidCache {
                 continue;
             }
             if(aid.endsWith("#")) {
-                aidInfo |= 0x20;
+                aidInfo |= AID_ROUTE_QUAL_SUBSET;
             }
             if(aid.endsWith("*") || (resolveInfo.prefixInfo != null && resolveInfo.prefixInfo.matchingSubset)) {
-                aidInfo |= 0x10;
+                aidInfo |= AID_ROUTE_QUAL_PREFIX;
             }
             if (resolveInfo.services.size() == 0) {
                 // No interested services
