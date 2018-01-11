@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 NXP Semiconductors
+ * Copyright (C) 2017 NXP Semiconductors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,18 +32,22 @@ import android.os.RemoteException;
 
 public class DtaServiceConnector {
 
+
+    private static String sMessageService;
     Context mContext;
     Messenger dtaMessenger = null;
     boolean isBound;
+
 
     public DtaServiceConnector(Context mContext) {
         this.mContext = mContext;
     }
 
     public void bindService() {
-        if(!isBound){
-        Intent intent = new Intent("com.phdtaui.messageservice.ACTION_BIND");
-        mContext.bindService(createExplicitFromImplicitIntent(mContext,intent), myConnection,Context.BIND_AUTO_CREATE);
+        if (!isBound) {
+            Intent intent = new Intent(sMessageService);
+            mContext.bindService(createExplicitFromImplicitIntent(mContext,intent),
+                                   myConnection,Context.BIND_AUTO_CREATE);
         }
     }
 
@@ -60,7 +64,7 @@ public class DtaServiceConnector {
     };
 
     public void sendMessage(String ndefMessage) {
-        if(!isBound)return;
+        if (!isBound) return;
         Message msg = Message.obtain();
         Bundle bundle = new Bundle();
         bundle.putString("NDEF_MESSAGE", ndefMessage);
@@ -69,16 +73,16 @@ public class DtaServiceConnector {
             dtaMessenger.send(msg);
         } catch (RemoteException e) {
             e.printStackTrace();
-        }catch (NullPointerException e) {
+        } catch (NullPointerException e) {
             e.printStackTrace();
-    }
+        }
     }
 
-    public static Intent createExplicitFromImplicitIntent(Context context, Intent implicitIntent){
+    public static Intent createExplicitFromImplicitIntent(Context context, Intent implicitIntent) {
         PackageManager pm = context.getPackageManager();
         List<ResolveInfo> resolveInfo = pm.queryIntentServices(implicitIntent, 0);
         if (resolveInfo == null || resolveInfo.size() != 1) {
-        return null;
+            return null;
         }
         ResolveInfo serviceInfo = resolveInfo.get(0);
         String packageName = serviceInfo.serviceInfo.packageName;
@@ -87,6 +91,10 @@ public class DtaServiceConnector {
         Intent explicitIntent = new Intent(implicitIntent);
         explicitIntent.setComponent(component);
         return explicitIntent;
+    }
+
+    public static void setMessageService(String service) {
+        sMessageService = service;
     }
 
 }

@@ -425,7 +425,7 @@ static jbyteArray nativeNfcTag_doRead (JNIEnv* e, jobject o)
         if (sReadStatus == NFA_STATUS_TIMEOUT)
             setNdefDetectionTimeout();
         else if (sReadStatus == NFA_STATUS_FAILED)
-            (void)setNdefDetectionTimeoutIfTagAbsent(e, o, NFA_PROTOCOL_ISO15693);
+            (void)setNdefDetectionTimeoutIfTagAbsent(e, o, NFA_PROTOCOL_T5T);
     }
     else
     {
@@ -1946,7 +1946,7 @@ static jint nativeNfcTag_doCheckNdef (JNIEnv* e, jobject o, jintArray ndefInfo)
             ndef[1] = NDEF_MODE_READ_WRITE;
         e->ReleaseIntArrayElements (ndefInfo, ndef, 0);
         status = NFA_STATUS_FAILED;
-        if (setNdefDetectionTimeoutIfTagAbsent(e, o, NFA_PROTOCOL_T3T | NFA_PROTOCOL_ISO15693))
+        if (setNdefDetectionTimeoutIfTagAbsent(e, o, NFA_PROTOCOL_T3T | NFA_PROTOCOL_T5T))
             status = STATUS_CODE_TARGET_LOST;
     }
     else if ((sCheckNdefStatus == NFA_STATUS_TIMEOUT) && (NfcTag::getInstance ().getProtocol() == NFC_PROTOCOL_ISO_DEP))

@@ -2195,7 +2195,6 @@ static jboolean nfcManager_doInitialize (JNIEnv* e, jobject o)
     tNFA_MW_VERSION mwVer;
     gSeDiscoverycount = 0;
     gActualSeCount = 0;
-    uint8_t configData = 0;
 
     uint8_t switchToUiccSlot = 0;
 #if(NXP_EXTNS == TRUE)
@@ -2410,6 +2409,7 @@ static jboolean nfcManager_doInitialize (JNIEnv* e, jobject o)
                         gGeneralPowershutDown = 0;
                     }
                     if(gIsDtaEnabled == true){
+                        uint8_t configData = 0;
                         configData = 0x01;    /**< Poll NFC-DEP : Highest Available Bit Rates */
                         NFA_SetConfig(NFC_PMID_BITR_NFC_DEP, sizeof(uint8_t), &configData);
                         configData = 0x0B;    /**< Listen NFC-DEP : Waiting Time */

@@ -74,6 +74,7 @@ import android.nfc.TechListParcel;
 import android.nfc.TransceiveResult;
 import android.nfc.tech.Ndef;
 import android.nfc.tech.TagTechnology;
+import android.nfc.INfcDta;
 import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Build;
@@ -144,7 +145,6 @@ import com.nxp.intf.ILoaderService;
 import com.nxp.intf.IJcopService;
 import com.nxp.intf.INxpExtrasService;
 import com.nxp.intf.IeSEClientServicesAdapter;
-import com.nxp.nfc.INfcDta;
 import com.nxp.nfc.INfcVzw;
 import com.nxp.nfc.INxpNfcAdapterExtras;
 import com.nxp.nfc.INxpNfcAccessExtras;
@@ -542,7 +542,7 @@ public class NfcService implements DeviceHostListener {
     NfcSeAccessControl mNfcSeAccessControl;
     NfcAlaService mAlaService;
     NfcJcopService mJcopService;
-    NfcDtaService mDtaService;
+    NfcDtaService mNfcDtaService;
     NfcVzwService mVzwService;
     private NfcDispatcher mNfcDispatcher;
     private PowerManager mPowerManager;
@@ -1923,6 +1923,15 @@ public class NfcService implements DeviceHostListener {
             return mExtrasService;
         }
 
+        @Override
+        public INfcDta getNfcDtaInterface(String pkg) throws RemoteException {
+            NfcPermissions.enforceAdminPermissions(mContext);
+            if (mNfcDtaService == null) {
+                mNfcDtaService = new NfcDtaService();
+            }
+            return mNfcDtaService;
+        }
+
          @Override
         public boolean ignore(int nativeHandle, int debounceMs, ITagRemovedCallback callback)
                 throws RemoteException {
@@ -2172,16 +2181,6 @@ public class NfcService implements DeviceHostListener {
             return mNxpNfcController.getNxpNfcControllerInterface();
         }
 
-        @Override
-        public INfcDta getNfcDtaInterface() {
-            NfcPermissions.enforceAdminPermissions(mContext);
-            //begin
-            if(mDtaService == null){
-                mDtaService = new NfcDtaService();
-            }
-            //end
-            return mDtaService;
-        }
         @Override
         public INfcVzw getNfcVzwInterface() {
             NfcPermissions.enforceAdminPermissions(mContext);
@@ -3424,47 +3423,75 @@ public class NfcService implements DeviceHostListener {
             return doTransceive(mOpenEe.handle, data);
         }
     };
-    final class NfcDtaService extends INfcDta.Stub {
 
-        public boolean snepDtaCmd(String cmdType, String serviceName, int serviceSap, int miu, int rwSize, int testCaseId) throws RemoteException
-        {
+
+    final class NfcDtaService extends INfcDta.Stub {
+        public void enableDta() throws RemoteException {
             NfcPermissions.enforceAdminPermissions(mContext);
-            if(cmdType.equals(null))
-                return false;
-            if(cmdType.equals("enabledta") && (!sIsDtaMode)) {
+            if(!sIsDtaMode) {
                 mDeviceHost.enableDtaMode();
                 sIsDtaMode = true;
                 Log.d(TAG, "DTA Mode is Enabled ");
-            }else if(cmdType.equals("disableDta") && (sIsDtaMode)) {
+            }
+        }
+
+        public void disableDta() throws RemoteException {
+            NfcPermissions.enforceAdminPermissions(mContext);
+            if(sIsDtaMode) {
                 mDeviceHost.disableDtaMode();
                 sIsDtaMode = false;
-            } else if(cmdType.equals("enableserver")) {
-                if(serviceName.equals(null))
-                    return false;
-                mP2pLinkManager.enableExtDtaSnepServer(serviceName, serviceSap, miu, rwSize,testCaseId);
-            } else if(cmdType.equals("disableserver")) {
-                mP2pLinkManager.disableExtDtaSnepServer();
-            } else if(cmdType.equals("enableclient")) {
-               if(testCaseId == 0)
-                    return false;
-                if(testCaseId>20){
-                    sIsShortRecordLayout=true;
-                    testCaseId=testCaseId-20;
-                }else{
-                    sIsShortRecordLayout=false;
-                }
-                Log.d("testCaseId", ""+testCaseId);
-                mP2pLinkManager.enableDtaSnepClient(serviceName, miu, rwSize, testCaseId);
-            } else if(cmdType.equals("disableclient")) {
-               mP2pLinkManager.disableDtaSnepClient();
-            } else {
-                Log.d(TAG, "Unkown DTA Command");
-                return false;
             }
+        }
+
+        public boolean enableServer(String serviceName, int serviceSap, int miu,
+                int rwSize,int testCaseId) throws RemoteException {
+            NfcPermissions.enforceAdminPermissions(mContext);
+
+            if(serviceName.equals(null))
+                return false;
+
+            mP2pLinkManager.enableExtDtaSnepServer(serviceName, serviceSap, miu, rwSize,testCaseId);
             return true;
         }
 
-    };
+        public void disableServer() throws RemoteException {
+            NfcPermissions.enforceAdminPermissions(mContext);
+            mP2pLinkManager.disableExtDtaSnepServer();
+        }
+
+        public boolean enableClient(String serviceName, int miu, int rwSize,
+                int testCaseId) throws RemoteException {
+            NfcPermissions.enforceAdminPermissions(mContext);
+
+            if(testCaseId == 0)
+                return false;
+
+            if (testCaseId>20){
+                sIsShortRecordLayout=true;
+                testCaseId=testCaseId-20;
+            } else {
+                sIsShortRecordLayout=false;
+            }
+            Log.d("testCaseId", ""+testCaseId);
+            mP2pLinkManager.enableDtaSnepClient(serviceName, miu, rwSize, testCaseId);
+            return true;
+        }
+
+        public void disableClient() throws RemoteException {
+            NfcPermissions.enforceAdminPermissions(mContext);
+            mP2pLinkManager.disableDtaSnepClient();
+        }
+
+        public boolean registerMessageService(String msgServiceName)
+                throws RemoteException {
+            NfcPermissions.enforceAdminPermissions(mContext);
+            if(msgServiceName.equals(null))
+                return false;
+
+            DtaServiceConnector.setMessageService(msgServiceName);
+            return true;
+         }
+      };
 
     final class NfcVzwService extends INfcVzw.Stub {
         @Override

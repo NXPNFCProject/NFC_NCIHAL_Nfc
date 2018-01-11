@@ -13,25 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/******************************************************************************
- *
- *  The original Work has been changed by NXP Semiconductors.
- *
- *  Copyright (C) 2015 NXP Semiconductors
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
- ******************************************************************************/
+
 package com.android.nfc.snep;
 
 import com.android.nfc.DeviceHost.LlcpServerSocket;
@@ -173,8 +155,8 @@ public final class SnepServer {
         if (((request.getVersion() & 0xF0) >> 4) != SnepMessage.VERSION_MAJOR) {
             messenger.sendMessage(SnepMessage.getMessage(
                     SnepMessage.RESPONSE_UNSUPPORTED_VERSION));
-        } else if((NfcService.sIsDtaMode)&&((request.getLength() > SnepMessage.MAL_IUT) ||
-                (request.getLength() == SnepMessage.MAL))){
+        } else if (NfcService.sIsDtaMode && ((request.getLength() > SnepMessage.MAL_IUT) ||
+                                              request.getLength() == SnepMessage.MAL)) {
             if (DBG) Log.d(TAG, "Bad requested length");
             messenger.sendMessage(SnepMessage.getMessage(SnepMessage.RESPONSE_REJECT));
         } else if (request.getField() == SnepMessage.REQUEST_GET) {
