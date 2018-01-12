@@ -266,17 +266,17 @@ tNFA_STATUS SendAGCDebugCommand()
     memset(gnxpfeature_conf.rsp_data, 0, 50);
     SyncEventGuard guard (gnxpfeature_conf.NxpFeatureConfigEvt);
     if(nfcFL.chipType == pn547C2 || nfcFL.chipType == pn551)
-        status = NFA_SendNxpNciCommand(sizeof(cmd_buf), cmd_buf, NxpResponse_EnableAGCDebug_Cb);
+        status = NFA_SendRawVsCommand(sizeof(cmd_buf), cmd_buf, NxpResponse_EnableAGCDebug_Cb);
     else if(nfcFL.chipType == pn553 || nfcFL.chipType == pn557)
-        status = NFA_SendNxpNciCommand(sizeof(cmd_buf2), cmd_buf2, NxpResponse_EnableAGCDebug_Cb);
+        status = NFA_SendRawVsCommand(sizeof(cmd_buf2), cmd_buf2, NxpResponse_EnableAGCDebug_Cb);
     if (status == NFA_STATUS_OK)
     {
-        ALOGV("%s: Success NFA_SendNxpNciCommand", __func__);
+        ALOGV("%s: Success NFA_SendRawVsCommand", __func__);
         gnxpfeature_conf.NxpFeatureConfigEvt.wait(1000); /* wait for callback */
     }
     else
     {
-        ALOGE("%s: Failed NFA_SendNxpNciCommand", __func__);
+        ALOGE("%s: Failed NFA_SendRawVsCommand", __func__);
     }
     status = GetCbStatus();
     if(status == NFA_STATUS_OK && gnxpfeature_conf.rsp_len > 0)
@@ -314,12 +314,12 @@ tNFA_STATUS EmvCo_dosetPoll(jboolean enable)
         NFA_SetEmvCoState(false);
         ALOGV("NFC forum polling profile");
     }
-    status = NFA_SendNxpNciCommand(sizeof(cmd_buf), cmd_buf, NxpResponse_Cb);
+    status = NFA_SendRawVsCommand(sizeof(cmd_buf), cmd_buf, NxpResponse_Cb);
     if (status == NFA_STATUS_OK) {
-        ALOGV("%s: Success NFA_SendNxpNciCommand", __func__);
+        ALOGV("%s: Success NFA_SendRawVsCommand", __func__);
         gnxpfeature_conf.NxpFeatureConfigEvt.wait(); /* wait for callback */
     } else {
-        ALOGE("%s: Failed NFA_SendNxpNciCommand", __func__);
+        ALOGE("%s: Failed NFA_SendRawVsCommand", __func__);
     }
 
     status = GetCbStatus();
@@ -363,12 +363,12 @@ tNFA_STATUS SetScreenState(jint state)
     {
         ALOGV("Invalid screen state");
     }
-    status = NFA_SendNxpNciCommand(sizeof(screen_off_state_cmd_buff), screen_off_state_cmd_buff, NxpResponse_SetDhlf_Cb);
+    status = NFA_SendRawVsCommand(sizeof(screen_off_state_cmd_buff), screen_off_state_cmd_buff, NxpResponse_SetDhlf_Cb);
     if (status == NFA_STATUS_OK) {
-        ALOGV("%s: Success NFA_SendNxpNciCommand", __func__);
+        ALOGV("%s: Success NFA_SendRawVsCommand", __func__);
         gnxpfeature_conf.NxpFeatureConfigEvt.wait(); /* wait for callback */
     } else {
-        ALOGE("%s: Failed NFA_SendNxpNciCommand", __func__);
+        ALOGE("%s: Failed NFA_SendRawVsCommand", __func__);
     }
 
     status = GetCbStatus();
@@ -417,12 +417,12 @@ tNFA_STATUS SendAutonomousMode(jint state ,uint8_t num)
         ALOGV("Invalid screen state");
         return  NFA_STATUS_FAILED;
     }
-    status = NFA_SendNxpNciCommand(sizeof(autonomos_cmd_buff), autonomos_cmd_buff, NxpResponse_SetDhlf_Cb);
+    status = NFA_SendRawVsCommand(sizeof(autonomos_cmd_buff), autonomos_cmd_buff, NxpResponse_SetDhlf_Cb);
     if (status == NFA_STATUS_OK) {
-        ALOGV("%s: Success NFA_SendNxpNciCommand", __func__);
+        ALOGV("%s: Success NFA_SendRawVsCommand", __func__);
         gnxpfeature_conf.NxpFeatureConfigEvt.wait(); /* wait for callback */
     } else {
-        ALOGE("%s: Failed NFA_SendNxpNciCommand", __func__);
+        ALOGE("%s: Failed NFA_SendRawVsCommand", __func__);
     }
 
     status = GetCbStatus();
@@ -541,17 +541,17 @@ tNFA_STATUS Nxp_SelfTest(uint8_t testcase, uint8_t* param)
     }
 
     if(nfcFL.chipType != pn547C2) {
-        status = NFA_SendNxpNciCommand(cmd_len, cmd_buf, NxpResponse_SetDhlf_Cb);
+        status = NFA_SendRawVsCommand(cmd_len, cmd_buf, NxpResponse_SetDhlf_Cb);
     }
     else {
-        status = NFA_SendNxpNciCommand(cmd_len, cmd_buf_stat, NxpResponse_SetDhlf_Cb);
+        status = NFA_SendRawVsCommand(cmd_len, cmd_buf_stat, NxpResponse_SetDhlf_Cb);
     }
 
     if (status == NFA_STATUS_OK) {
-        ALOGV("%s: Success NFA_SendNxpNciCommand", __func__);
+        ALOGV("%s: Success NFA_SendRawVsCommand", __func__);
         gnxpfeature_conf.NxpFeatureConfigEvt.wait(); /* wait for callback */
     } else {
-        ALOGE("%s: Failed NFA_SendNxpNciCommand", __func__);
+        ALOGE("%s: Failed NFA_SendRawVsCommand", __func__);
     }
 
     status = GetCbStatus();
@@ -590,15 +590,15 @@ tNFA_STATUS SetVenConfigValue(jint nfcMode)
     }
     SetCbStatus(NFA_STATUS_FAILED);
     SyncEventGuard guard (gnxpfeature_conf.NxpFeatureConfigEvt);
-    status = NFA_SendNxpNciCommand(sizeof(cmd_buf), cmd_buf, NxpResponse_SetVenConfig_Cb);
+    status = NFA_SendRawVsCommand(sizeof(cmd_buf), cmd_buf, NxpResponse_SetVenConfig_Cb);
     if (status == NFA_STATUS_OK)
     {
-        ALOGV("%s: Success NFA_SendNxpNciCommand", __func__);
+        ALOGV("%s: Success NFA_SendRawVsCommand", __func__);
         gnxpfeature_conf.NxpFeatureConfigEvt.wait(); /* wait for callback */
     }
     else
     {
-        ALOGE("%s: Failed NFA_SendNxpNciCommand", __func__);
+        ALOGE("%s: Failed NFA_SendRawVsCommand", __func__);
     }
     status = GetCbStatus();
     return status;
@@ -695,15 +695,15 @@ tNFA_STATUS GetNumNFCEEConfigured(void)
 
     SetCbStatus(NFA_STATUS_FAILED);
     SyncEventGuard guard (gnxpfeature_conf.NxpFeatureConfigEvt);
-    status = NFA_SendNxpNciCommand(cmd_buf_len, cmd_buf, NxpResponse_GetNumNFCEEValueCb);
+    status = NFA_SendRawVsCommand(cmd_buf_len, cmd_buf, NxpResponse_GetNumNFCEEValueCb);
     if (status == NFA_STATUS_OK)
     {
-        ALOGV("%s: Success NFA_SendNxpNciCommand", __func__);
+        ALOGV("%s: Success NFA_SendRawVsCommand", __func__);
         gnxpfeature_conf.NxpFeatureConfigEvt.wait(); /* wait for callback */
     }
     else
     {
-        ALOGE("%s: Failed NFA_SendNxpNciCommand", __func__);
+        ALOGE("%s: Failed NFA_SendRawVsCommand", __func__);
     }
     status = GetCbStatus();
     ALOGV("%s : gActualSeCount = %ld",__func__, gActualSeCount);
@@ -747,15 +747,15 @@ tNFA_STATUS SetHfoConfigValue(void)
 
     SetCbStatus(NFA_STATUS_FAILED);
     SyncEventGuard guard (gnxpfeature_conf.NxpFeatureConfigEvt);
-    status = NFA_SendNxpNciCommand(sizeof(cmd_buf), cmd_buf, NxpResponse_SetVenConfig_Cb);
+    status = NFA_SendRawVsCommand(sizeof(cmd_buf), cmd_buf, NxpResponse_SetVenConfig_Cb);
     if (status == NFA_STATUS_OK)
     {
-        ALOGV("%s: Success NFA_SendNxpNciCommand", __func__);
+        ALOGV("%s: Success NFA_SendRawVsCommand", __func__);
         gnxpfeature_conf.NxpFeatureConfigEvt.wait(); /* wait for callback */
     }
     else
     {
-        ALOGE("%s: Failed NFA_SendNxpNciCommand", __func__);
+        ALOGE("%s: Failed NFA_SendRawVsCommand", __func__);
     }
     status = GetCbStatus();
     if (NFA_STATUS_OK == status)
@@ -790,15 +790,15 @@ tNFA_STATUS ResetEseSession()
     SetCbStatus(NFA_STATUS_FAILED);
     {
         SyncEventGuard guard (gnxpfeature_conf.NxpFeatureConfigEvt);
-        status = NFA_SendNxpNciCommand(sizeof(cmd_buf), cmd_buf, NxpResponse_Cb);
+        status = NFA_SendRawVsCommand(sizeof(cmd_buf), cmd_buf, NxpResponse_Cb);
         if (status == NFA_STATUS_OK)
         {
-            ALOGV("%s: Success NFA_SendNxpNciCommand", __func__);
+            ALOGV("%s: Success NFA_SendRawVsCommand", __func__);
             gnxpfeature_conf.NxpFeatureConfigEvt.wait(); /* wait for callback */
         }
         else
         {
-            ALOGE("%s: Failed NFA_SendNxpNciCommand", __func__);
+            ALOGE("%s: Failed NFA_SendRawVsCommand", __func__);
         }
     }
     status = GetCbStatus();
@@ -858,21 +858,21 @@ tNFA_STATUS enableSWPInterface()
             {
                 SyncEventGuard guard (gnxpfeature_conf.NxpFeatureConfigEvt);
                 if(nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH) {
-                    status = NFA_SendNxpNciCommand(sizeof(dual_uicc_cmd_buf),
+                    status = NFA_SendRawVsCommand(sizeof(dual_uicc_cmd_buf),
                             dual_uicc_cmd_buf, NxpResponse_Cb);
                 }
                 else {
-                    status = NFA_SendNxpNciCommand(sizeof(cmd_buf), cmd_buf, NxpResponse_Cb);
+                    status = NFA_SendRawVsCommand(sizeof(cmd_buf), cmd_buf, NxpResponse_Cb);
                 }
 
                 if (status == NFA_STATUS_OK)
                 {
-                    ALOGV("%s: Success NFA_SendNxpNciCommand", __func__);
+                    ALOGV("%s: Success NFA_SendRawVsCommand", __func__);
                     gnxpfeature_conf.NxpFeatureConfigEvt.wait(); /* wait for callback */
                 }
                 else
                 {
-                    ALOGE("%s: Failed NFA_SendNxpNciCommand", __func__);
+                    ALOGE("%s: Failed NFA_SendRawVsCommand", __func__);
                 }
             }
             status = GetCbStatus();
@@ -914,15 +914,15 @@ tNFA_STATUS SetUICC_SWPBitRate(bool isMifareSupported)
 
     SetCbStatus(NFA_STATUS_FAILED);
     SyncEventGuard guard (gnxpfeature_conf.NxpFeatureConfigEvt);
-    status = NFA_SendNxpNciCommand(sizeof(cmd_buf), cmd_buf, NxpResponse_SetSWPBitRate_Cb);
+    status = NFA_SendRawVsCommand(sizeof(cmd_buf), cmd_buf, NxpResponse_SetSWPBitRate_Cb);
     if (status == NFA_STATUS_OK)
     {
-        ALOGV("%s: Success NFA_SendNxpNciCommand", __func__);
+        ALOGV("%s: Success NFA_SendRawVsCommand", __func__);
         gnxpfeature_conf.NxpFeatureConfigEvt.wait(); /* wait for callback */
     }
     else
     {
-         ALOGE("%s: Failed NFA_SendNxpNciCommand", __func__);
+         ALOGE("%s: Failed NFA_SendRawVsCommand", __func__);
     }
     status = GetCbStatus();
     return status;
@@ -941,15 +941,15 @@ tNFA_STATUS NxpNfc_Write_Cmd(uint8_t retlen, uint8_t* buffer, tNXP_RSP_CBACK* p_
     tNFA_STATUS status = NFA_STATUS_FAILED;
     SetCbStatus(NFA_STATUS_FAILED);
     SyncEventGuard guard (gnxpfeature_conf.NxpFeatureConfigEvt);
-    status = NFA_SendNxpNciCommand(retlen, buffer, p_cback);
+    status = NFA_SendRawVsCommand(retlen, buffer, p_cback);
     if (status == NFA_STATUS_OK)
     {
-        ALOGV("%s: Success NFA_SendNxpNciCommand", __func__);
+        ALOGV("%s: Success NFA_SendRawVsCommand", __func__);
         gnxpfeature_conf.NxpFeatureConfigEvt.wait(); /* wait for callback */
     }
     else
     {
-         ALOGE("%s: Failed NFA_SendNxpNciCommand", __func__);
+         ALOGE("%s: Failed NFA_SendRawVsCommand", __func__);
     }
     status = GetCbStatus();
     return status;
@@ -995,16 +995,16 @@ tNFA_STATUS Set_EERegisterValue(uint16_t RegAddr, uint8_t bitVal)
     SetCbStatus(NFA_STATUS_FAILED);
     SyncEventGuard guard (gnxpfeature_conf.NxpFeatureConfigEvt);
 
-    status = NFA_SendNxpNciCommand(sizeof(swp1conf), swp1conf, NxpResponse_SwitchUICC_Cb);
+    status = NFA_SendRawVsCommand(sizeof(swp1conf), swp1conf, NxpResponse_SwitchUICC_Cb);
     if (status == NFA_STATUS_OK)
     {
-        ALOGV("%s: Success NFA_SendNxpNciCommand", __func__);
+        ALOGV("%s: Success NFA_SendRawVsCommand", __func__);
         gnxpfeature_conf.NxpFeatureConfigEvt.wait(); /* wait for callback */
         status = NFA_STATUS_FAILED;
     }
     else
     {
-         ALOGE("%s: Failed NFA_SendNxpNciCommand", __func__);
+         ALOGE("%s: Failed NFA_SendRawVsCommand", __func__);
     }
     status = GetCbStatus();
     return status;
@@ -1025,15 +1025,15 @@ tNFA_STATUS NxpNfc_Write_Cmd_Common(uint8_t retlen, uint8_t* buffer)
     tNFA_STATUS status = NFA_STATUS_FAILED;
     SetCbStatus(NFA_STATUS_FAILED);
     SyncEventGuard guard (gnxpfeature_conf.NxpFeatureConfigEvt);
-    status = NFA_SendNxpNciCommand(retlen, buffer, NxpResponse_Cb);
+    status = NFA_SendRawVsCommand(retlen, buffer, NxpResponse_Cb);
     if (status == NFA_STATUS_OK)
     {
-        ALOGV("%s: Success NFA_SendNxpNciCommand", __func__);
+        ALOGV("%s: Success NFA_SendRawVsCommand", __func__);
         gnxpfeature_conf.NxpFeatureConfigEvt.wait(); /* wait for callback */
     }
     else
     {
-         ALOGE("%s: Failed NFA_SendNxpNciCommand", __func__);
+         ALOGE("%s: Failed NFA_SendRawVsCommand", __func__);
     }
     status = GetCbStatus();
     return status;

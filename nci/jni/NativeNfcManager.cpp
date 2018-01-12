@@ -2840,7 +2840,7 @@ static void nfcManager_enableDiscovery (JNIEnv* e, jobject o, jint technologies_
                 NFA_SetReaderMode(true,0);
                 /*Send the state of readmode flag to Hal using proprietary command*/
                 sProprietaryCmdBuf[3]=0x01;
-                status |= NFA_SendNxpNciCommand(sizeof(sProprietaryCmdBuf),sProprietaryCmdBuf,NxpResponsePropCmd_Cb);
+                status |= NFA_SendRawVsCommand(sizeof(sProprietaryCmdBuf),sProprietaryCmdBuf,NxpResponsePropCmd_Cb);
                 if (status == NFA_STATUS_OK)
                 {
                     SyncEventGuard guard (sNfaNxpNtfEvent);
@@ -2848,7 +2848,7 @@ static void nfcManager_enableDiscovery (JNIEnv* e, jobject o, jint technologies_
                 }
                 else
                 {
-                    ALOGE("%s: Failed NFA_SendNxpNciCommand", __func__);
+                    ALOGE("%s: Failed NFA_SendRawVsCommand", __func__);
                 }
                 ALOGV("%s: FRM Enable", __func__);
 #endif
@@ -2869,7 +2869,7 @@ static void nfcManager_enableDiscovery (JNIEnv* e, jobject o, jint technologies_
                 gFelicaReaderState = STATE_IDLE;
                 /*Send the state of readmode flag to Hal using proprietary command*/
                 sProprietaryCmdBuf[3]=0x00;
-                status |= NFA_SendNxpNciCommand(sizeof(sProprietaryCmdBuf),sProprietaryCmdBuf,NxpResponsePropCmd_Cb);
+                status |= NFA_SendRawVsCommand(sizeof(sProprietaryCmdBuf),sProprietaryCmdBuf,NxpResponsePropCmd_Cb);
                 if (status == NFA_STATUS_OK)
                 {
                     SyncEventGuard guard (sNfaNxpNtfEvent);
@@ -2877,7 +2877,7 @@ static void nfcManager_enableDiscovery (JNIEnv* e, jobject o, jint technologies_
                 }
                 else
                 {
-                    ALOGE("%s: Failed NFA_SendNxpNciCommand", __func__);
+                    ALOGE("%s: Failed NFA_SendRawVsCommand", __func__);
                 }
                 ALOGV("%s: FRM Disable", __func__);
 #endif
