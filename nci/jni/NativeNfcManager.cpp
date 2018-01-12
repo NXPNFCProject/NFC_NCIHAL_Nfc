@@ -5931,7 +5931,7 @@ static void nfcManager_doSetScreenState (JNIEnv* e, jobject o, jint screen_state
            prevScreenState == NFA_SCREEN_STATE_ON_LOCKED)
         {
             SyncEventGuard guard (sNfaSetPowerSubState);
-            status = NFA_SetPowerSubState(state);
+            status = NFA_SetPowerSubStateForScreenState(state);
             if (status != NFA_STATUS_OK) {
                 ALOGE ("%s: fail enable SetScreenState; error=0x%X", __FUNCTION__, status);
             }
@@ -5970,7 +5970,7 @@ static void nfcManager_doSetScreenState (JNIEnv* e, jobject o, jint screen_state
         if(prevScreenState == NFA_SCREEN_STATE_ON_UNLOCKED)
         {
             SyncEventGuard guard (sNfaSetPowerSubState);
-            status = NFA_SetPowerSubState(state);
+            status = NFA_SetPowerSubStateForScreenState(state);
             if (status != NFA_STATUS_OK) {
             ALOGE ("%s: fail enable SetScreenState; error=0x%X", __FUNCTION__, status);
             }
