@@ -45,6 +45,7 @@
 #include <sys/stat.h>
 
 #include <phNxpLog.h>
+#include "sparse_crc32.h"
 
 #if GENERIC_TARGET
 const char alternative_config_path[] = "/data/vendor/nfc/";
@@ -54,9 +55,7 @@ const char alternative_config_path[] = "";
 
 #if 1
 const char* transport_config_paths[] = {"/odm/etc/", "/vendor/etc/", "/etc/"};
-#if(NXP_EXTNS == TRUE)
-const char transit_config_path[] = "/data/vendor/nfc/";
-#endif
+const char transit_config_path[] = "/data/vendor/nfc/libnfc-nxpTransit.conf";
 #else
 const char* transport_config_paths[] = {"res/"};
 #endif
@@ -73,7 +72,34 @@ const int transport_config_path_size =
 #define extra_config_ext        ".conf"
 #define IsStringValue           0x80000000
 
+const char default_nxp_config_path[] =
+        "/vendor/etc/libnfc-nxp.conf";
 const char config_timestamp_path[] = "/data/vendor/nfc/libnfc-nxpConfigState.bin";
+
+namespace {
+
+size_t readConfigFile(const char* fileName, uint8_t** p_data) {
+  FILE* fd = fopen(fileName, "rb");
+  if (fd == nullptr) return 0;
+
+  fseek(fd, 0L, SEEK_END);
+  const size_t file_size = ftell(fd);
+  rewind(fd);
+
+  uint8_t* buffer = new uint8_t[file_size];
+  size_t read = fread(buffer, file_size, 1, fd);
+  fclose(fd);
+
+  if (read == 1) {
+    *p_data = buffer;
+    return file_size;
+  }
+
+  return 0;
+}
+
+}  // namespace
+
 
 using namespace::std;
 
@@ -98,8 +124,8 @@ public:
     virtual ~CNxpNfcConfig ();
     static CNxpNfcConfig& GetInstance ();
     friend void readOptionalConfig (const char* optional);
-    int checkTimestamp ();
-    int updateTimestamp ();
+    bool isModified();
+    void resetModified();
 
     bool    getValue (const char* name, char* pValue, size_t len) const;
     bool    getValue (const char* name, unsigned long& rValue) const;
@@ -123,7 +149,7 @@ private:
 #endif
     list<const CNxpNfcParam*> m_list;
     bool    mValidFile;
-    unsigned long m_timeStamp;
+    uint32_t config_crc32_;
 
     unsigned long state;
 
@@ -241,6 +267,17 @@ bool CNxpNfcConfig::readConfig (const char* name, bool bResetContent)
         END_LINE
     };
 
+  uint8_t* p_config = nullptr;
+  size_t config_size = readConfigFile(name, &p_config);
+  if (p_config == nullptr) {
+    ALOGE("%s Cannot open config file %s\n", __func__, name);
+    if (bResetContent) {
+      ALOGE("%s Using default value for all settings\n", __func__);
+      mValidFile = false;
+    }
+    return false;
+  }
+
     FILE*   fd;
     struct stat buf;
     string  token;
@@ -269,7 +306,9 @@ bool CNxpNfcConfig::readConfig (const char* name, bool bResetContent)
     ALOGV("%s Opened %s config %s\n", __func__, (bResetContent ? "base" : "optional"), name);
 
     stat (name, &buf);
-    m_timeStamp = (unsigned long) buf.st_mtime;
+    if (strcmp(default_nxp_config_path, name) == 0) {
+      config_crc32_ = sparse_crc32(0, p_config, config_size);
+    }
 
     mValidFile = true;
     if (size() > 0)
@@ -482,7 +521,6 @@ bool CNxpNfcConfig::readConfig (const char* name, bool bResetContent)
 *******************************************************************************/
 CNxpNfcConfig::CNxpNfcConfig () :
     mValidFile (true),
-    m_timeStamp (0),
     state (0)
 {
 }
@@ -843,51 +881,31 @@ void CNxpNfcConfig::moveToList ()
     clear();
 }
 
-/*******************************************************************************
-**
-** Function:    CNxpNfcConfig::checkTimestamp()
-**
-** Description: check if config file has modified
-**
-** Returns:     0 if not modified, 1 otherwise.
-**
-*******************************************************************************/
-int CNxpNfcConfig::checkTimestamp ()
-{
-    FILE* fd;
-    struct stat st;
-    unsigned long value = 0;
-    int ret = 0;
+bool CNxpNfcConfig::isModified() {
+  FILE* fd = fopen(config_timestamp_path, "r+");
+  if (fd == nullptr) {
+    ALOGE("%s Unable to open file '%s' - assuming modified", __func__,
+          config_timestamp_path);
+    return true;
+  }
 
-    if (stat(config_timestamp_path, &st) != 0)
-    {
-        ALOGV("%s file %s not exist, creat it.", __func__, config_timestamp_path);
-        if ((fd = fopen (config_timestamp_path, "w+")) != NULL)
-        {
-            fwrite (&m_timeStamp, sizeof(unsigned long), 1, fd);
-            fclose (fd);
-        }
-        return 1;
-    }
-    else
-    {
-        fd = fopen (config_timestamp_path, "r+");
-        if (fd == NULL)
-        {
-            ALOGE("%s Cannot open file %s", __func__, config_timestamp_path);
-            return 1;
-        }
+  uint32_t stored_crc32 = 0;
+  fread(&stored_crc32, sizeof(uint32_t), 1, fd);
+  fclose(fd);
 
-        fread (&value, sizeof(unsigned long), 1, fd);
-        ret = (value != m_timeStamp);
-        if (ret)
-        {
-            fseek (fd, 0, SEEK_SET);
-            fwrite (&m_timeStamp, sizeof(unsigned long), 1, fd);
-        }
-        fclose (fd);
-    }
-    return ret;
+  return stored_crc32 != config_crc32_;
+}
+
+void CNxpNfcConfig::resetModified() {
+  FILE* fd = fopen(config_timestamp_path, "w+");
+  if (fd == nullptr) {
+    ALOGE("%s Unable to open file '%s' for writing", __func__,
+          config_timestamp_path);
+    return;
+  }
+
+  fwrite(&config_crc32_, sizeof(uint32_t), 1, fd);
+  fclose(fd);
 }
 
 /*******************************************************************************
@@ -1091,7 +1109,7 @@ void readOptionalConfig (const char* extra)
 extern "C" int isNxpConfigModified ()
 {
     CNxpNfcConfig& rConfig = CNxpNfcConfig::GetInstance ();
-    return rConfig.checkTimestamp ();
+    return rConfig.isModified();
 }
 
 /*******************************************************************************
@@ -1106,52 +1124,6 @@ extern "C" int isNxpConfigModified ()
 extern "C" int updateNxpConfigTimestamp()
 {
     CNxpNfcConfig& rConfig = CNxpNfcConfig::GetInstance();
-    return rConfig.updateTimestamp();
-}
-
-/*******************************************************************************
-**
-** Function:    CNxpNfcConfig::updateTimestamp()
-**
-** Description: update if config file has modified
-**
-** Returns:     0 if not modified, 1 otherwise.
-**
-*******************************************************************************/
-int CNxpNfcConfig::updateTimestamp()
-{
-    FILE*   fd;
-    struct stat st;
-    unsigned long value = 0;
-    int ret = 0;
-
-    if(stat(config_timestamp_path, &st) != 0)
-    {
-        ALOGV("%s file %s not exist, creat it.\n", __func__, config_timestamp_path);
-        if ((fd = fopen(config_timestamp_path, "w+")) != NULL)
-        {
-            fwrite(&m_timeStamp, sizeof(unsigned long), 1, fd);
-            fclose(fd);
-        }
-        return 1;
-    }
-    else
-    {
-        fd = fopen(config_timestamp_path, "r+");
-        if(fd == NULL)
-        {
-            ALOGE("%s Cannot open file %s\n", __func__, config_timestamp_path);
-            return 1;
-        }
-
-        fread(&value, sizeof(unsigned long), 1, fd);
-        ret = (value != m_timeStamp);
-        if(ret)
-        {
-            fseek(fd, 0, SEEK_SET);
-            fwrite(&m_timeStamp, sizeof(unsigned long), 1, fd);
-        }
-        fclose(fd);
-    }
-    return ret;
+    rConfig.resetModified();
+    return 0;
 }
