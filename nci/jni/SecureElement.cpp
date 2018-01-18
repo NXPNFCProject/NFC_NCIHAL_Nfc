@@ -285,7 +285,6 @@ SecureElement::SecureElement ()
     memset (&mEeInfo, 0, nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED *sizeof(tNFA_EE_INFO));
     memset (&mUiccInfo, 0, sizeof(mUiccInfo));
     memset (&mHciCfg, 0, sizeof(mHciCfg));
-    memset (mResponseData, 0, sizeof(mResponseData));
     memset (mAidForEmptySelect, 0, sizeof(mAidForEmptySelect));
     memset (&mLastRfFieldToggle, 0, sizeof(mLastRfFieldToggle));
     memset (mAtrInfo, 0, sizeof( mAtrInfo));
@@ -1765,7 +1764,7 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
     {
         SyncEventGuard guard (mTransceiveEvent);
         mActualResponseSize = 0;
-        memset (mResponseData, 0, sizeof(mResponseData));
+        memset (recvBuffer, 0, recvBufferMaxSize);
 #if(NXP_EXTNS == TRUE)
         if(nfcFL.nfcNxpEse) {
             struct timeval start_timer, end_timer;
@@ -1836,13 +1835,13 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
         if(nfcFL.nfcNxpEse && nfcFL.eseFL._NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION) {
             isTransceiveOngoing = true;
         }
-            nfaStat = NFA_HciSendEvent (mNfaHciHandle, mNewPipeId, EVT_SEND_DATA, xmitBufferSize, xmitBuffer, sizeof(mResponseData), mResponseData, timeoutMillisec);
+            nfaStat = NFA_HciSendEvent (mNfaHciHandle, mNewPipeId, EVT_SEND_DATA, xmitBufferSize, xmitBuffer, recvBufferMaxSize, recvBuffer, timeoutMillisec);
 #if(NXP_EXTNS == TRUE)
         }
         else if (mNewPipeId == STATIC_PIPE_UICC)
         {
             ALOGV("%s, Starting UICC wired mode!!!!!!.....", fn);
-            nfaStat = NFA_HciSendEvent (mNfaHciHandle, mNewPipeId, EVT_SEND_DATA, xmitBufferSize, xmitBuffer, sizeof(mResponseData), mResponseData, timeoutMillisec);
+            nfaStat = NFA_HciSendEvent (mNfaHciHandle, mNewPipeId, EVT_SEND_DATA, xmitBufferSize, xmitBuffer, recvBufferMaxSize, recvBuffer, timeoutMillisec);
         }
 #endif
         else
@@ -1862,7 +1861,7 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
             if(nfcFL.nfcNxpEse && nfcFL.eseFL._NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION) {
                 isTransceiveOngoing = true;
             }
-            nfaStat = NFA_HciSendEvent (mNfaHciHandle, mNewPipeId, NFA_HCI_EVT_POST_DATA, xmitBufferSize, xmitBuffer, sizeof(mResponseData), mResponseData, timeoutMillisec);
+            nfaStat = NFA_HciSendEvent (mNfaHciHandle, mNewPipeId, NFA_HCI_EVT_POST_DATA, xmitBufferSize, xmitBuffer, recvBufferMaxSize, recvBuffer, timeoutMillisec);
 #if(NXP_EXTNS == TRUE)
         }
 #endif
@@ -1920,7 +1919,6 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
         else
             recvBufferActualSize = mActualResponseSize;
 
-        memcpy (recvBuffer, mResponseData, recvBufferActualSize);
 #if(NXP_EXTNS == TRUE)
     tranStatus = TRANSCEIVE_STATUS_OK;
 #else

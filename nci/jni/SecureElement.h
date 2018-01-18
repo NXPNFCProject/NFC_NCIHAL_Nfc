@@ -877,7 +877,6 @@ private:
     uint8_t         mVerInfo [3];
     uint8_t         mAtrInfo[40];
     bool            mGetAtrRspwait;
-    uint8_t         mResponseData [MAX_RESPONSE_SIZE];
     RouteDataSet    mRouteDataSet; //routing data
     std::vector<std::string> mUsedAids; //AID's that are used in current routes
     uint8_t         mAidForEmptySelect[NCI_MAX_AID_LEN+1];
