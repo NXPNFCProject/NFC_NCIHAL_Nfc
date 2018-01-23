@@ -5903,10 +5903,12 @@ static void nfcManager_doSetScreenState (JNIEnv* e, jobject o, jint screen_state
     uint8_t  discovry_param = NFA_LISTEN_DH_NFCEE_ENABLE_MASK | NFA_POLLING_DH_ENABLE_MASK;
     uint8_t state = (screen_state_mask & NFA_SCREEN_STATE_MASK);
 
-    ALOGV("%s: state = %d", __func__, state);
+    ALOGV("%s: Enter state = %d", __func__, state);
 
-    if (sIsDisabling || !sIsNfaEnabled ||(NFC_GetNCIVersion() != NCI_VERSION_2_0))
+    if (sIsDisabling || !sIsNfaEnabled)
+    {
         return;
+    }
 
 #if (NXP_EXTNS == TRUE)
     if(!pTransactionController->transactionAttempt(TRANSACTION_REQUESTOR(setScreenState)))
@@ -5919,10 +5921,11 @@ static void nfcManager_doSetScreenState (JNIEnv* e, jobject o, jint screen_state
 #endif
     pendingScreenState = false;
     int prevScreenState = getScreenState();
-    if(prevScreenState == state) {
+    if(prevScreenState == state)
+    {
         ALOGV("Screen state is not changed. ");
 #if (NXP_EXTNS == TRUE)
-    pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(setScreenState));
+        pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(setScreenState));
 #endif
         return;
     }
@@ -5985,7 +5988,6 @@ static void nfcManager_doSetScreenState (JNIEnv* e, jobject o, jint screen_state
 #endif
         return;
     }
-    nativeNfcTag_acquireRfInterfaceMutexLock();
     if (state) {
         if (sRfEnabled) {
             // Stop RF discovery to reconfigure
@@ -6068,12 +6070,11 @@ static void nfcManager_doSetScreenState (JNIEnv* e, jobject o, jint screen_state
         {
             free(buffer);
         }
-
     }
-    nativeNfcTag_releaseRfInterfaceMutexLock();
 #if (NXP_EXTNS == TRUE)
     pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(setScreenState));
 #endif
+    ALOGV("%s: Exit", __func__);
 }
 #if(NXP_EXTNS == TRUE)
 /*******************************************************************************
