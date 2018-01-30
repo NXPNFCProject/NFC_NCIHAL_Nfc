@@ -99,6 +99,11 @@ bool                          sHCEEnabled = true;
 #define NFC_PIPE_STATUS_OFFSET       4
 #define MAX_JCOP_TIMEOUT_VALUE 60000 /*Maximum Jcop OSU timeout value*/
 #define MAX_WAIT_TIME_FOR_RETRY 8 /*Maximum wait for retry in usec*/
+#define IS_ESE_RF_CE_PARAM_FETCHED()   (pEvtData->get_config.param_tlvs[1] == 0xA0 &&\
+                                        pEvtData->get_config.param_tlvs[2] == 0xF0)
+#define IS_ESE_CE_MODE_DISABLED()       (pEvtData->get_config.param_tlvs[5] == 0xFF ||\
+                                        pEvtData->get_config.param_tlvs[43] == 0xFF)
+
 extern nfcee_disc_state     sNfcee_disc_state;
 extern bool                 recovery;
 extern uint8_t              swp_getconfig_status;
@@ -399,6 +404,8 @@ static uint8_t sRoutingBuff[MAX_GET_ROUTING_BUFFER_SIZE];
 static uint8_t sNfceeConfigured;
 static uint8_t sCheckNfceeFlag;
 void checkforNfceeBuffer();
+static uint32_t eSEPhyIntfInResponsive(tNFA_DM_CBACK_DATA* pEvtData);
+static void recoverEseConnectivity();
 void checkforNfceeConfig(uint8_t type);
 static void performHCIInitialization (JNIEnv* e, jobject o);
 void performNfceeETSI12Config();
@@ -1633,6 +1640,9 @@ void nfaDeviceManagementCallback (uint8_t dmEvent, tNFA_DM_CBACK_DATA* eventData
 #if(NXP_EXTNS == TRUE)
                 if(sCheckNfceeFlag)
                     checkforNfceeBuffer();
+
+                if(eSEPhyIntfInResponsive(eventData))
+                    recoverEseConnectivity();
 #endif
             }
             else
@@ -2357,19 +2367,6 @@ static jboolean nfcManager_doInitialize (JNIEnv* e, jobject o)
                 /////////////////////////////////////////////////////////////////////////////////
                 // Add extra configuration here (work-arounds, etc.)
 #if (NXP_EXTNS == TRUE)
-                    if(IsEseCeDisabled)
-                    {
-                        ALOGV("CE with ESE is disable, Hence reset the session");
-                        stat = android::ResetEseSession();
-                        if(stat == NFA_STATUS_OK)
-                        {
-                            SecureElement::getInstance().SecEle_Modeset(0x00);
-                            usleep(50*1000);
-                            SecureElement::getInstance().SecEle_Modeset(0x01);
-                        }
-                        IsEseCeDisabled = false;
-                    }
-
                     if(nfcFL.nfcNxpEse) {
                         if(nfcFL.eseFL._ESE_SVDD_SYNC || nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION ||
                                 nfcFL.nfccFL._NFCC_SPI_FW_DOWNLOAD_SYNC ||
@@ -2463,6 +2460,11 @@ static jboolean nfcManager_doInitialize (JNIEnv* e, jobject o)
 #if(NXP_EXTNS != TRUE)
                 // Do custom NFCA startup configuration.
                 doStartupConfig();
+#else
+                if(HciRFParams::getInstance().isCeWithEseDisabled())
+                {
+                    recoverEseConnectivity();
+                }
 #endif
                 goto TheEnd;
             }
@@ -6818,7 +6820,42 @@ static bool isActivatedTypeF(tNFA_ACTIVATED& activated)
             || (NFC_DISCOVERY_TYPE_LISTEN_F == activated.activate_ntf.rf_tech_param.mode)
             || (NFC_DISCOVERY_TYPE_LISTEN_F_ACTIVE == activated.activate_ntf.rf_tech_param.mode));
 }
-
+/**********************************************************************************
+ **
+ ** Function:        eSEPhyIntfInResponsive
+ **
+ ** Description:    checking inactivity of eSE physical interface
+ **
+ ** Returns:         1(if true)/0 (if false) .
+ **
+ **********************************************************************************/
+ static uint32_t eSEPhyIntfInResponsive(tNFA_DM_CBACK_DATA* pEvtData)
+ {
+    ALOGE("%s: param_tlvs %x", __func__,pEvtData->get_config.param_tlvs[5]);
+    if(nfcFL.chipType != pn553)
+      return ( IS_ESE_RF_CE_PARAM_FETCHED() && IS_ESE_CE_MODE_DISABLED() &&
+              SecureElement::getInstance().getEeStatus(ESE_HANDLE) == NFA_EE_STATUS_ACTIVE);
+    else
+      return 0;
+ }
+ /**********************************************************************************
+ **
+ ** Function:        recoverEseConnectivity
+ **
+ ** Description:     reset eSE connection for recovering communication
+ **
+ ** Returns:         None
+ **
+ **********************************************************************************/
+ static void recoverEseConnectivity()
+ {
+   tNFA_STATUS stat = ResetEseSession();
+   if(stat == NFA_STATUS_OK) {
+     SecureElement::getInstance().SecEle_Modeset(0x00);
+     usleep(50*1000);
+     SecureElement::getInstance().SecEle_Modeset(0x01);
+  }
+}
 /**********************************************************************************
  **
  ** Function:        checkforNfceeBuffer
