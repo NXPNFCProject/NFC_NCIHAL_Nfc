@@ -2484,9 +2484,9 @@ TheEnd:
         PowerSwitch::getInstance ().setLevel (PowerSwitch::LOW_POWER);
     ALOGV("%s: exit", __func__);
 #if (NXP_EXTNS == TRUE)
-    if (isNxpConfigModified())
+    if (isNxpConfigModified() || isNxpRFConfigModified())
     {
-        updateNxpConfigTimestamp();
+      updateNxpConfigTimestamp();
     }
 #endif
     return sIsNfaEnabled ? JNI_TRUE : JNI_FALSE;
