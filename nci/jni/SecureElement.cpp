@@ -2532,6 +2532,14 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
             tNFA_HCI_RSP_RCVD& rsp_rcvd = eventData->rsp_rcvd;
             ALOGV("%s: NFA_HCI_RSP_RCVD_EVT; status: 0x%X; code: 0x%X; pipe: 0x%X; len: %u", fn,
                     rsp_rcvd.status, rsp_rcvd.rsp_code, rsp_rcvd.pipe, rsp_rcvd.rsp_len);
+            if((rsp_rcvd.rsp_code == NFA_HCI_ANY_E_PIPE_NOT_OPENED) && (sSecElem.IsCmdsentOnOpenDwpSession))
+            {
+                SyncEventGuard guard (sSecElem.mPipeStatusCheckEvent);
+                sSecElem.mCommandStatus = eventData->closed.status;
+                sSecElem.pipeStatus = NFA_HCI_ANY_E_PIPE_NOT_OPENED;
+                sSecElem.mPipeStatusCheckEvent.notifyOne();
+                sSecElem.IsCmdsentOnOpenDwpSession = false;
+            }
         }
         break;
 
@@ -2596,6 +2604,14 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
 #endif
         }
 #if(NXP_EXTNS == TRUE)
+        else if (sSecElem.IsCmdsentOnOpenDwpSession)
+        {
+            SyncEventGuard guard (sSecElem.mPipeStatusCheckEvent);
+            sSecElem.mCommandStatus = eventData->closed.status;
+            sSecElem.mPipeStatusCheckEvent.notifyOne();
+            sSecElem.IsCmdsentOnOpenDwpSession = false;
+
+        }
         else if (((eventData->rcvd_evt.evt_code == NFA_HCI_ABORT) || (eventData->rcvd_evt.last_SentEvtType == EVT_ABORT))
                 &&(eventData->rcvd_evt.pipe == mStaticPipeProp))
         {
@@ -3315,6 +3331,50 @@ bool SecureElement::configureNfceeETSI12()
     return retval;
 }
 
+bool SecureElement::checkPipeStatusAndRecreate()
+{
+    bool pipeCorrectStatus = false;
+    bool success = true;
+    tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
+    se_apdu_gate_info gateInfo = NO_APDU_GATE;
+    uint8_t xmitBuffer[] = {0x00, 0x00, 0x00, 0x00};
+    uint8_t EVT_SEND_DATA = 0x10;
+    ALOGD ("checkPipeStatusAndRecreate: Enter");
+    pipeCorrectStatus = NFA_IsPipeStatusNotCorrect();
+    if(pipeCorrectStatus)
+    {
+        gateInfo = getApduGateInfo();
+        if(gateInfo == ETSI_12_APDU_GATE)
+        {
+            pipeStatus = NFA_HCI_ANY_OK;
+            IsCmdsentOnOpenDwpSession = true;
+            SyncEventGuard guard (mPipeStatusCheckEvent);
+
+            nfaStat = NFA_HciSendEvent(mNfaHciHandle, mNewPipeId, EVT_SEND_DATA, sizeof(xmitBuffer), xmitBuffer, 0x00, NULL, 0);
+            if(nfaStat == NFA_STATUS_OK)
+            {
+                mPipeStatusCheckEvent.wait(500);
+            }
+            IsCmdsentOnOpenDwpSession = false;
+            if(pipeStatus == NFA_HCI_ANY_E_PIPE_NOT_OPENED)
+            {
+                SyncEventGuard guard (mPipeOpenedEvent);
+                nfaStat = NFA_HciOpenPipe (mNfaHciHandle, mNewPipeId);
+                if (nfaStat != NFA_STATUS_OK)
+                {
+                    ALOGE("checkPipeStatusAndRecreate:fail open pipe; error=0x%X", nfaStat);
+                }
+
+                if(!mPipeOpenedEvent.wait (500) || (mCommandStatus != NFA_STATUS_OK))
+                {
+                    success = false;
+                }
+            }
+        }
+    }
+ ALOGD ("checkPipeStatusAndRecreate: Exit status x%x",success);
+ return success;
+}
 /*******************************************************************************
 **
 ** Function:        getUiccGateAndPipeList

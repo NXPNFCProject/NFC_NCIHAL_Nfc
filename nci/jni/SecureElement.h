@@ -225,7 +225,10 @@ public:
     SyncEvent   mCreatePipeEvent;
     SyncEvent   mPipeOpenedEvent;
     SyncEvent   mAbortEvent;
+    SyncEvent   mPipeStatusCheckEvent;
     bool        mAbortEventWaitOk;
+    uint8_t     pipeStatus;
+    bool IsCmdsentOnOpenDwpSession;
     bool enableDwp(void);
     IntervalTimer sSwpReaderTimer; /*timer swp reader timeout*/
     static const tNFA_HANDLE EE_HANDLE_0xF3 = 0x4C0;//0x401; //handle to secure element in slot 0
@@ -655,6 +658,7 @@ public:
 #if(NXP_EXTNS == TRUE)
     bool getNfceeHostTypeList (void);
     bool configureNfceeETSI12 ();
+    bool checkPipeStatusAndRecreate();
     void eSE_ClearAllPipe_handler(uint8_t host);
     /**********************************************************************************
      **

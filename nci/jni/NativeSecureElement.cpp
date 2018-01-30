@@ -350,7 +350,13 @@ if(nfcFL.nfcNxpEse && stat)
             }
         }
     }
-
+    if(status == NFA_STATUS_OK)
+    {
+        bool ret = false;
+        ret = se.checkPipeStatusAndRecreate();
+        if(!ret)
+            status = NFCSTATUS_FAILED;
+    }
     if(status != NFA_STATUS_OK)
     {
         if(nfcFL.eseFL._WIRED_MODE_STANDBY && (se.mNfccPowerMode == 1) &&
