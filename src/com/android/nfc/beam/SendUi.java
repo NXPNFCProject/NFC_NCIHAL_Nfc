@@ -13,7 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+/******************************************************************************
+*
+*  The original Work has been changed by NXP.
+*
+*  Licensed under the Apache License, Version 2.0 (the "License");
+*  you may not use this file except in compliance with the License.
+*  You may obtain a copy of the License at
+*
+*  http://www.apache.org/licenses/LICENSE-2.0
+*
+*  Unless required by applicable law or agreed to in writing, software
+*  distributed under the License is distributed on an "AS IS" BASIS,
+*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*  See the License for the specific language governing permissions and
+*  limitations under the License.
+*
+*  Copyright 2018 NXP
+*  NOT A CONTRIBUTION
+*
+******************************************************************************/
 package com.android.nfc.beam;
 
 import com.android.nfc.R;
@@ -466,7 +485,8 @@ public class SendUi implements Animator.AnimatorListener, View.OnTouchListener,
                 // We didn't build up any animation state yet, but
                 // did store the bitmap. Clear out the bitmap, reset
                 // state and bail.
-                mScreenshotBitmap = null;
+                mScreenshotView.setImageBitmap(null);
+                recycleBitmap();
                 mState = STATE_IDLE;
                 return;
             default:
@@ -532,9 +552,9 @@ public class SendUi implements Animator.AnimatorListener, View.OnTouchListener,
         mScaleUpAnimator.cancel();
         mAlphaUpAnimator.cancel();
         mAlphaDownAnimator.cancel();
+        mScreenshotView.setImageBitmap(null);
         mWindowManager.removeView(mDecor);
         mStatusBarManager.disable(StatusBarManager.DISABLE_NONE);
-        mScreenshotBitmap = null;
         mContext.unregisterReceiver(mReceiver);
         if (mToastString != null) {
             Toast toast = Toast.makeText(mContext, mToastString, Toast.LENGTH_LONG);
@@ -542,6 +562,19 @@ public class SendUi implements Animator.AnimatorListener, View.OnTouchListener,
             toast.show();
         }
         mToastString = null;
+        recycleBitmap();
+    }
+    /*
+    * Recycles Bitmap of ScreenShot
+    */
+    private void recycleBitmap(){
+        try{
+            if(mScreenshotBitmap!=null && !mScreenshotBitmap.isRecycled()){
+                mScreenshotBitmap.recycle();
+            }
+        }catch(Exception e){
+            Log.e(TAG, "Error while recycle bitmap", e);
+        }
     }
 
     /**
