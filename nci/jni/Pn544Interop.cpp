@@ -86,7 +86,6 @@ void pn544InteropStopPolling ()
 void pn544InteropStartPolling (union sigval)
 {
     ALOGV("%s: enter", __func__);
-    android::nativeNfcTag_acquireRfInterfaceMutexLock();
     gMutex.lock ();
     NfcTag::ActivationState state = NfcTag::getInstance ().getActivationState ();
 
@@ -111,7 +110,6 @@ void pn544InteropStartPolling (union sigval)
 
 TheEnd:
     gMutex.unlock ();
-    android::nativeNfcTag_releaseRfInterfaceMutexLock();
     ALOGV("%s: exit", __func__);
 }
 

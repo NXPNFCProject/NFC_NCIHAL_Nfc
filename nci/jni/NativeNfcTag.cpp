@@ -2122,6 +2122,8 @@ static jboolean nativeNfcTag_doPresenceCheck (JNIEnv*, jobject)
         tNFC_STATUS stat = NFA_RegVSCback (true,nfaVSCNtfCallback); //Register CallBack for VS NTF
         if(NFA_STATUS_OK != stat)
         {
+            ALOGE("%s: Kill presence check timer", __func__);
+            sPresenceCheckTimer.kill();
             goto TheEnd;
         }
 
@@ -2132,6 +2134,12 @@ static jboolean nativeNfcTag_doPresenceCheck (JNIEnv*, jobject)
             ALOGV("%s: presence check for TypeB - wait for NFA VS RSP to come", __func__);
             sNfaVSCResponseEvent.wait(); //wait for NFA VS command to finish
             ALOGV("%s: presence check for TypeB - GOT NFA VS RSP", __func__);
+        }
+        else
+        {
+            ALOGE("%s: Kill presence check timer, command failed", __func__);
+            sPresenceCheckTimer.kill();
+
         }
 
         if(true == sVSCRsp)
