@@ -273,6 +273,8 @@ public interface DeviceHost {
 
     public void doSelectSecureElement(int seID);
 
+    public void doActivateSecureElement(int seID);
+
     public void doSetSecureElementListenTechMask(int tech_mask);
     public int doGetSecureElementTechList();
 

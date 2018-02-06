@@ -3673,18 +3673,47 @@ static void nfcManager_doSelectSecureElement(JNIEnv *e, jobject o, jint seId)
     {
         SecureElement::getInstance().routeToSecureElement ();
         sIsSecElemSelected++;
-//        if(sHCEEnabled == false)
-//        {
-//            RoutingManager::getInstance().setRouting(false);
-//        }
     }
-//    sIsSecElemSelected = true;
 
     startRfDiscovery (true);
     PowerSwitch::getInstance ().setModeOn (PowerSwitch::SE_ROUTING);
 TheEnd:
     ALOGV("%s: exit", __func__);
 }
+
+
+/*******************************************************************************
+**
+** Function:        nfcManager_activateSecureElement
+**
+** Description:     This function shall activate the SE as per given identifier.
+**                  e: JVM environment.
+**                  o: Java object.
+**                  seId: Secure element identifier
+**
+** Returns:         None
+**
+*******************************************************************************/
+static void nfcManager_activateSecureElement(JNIEnv *e, jobject o, jint seId)
+{
+    (void)e;
+    (void)o;
+    ALOGV("%s: enter", __func__);
+    bool stat;
+    int maxRetryCount = 3;
+
+    SecureElement::getInstance().deactivate (seId);
+    ALOGV("%s: Deactivated", __func__);
+    do
+    {
+       stat = SecureElement::getInstance().activate (seId);
+       ALOGV("%s: Activate status %d", __func__, stat);
+    }while(!stat && maxRetryCount-- > 0);
+
+    ALOGV("%s: exit", __func__);
+}
+
+
 
 /*******************************************************************************
 **
@@ -5101,6 +5130,9 @@ static JNINativeMethod gMethods[] =
 
     {"doSelectSecureElement", "(I)V",
             (void *)nfcManager_doSelectSecureElement},
+
+    {"doActivateSecureElement", "(I)V",
+            (void *)nfcManager_activateSecureElement},
 
     {"doDeselectSecureElement", "(I)V",
             (void *)nfcManager_doDeselectSecureElement},

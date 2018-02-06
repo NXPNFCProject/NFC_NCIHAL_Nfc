@@ -153,6 +153,7 @@ import com.vzw.nfc.RouteEntry;
 import com.gsma.nfc.internal.NxpNfcController;
 import com.nxp.nfc.gsma.internal.INxpNfcController;
 
+
 public class NfcService implements DeviceHostListener {
     private static final String ACTION_MASTER_CLEAR_NOTIFICATION = "android.intent.action.MASTER_CLEAR_NOTIFICATION";
 
@@ -1020,6 +1021,10 @@ public class NfcService implements DeviceHostListener {
         x509CertificateFilter.addAction(NxpConstants.ACTION_CHECK_X509_RESULT);
         mContext.registerReceiverAsUser(x509CertificateReceiver, UserHandle.ALL,
                 x509CertificateFilter, NfcPermissions.ADMIN_PERM, null);
+
+        IntentFilter activateStkFilter = new IntentFilter();
+        activateStkFilter.addAction(NxpConstants.CAT_ACTIVATE_NOTIFY_ACTION);
+        mContext.registerReceiver(mActivateSwpInterface, activateStkFilter);
 
         IntentFilter enableNfc = new IntentFilter();
         enableNfc.addAction(NxpConstants.ACTION_GSMA_ENABLE_NFC);
@@ -5656,6 +5661,39 @@ public class NfcService implements DeviceHostListener {
             mContext.startActivityAsUser(nfcDialogIntent, UserHandle.CURRENT);
         }
     };
+
+    private final BroadcastReceiver mActivateSwpInterface = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            String action = intent.getAction();
+
+            if(NxpConstants.CAT_ACTIVATE_NOTIFY_ACTION.equals(action)){
+
+                Log.i(TAG, "Received ACTIVATE intent:" + action);
+
+                if(mSelectedSeId != ALL_SE_ID_TYPE){
+                    mDeviceHost.doSelectSecureElement(mSelectedSeId);
+                    Log.i(TAG, "Activated:" + mSelectedSeId);
+                }
+                else{
+                    int[] seList = mDeviceHost.doGetSecureElementList();
+                    Log.i(TAG, "Activating all SE:");
+
+                    for(int i = 0; i < seList.length; i++){
+                        mDeviceHost.doActivateSecureElement(seList[i]);
+                        try{
+                            //Delay between two SE selection
+                            Thread.sleep(200);
+                        }catch(Exception e){
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+        }
+    };
+
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override

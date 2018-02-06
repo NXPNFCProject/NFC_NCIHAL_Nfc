@@ -56,6 +56,7 @@
     <uses-permission android:name="android.permission.DEVICE_POWER" />
     <uses-permission android:name="android.permission.ACCESS_VR_MANAGER"/>
     <uses-permission android:name="android.permission.USER_ACTIVITY" />
+    <uses-permission android:name="android.permission.SEND_RECEIVE_STK_INTENT" />
     <uses-permission android:name="android.permission.BIND_RESOLVER_RANKER_SERVICE" />
     <protected-broadcast android:name="com.nxp.action.TRANSACTION_DETECTED" />
     <protected-broadcast android:name="com.gsma.services.nfc.action.TRANSACTION_EVENT" />
