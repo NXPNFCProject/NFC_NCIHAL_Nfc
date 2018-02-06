@@ -241,11 +241,11 @@ void transactionController::transactionEnd(eTransactionId transactionRequestor)
     if(requestor == transactionRequestor)
     {
         /*If any abort timer is running for this transaction then stop it*/
-        if(abortTimer != NULL && abortTimer->isRunning())
-        {
-            ALOGD ("%s: Transaction control timer killed", __FUNCTION__);
-            killAbortTimer();
-        }
+        abortTimer->kill();
+        /*Create new abort timer for next use*/
+        abortTimer = new IntervalTimer();
+        ALOGD ("%s: Transaction control timer killed", __FUNCTION__);
+
         pTransactionDetail->trans_in_progress = false;
         requestor = NO_REQUESTOR;
         ALOGD ("%s: Transaction ended : %d ", __FUNCTION__, transactionRequestor);
