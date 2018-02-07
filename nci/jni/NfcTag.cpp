@@ -440,11 +440,13 @@ void NfcTag::discoverTechnologies (tNFA_ACTIVATED& activationData)
         if((rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_POLL_A) ||
            (rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_POLL_A_ACTIVE))
         {
+            double fc = 13560000;
             uint8_t fwi = rfDetail.intf_param.intf_param.pa_iso.fwi;
-            if(fwi > 0 && fwi < 15)
+            if(fwi >= MIN_FWI && fwi <= MAX_FWI)
             {
-                // fwt = (((2^fwi) * 256 * 16 ) / (13.56 * 10^6)) * 1000msec
-                double fwt = (((2 << (fwi - 1)) * 256 * 16) / 13560000) * 1000;
+                double fwt = (((1 << fwi) * 256 * 16) / fc) * 1000;
+                if(fwt < MIN_TRANSCEIVE_TIMEOUT_IN_MILLISEC)
+                    fwt = MIN_TRANSCEIVE_TIMEOUT_IN_MILLISEC;
                 ALOGD ("Setting the Xceive timeout = %f, fwi = %0#x", fwt, fwi);
                 setTransceiveTimeout(mTechList[mNumTechList], fwt);
             }
