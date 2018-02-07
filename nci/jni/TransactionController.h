@@ -48,6 +48,8 @@ typedef enum transactionId
     getTransanctionRequest,
     isTransanctionOnGoing,
     exec_pending_req,
+    TAG_PRESENCE_CHECK,
+    /* add new requestors here in capital letters*/
 }eTransactionId;
 
 /* Transaction Events in order */
