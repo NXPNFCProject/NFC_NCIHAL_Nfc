@@ -2348,8 +2348,15 @@ public class NfcService implements DeviceHostListener {
         public void MifareDesfireRouteSet(int routeLoc, boolean fullPower, boolean lowPower, boolean noPower)
         throws RemoteException
         {
+            if((mChipVer < PN553_ID) && (routeLoc == UICC2_ID_TYPE)) {
+                throw new RemoteException("UICC2 is not supported");
+            }
             int protoRouteEntry = 0;
-            protoRouteEntry=((routeLoc & 0x03)== 0x01) ? (0x01 << ROUTE_LOC_MASK) : (((routeLoc & 0x03) == 0x02) ? (0x02 << ROUTE_LOC_MASK) : 0x00) ;
+                             /*UICC2 ID-4(fromApp) mapped to 3 (JNI)*/
+            protoRouteEntry=((routeLoc & 0x07) == 0x04) ? (0x03 << ROUTE_LOC_MASK) : /*UICC2*/
+                            ((routeLoc & 0x07) == 0x02) ? (0x02 << ROUTE_LOC_MASK) : /*UICC1*/
+                            ((routeLoc & 0x07) == 0x01) ? (0x01 << ROUTE_LOC_MASK) : /*eSE*/
+                            0x00;
             protoRouteEntry |= ((fullPower ? (mDeviceHost.getDefaultDesfirePowerState() & 0x1F) | 0x01 : 0) | (lowPower ? 0x01 << 1 :0 ) | (noPower ? 0x01 << 2 :0));
 
             if(routeLoc == 0x00)
@@ -2373,9 +2380,15 @@ public class NfcService implements DeviceHostListener {
         public void DefaultRouteSet(int routeLoc, boolean fullPower, boolean lowPower, boolean noPower)
                 throws RemoteException
         {
+            if((mChipVer < PN553_ID) && (routeLoc == UICC2_ID_TYPE)) {
+                throw new RemoteException("UICC2 is not supported");
+            }
             if (mIsHceCapable) {
                 int protoRouteEntry = 0;
-                protoRouteEntry=((routeLoc & 0x03)== 0x01) ? (0x01 << ROUTE_LOC_MASK) : (((routeLoc & 0x03) == 0x02) ? (0x02 << ROUTE_LOC_MASK) : 0x00) ;
+                protoRouteEntry=((routeLoc & 0x07) == 0x04) ? (0x03 << ROUTE_LOC_MASK) : /*UICC2*/
+                                ((routeLoc & 0x07) == 0x02) ? (0x02 << ROUTE_LOC_MASK) : /*UICC1*/
+                                ((routeLoc & 0x07) == 0x01) ? (0x01 << ROUTE_LOC_MASK) : /*eSE*/
+                                0x00;
                 protoRouteEntry |= ((fullPower ? (mDeviceHost.getDefaultAidPowerState() & 0x1F) | 0x01 : 0) | (lowPower ? 0x01 << 1 :0 ) | (noPower ? 0x01 << 2 :0));
 
                 if(routeLoc == 0x00)
@@ -2409,8 +2422,15 @@ public class NfcService implements DeviceHostListener {
         public void MifareCLTRouteSet(int routeLoc, boolean fullPower, boolean lowPower, boolean noPower)
         throws RemoteException
         {
+            if((mChipVer < PN553_ID) && (routeLoc == UICC2_ID_TYPE)) {
+                throw new RemoteException("UICC2 is not supported");
+            }
+
             int techRouteEntry=0;
-            techRouteEntry=((routeLoc & 0x03) == 0x01) ? (0x01 << ROUTE_LOC_MASK) : (((routeLoc & 0x03) == 0x02) ? (0x02 << ROUTE_LOC_MASK) : 0x00);
+            techRouteEntry=((routeLoc & 0x07) == 0x04) ? (0x03 << ROUTE_LOC_MASK) : /*UICC2*/
+                           ((routeLoc & 0x07) == 0x02) ? (0x02 << ROUTE_LOC_MASK) : /*UICC1*/
+                           ((routeLoc & 0x07) == 0x01) ? (0x01 << ROUTE_LOC_MASK) : /*eSE*/
+                           0x00;
             techRouteEntry |= ((fullPower ? (mDeviceHost.getDefaultMifareCLTPowerState() & 0x1F) | 0x01 : 0) | (lowPower ? 0x01 << 1 :0 ) | (noPower ? 0x01 << 2 :0));
             techRouteEntry |= (TECH_TYPE_A << TECH_TYPE_MASK);
 
