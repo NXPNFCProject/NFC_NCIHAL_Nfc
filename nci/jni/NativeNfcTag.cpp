@@ -2134,26 +2134,26 @@ static jboolean nativeNfcTag_doPresenceCheck (JNIEnv*, jobject)
             sPresenceCheckTimer.kill();
             goto TheEnd;
         }
-
-        SyncEventGuard guard (sNfaVSCResponseEvent);
-        stat = NFA_SendVsCommand (0x11,0x00,NULL,nfaVSCCallback);
-        if(NFA_STATUS_OK == stat)
         {
-            /*Considering the FWI=14 for slowest tag, wait time is kept 5000*/
-            result = sNfaVSCResponseEvent.wait(5000); //wait for NFA VS command to finish
-            if(result == FALSE)
+            SyncEventGuard guard (sNfaVSCResponseEvent);
+            stat = NFA_SendVsCommand (0x11,0x00,NULL,nfaVSCCallback);
+            if(NFA_STATUS_OK == stat)
             {
-                ALOGV("%s: Timedout while waiting for presence check rsp", __func__);
-                pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(TAG_PRESENCE_CHECK));
-                return JNI_FALSE;
+                /*Considering the FWI=14 for slowest tag, wait time is kept 5000*/
+                result = sNfaVSCResponseEvent.wait(5000); //wait for NFA VS command to finish
+                if(result == FALSE)
+                {
+                    ALOGV("%s: Timedout while waiting for presence check rsp", __func__);
+                    pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(TAG_PRESENCE_CHECK));
+                    return JNI_FALSE;
+                }
+                ALOGV("%s: presence check for TypeB - GOT NFA VS RSP", __func__);
             }
-            ALOGV("%s: presence check for TypeB - GOT NFA VS RSP", __func__);
-        }
-        else
-        {
-            ALOGE("%s: Kill presence check timer, command failed", __func__);
-            sPresenceCheckTimer.kill();
-
+            else
+            {
+                ALOGE("%s: Kill presence check timer, command failed", __func__);
+                sPresenceCheckTimer.kill();
+            }
         }
         pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(TAG_PRESENCE_CHECK));
 
