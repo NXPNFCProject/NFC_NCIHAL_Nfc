@@ -7258,6 +7258,7 @@ void performNfceeETSI12Config()
                 SecureElement::getInstance().SecEle_Modeset(0x01);
                 SecureElement::getInstance().meseETSI12Recovery = false;
             }
+            checkforNfceeConfig(ESE);
         }
     }
 
