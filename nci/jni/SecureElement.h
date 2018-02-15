@@ -816,6 +816,7 @@ public:
     uint8_t      mNfccPowerMode;
     tNFA_STATUS  setNfccPwrConfig(uint8_t value);
     bool mIsIntfRstEnabled;
+    bool mIsEmvCoPollEnabled;
     void setCLState(bool mState);
     void setDwpTranseiveState(bool state, tNFCC_EVTS_NTF action);
 #endif

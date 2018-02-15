@@ -250,6 +250,7 @@ SecureElement::SecureElement ()
     mIsAllowWiredInDesfireMifareCE(false),
     mRfFieldEventTimeout(0),
     mIsIntfRstEnabled (false),
+    mIsEmvCoPollEnabled(false),
     mETSI12InitStatus (NFA_STATUS_FAILED),
     mModeSetInfo(NFA_STATUS_FAILED),
     meseETSI12Recovery(false),
@@ -470,6 +471,7 @@ bool SecureElement::initialize (nfc_jni_native_data* native)
     memset(mAidForEmptySelect, 0, sizeof(mAidForEmptySelect));
 #if(NXP_EXTNS == TRUE)
     mIsWiredModeBlocked = false;
+    mIsEmvCoPollEnabled = false;
 #endif
 
     // if no SE is to be used, get out.
@@ -2654,7 +2656,9 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
                 if(eventData->rcvd_evt.evt_len > 0)
                 {
                     sSecElem.mTransceiveWaitOk = true;
-                    sSecElem.NfccStandByOperation(STANDBY_TIMER_START);
+
+                    if(nfcFL.eseFL._ESE_ETSI_READER_ENABLE)
+                        sSecElem.NfccStandByOperation(STANDBY_TIMER_START);
                 }
                 /*If there is pending reset event to process*/
                 if((nfcFL.eseFL._JCOP_WA_ENABLE) &&(active_ese_reset_control&RESET_BLOCKED)&&
@@ -3991,6 +3995,10 @@ tNFC_STATUS SecureElement::etsiReaderConfig(int eeHandle)
         ALOGV("%s: UNKNOWN SOURCE!!! ", __func__);
         return NFA_STATUS_FAILED;
     }
+    if(mIsWiredModeOpen)
+        NfccStandByOperation(STANDBY_TIMER_STOP);
+    mIsEmvCoPollEnabled = true;
+
     return NFA_STATUS_OK;
 }
 
@@ -4009,15 +4017,18 @@ tNFC_STATUS SecureElement::etsiResetReaderConfig()
         ALOGV("%s: ETSI_READER not available. Returning", __func__);
         return NFA_STATUS_FAILED;
     }
-    tNFC_STATUS status;
+    tNFC_STATUS status = NFA_STATUS_FAILED;
     ALOGV("%s: Enter", __func__);
 
     status = android::EmvCo_dosetPoll(false);
     if (status != NFA_STATUS_OK)
     {
         ALOGE("%s: fail enable polling; error=0x%X", __func__, status);
+        status = NFA_STATUS_FAILED;
     }
+    else
     {
+        mIsEmvCoPollEnabled = false; /*Emvco poll is disabled*/
         SyncEventGuard guard (mDiscMapEvent);
         ALOGV("%s: mapping intf for DH", __func__);
         status = NFC_DiscoveryMap (NFC_NUM_INTERFACE_MAP,(tNCI_DISCOVER_MAPS *) nfc_interface_mapping_default
@@ -4028,8 +4039,11 @@ tNFC_STATUS SecureElement::etsiResetReaderConfig()
             return status;
         }
         mDiscMapEvent.wait ();
-        return NFA_STATUS_OK;
+
+        if(mIsWiredModeOpen)
+            NfccStandByOperation(STANDBY_TIMER_START);
     }
+    return status;
 }
 
 int SecureElement::decodeBerTlvLength(uint8_t* data,int index, int data_length )
