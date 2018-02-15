@@ -2998,6 +2998,7 @@ TheEnd:
                 setNfccPwrConfig(SecureElement::getInstance().
                     NFCC_DECIDES);
         }
+        NFC_SetNfcServicePid();
     }
 
 #endif
@@ -3024,6 +3025,10 @@ void nfcManager_disableDiscovery (JNIEnv* e, jobject o)
     unsigned long num = 0;
     unsigned long p2p_listen_mask =0;
     tNFA_HANDLE handle = NFA_HANDLE_INVALID;
+#if (NXP_EXTNS == TRUE)
+    p61_access_state_t p61_current_state = P61_STATE_INVALID;
+    long ret_val = -1;
+#endif
     ALOGV("%s: enter;", __func__);
 #if (NXP_EXTNS == TRUE)
     if(!pTransactionController->transactionAttempt(TRANSACTION_REQUESTOR(disableDiscovery)))
@@ -3131,6 +3136,29 @@ void nfcManager_disableDiscovery (JNIEnv* e, jobject o)
 TheEnd:
 #if (NXP_EXTNS == TRUE)
     pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(disableDiscovery));
+/* Set this state only during initialization and in all the other cases
+    NfcState should remain at NFC_ON  except during Nfc deinit */
+    if(NFC_INITIALIZING_IN_PROGRESS == sNfcState)
+    {
+        if(nfcFL.eseFL._WIRED_MODE_STANDBY)
+        {
+            sNfcState = NFC_ON;
+            ret_val = NFC_GetP61Status ((void *)&p61_current_state);
+            if (ret_val < 0)
+            {
+                ALOGV("NFC_GetP61Status failed");
+            }
+            if(!(p61_current_state & (P61_STATE_SPI)&&
+               !(p61_current_state & (P61_STATE_SPI_PRIO))))
+            {
+                SecureElement::getInstance().
+                setNfccPwrConfig(SecureElement::getInstance().
+                    NFCC_DECIDES);
+            }
+        }
+
+        NFC_SetNfcServicePid();
+    }
 #endif
     ALOGV("%s: exit", __func__);
 }
