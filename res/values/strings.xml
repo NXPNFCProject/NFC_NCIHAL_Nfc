@@ -63,18 +63,6 @@
     <!-- Label that is shown when the user must tap another NFC enabled device to send data -->
     <string name="ask_nfc_tap">Tap another device to complete</string>
 
-    <!-- GSMA V8.0 -->
-    <string name="permgrouplab_NFC">NFC-Near Field communication</string>
-    <string name="permgroupdesc_NFC"> Access various NFC features</string>
-
-    <!-- GSMA V6.0 -->
-    <string name="permlab_nfcReceiveEvent">NFC Transaction awareness</string>
-    <string name="permdesc_nfcReceiveEvent">Allows application to receive information about NFC transaction performed</string>
-    <string name="nfc_enabled_dialog">        Nfc is Currently Disabled. \nDo you want to Enable it for your NFC Service </string>
-    <string name="ok">OK</string>
-    <string name="no">NO</string>
-
-
     <!-- Strings for connecting to a network from WiFi NFC tags -->
     <!-- Dialog button text for confirming the user wants to connect to the network on the tag-->
     <string name="wifi_connect">Connect</string>
@@ -92,4 +80,8 @@
 
     <!-- Used to refer to in the Share Menu Android Beam . This phrase is a trademark. [CHAR LIMIT=32] -->
     <string name="android_beam">Android Beam</string>
+
+    <!-- Message shown in a toast when user wants to Beam a file, but application doesn't have required permission -->
+    <string name="beam_requires_external_storage_permission">Application does not have External Storage Permission. This is required to Beam this file</string>
+
 </resources>

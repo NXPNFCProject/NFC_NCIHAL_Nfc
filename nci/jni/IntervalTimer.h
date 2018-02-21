@@ -20,20 +20,17 @@
 
 #include <time.h>
 
+class IntervalTimer {
+ public:
+  typedef void (*TIMER_FUNC)(union sigval);
 
-class IntervalTimer
-{
-public:
-    typedef void (*TIMER_FUNC) (union sigval);
+  IntervalTimer();
+  ~IntervalTimer();
+  bool set(int ms, TIMER_FUNC cb);
+  void kill();
+  bool create(TIMER_FUNC);
 
-    IntervalTimer();
-    ~IntervalTimer();
-    bool set(int ms, TIMER_FUNC cb);
-    void kill();
-    bool create(TIMER_FUNC );
-    bool isRunning(void);    //This function returns true if a valid timer is running(curTime > 0)
-
-private:
-    timer_t mTimerId;
-    TIMER_FUNC mCb;
+ private:
+  timer_t mTimerId;
+  TIMER_FUNC mCb;
 };

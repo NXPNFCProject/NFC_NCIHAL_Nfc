@@ -19,88 +19,80 @@
  */
 
 #pragma once
+#include <list>
+#include "Mutex.h"
 #include "NfcJniUtil.h"
 #include "gki.h"
-#include "Mutex.h"
-#include <cstdlib>
-#include <list>
 
+class DataQueue {
+ public:
+  /*******************************************************************************
+  **
+  ** Function:        DataQueue
+  **
+  ** Description:     Initialize member variables.
+  **
+  ** Returns:         None.
+  **
+  *******************************************************************************/
+  DataQueue();
 
-class DataQueue
-{
-public:
-    /*******************************************************************************
-    **
-    ** Function:        DataQueue
-    **
-    ** Description:     Initialize member variables.
-    **
-    ** Returns:         None.
-    **
-    *******************************************************************************/
-    DataQueue ();
+  /*******************************************************************************
+  **
+  ** Function:        ~DataQueue
+  **
+  ** Description:      Release all resources.
+  **
+  ** Returns:         None.
+  **
+  *******************************************************************************/
+  ~DataQueue();
 
+  /*******************************************************************************
+  **
+  ** Function:        enqueue
+  **
+  ** Description:     Append data to the queue.
+  **                  data: array of bytes
+  **                  dataLen: length of the data.
+  **
+  ** Returns:         True if ok.
+  **
+  *******************************************************************************/
+  bool enqueue(uint8_t* data, uint16_t dataLen);
 
-    /*******************************************************************************
-    **
-    ** Function:        ~DataQueue
-    **
-    ** Description:      Release all resources.
-    **
-    ** Returns:         None.
-    **
-    *******************************************************************************/
-    ~DataQueue ();
+  /*******************************************************************************
+  **
+  ** Function:        dequeue
+  **
+  ** Description:     Retrieve and remove data from the front of the queue.
+  **                  buffer: array to store the data.
+  **                  bufferMaxLen: maximum size of the buffer.
+  **                  actualLen: actual length of the data.
+  **
+  ** Returns:         True if ok.
+  **
+  *******************************************************************************/
+  bool dequeue(uint8_t* buffer, uint16_t bufferMaxLen, uint16_t& actualLen);
 
+  /*******************************************************************************
+  **
+  ** Function:        isEmpty
+  **
+  ** Description:     Whether the queue is empty.
+  **
+  ** Returns:         True if empty.
+  **
+  *******************************************************************************/
+  bool isEmpty();
 
-    /*******************************************************************************
-    **
-    ** Function:        enqueue
-    **
-    ** Description:     Append data to the queue.
-    **                  data: array of bytes
-    **                  dataLen: length of the data.
-    **
-    ** Returns:         True if ok.
-    **
-    *******************************************************************************/
-    bool enqueue (uint8_t* data, uint16_t dataLen);
+ private:
+  struct tHeader {
+    uint16_t mDataLen;  // number of octets of data
+    uint16_t mOffset;   // offset of the first octet of data
+  };
+  typedef std::list<tHeader*> Queue;
 
-
-    /*******************************************************************************
-    **
-    ** Function:        dequeue
-    **
-    ** Description:     Retrieve and remove data from the front of the queue.
-    **                  buffer: array to store the data.
-    **                  bufferMaxLen: maximum size of the buffer.
-    **                  actualLen: actual length of the data.
-    **
-    ** Returns:         True if ok.
-    **
-    *******************************************************************************/
-    bool dequeue (uint8_t* buffer, uint16_t bufferMaxLen, uint16_t& actualLen);
-
-
-    /*******************************************************************************
-    **
-    ** Function:        isEmpty
-    **
-    ** Description:     Whether the queue is empty.
-    **
-    ** Returns:         True if empty.
-    **
-    *******************************************************************************/
-    bool isEmpty();
-
-private:
-    struct tHeader
-    {
-        uint16_t mDataLen; //number of octets of data
-        uint16_t mOffset; //offset of the first octet of data
-    };
-    typedef std::list<tHeader*> Queue;
-
-    Queue mQueue;
-    Mutex mMutex;
+  Queue mQueue;
+  Mutex mMutex;
 };

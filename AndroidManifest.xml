@@ -54,18 +54,10 @@
     <uses-permission android:name="android.permission.DISPATCH_NFC_MESSAGE" />
     <uses-permission android:name="android.permission.OVERRIDE_WIFI_CONFIG" />
     <uses-permission android:name="android.permission.DEVICE_POWER" />
+    <uses-permission android:name="android.permission.ACCESS_VR_MANAGER"/>
     <uses-permission android:name="android.permission.USER_ACTIVITY" />
     <uses-permission android:name="android.permission.BIND_RESOLVER_RANKER_SERVICE" />
-    <protected-broadcast android:name="com.nxp.action.TRANSACTION_DETECTED" />
-    <protected-broadcast android:name="com.gsma.services.nfc.action.TRANSACTION_EVENT" />
-    <permission-group android:name ="com.gsma.services.nfc.permission"
-                      android:label ="@string/permgrouplab_NFC"
-                      android:description="@string/permgroupdesc_NFC"
-                      android:priority="270" />
-    <permission android:name="com.gsma.services.nfc.permission.TRANSACTION_EVENT"
-                android:permissionGroup = "com.gsma.services.nfc.permission"
-                android:label= "@string/permlab_nfcReceiveEvent"
-                android:description = "@string/permdesc_nfcReceiveEvent" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <application android:name=".NfcApplication"
                  android:icon="@drawable/icon"
@@ -77,6 +69,7 @@
                  android:killAfterRestore="false"
                  android:usesCleartextTraffic="false"
                  android:supportsRtl="true"
+                 android:hardwareAccelerated="false"
     >
         <meta-data android:name="com.google.android.backup.api_key"
             android:value="AEdPqrEAAAAIbiKKs0wlimxeJ9y8iRIaBOH6aeb2IurmZyBHvg" />
@@ -98,21 +91,6 @@
         />
 
         <activity android:name=".cardemulation.AppChooserActivity"
-            android:finishOnCloseSystemDialogs="true"
-            android:excludeFromRecents="true"
-            android:clearTaskOnLaunch="true"
-            android:multiprocess="true"
-        />
-
-        <activity android:name=".EnableNfcDialogActivity"
-            android:finishOnCloseSystemDialogs="true"
-            android:excludeFromRecents="true"
-            android:clearTaskOnLaunch="true"
-            android:multiprocess="true"
-        />
-
-        <activity android:name=".cardemulation.DefaultRemovedActivity"
-            android:theme="@*android:style/Theme.Material.Dialog.Alert"
             android:finishOnCloseSystemDialogs="true"
             android:excludeFromRecents="true"
             android:clearTaskOnLaunch="true"
@@ -169,9 +147,14 @@
             android:process=":beam"
         />
 
+        <receiver android:name=".NfcBootCompletedReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
         <service android:name=".handover.PeripheralHandoverService"
         />
-
         <uses-library android:name="com.nxp.nfc"
             android:required="true"
         />

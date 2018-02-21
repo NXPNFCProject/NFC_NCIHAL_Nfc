@@ -14,37 +14,35 @@
  * limitations under the License.
  */
 
+#include <android-base/stringprintf.h>
+#include <base/logging.h>
+#include <errno.h>
 #include <malloc.h>
+#include <nativehelper/ScopedLocalRef.h>
+#include <nativehelper/ScopedPrimitiveArray.h>
 #include <semaphore.h>
 #include <string.h>
-#include <errno.h>
-#include "_OverrideLog.h"
-#include "NfcJniUtil.h"
 #include "JavaClassConstants.h"
-#include <ScopedLocalRef.h>
-#include <ScopedPrimitiveArray.h>
-extern "C"
-{
-    #include "nfa_api.h"
-    #include "nfa_p2p_api.h"
-}
+#include "NfcJniUtil.h"
+#include "nfa_api.h"
+#include "nfa_p2p_api.h"
 
+using android::base::StringPrintf;
 
-namespace android
-{
+extern bool nfc_debug_enabled;
 
+namespace android {
 
 /*****************************************************************************
 **
 ** private variables and functions
 **
 *****************************************************************************/
-static sem_t        sConnlessRecvSem;
-static jboolean     sConnlessRecvWaitingForData = JNI_FALSE;
-static uint8_t*     sConnlessRecvBuf = NULL;
-static uint32_t     sConnlessRecvLen = 0;
-static uint32_t     sConnlessRecvRemoteSap = 0;
-
+static sem_t sConnlessRecvSem;
+static jboolean sConnlessRecvWaitingForData = JNI_FALSE;
+static uint8_t* sConnlessRecvBuf = NULL;
+static uint32_t sConnlessRecvLen = 0;
+static uint32_t sConnlessRecvRemoteSap = 0;
 
 /*******************************************************************************
 **
@@ -59,34 +57,38 @@ static uint32_t     sConnlessRecvRemoteSap = 0;
 ** Returns:         True if ok.
 **
 *******************************************************************************/
-static jboolean nativeLlcpConnectionlessSocket_doSendTo (JNIEnv *e, jobject o, jint nsap, jbyteArray data)
-{
-    ALOGV("%s: nsap = %d", __func__, nsap);
+static jboolean nativeLlcpConnectionlessSocket_doSendTo(JNIEnv* e, jobject o,
+                                                        jint nsap,
+                                                        jbyteArray data) {
+  DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("%s: nsap = %d", __func__, nsap);
 
-    ScopedLocalRef<jclass> c(e, e->GetObjectClass(o));
-    jfieldID f = e->GetFieldID(c.get(), "mHandle", "I");
-    jint handle = e->GetIntField(o, f);
+  ScopedLocalRef<jclass> c(e, e->GetObjectClass(o));
+  jfieldID f = e->GetFieldID(c.get(), "mHandle", "I");
+  jint handle = e->GetIntField(o, f);
 
-    ScopedByteArrayRO bytes(e, data);
-    if (bytes.get() == NULL)
-    {
-        return JNI_FALSE;
-    }
-    size_t byte_count = bytes.size();
+  ScopedByteArrayRO bytes(e, data);
+  if (bytes.get() == NULL) {
+    return JNI_FALSE;
+  }
+  size_t byte_count = bytes.size();
 
-    ALOGV("NFA_P2pSendUI: len = %zu", byte_count);
-    uint8_t* raw_ptr = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0])); // TODO: API bug; NFA_P2pSendUI should take const*!
-    tNFA_STATUS status = NFA_P2pSendUI((tNFA_HANDLE) handle, nsap, byte_count, raw_ptr);
+  DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("NFA_P2pSendUI: len = %zu", byte_count);
+  uint8_t* raw_ptr = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(
+      &bytes[0]));  // TODO: API bug; NFA_P2pSendUI should take const*!
+  tNFA_STATUS status =
+      NFA_P2pSendUI((tNFA_HANDLE)handle, nsap, byte_count, raw_ptr);
 
-    ALOGV("%s: NFA_P2pSendUI done, status = %d", __func__, status);
-    if (status != NFA_STATUS_OK)
-    {
-        ALOGE("%s: NFA_P2pSendUI failed, status = %d", __func__, status);
-        return JNI_FALSE;
-    }
-    return JNI_TRUE;
+  DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("%s: NFA_P2pSendUI done, status = %d", __func__, status);
+  if (status != NFA_STATUS_OK) {
+    LOG(ERROR) << StringPrintf("%s: NFA_P2pSendUI failed, status = %d",
+                               __func__, status);
+    return JNI_FALSE;
+  }
+  return JNI_TRUE;
 }
-
 
 /*******************************************************************************
 **
@@ -100,27 +102,26 @@ static jboolean nativeLlcpConnectionlessSocket_doSendTo (JNIEnv *e, jobject o, j
 ** Returns:         None
 **
 *******************************************************************************/
-void nativeLlcpConnectionlessSocket_receiveData (uint8_t* data, uint32_t len, uint32_t remoteSap)
-{
-    ALOGV("%s: waiting for data = %d, len = %d", __func__, sConnlessRecvWaitingForData, len);
+void nativeLlcpConnectionlessSocket_receiveData(uint8_t* data, uint32_t len,
+                                                uint32_t remoteSap) {
+  DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("%s: waiting for data = %d, len = %d", __func__,
+                      sConnlessRecvWaitingForData, len);
 
-    // Sanity...
-    if (sConnlessRecvLen < len)
-    {
-        len = sConnlessRecvLen;
-    }
+  // Sanity...
+  if (sConnlessRecvLen < len) {
+    len = sConnlessRecvLen;
+  }
 
-    if (sConnlessRecvWaitingForData)
-    {
-        sConnlessRecvWaitingForData = JNI_FALSE;
-        sConnlessRecvLen = len;
-        memcpy (sConnlessRecvBuf, data, len);
-        sConnlessRecvRemoteSap = remoteSap;
+  if (sConnlessRecvWaitingForData) {
+    sConnlessRecvWaitingForData = JNI_FALSE;
+    sConnlessRecvLen = len;
+    memcpy(sConnlessRecvBuf, data, len);
+    sConnlessRecvRemoteSap = remoteSap;
 
-        sem_post (&sConnlessRecvSem);
-    }
+    sem_post(&sConnlessRecvSem);
+  }
 }
-
 
 /*******************************************************************************
 **
@@ -131,18 +132,15 @@ void nativeLlcpConnectionlessSocket_receiveData (uint8_t* data, uint32_t len, ui
 ** Returns:         None
 **
 *******************************************************************************/
-static jobject connectionlessCleanup ()
-{
-    sConnlessRecvWaitingForData = JNI_FALSE;
-    sConnlessRecvLen = 0;
-    if (sConnlessRecvBuf != NULL)
-    {
-        free (sConnlessRecvBuf);
-        sConnlessRecvBuf = NULL;
-    }
-    return NULL;
+static jobject connectionlessCleanup() {
+  sConnlessRecvWaitingForData = JNI_FALSE;
+  sConnlessRecvLen = 0;
+  if (sConnlessRecvBuf != NULL) {
+    free(sConnlessRecvBuf);
+    sConnlessRecvBuf = NULL;
+  }
+  return NULL;
 }
-
 
 /*******************************************************************************
 **
@@ -153,11 +151,7 @@ static jobject connectionlessCleanup ()
 ** Returns:         None
 **
 *******************************************************************************/
-void nativeLlcpConnectionlessSocket_abortWait ()
-{
-    sem_post (&sConnlessRecvSem);
-}
-
+void nativeLlcpConnectionlessSocket_abortWait() { sem_post(&sConnlessRecvSem); }
 
 /*******************************************************************************
 **
@@ -171,82 +165,88 @@ void nativeLlcpConnectionlessSocket_abortWait ()
 ** Returns:         LlcpPacket Java object.
 **
 *******************************************************************************/
-static jobject nativeLlcpConnectionlessSocket_doReceiveFrom (JNIEnv* e, jobject, jint linkMiu)
-{
-    ALOGV("%s: linkMiu = %d", __func__, linkMiu);
-    jobject llcpPacket = NULL;
-    ScopedLocalRef<jclass> clsLlcpPacket(e, NULL);
+static jobject nativeLlcpConnectionlessSocket_doReceiveFrom(JNIEnv* e, jobject,
+                                                            jint linkMiu) {
+  DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("%s: linkMiu = %d", __func__, linkMiu);
+  jobject llcpPacket = NULL;
+  ScopedLocalRef<jclass> clsLlcpPacket(e, NULL);
 
-    if (sConnlessRecvWaitingForData != JNI_FALSE)
-    {
-        ALOGV("%s: Already waiting for incoming data", __func__);
-        return NULL;
-    }
+  if (sConnlessRecvWaitingForData != JNI_FALSE) {
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s: Already waiting for incoming data", __func__);
+    return NULL;
+  }
 
-    sConnlessRecvBuf = (uint8_t*) malloc (linkMiu);
-    if (sConnlessRecvBuf == NULL)
-    {
-        ALOGV("%s: Failed to allocate %d bytes memory buffer", __func__, linkMiu);
-        return NULL;
-    }
-    sConnlessRecvLen = linkMiu;
+  sConnlessRecvBuf = (uint8_t*)malloc(linkMiu);
+  if (sConnlessRecvBuf == NULL) {
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+        "%s: Failed to allocate %d bytes memory buffer", __func__, linkMiu);
+    return NULL;
+  }
+  sConnlessRecvLen = linkMiu;
 
-    // Create the write semaphore
-    if (sem_init (&sConnlessRecvSem, 0, 0) == -1)
-    {
-        ALOGE("%s: semaphore creation failed (errno=0x%08x)", __func__, errno);
-        return connectionlessCleanup ();
-    }
+  // Create the write semaphore
+  if (sem_init(&sConnlessRecvSem, 0, 0) == -1) {
+    LOG(ERROR) << StringPrintf("%s: semaphore creation failed (errno=0x%08x)",
+                               __func__, errno);
+    return connectionlessCleanup();
+  }
 
-    sConnlessRecvWaitingForData = JNI_TRUE;
+  sConnlessRecvWaitingForData = JNI_TRUE;
 
-    // Wait for sConnlessRecvSem completion status
-    if (sem_wait (&sConnlessRecvSem))
-    {
-        ALOGE("%s: Failed to wait for write semaphore (errno=0x%08x)", __func__, errno);
-        goto TheEnd;
-    }
+  // Wait for sConnlessRecvSem completion status
+  if (sem_wait(&sConnlessRecvSem)) {
+    LOG(ERROR) << StringPrintf(
+        "%s: Failed to wait for write semaphore (errno=0x%08x)", __func__,
+        errno);
+    goto TheEnd;
+  }
 
-    // Create new LlcpPacket object
-    if (nfc_jni_cache_object_local (e, "com/android/nfc/LlcpPacket", &(llcpPacket)) == -1)
-    {
-        ALOGE("%s: Find LlcpPacket class error", __func__);
-        return connectionlessCleanup ();
-    }
+  // Create new LlcpPacket object
+  if (nfc_jni_cache_object_local(e, "com/android/nfc/LlcpPacket",
+                                 &(llcpPacket)) == -1) {
+    LOG(ERROR) << StringPrintf("%s: Find LlcpPacket class error", __func__);
+    return connectionlessCleanup();
+  }
 
-    // Get NativeConnectionless class object
-    clsLlcpPacket.reset(e->GetObjectClass(llcpPacket));
-    if (e->ExceptionCheck())
-    {
-        e->ExceptionClear();
-        ALOGE("%s: Get Object class error", __func__);
-        return connectionlessCleanup ();
-    }
+  // Get NativeConnectionless class object
+  clsLlcpPacket.reset(e->GetObjectClass(llcpPacket));
+  if (e->ExceptionCheck()) {
+    e->ExceptionClear();
+    LOG(ERROR) << StringPrintf("%s: Get Object class error", __func__);
+    return connectionlessCleanup();
+  }
 
-    // Set Llcp Packet remote SAP
-    jfieldID f;
-    f = e->GetFieldID(clsLlcpPacket.get(), "mRemoteSap", "I");
-    e->SetIntField(llcpPacket, f, (jbyte) sConnlessRecvRemoteSap);
+  // Set Llcp Packet remote SAP
+  jfieldID f;
+  f = e->GetFieldID(clsLlcpPacket.get(), "mRemoteSap", "I");
+  e->SetIntField(llcpPacket, f, (jbyte)sConnlessRecvRemoteSap);
 
-    // Set Llcp Packet Buffer
-    ALOGV("%s: Received Llcp packet buffer size = %d\n", __func__, sConnlessRecvLen);
-    f = e->GetFieldID(clsLlcpPacket.get(), "mDataBuffer", "[B");
+  // Set Llcp Packet Buffer
+  DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("%s: Received Llcp packet buffer size = %d\n", __func__,
+                      sConnlessRecvLen);
+  f = e->GetFieldID(clsLlcpPacket.get(), "mDataBuffer", "[B");
 
-    {
-        ScopedLocalRef<jbyteArray> receivedData(e, e->NewByteArray(sConnlessRecvLen));
-        e->SetByteArrayRegion(receivedData.get(), 0, sConnlessRecvLen, (jbyte*) sConnlessRecvBuf);
-        e->SetObjectField(llcpPacket, f, receivedData.get());
-    }
+  {
+    ScopedLocalRef<jbyteArray> receivedData(e,
+                                            e->NewByteArray(sConnlessRecvLen));
+    e->SetByteArrayRegion(receivedData.get(), 0, sConnlessRecvLen,
+                          (jbyte*)sConnlessRecvBuf);
+    e->SetObjectField(llcpPacket, f, receivedData.get());
+  }
 
-TheEnd: // TODO: should all the "return connectionlessCleanup()"s in this function jump here instead?
-    connectionlessCleanup ();
-    if (sem_destroy (&sConnlessRecvSem))
-    {
-        ALOGE("%s: Failed to destroy sConnlessRecvSem semaphore (errno=0x%08x)", __func__, errno);
-    }
-    return llcpPacket;
+TheEnd:  // TODO: should all the "return connectionlessCleanup()"s in this
+         // function jump here instead?
+  connectionlessCleanup();
+  if (sem_destroy(&sConnlessRecvSem)) {
+    LOG(ERROR) << StringPrintf(
+        "%s: Failed to destroy sConnlessRecvSem semaphore (errno=0x%08x)",
+        __func__, errno);
+  }
+  return llcpPacket;
 }
-
 
 /*******************************************************************************
 **
@@ -259,36 +259,33 @@ TheEnd: // TODO: should all the "return connectionlessCleanup()"s in this functi
 ** Returns:         True if ok.
 **
 *******************************************************************************/
-static jboolean nativeLlcpConnectionlessSocket_doClose (JNIEnv *e, jobject o)
-{
-    ALOGV("%s", __func__);
+static jboolean nativeLlcpConnectionlessSocket_doClose(JNIEnv* e, jobject o) {
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s", __func__);
 
-    ScopedLocalRef<jclass> c(e, e->GetObjectClass(o));
-    jfieldID f = e->GetFieldID(c.get(), "mHandle", "I");
-    jint handle = e->GetIntField(o, f);
+  ScopedLocalRef<jclass> c(e, e->GetObjectClass(o));
+  jfieldID f = e->GetFieldID(c.get(), "mHandle", "I");
+  jint handle = e->GetIntField(o, f);
 
-    tNFA_STATUS status = NFA_P2pDisconnect((tNFA_HANDLE) handle, false);
-    if (status != NFA_STATUS_OK)
-    {
-        ALOGE("%s: disconnect failed, status = %d", __func__, status);
-        return JNI_FALSE;
-    }
-    return JNI_TRUE;
+  tNFA_STATUS status = NFA_P2pDisconnect((tNFA_HANDLE)handle, FALSE);
+  if (status != NFA_STATUS_OK) {
+    LOG(ERROR) << StringPrintf("%s: disconnect failed, status = %d", __func__,
+                               status);
+    return JNI_FALSE;
+  }
+  return JNI_TRUE;
 }
-
 
 /*****************************************************************************
 **
 ** Description:     JNI functions
 **
 *****************************************************************************/
-static JNINativeMethod gMethods[] =
-{
-    {"doSendTo", "(I[B)Z", (void*) nativeLlcpConnectionlessSocket_doSendTo},
-    {"doReceiveFrom", "(I)Lcom/android/nfc/LlcpPacket;", (void*) nativeLlcpConnectionlessSocket_doReceiveFrom},
-    {"doClose", "()Z", (void*) nativeLlcpConnectionlessSocket_doClose},
+static JNINativeMethod gMethods[] = {
+    {"doSendTo", "(I[B)Z", (void*)nativeLlcpConnectionlessSocket_doSendTo},
+    {"doReceiveFrom", "(I)Lcom/android/nfc/LlcpPacket;",
+     (void*)nativeLlcpConnectionlessSocket_doReceiveFrom},
+    {"doClose", "()Z", (void*)nativeLlcpConnectionlessSocket_doClose},
 };
-
 
 /*******************************************************************************
 **
@@ -300,10 +297,9 @@ static JNINativeMethod gMethods[] =
 ** Returns:         Status of registration.
 **
 *******************************************************************************/
-int register_com_android_nfc_NativeLlcpConnectionlessSocket (JNIEnv *e)
-{
-    return jniRegisterNativeMethods (e, gNativeLlcpConnectionlessSocketClassName, gMethods, NELEM(gMethods));
+int register_com_android_nfc_NativeLlcpConnectionlessSocket(JNIEnv* e) {
+  return jniRegisterNativeMethods(e, gNativeLlcpConnectionlessSocketClassName,
+                                  gMethods, NELEM(gMethods));
 }
 
-
-} // android namespace
+}  // namespace android

@@ -14,30 +14,30 @@
  * limitations under the License.
  */
 /******************************************************************************
- *
- *  The original Work has been changed by NXP Semiconductors.
- *
- *  Copyright (C) 2015 NXP Semiconductors
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
- ******************************************************************************/
+*
+*  The original Work has been changed by NXP.
+*
+*  Licensed under the Apache License, Version 2.0 (the "License");
+*  you may not use this file except in compliance with the License.
+*  You may obtain a copy of the License at
+*
+*  http://www.apache.org/licenses/LICENSE-2.0
+*
+*  Unless required by applicable law or agreed to in writing, software
+*  distributed under the License is distributed on an "AS IS" BASIS,
+*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*  See the License for the specific language governing permissions and
+*  limitations under the License.
+*
+*  Copyright 2018 NXP
+*
+******************************************************************************/
 package com.android.nfc;
 
 import android.annotation.Nullable;
 import android.nfc.NdefMessage;
 import android.os.Bundle;
-
+import java.io.FileDescriptor;
 import java.io.IOException;
 
 public interface DeviceHost {
@@ -45,31 +45,10 @@ public interface DeviceHost {
         public void onRemoteEndpointDiscovered(TagEndpoint tag);
 
         /**
-         * Notifies transaction
          */
-        public void onCardEmulationDeselected();
-
-        /**
-         * Notifies transaction
-         */
-        public void onCardEmulationAidSelected(byte[] aid,byte[] data, int evtSrc);
-
-        /**
-         * Notifies connectivity event from the SE
-         */
-        public void onConnectivityEvent(int evtSrc);
         public void onHostCardEmulationActivated(int technology);
         public void onHostCardEmulationData(int technology, byte[] data);
         public void onHostCardEmulationDeactivated(int technology);
-        public void onAidRoutingTableFull();
-        public void onNotifyT3tConfigure();
-        public void onNotifyReRoutingEntry();
-
-        /**
-         * Notifies about multiple card presented to
-         * emvco reader.
-         */
-        public void onEmvcoMultiCardDetectedEvent();
 
         /**
          * Notifies P2P Device detected, to activate LLCP link
@@ -86,44 +65,6 @@ public interface DeviceHost {
         public void onRemoteFieldActivated();
 
         public void onRemoteFieldDeactivated();
-
-        /*Restart disable watchdog timer*/
-        public void onRestartWatchDog(int enable);
-
-        /*Restart NFC:When Fw dwnld request was stored during SPI onGoing*/
-        public void onFwDwnldReqRestartNfc();
-
-        /**
-         * Notifies that the SE has been activated in listen mode
-         */
-        public void onSeListenActivated();
-
-        /**
-         * Notifies that the SE has been deactivated
-         */
-        public void onSeListenDeactivated();
-
-        public void onSeApduReceived(byte[] apdu);
-
-        public void onSeEmvCardRemoval();
-
-        public void onSeMifareAccess(byte[] block);
-        /**
-         * Notifies SWP Reader Events.
-         */
-        public void onSWPReaderRequestedEvent(boolean istechA, boolean istechB);
-
-        public void onSWPReaderRequestedFail(int FailCause);
-
-        public void onSWPReaderActivatedEvent();
-
-        public void onETSIReaderModeStartConfig(int eeHandle);
-
-        public void onETSIReaderModeStopConfig(int disc_ntf_timeout);
-
-        public void onETSIReaderModeSwpTimeout(int disc_ntf_timeout);
-
-        public void onUiccStatusEvent(int uiccStat);
     }
 
     public interface TagEndpoint {
@@ -135,6 +76,7 @@ public interface DeviceHost {
         boolean isPresent();
         void startPresenceChecking(int presenceCheckDelay,
                                    @Nullable TagDisconnectedCallback callback);
+        void stopPresenceChecking();
 
         int[] getTechList();
         void removeTechnology(int tech); // TODO remove this one
@@ -248,8 +190,6 @@ public interface DeviceHost {
      */
     public void checkFirmware();
 
-    public boolean download();
-
     public boolean initialize();
 
     public boolean deinitialize();
@@ -258,52 +198,17 @@ public interface DeviceHost {
 
     public void enableDiscovery(NfcDiscoveryParameters params, boolean restart);
 
-    public int getNciVersion();
-
-    public void doSetScreenState(int screen_state_mask);
-
-    public void doEnablep2p(boolean p2pFlag);
-
     public void disableDiscovery();
-
-    public int[] doGetSecureElementList();
-
-    public int[] doGetActiveSecureElementList();
-
-    public void doSelectSecureElement(int seID);
-
-    public void doSetSecureElementListenTechMask(int tech_mask);
-    public int doGetSecureElementTechList();
-
-    public int GetDefaultSE();
-
-    public byte[] getSecureElementUid();
-
-    public int setEmvCoPollProfile(boolean enable, int route);
-
-    public void doDeselectSecureElement(int seID);
-
-    public void doSetSEPowerOffState(int seID,boolean enable);
-
-    public void setDefaultTechRoute(int seID, int tech_switchon, int tech_switchoff);
-
-    public void setDefaultProtoRoute(int seID, int proto_switchon, int proto_switchoff);
-
-    public void doSetProvisionMode(boolean provisionMode);
 
     public boolean sendRawFrame(byte[] data);
 
-    public boolean routeAid(byte[] aid, int route, int powerState, int aidInfo);
-
-    public boolean setDefaultRoute(int defaultRouteEntry, int defaultProtoRouteEntry, int defaultTechRouteEntry);
+    public boolean routeAid(byte[] aid, int route, int aidInfo, int powerState);
 
     public boolean unrouteAid(byte[] aid);
 
-    public boolean clearAidTable();
-
     public int getAidTableSize();
 
-    public int getRemainingAidTableSize();
+    public boolean setDefaultRoute(int defaultRouteEntry, int defaultProtoRouteEntry, int defaultTechRouteEntry);
 
     public int getDefaultAidRoute();
 
@@ -316,12 +221,16 @@ public interface DeviceHost {
     public int getDefaultDesfirePowerState();
 
     public int getDefaultMifareCLTPowerState();
+    
+    public boolean commitRouting();
 
-    public boolean setRoutingEntry(int type, int value, int route, int power);
+    public void registerT3tIdentifier(byte[] t3tIdentifier);
 
-    public boolean clearRoutingEntry(int type);
+    public void deregisterT3tIdentifier(byte[] t3tIdentifier);
 
-    public boolean routeApduPattern(int route, int powerState, byte[] apduData, byte[] apduMask);
+    public void clearT3tIdentifiersCache();
+
+    public int getLfT3tMax();
 
     public LlcpConnectionlessSocket createLlcpConnectionlessSocket(int nSap, String sn)
             throws LlcpException;
@@ -332,15 +241,9 @@ public interface DeviceHost {
     public LlcpSocket createLlcpSocket(int sap, int miu, int rw,
             int linearBufferLength) throws LlcpException;
 
-    public boolean unrouteApduPattern(byte[] apduData);
-
     public boolean doCheckLlcp();
 
-    public boolean doCheckJcopDlAtBoot();
-
     public boolean doActivateLlcp();
-
-    public void doSetScreenOrPowerState(int state);
 
     public void resetTimeouts();
 
@@ -360,82 +263,29 @@ public interface DeviceHost {
 
     boolean getExtendedLengthApdusSupported();
 
-    byte[][] getWipeApdus();
-
     int getDefaultLlcpMiu();
 
     int getDefaultLlcpRwSize();
 
-    int getChipVer();
-
-    byte[] getFwFileName();
-
-    int getNfcInitTimeout();
-
-    int JCOSDownload();
-
-    void doSetNfcMode(int nfcMode);
-
-    String dump();
+    void dump(FileDescriptor fd);
 
     boolean enableScreenOffSuspend();
 
     boolean disableScreenOffSuspend();
 
-    boolean isVzwFeatureEnabled();
+    public void doSetScreenState(int screen_state_mask);
 
-    boolean isNfccBusy();
-
-    void setEtsiReaederState(int newState);
-
-    int getEtsiReaederState();
-
-    void etsiReaderConfig(int eeHandle);
-
-    void etsiResetReaderConfig();
-
-    void notifyEEReaderEvent(int evt);
-
-    void etsiInitConfig();
-
-    void updateScreenState();
-    //boolean enableReaderMode(int technologies);
-
-    //boolean disableScreenOffSuspend();
-
-    public void registerT3tIdentifier(byte[] t3tIdentifier);
-
-    public void deregisterT3tIdentifier(byte[] t3tIdentifier);
-
-    public void clearT3tIdentifiersCache();
-
-    public int getLfT3tMax();
-
-    void commitRouting();
-
-    //Factory Test --start
-    public void doPrbsOn(int prbs, int hw_prbs, int tech, int rate);
-
-    public void doPrbsOff();
-
-    public int SWPSelfTest(int ch);
-
-    public int getFWVersion();
-
-    public byte[] doGetRouting();
-
-    public void doSetEEPROM(byte[] val);
-    //Factory Test --end
-
-    public int doGetSeInterface(int type);
+    public int getNciVersion();
 
     public void enableDtaMode();
 
     public void disableDtaMode();
 
-    public int doselectUicc(int uiccSlot);
+    public void factoryReset();
 
-    public int doGetSelectedUicc();
+    public void shutdown();
 
-    public int setPreferredSimSlot(int uiccSlot);
+/* NXP extension are here */
+    public boolean doCheckJcopDlAtBoot();
+    int JCOSDownload();
 }

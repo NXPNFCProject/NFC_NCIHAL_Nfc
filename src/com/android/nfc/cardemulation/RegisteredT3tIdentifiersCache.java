@@ -47,6 +47,7 @@ public class RegisteredT3tIdentifiersCache {
         public final String systemCode;
         public final String nfcid2;
         public final String t3tPmm;
+
         T3tIdentifier(String systemCode, String nfcid2, String t3tPmm) {
             this.systemCode = systemCode;
             this.nfcid2 = nfcid2;
@@ -123,11 +124,6 @@ public class RegisteredT3tIdentifiersCache {
         }
 
         updateRoutingLocked();
-    }
-
-    void clearT3tidentifiercache()
-    {
-        mRoutingManager.onNfccRoutingTableCleared();
     }
 
     void updateRoutingLocked() {

@@ -1,5 +1,7 @@
 package com.android.nfc.beam;
 
+import com.android.nfc.R;
+
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -120,6 +122,7 @@ public class BeamStatusReceiver extends BroadcastReceiver {
                     if (DBG) Log.d(TAG, "Didn't find transfer, stopping");
                     Intent cancelIntent = new Intent(ACTION_STOP_BLUETOOTH_TRANSFER);
                     cancelIntent.putExtra(EXTRA_TRANSFER_ID, id);
+                    cancelIntent.setPackage(mContext.getString(R.string.bluetooth_package));
                     mContext.sendBroadcast(cancelIntent);
                 }
             }

@@ -13,25 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/******************************************************************************
- *
- *  The original Work has been changed by NXP Semiconductors.
- *
- *  Copyright (C) 2015 NXP Semiconductors
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
- ******************************************************************************/
+
 package com.android.nfc.snep;
 
 import android.nfc.FormatException;
@@ -66,6 +48,16 @@ public final class SnepMessage {
     public static final byte RESPONSE_UNSUPPORTED_VERSION = (byte) 0xE1;
     public static final byte RESPONSE_REJECT = (byte) 0xFF;
 
+    private static final byte[] NDEF_SHORT_TEST_RECORD = new byte[]{(byte)0xD1,(byte)0x01,(byte)0x1E,(byte)0x54,(byte)0x02,(byte)0x6C,(byte)0x61, // NDEF Header
+            (byte)0x4C,(byte)0x6F,(byte)0x72,(byte)0x65,(byte)0x6D,(byte)0x20,(byte)0x69,(byte)0x70,(byte)0x73,(byte)0x75, // Payload
+            (byte)0x6D,(byte)0x20,(byte)0x64,(byte)0x6F,(byte)0x6C,(byte)0x6F,(byte)0x72,(byte)0x20,(byte)0x73,(byte)0x69,
+            (byte)0x74,(byte)0x20,(byte)0x61,(byte)0x6D,(byte)0x65,(byte)0x74,(byte)0x2E};
+
+    private static final byte[] NDEF_TEST_RECORD = new byte[]{(byte)0xC1,(byte)0x01,(byte)0x00,(byte)0x00,(byte)0x00,(byte)0x1E,(byte)0x54,(byte)0x02,(byte)0x6C,(byte)0x61, // NDEF Header
+            (byte)0x4C,(byte)0x6F,(byte)0x72,(byte)0x65,(byte)0x6D,(byte)0x20,(byte)0x69,(byte)0x70,(byte)0x73,(byte)0x75, // Payload
+            (byte)0x6D,(byte)0x20,(byte)0x64,(byte)0x6F,(byte)0x6C,(byte)0x6F,(byte)0x72,(byte)0x20,(byte)0x73,(byte)0x69,
+            (byte)0x74,(byte)0x20,(byte)0x61,(byte)0x6D,(byte)0x65,(byte)0x74,(byte)0x2E};
+
     private static final int HEADER_LENGTH = 6;
     public static final int MAL_IUT = 0x0400;
     public static final int MAL = 0xFFFFFFFF;
@@ -99,8 +91,8 @@ public final class SnepMessage {
     public static SnepMessage fromByteArray(byte[] data) throws FormatException {
         return new SnepMessage(data);
     }
-    public static NdefMessage getLargeNdef() throws UnsupportedEncodingException
-    {
+
+    public static NdefMessage getLargeNdef() throws UnsupportedEncodingException {
         String snepTestData2 = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus at"
                 +" lorem nunc, ut venenatis quam. Etiam id dolor quam, at viverra dolor."
                 +" Phasellus eu lacus ligula, quis euismod erat. Sed feugiat, ligula at"
@@ -125,8 +117,7 @@ public final class SnepMessage {
         return new NdefMessage(new NdefRecord[]{data2});
     }
 
-    public static NdefMessage getSmallNdef() throws UnsupportedEncodingException
-    {
+    public static NdefMessage getSmallNdef() throws UnsupportedEncodingException {
         String snepTestData1 = "Lorem ipsum dolor sit amet.";
         String lang = "la";
         byte[] textBytes = snepTestData1.getBytes();
@@ -183,21 +174,14 @@ public final class SnepMessage {
     public byte[] toByteArray() {
         byte[] bytes;
         if (mNdefMessage != null) {
-            if((NfcService.sIsDtaMode)&&(DtaSnepClient.mTestCaseId != 0)){
-               if(DtaSnepClient.mTestCaseId == 5 || DtaSnepClient.mTestCaseId == 6){
+            if (NfcService.sIsDtaMode && DtaSnepClient.mTestCaseId != 0) {
+               if (DtaSnepClient.mTestCaseId == 5 || DtaSnepClient.mTestCaseId == 6) {
                    bytes = mNdefMessage.toByteArray();
-               }
-               else{
-                   if(NfcService.sIsShortRecordLayout){
-                       bytes = new byte[]{(byte)0xD1,(byte)0x01,(byte)0x1E,(byte)0x54,(byte)0x02,(byte)0x6C,(byte)0x61, // NDEF Header
-                                          (byte)0x4C,(byte)0x6F,(byte)0x72,(byte)0x65,(byte)0x6D,(byte)0x20,(byte)0x69,(byte)0x70,(byte)0x73,(byte)0x75, // Payload
-                                          (byte)0x6D,(byte)0x20,(byte)0x64,(byte)0x6F,(byte)0x6C,(byte)0x6F,(byte)0x72,(byte)0x20,(byte)0x73,(byte)0x69,
-                                          (byte)0x74,(byte)0x20,(byte)0x61,(byte)0x6D,(byte)0x65,(byte)0x74,(byte)0x2E};
-                   }else{
-                       bytes = new byte[]{(byte)0xC1,(byte)0x01,(byte)0x00,(byte)0x00,(byte)0x00,(byte)0x1E,(byte)0x54,(byte)0x02,(byte)0x6C,(byte)0x61, // NDEF Header
-                               (byte)0x4C,(byte)0x6F,(byte)0x72,(byte)0x65,(byte)0x6D,(byte)0x20,(byte)0x69,(byte)0x70,(byte)0x73,(byte)0x75, // Payload
-                               (byte)0x6D,(byte)0x20,(byte)0x64,(byte)0x6F,(byte)0x6C,(byte)0x6F,(byte)0x72,(byte)0x20,(byte)0x73,(byte)0x69,
-                               (byte)0x74,(byte)0x20,(byte)0x61,(byte)0x6D,(byte)0x65,(byte)0x74,(byte)0x2E};
+               } else {
+                   if (NfcService.sIsShortRecordLayout) {
+                       bytes = NDEF_SHORT_TEST_RECORD;
+                   } else {
+                       bytes = NDEF_TEST_RECORD;
                    }
                }
             } else {

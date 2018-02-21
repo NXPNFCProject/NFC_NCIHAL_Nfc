@@ -42,4 +42,5 @@
     <string name="prompt_connect_to_network" msgid="8511683573657516114">"Kokonekta sa network na <xliff:g id="NETWORK_SSID">%1$s</xliff:g>?"</string>
     <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"Kailangang i-enable ang NFC upang magamit ang Android Beam. Gusto mo ba itong i-enable?"</string>
     <string name="android_beam" msgid="1666446406999492763">"Android Beam"</string>
+    <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"Walang Pahintulot sa External Storage ang application. Kinakailangan ito upang Ma-beam ang file na ito"</string>
 </resources>

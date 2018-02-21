@@ -42,4 +42,5 @@
     <string name="prompt_connect_to_network" msgid="8511683573657516114">"Ligar à rede <xliff:g id="NETWORK_SSID">%1$s</xliff:g>?"</string>
     <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"A ativação do Android Beam requer NFC. Pretende ativá-lo?"</string>
     <string name="android_beam" msgid="1666446406999492763">"Android Beam"</string>
+    <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"A aplicação não tem autorização de armazenamento externo. Esta é necessária para transmitir este ficheiro."</string>
 </resources>

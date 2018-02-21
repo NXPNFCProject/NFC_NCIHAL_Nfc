@@ -42,4 +42,5 @@
     <string name="prompt_connect_to_network" msgid="8511683573657516114">"Vil du koble til nettverket «<xliff:g id="NETWORK_SSID">%1$s</xliff:g>»?"</string>
     <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"Android Beam krever at NFC er aktivert. Ønsker du å aktivere NFC?"</string>
     <string name="android_beam" msgid="1666446406999492763">"Android Beam"</string>
+    <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"Appen har ikke tillatelse for ekstern lagring. Dette er påkrevd for å beame denne filen."</string>
 </resources>

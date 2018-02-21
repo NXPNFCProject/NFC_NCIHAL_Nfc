@@ -42,4 +42,5 @@
     <string name="prompt_connect_to_network" msgid="8511683573657516114">"Sambung ke rangkaian <xliff:g id="NETWORK_SSID">%1$s</xliff:g>?"</string>
     <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"NFC perlu didayakan untuk menggunakan Pancaran Android. Adakah anda ingin dayakan?"</string>
     <string name="android_beam" msgid="1666446406999492763">"Pancaran Android"</string>
+    <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"Aplikasi tiada Kebenaran Storan Luaran. Kebenaran ini diperlukan untuk Memancarkan fail ini"</string>
 </resources>

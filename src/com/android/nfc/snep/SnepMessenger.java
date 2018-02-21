@@ -13,25 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/******************************************************************************
- *
- *  The original Work has been changed by NXP Semiconductors.
- *
- *  Copyright (C) 2015 NXP Semiconductors
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
- ******************************************************************************/
+
 package com.android.nfc.snep;
 
 import com.android.nfc.DeviceHost.LlcpSocket;
@@ -49,7 +31,7 @@ import java.io.IOException;
 import java.util.Arrays;
 
 public class SnepMessenger {
-    private static final String TAG = "SnepMessenger";
+    private static final String TAG = "SnepMessager";
     private static final boolean DBG = false;
     private static final int HEADER_LENGTH = 6;
     final LlcpSocket mSocket;
@@ -99,8 +81,8 @@ public class SnepMessenger {
                     snepResponse.getField() + ")");
         }
         // Look for wrong/invalid request or response from peer
-       if(NfcService.sIsDtaMode) {
-            if((mIsClient)&&(DtaSnepClient.mTestCaseId == 6)) {
+       if (NfcService.sIsDtaMode) {
+            if (mIsClient && (DtaSnepClient.mTestCaseId == 6)) {
                 length = Math.min(buffer.length - offset, mFragmentLength);
                 tmpBuffer = Arrays.copyOfRange(buffer, offset, offset + length);
                 if (DBG) Log.d(TAG, "about to send a " + length + " byte fragment");
@@ -129,8 +111,8 @@ public class SnepMessenger {
             if (DBG) Log.d(TAG, "about to send a " + length + " byte fragment");
             mSocket.send(tmpBuffer);
 
-            if(NfcService.sIsDtaMode) {
-                if((!mIsClient)&&(ExtDtaSnepServer.mTestCaseId == 0x01)){
+            if (NfcService.sIsDtaMode) {
+                if (!mIsClient && ExtDtaSnepServer.mTestCaseId == 0x01) {
                     mSocket.receive(responseBytes);
                     try {
                         snepResponse = SnepMessage.fromByteArray(responseBytes);
@@ -153,10 +135,10 @@ public class SnepMessenger {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream(mFragmentLength);
         byte[] partial = new byte[mFragmentLength];
         int size;
+        int requestSize = 0;
         int readSize = 0;
         byte requestVersion = 0;
         byte requestField = 0; // for DTA Mode
-        int requestLength = 0;
         boolean doneReading = false;
         byte fieldContinue;
         byte fieldReject;
@@ -179,7 +161,7 @@ public class SnepMessenger {
             throw new IOException("Error reading SNEP message.");
         } else if (size < HEADER_LENGTH) {
             try {
-                if((NfcService.sIsDtaMode)&&(mIsClient)){
+                if (NfcService.sIsDtaMode && mIsClient) {
                     if (DBG) Log.d(TAG, "Invalid header length");
                     close();
                 } else {
@@ -199,16 +181,16 @@ public class SnepMessenger {
         DataInputStream dataIn = new DataInputStream(new ByteArrayInputStream(partial));
         requestVersion = dataIn.readByte();
         requestField = dataIn.readByte();
-        requestLength = dataIn.readInt();
+        requestSize = dataIn.readInt();
 
-        if (DBG) Log.d(TAG, "read " + readSize + " of " + requestLength);
+        if (DBG) Log.d(TAG, "read " + readSize + " of " + requestSize);
 
         if (((requestVersion & 0xF0) >> 4) != SnepMessage.VERSION_MAJOR) {
-            if(NfcService.sIsDtaMode) {
+            if (NfcService.sIsDtaMode) {
                 sendMessage(SnepMessage.getMessage(SnepMessage.RESPONSE_UNSUPPORTED_VERSION));
                 close();
             } else {
-            if(NfcService.sIsDtaMode) {
+            if (NfcService.sIsDtaMode) {
                 sendMessage(SnepMessage.getMessage(SnepMessage.RESPONSE_UNSUPPORTED_VERSION));
                 close();
             } else {
@@ -219,39 +201,37 @@ public class SnepMessenger {
 
         }
 
-        if(NfcService.sIsDtaMode) {
-            if((!mIsClient)&&((requestField == SnepMessage.RESPONSE_CONTINUE)||  // added for TC_S_BIT_B1_01_X
-                              (requestField == SnepMessage.RESPONSE_SUCCESS) ||
-                              (requestField == SnepMessage.RESPONSE_NOT_FOUND)))
-            {
+        if (NfcService.sIsDtaMode) {
+            if (!mIsClient && (requestField == SnepMessage.RESPONSE_CONTINUE)||  // added for TC_S_BIT_B1_01_X
+                              requestField == SnepMessage.RESPONSE_SUCCESS ||
+                              requestField == SnepMessage.RESPONSE_NOT_FOUND) {
                 if (DBG) Log.d(TAG, "errorneous response received, disconnecting client");
                 close();
             }
-            if((!mIsClient)&&((requestField == SnepMessage.REQUEST_RFU)))
-            {
+            if (!mIsClient && requestField == SnepMessage.REQUEST_RFU) {
                 if (DBG) Log.d(TAG, "unknown request received, disconnecting client");
                 sendMessage(SnepMessage.getMessage(SnepMessage.RESPONSE_BAD_REQUEST));
                 close();
-
             }
-            if((mIsClient)&&((requestField == SnepMessage.REQUEST_PUT))) // added for TC_C_BIT_BI_01_0
-            {
+            // added for TC_C_BIT_BI_01_0
+            if (mIsClient && requestField == SnepMessage.REQUEST_PUT) {
                 if (DBG) Log.d(TAG, "errorneous PUT request received, disconnecting from server");
                     close();
             }
-            if((mIsClient)&&(requestLength > SnepMessage.MAL_IUT)) // added for TC_C_GET_BV_03
-            {
+            // added for TC_C_GET_BV_03
+            if (mIsClient && (requestSize > SnepMessage.MAL_IUT)) {
                 if (DBG) Log.d(TAG, "responding reject");
-                    return new SnepMessage(requestVersion, requestField, requestLength, 0, null);
+                    return new SnepMessage(requestVersion, requestField, requestSize, 0, null);
             }
-            if((!mIsClient)&&((requestLength > SnepMessage.MAL_IUT) || (requestLength == SnepMessage.MAL)))  //added for TC_S_ACC_BV_05_0&1 and TC_S_ACC_BV_06_0&1
-            {
+            //added for TC_S_ACC_BV_05_0&1 and TC_S_ACC_BV_06_0&1
+            if (!mIsClient && ((requestSize > SnepMessage.MAL_IUT) ||
+                                requestSize == SnepMessage.MAL)) {
                 if (DBG) Log.d(TAG, "responding reject");
-                    return new SnepMessage(requestVersion, requestField, requestLength, 0, null);
+                    return new SnepMessage(requestVersion, requestField, requestSize, 0, null);
             }
         }
 
-        if (requestLength > readSize) {
+        if (requestSize > readSize) {
             if (DBG) Log.d(TAG, "requesting continuation");
             mSocket.send(SnepMessage.getMessage(fieldContinue).toByteArray());
         } else {
@@ -273,7 +253,7 @@ public class SnepMessenger {
                 } else {
                     readSize += size;
                     buffer.write(partial, 0, size);
-                    if (readSize == requestLength) {
+                    if (readSize == requestSize) {
                         doneReading = true;
                     }
                 }

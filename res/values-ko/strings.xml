@@ -42,4 +42,5 @@
     <string name="prompt_connect_to_network" msgid="8511683573657516114">"네트워크 <xliff:g id="NETWORK_SSID">%1$s</xliff:g>에 연결하시겠습니까?"</string>
     <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"Android Beam을 사용하려면 NFC를 사용 설정해야 합니다. NFC를 사용 설정하시겠습니까?"</string>
     <string name="android_beam" msgid="1666446406999492763">"Android Beam"</string>
+    <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"애플리케이션에 외부 저장소 권한이 없습니다. 이 파일을 공유하려면 외부 저장소 권한이 필요합니다."</string>
 </resources>

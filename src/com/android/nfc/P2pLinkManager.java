@@ -13,29 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/******************************************************************************
- *
- *  The original Work has been changed by NXP Semiconductors.
- *
- *  Copyright (C) 2015 NXP Semiconductors
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
- ******************************************************************************/
+
 package com.android.nfc;
 
+import android.content.Intent;
 import android.content.pm.UserInfo;
+
 import com.android.nfc.beam.BeamManager;
+import com.android.nfc.beam.BeamSendService;
+import com.android.nfc.beam.BeamTransferRecord;
+
 import android.os.UserManager;
 import com.android.nfc.sneptest.ExtDtaSnepServer;
 import com.android.nfc.sneptest.DtaSnepClient;
@@ -48,7 +35,6 @@ import com.android.nfc.ndefpush.NdefPushServer;
 import com.android.nfc.snep.SnepClient;
 import com.android.nfc.snep.SnepMessage;
 import com.android.nfc.snep.SnepServer;
-
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -67,12 +53,13 @@ import android.os.Message;
 import android.os.SystemClock;
 import android.os.UserHandle;
 import android.util.Log;
-
 import java.io.FileDescriptor;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
+import java.io.UnsupportedEncodingException;
 
 /**
  * Interface to listen for P2P events.
@@ -97,7 +84,6 @@ interface P2pEventListener {
      * Indicates a P2P device is in range.
      * <p>onP2pInRange() and onP2pOutOfRange() will always be called
      * alternately.
-     * <p>All other callbacks will only occur while a P2P device is in range.
      */
     public void onP2pInRange();
 
@@ -134,8 +120,8 @@ interface P2pEventListener {
     /**
      * Called to indicate the device is busy with another handover transfer
      */
-
     public void onP2pHandoverBusy();
+
     /**
      * Called to indicate a receive was successful.
      */
@@ -321,18 +307,18 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
                 if (mEchoServer != null) {
                     mHandler.sendEmptyMessage(MSG_STOP_ECHOSERVER);
                 }
-                if(mExtDtaSnepServerRunning)
+                if (mExtDtaSnepServerRunning)
                     disableExtDtaSnepServer();
             }
             mIsSendEnabled = sendEnable;
             mIsReceiveEnabled = receiveEnable;
         }
     }
-     /**
+
+    /**
      * To Enable DTA SNEP Server for NFC Forum testing
      */
-    public void enableExtDtaSnepServer(String serviceName, int serviceSap, int miu, int rwSize,int testCaseId)
-    {
+    public void enableExtDtaSnepServer(String serviceName, int serviceSap, int miu, int rwSize,int testCaseId) {
         if (DBG) Log.d(TAG, "Enabling Extended DTA Server");
         mServiceName = serviceName;
         mServiceSap = serviceSap;
@@ -341,7 +327,8 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
         mTestCaseID = testCaseId;
         synchronized (this) {
             if(mExtDtaSnepServer == null)
-            mExtDtaSnepServer = new ExtDtaSnepServer(mServiceName, mServiceSap, mDtaMiu, mDtaRwSize, mExtDtaSnepServerCallback,mContext, mTestCaseID);
+            mExtDtaSnepServer = new ExtDtaSnepServer(mServiceName, mServiceSap, mDtaMiu, mDtaRwSize,
+                                                     mExtDtaSnepServerCallback,mContext, mTestCaseID);
             mExtDtaSnepServer.start();
             mExtDtaSnepServerRunning = true;
         }
@@ -351,15 +338,11 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
     /**
      * To Disable DTA SNEP Server for NFC Forum testing
      */
-    public void disableExtDtaSnepServer()
-    {
+    public void disableExtDtaSnepServer() {
         if (DBG) Log.d(TAG, "Disabling Extended DTA Server");
         if (!mExtDtaSnepServerRunning)
-        {
             return;
-        }
-        synchronized (this)
-        {
+        synchronized (this) {
             mExtDtaSnepServer.stop();
             mExtDtaSnepServer = null;
             mExtDtaSnepServerRunning = false;
@@ -370,8 +353,7 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
     /**
      * To Enable DTA SNEP Client for NFC Forum testing
      */
-    public void enableDtaSnepClient(String serviceName, int miu, int rwSize, int testCaseId)
-    {
+    public void enableDtaSnepClient(String serviceName, int miu, int rwSize, int testCaseId) {
         if (DBG) Log.d(TAG, "enableDtaSnepClient");
         mClientEnabled = true;
         mServiceName = serviceName;
@@ -384,8 +366,7 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
     /**
      * To Disable DTA SNEP Client for NFC Forum testing
      */
-    public void disableDtaSnepClient()
-    {
+    public void disableDtaSnepClient() {
         if (DBG) Log.d(TAG, "disableDtaSnepClient");
         mDtaSnepClient = null;
         mClientEnabled = false;
@@ -436,6 +417,7 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
                 } else if (shareData.ndefMessage != null) {
                     mMessageToSend = shareData.ndefMessage;
                 }
+
                 mUserHandle = shareData.userHandle;
             }
             if (mMessageToSend != null ||
@@ -452,7 +434,6 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
      */
     public void onLlcpActivated(byte peerLlcpVersion) {
         Log.i(TAG, "LLCP activated");
-
         synchronized (P2pLinkManager.this) {
             if (mEchoServer != null) {
                 mEchoServer.onLlcpActivated();
@@ -462,7 +443,7 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
             switch (mLinkState) {
                 case LINK_STATE_DOWN:
                     if (DBG) Log.d(TAG, "onP2pInRange()");
-                 // Start taking a screenshot
+                    // Start taking a screenshot
                     mEventListener.onP2pInRange();
                     mLinkState = LINK_STATE_UP;
                     // If we had a pending send (manual Beam invoke),
@@ -737,7 +718,7 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
                 mEventListener.onP2pResumeSend();
                 sendNdefMessage();
             } else {
-             // Either nothing to send or canceled/complete, ignore
+                // Either nothing to send or canceled/complete, ignore
             }
         }
     }
@@ -785,33 +766,23 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
                     handoverClient = null;
                 }
             }
-            if (needsNdef || (needsHandover && handoverClient == null))
-            {
-                if(NfcService.sIsDtaMode) {
-                    if(mClientEnabled)
-                    {
-                        if(mDtaSnepClient == null){
+            if (needsNdef || (needsHandover && handoverClient == null)) {
+                if (NfcService.sIsDtaMode) {
+                    if (mClientEnabled) {
+                        if (mDtaSnepClient == null) {
                             if (DBG) Log.d(TAG, "Creating DTA Snep Client");
                             mDtaSnepClient = new DtaSnepClient(mServiceName, mDtaMiu, mDtaRwSize, mTestCaseID);
                         }
                     }
-                }
-                else
-                {
+                } else
                     snepClient = new SnepClient();
-                }
-                try
-                {
-                    if(NfcService.sIsDtaMode) {
-                        if(mDtaSnepClient != null)
-                        {
+                try {
+                    if (NfcService.sIsDtaMode) {
+                        if (mDtaSnepClient != null)
                             mDtaSnepClient.DtaClientOperations(mContext);
-                        }
                     }
                     else
-                    {
                         snepClient.connect();
-                    }
                     success = true;
                     mDtaSnepClient = null;
                 } catch (IOException e) {
@@ -841,7 +812,7 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
                     if (nppClient != null) {
                         nppClient.close();
                     }
-                    if(mDtaSnepClient != null) {
+                    if (mDtaSnepClient != null) {
                         mDtaSnepClient.close();
                     }
                     return false;
@@ -897,6 +868,7 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
                     mHandoverDataParser.getOutgoingHandoverData(response), uris, userHandle)) {
                 return HANDOVER_BUSY;
             }
+
             return HANDOVER_SUCCESS;
         }
 
@@ -1020,16 +992,17 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
 
         @Override
         public SnepMessage doGet(int acceptableLength, NdefMessage msg) {
-            NdefMessage response = null;
             // The NFC Forum Default SNEP server is not allowed to respond to
             // SNEP GET requests - see SNEP 1.0 TS section 6.1. However,
             // since Android 4.1 used the NFC Forum default server to
             // implement connection handover, we will support this
             // until we can deprecate it.
-            /*IncomingHandoverData inCmgHandoverData;*/
-            if(msg == null){
-            }else if((mHandoverDataParser.getIncomingHandoverData(msg)) ==  null){
-            }else{
+            NdefMessage response = null;
+            if (NfcService.sIsDtaMode){
+               if(msg != null && mHandoverDataParser.getIncomingHandoverData(msg) !=  null) {
+                   response = mHandoverDataParser.getIncomingHandoverData(msg).handoverSelect;
+               }
+            } else {
                 response = mHandoverDataParser.getIncomingHandoverData(msg).handoverSelect;
             }
             if (response != null) {
@@ -1040,8 +1013,7 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
             }
         }
     };
-    final ExtDtaSnepServer.Callback mExtDtaSnepServerCallback = new ExtDtaSnepServer.Callback()
-    {
+    final ExtDtaSnepServer.Callback mExtDtaSnepServerCallback = new ExtDtaSnepServer.Callback() {
         @Override
         public SnepMessage doPut(NdefMessage msg) {
             mPutBeforeGet = true;
@@ -1050,16 +1022,16 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
 
         @Override
         public SnepMessage doGet(int acceptableLength, NdefMessage msg) {
-            if((!mPutBeforeGet)) {
+            if ((!mPutBeforeGet)) {
                 return SnepMessage.getMessage(SnepMessage.RESPONSE_NOT_FOUND);
-            } else if(acceptableLength == 501) {
+            } else if (acceptableLength == 501) {
                 mPutBeforeGet = false;
                 return SnepMessage.getMessage(SnepMessage.RESPONSE_EXCESS_DATA);
-            } else if(mPutBeforeGet&&(acceptableLength == 1024)) {
+            } else if (mPutBeforeGet&&(acceptableLength == 1024)) {
                 try {
                     mPutBeforeGet = false;
                     return SnepMessage.getSuccessResponse(SnepMessage.getLargeNdef());
-                } catch(UnsupportedEncodingException e) {
+                } catch (UnsupportedEncodingException e) {
                     mPutBeforeGet = false;
                     return null;
                 }

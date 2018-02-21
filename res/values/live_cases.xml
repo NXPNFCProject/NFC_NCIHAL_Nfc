@@ -22,7 +22,7 @@
 
     <!-- The accepted mime-types when NFC is enabled at locked screen.
          Mime-types must be lower case, wildcards are *not* accepted. -->
-    <string-array name="live_case_mime_types">
+    <string-array name="live_case_mime_types" translatable="false">
         <item>application/vnd.google.android.apps.workshop</item>
         <item>application/vnd.google.android.apps.live_case</item>
     </string-array>
@@ -30,7 +30,7 @@
     <!-- The accepted tag technology types which will be detected for live case
          NFC at lock screen. Mime-types must be lower case, wildcards are *not*
          accepted. -->
-    <string-array name="live_case_tag_types">
+    <string-array name="live_case_tag_types" translatable="false">
         <item>TypeA</item>
     </string-array>
 </resources>

@@ -1,24 +1,22 @@
-/*
- * Copyright (C) 2015 NXP Semiconductors
+/******************************************************************************
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  Copyright 2018 NXP
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-extern "C"
-{
-    #include "nfa_ee_api.h"
-}
-#define ALOGV ALOGD
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
+#include "nfa_ee_api.h"
+#include "Nxp_Features.h"
 class DwpChannel
 {
 public:
@@ -34,16 +32,6 @@ public:
 *******************************************************************************/
 static DwpChannel& getInstance ();
 
-/*******************************************************************************
-**
-** Function:        DwpChannel's force exit
-**
-** Description:     Force exit of DWP channel
-**
-** Returns:         None.
-**
-*******************************************************************************/
-void forceClose();
 
 /*******************************************************************************
 **
@@ -111,8 +99,7 @@ int16_t open();
 bool close(int16_t mHandle);
 
 bool transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uint8_t* recvBuffer,
-				 int32_t recvBufferMaxSize, int32_t& recvBufferActualSize, int32_t timeoutMillisec);
+    int32_t recvBufferMaxSize, int32_t& recvBufferActualSize, int32_t timeoutMillisec);
 
 void doeSE_Reset();
 void doeSE_JcopDownLoadReset();
-void doDwpChannel_ForceExit();

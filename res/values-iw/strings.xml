@@ -24,7 +24,7 @@
     <string name="pairing_peripheral" msgid="6983626861540899365">"מבצע התאמה עם <xliff:g id="DEVICE_NAME">%1$s</xliff:g>"</string>
     <string name="pairing_peripheral_failed" msgid="6087643307743264679">"לא ניתן לבצע התאמה עם <xliff:g id="DEVICE_NAME">%1$s</xliff:g>"</string>
     <string name="failed_to_enable_bt" msgid="7229153323594758077">"‏לא ניתן להפעיל Bluetooth"</string>
-    <string name="confirm_pairing" msgid="4112568077038265363">"‏האם אתה בטוח שברצונך להתאים את מכשיר ה-Bluetooth <xliff:g id="DEVICE_NAME">%1$s</xliff:g>?"</string>
+    <string name="confirm_pairing" msgid="4112568077038265363">"‏בטוח שברצונך להתאים את מכשיר ה-Bluetooth <xliff:g id="DEVICE_NAME">%1$s</xliff:g>?"</string>
     <string name="pair_yes" msgid="3525614878559994448">"כן"</string>
     <string name="pair_no" msgid="5022308368904055020">"לא"</string>
     <string name="tap_again_to_pay" msgid="5754988005412859897">"הקש שוב כדי לשלם באמצעות <xliff:g id="APP">%1$s</xliff:g>"</string>
@@ -42,4 +42,5 @@
     <string name="prompt_connect_to_network" msgid="8511683573657516114">"להתחבר לרשת <xliff:g id="NETWORK_SSID">%1$s</xliff:g>?"</string>
     <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"‏כדי להשתמש ב-Android Beam נדרשת הפעלה של NFC. האם ברצונך להפעיל אותו?"</string>
     <string name="android_beam" msgid="1666446406999492763">"Android Beam"</string>
+    <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"לאפליקציה אין הרשאת גישה לאחסון החיצוני. ההרשאה הזו נדרשת כדי להעביר את הקובץ"</string>
 </resources>

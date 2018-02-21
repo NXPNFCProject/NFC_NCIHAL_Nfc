@@ -42,4 +42,5 @@
     <string name="prompt_connect_to_network" msgid="8511683573657516114">"<xliff:g id="NETWORK_SSID">%1$s</xliff:g> сүлжээнд холбогдох уу?"</string>
     <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"Android Beam-г идэвхжүүлэхэд NFC шаардлагатай. Үүнийг идэвхжүүлэх үү?"</string>
     <string name="android_beam" msgid="1666446406999492763">"Андройд Цацраг"</string>
+    <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"Аппад Гадаад сангийн зөвшөөрөл алга. Энэ файлыг дамжуулахад энэ зөвшөөрөл шаардлагатай"</string>
 </resources>

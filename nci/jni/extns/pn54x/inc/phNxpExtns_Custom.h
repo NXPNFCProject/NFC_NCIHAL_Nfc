@@ -17,14 +17,10 @@
 #ifndef _PHNXPEXTNS_CUSTOM_H_
 #define _PHNXPEXTNS_CUSTOM_H_
 
-#include <nfa_api.h>
-#include <sys/types.h>
 #include <errno.h>
+#include <nfa_api.h>
 #include <phNfcStatus.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <sys/types.h>
 
 /*
  * TLV structure
@@ -32,30 +28,30 @@ extern "C" {
  * For extended TLV, type[0] == 0xA0
  */
 typedef struct {
-    uint8_t type[2];
-    uint8_t len;
-    uint8_t *val;
+  uint8_t type[2];
+  uint8_t len;
+  uint8_t* val;
 } tlv_t;
 
 typedef enum {
-    passive_106 = 0x01,
-    passive_212 = 0x02,
-    passive_424 = 0x04,
-    active_106 = 0x10,
-    active_212 = 0x20,
-    active_424 = 0x40,
+  passive_106 = 0x01,
+  passive_212 = 0x02,
+  passive_424 = 0x04,
+  active_106 = 0x10,
+  active_212 = 0x20,
+  active_424 = 0x40,
 } p2p_speed_t;
 
 typedef enum {
-    NO_SE,
-    UICC,
-    eSE,
+  NO_SE,
+  UICC,
+  eSE,
 } SE_t;
 
 typedef enum {
-    ReaderMode = 0x01,
-    P2PMode = 0x02,
-    CEMode = 0x04,
+  ReaderMode = 0x01,
+  P2PMode = 0x02,
+  CEMode = 0x04,
 } PollMode_t;
 
 /*******************************************************************************
@@ -69,15 +65,18 @@ typedef enum {
  ** NOTE: Internally this function will use phNxpNciHal_get_version from HAL.
  *******************************************************************************/
 
-NFCSTATUS phNxpExtns_get_version (uint32_t *hw_ver, uint32_t *fw_ver, uint32_t *sw_ver);
+NFCSTATUS phNxpExtns_get_version(uint32_t* hw_ver, uint32_t* fw_ver,
+                                 uint32_t* sw_ver);
 
 /*******************************************************************************
  **
  ** Function         phNxpNciHal_read_tlv
  **
  ** Description      Function to read simple TLV and extended TLV.
- **                  Memory for TLV and fields are allocated and freed by calling
- **                  function. Input is type and len. Response is provied in *val.
+ **                  Memory for TLV and fields are allocated and freed by
+ *calling
+ **                  function. Input is type and len. Response is provied in
+ **val.
  **
  ** Returns          NFCSTATUS_SUCCESS if successful,otherwise NFCSTATUS_FAILED.
  **
@@ -85,14 +84,15 @@ NFCSTATUS phNxpExtns_get_version (uint32_t *hw_ver, uint32_t *fw_ver, uint32_t *
  **       For extended TLV, it will use NFA_SendRawFrame.
  *******************************************************************************/
 
-NFCSTATUS phNxpNciHal_read_tlv (tlv_t *tlv);
+NFCSTATUS phNxpNciHal_read_tlv(tlv_t* tlv);
 
 /*******************************************************************************
  **
  ** Function         phNxpNciHal_write_tlv
  **
  ** Description      Function to write simple TLV and extended TLV.
- **                  Memory for TLV and fields are allocated and freed by calling
+ **                  Memory for TLV and fields are allocated and freed by
+ *calling
  **                  function. Input is type, len, *val.
  **
  ** Returns          NFCSTATUS_SUCCESS if successful,otherwise NFCSTATUS_FAILED.
@@ -101,7 +101,7 @@ NFCSTATUS phNxpNciHal_read_tlv (tlv_t *tlv);
  **       For extended TLV, it will use NFA_SendRawFrame.
  *******************************************************************************/
 
-NFCSTATUS phNxpNciHal_write_tlv (tlv_t *tlv);
+NFCSTATUS phNxpNciHal_write_tlv(tlv_t* tlv);
 
 /*******************************************************************************
  **
@@ -117,7 +117,7 @@ NFCSTATUS phNxpNciHal_write_tlv (tlv_t *tlv);
  ** NOTE: Internally this function is using NFA_EnablePolling function.
  *******************************************************************************/
 
-NFCSTATUS phNxpExtns_select_poll_tech (tNFA_TECHNOLOGY_MASK tech_mask);
+NFCSTATUS phNxpExtns_select_poll_tech(tNFA_TECHNOLOGY_MASK tech_mask);
 
 /*******************************************************************************
  **
@@ -134,17 +134,19 @@ NFCSTATUS phNxpExtns_select_poll_tech (tNFA_TECHNOLOGY_MASK tech_mask);
  **       Not sure which handle to use, from UICC or eSE.
  *******************************************************************************/
 
-NFCSTATUS phNxpExtns_select_ce_listen_tech (tNFA_TECHNOLOGY_MASK tech_mask);
+NFCSTATUS phNxpExtns_select_ce_listen_tech(tNFA_TECHNOLOGY_MASK tech_mask);
 
 /*******************************************************************************
  **
  ** Function        phNxpExtns_select_p2p_poll_speed
  **
  ** Description     This function will select the P2P polling speed.
- **                 phNxpExtns_select_poll_tech overwrite the settings of poll if
+ **                 phNxpExtns_select_poll_tech overwrite the settings of poll
+ *if
  **                 reader mode is enabled.
  **                 There is only one active poll phase but device can use one
- **                 active speed and can move to higher speed if target supports.
+ **                 active speed and can move to higher speed if target
+ *supports.
  **
  ** Returns         NFCSTATUS_SUCCESS if operation successful,
  **                 otherwise NFCSTATUS_FAILED.
@@ -152,7 +154,7 @@ NFCSTATUS phNxpExtns_select_ce_listen_tech (tNFA_TECHNOLOGY_MASK tech_mask);
  ** NOTE: Internally this function will use NFA_EnablePolling and NFA_SetConfig
  *******************************************************************************/
 
-NFCSTATUS phNxpExtns_select_p2p_poll_speed (p2p_speed_t p2p_initiator_speed);
+NFCSTATUS phNxpExtns_select_p2p_poll_speed(p2p_speed_t p2p_initiator_speed);
 
 /*******************************************************************************
  **
@@ -165,16 +167,18 @@ NFCSTATUS phNxpExtns_select_p2p_poll_speed (p2p_speed_t p2p_initiator_speed);
  ** Returns         NFCSTATUS_SUCCESS if operation successful,
  **                 otherwise NFCSTATUS_FAILED.
  **
- ** NOTE: Internally this function will use NFA_SetP2pListenTech and NFA_SetConfig
+ ** NOTE: Internally this function will use NFA_SetP2pListenTech and
+ *NFA_SetConfig
  *******************************************************************************/
 
-NFCSTATUS phNxpExtns_select_p2p_listen_speed (p2p_speed_t p2p_target_speed);
+NFCSTATUS phNxpExtns_select_p2p_listen_speed(p2p_speed_t p2p_target_speed);
 
 /*******************************************************************************
  **
  ** Function        phNxpExtns_select_se
  **
- ** Description     This function will set the routing of the traffic to selected
+ ** Description     This function will set the routing of the traffic to
+ *selected
  **                 SE. This function also does not start polling loop.
  **
  ** Returns         NFCSTATUS_SUCCESS if operation successful,
@@ -183,7 +187,7 @@ NFCSTATUS phNxpExtns_select_p2p_listen_speed (p2p_speed_t p2p_target_speed);
  ** NOTE:
  *******************************************************************************/
 
-NFCSTATUS phNxpExtns_select_se (SE_t se);
+NFCSTATUS phNxpExtns_select_se(SE_t se);
 
 /*******************************************************************************
  **
@@ -198,14 +202,15 @@ NFCSTATUS phNxpExtns_select_se (SE_t se);
  ** NOTE:
  *******************************************************************************/
 
-NFCSTATUS phNxpExtns_set_poll_mode (PollMode_t poll_mode);
+NFCSTATUS phNxpExtns_set_poll_mode(PollMode_t poll_mode);
 
 /*******************************************************************************
  **
  ** Function        phNxpExtns_start_poll
  **
  ** Description     This function starts polling loop based on the configuration
- **                 of the previous calls. If no configuration done through other
+ **                 of the previous calls. If no configuration done through
+ *other
  **                 function call then it uses the default configuration from
  **                 configuration files.
  **                 This function internally stops the polling loop if it is
@@ -217,7 +222,7 @@ NFCSTATUS phNxpExtns_set_poll_mode (PollMode_t poll_mode);
  ** NOTE: Internally this function uses NFA_StartRfDiscovery.
  *******************************************************************************/
 
-NFCSTATUS phNxpExtns_start_poll (void);
+NFCSTATUS phNxpExtns_start_poll(void);
 
 /*******************************************************************************
  **
@@ -231,7 +236,7 @@ NFCSTATUS phNxpExtns_start_poll (void);
  ** NOTE:Internally this function uses NFA_StopRfDiscovery.
  *******************************************************************************/
 
-NFCSTATUS phNxpExtns_stop_poll (void);
+NFCSTATUS phNxpExtns_stop_poll(void);
 
 /*******************************************************************************
  **
@@ -245,7 +250,7 @@ NFCSTATUS phNxpExtns_stop_poll (void);
  ** NOTE:
  *******************************************************************************/
 
-NFCSTATUS phNxpExtns_enable_Felica_CLT (bool enable);
+NFCSTATUS phNxpExtns_enable_Felica_CLT(bool enable);
 
 /*******************************************************************************
  **
@@ -259,6 +264,6 @@ NFCSTATUS phNxpExtns_enable_Felica_CLT (bool enable);
  ** NOTE:
  *******************************************************************************/
 
-NFCSTATUS phNxpExtns_enable_Mifare_CLT (bool enable);
+NFCSTATUS phNxpExtns_enable_Mifare_CLT(bool enable);
 
 #endif /* _PHNXPEXTNS_CUSTOM_H_ */

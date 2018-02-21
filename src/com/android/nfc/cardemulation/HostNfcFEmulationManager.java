@@ -143,8 +143,7 @@ public class HostNfcFEmulationManager {
                 break;
             }
         }
-
-	}
+    }
 
     public void onHostEmulationDeactivated() {
         if (DBG) Log.d(TAG, "notifyHostEmulationDeactivated");
@@ -284,7 +283,6 @@ public class HostNfcFEmulationManager {
                 mServiceName = null;
             }
         }
-
     };
 
     class MessageHandler extends Handler {
@@ -305,19 +303,15 @@ public class HostNfcFEmulationManager {
                     return;
                 }
                 byte[] data = dataBundle.getByteArray("data");
-                /*if (data == null) {
-                    Log.e(TAG, "Data is null");
+                if (data == null) {
                     return;
                 }
-                */
-                if (data == null || data.length == 0) {
-                    Log.e(TAG, "Empty response packet");
-                    sendEmptyData();
-                    return;
-                }
-                if (data != null && (data.length != (data[0] & 0xff))) {
+                if (data.length == 0) {
                     Log.e(TAG, "Invalid response packet");
-                    sendEmptyData();
+                    return;
+                }
+                if (data.length != (data[0] & 0xff)) {
+                    Log.e(TAG, "Invalid response packet");
                     return;
                 }
                 int state;
@@ -333,12 +327,6 @@ public class HostNfcFEmulationManager {
                 }
             }
         }
-    }
-
-    static void sendEmptyData() {
-        byte[] data = new byte[0]; /* to send NCI empty message */
-        Log.d(TAG, "sending empty data");
-        NfcService.getInstance().sendData(data);
     }
 
     static String bytesToString(byte[] bytes, int offset, int length) {

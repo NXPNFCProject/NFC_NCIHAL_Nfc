@@ -105,8 +105,6 @@ public class BeamTransferManager implements Handler.Callback,
 
     static final String BEAM_NOTIFICATION_CHANNEL = "beam_notification_channel";
 
-    static final String BLUETOOTH_PACKAGE = "com.android.bluetooth";
-
     static final String ACTION_WHITELIST_DEVICE =
             "android.btopp.intent.action.WHITELIST_DEVICE";
 
@@ -185,7 +183,7 @@ public class BeamTransferManager implements Handler.Callback,
     void whitelistOppDevice(BluetoothDevice device) {
         if (DBG) Log.d(TAG, "Whitelisting " + device + " for BT OPP");
         Intent intent = new Intent(ACTION_WHITELIST_DEVICE);
-        intent.setPackage(BLUETOOTH_PACKAGE);
+        intent.setPackage(mContext.getString(R.string.bluetooth_package));
         intent.putExtra(BluetoothDevice.EXTRA_DEVICE, device);
         mContext.sendBroadcastAsUser(intent, UserHandle.CURRENT);
     }
@@ -295,7 +293,7 @@ public class BeamTransferManager implements Handler.Callback,
 
     private void sendBluetoothCancelIntentAndUpdateState() {
         Intent cancelIntent = new Intent(ACTION_STOP_BLUETOOTH_TRANSFER);
-        cancelIntent.setPackage(BLUETOOTH_PACKAGE);
+        cancelIntent.setPackage(mContext.getString(R.string.bluetooth_package));
         cancelIntent.putExtra(BeamStatusReceiver.EXTRA_TRANSFER_ID, mBluetoothTransferId);
         mContext.sendBroadcast(cancelIntent);
         updateStateAndNotification(STATE_CANCELLED);

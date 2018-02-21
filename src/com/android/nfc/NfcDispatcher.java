@@ -16,8 +16,10 @@
 
 package com.android.nfc;
 
+import android.app.ActivityManager;
 import android.bluetooth.BluetoothAdapter;
 import android.os.UserManager;
+
 import com.android.nfc.RegisteredComponentCache.ComponentInfo;
 import com.android.nfc.handover.HandoverDataParser;
 import com.android.nfc.handover.PeripheralHandoverService;
@@ -27,6 +29,7 @@ import android.app.ActivityManager;
 import android.app.IActivityManager;
 import android.app.PendingIntent;
 import android.app.PendingIntent.CanceledException;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -43,6 +46,9 @@ import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.nfc.tech.Ndef;
 import android.nfc.tech.NfcBarcode;
+import android.os.Handler;
+import android.os.Message;
+import android.os.Messenger;
 import android.os.RemoteException;
 import android.os.UserHandle;
 import android.util.Log;
@@ -52,6 +58,7 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -76,6 +83,9 @@ class NfcDispatcher {
     private final ScreenStateHelper mScreenStateHelper;
     private final NfcUnlockManager mNfcUnlockManager;
     private final boolean mDeviceSupportsBluetooth;
+    private final Handler mMessageHandler = new MessageHandler();
+    private final Messenger mMessenger = new Messenger(mMessageHandler);
+    private AtomicBoolean mBluetoothEnabledByNfc = new AtomicBoolean();
 
     // Locked on this
     private PendingIntent mOverrideIntent;
@@ -123,6 +133,15 @@ class NfcDispatcher {
             }
         }
         mLiveCaseMimes = liveCaseMimes;
+
+        IntentFilter filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
+        mContext.registerReceiver(mBluetoothStatusReceiver, filter);
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        mContext.unregisterReceiver(mBluetoothStatusReceiver);
+        super.finalize();
     }
 
     public synchronized void setForegroundDispatch(PendingIntent intent,
@@ -279,7 +298,7 @@ class NfcDispatcher {
 
         if (ndef != null) {
             message = ndef.getCachedNdefMessage();
-        }else {
+        } else {
             NfcBarcode nfcBarcode = NfcBarcode.get(tag);
             if (nfcBarcode != null && nfcBarcode.getType() == NfcBarcode.TYPE_KOVIO) {
                 message = decodeNfcBarcodeUri(nfcBarcode);
@@ -392,7 +411,7 @@ class NfcDispatcher {
         // All tags of NfcBarcode technology and Kovio type have lengths of a multiple of 16 bytes
         if (tagId.length >= 4
                 && (tagId[1] == URI_PREFIX_HTTP_WWW || tagId[1] == URI_PREFIX_HTTPS_WWW
-                || tagId[1] == URI_PREFIX_HTTP || tagId[1] == URI_PREFIX_HTTPS)) {
+                    || tagId[1] == URI_PREFIX_HTTP || tagId[1] == URI_PREFIX_HTTPS)) {
             // Look for optional URI terminator (0xfe), used to indicate the end of a URI prior to
             // the end of the full NfcBarcode payload. No terminator means that the URI occupies the
             // entire length of the payload field. Exclude checking the CRC in the final two bytes
@@ -634,10 +653,13 @@ class NfcDispatcher {
         if (handover.btClass != null) {
             intent.putExtra(PeripheralHandoverService.EXTRA_PERIPHERAL_CLASS, handover.btClass);
         }
+        intent.putExtra(PeripheralHandoverService.EXTRA_BT_ENABLED, mBluetoothEnabledByNfc.get());
+        intent.putExtra(PeripheralHandoverService.EXTRA_CLIENT, mMessenger);
         mContext.startServiceAsUser(intent, UserHandle.CURRENT);
 
         return true;
     }
+
 
     /**
      * Tells the ActivityManager to resume allowing app switches.
@@ -710,4 +732,38 @@ class NfcDispatcher {
             pw.println("mOverrideTechLists=" + mOverrideTechLists);
         }
     }
+
+    private class MessageHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+            if (DBG) Log.d(TAG, "handleMessage: msg=" + msg);
+
+            switch (msg.what) {
+                case PeripheralHandoverService.MSG_HEADSET_CONNECTED:
+                case PeripheralHandoverService.MSG_HEADSET_NOT_CONNECTED:
+                    mBluetoothEnabledByNfc.set(msg.arg1 != 0);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    final BroadcastReceiver mBluetoothStatusReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action.equals(BluetoothAdapter.ACTION_STATE_CHANGED)) {
+                handleBluetoothStateChanged(intent);
+            }
+        }
+
+        private void handleBluetoothStateChanged(Intent intent) {
+            int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE,
+                    BluetoothAdapter.ERROR);
+            if (state == BluetoothAdapter.STATE_OFF) {
+                mBluetoothEnabledByNfc.set(false);
+            }
+        }
+    };
 }

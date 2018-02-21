@@ -14,108 +14,115 @@
  * limitations under the License.
  */
 
-#if !defined (NXPLOG__H_INCLUDED)
+#if !defined(NXPLOG__H_INCLUDED)
 #define NXPLOG__H_INCLUDED
 
 #include <log/log.h>
-#include <string.h>
 
-typedef struct nci_log_level
-{
-    uint8_t global_log_level;
-    uint8_t extns_log_level;
-    uint8_t hal_log_level;
-    uint8_t dnld_log_level;
-    uint8_t tml_log_level;
-    uint8_t ncix_log_level;
-    uint8_t ncir_log_level;
+typedef struct nci_log_level {
+  uint8_t global_log_level;
+  uint8_t extns_log_level;
+  uint8_t hal_log_level;
+  uint8_t dnld_log_level;
+  uint8_t tml_log_level;
+  uint8_t ncix_log_level;
+  uint8_t ncir_log_level;
 } nci_log_level_t;
 
 /* global log level Ref */
 extern nci_log_level_t gLog_level;
 
 /* define log module included when compile */
-#define ENABLE_EXTNS_TRACES   true
-#define ENABLE_HAL_TRACES     true
-#define ENABLE_TML_TRACES     true
-#define ENABLE_FWDNLD_TRACES  true
-#define ENABLE_NCIX_TRACES    true
-#define ENABLE_NCIR_TRACES    true
+#define ENABLE_HAL_TRACES TRUE
+#define ENABLE_TML_TRACES TRUE
+#define ENABLE_FWDNLD_TRACES TRUE
+#define ENABLE_NCIX_TRACES TRUE
+#define ENABLE_NCIR_TRACES TRUE
 
-#define ENABLE_HCPX_TRACES    false
-#define ENABLE_HCPR_TRACES    false
+#define ENABLE_HCPX_TRACES FALSE
+#define ENABLE_HCPR_TRACES FALSE
 
-/* ####################### Set the log module name in .conf file ########################## */
-#define NAME_NXPLOG_EXTNS_LOGLEVEL          "NXPLOG_EXTNS_LOGLEVEL"
-#define NAME_NXPLOG_HAL_LOGLEVEL            "NXPLOG_NCIHAL_LOGLEVEL"
-#define NAME_NXPLOG_NCIX_LOGLEVEL           "NXPLOG_NCIX_LOGLEVEL"
-#define NAME_NXPLOG_NCIR_LOGLEVEL           "NXPLOG_NCIR_LOGLEVEL"
-#define NAME_NXPLOG_FWDNLD_LOGLEVEL         "NXPLOG_FWDNLD_LOGLEVEL"
-#define NAME_NXPLOG_TML_LOGLEVEL            "NXPLOG_TML_LOGLEVEL"
+/* ####################### Set the log module name in .conf file
+ * ########################## */
+#define NAME_NXPLOG_EXTNS_LOGLEVEL "NXPLOG_EXTNS_LOGLEVEL"
+#define NAME_NXPLOG_HAL_LOGLEVEL "NXPLOG_NCIHAL_LOGLEVEL"
+#define NAME_NXPLOG_NCIX_LOGLEVEL "NXPLOG_NCIX_LOGLEVEL"
+#define NAME_NXPLOG_NCIR_LOGLEVEL "NXPLOG_NCIR_LOGLEVEL"
+#define NAME_NXPLOG_FWDNLD_LOGLEVEL "NXPLOG_FWDNLD_LOGLEVEL"
+#define NAME_NXPLOG_TML_LOGLEVEL "NXPLOG_TML_LOGLEVEL"
 
-/* ####################### Set the log module name by Android property ########################## */
-#define PROP_NAME_NXPLOG_GLOBAL_LOGLEVEL       "nfc.nxp_log_level_global"
-#define PROP_NAME_NXPLOG_EXTNS_LOGLEVEL        "nfc.nxp_log_level_extns"
-#define PROP_NAME_NXPLOG_HAL_LOGLEVEL          "nfc.nxp_log_level_hal"
-#define PROP_NAME_NXPLOG_NCI_LOGLEVEL          "nfc.nxp_log_level_nci"
-#define PROP_NAME_NXPLOG_FWDNLD_LOGLEVEL       "nfc.nxp_log_level_dnld"
-#define PROP_NAME_NXPLOG_TML_LOGLEVEL          "nfc.nxp_log_level_tml"
+/* ####################### Set the log module name by Android property
+ * ########################## */
+#define PROP_NAME_NXPLOG_GLOBAL_LOGLEVEL "nfc.nxp_log_level_global"
+#define PROP_NAME_NXPLOG_EXTNS_LOGLEVEL "nfc.nxp_log_level_extns"
+#define PROP_NAME_NXPLOG_HAL_LOGLEVEL "nfc.nxp_log_level_hal"
+#define PROP_NAME_NXPLOG_NCI_LOGLEVEL "nfc.nxp_log_level_nci"
+#define PROP_NAME_NXPLOG_FWDNLD_LOGLEVEL "nfc.nxp_log_level_dnld"
+#define PROP_NAME_NXPLOG_TML_LOGLEVEL "nfc.nxp_log_level_tml"
 
-/* ####################### Set the logging level for EVERY COMPONENT here ######################## :START: */
-#define NXPLOG_LOG_SILENT_LOGLEVEL             0x00
-#define NXPLOG_LOG_ERROR_LOGLEVEL              0x01
-#define NXPLOG_LOG_WARN_LOGLEVEL               0x02
-#define NXPLOG_LOG_DEBUG_LOGLEVEL              0x03
-/* ####################### Set the default logging level for EVERY COMPONENT here ########################## :END: */
-
+/* ####################### Set the logging level for EVERY COMPONENT here
+ * ######################## :START: */
+#define NXPLOG_LOG_SILENT_LOGLEVEL 0x00
+#define NXPLOG_LOG_ERROR_LOGLEVEL 0x01
+#define NXPLOG_LOG_WARN_LOGLEVEL 0x02
+#define NXPLOG_LOG_DEBUG_LOGLEVEL 0x03
+/* ####################### Set the default logging level for EVERY COMPONENT
+ * here ########################## :END: */
 
 /* The Default log level for all the modules. */
-#define NXPLOG_DEFAULT_LOGLEVEL                NXPLOG_LOG_ERROR_LOGLEVEL
+#define NXPLOG_DEFAULT_LOGLEVEL NXPLOG_LOG_ERROR_LOGLEVEL
 
+/* ################################################################################################################
+ */
+/* ############################################### Component Names
+ * ################################################ */
+/* ################################################################################################################
+ */
 
-/* ################################################################################################################ */
-/* ############################################### Component Names ################################################ */
-/* ################################################################################################################ */
-
-extern const char * NXPLOG_ITEM_EXTNS;   /* Android logging tag for NxpExtns  */
-extern const char * NXPLOG_ITEM_NCIHAL;  /* Android logging tag for NxpNciHal */
-extern const char * NXPLOG_ITEM_NCIX;    /* Android logging tag for NxpNciX   */
-extern const char * NXPLOG_ITEM_NCIR;    /* Android logging tag for NxpNciR   */
-extern const char * NXPLOG_ITEM_FWDNLD;  /* Android logging tag for NxpFwDnld */
-extern const char * NXPLOG_ITEM_TML;     /* Android logging tag for NxpTml    */
+extern const char* NXPLOG_ITEM_EXTNS;  /* Android logging tag for NxpExtns  */
+extern const char* NXPLOG_ITEM_NCIHAL; /* Android logging tag for NxpNciHal */
+extern const char* NXPLOG_ITEM_NCIX;   /* Android logging tag for NxpNciX   */
+extern const char* NXPLOG_ITEM_NCIR;   /* Android logging tag for NxpNciR   */
+extern const char* NXPLOG_ITEM_FWDNLD; /* Android logging tag for NxpFwDnld */
+extern const char* NXPLOG_ITEM_TML;    /* Android logging tag for NxpTml    */
 
 #ifdef NXP_HCI_REQ
-extern const char * NXPLOG_ITEM_HCPX;    /* Android logging tag for NxpHcpX   */
-extern const char * NXPLOG_ITEM_HCPR;    /* Android logging tag for NxpHcpR   */
-#endif /*NXP_HCI_REQ*/
+extern const char* NXPLOG_ITEM_HCPX; /* Android logging tag for NxpHcpX   */
+extern const char* NXPLOG_ITEM_HCPR; /* Android logging tag for NxpHcpR   */
+#endif                               /*NXP_HCI_REQ*/
 
-/* ######################################## Defines used for Logging data ######################################### */
+/* ######################################## Defines used for Logging data
+ * ######################################### */
 #ifdef NXP_VRBS_REQ
 #define NXPLOG_FUNC_ENTRY(COMP) \
-    LOG_PRI( ANDROID_LOG_VERBOSE, (COMP), "+:%s", (__func__))
+  LOG_PRI(ANDROID_LOG_VERBOSE, (COMP), "+:%s", (__func__))
 #define NXPLOG_FUNC_EXIT(COMP) \
-    LOG_PRI( ANDROID_LOG_VERBOSE, (COMP), "-:%s", (__func__))
+  LOG_PRI(ANDROID_LOG_VERBOSE, (COMP), "-:%s", (__func__))
 #endif /*NXP_VRBS_REQ*/
 
-/* ################################################################################################################ */
-/* ######################################## Logging APIs of actual modules ######################################## */
-/* ################################################################################################################ */
-/* Logging APIs used by NxpExtns module */
-#if (ENABLE_EXTNS_TRACES == true )
-#define NXPLOG_EXTNS_D(...)  {if (gLog_level.extns_log_level >= NXPLOG_LOG_DEBUG_LOGLEVEL) LOG_PRI (ANDROID_LOG_DEBUG, NXPLOG_ITEM_EXTNS, __VA_ARGS__);}
-#define NXPLOG_EXTNS_W(...)  {if (gLog_level.extns_log_level >= NXPLOG_LOG_WARN_LOGLEVEL) LOG_PRI (ANDROID_LOG_WARN, NXPLOG_ITEM_EXTNS, __VA_ARGS__);}
-#define NXPLOG_EXTNS_E(...)  {if (gLog_level.extns_log_level >= NXPLOG_LOG_ERROR_LOGLEVEL) LOG_PRI (ANDROID_LOG_ERROR, NXPLOG_ITEM_EXTNS, __VA_ARGS__);}
-#else
-#define NXPLOG_EXTNS_D(...)
-#define NXPLOG_EXTNS_W(...)
-#define NXPLOG_EXTNS_E(...)
-#endif /* Logging APIs used by NxpExtns module */
-
+/* ################################################################################################################
+ */
+/* ######################################## Logging APIs of actual modules
+ * ######################################## */
+/* ################################################################################################################
+ */
 /* Logging APIs used by NxpNciHal module */
-#if (ENABLE_HAL_TRACES == true )
-#define NXPLOG_NCIHAL_D(...)  {if (gLog_level.hal_log_level >= NXPLOG_LOG_DEBUG_LOGLEVEL) LOG_PRI (ANDROID_LOG_DEBUG, NXPLOG_ITEM_NCIHAL, __VA_ARGS__);}
-#define NXPLOG_NCIHAL_W(...)  {if (gLog_level.hal_log_level >= NXPLOG_LOG_WARN_LOGLEVEL) LOG_PRI (ANDROID_LOG_WARN, NXPLOG_ITEM_NCIHAL, __VA_ARGS__);}
-#define NXPLOG_NCIHAL_E(...)  {if (gLog_level.hal_log_level >= NXPLOG_LOG_ERROR_LOGLEVEL) LOG_PRI (ANDROID_LOG_ERROR, NXPLOG_ITEM_NCIHAL, __VA_ARGS__);}
+#if (ENABLE_HAL_TRACES == TRUE)
+#define NXPLOG_NCIHAL_D(...)                                       \
+  {                                                                \
+    if (gLog_level.hal_log_level >= NXPLOG_LOG_DEBUG_LOGLEVEL)     \
+      LOG_PRI(ANDROID_LOG_DEBUG, NXPLOG_ITEM_NCIHAL, __VA_ARGS__); \
+  }
+#define NXPLOG_NCIHAL_W(...)                                      \
+  {                                                               \
+    if (gLog_level.hal_log_level >= NXPLOG_LOG_WARN_LOGLEVEL)     \
+      LOG_PRI(ANDROID_LOG_WARN, NXPLOG_ITEM_NCIHAL, __VA_ARGS__); \
+  }
+#define NXPLOG_NCIHAL_E(...)                                       \
+  {                                                                \
+    if (gLog_level.hal_log_level >= NXPLOG_LOG_ERROR_LOGLEVEL)     \
+      LOG_PRI(ANDROID_LOG_ERROR, NXPLOG_ITEM_NCIHAL, __VA_ARGS__); \
+  }
 #else
 #define NXPLOG_NCIHAL_D(...)
 #define NXPLOG_NCIHAL_W(...)
@@ -123,10 +130,22 @@ extern const char * NXPLOG_ITEM_HCPR;    /* Android logging tag for NxpHcpR   */
 #endif /* Logging APIs used by HAL module */
 
 /* Logging APIs used by NxpNciX module */
-#if (ENABLE_NCIX_TRACES == true )
-#define NXPLOG_NCIX_D(...)  {if (gLog_level.ncix_log_level >= NXPLOG_LOG_DEBUG_LOGLEVEL) LOG_PRI (ANDROID_LOG_DEBUG, NXPLOG_ITEM_NCIX, __VA_ARGS__);}
-#define NXPLOG_NCIX_W(...)  {if (gLog_level.ncix_log_level >= NXPLOG_LOG_WARN_LOGLEVEL) LOG_PRI (ANDROID_LOG_WARN, NXPLOG_ITEM_NCIX, __VA_ARGS__);}
-#define NXPLOG_NCIX_E(...)  {if (gLog_level.ncix_log_level >= NXPLOG_LOG_ERROR_LOGLEVEL) LOG_PRI (ANDROID_LOG_ERROR, NXPLOG_ITEM_NCIX, __VA_ARGS__);}
+#if (ENABLE_NCIX_TRACES == TRUE)
+#define NXPLOG_NCIX_D(...)                                       \
+  {                                                              \
+    if (gLog_level.ncix_log_level >= NXPLOG_LOG_DEBUG_LOGLEVEL)  \
+      LOG_PRI(ANDROID_LOG_DEBUG, NXPLOG_ITEM_NCIX, __VA_ARGS__); \
+  }
+#define NXPLOG_NCIX_W(...)                                      \
+  {                                                             \
+    if (gLog_level.ncix_log_level >= NXPLOG_LOG_WARN_LOGLEVEL)  \
+      LOG_PRI(ANDROID_LOG_WARN, NXPLOG_ITEM_NCIX, __VA_ARGS__); \
+  }
+#define NXPLOG_NCIX_E(...)                                       \
+  {                                                              \
+    if (gLog_level.ncix_log_level >= NXPLOG_LOG_ERROR_LOGLEVEL)  \
+      LOG_PRI(ANDROID_LOG_ERROR, NXPLOG_ITEM_NCIX, __VA_ARGS__); \
+  }
 #else
 #define NXPLOG_NCIX_D(...)
 #define NXPLOG_NCIX_W(...)
@@ -134,10 +153,22 @@ extern const char * NXPLOG_ITEM_HCPR;    /* Android logging tag for NxpHcpR   */
 #endif /* Logging APIs used by NCIx module */
 
 /* Logging APIs used by NxpNciR module */
-#if (ENABLE_NCIR_TRACES == true )
-#define NXPLOG_NCIR_D(...)  {if (gLog_level.ncir_log_level >= NXPLOG_LOG_DEBUG_LOGLEVEL) LOG_PRI (ANDROID_LOG_DEBUG, NXPLOG_ITEM_NCIR, __VA_ARGS__);}
-#define NXPLOG_NCIR_W(...)  {if (gLog_level.ncir_log_level >= NXPLOG_LOG_WARN_LOGLEVEL) LOG_PRI (ANDROID_LOG_WARN, NXPLOG_ITEM_NCIR, __VA_ARGS__);}
-#define NXPLOG_NCIR_E(...)  {if (gLog_level.ncir_log_level >= NXPLOG_LOG_ERROR_LOGLEVEL) LOG_PRI (ANDROID_LOG_ERROR, NXPLOG_ITEM_NCIR, __VA_ARGS__);}
+#if (ENABLE_NCIR_TRACES == TRUE)
+#define NXPLOG_NCIR_D(...)                                       \
+  {                                                              \
+    if (gLog_level.ncir_log_level >= NXPLOG_LOG_DEBUG_LOGLEVEL)  \
+      LOG_PRI(ANDROID_LOG_DEBUG, NXPLOG_ITEM_NCIR, __VA_ARGS__); \
+  }
+#define NXPLOG_NCIR_W(...)                                      \
+  {                                                             \
+    if (gLog_level.ncir_log_level >= NXPLOG_LOG_WARN_LOGLEVEL)  \
+      LOG_PRI(ANDROID_LOG_WARN, NXPLOG_ITEM_NCIR, __VA_ARGS__); \
+  }
+#define NXPLOG_NCIR_E(...)                                       \
+  {                                                              \
+    if (gLog_level.ncir_log_level >= NXPLOG_LOG_ERROR_LOGLEVEL)  \
+      LOG_PRI(ANDROID_LOG_ERROR, NXPLOG_ITEM_NCIR, __VA_ARGS__); \
+  }
 #else
 #define NXPLOG_NCIR_D(...)
 #define NXPLOG_NCIR_W(...)
@@ -145,10 +176,22 @@ extern const char * NXPLOG_ITEM_HCPR;    /* Android logging tag for NxpHcpR   */
 #endif /* Logging APIs used by NCIR module */
 
 /* Logging APIs used by NxpFwDnld module */
-#if (ENABLE_FWDNLD_TRACES == true )
-#define NXPLOG_FWDNLD_D(...)  {if (gLog_level.dnld_log_level >= NXPLOG_LOG_DEBUG_LOGLEVEL) LOG_PRI (ANDROID_LOG_DEBUG, NXPLOG_ITEM_FWDNLD, __VA_ARGS__);}
-#define NXPLOG_FWDNLD_W(...)  {if (gLog_level.dnld_log_level >= NXPLOG_LOG_WARN_LOGLEVEL) LOG_PRI (ANDROID_LOG_WARN, NXPLOG_ITEM_FWDNLD, __VA_ARGS__);}
-#define NXPLOG_FWDNLD_E(...)  {if (gLog_level.dnld_log_level >= NXPLOG_LOG_ERROR_LOGLEVEL) LOG_PRI (ANDROID_LOG_ERROR, NXPLOG_ITEM_FWDNLD, __VA_ARGS__);}
+#if (ENABLE_FWDNLD_TRACES == TRUE)
+#define NXPLOG_FWDNLD_D(...)                                       \
+  {                                                                \
+    if (gLog_level.dnld_log_level >= NXPLOG_LOG_DEBUG_LOGLEVEL)    \
+      LOG_PRI(ANDROID_LOG_DEBUG, NXPLOG_ITEM_FWDNLD, __VA_ARGS__); \
+  }
+#define NXPLOG_FWDNLD_W(...)                                      \
+  {                                                               \
+    if (gLog_level.dnld_log_level >= NXPLOG_LOG_WARN_LOGLEVEL)    \
+      LOG_PRI(ANDROID_LOG_WARN, NXPLOG_ITEM_FWDNLD, __VA_ARGS__); \
+  }
+#define NXPLOG_FWDNLD_E(...)                                       \
+  {                                                                \
+    if (gLog_level.dnld_log_level >= NXPLOG_LOG_ERROR_LOGLEVEL)    \
+      LOG_PRI(ANDROID_LOG_ERROR, NXPLOG_ITEM_FWDNLD, __VA_ARGS__); \
+  }
 #else
 #define NXPLOG_FWDNLD_D(...)
 #define NXPLOG_FWDNLD_W(...)
@@ -156,10 +199,22 @@ extern const char * NXPLOG_ITEM_HCPR;    /* Android logging tag for NxpHcpR   */
 #endif /* Logging APIs used by NxpFwDnld module */
 
 /* Logging APIs used by NxpTml module */
-#if (ENABLE_TML_TRACES == true )
-#define NXPLOG_TML_D(...)  {if (gLog_level.tml_log_level >= NXPLOG_LOG_DEBUG_LOGLEVEL) LOG_PRI (ANDROID_LOG_DEBUG, NXPLOG_ITEM_TML, __VA_ARGS__);}
-#define NXPLOG_TML_W(...)  {if (gLog_level.tml_log_level >= NXPLOG_LOG_WARN_LOGLEVEL) LOG_PRI (ANDROID_LOG_WARN, NXPLOG_ITEM_TML, __VA_ARGS__);}
-#define NXPLOG_TML_E(...)  {if (gLog_level.tml_log_level >= NXPLOG_LOG_ERROR_LOGLEVEL) LOG_PRI (ANDROID_LOG_ERROR, NXPLOG_ITEM_TML, __VA_ARGS__);}
+#if (ENABLE_TML_TRACES == TRUE)
+#define NXPLOG_TML_D(...)                                       \
+  {                                                             \
+    if (gLog_level.tml_log_level >= NXPLOG_LOG_DEBUG_LOGLEVEL)  \
+      LOG_PRI(ANDROID_LOG_DEBUG, NXPLOG_ITEM_TML, __VA_ARGS__); \
+  }
+#define NXPLOG_TML_W(...)                                      \
+  {                                                            \
+    if (gLog_level.tml_log_level >= NXPLOG_LOG_WARN_LOGLEVEL)  \
+      LOG_PRI(ANDROID_LOG_WARN, NXPLOG_ITEM_TML, __VA_ARGS__); \
+  }
+#define NXPLOG_TML_E(...)                                       \
+  {                                                             \
+    if (gLog_level.tml_log_level >= NXPLOG_LOG_ERROR_LOGLEVEL)  \
+      LOG_PRI(ANDROID_LOG_ERROR, NXPLOG_ITEM_TML, __VA_ARGS__); \
+  }
 #else
 #define NXPLOG_TML_D(...)
 #define NXPLOG_TML_W(...)
@@ -168,10 +223,22 @@ extern const char * NXPLOG_ITEM_HCPR;    /* Android logging tag for NxpHcpR   */
 
 #ifdef NXP_HCI_REQ
 /* Logging APIs used by NxpHcpX module */
-#if (ENABLE_HCPX_TRACES == true )
-#define NXPLOG_HCPX_D(...)  {if (gLog_level.dnld_log_level >= NXPLOG_LOG_DEBUG_LOGLEVEL) LOG_PRI (ANDROID_LOG_DEBUG, NXPLOG_ITEM_FWDNLD, __VA_ARGS__);}
-#define NXPLOG_HCPX_W(...)  {if (gLog_level.dnld_log_level >= NXPLOG_LOG_WARN_LOGLEVEL) LOG_PRI (ANDROID_LOG_WARN, NXPLOG_ITEM_FWDNLD, __VA_ARGS__);}
-#define NXPLOG_HCPX_E(...)  {if (gLog_level.dnld_log_level >= NXPLOG_LOG_ERROR_LOGLEVEL) LOG_PRI (ANDROID_LOG_ERROR, NXPLOG_ITEM_FWDNLD, __VA_ARGS__);}
+#if (ENABLE_HCPX_TRACES == TRUE)
+#define NXPLOG_HCPX_D(...)                                         \
+  {                                                                \
+    if (gLog_level.dnld_log_level >= NXPLOG_LOG_DEBUG_LOGLEVEL)    \
+      LOG_PRI(ANDROID_LOG_DEBUG, NXPLOG_ITEM_FWDNLD, __VA_ARGS__); \
+  }
+#define NXPLOG_HCPX_W(...)                                        \
+  {                                                               \
+    if (gLog_level.dnld_log_level >= NXPLOG_LOG_WARN_LOGLEVEL)    \
+      LOG_PRI(ANDROID_LOG_WARN, NXPLOG_ITEM_FWDNLD, __VA_ARGS__); \
+  }
+#define NXPLOG_HCPX_E(...)                                         \
+  {                                                                \
+    if (gLog_level.dnld_log_level >= NXPLOG_LOG_ERROR_LOGLEVEL)    \
+      LOG_PRI(ANDROID_LOG_ERROR, NXPLOG_ITEM_FWDNLD, __VA_ARGS__); \
+  }
 #else
 #define NXPLOG_HCPX_D(...)
 #define NXPLOG_HCPX_W(...)
@@ -179,10 +246,22 @@ extern const char * NXPLOG_ITEM_HCPR;    /* Android logging tag for NxpHcpR   */
 #endif /* Logging APIs used by NxpHcpX module */
 
 /* Logging APIs used by NxpHcpR module */
-#if (ENABLE_HCPR_TRACES == true )
-#define NXPLOG_HCPR_D(...)  {if (gLog_level.dnld_log_level >= NXPLOG_LOG_DEBUG_LOGLEVEL) LOG_PRI (ANDROID_LOG_DEBUG, NXPLOG_ITEM_FWDNLD, __VA_ARGS__);}
-#define NXPLOG_HCPR_W(...)  {if (gLog_level.dnld_log_level >= NXPLOG_LOG_WARN_LOGLEVEL) LOG_PRI (ANDROID_LOG_WARN, NXPLOG_ITEM_FWDNLD, __VA_ARGS__);}
-#define NXPLOG_HCPR_E(...)  {if (gLog_level.dnld_log_level >= NXPLOG_LOG_ERROR_LOGLEVEL) LOG_PRI (ANDROID_LOG_ERROR, NXPLOG_ITEM_FWDNLD, __VA_ARGS__);}
+#if (ENABLE_HCPR_TRACES == TRUE)
+#define NXPLOG_HCPR_D(...)                                         \
+  {                                                                \
+    if (gLog_level.dnld_log_level >= NXPLOG_LOG_DEBUG_LOGLEVEL)    \
+      LOG_PRI(ANDROID_LOG_DEBUG, NXPLOG_ITEM_FWDNLD, __VA_ARGS__); \
+  }
+#define NXPLOG_HCPR_W(...)                                        \
+  {                                                               \
+    if (gLog_level.dnld_log_level >= NXPLOG_LOG_WARN_LOGLEVEL)    \
+      LOG_PRI(ANDROID_LOG_WARN, NXPLOG_ITEM_FWDNLD, __VA_ARGS__); \
+  }
+#define NXPLOG_HCPR_E(...)                                         \
+  {                                                                \
+    if (gLog_level.dnld_log_level >= NXPLOG_LOG_ERROR_LOGLEVEL)    \
+      LOG_PRI(ANDROID_LOG_ERROR, NXPLOG_ITEM_FWDNLD, __VA_ARGS__); \
+  }
 #else
 #define NXPLOG_HCPR_D(...)
 #define NXPLOG_HCPR_W(...)
@@ -191,33 +270,25 @@ extern const char * NXPLOG_ITEM_HCPR;    /* Android logging tag for NxpHcpR   */
 #endif /* NXP_HCI_REQ */
 
 #ifdef NXP_VRBS_REQ
-#if (ENABLE_EXTNS_TRACES == true )
-#define NXPLOG_EXTNS_ENTRY() NXPLOG_FUNC_ENTRY (NXPLOG_ITEM_EXTNS)
-#define NXPLOG_EXTNS_EXIT()  NXPLOG_FUNC_EXIT (NXPLOG_ITEM_EXTNS)
-#else
-#define NXPLOG_EXTNS_ENTRY()
-#define NXPLOG_EXTNS_EXIT()
-#endif
-
-#if (ENABLE_HAL_TRACES == true )
-#define NXPLOG_NCIHAL_ENTRY() NXPLOG_FUNC_ENTRY (NXPLOG_ITEM_NCIHAL)
-#define NXPLOG_NCIHAL_EXIT()  NXPLOG_FUNC_EXIT (NXPLOG_ITEM_NCIHAL)
+#if (ENABLE_HAL_TRACES == TRUE)
+#define NXPLOG_NCIHAL_ENTRY() NXPLOG_FUNC_ENTRY(NXPLOG_ITEM_NCIHAL)
+#define NXPLOG_NCIHAL_EXIT() NXPLOG_FUNC_EXIT(NXPLOG_ITEM_NCIHAL)
 #else
 #define NXPLOG_NCIHAL_ENTRY()
 #define NXPLOG_NCIHAL_EXIT()
 #endif
 
-#if (ENABLE_NCIX_TRACES == true )
-#define NXPLOG_NCIX_ENTRY() NXPLOG_FUNC_ENTRY (NXPLOG_ITEM_NCIX)
-#define NXPLOG_NCIX_EXIT()  NXPLOG_FUNC_EXIT (NXPLOG_ITEM_NCIX)
+#if (ENABLE_NCIX_TRACES == TRUE)
+#define NXPLOG_NCIX_ENTRY() NXPLOG_FUNC_ENTRY(NXPLOG_ITEM_NCIX)
+#define NXPLOG_NCIX_EXIT() NXPLOG_FUNC_EXIT(NXPLOG_ITEM_NCIX)
 #else
 #define NXPLOG_NCIX_ENTRY()
 #define NXPLOG_NCIX_EXIT()
 #endif
 
-#if (ENABLE_NCIR_TRACES == true )
-#define NXPLOG_NCIR_ENTRY() NXPLOG_FUNC_ENTRY (NXPLOG_ITEM_NCIR)
-#define NXPLOG_NCIR_EXIT()  NXPLOG_FUNC_EXIT (NXPLOG_ITEM_NCIR)
+#if (ENABLE_NCIR_TRACES == TRUE)
+#define NXPLOG_NCIR_ENTRY() NXPLOG_FUNC_ENTRY(NXPLOG_ITEM_NCIR)
+#define NXPLOG_NCIR_EXIT() NXPLOG_FUNC_EXIT(NXPLOG_ITEM_NCIR)
 #else
 #define NXPLOG_NCIR_ENTRY()
 #define NXPLOG_NCIR_EXIT()
@@ -225,17 +296,17 @@ extern const char * NXPLOG_ITEM_HCPR;    /* Android logging tag for NxpHcpR   */
 
 #ifdef NXP_HCI_REQ
 
-#if (ENABLE_HCPX_TRACES == true )
-#define NXPLOG_HCPX_ENTRY() NXPLOG_FUNC_ENTRY (NXPLOG_ITEM_HCPX)
-#define NXPLOG_HCPX_EXIT()  NXPLOG_FUNC_EXIT (NXPLOG_ITEM_HCPX)
+#if (ENABLE_HCPX_TRACES == TRUE)
+#define NXPLOG_HCPX_ENTRY() NXPLOG_FUNC_ENTRY(NXPLOG_ITEM_HCPX)
+#define NXPLOG_HCPX_EXIT() NXPLOG_FUNC_EXIT(NXPLOG_ITEM_HCPX)
 #else
 #define NXPLOG_HCPX_ENTRY()
 #define NXPLOG_HCPX_EXIT()
 #endif
 
-#if (ENABLE_HCPR_TRACES == true )
-#define NXPLOG_HCPR_ENTRY() NXPLOG_FUNC_ENTRY (NXPLOG_ITEM_HCPR)
-#define NXPLOG_HCPR_EXIT()  NXPLOG_FUNC_EXIT (NXPLOG_ITEM_HCPR)
+#if (ENABLE_HCPR_TRACES == TRUE)
+#define NXPLOG_HCPR_ENTRY() NXPLOG_FUNC_ENTRY(NXPLOG_ITEM_HCPR)
+#define NXPLOG_HCPR_EXIT() NXPLOG_FUNC_EXIT(NXPLOG_ITEM_HCPR)
 #else
 #define NXPLOG_HCPR_ENTRY()
 #define NXPLOG_HCPR_EXIT()
@@ -244,6 +315,6 @@ extern const char * NXPLOG_ITEM_HCPR;    /* Android logging tag for NxpHcpR   */
 
 #endif /* NXP_VRBS_REQ */
 
-void phNxpLog_InitializeLogLevel (void);
+void phNxpLog_InitializeLogLevel(void);
 
 #endif /* NXPLOG__H_INCLUDED */

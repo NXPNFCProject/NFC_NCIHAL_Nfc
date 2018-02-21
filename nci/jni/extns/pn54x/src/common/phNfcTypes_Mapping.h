@@ -17,7 +17,6 @@
 #ifndef PHNFCTYPES_MAPPING_H_
 #define PHNFCTYPES_MAPPING_H_
 
-
 typedef phNfc_sData_t phHal_sData_t;
 typedef phNfc_sSupProtocol_t phHal_sSupProtocol_t;
 #define phHal_eMifareRaw phNfc_eMifareRaw

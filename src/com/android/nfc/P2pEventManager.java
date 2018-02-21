@@ -17,6 +17,7 @@
 package com.android.nfc;
 
 import com.android.nfc.beam.SendUi;
+
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.res.Configuration;
