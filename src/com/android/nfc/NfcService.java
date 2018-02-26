@@ -5344,18 +5344,12 @@ public class NfcService implements DeviceHostListener {
                                 (ScreenStateHelper.SCREEN_POLLING_TAG_MASK | mScreenState) : mScreenState;
                     mDeviceHost.doSetScreenOrPowerState(screen_state_mask);
 
-                    if(mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED
+                    if(nci_version != NCI_VERSION_2_0) {
+                        applyRouting(false);
+                    } else if(mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED
                        || mNfcUnlockManager.isLockscreenPollingEnabled()) {
                         applyRouting(false);
                     }
-
-/*                    mRoutingWakeLock.acquire();
-                    try {
-                        Log.e(TAG, "applyRouting -20");
-                        applyRouting(false);
-                    } finally {
-                        mRoutingWakeLock.release();
-                    }*/
                     break;
                 case MSG_TAG_DEBOUNCE:
                     // Didn't see the tag again, tag is gone
@@ -5755,9 +5749,11 @@ public class NfcService implements DeviceHostListener {
                         return;
                     }
                 }
-                if(nci_version != NCI_VERSION_2_0) {
+                /* This piece of code is duplicate as MSG_APPLY_SCREEN_STATE
+                is already calling applyRouting api */
+                /*if(nci_version != NCI_VERSION_2_0) {
                     new ApplyRoutingTask().execute(Integer.valueOf(screenState));
-                }
+                }*/
                 sendMessage(NfcService.MSG_APPLY_SCREEN_STATE, screenState);
                 Log.e(TAG, "screen state "+screenState);
                 Log.e(TAG, "screen state mScreenState "+mScreenState);
