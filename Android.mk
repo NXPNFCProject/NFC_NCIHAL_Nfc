@@ -20,7 +20,7 @@ LOCAL_JNI_SHARED_LIBRARIES := libnfc_nci_jni
 
 LOCAL_JAVA_LIBRARIES := com.nxp.nfc
 
-LOCAL_STATIC_JAVA_LIBRARIES := android-support-v4
+LOCAL_STATIC_JAVA_LIBRARIES := android-support-core-utils
 
 LOCAL_PROGUARD_ENABLED := disabled
 
