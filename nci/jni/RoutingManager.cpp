@@ -3104,16 +3104,29 @@ void *ee_removed_ntf_handler_thread(void *data)
             }
         }
     }
-    {
-    SyncEventGuard guard (se.mEeSetModeEvent);
+    if(nfcFL.eseFL._WIRED_MODE_STANDBY) {
+        SyncEventGuard guard(se.mModeSetNtf);
         stat = NFA_EeModeSet(SecureElement::EE_HANDLE_0xF3, NFA_EE_MD_ACTIVATE);
-
-        if(stat == NFA_STATUS_OK)
-        {
-            if(se.mEeSetModeEvent.wait (500) == false)
-            {
+        if(stat == NFA_STATUS_OK) {
+            if(se.mModeSetNtf.wait (500) == false) {
                 ALOGV("%s:SetMode ntf timeout", __func__);
+            } else {
+                // do nothing
             }
+        } else {
+            // do nothing
+        }
+    } else {
+        SyncEventGuard guard(se.mEeSetModeEvent);
+        stat = NFA_EeModeSet(SecureElement::EE_HANDLE_0xF3, NFA_EE_MD_ACTIVATE);
+        if(stat == NFA_STATUS_OK) {
+            if(se.mEeSetModeEvent.wait (500) == false) {
+                ALOGV("%s:SetMode rsp timeout", __func__);
+            } else {
+                // do nothing
+            }
+        } else {
+            // do nothing
         }
     }
     rm.mResetHandlerMutex.unlock();

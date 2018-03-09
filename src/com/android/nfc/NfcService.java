@@ -448,6 +448,12 @@ public class NfcService implements DeviceHostListener {
     // Timeout to re-apply routing if a tag was present and we postponed it
     private static final int APPLY_ROUTING_RETRY_TIMEOUT_MS = 5000;
 
+    // these states are for making enable and disable nfc atomic
+    private int NXP_NFC_STATE_OFF = 0;
+    private int NXP_NFC_STATE_TURNING_ON = 1;
+    private int NXP_NFC_STATE_ON = 2;
+    private int NXP_NFC_STATE_TURNING_OFF = 3;
+
     private final UserManager mUserManager;
     private static int nci_version = NCI_VERSION_1_0;
     // NFC Execution Environment
@@ -505,6 +511,8 @@ public class NfcService implements DeviceHostListener {
     // and the default AsyncTask thread so it is read unprotected from that
     // thread
     int mState;  // one of NfcAdapter.STATE_ON, STATE_TURNING_ON, etc
+    int mNxpNfcState = NXP_NFC_STATE_OFF;
+
     boolean mPowerShutDown = false;  // State for power shut down state
 
     // fields below are final after onCreate()
@@ -1503,7 +1511,15 @@ public class NfcService implements DeviceHostListener {
             synchronized (NfcService.this) {
                 mObjectMap.clear();
                 mP2pLinkManager.enableDisable(mIsNdefPushEnabled, true);
-                updateState(NfcAdapter.STATE_ON);
+                if(mChipVer == PN80T_ID || mChipVer == PN67T_ID || mChipVer == PN66T_ID || mChipVer == PN65T_ID) {
+                    /*Added for Loader service recover during NFC Off/On*/
+                     NfcAlaService nas = new NfcAlaService();
+                     nas.LSReexecute();
+                     IntentFilter lsFilter = new IntentFilter(NfcAdapter.ACTION_ADAPTER_STATE_CHANGED);
+                     mContext.registerReceiverAsUser(mAlaReceiver, UserHandle.ALL, lsFilter, null, null);
+                } else {
+                    // do nothing
+                }
             }
 
             synchronized (NfcService.this) {
@@ -1514,6 +1530,9 @@ public class NfcService implements DeviceHostListener {
                 }
             }
 
+            synchronized (NfcService.this) {
+                updateState(NfcAdapter.STATE_ON);
+            }
             /* Start polling loop */
             Log.e(TAG, "applyRouting -3");
             mScreenState = mScreenStateHelper.checkScreenState();
@@ -1535,6 +1554,10 @@ public class NfcService implements DeviceHostListener {
                 mIsTaskBoot = false;
             }
             applyRouting(true);
+            synchronized (NfcService.this) {
+                mNxpNfcState = NXP_NFC_STATE_ON;
+            }
+
             return true;
         }
 
@@ -1607,6 +1630,7 @@ public class NfcService implements DeviceHostListener {
             synchronized (NfcService.this) {
                 mCurrentDiscoveryParameters = NfcDiscoveryParameters.getNfcOffParameters();
                 updateState(NfcAdapter.STATE_OFF);
+                mNxpNfcState = NXP_NFC_STATE_OFF;
             }
 
 
@@ -1647,16 +1671,6 @@ public class NfcService implements DeviceHostListener {
             synchronized (NfcService.this) {
                 if (newState == mState) {
                     return;
-                }
-                int Ver = mDeviceHost.getChipVer();
-                if(Ver == PN80T_ID || Ver == PN67T_ID || Ver == PN66T_ID || Ver == PN65T_ID) {
-                    /*Added for Loader service recover during NFC Off/On*/
-                    if(newState == NfcAdapter.STATE_ON){
-                        NfcAlaService nas = new NfcAlaService();
-                        nas.LSReexecute();
-                        IntentFilter lsFilter = new IntentFilter(NfcAdapter.ACTION_ADAPTER_STATE_CHANGED);
-                        mContext.registerReceiverAsUser(mAlaReceiver, UserHandle.ALL, lsFilter, null, null);
-                    }
                 }
                 mState = newState;
                 Intent intent = new Intent(NfcAdapter.ACTION_ADAPTER_STATE_CHANGED);
@@ -1743,6 +1757,17 @@ public class NfcService implements DeviceHostListener {
     final class NfcAdapterService extends INfcAdapter.Stub {
         @Override
         public boolean enable() throws RemoteException {
+
+            if (mNxpNfcState != NXP_NFC_STATE_OFF) {
+                return true;
+            } else {
+                // do nothing
+            }
+
+            synchronized (NfcService.this) {
+                mNxpNfcState = NXP_NFC_STATE_TURNING_ON;
+            }
+
             NfcPermissions.enforceAdminPermissions(mContext);
             int val =  mDeviceHost.GetDefaultSE();
             Log.i(TAG, "getDefaultSE " + val);
@@ -1756,6 +1781,17 @@ public class NfcService implements DeviceHostListener {
 
         @Override
         public boolean disable(boolean saveState) throws RemoteException {
+
+            if (mNxpNfcState != NXP_NFC_STATE_ON) {
+                return true;
+            } else {
+               // do nothing
+            }
+
+            synchronized (NfcService.this) {
+                mNxpNfcState = NXP_NFC_STATE_TURNING_OFF;
+            }
+
             NfcPermissions.enforceAdminPermissions(mContext);
             Log.d(TAG,"Disabling Nfc.");
 

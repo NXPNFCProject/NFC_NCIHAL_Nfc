@@ -4844,14 +4844,42 @@ tNFA_STATUS SecureElement::SecElem_EeModeSet(uint16_t handle, uint8_t mode)
         (mode == NFA_EE_MD_DEACTIVATE))
         return NFA_STATUS_OK;
 
-    SyncEventGuard guard (sSecElem.mEeSetModeEvent);
-    stat =  NFA_EeModeSet(handle, mode);
-    if(stat == NFA_STATUS_OK && !android::nfcManager_isNfcDisabling() &&
-       (android::nfcManager_getNfcState() != NFC_OFF))
-    {
-        sSecElem.mEeSetModeEvent.wait ();
-    }
 
+    if(nfcFL.eseFL._WIRED_MODE_STANDBY) {
+        if((handle == EE_HANDLE_0xF3) && (mode == NFA_EE_MD_ACTIVATE)) {
+            SyncEventGuard guard (mModeSetNtf);
+            stat =  NFA_EeModeSet(handle, mode);
+            if(stat == NFA_STATUS_OK && !android::nfcManager_isNfcDisabling() &&
+               (android::nfcManager_getNfcState() != NFC_OFF)) {
+                ALOGD("Waiting for Mode Set Ntf");
+                if(mModeSetNtf.wait(500) == false) {
+                    ALOGE("%s: timeout waiting for setModeNtf", __func__);
+                } else {
+                    // do nothing
+                }
+            } else {
+                // do nothing
+            }
+        } else {
+            SyncEventGuard guard (mEeSetModeEvent);
+            stat =  NFA_EeModeSet(handle, mode);
+            if(stat == NFA_STATUS_OK && !android::nfcManager_isNfcDisabling() &&
+               (android::nfcManager_getNfcState() != NFC_OFF)) {
+                mEeSetModeEvent.wait ();
+            } else {
+                // do nothing
+            }
+        }
+    } else {
+        SyncEventGuard guard (mEeSetModeEvent);
+        stat =  NFA_EeModeSet(handle, mode);
+        if(stat == NFA_STATUS_OK && !android::nfcManager_isNfcDisabling() &&
+           (android::nfcManager_getNfcState() != NFC_OFF)) {
+            mEeSetModeEvent.wait ();
+        } else {
+            // do nothing
+        }
+    }
     if(nfcFL.nfcNxpEse) {
         if(nfcFL.eseFL._JCOP_WA_ENABLE && (active_ese_reset_control&RESET_BLOCKED))
         {
