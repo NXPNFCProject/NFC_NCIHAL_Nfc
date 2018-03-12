@@ -949,7 +949,7 @@ bool RoutingManager::setDefaultRoute(const int defaultRoute, const int protoRout
     static const char fn []   = "RoutingManager::setDefaultRoute";
     tNFA_STATUS       nfaStat = NFA_STATUS_FAILED;
 
-    DLOG_IF(VERBOSE, nfc_debug_enabled)
+    DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: enter; defaultRoute:0x%2X protoRoute:0x%2X TechRoute:0x%2X HostListenMask:0x%X", fn, defaultRoute, protoRoute, techRoute, mHostListnTechMask);
     extractRouteLocationAndPowerStates(defaultRoute,protoRoute,techRoute);
 
@@ -986,7 +986,7 @@ bool RoutingManager::setDefaultRoute(const int defaultRoute, const int protoRout
 
     configureOffHostNfceeTechMask();
 
-    DLOG_IF(VERBOSE, nfc_debug_enabled)
+    DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: exit", fn);
     return true;
 }
@@ -1026,14 +1026,14 @@ void RoutingManager::extractRouteLocationAndPowerStates(const int defaultRoute, 
  * */
 void RoutingManager::setEmptyAidEntry() {
 
-    DLOG_IF(VERBOSE, nfc_debug_enabled) << StringPrintf("%s: enter",__func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter",__func__);
     uint16_t routeLoc;
     uint8_t power;
 
     routeLoc = mDefaultIso7816SeID;
 
     power    = mCeRouteStrictDisable ? mDefaultIso7816Powerstate : (mDefaultIso7816Powerstate & POWER_STATE_MASK);
-    DLOG_IF(VERBOSE, nfc_debug_enabled) << StringPrintf("%s: route %x",__func__,routeLoc);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: route %x",__func__,routeLoc);
     if(routeLoc == 0x400) power &= 0x11;
     if (routeLoc  == NFA_HANDLE_INVALID)
     {
@@ -1042,7 +1042,7 @@ void RoutingManager::setEmptyAidEntry() {
     }
 
     tNFA_STATUS nfaStat = NFA_EeAddAidRouting(routeLoc, 0, NULL, power, 0x10);
-    DLOG_IF(VERBOSE, nfc_debug_enabled) << StringPrintf("%s: Status :0x%2x", __func__, nfaStat);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Status :0x%2x", __func__, nfaStat);
 }
 
 /* To check whether the route location for ISO-DEP protocol defined by user in config file is actually connected or not
@@ -1054,7 +1054,7 @@ void RoutingManager::checkProtoSeID(void)
     tNFA_HANDLE       ActDevHandle                  = NFA_HANDLE_INVALID;
     unsigned long     check_default_proto_se_id_req = 0;
     static const char fn []   = "RoutingManager::checkProtoSeID";
-    DLOG_IF(VERBOSE, nfc_debug_enabled) << StringPrintf("%s: enter",__func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter",__func__);
 //FIX THIS
     /*
     if (GetNxpNumValue(NAME_CHECK_DEFAULT_PROTO_SE_ID, &check_default_proto_se_id_req, sizeof(check_default_proto_se_id_req)))

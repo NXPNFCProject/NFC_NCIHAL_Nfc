@@ -51,6 +51,7 @@
 #include "SyncEvent.h"
 #include "nfc_config.h"
 #if(NXP_EXTNS == TRUE)
+#include "nfca_version.h"
 #include "SecureElement.h"
 #include "DwpChannel.h"
 #include "JcDnld.h"
@@ -65,10 +66,16 @@
 #include "phNxpExtns.h"
 #include "rw_api.h"
 
+
+
+
 using android::base::StringPrintf;
 
 extern const uint8_t nfca_version_string[];
 extern const uint8_t nfa_version_string[];
+#if(NXP_EXTNS == TRUE)
+extern bool nfc_debug_enabled;
+#endif
 extern tNFA_DM_DISC_FREQ_CFG* p_nfa_dm_rf_disc_freq_cfg;  // defined in stack
 namespace android {
 extern bool gIsTagDeactivating;
@@ -201,9 +208,9 @@ static int NFA_SCREEN_POLLING_TAG_MASK = 0x10;
 static bool gIsDtaEnabled = false;
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
-
+#if (NXP_EXTNS != TRUE)
 bool nfc_debug_enabled;
-
+#endif
 namespace {
 void initializeGlobalDebugEnabledFlag() {
   nfc_debug_enabled =

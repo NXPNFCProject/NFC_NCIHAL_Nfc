@@ -28,7 +28,7 @@ LOCAL_SRC_FILES := $(SRC_FILES_LIST:$(LOCAL_PATH)/%=%)
 endif
 
 NFC_NXP_ESE:= TRUE
-
+LOCAL_CFLAGS += -DDCHECK_ALWAYS_ON=TRUE
 LOCAL_CFLAGS += -Wall -Wextra -Wno-unused-parameter -Werror
 
 LOCAL_C_INCLUDES += \
@@ -44,6 +44,7 @@ LOCAL_C_INCLUDES += \
     $(VOB_COMPONENTS)/include \
     $(VOB_COMPONENTS)/gki/ulinux \
     $(VOB_COMPONENTS)/gki/common \
+    $(VOB_COMPONENTS) \
     system/nfc/utils/include \
     hardware/nxp/nfc/extns/impl\
 
