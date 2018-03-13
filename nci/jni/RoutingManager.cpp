@@ -139,6 +139,11 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
        mDefaultTechFPowerstate = num;
     else
        mDefaultTechFPowerstate = 0x3F;
+    if (GetNxpNumValue (NAME_NXP_DEFAULT_SE, (void*)&num, sizeof(num)))
+        mDefaultEe = num;
+    else
+        mDefaultEe = 0x02;
+    mUiccListnTechMask = NfcConfig::getUnsigned("NAME_UICC_LISTEN_TECH_MASK", 0x07);
 #endif
   if ((mActiveSe != 0) || (mActiveSeNfcF != 0)) {
     DLOG_IF(INFO, nfc_debug_enabled)
