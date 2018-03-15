@@ -273,6 +273,7 @@ public class NfcService implements DeviceHostListener {
     static final int MSG_DEREGISTER_T3T_IDENTIFIER = 55;
     static final int MSG_TAG_DEBOUNCE = 56;
     static final int MSG_UPDATE_STATS = 57;
+    static final int MSG_SWP_READER_RESTART = 58;
     /*Restart Nfc disbale watchdog timer*/
     static final int MSG_RESTART_WATCHDOG = 60;
     static final int MSG_ROUTE_APDU = 61;
@@ -349,8 +350,9 @@ public class NfcService implements DeviceHostListener {
     public static final int NCI_VERSION_1_0 = 0x10;
     //ETSI Reader Events
     public static final int ETSI_READER_REQUESTED   = 0;
-    public static final int ETSI_READER_START       = 1;
-    public static final int ETSI_READER_STOP        = 2;
+    public static final int ETSI_READER_START_FAIL  = 1;
+    public static final int ETSI_READER_ACTIVATED   = 2;
+    public static final int ETSI_READER_STOP        = 3;
 
     //ETSI Reader Req States
     public static final int STATE_SE_RDR_MODE_INVALID = 0x00;
@@ -823,7 +825,7 @@ public class NfcService implements DeviceHostListener {
     }
 
     @Override
-    public void onSWPReaderRequestedEvent(boolean istechA, boolean istechB)
+    public void onETSIReaderRequestedEvent(boolean istechA, boolean istechB)
     {
         int size=0;
         ArrayList<Integer> techList = new ArrayList<Integer>();
@@ -836,13 +838,13 @@ public class NfcService implements DeviceHostListener {
     }
 
     @Override
-    public void onSWPReaderRequestedFail(int FailCause)
+    public void onETSIReaderRequestedFail(int FailCause)
     {
         sendMessage(NfcService.MSG_SWP_READER_REQUESTED_FAIL , FailCause);
     }
 
     @Override
-    public void onSWPReaderActivatedEvent()
+    public void onETSIReaderActivatedEvent()
     {
         sendMessage(NfcService.MSG_SWP_READER_ACTIVATED, null);
     }
@@ -867,7 +869,12 @@ public class NfcService implements DeviceHostListener {
         sendMessage(NfcService.MSG_ETSI_SWP_TIMEOUT, disc_ntf_timeout);
     }
 
-     @Override
+    @Override
+    public void onETSIReaderModeRestart() {
+        sendMessage(NfcService.MSG_SWP_READER_RESTART, null);
+    }
+
+    @Override
     public void onUiccStatusEvent(int uiccStat)
     {
          Log.i(TAG, "Broadcasting UICC Status : " + uiccStat);
@@ -2562,6 +2569,33 @@ public class NfcService implements DeviceHostListener {
                 return TRANSIT_SETCONFIG_STAT_FAILED;
             }
             return TRANSIT_SETCONFIG_STAT_SUCCESS;
+        }
+
+        @Override
+        public int mPOSSetReaderMode (String pkg, boolean on) {
+            NfcService.this.enforceNfceeAdminPerm(pkg);
+            int status = mDeviceHost.mposSetReaderMode(on);
+            if(!on) {
+                if(nci_version != NCI_VERSION_2_0) {
+                    applyRouting(true);
+                } else if(mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED
+                        || mNfcUnlockManager.isLockscreenPollingEnabled()) {
+                    applyRouting(false);
+                }
+            }
+            return status;
+        }
+
+        @Override
+        public void stopPoll(String pkg, int mode) {
+            NfcService.this.enforceNfceeAdminPerm(pkg);
+            mDeviceHost.stopPoll(mode);
+        }
+
+        @Override
+        public void startPoll(String pkg) {
+            NfcService.this.enforceNfceeAdminPerm(pkg);
+            mDeviceHost.startPoll();
         }
     }
 
@@ -4716,6 +4750,14 @@ public class NfcService implements DeviceHostListener {
         }
     }
 
+    public void updateLastScreenState()
+    {
+        Log.d(TAG, "updateLastScreenState");
+        int screen_state_mask = (mNfcUnlockManager.isLockscreenPollingEnabled()) ?
+                (ScreenStateHelper.SCREEN_POLLING_TAG_MASK | mScreenState) : mScreenState;
+        mDeviceHost.doSetScreenOrPowerState(screen_state_mask);
+    }
+
     public void etsiStartConfig(int eeHandle) {
         Log.d(TAG, "etsiStartConfig Enter");
 
@@ -4735,7 +4777,7 @@ public class NfcService implements DeviceHostListener {
         mDeviceHost.setEtsiReaederState(STATE_SE_RDR_MODE_STARTED);
         //broadcast SWP_READER_ACTIVATED evt
         Intent swpReaderRequestedIntent = new Intent();
-        swpReaderRequestedIntent.setAction(NxpConstants.ACTION_SWP_READER_REQUESTED);
+        swpReaderRequestedIntent.setAction(NxpConstants.ACTION_NFC_MPOS_READER_MODE_START_SUCCESS);
         if (DBG) {
             Log.d(TAG, "SWP READER - Requested");
         }
@@ -4761,7 +4803,7 @@ public class NfcService implements DeviceHostListener {
         mDeviceHost.etsiInitConfig();
 
         Log.d(TAG, "etsiStopConfig : disableDiscovery");
-        mDeviceHost.disableDiscovery();
+        mDeviceHost.stopPoll(NxpConstants.ULTRA_LOW_POWER);
 
         if(mDeviceHost.getEtsiReaederState() == STATE_SE_RDR_MODE_STOPPED)
         {
@@ -4779,7 +4821,7 @@ public class NfcService implements DeviceHostListener {
 
       //broadcast SWP_READER_DEACTIVATED evt
         swpReaderDeActivatedIntent
-                .setAction(NxpConstants.ACTION_SWP_READER_DEACTIVATED);
+                .setAction(NxpConstants.ACTION_NFC_MPOS_READER_MODE_STOP_SUCCESS);
         if (DBG) {
             Log.d(TAG, "SWP READER - DeActivated");
         }
@@ -4788,12 +4830,8 @@ public class NfcService implements DeviceHostListener {
         Log.d(TAG, "etsiStopConfig : setEtsiReaederState");
         mDeviceHost.setEtsiReaederState(STATE_SE_RDR_MODE_STOPPED);
 
-        Log.d(TAG, "etsiStopConfig : enableDiscovery");
-        mDeviceHost.enableDiscovery(mCurrentDiscoveryParameters, true);
         ETSI_STOP_CONFIG = false;
-
-        Log.d(TAG, "etsiStopConfig : updateScreenState");
-        mDeviceHost.updateScreenState();
+        updateLastScreenState();
 
         Log.d(TAG, "etsiStopConfig Exit");
     }
@@ -5302,7 +5340,7 @@ public class NfcService implements DeviceHostListener {
                     ArrayList<Integer> techList = (ArrayList<Integer>) msg.obj;
                     Integer[] techs = techList.toArray(new Integer[techList.size()]);
                     swpReaderRequestedIntent
-                            .setAction(NxpConstants.ACTION_SWP_READER_REQUESTED);
+                            .setAction(NxpConstants.ACTION_NFC_MPOS_READER_MODE_START_SUCCESS);
                     if (DBG) {
                         Log.d(TAG, "SWP READER - Requested");
                     }
@@ -5315,7 +5353,7 @@ public class NfcService implements DeviceHostListener {
                     Intent swpReaderRequestedFailIntent = new Intent();
 
                     swpReaderRequestedFailIntent
-                    .setAction(NxpConstants.ACTION_SWP_READER_REQUESTED_FAILED);
+                    .setAction(NxpConstants.ACTION_NFC_MPOS_READER_MODE_START_FAIL);
                     if (DBG) {
                         Log.d(TAG, "SWP READER - Requested Fail");
                     }
@@ -5328,7 +5366,7 @@ public class NfcService implements DeviceHostListener {
                     Intent swpReaderActivatedIntent = new Intent();
 
                     swpReaderActivatedIntent
-                            .setAction(NxpConstants.ACTION_SWP_READER_ACTIVATED);
+                            .setAction(NxpConstants.ACTION_NFC_MPOS_READER_MODE_ACTIVATED);
                     if (DBG) {
                         Log.d(TAG, "SWP READER - Activated");
                     }
@@ -5362,10 +5400,32 @@ public class NfcService implements DeviceHostListener {
 
                     Log.d(TAG, "NfcServiceHandler - MSG_ETSI_SWP_TIMEOUT");
 
-                    mDeviceHost.setEtsiReaederState(STATE_SE_RDR_MODE_STOP_CONFIG);
-                    etsiStopConfig((int)msg.obj);
+                    /* Send broadcast ordered */
+                    Intent swpReaderTimeoutIntent = new Intent();
 
+                    swpReaderTimeoutIntent
+                            .setAction(NxpConstants.ACTION_NFC_MPOS_READER_MODE_TIMEOUT);
+                    if (DBG) {
+                        Log.d(TAG, "SWP READER - Timeout");
+                    }
+                    mContext.sendBroadcast(swpReaderTimeoutIntent);
                     break;
+
+                case MSG_SWP_READER_RESTART:
+
+                    Log.d(TAG, "NfcServiceHandler - MSG_SWP_READER_RESTART");
+
+                    /* Send broadcast ordered */
+                    Intent swpReaderRestartIntent = new Intent();
+
+                    swpReaderRestartIntent
+                            .setAction(NxpConstants.ACTION_NFC_MPOS_READER_MODE_RESTART);
+                    if (DBG) {
+                        Log.d(TAG, "SWP READER - RESTART");
+                    }
+                    mContext.sendBroadcast(swpReaderRestartIntent);
+                    break;
+
                 case MSG_APPLY_SCREEN_STATE:
 
                     mScreenState = (int)msg.obj;
@@ -5658,7 +5718,7 @@ public class NfcService implements DeviceHostListener {
 
                 Intent swpReaderTagRemoveIntent = new Intent();
 
-                swpReaderTagRemoveIntent.setAction(NxpConstants.ACTION_SWP_READER_TAG_REMOVE);
+                swpReaderTagRemoveIntent.setAction(NxpConstants.ACTION_NFC_MPOS_READER_MODE_REMOVE_CARD);
 
                 int counter = 0;
                 int discNtfTimeout = params[0].intValue();
@@ -5790,7 +5850,14 @@ public class NfcService implements DeviceHostListener {
                 /*if(nci_version != NCI_VERSION_2_0) {
                     new ApplyRoutingTask().execute(Integer.valueOf(screenState));
                 }*/
-                sendMessage(NfcService.MSG_APPLY_SCREEN_STATE, screenState);
+
+                if( mDeviceHost.getEtsiReaederState() == STATE_SE_RDR_MODE_STOPPED ||
+                    mDeviceHost.getEtsiReaederState() == STATE_SE_RDR_MODE_INVALID) {
+                    sendMessage(NfcService.MSG_APPLY_SCREEN_STATE, screenState);
+                } else {
+                    Log.e(TAG, "mPOS in progress holding screen state "+screenState);
+                    mScreenState = screenState;
+                }
                 Log.e(TAG, "screen state "+screenState);
                 Log.e(TAG, "screen state mScreenState "+mScreenState);
             } else if (action.equals(Intent.ACTION_USER_SWITCHED)) {

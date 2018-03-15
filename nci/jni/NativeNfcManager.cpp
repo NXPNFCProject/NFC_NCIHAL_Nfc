@@ -53,6 +53,7 @@
 #include <pthread.h>
 #include <ScopedPrimitiveArray.h>
 #if(NXP_EXTNS == TRUE)
+#include "MposManager.h"
 #include <signal.h>
 #include <sys/types.h>
 #endif
@@ -75,7 +76,6 @@ extern "C"
 }
 #define ALOGV ALOGD
 #define SAK_VALUE_AT 17
-extern bool                   gReaderNotificationflag;
 extern const uint8_t          nfca_version_string [];
 extern const uint8_t          nfa_version_string [];
 extern tNFA_DM_DISC_FREQ_CFG* p_nfa_dm_rf_disc_freq_cfg;
@@ -117,7 +117,6 @@ int32_t                     gActualSeCount = 0;
 uint16_t                    sCurrentSelectedUICCSlot = 1;
 SyncEvent                   gNfceeDiscCbEvent;
 uint8_t                     sSelectedUicc = 0;
-extern Rdr_req_ntf_info_t   swp_rdr_req_ntf_info;
 bool nfcManager_getTransanctionRequest(int t3thandle, bool registerRequest);
 extern bool createSPIEvtHandlerThread();
 extern void releaseSPIEvtHandlerThread();
@@ -207,15 +206,9 @@ namespace android
     jmethodID               gCachedNfcManagerNotifyHostEmuDeactivated;
     jmethodID               gCachedNfcManagerNotifyRfFieldActivated;
     jmethodID               gCachedNfcManagerNotifyRfFieldDeactivated;
-    jmethodID               gCachedNfcManagerNotifySWPReaderRequested;
-    jmethodID               gCachedNfcManagerNotifySWPReaderRequestedFail;
-    jmethodID               gCachedNfcManagerNotifySWPReaderActivated;
     jmethodID               gCachedNfcManagerNotifyAidRoutingTableFull;
 #if(NXP_EXTNS == TRUE)
     int                     gMaxEERecoveryTimeout = MAX_EE_RECOVERY_TIMEOUT;
-    jmethodID               gCachedNfcManagerNotifyETSIReaderModeStartConfig;
-    jmethodID               gCachedNfcManagerNotifyETSIReaderModeStopConfig;
-    jmethodID               gCachedNfcManagerNotifyETSIReaderModeSwpTimeout;
     jmethodID               gCachedNfcManagerNotifyUiccStatusEvent;
     jmethodID               gCachedNfcManagerNotifyT3tConfigure;
     jmethodID               gCachedNfcManagerNotifyJcosDownloadInProgress;
@@ -229,12 +222,19 @@ namespace android
     const char*             gNativeNfcManagerClassName                = "com/android/nfc/dhimpl/NativeNfcManager";
     const char*             gNativeNfcSecureElementClassName          = "com/android/nfc/dhimpl/NativeNfcSecureElement";
     const char*             gNativeNfcAlaClassName                    = "com/android/nfc/dhimpl/NativeNfcAla";
+    const char*             gNativeNfcMposManagerClassName            = "com/android/nfc/dhimpl/NativeNfcMposManager";
     void                    doStartupConfig ();
     void                    startStopPolling (bool isStartPolling);
     void                    startRfDiscovery (bool isStart);
     void                    setUiccIdleTimeout (bool enable);
     bool                    isDiscoveryStarted ();
     void                    requestFwDownload();
+#if(NXP_EXTNS == TRUE)
+    void                    enableRfDiscovery();
+    void                    disableRfDiscovery();
+    void                    storeLastDiscoveryParams(int technologies_mask, bool enable_lptd,
+                                bool reader_mode, bool enable_p2p, bool restart);
+#endif
 }
 
 
@@ -501,6 +501,7 @@ typedef struct discovery_Parameters
     bool restart;
 }discovery_Parameters_t;
 
+discovery_Parameters_t mDiscParams;
 /*Structure to store transcation result*/
 typedef struct Transcation_Check
 {
@@ -929,8 +930,8 @@ static void nfaConnectionCallback (uint8_t connEvent, tNFA_CONN_EVT_DATA* eventD
                     if(eventData->activated.activate_ntf.intf_param.type == NCI_INTERFACE_UICC_DIRECT_STAT ||
                           eventData->activated.activate_ntf.intf_param.type == NCI_INTERFACE_ESE_DIRECT_STAT)
                     {
-                        SecureElement::getInstance().notifyEEReaderEvent(NFA_RD_SWP_READER_START, eventData->activated.activate_ntf.rf_tech_param.mode);
-                        gReaderNotificationflag = true;
+                        MposManager::getInstance().setEtsiReaederState(STATE_SE_RDR_MODE_ACTIVATED);
+                        MposManager::getInstance().notifyEEReaderEvent(ETSI_READER_ACTIVATED);
                         break;
                     }
                 }
@@ -1095,8 +1096,6 @@ static void nfaConnectionCallback (uint8_t connEvent, tNFA_CONN_EVT_DATA* eventD
                 ALOGV("Reconnect in progress : Do nothing");
                 break;
             }
-
-            gReaderNotificationflag = false;
 
 #if(NXP_EXTNS == TRUE)
             /* P2P-priority logic for multiprotocol tags */
@@ -1400,10 +1399,10 @@ static void nfaConnectionCallback (uint8_t connEvent, tNFA_CONN_EVT_DATA* eventD
         {
             if(nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
                 ALOGV("%s: NFA_RECOVERY_EVT: Discovery Started in lower layer:Updating status in JNI", __func__);
-                if(RoutingManager::getInstance().getEtsiReaederState() == STATE_SE_RDR_MODE_STOP_IN_PROGRESS)
+                if(MposManager::getInstance().getEtsiReaederState() == STATE_SE_RDR_MODE_STOP_IN_PROGRESS)
                 {
                     ALOGV("%s: Reset the ETSI Reader State to STATE_SE_RDR_MODE_STOPPED", __func__);
-                    RoutingManager::getInstance().setEtsiReaederState(STATE_SE_RDR_MODE_STOPPED);
+                    MposManager::getInstance().setEtsiReaederState(STATE_SE_RDR_MODE_STOPPED);
                 }
             }
         }
@@ -1473,6 +1472,7 @@ static jboolean nfcManager_initNativeStruc (JNIEnv* e, jobject o)
     jfieldID f = e->GetFieldID(cls.get(), "mNative", "J");
     e->SetLongField(o, f, (jlong)nat);
 
+    MposManager::initMposNativeStruct(e, o);
     /* Initialize native cached references */
     gCachedNfcManagerNotifyNdefMessageListeners = e->GetMethodID(cls.get(),
             "notifyNdefMessageListeners", "(Lcom/android/nfc/dhimpl/NativeNfcTag;)V");
@@ -1525,27 +1525,11 @@ static jboolean nfcManager_initNativeStruc (JNIEnv* e, jobject o)
     sCachedNfcManagerNotifySeEmvCardRemoval =  e->GetMethodID(cls.get(),
             "notifySeEmvCardRemoval", "()V");
 
-    gCachedNfcManagerNotifySWPReaderRequested = e->GetMethodID (cls.get(),
-            "notifySWPReaderRequested", "(ZZ)V");
-
-    gCachedNfcManagerNotifySWPReaderRequestedFail= e->GetMethodID (cls.get(),
-            "notifySWPReaderRequestedFail", "(I)V");
-
-    gCachedNfcManagerNotifySWPReaderActivated = e->GetMethodID (cls.get(),
-            "notifySWPReaderActivated", "()V");
 #if(NXP_EXTNS == TRUE)
     gCachedNfcManagerNotifyReRoutingEntry = e->GetMethodID(cls.get(),
             "notifyReRoutingEntry", "()V");
-        gCachedNfcManagerNotifyETSIReaderModeStartConfig = e->GetMethodID (cls.get(),
-                "notifyonETSIReaderModeStartConfig", "(I)V");
 
-        gCachedNfcManagerNotifyETSIReaderModeStopConfig = e->GetMethodID (cls.get(),
-                "notifyonETSIReaderModeStopConfig", "(I)V");
-
-        gCachedNfcManagerNotifyETSIReaderModeSwpTimeout = e->GetMethodID (cls.get(),
-                "notifyonETSIReaderModeSwpTimeout", "(I)V");
-
-        gCachedNfcManagerNotifyUiccStatusEvent= e->GetMethodID (cls.get(),
+    gCachedNfcManagerNotifyUiccStatusEvent= e->GetMethodID (cls.get(),
                 "notifyUiccStatusEvent", "(I)V");
 
 #if(NXP_NFCC_HCE_F == TRUE)
@@ -2277,6 +2261,7 @@ static jboolean nfcManager_doInitialize (JNIEnv* e, jobject o)
                 //setListenMode();
                 RoutingManager::getInstance().initialize(getNative(e, o));
                 HciRFParams::getInstance().initialize ();
+                MposManager::getInstance().initialize(getNative(e, o));
                 sIsSecElemSelected = (SecureElement::getInstance().getActualNumEe() - 1 );
                 sIsSecElemDetected = sIsSecElemSelected;
                 nativeNfcTag_registerNdefTypeHandler ();
@@ -2680,6 +2665,33 @@ static void nfcManager_Enablep2p(JNIEnv* e, jobject o, jboolean p2pFlag)
     }
     pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(enablep2p));
 }
+
+void enableRfDiscovery()
+{
+    ALOGV("%s: enter", __FUNCTION__);
+    nfcManager_enableDiscovery(NULL, NULL,
+        mDiscParams.technologies_mask,
+        mDiscParams.enable_lptd,
+        mDiscParams.reader_mode,
+        mDiscParams.enable_p2p,
+        mDiscParams.restart);
+}
+
+void disableRfDiscovery()
+{
+  nfcManager_disableDiscovery(NULL, NULL);
+}
+
+void storeLastDiscoveryParams(int technologies_mask, bool enable_lptd,
+    bool reader_mode, bool enable_p2p, bool restart)
+{
+    ALOGV("%s: enter", __FUNCTION__);
+    mDiscParams.technologies_mask = technologies_mask;
+    mDiscParams.enable_lptd = enable_lptd;
+    mDiscParams.reader_mode = reader_mode;
+    mDiscParams.enable_p2p = enable_p2p;
+    mDiscParams.restart = restart;
+}
 #endif
 /*******************************************************************************
 **
@@ -2719,6 +2731,9 @@ static void nfcManager_enableDiscovery (JNIEnv* e, jobject o, jint technologies_
     {
         nat = getNative(e, o);
     }
+
+    storeLastDiscoveryParams(technologies_mask, enable_lptd,
+        reader_mode, enable_p2p, restart);
 #if (NXP_EXTNS == TRUE)
     if(!pTransactionController->transactionAttempt(TRANSACTION_REQUESTOR(enableDiscovery)))
     {
@@ -2735,9 +2750,9 @@ static void nfcManager_enableDiscovery (JNIEnv* e, jobject o, jint technologies_
 
 #if(NXP_EXTNS == TRUE)
     if((nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE) &&
-            (RoutingManager::getInstance().getEtsiReaederState() == STATE_SE_RDR_MODE_STARTED)) {
+            (MposManager::getInstance().getEtsiReaederState() == STATE_SE_RDR_MODE_STARTED)) {
         ALOGV("%s: enter STATE_SE_RDR_MODE_START_CONFIG", __func__);
-        Rdr_req_ntf_info_t mSwp_info = RoutingManager::getInstance().getSwpRrdReqInfo();
+        Rdr_req_ntf_info_t mSwp_info = MposManager::getInstance().getSwpRrdReqInfo();
         {
             SyncEventGuard guard (android::sNfaEnableDisablePollingEvent);
             ALOGV("%s: disable polling", __func__);
@@ -3041,9 +3056,9 @@ void nfcManager_disableDiscovery (JNIEnv* e, jobject o)
     pn544InteropAbortNow ();
 #if(NXP_EXTNS == TRUE)
     if(nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
-        if(RoutingManager::getInstance().getEtsiReaederState() == STATE_SE_RDR_MODE_START_IN_PROGRESS)
+        if(MposManager::getInstance().getEtsiReaederState() == STATE_SE_RDR_MODE_START_IN_PROGRESS)
         {
-            Rdr_req_ntf_info_t mSwp_info = RoutingManager::getInstance().getSwpRrdReqInfo();
+            Rdr_req_ntf_info_t mSwp_info = MposManager::getInstance().getSwpRrdReqInfo();
             //        if(android::isDiscoveryStarted() == true)
             android::startRfDiscovery(false);
             PeerToPeer::getInstance().enableP2pListening (false);
@@ -3061,7 +3076,7 @@ void nfcManager_disableDiscovery (JNIEnv* e, jobject o)
             }
             goto TheEnd;
         }
-        else if(RoutingManager::getInstance().getEtsiReaederState() == STATE_SE_RDR_MODE_STOP_IN_PROGRESS)
+        else if(MposManager::getInstance().getEtsiReaederState() == STATE_SE_RDR_MODE_STOP_IN_PROGRESS)
         {
             android::startRfDiscovery(false);
             goto TheEnd;
@@ -4639,145 +4654,6 @@ static void nfcManager_doSetP2pTargetModes (JNIEnv*, jobject, jint modes)
     PeerToPeer::getInstance().setP2pListenMask(mask);
 }
 
-#if(NXP_EXTNS == TRUE)
-/*******************************************************************************
-**
-** Function:        nfcManager_dosetEtsiReaederState
-**
-** Description:     Set ETSI reader state
-**                  e: JVM environment.
-**                  o: Java object.
-**                  newState : new state to be set
-**
-** Returns:         None.
-**
-*******************************************************************************/
-static void nfcManager_dosetEtsiReaederState (JNIEnv*, jobject, se_rd_req_state_t newState)
-{
-    ALOGV("%s: Enter ", __func__);
-    if(nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
-     RoutingManager::getInstance().setEtsiReaederState(newState);
-    }
-}
-
-/*******************************************************************************
-**
-** Function:        nfcManager_dogetEtsiReaederState
-**
-** Description:     Get current ETSI reader state
-**                  e: JVM environment.
-**                  o: Java object.
-**
-** Returns:         State.
-**
-*******************************************************************************/
-static int nfcManager_dogetEtsiReaederState (JNIEnv*, jobject)
-{
-    ALOGV("%s: Enter ", __func__);
-    if(nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
-        return RoutingManager::getInstance().getEtsiReaederState();
-    }
-    else {
-        return STATE_SE_RDR_MODE_STOPPED;
-    }
-}
-
-/*******************************************************************************
-**
-** Function:        nfcManager_doEtsiReaderConfig
-**
-** Description:     Configuring to Emvco profile
-**                  e: JVM environment.
-**                  o: Java object.
-**
-** Returns:         None.
-**
-*******************************************************************************/
-static void nfcManager_doEtsiReaderConfig (JNIEnv*, jobject, int eeHandle)
-{
-    tNFC_STATUS status;
-    ALOGV("%s: Enter ", __func__);
-    if(nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
-        status = SecureElement::getInstance().etsiReaderConfig(eeHandle);
-        if(status != NFA_STATUS_OK)
-        {
-            ALOGV("%s: etsiReaderConfig Failed ", __func__);
-        }
-        else
-        {
-            ALOGV("%s: etsiReaderConfig Success ", __func__);
-        }
-    }
-}
-
-/*******************************************************************************
-**
-** Function:        nfcManager_doEtsiResetReaderConfig
-**
-** Description:     Configuring to Nfc forum profile
-**                  e: JVM environment.
-**                  o: Java object.
-**
-** Returns:         None.
-**
-*******************************************************************************/
-static void nfcManager_doEtsiResetReaderConfig (JNIEnv*, jobject)
-{
-    tNFC_STATUS status;
-    ALOGV("%s: Enter ", __func__);
-    if(nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
-        status = SecureElement::getInstance().etsiResetReaderConfig();
-        if(status != NFA_STATUS_OK)
-        {
-            ALOGV("%s: etsiReaderConfig Failed ", __func__);
-        }
-        else
-        {
-            ALOGV("%s: etsiReaderConfig Success ", __func__);
-        }
-    }
-}
-
-/*******************************************************************************
-**
-** Function:        nfcManager_doNotifyEEReaderEvent
-**
-** Description:     Notify with the Reader event
-**                  e: JVM environment.
-**                  o: Java object.
-**
-** Returns:         None.
-**
-*******************************************************************************/
-static void nfcManager_doNotifyEEReaderEvent (JNIEnv*, jobject, int evt)
-{
-    ALOGV("%s: Enter ", __func__);
-    if(nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
-        SecureElement::getInstance().notifyEEReaderEvent(
-                evt,swp_rdr_req_ntf_info.swp_rd_req_info.tech_mask);
-    }
-}
-
-/*******************************************************************************
-**
-** Function:        nfcManager_doEtsiInitConfig
-**
-** Description:     Chnage the ETSI state before start configuration
-**                  e: JVM environment.
-**                  o: Java object.
-**
-** Returns:         None.
-**
-*******************************************************************************/
-static void nfcManager_doEtsiInitConfig (JNIEnv*, jobject, int evt)
-{
-    ALOGV("%s: Enter ", __func__);
-    if(nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
-        SecureElement::getInstance().etsiInitConfig();
-    }
-}
-#endif
-
 static void nfcManager_doEnableScreenOffSuspend(JNIEnv* e, jobject o)
 {
     PowerSwitch::getInstance().setScreenOffPowerState(PowerSwitch::POWER_STATE_FULL);
@@ -5270,28 +5146,8 @@ static JNINativeMethod gMethods[] =
     {"getFWVersion", "()I",
             (void *)nfcManager_getFwVersion},
 #if(NXP_EXTNS == TRUE)
-    {"setEtsiReaederState", "(I)V",
-        (void *)nfcManager_dosetEtsiReaederState},
-
-    {"getEtsiReaederState", "()I",
-        (void *)nfcManager_dogetEtsiReaederState},
-
-    {"etsiReaderConfig", "(I)V",
-            (void *)nfcManager_doEtsiReaderConfig},
-
-    {"etsiResetReaderConfig", "()V",
-            (void *)nfcManager_doEtsiResetReaderConfig},
-
-    {"notifyEEReaderEvent", "(I)V",
-            (void *)nfcManager_doNotifyEEReaderEvent},
-
-    {"etsiInitConfig", "()V",
-            (void *)nfcManager_doEtsiInitConfig},
-
     {"updateScreenState", "()V",
             (void *)nfcManager_doUpdateScreenState},
-#endif
-#if(NXP_EXTNS == TRUE)
     {"doEnablep2p", "(Z)V",
             (void*)nfcManager_Enablep2p},
     {"doSetProvisionMode", "(Z)V",
@@ -5384,7 +5240,13 @@ void startRfDiscovery(bool isStart)
     if (status == NFA_STATUS_OK) {
         if(gGeneralPowershutDown == NFC_MODE_OFF)
             sDiscCmdwhleNfcOff = true;
-        sNfaEnableDisablePollingEvent.wait (NFC_CMD_TIMEOUT); //wait for NFA_RF_DISCOVERY_xxxx_EVT
+        se_rd_req_state_t state = MposManager::getInstance().getEtsiReaederState();
+        if(state == STATE_SE_RDR_MODE_STOP_IN_PROGRESS ||
+            state == STATE_SE_RDR_MODE_ACTIVATED) {
+          sNfaEnableDisablePollingEvent.wait (); //wait for NFA_RF_DISCOVERY_xxxx_EVT
+        } else {
+            sNfaEnableDisablePollingEvent.wait (NFC_CMD_TIMEOUT); //wait for NFA_RF_DISCOVERY_xxxx_EVT
+        }
         sRfEnabled = isStart;
         sDiscCmdwhleNfcOff = false;
     }

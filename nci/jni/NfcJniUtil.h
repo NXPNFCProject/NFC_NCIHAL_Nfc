@@ -125,13 +125,14 @@
 /*NFCEE recovery maximum timeout value*/
 #define MAX_EE_RECOVERY_TIMEOUT    10000
 /* NFC states: Primarily used to decide SPI signal handling (whether to discard or accept)*/
-typedef enum eNfcState
+typedef enum
 {
     NFC_OFF = 0x00, /* Default state */
     NFC_INITIALIZING_IN_PROGRESS = 0x01, /* Initializing not complete (RF discovery not enabled yet) */
     NFC_ON = 0x02 /* NFC is fully ON*/
-};
+}eNfcState;
 #define NFC_CMD_TIMEOUT 2000 /* 2 sec timeout to wait on the semaphore for the command sent */
+#define ONE_SECOND_MS 1000
 #endif
 
 struct nfc_jni_native_data
@@ -210,4 +211,7 @@ namespace android
     int register_com_android_nfc_NativeLlcpSocket (JNIEnv *e);
     int register_com_android_nfc_NativeNfcSecureElement (JNIEnv *e);
     int register_com_android_nfc_NativeNfcAla(JNIEnv *e);
+#if(NXP_EXTNS == TRUE)
+    int register_com_android_nfc_NativeNfcMposManager (JNIEnv *e);
+#endif
 } // namespace android

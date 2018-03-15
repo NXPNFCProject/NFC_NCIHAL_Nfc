@@ -171,9 +171,6 @@ public:
     int  syscodelen,const uint8_t* optparam, int optparamlen);
     void handleSERemovedNtf();
     bool is_ee_recovery_ongoing();
-    void setEtsiReaederState(se_rd_req_state_t newState);
-    se_rd_req_state_t getEtsiReaederState();
-    Rdr_req_ntf_info_t getSwpRrdReqInfo();
 #if(NXP_NFCC_HCE_F == TRUE)
     void notifyT3tConfigure();
 #endif

@@ -44,6 +44,7 @@
 #include "RoutingManager.h"
 #include "SecureElement.h"
 #if(NXP_EXTNS == TRUE)
+#include "MposManager.h"
 extern "C"{
 #include "phNxpConfig.h"
 #include "nfc_api.h"
@@ -72,14 +73,6 @@ const JNINativeMethod RoutingManager::sMethods [] =
     {"doGetAidMatchingMode", "()I", (void*) RoutingManager::com_android_nfc_cardemulation_doGetAidMatchingMode},
     {"doGetAidMatchingPlatform", "()I", (void*) RoutingManager::com_android_nfc_cardemulation_doGetAidMatchingPlatform}
 };
-
-static uint16_t rdr_req_handling_timeout = 50;
-
-
-#if(NXP_EXTNS == TRUE)
-Rdr_req_ntf_info_t swp_rdr_req_ntf_info;
-static IntervalTimer swp_rd_req_timer;
-#endif
 
 uint16_t lastcehandle = 0;
 
@@ -179,9 +172,6 @@ int RoutingManager::mChipId = 0;
 bool recovery;
 #endif
 
-#if(NXP_EXTNS == TRUE)
-void reader_req_event_ntf (union sigval);
-#endif
 RoutingManager::~RoutingManager ()
 {
     NFA_EeDeregister (nfaEeCallback);
@@ -341,19 +331,6 @@ bool RoutingManager::initialize (nfc_jni_native_data* native)
         }
 #endif
     }
-
-#if(NXP_EXTNS == TRUE)
-    if(nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
-        swp_rdr_req_ntf_info.mMutex.lock();
-        memset(&(swp_rdr_req_ntf_info.swp_rd_req_info),0x00,sizeof(rd_swp_req_t));
-        memset(&(swp_rdr_req_ntf_info.swp_rd_req_current_info),0x00,sizeof(rd_swp_req_t));
-        swp_rdr_req_ntf_info.swp_rd_req_current_info.src = NFA_HANDLE_INVALID;
-        swp_rdr_req_ntf_info.swp_rd_req_info.src = NFA_HANDLE_INVALID;
-        swp_rdr_req_ntf_info.swp_rd_state = STATE_SE_RDR_MODE_STOPPED;
-        swp_rdr_req_ntf_info.mMutex.unlock();
-    }
-#endif
-
     printMemberData();
 
     ALOGV("%s: exit", fn);
@@ -2584,133 +2561,7 @@ void RoutingManager::nfaEeCallback (tNFA_EE_EVT event, tNFA_EE_CBACK_DATA* event
         ALOGV("%s: NFA_EE_DISCOVER_REQ_EVT; status=0x%X; num ee=%u", __func__,
                 eventData->discover_req.status, eventData->discover_req.num_ee);
         if(nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
-            /* Handle Reader over SWP.
-             * 1. Check if the event is for Reader over SWP.
-             * 2. IF yes than send this info(READER_REQUESTED_EVENT) till FWK level.
-             * 3. Stop the discovery.
-             * 4. MAP the proprietary interface for Reader over SWP.NFC_DiscoveryMap, nfc_api.h
-             * 5. start the discovery with reader req, type and DH configuration.
-             *
-             * 6. IF yes than send this info(STOP_READER_EVENT) till FWK level.
-             * 7. MAP the DH interface for Reader over SWP. NFC_DiscoveryMap, nfc_api.h
-             * 8. start the discovery with DH configuration.
-             */
-            swp_rdr_req_ntf_info.mMutex.lock ();
-            for (uint8_t xx = 0; xx < info.num_ee; xx++)
-            {
-                //for each technology (A, B, F, B'), print the bit field that shows
-                //what protocol(s) is support by that technology
-                ALOGV("%s   EE[%u] Handle: 0x%04x  PA: 0x%02x  PB: 0x%02x",
-                        fn, xx, info.ee_disc_info[xx].ee_handle,
-                        info.ee_disc_info[xx].pa_protocol,
-                        info.ee_disc_info[xx].pb_protocol);
-
-                ALOGV("%s, swp_rd_state=%x", fn, swp_rdr_req_ntf_info.swp_rd_state);
-                if( (info.ee_disc_info[xx].ee_req_op == NFC_EE_DISC_OP_ADD) &&
-                        (swp_rdr_req_ntf_info.swp_rd_state == STATE_SE_RDR_MODE_STOPPED ||
-                                swp_rdr_req_ntf_info.swp_rd_state == STATE_SE_RDR_MODE_START_CONFIG ||
-                                swp_rdr_req_ntf_info.swp_rd_state == STATE_SE_RDR_MODE_STOP_CONFIG)&&
-                                (info.ee_disc_info[xx].pa_protocol ==  0x04 || info.ee_disc_info[xx].pb_protocol == 0x04 ))
-                {
-                    ALOGV("%s NFA_RD_SWP_READER_REQUESTED  EE[%u] Handle: 0x%04x  PA: 0x%02x  PB: 0x%02x",
-                            fn, xx, info.ee_disc_info[xx].ee_handle,
-                            info.ee_disc_info[xx].pa_protocol,
-                            info.ee_disc_info[xx].pb_protocol);
-
-                    swp_rdr_req_ntf_info.swp_rd_req_info.src = info.ee_disc_info[xx].ee_handle;
-                    swp_rdr_req_ntf_info.swp_rd_req_info.tech_mask = 0;
-                    swp_rdr_req_ntf_info.swp_rd_req_info.reCfg = false;
-
-                    if( !(swp_rdr_req_ntf_info.swp_rd_req_info.tech_mask & NFA_TECHNOLOGY_MASK_A) )
-                    {
-                        if(info.ee_disc_info[xx].pa_protocol ==  0x04)
-                        {
-                            swp_rdr_req_ntf_info.swp_rd_req_info.tech_mask |= NFA_TECHNOLOGY_MASK_A;
-                            swp_rdr_req_ntf_info.swp_rd_req_info.reCfg = true;
-                        }
-                    }
-
-                    if( !(swp_rdr_req_ntf_info.swp_rd_req_info.tech_mask & NFA_TECHNOLOGY_MASK_B) )
-                    {
-                        if(info.ee_disc_info[xx].pb_protocol ==  0x04)
-                        {
-                            swp_rdr_req_ntf_info.swp_rd_req_info.tech_mask |= NFA_TECHNOLOGY_MASK_B;
-                            swp_rdr_req_ntf_info.swp_rd_req_info.reCfg = true;
-                        }
-                    }
-
-                    if(swp_rdr_req_ntf_info.swp_rd_req_info.reCfg)
-                    {
-                        ALOGV("%s, swp_rd_state=%x  evt : NFA_RD_SWP_READER_REQUESTED swp_rd_req_timer start", fn, swp_rdr_req_ntf_info.swp_rd_state);
-
-                        swp_rd_req_timer.kill();
-                        if(swp_rdr_req_ntf_info.swp_rd_state != STATE_SE_RDR_MODE_STOP_CONFIG)
-                        {
-                            swp_rd_req_timer.set (rdr_req_handling_timeout, reader_req_event_ntf);
-                            swp_rdr_req_ntf_info.swp_rd_state = STATE_SE_RDR_MODE_START_CONFIG;
-                        }
-                        /*RestartReadermode procedure special case should not de-activate*/
-                        else if(swp_rdr_req_ntf_info.swp_rd_state == STATE_SE_RDR_MODE_STOP_CONFIG)
-                        {
-                            swp_rdr_req_ntf_info.swp_rd_state = STATE_SE_RDR_MODE_STARTED;
-                            /*RFDEACTIVATE_DISCOVERY*/
-                            NFA_Deactivate(false);
-                        }
-                        swp_rdr_req_ntf_info.swp_rd_req_info.reCfg = false;
-                    }
-                    //Reader over SWP - Reader Requested.
-                    //se.handleEEReaderEvent(NFA_RD_SWP_READER_REQUESTED, tech, info.ee_disc_info[xx].ee_handle);
-                    break;
-                }
-                else if((info.ee_disc_info[xx].ee_req_op == NFC_EE_DISC_OP_REMOVE) &&
-                        ((swp_rdr_req_ntf_info.swp_rd_state == STATE_SE_RDR_MODE_STARTED) ||
-                                (swp_rdr_req_ntf_info.swp_rd_state == STATE_SE_RDR_MODE_START_CONFIG) ||
-                                (swp_rdr_req_ntf_info.swp_rd_state == STATE_SE_RDR_MODE_STOP_CONFIG) ||
-                                (swp_rdr_req_ntf_info.swp_rd_state == STATE_SE_RDR_MODE_ACTIVATED)) &&
-                                (info.ee_disc_info[xx].pa_protocol ==  0xFF || info.ee_disc_info[xx].pb_protocol == 0xFF))
-                {
-                    ALOGV("%s NFA_RD_SWP_READER_STOP  EE[%u] Handle: 0x%04x  PA: 0x%02x  PB: 0x%02x",
-                            fn, xx, info.ee_disc_info[xx].ee_handle,
-                            info.ee_disc_info[xx].pa_protocol,
-                            info.ee_disc_info[xx].pb_protocol);
-
-                    if(swp_rdr_req_ntf_info.swp_rd_req_info.src == info.ee_disc_info[xx].ee_handle)
-                    {
-                        if(info.ee_disc_info[xx].pa_protocol ==  0xFF)
-                        {
-                            if(swp_rdr_req_ntf_info.swp_rd_req_info.tech_mask & NFA_TECHNOLOGY_MASK_A)
-                            {
-                                swp_rdr_req_ntf_info.swp_rd_req_info.tech_mask &= ~NFA_TECHNOLOGY_MASK_A;
-                                swp_rdr_req_ntf_info.swp_rd_req_info.reCfg = true;
-                                //swp_rdr_req_ntf_info.swp_rd_state = STATE_SE_RDR_MODE_STOP_CONFIG;
-                            }
-                        }
-
-                        if(info.ee_disc_info[xx].pb_protocol ==  0xFF)
-                        {
-                            if(swp_rdr_req_ntf_info.swp_rd_req_info.tech_mask & NFA_TECHNOLOGY_MASK_B)
-                            {
-                                swp_rdr_req_ntf_info.swp_rd_req_info.tech_mask &= ~NFA_TECHNOLOGY_MASK_B;
-                                swp_rdr_req_ntf_info.swp_rd_req_info.reCfg = true;
-                            }
-
-                        }
-
-                        if(swp_rdr_req_ntf_info.swp_rd_req_info.reCfg)
-                        {
-                            ALOGV("%s, swp_rd_state=%x  evt : NFA_RD_SWP_READER_STOP swp_rd_req_timer start", fn, swp_rdr_req_ntf_info.swp_rd_state);
-                            swp_rdr_req_ntf_info.swp_rd_state = STATE_SE_RDR_MODE_STOP_CONFIG;
-                            swp_rd_req_timer.kill();
-                            swp_rd_req_timer.set (rdr_req_handling_timeout, reader_req_event_ntf);
-                            swp_rdr_req_ntf_info.swp_rd_req_info.reCfg = false;
-                        }
-                    }
-                    break;
-                }
-            }
-            swp_rdr_req_ntf_info.mMutex.unlock();
-            /*Set the configuration for UICC/ESE */
-            se.storeUiccInfo (eventData->discover_req);
+          MposManager::getInstance().hanldeEtsiReaderReqEvent(&info);
         }
         break;
 
@@ -3021,40 +2872,6 @@ int RoutingManager::com_android_nfc_cardemulation_doGetAidMatchingPlatform(JNIEn
 
 */
 #if(NXP_EXTNS == TRUE)
-void reader_req_event_ntf (union sigval)
-{
-    if(!nfcFL.nfcNxpEse || !nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
-        ALOGV("%s: nfcNxpEse or ETSI_READER not available. Returning", __func__);
-        return;
-    }
-    static const char fn [] = "RoutingManager::reader_req_event_ntf";
-    ALOGV("%s:  ", fn);
-    JNIEnv* e = NULL;
-    int disc_ntf_timeout = 10;
-    ScopedAttach attach(RoutingManager::getInstance().mNativeData->vm, &e);
-    if (e == NULL)
-    {
-        ALOGE("%s: jni env is null", fn);
-        return;
-    }
-
-    GetNumValue ( NAME_NFA_DM_DISC_NTF_TIMEOUT, &disc_ntf_timeout, sizeof ( disc_ntf_timeout ) );
-
-    Rdr_req_ntf_info_t mSwp_info = RoutingManager::getInstance().getSwpRrdReqInfo();
-
-    ALOGV("%s: swp_rdr_req_ntf_info.swp_rd_req_info.src = 0x%4x ", fn,mSwp_info.swp_rd_req_info.src);
-
-    if(RoutingManager::getInstance().getEtsiReaederState() == STATE_SE_RDR_MODE_START_CONFIG)
-    {
-        e->CallVoidMethod (RoutingManager::getInstance().mNativeData->manager, android::gCachedNfcManagerNotifyETSIReaderModeStartConfig, (uint16_t)mSwp_info.swp_rd_req_info.src);
-    }
-    else if(RoutingManager::getInstance().getEtsiReaederState() == STATE_SE_RDR_MODE_STOP_CONFIG)
-    {
-        ALOGV("%s: sSwpReaderTimer.kill() ", fn);
-        SecureElement::getInstance().sSwpReaderTimer.kill();
-        e->CallVoidMethod (RoutingManager::getInstance().mNativeData->manager, android::gCachedNfcManagerNotifyETSIReaderModeStopConfig,disc_ntf_timeout);
-    }
-}
 extern int active_ese_reset_control;
 #endif
 
@@ -3174,72 +2991,6 @@ void RoutingManager::ee_removed_disc_ntf_handler(tNFA_HANDLE handle, tNFA_EE_STA
     }
     pthread_attr_destroy(&attr);
 }
-#if(NXP_EXTNS == TRUE)
-/*******************************************************************************
-**
-** Function:        getEtsiReaederState
-**
-** Description:     Get the current ETSI Reader state
-**
-** Returns:         Current ETSI state
-**
-*******************************************************************************/
-se_rd_req_state_t RoutingManager::getEtsiReaederState()
-{
-    if(!nfcFL.nfcNxpEse || !nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
-        ALOGV("%s : nfcNxpEse or ETSI_READER not avaialble.Returning",__func__);
-    }
-    return swp_rdr_req_ntf_info.swp_rd_state;
-}
-
-/*******************************************************************************
-**
-** Function:        setEtsiReaederState
-**
-** Description:     Set the current ETSI Reader state
-**
-** Returns:         None
-**
-*******************************************************************************/
-void RoutingManager::setEtsiReaederState(se_rd_req_state_t newState)
-{
-    if(!nfcFL.nfcNxpEse || !nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
-        ALOGV("%s : nfcNxpEse or ETSI_READER not avaialble.Returning",__func__);
-        return;
-    }
-    swp_rdr_req_ntf_info.mMutex.lock();
-    if(newState == STATE_SE_RDR_MODE_STOPPED)
-    {
-        swp_rdr_req_ntf_info.swp_rd_req_current_info.tech_mask &= ~NFA_TECHNOLOGY_MASK_A;
-        swp_rdr_req_ntf_info.swp_rd_req_current_info.tech_mask &= ~NFA_TECHNOLOGY_MASK_B;
-
-        //If all the requested tech are removed, set the hande to invalid , so that next time poll add request can be handled
-
-        swp_rdr_req_ntf_info.swp_rd_req_current_info.src = NFA_HANDLE_INVALID;
-        swp_rdr_req_ntf_info.swp_rd_req_info = swp_rdr_req_ntf_info.swp_rd_req_current_info;
-    }
-    swp_rdr_req_ntf_info.swp_rd_state = newState;
-    swp_rdr_req_ntf_info.mMutex.unlock();
-}
-
-/*******************************************************************************
-**
-** Function:        getSwpRrdReqInfo
-**
-** Description:     get swp_rdr_req_ntf_info
-**
-** Returns:         swp_rdr_req_ntf_info
-**
-*******************************************************************************/
-Rdr_req_ntf_info_t RoutingManager::getSwpRrdReqInfo()
-{
-    ALOGE("%s Enter",__func__);
-    if(!nfcFL.nfcNxpEse || !nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
-        ALOGV("%s : nfcNxpEse or ETSI_READER not avaialble.Returning",__func__);
-    }
-    return swp_rdr_req_ntf_info;
-}
-#endif
 
 #if(NXP_EXTNS == TRUE)
 bool RoutingManager::is_ee_recovery_ongoing()

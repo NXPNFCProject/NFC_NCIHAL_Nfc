@@ -112,17 +112,19 @@ public interface DeviceHost {
         /**
          * Notifies SWP Reader Events.
          */
-        public void onSWPReaderRequestedEvent(boolean istechA, boolean istechB);
+        public void onETSIReaderRequestedEvent(boolean istechA, boolean istechB);
 
-        public void onSWPReaderRequestedFail(int FailCause);
+        public void onETSIReaderRequestedFail(int FailCause);
 
-        public void onSWPReaderActivatedEvent();
+        public void onETSIReaderActivatedEvent();
 
         public void onETSIReaderModeStartConfig(int eeHandle);
 
         public void onETSIReaderModeStopConfig(int disc_ntf_timeout);
 
         public void onETSIReaderModeSwpTimeout(int disc_ntf_timeout);
+
+        public void onETSIReaderModeRestart();
 
         public void onUiccStatusEvent(int uiccStat);
     }
@@ -400,6 +402,12 @@ public interface DeviceHost {
     void notifyEEReaderEvent(int evt);
 
     void etsiInitConfig();
+
+    void stopPoll(int mode);
+
+    void startPoll();
+
+    int mposSetReaderMode(boolean on);
 
     void updateScreenState();
     //boolean enableReaderMode(int technologies);

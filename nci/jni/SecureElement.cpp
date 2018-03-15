@@ -51,6 +51,7 @@
 #include "TransactionController.h"
 
 #if(NXP_EXTNS == TRUE)
+#include "MposManager.h"
 #include "RoutingManager.h"
 
 #include <signal.h>
@@ -69,7 +70,6 @@ static int gSEId = -1;     // secure element ID to use in connectEE(), -1 means 
 static int gGatePipe = -1; // gate id or static pipe id to use in connectEE(), -1 means not set
 static bool gUseStaticPipe = false;    // if true, use gGatePipe as static pipe id.  if false, use as gate id
 extern bool gTypeB_listen;
-bool gReaderNotificationflag = false;
 bool hold_the_transceive = false;
 int dual_mode_current_state=0;
 nfc_jni_native_data* mthreadnative;
@@ -78,7 +78,6 @@ nfcee_disc_state sNfcee_disc_state;
 extern uint8_t nfcee_swp_discovery_status;
 extern int32_t gSeDiscoverycount;
 static void rfFeildEventTimeoutCallback(union sigval);
-extern Rdr_req_ntf_info_t swp_rdr_req_ntf_info ;
 pthread_t passiveListenEnable_thread;
 void *passiveListenEnableThread(void *arg);
 bool ceTransactionPending = false;
@@ -99,7 +98,6 @@ namespace android
 #endif
     extern bool isp2pActivated();
     extern SyncEvent sNfaSetConfigEvent;
-    extern tNFA_STATUS EmvCo_dosetPoll(jboolean enable);
     extern tNFA_STATUS ResetEseSession();
     extern void start_timer_msec(struct timeval  *start_tv);
     extern long stop_timer_getdifference_msec(struct timeval  *start_tv, struct timeval  *stop_tv);
@@ -140,93 +138,10 @@ namespace android
 //////////////////////////////////////////////
 //////////////////////////////////////////////
 #if(NXP_EXTNS == TRUE)
-#define NFC_NUM_INTERFACE_MAP 3
-#define NFC_SWP_RD_NUM_INTERFACE_MAP 1
 #define STATIC_PIPE_0x19 0x19 //PN54X Gemalto's proprietary static pipe
 #define STATIC_PIPE_0x70 0x70 //Broadcom's proprietary static pipe
 uint8_t  SecureElement::mStaticPipeProp;
 
-static const tNCI_DISCOVER_MAPS nfc_interface_mapping_default[NFC_NUM_INTERFACE_MAP] =
-{
-        /* Protocols that use Frame Interface do not need to be included in the interface mapping */
-        {
-                NCI_PROTOCOL_ISO_DEP,
-                NCI_INTERFACE_MODE_POLL_N_LISTEN,
-                NCI_INTERFACE_ISO_DEP
-        }
-        ,
-        {
-                NCI_PROTOCOL_NFC_DEP,
-                NCI_INTERFACE_MODE_POLL_N_LISTEN,
-                NCI_INTERFACE_NFC_DEP
-        }
-        ,
-        {
-                NCI_PROTOCOL_MIFARE,
-                NCI_INTERFACE_MODE_POLL,
-                NCI_INTERFACE_MIFARE
-        }
-};
-static const tNCI_DISCOVER_MAPS nfc_interface_mapping_uicc[NFC_SWP_RD_NUM_INTERFACE_MAP] =
-{
-        /* Protocols that use Frame Interface do not need to be included in the interface mapping */
-        {
-                NCI_PROTOCOL_ISO_DEP,
-                NCI_INTERFACE_MODE_POLL,
-                NCI_INTERFACE_UICC_DIRECT_STAT
-        }
-
-};
-
-static const tNCI_DISCOVER_MAPS nfc_interface_mapping_ese[NFC_SWP_RD_NUM_INTERFACE_MAP] =
-{
-        /* Protocols that use Frame Interface do not need to be included in the interface mapping */
-        {
-                NCI_PROTOCOL_ISO_DEP,
-                NCI_INTERFACE_MODE_POLL,
-                NCI_INTERFACE_ESE_DIRECT_STAT
-        }
-
-};
-
-/*******************************************************************************
-**
-** Function:        startStopSwpReaderProc
-**
-** Description:     handle timeout
-**
-** Returns:         None
-**
-*******************************************************************************/
-static void startStopSwpReaderProc (union sigval)
-{
-    if(!nfcFL.nfcNxpEse || !nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
-        ALOGV("%s: nfcNxpEse or ETSI_READER not enabled. Returning", __func__);
-        return;
-    }
-    ALOGV("%s: Timeout!!!", __func__);
-    JNIEnv* e = NULL;
-    int disc_ntf_timeout = 10;
-
-        ScopedAttach attach(RoutingManager::getInstance().mNativeData->vm, &e);
-        if (e == NULL)
-        {
-            ALOGE("%s: jni env is null", __func__);
-            return;
-        }
-        GetNumValue ( NAME_NFA_DM_DISC_NTF_TIMEOUT, &disc_ntf_timeout, sizeof ( disc_ntf_timeout ) );
-
-        e->CallVoidMethod (RoutingManager::getInstance().mNativeData->manager, android::gCachedNfcManagerNotifyETSIReaderModeSwpTimeout,disc_ntf_timeout);
-
-}
-void SecureElement::discovery_map_cb (tNFC_DISCOVER_EVT event, tNFC_DISCOVER *p_data)
-{
-    (void)event;
-    (void)p_data;
-    SyncEventGuard guard (sSecElem.mDiscMapEvent);
-//    ALOGV("discovery_map_cb; status=%u", eventData->ee_register);
-    sSecElem.mDiscMapEvent.notifyOne();
-}
 #endif
 
 
@@ -250,7 +165,6 @@ SecureElement::SecureElement ()
     mIsAllowWiredInDesfireMifareCE(false),
     mRfFieldEventTimeout(0),
     mIsIntfRstEnabled (false),
-    mIsEmvCoPollEnabled(false),
     mETSI12InitStatus (NFA_STATUS_FAILED),
     mModeSetInfo(NFA_STATUS_FAILED),
     meseETSI12Recovery(false),
@@ -471,7 +385,6 @@ bool SecureElement::initialize (nfc_jni_native_data* native)
     memset(mAidForEmptySelect, 0, sizeof(mAidForEmptySelect));
 #if(NXP_EXTNS == TRUE)
     mIsWiredModeBlocked = false;
-    mIsEmvCoPollEnabled = false;
 #endif
 
     // if no SE is to be used, get out.
@@ -2172,96 +2085,6 @@ void SecureElement::notifyRfFieldEvent (bool isActive)
     ALOGV("%s: exit", fn);
 }
 
-#if(NXP_EXTNS == TRUE)
-/*Reader over SWP*/
-void SecureElement::notifyEEReaderEvent (int evt, int data)
-{
-    if(!nfcFL.nfcNxpEse || !nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
-        ALOGV("%s: nfcNxpEse or ETSI_READER not available. Returning", __func__);
-        return;
-    }
-    static const char fn [] = "SecureElement::notifyEEReaderEvent";
-    ALOGV("%s: enter; event=%x", fn, evt);
-
-
-
-    mMutex.lock();
-    int ret = clock_gettime (CLOCK_MONOTONIC, &mLastRfFieldToggle);
-    if (ret == -1) {
-        ALOGE("%s: clock_gettime failed", fn);
-        // There is no good choice here...
-    }
-    switch (evt) {
-        case NFA_RD_SWP_READER_REQUESTED:
-            ALOGV("%s: NFA_RD_SWP_READER_REQUESTED for tech %x", fn, data);
-            {
-                jboolean istypeA = false;
-                jboolean istypeB = false;
-
-                if(data & NFA_TECHNOLOGY_MASK_A)
-                    istypeA = true;
-                if(data & NFA_TECHNOLOGY_MASK_B)
-                    istypeB = true;
-
-                /*
-                 * Start the protection time.This is to give user a specific time window to wait for the TAG,
-                 * and prevents MW from infinite waiting to switch back to normal NFC-Fouram polling mode.
-                 * */
-                unsigned long timeout = 0;
-                GetNxpNumValue(NAME_NXP_SWP_RD_START_TIMEOUT, (void *)&timeout, sizeof(timeout));
-                ALOGV("SWP_RD_START_TIMEOUT : %ld", timeout);
-                if (timeout > 0)
-                    sSwpReaderTimer.set(1000*timeout,startStopSwpReaderProc);
-            }
-            break;
-        case NFA_RD_SWP_READER_START:
-            ALOGV("%s: NFA_RD_SWP_READER_START", fn);
-            {
-                JNIEnv* e = NULL;
-                    ScopedAttach attach(mNativeData->vm, &e);
-                    if (e == NULL)
-                    {
-                        ALOGE("%s: jni env is null", fn);
-                        break;
-                    }
-                    sSwpReaderTimer.kill();
-                /*
-                 * Start the protection time.This is to give user a specific time window to wait for the
-                 * SWP Reader to finish with card, and prevents MW from infinite waiting to switch back to
-                 * normal NFC-Forum polling mode.
-                 *
-                 *  configuring timeout.
-                 * */
-                unsigned long timeout = 0;
-                GetNxpNumValue(NAME_NXP_SWP_RD_TAG_OP_TIMEOUT, (void *)&timeout, sizeof(timeout));
-                ALOGV("SWP_RD_TAG_OP_TIMEOUT : %ld", timeout);
-                if (timeout > 0)
-                    sSwpReaderTimer.set(2000*timeout,startStopSwpReaderProc);
-
-                e->CallVoidMethod (mNativeData->manager, android::gCachedNfcManagerNotifySWPReaderActivated);
-            }
-            break;
-        case NFA_RD_SWP_READER_STOP:
-            ALOGV("%s: NFA_RD_SWP_READER_STOP", fn);
-            break;
-
-            //TODO: Check this later. Need to update libnfc-nci for this symbol.
-//        case NFA_RD_SWP_READER_START_FAIL:
-//            ALOGV("%s: NFA_RD_SWP_READER_STOP", fn);
-//            //sStopSwpReaderTimer.kill();
-//            e->CallVoidMethod (mNativeData->manager, android::gCachedNfcManagerNotifySWPReaderRequestedFail);
-//            break;
-
-        default:
-            ALOGV("%s: UNKNOWN EVENT ??", fn);
-            break;
-    }
-
-    mMutex.unlock();
-
-    ALOGV("%s: exit", fn);
-}
-#endif
 /*******************************************************************************
 **
 ** Function:        resetRfFieldStatus
@@ -2653,17 +2476,23 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
             sSecElem.mActualResponseSize = (eventData->rcvd_evt.evt_len > MAX_RESPONSE_SIZE) ? MAX_RESPONSE_SIZE : eventData->rcvd_evt.evt_len;
 #if(NXP_EXTNS == TRUE)
             if(nfcFL.nfcNxpEse) {
-                if(eventData->rcvd_evt.evt_len > 0)
-                {
+                if(eventData->rcvd_evt.evt_len > 0) {
                     sSecElem.mTransceiveWaitOk = true;
-
-                    if(nfcFL.eseFL._ESE_ETSI_READER_ENABLE)
-                        sSecElem.NfccStandByOperation(STANDBY_TIMER_START);
+                    if(nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
+                        se_rd_req_state_t state = MposManager::getInstance().getEtsiReaederState();
+                        if((state == STATE_SE_RDR_MODE_STOPPED) ||
+                           (state == STATE_SE_RDR_MODE_STOP_CONFIG)) {
+                            sSecElem.NfccStandByOperation(STANDBY_TIMER_START);
+                        } else {
+                            ALOGV("ETSI in progress, do not start standby timer");
+                        }
+                    } else {
+                      sSecElem.NfccStandByOperation(STANDBY_TIMER_START);
+                    }
                 }
                 /*If there is pending reset event to process*/
                 if((nfcFL.eseFL._JCOP_WA_ENABLE) &&(active_ese_reset_control&RESET_BLOCKED)&&
-                        (!(active_ese_reset_control &(TRANS_CL_ONGOING))))
-                {
+                        (!(active_ese_reset_control &(TRANS_CL_ONGOING)))) {
                     SyncEventGuard guard (sSecElem.mResetEvent);
                     sSecElem.mResetEvent.notifyOne();
                 }
@@ -2719,7 +2548,19 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
                         dataStartPosition = 2+aidlen+5;
                     }
                     data  = &eventData->rcvd_evt.p_evt_buf[dataStartPosition];
-                    sSecElem.notifyTransactionListenersOfAid (&eventData->rcvd_evt.p_evt_buf[2],aidlen,data,datalen,evtSrc);
+                    if (nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE)
+                    {
+                        if(MposManager::getInstance().validateHCITransactionEventParams(data, datalen) == NFA_STATUS_OK)
+                        {
+                            sSecElem.notifyTransactionListenersOfAid(&eventData->rcvd_evt.p_evt_buf[2],
+                                                                     aidlen, data, datalen, evtSrc);
+                        }
+                    }
+                    else
+                    {
+                        sSecElem.notifyTransactionListenersOfAid(&eventData->rcvd_evt.p_evt_buf[2],
+                                                                 aidlen, data, datalen, evtSrc);
+                    }
                 }
                 else
                 {
@@ -3543,7 +3384,6 @@ void SecureElement::eSE_ClearAllPipe_handler(uint8_t host)
     pthread_attr_destroy(&attr);
 
 }
-
 #endif
 
 
@@ -3887,164 +3727,6 @@ bool SecureElement::checkForWiredModeAccess()
     return status;
 }
 #endif
-/*******************************************************************************
-**
-** Function:        etsiInitConfig
-**
-** Description:     Chnage the ETSI state before start configuration
-**
-** Returns:         None
-**
-*******************************************************************************/
-void SecureElement::etsiInitConfig()
-{
-    if(!nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
-        ALOGV("%s: ETSI_READER not available. Returning", __func__);
-        return;
-    }
-
-    ALOGV("%s: Enter", __func__);
-    swp_rdr_req_ntf_info.mMutex.lock();
-
-    if((swp_rdr_req_ntf_info.swp_rd_state == STATE_SE_RDR_MODE_START_CONFIG) &&
-      ((swp_rdr_req_ntf_info.swp_rd_req_info.tech_mask & NFA_TECHNOLOGY_MASK_A) ||
-      (swp_rdr_req_ntf_info.swp_rd_req_info.tech_mask & NFA_TECHNOLOGY_MASK_B)))
-    {
-        if((swp_rdr_req_ntf_info.swp_rd_req_info.tech_mask & NFA_TECHNOLOGY_MASK_A))
-        {
-            swp_rdr_req_ntf_info.swp_rd_req_current_info.tech_mask |= NFA_TECHNOLOGY_MASK_A;
-        }
-
-        if((swp_rdr_req_ntf_info.swp_rd_req_info.tech_mask & NFA_TECHNOLOGY_MASK_B))
-        {
-            swp_rdr_req_ntf_info.swp_rd_req_current_info.tech_mask |= NFA_TECHNOLOGY_MASK_B;
-        }
-
-        swp_rdr_req_ntf_info.swp_rd_req_current_info.src = swp_rdr_req_ntf_info.swp_rd_req_info.src;
-        swp_rdr_req_ntf_info.swp_rd_state = STATE_SE_RDR_MODE_START_IN_PROGRESS;
-        ALOGV("%s: new ETSI state : STATE_SE_RDR_MODE_START_IN_PROGRESS", __func__);
-    }
-    else if((swp_rdr_req_ntf_info.swp_rd_state == STATE_SE_RDR_MODE_STOP_CONFIG) &&
-            (swp_rdr_req_ntf_info.swp_rd_req_current_info.src == swp_rdr_req_ntf_info.swp_rd_req_info.src))
-    {
-        pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(etsiReader));
-        swp_rdr_req_ntf_info.swp_rd_state = STATE_SE_RDR_MODE_STOP_IN_PROGRESS;
-        ALOGV("%s: new ETSI state : STATE_SE_RDR_MODE_STOP_IN_PROGRESS", __func__);
-
-    }
-    swp_rdr_req_ntf_info.mMutex.unlock();
-}
-
-/*******************************************************************************
-**
-** Function:        etsiReaderConfig
-**
-** Description:     Configuring to Emvco Profile
-**
-** Returns:         Status
-**
-*******************************************************************************/
-tNFC_STATUS SecureElement::etsiReaderConfig(int eeHandle)
-{
-    if(!nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
-        ALOGV("%s: ETSI_READER not available. Returning", __func__);
-        return NFA_STATUS_FAILED;
-    }
-    tNFC_STATUS status;
-
-    ALOGV("%s: Enter", __func__);
-    ALOGV("%s: eeHandle : 0x%4x", __func__,eeHandle);
-    /* Setting up the emvco poll profile*/
-    status = android::EmvCo_dosetPoll(true);
-    if (status != NFA_STATUS_OK)
-    {
-        ALOGE("%s: fail enable polling; error=0x%X", __func__, status);
-    }
-
-    ALOGV("%s: NFA_RD_SWP_READER_REQUESTED EE_HANDLE_0xF4 %x", __func__, EE_HANDLE_0xF4);
-    ALOGV("%s: NFA_RD_SWP_READER_REQUESTED EE_HANDLE_0xF3 %x", __func__, EE_HANDLE_0xF3);
-
-    if(eeHandle == EE_HANDLE_0xF4) //UICC
-    {
-        SyncEventGuard guard (mDiscMapEvent);
-        ALOGV("%s: mapping intf for UICC", __func__);
-        status = NFC_DiscoveryMap (NFC_SWP_RD_NUM_INTERFACE_MAP,(tNCI_DISCOVER_MAPS *)nfc_interface_mapping_uicc
-                ,SecureElement::discovery_map_cb);
-        if (status != NFA_STATUS_OK)
-        {
-            ALOGE("%s: fail intf mapping for UICC; error=0x%X", __func__, status);
-            return status;
-        }
-        mDiscMapEvent.wait ();
-    }
-    else if(eeHandle == EE_HANDLE_0xF3) //ESE
-    {
-        SyncEventGuard guard (mDiscMapEvent);
-        ALOGV("%s: mapping intf for ESE", __func__);
-        status = NFC_DiscoveryMap (NFC_SWP_RD_NUM_INTERFACE_MAP,(tNCI_DISCOVER_MAPS *)nfc_interface_mapping_ese
-                ,SecureElement::discovery_map_cb);
-        if (status != NFA_STATUS_OK)
-        {
-            ALOGE("%s: fail intf mapping for ESE; error=0x%X", __func__, status);
-            return status;
-        }
-        mDiscMapEvent.wait ();
-    }
-    else
-    {
-        ALOGV("%s: UNKNOWN SOURCE!!! ", __func__);
-        return NFA_STATUS_FAILED;
-    }
-    if(mIsWiredModeOpen)
-        NfccStandByOperation(STANDBY_TIMER_STOP);
-    mIsEmvCoPollEnabled = true;
-
-    return NFA_STATUS_OK;
-}
-
-/*******************************************************************************
-**
-** Function:        etsiResetReaderConfig
-**
-** Description:     Configuring from Emvco profile to Nfc forum profile
-**
-** Returns:         Status
-**
-*******************************************************************************/
-tNFC_STATUS SecureElement::etsiResetReaderConfig()
-{
-    if(!nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
-        ALOGV("%s: ETSI_READER not available. Returning", __func__);
-        return NFA_STATUS_FAILED;
-    }
-    tNFC_STATUS status = NFA_STATUS_FAILED;
-    ALOGV("%s: Enter", __func__);
-
-    status = android::EmvCo_dosetPoll(false);
-    if (status != NFA_STATUS_OK)
-    {
-        ALOGE("%s: fail enable polling; error=0x%X", __func__, status);
-        status = NFA_STATUS_FAILED;
-    }
-    else
-    {
-        mIsEmvCoPollEnabled = false; /*Emvco poll is disabled*/
-        SyncEventGuard guard (mDiscMapEvent);
-        ALOGV("%s: mapping intf for DH", __func__);
-        status = NFC_DiscoveryMap (NFC_NUM_INTERFACE_MAP,(tNCI_DISCOVER_MAPS *) nfc_interface_mapping_default
-                ,SecureElement::discovery_map_cb);
-        if (status != NFA_STATUS_OK)
-        {
-            ALOGE("%s: fail intf mapping for ESE; error=0x%X", __func__, status);
-            return status;
-        }
-        mDiscMapEvent.wait ();
-
-        if(mIsWiredModeOpen)
-            NfccStandByOperation(STANDBY_TIMER_START);
-    }
-    return status;
-}
 
 int SecureElement::decodeBerTlvLength(uint8_t* data,int index, int data_length )
 {
@@ -5204,6 +4886,20 @@ static void rfFeildEventTimeoutCallback(union sigval)
 {
     ALOGV("rfFeildEventTimeoutCallback  Enter");
     SecureElement::getInstance().setDwpTranseiveState(false, NFCC_RF_FIELD_EVT);
+}
+
+/*******************************************************************************
+**
+** Function         getLastRfFiledToggleTime
+**
+** Description      Provides the last RF filed toggile timer
+**
+** Returns          timespec
+**
+*******************************************************************************/
+struct timespec SecureElement::getLastRfFiledToggleTime(void)
+{
+  return mLastRfFieldToggle;
 }
 #endif
 

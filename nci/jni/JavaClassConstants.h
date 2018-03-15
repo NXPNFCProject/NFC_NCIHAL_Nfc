@@ -17,7 +17,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2015 NXP Semiconductors
+ *  Copyright (C) 2015-2018 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -64,13 +64,6 @@ namespace android
 #endif
     extern jmethodID gCachedNfcManagerNotifyHostEmuDeactivated;
     extern jmethodID gCachedNfcManagerNotifyAidRoutingTableFull;
-    extern jmethodID gCachedNfcManagerNotifySWPReaderRequested;
-    extern jmethodID gCachedNfcManagerNotifySWPReaderRequestedFail;
-    extern jmethodID gCachedNfcManagerNotifySWPReaderActivated;
-    extern jmethodID gCachedNfcManagerNotifySWPReaderTagRemove;
-    extern jmethodID gCachedNfcManagerNotifyETSIReaderModeStartConfig;
-    extern jmethodID gCachedNfcManagerNotifyETSIReaderModeStopConfig;
-    extern jmethodID gCachedNfcManagerNotifyETSIReaderModeSwpTimeout;
 
     extern const char* gNativeP2pDeviceClassName;
     extern const char* gNativeLlcpServiceSocketClassName;
@@ -79,5 +72,8 @@ namespace android
     extern const char* gNativeNfcTagClassName;
     extern const char* gNativeNfcManagerClassName;
     extern const char* gNativeNfcSecureElementClassName;
+#if(NXP_EXTNS == TRUE)
     extern const char* gNativeNfcAlaClassName;
+    extern const char* gNativeNfcMposManagerClassName;
+#endif
 }

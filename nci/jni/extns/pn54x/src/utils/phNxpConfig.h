@@ -20,7 +20,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2015 The Android Open Source Project
+ *  Copyright (C) 2015-2018 The Android Open Source Project
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -96,5 +96,6 @@ int updateNxpConfigTimestamp();
 #define NAME_NXP_ENABLE_ADD_AID             "NXP_ENABLE_ADD_AID"
 #define NAME_NXP_ESE_POWER_DH_CONTROL       "NXP_ESE_POWER_DH_CONTROL"
 #define NAME_NXP_DWP_INTF_RESET_ENABLE      "NXP_DWP_INTF_RESET_ENABLE"
+#define NAME_NFA_CONFIG_FORMAT              "NFA_CONFIG_FORMAT"
 
 #endif //_NXP_CONFIG_H

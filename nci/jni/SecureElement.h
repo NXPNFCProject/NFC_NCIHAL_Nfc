@@ -107,24 +107,6 @@ typedef enum reset_management{
  TRANS_CL_ONGOING = 0x02,
  RESET_BLOCKED = 0x04,
 }ese_reset_control;
-typedef struct {
-    tNFA_HANDLE src;
-    tNFA_TECHNOLOGY_MASK tech_mask;
-    bool reCfg;
-}rd_swp_req_t;
-
-typedef enum
-{
-    STATE_SE_RDR_MODE_INVALID =0x00,
-    STATE_SE_RDR_MODE_START_CONFIG,
-    STATE_SE_RDR_MODE_START_IN_PROGRESS,
-    STATE_SE_RDR_MODE_STARTED,
-    STATE_SE_RDR_MODE_ACTIVATED,
-    STATE_SE_RDR_MODE_STOP_CONFIG,
-    STATE_SE_RDR_MODE_STOP_IN_PROGRESS,
-    STATE_SE_RDR_MODE_STOPPED,
-
-}se_rd_req_state_t;
 
 #if(NXP_EXTNS == TRUE)
 
@@ -148,21 +130,8 @@ typedef enum
     HCI_ACESS = 0x10
 }nfcee_swp_getconfig_status;
 #endif
-typedef enum
-{   STATE_SE_RDR_FAILURE_NOT_SUPPORTED ,
-    STATE_SE_RDR_FAILURE_NOT_ALLOWED
-
-}se_rd_req_failures_t;
 
 #if (NXP_EXTNS == TRUE)
-typedef struct{
-    rd_swp_req_t swp_rd_req_info ;
-    rd_swp_req_t swp_rd_req_current_info ;
-    se_rd_req_state_t swp_rd_state;
-    se_rd_req_failures_t swp_rd_req_fail_cause;
-    Mutex mMutex;
-}Rdr_req_ntf_info_t;
-
 typedef enum operation{
     STANDBY_TIMER_START,
     STANDBY_TIMER_STOP,
@@ -230,7 +199,6 @@ public:
     uint8_t     pipeStatus;
     bool IsCmdsentOnOpenDwpSession;
     bool enableDwp(void);
-    IntervalTimer sSwpReaderTimer; /*timer swp reader timeout*/
     static const tNFA_HANDLE EE_HANDLE_0xF3 = 0x4C0;//0x401; //handle to secure element in slot 0
     static const tNFA_HANDLE EE_HANDLE_0xF8 = 0x481; //handle to secure element in slot 2
     tNFA_HANDLE EE_HANDLE_0xF4;               //handle to secure element in slot 1
@@ -404,17 +372,6 @@ public:
     void notifyRfFieldEvent (bool isActive);
 
 #if(NXP_EXTNS == TRUE)
-    /*******************************************************************************
-    **
-    ** Function:        notifyEEReaderEvent
-    **
-    ** Description:     Notify the NFC service about Reader over SWP events from the stack.
-    **
-    ** Returns:         None
-    **
-    *******************************************************************************/
-    void notifyEEReaderEvent (int evt, int data);
-
     /*******************************************************************************
     **
     ** Function:        initializeEeHandle
@@ -711,10 +668,6 @@ public:
 #endif
 
 #if(NXP_EXTNS == TRUE)
-    void etsiInitConfig();
-    tNFC_STATUS etsiReaderConfig(int eeHandle);
-    tNFC_STATUS etsiResetReaderConfig();
-
     /*******************************************************************************
     **
     ** Function:        enablePassiveListen
@@ -816,9 +769,19 @@ public:
     uint8_t      mNfccPowerMode;
     tNFA_STATUS  setNfccPwrConfig(uint8_t value);
     bool mIsIntfRstEnabled;
-    bool mIsEmvCoPollEnabled;
     void setCLState(bool mState);
     void setDwpTranseiveState(bool state, tNFCC_EVTS_NTF action);
+
+    /*******************************************************************************
+    **
+    ** Function         getLastRfFiledToggleTime
+    **
+    ** Description      Provides the last RF filed toggile timer
+    **
+    ** Returns          timespec
+    **
+    *******************************************************************************/
+    struct timespec getLastRfFiledToggleTime(void);
 #endif
 
 private:
@@ -878,7 +841,6 @@ private:
     SyncEvent       mGetRegisterEvent;
     SyncEvent       mVerInfoEvent;
     SyncEvent       mRegistryEvent;
-    SyncEvent       mDiscMapEvent;
     uint8_t         mVerInfo [3];
     uint8_t         mAtrInfo[40];
     bool            mGetAtrRspwait;
@@ -1007,6 +969,7 @@ private:
     **
     *******************************************************************************/
     tNFA_HANDLE getActiveEeHandle (tNFA_HANDLE eeHandle);
+
 #endif
     /*******************************************************************************
     **
@@ -1088,8 +1051,4 @@ private:
     bool encodeAid (uint8_t* tlv, uint16_t tlvMaxLen, uint16_t& tlvActualLen, const uint8_t* aid, uint8_t aidLen);
 
     static int decodeBerTlvLength(uint8_t* data,int index, int data_length );
-
-    static void discovery_map_cb (tNFC_DISCOVER_EVT event, tNFC_DISCOVER *p_data);
-
-
 };
