@@ -2044,8 +2044,15 @@ final class NfcWiredSe extends ISecureElement.Stub {
             Log.i(TAG, "Mr Robot Opening SecureElementConnection");
             mNfcWiredSeHandle = doOpenSecureElementConnection();
             if (mNfcWiredSeHandle < 0) {
+                Log.i(TAG, "open secure element fails.");
+                mNfcWiredSeHandle = 0;
                 _hidl_cb.onValues(null, SecureElementStatus.IOERROR);
                 return;
+            }
+            else
+            {
+                mIsSecureElementOpened = true;
+                Log.i(TAG, "Mr Robot Completed Opening Secure Element");
             }
         }
         byte[] selectCommand = new byte[5 + aid.size()];
@@ -2090,8 +2097,15 @@ final class NfcWiredSe extends ISecureElement.Stub {
             Log.e(TAG, "Mr Robot Opening SecureElementConnection");
             mNfcWiredSeHandle = doOpenSecureElementConnection();
             if (mNfcWiredSeHandle < 0) {
+                Log.i(TAG, "open secure element fails.");
+                mNfcWiredSeHandle = 0;
                 _hidl_cb.onValues(null, SecureElementStatus.IOERROR);
                 return;
+            }
+            else
+            {
+                mIsSecureElementOpened = true;
+                Log.i(TAG, "Mr Robot Completed Opening Secure Element");
             }
         }
         /* Send Manage channel command */
