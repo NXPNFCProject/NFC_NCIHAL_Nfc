@@ -298,7 +298,7 @@ public class NfcService implements DeviceHostListener {
     NfcWiredSe mNfcSeService;
     ISecureElementHalCallback mSecureElementclientCallback;
     boolean mIsSecureElementOpened = false;
-    boolean mIsNfcOff = false;
+    boolean mSEClientAccessState = false;
     NfcAdapterService mNfcAdapter;
     NfcDtaService mNfcDtaService;
     NfcAdapterExtrasService mExtrasService;
@@ -738,6 +738,21 @@ public class NfcService implements DeviceHostListener {
                 mObjectMap.clear();
                 mP2pLinkManager.enableDisable(mIsNdefPushEnabled, true);
                 updateState(NfcAdapter.STATE_ON);
+                /* Update the SmartCardClient on the state change to enable for any client request
+                 * Handled only the case when state is changed during NFC OFF */
+                try {
+                    if((mSecureElementclientCallback != null) &&
+                            (mSEClientAccessState != true)) {
+                        mSecureElementclientCallback.onStateChange(true);
+                        mSEClientAccessState = true;
+                        Log.i(TAG, "mSecureElementclientCallback.onStateChange true ###################");
+                    } else {
+                        Log.e(TAG, "mSecureElementclientCallback is NULL");
+                    }
+
+                } catch (Exception e) {
+                    Log.e(TAG, "mSecureElementclientCallback.onStateChange");
+                }
             }
 
             initSoundPool();
@@ -753,21 +768,6 @@ public class NfcService implements DeviceHostListener {
 
             /* Start polling loop */
             applyRouting(true);
-            /* Update the SmartCardClient on the state change to enable for any client request
-             * Handled only the case when state is changed during NFC OFF */
-            if(mIsNfcOff) {
-                try {
-                    Log.e(TAG, "mSecureElementclientCallback.onStateChange true ###################");
-                    if(mSecureElementclientCallback != null)
-                       mSecureElementclientCallback.onStateChange(true);
-                    else
-                       Log.e(TAG, "mSecureElementclientCallback is NULL");
-
-                } catch (Exception e) {
-                    Log.e(TAG, "mSecureElementclientCallback.onStateChange");
-                }
-                mIsNfcOff = false;
-            }
             return true;
         }
 
@@ -784,16 +784,20 @@ public class NfcService implements DeviceHostListener {
 
             /* Update the SmartCardClient on the state change to disable any client request
              * */
-            try {
-                Log.e(TAG, "mSecureElementclientCallback.onStateChange false ################# ");
-                mIsNfcOff = true;
-                if(mSecureElementclientCallback != null)
-                    mSecureElementclientCallback.onStateChange(false);
-                else
-                    Log.e(TAG, "mSecureElementclientCallback is NULL");
-                mIsSecureElementOpened = false;
-            } catch (RemoteException e) {
-                Log.e(TAG, "mSecureElementclientCallback.onStateChange");
+            synchronized (NfcService.this) {
+                try {
+                    if((mSecureElementclientCallback != null) &&
+                            (mSEClientAccessState == true)) {
+                        mSecureElementclientCallback.onStateChange(false);
+                        mSEClientAccessState = false;
+                        Log.e(TAG, "mSecureElementclientCallback.onStateChange false ################# ");
+                    } else {
+                        Log.e(TAG, "mSecureElementclientCallback is NULL");
+                    }
+                    mIsSecureElementOpened = false;
+                } catch (RemoteException e) {
+                    Log.e(TAG, "mSecureElementclientCallback.onStateChange");
+                }
             }
             /* Sometimes mDeviceHost.deinitialize() hangs, use a watch-dog.
              * Implemented with a new thread (instead of a Handler or AsyncTask),
@@ -2023,7 +2027,7 @@ final class NfcWiredSe extends ISecureElement.Stub {
 
         if ((channelNumber == DEFAULT_BASIC_CHANNEL) ||
                 (status == SecureElementStatus.SUCCESS)) {
-            Log.i(TAG, "Mr Robot Inside closeChannel(): Returned SUCCESS");
+            Log.i(TAG, "Mr Robot Inside closeChannel(): Returned SUCCESS Channel count = "+mOpenedchannelCount);
             mOpenedchannelCount--;
             /*If there are no channels remaining close secureElement*/
             if (mOpenedchannelCount == 0) {
@@ -2218,12 +2222,14 @@ final class NfcWiredSe extends ISecureElement.Stub {
             if (mNfcWiredSeHandle < 0) {
                 Log.i(TAG, "open secure element fails.");
                 clientCallback.onStateChange(false);
+                mSEClientAccessState = false;
                 mNfcWiredSeHandle = 0;
             }
             else
             {
                 mIsSecureElementOpened = true;
                 clientCallback.onStateChange(true);
+                mSEClientAccessState = true;
                 Log.i(TAG, "Mr Robot Completed Opening Secure Element");
             }
         }
