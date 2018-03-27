@@ -2029,14 +2029,6 @@ void SecureElement::notifyRfFieldEvent (bool isActive)
     static const char fn [] = "SecureElement::notifyRfFieldEvent";
     ALOGV("%s: enter; is active=%u", fn, isActive);
 
-    JNIEnv* e = NULL;
-    ScopedAttach attach(mNativeData->vm, &e);
-    if (e == NULL)
-    {
-        ALOGE("%s: jni env is null", fn);
-        return;
-    }
-
     mMutex.lock();
     int ret = clock_gettime (CLOCK_MONOTONIC, &mLastRfFieldToggle);
     if (ret == -1) {
@@ -2060,7 +2052,6 @@ void SecureElement::notifyRfFieldEvent (bool isActive)
             }
         }
 #endif
-        e->CallVoidMethod (mNativeData->manager, android::gCachedNfcManagerNotifySeFieldActivated);
     }
     else
     {
@@ -2073,15 +2064,9 @@ void SecureElement::notifyRfFieldEvent (bool isActive)
             setDwpTranseiveState(false, NFCC_RF_FIELD_EVT);
         }
 #endif
-        e->CallVoidMethod (mNativeData->manager, android::gCachedNfcManagerNotifySeFieldDeactivated);
     }
     mMutex.unlock();
 
-    if (e->ExceptionCheck())
-    {
-        e->ExceptionClear();
-        ALOGE("%s: fail notify", fn);
-    }
     ALOGV("%s: exit", fn);
 }
 
