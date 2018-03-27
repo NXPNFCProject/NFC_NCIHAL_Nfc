@@ -63,7 +63,7 @@ typedef enum
 
 typedef enum {
   /* Reader over SWP Events*/
-  ETSI_READER_REQUESTED = 0x00,
+  ETSI_READER_START_SUCCESS = 0x00,
   ETSI_READER_START_FAIL,
   ETSI_READER_ACTIVATED,
   ETSI_READER_STOP,
@@ -85,7 +85,6 @@ public:
   Rdr_req_ntf_info_t swp_rdr_req_ntf_info;
   static jmethodID  gCachedMposManagerNotifyETSIReaderRequested;
   static jmethodID  gCachedMposManagerNotifyETSIReaderRequestedFail;
-  static jmethodID  gCachedMposManagerNotifyETSIReaderActivated;
   static jmethodID  gCachedMposManagerNotifyETSIReaderModeStartConfig;
   static jmethodID  gCachedMposManagerNotifyETSIReaderModeStopConfig;
   static jmethodID  gCachedMposManagerNotifyETSIReaderModeSwpTimeout;
@@ -299,7 +298,6 @@ private:
   static MposManager mMposMgr;
   static int32_t mDiscNtfTimeout;
   static int32_t mRdrTagOpTimeout;
-  static int32_t mRdrStartTimeout;
   static const uint8_t EVENT_RF_ERROR   = 0x80; //HCI_TRANSACTION_EVENT parameter type
   static const uint8_t EVENT_RF_VERSION = 0x00; //HCI_TRANSACTION_EVENT parameter version
   static const uint8_t EVENT_EMV_POWER_OFF = 0x72; //HCI_TRANSACTION_EVENT parameter power off

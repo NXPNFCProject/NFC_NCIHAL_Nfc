@@ -38,4 +38,6 @@ public class NativeNfcMposManager {
     public native void doStartPoll();
 
     public native int doMposSetReaderMode(boolean on);
+
+    public native boolean doMposGetReaderMode();
 }

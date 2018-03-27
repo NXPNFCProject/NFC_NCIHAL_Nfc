@@ -440,6 +440,11 @@ public class NativeNfcManager implements DeviceHost {
     }
 
     @Override
+    public boolean mposGetReaderMode() {
+        return mMposMgr.doMposGetReaderMode();
+    }
+
+    @Override
     public native void updateScreenState();
 
     private native NativeLlcpConnectionlessSocket doCreateLlcpConnectionlessSocket(int nSap,
@@ -840,10 +845,6 @@ public class NativeNfcManager implements DeviceHost {
 
     private void notifyETSIReaderRequestedFail(int FailureCause) {
         mListener.onETSIReaderRequestedFail(FailureCause);
-    }
-
-    private void notifyETSIReaderActivated() {
-        mListener.onETSIReaderActivatedEvent();
     }
 
     private void notifyonETSIReaderModeStartConfig(int eeHandle) {

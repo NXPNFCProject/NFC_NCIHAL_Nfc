@@ -196,6 +196,32 @@ static int nativeNfcMposManage_doMposSetReaderMode(JNIEnv*, jobject, bool on)
 
 /*******************************************************************************
 **
+** Function:        nativeNfcMposManage_doMposGetReaderMode
+**
+** Description:     Provides the state of the reader mode on/off
+**                  e: JVM environment.
+**                  o: Java object.
+**
+** Returns:         TRUE/FALSE.
+**
+*******************************************************************************/
+static bool nativeNfcMposManager_doMposGetReaderMode(JNIEnv*, jobject)
+{
+  bool isEnabled = false;
+  int state = MposManager::getInstance().getEtsiReaederState();
+
+  if ((state == STATE_SE_RDR_MODE_STOPPED) ||
+      (state == STATE_SE_RDR_MODE_INVALID)) {
+    isEnabled = false;
+  } else {
+    isEnabled = true;
+  }
+  ALOGV("isEnabled =%x", isEnabled);
+  return isEnabled;
+}
+
+/*******************************************************************************
+**
 ** Function:        nativeNfcMposManage_doStopPoll
 **
 ** Description:     Enables the specific power mode
@@ -295,6 +321,9 @@ static JNINativeMethod gMethods[] =
 
     {"doMposSetReaderMode", "(Z)I",
             (void *)nativeNfcMposManage_doMposSetReaderMode},
+
+    {"doMposGetReaderMode", "()Z",
+            (void *)nativeNfcMposManager_doMposGetReaderMode},
 
     {"doStopPoll", "(I)V",
             (void *)nativeNfcMposManage_doStopPoll},

@@ -36,10 +36,8 @@ extern void        startRfDiscovery (bool isStart);
 MposManager MposManager::mMposMgr;
 int32_t MposManager::mDiscNtfTimeout = 10;
 int32_t MposManager::mRdrTagOpTimeout = 20;
-int32_t MposManager::mRdrStartTimeout = 0x0A;
 jmethodID  MposManager::gCachedMposManagerNotifyETSIReaderRequested;
 jmethodID  MposManager::gCachedMposManagerNotifyETSIReaderRequestedFail;
-jmethodID  MposManager::gCachedMposManagerNotifyETSIReaderActivated;
 jmethodID  MposManager::gCachedMposManagerNotifyETSIReaderModeStartConfig;
 jmethodID  MposManager::gCachedMposManagerNotifyETSIReaderModeStopConfig;
 jmethodID  MposManager::gCachedMposManagerNotifyETSIReaderModeSwpTimeout;
@@ -63,9 +61,6 @@ void MposManager::initMposNativeStruct(JNIEnv* e, jobject o)
 
   gCachedMposManagerNotifyETSIReaderRequestedFail= e->GetMethodID (cls.get(),
           "notifyETSIReaderRequestedFail", "(I)V");
-
-  gCachedMposManagerNotifyETSIReaderActivated = e->GetMethodID (cls.get(),
-          "notifyETSIReaderActivated", "()V");
 
   gCachedMposManagerNotifyETSIReaderModeStartConfig = e->GetMethodID (cls.get(),
           "notifyonETSIReaderModeStartConfig", "(I)V");
@@ -110,7 +105,6 @@ bool MposManager::initialize(nfc_jni_native_data* native)
   initializeReaderInfo();
   GetNumValue(NAME_NFA_DM_DISC_NTF_TIMEOUT, &mDiscNtfTimeout, sizeof(mDiscNtfTimeout));
   GetNxpNumValue(NAME_NXP_SWP_RD_TAG_OP_TIMEOUT, (void *) &mRdrTagOpTimeout, sizeof(mRdrTagOpTimeout));
-  GetNxpNumValue(NAME_NXP_SWP_RD_START_TIMEOUT, (void *) &mRdrStartTimeout, sizeof(mRdrStartTimeout));
   return true;
 }
 
@@ -411,42 +405,25 @@ void MposManager::notifyEEReaderEvent (etsi_rd_event_t evt)
     // There is no good choice here...
   }
   switch (evt) {
-  case ETSI_READER_REQUESTED:
-    ALOGV("%s: NFA_RD_SWP_READER_REQUESTED", __func__);
+  case ETSI_READER_START_SUCCESS:
+    ALOGV("%s: ETSI_READER_START_SUCCESS", __func__);
     {
-      /*
-       * Start the protection time.This is to give user a specific time window to wait for the TAG,
-       * and prevents MW from infinite waiting to switch back to normal NFC-Fouram polling mode.
-       * */
-      if (mRdrStartTimeout > 0)
-        mSwpReaderTimer.set(ONE_SECOND_MS * mRdrStartTimeout, MposManager::startStopSwpReaderProc);
-    }
-    break;
-  case ETSI_READER_ACTIVATED:
-    ALOGV("%s: NFA_RD_SWP_READER_ACTIVATED", __func__);
-    {
-      JNIEnv* e = NULL;
-      ScopedAttach attach(mNativeData->vm, &e);
-      if (e == NULL) {
-        ALOGE("%s: jni env is null", __func__);
-        break;
-      }
       mSwpReaderTimer.kill();
       /*
-       * Start the protection time.This is to give user a specific time window to wait for the
-       * SWP Reader to finish with card, and prevents MW from infinite waiting to switch back to
-       * normal NFC-Forum polling mode.
+       * This is to give user a specific time window to wait for card to be found and
+       * Notify to user if no card found within the give interval of timeout.
        *
        *  configuring timeout.
        * */
       if (mRdrTagOpTimeout > 0)
         mSwpReaderTimer.set(ONE_SECOND_MS * mRdrTagOpTimeout, MposManager::startStopSwpReaderProc);
-
-      e->CallVoidMethod(mNativeData->manager,gCachedMposManagerNotifyETSIReaderActivated);
     }
     break;
+  case ETSI_READER_ACTIVATED:
+    ALOGV("%s: ETSI_READER_ACTIVATED", __func__);
+    break;
   case ETSI_READER_STOP:
-    ALOGV("%s: NFA_RD_SWP_READER_STOP", __func__);
+    ALOGV("%s: ETSI_READER_STOP", __func__);
     pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(etsiReader));
 
     if (se.mIsWiredModeOpen)
@@ -508,8 +485,8 @@ void MposManager::notifyMPOSReaderEvent(mpos_rd_state_t aEvent)
 
     break;
   }
-
 }
+
 void MposManager::hanldeEtsiReaderReqEvent (tNFA_EE_DISCOVER_REQ* aInfo)
 {
   /* Handle Reader over SWP.

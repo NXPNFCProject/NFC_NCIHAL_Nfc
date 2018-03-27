@@ -133,6 +133,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.TimerTask;
+import java.util.Timer;
 import java.io.IOException;
 import java.io.FileNotFoundException;
 
@@ -245,7 +247,6 @@ public class NfcService implements DeviceHostListener {
     static final int MSG_INVOKE_BEAM = 19;
 
     static final int MSG_SWP_READER_REQUESTED = 20;
-    static final int MSG_SWP_READER_ACTIVATED = 21;
     static final int MSG_SWP_READER_DEACTIVATED = 22;
     static final int MSG_CLEAR_ROUTING = 23;
     static final int MSG_SET_SCREEN_STATE = 25;
@@ -340,6 +341,8 @@ public class NfcService implements DeviceHostListener {
     // The amount of time we wait before manually launching
     // the Beam animation when called through the share menu.
     static final int INVOKE_BEAM_DELAY_MS = 1000;
+    // Default delay used for presence checks in ETSI mode
+    static final int ETSI_PRESENCE_CHECK_DELAY = 1000;
     // for use with playSound()
     public static final int SOUND_START = 0;
     public static final int SOUND_END = 1;
@@ -349,7 +352,7 @@ public class NfcService implements DeviceHostListener {
 
     public static final int NCI_VERSION_1_0 = 0x10;
     //ETSI Reader Events
-    public static final int ETSI_READER_REQUESTED   = 0;
+    public static final int ETSI_READER_START_SUCCESS   = 0;
     public static final int ETSI_READER_START_FAIL  = 1;
     public static final int ETSI_READER_ACTIVATED   = 2;
     public static final int ETSI_READER_STOP        = 3;
@@ -844,14 +847,12 @@ public class NfcService implements DeviceHostListener {
     }
 
     @Override
-    public void onETSIReaderActivatedEvent()
-    {
-        sendMessage(NfcService.MSG_SWP_READER_ACTIVATED, null);
-    }
-
-    @Override
     public void onETSIReaderModeStartConfig(int eeHandle)
     {
+        // Check if NFC is enabled
+        if (!isNfcEnabled()) {
+            return;
+        }
         ArrayList<Integer> configList = new ArrayList<Integer>();
         configList.add(eeHandle);
         sendMessage(NfcService.MSG_ETSI_START_CONFIG, configList);
@@ -860,7 +861,13 @@ public class NfcService implements DeviceHostListener {
     @Override
     public void onETSIReaderModeStopConfig(int disc_ntf_timeout)
     {
-        sendMessage(NfcService.MSG_ETSI_STOP_CONFIG, disc_ntf_timeout);
+        // Check if NFC is enabled
+        if (!isNfcEnabled()) {
+            return;
+        }
+        EtsiStopConfigTask task = new EtsiStopConfigTask();
+        task.execute(disc_ntf_timeout);
+
     }
 
     @Override
@@ -2574,14 +2581,36 @@ public class NfcService implements DeviceHostListener {
         @Override
         public int mPOSSetReaderMode (String pkg, boolean on) {
             NfcService.this.enforceNfceeAdminPerm(pkg);
-            int status = mDeviceHost.mposSetReaderMode(on);
-            if(!on) {
-                if(nci_version != NCI_VERSION_2_0) {
-                    applyRouting(true);
-                } else if(mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED
-                        || mNfcUnlockManager.isLockscreenPollingEnabled()) {
-                    applyRouting(false);
+            // Check if NFC is enabled
+            if (!isNfcEnabled()) {
+                return NxpConstants.MPOS_STATUS_REJECTED;
+            }
+
+            synchronized(NfcService.this) {
+                int status = mDeviceHost.mposSetReaderMode(on);
+                if(!on) {
+                    if(nci_version != NCI_VERSION_2_0) {
+                        applyRouting(true);
+                    } else if(mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED
+                            || mNfcUnlockManager.isLockscreenPollingEnabled()) {
+                        applyRouting(false);
+                    }
                 }
+                return status;
+            }
+        }
+
+        @Override
+        public boolean mPOSGetReaderMode (String pkg) {
+            NfcService.this.enforceNfceeAdminPerm(pkg);
+            // Check if NFC is enabled
+            if (!isNfcEnabled()) {
+                return false;
+            }
+
+            boolean status = false;
+            synchronized(NfcService.this) {
+                status = mDeviceHost.mposGetReaderMode();
             }
             return status;
         }
@@ -2589,13 +2618,27 @@ public class NfcService implements DeviceHostListener {
         @Override
         public void stopPoll(String pkg, int mode) {
             NfcService.this.enforceNfceeAdminPerm(pkg);
-            mDeviceHost.stopPoll(mode);
+            // Check if NFC is enabled
+            if (!isNfcEnabled()) {
+                return;
+            }
+
+            synchronized(NfcService.this) {
+                mDeviceHost.stopPoll(mode);
+            }
         }
 
         @Override
         public void startPoll(String pkg) {
             NfcService.this.enforceNfceeAdminPerm(pkg);
-            mDeviceHost.startPoll();
+           // Check if NFC is enabled
+            if (!isNfcEnabled()) {
+                return;
+            }
+
+            synchronized(NfcService.this) {
+                mDeviceHost.startPoll();
+            }
         }
     }
 
@@ -4771,7 +4814,7 @@ public class NfcService implements DeviceHostListener {
         mDeviceHost.etsiReaderConfig(eeHandle);
 
         Log.d(TAG, "etsiStartConfig : notifyEEReaderEvent");
-        mDeviceHost.notifyEEReaderEvent(ETSI_READER_REQUESTED);
+        mDeviceHost.notifyEEReaderEvent(ETSI_READER_START_SUCCESS);
 
         Log.d(TAG, "etsiStartConfig : setEtsiReaederState");
         mDeviceHost.setEtsiReaederState(STATE_SE_RDR_MODE_STARTED);
@@ -4797,13 +4840,16 @@ public class NfcService implements DeviceHostListener {
             return;
         }
         ETSI_STOP_CONFIG = true;
-        TagRemoveTask tagRemoveTask = new TagRemoveTask();
-        tagRemoveTask.execute(discNtfTimeout);
         Log.d(TAG, "etsiStopConfig : etsiInitConfig");
         mDeviceHost.etsiInitConfig();
 
+        Timer mTimer = new Timer();
+        TagRemoveTaskTimer tagRemoveTask = new TagRemoveTaskTimer();
+        mTimer.schedule(tagRemoveTask, ETSI_PRESENCE_CHECK_DELAY, ETSI_PRESENCE_CHECK_DELAY);
+
         Log.d(TAG, "etsiStopConfig : disableDiscovery");
         mDeviceHost.stopPoll(NxpConstants.ULTRA_LOW_POWER);
+        mTimer.cancel();
 
         if(mDeviceHost.getEtsiReaederState() == STATE_SE_RDR_MODE_STOPPED)
         {
@@ -5174,7 +5220,7 @@ public class NfcService implements DeviceHostListener {
                     aidIntent.putExtra(NxpConstants.EXTRA_DATA,dataSrcInfo.first);
                     if (DBG) Log.d(TAG, "Broadcasting " + ACTION_AID_SELECTED);
                     sendSeBroadcast(aidIntent);
-				    }
+                    }
                     break;
 
                 case MSG_CONNECTIVITY_EVENT:
@@ -5360,19 +5406,6 @@ public class NfcService implements DeviceHostListener {
                     mContext.sendBroadcast(swpReaderRequestedFailIntent);
                     break;
 
-                case MSG_SWP_READER_ACTIVATED:
-
-                    /* Send broadcast ordered */
-                    Intent swpReaderActivatedIntent = new Intent();
-
-                    swpReaderActivatedIntent
-                            .setAction(NxpConstants.ACTION_NFC_MPOS_READER_MODE_ACTIVATED);
-                    if (DBG) {
-                        Log.d(TAG, "SWP READER - Activated");
-                    }
-                    mContext.sendBroadcast(swpReaderActivatedIntent);
-                    break;
-
                 case MSG_ETSI_START_CONFIG:
                 {
                     Log.d(TAG, "NfcServiceHandler - MSG_ETSI_START_CONFIG");
@@ -5385,7 +5418,9 @@ public class NfcService implements DeviceHostListener {
                     else{
                         eeHandle = 0x4C0;
                     }
-                    etsiStartConfig(eeHandle);
+                    synchronized (NfcService.this) {
+                        etsiStartConfig(eeHandle);
+                    }
                 }
                     break;
 
@@ -5712,44 +5747,25 @@ public class NfcService implements DeviceHostListener {
         }
     }
 
-    class TagRemoveTask extends AsyncTask<Integer, Void, Void> {
+    class EtsiStopConfigTask extends AsyncTask<Integer, Void, Void> {
         @Override
         protected Void doInBackground(Integer... params) {
-
-                Intent swpReaderTagRemoveIntent = new Intent();
-
-                swpReaderTagRemoveIntent.setAction(NxpConstants.ACTION_NFC_MPOS_READER_MODE_REMOVE_CARD);
-
-                int counter = 0;
-                int discNtfTimeout = params[0].intValue();
-
-                while(ETSI_STOP_CONFIG == true)
-                { /* Send broadcast ordered */
-
-                    if(discNtfTimeout == 0)
-                    {
-                        /*Do nothing*/
-                    }
-                    else if(counter < discNtfTimeout)
-                    {
-                        counter++;
-                    }
-                    else
-                    {
-                        ETSI_STOP_CONFIG = false;
-                        break;
-                    }
-                    if (DBG) {
-                        Log.d(TAG, "SWP READER - Tag Remove");
-                    }
-                    mContext.sendBroadcast(swpReaderTagRemoveIntent);
-                    try{
-                        Thread.sleep(1000);
-                    } catch(Exception e) {
-                        e.printStackTrace();
-                    }
-                }
+            synchronized (NfcService.this) {
+                etsiStopConfig(params[0].intValue());
                 return null;
+            }
+        }
+    }
+
+    class TagRemoveTaskTimer extends TimerTask {
+        public void run()
+        {
+            Intent swpReaderTagRemoveIntent = new Intent();
+            swpReaderTagRemoveIntent.setAction(NxpConstants.ACTION_NFC_MPOS_READER_MODE_REMOVE_CARD);
+            if (DBG) {
+                Log.d(TAG, "SWP READER - Tag Remove");
+            }
+            mContext.sendBroadcast(swpReaderTagRemoveIntent);
         }
     }
 

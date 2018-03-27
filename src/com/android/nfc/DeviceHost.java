@@ -116,8 +116,6 @@ public interface DeviceHost {
 
         public void onETSIReaderRequestedFail(int FailCause);
 
-        public void onETSIReaderActivatedEvent();
-
         public void onETSIReaderModeStartConfig(int eeHandle);
 
         public void onETSIReaderModeStopConfig(int disc_ntf_timeout);
@@ -408,6 +406,8 @@ public interface DeviceHost {
     void startPoll();
 
     int mposSetReaderMode(boolean on);
+
+    boolean mposGetReaderMode();
 
     void updateScreenState();
     //boolean enableReaderMode(int technologies);
