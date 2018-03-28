@@ -173,6 +173,7 @@ namespace android
     extern void nativeNfcTag_cacheNonNciCardDetection();
     extern void nativeNfcTag_handleNonNciCardDetection(tNFA_CONN_EVT_DATA* eventData);
     extern void nativeNfcTag_handleNonNciMultiCardDetection(uint8_t connEvent, tNFA_CONN_EVT_DATA* eventData);
+    extern tNFA_STATUS NxpNfcUpdateEeprom(uint8_t* param, uint8_t len, uint8_t* val);
     extern uint8_t checkTagNtf;
     extern uint8_t checkCmdSent;
 #endif
@@ -464,6 +465,7 @@ bool get_AGC_process_state();
 void checkforTranscation(uint8_t connEvent ,void * eventData);
 void sig_handler(int signo);
 void cleanup_timer();
+tNFA_STATUS updateEeprom(uint8_t* param, uint8_t len, uint8_t* val);
 /* Transaction Events in order */
 static IntervalTimer scleanupTimerProc_rffield;
 typedef enum transcation_events
@@ -2194,6 +2196,8 @@ static jboolean nfcManager_doInitialize (JNIEnv* e, jobject o)
 #if(NXP_EXTNS == TRUE)
     rfActivation = false;
     tNFA_PMID ven_config_addr[]  = {0xA0, 0x07};
+    tNFA_PMID pollProfileAddr[] = {0xA0, 0x44};
+    uint8_t pollProfileVal[] = {NFC_FORUM_POLL};
     bool isSuccess = false;
     sNfcee_disc_state = UICC_SESSION_NOT_INTIALIZED;
     IsEseCeDisabled = false;
@@ -2390,6 +2394,7 @@ static jboolean nfcManager_doInitialize (JNIEnv* e, jobject o)
                         }
                         gGeneralPowershutDown = 0;
                     }
+                    updateEeprom(pollProfileAddr, sizeof(pollProfileVal), pollProfileVal);
                     if(gIsDtaEnabled == true){
                         uint8_t configData = 0;
                         configData = 0x01;    /**< Poll NFC-DEP : Highest Available Bit Rates */
@@ -2599,6 +2604,45 @@ void requestFwDownload()
     {
         ALOGE("Exit:%s HalGetFwDwnldFlag status:%d ",__func__, status);
     }
+}
+
+/*******************************************************************************
+**
+** Function:        updateEeprom
+**
+** Description:     Used to send the EXTENDED SET CONFIG command to update
+**                  the EEPROM values
+**                  *param Address of the eeprom
+**                  len of the eeprom address
+**                  val to be updated
+**
+** Returns:         NFA_STATUS_OK/NFA_STATUS_FAILED
+**
+*******************************************************************************/
+tNFA_STATUS updateEeprom(uint8_t* param, uint8_t len, uint8_t* val)
+{
+  tNFA_STATUS status = NFA_STATUS_OK;
+  uint8_t valOffset = 4;
+  SyncEventGuard guard(sNfaGetConfigEvent);
+  status = NFA_GetConfig(0x01, param);
+  if (status == NFA_STATUS_OK) {
+    status = sNfaGetConfigEvent.wait(2*ONE_SECOND_MS)?NFA_STATUS_OK:NFA_STATUS_FAILED;
+  }
+
+  if(status == NFA_STATUS_OK) {
+    /*sCurrentConfigLen should be > 4 (num_tlv:1 + addr:2 + value:1) and
+     *pos 4 gives the current eeprom value*/
+    if ((sCurrentConfigLen > PROPSETCONFIGMINLEN) && (sConfig[SETCONFIGLENPOS] == len)) {
+      if(memcmp(&sConfig[valOffset], val, len)) {
+        status = NxpNfcUpdateEeprom(param, len, val);
+      } else {
+        ALOGV("Already same");
+      }
+    } else {
+      status = NFA_STATUS_FAILED;
+    }
+  }
+  return status;
 }
 #endif
 

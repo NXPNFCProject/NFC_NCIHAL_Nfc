@@ -1012,14 +1012,14 @@ tNFA_STATUS Set_EERegisterValue(uint16_t RegAddr, uint8_t bitVal)
 
 #if(NXP_EXTNS == TRUE)
 /*******************************************************************************
-+ **
-+ ** Function:        NxpNfc_Write_Cmd()
-+ **
-+ ** Description:     Writes the command to NFCC
-+ **
-+ ** Returns:         success/failure
-+ **
-+ *******************************************************************************/
+ **
+ ** Function:        NxpNfc_Write_Cmd()
+ **
+ ** Description:     Writes the command to NFCC
+ **
+ ** Returns:         success/failure
+ **
+ *******************************************************************************/
 tNFA_STATUS NxpNfc_Write_Cmd_Common(uint8_t retlen, uint8_t* buffer)
 {
     tNFA_STATUS status = NFA_STATUS_FAILED;
@@ -1038,8 +1038,7 @@ tNFA_STATUS NxpNfc_Write_Cmd_Common(uint8_t retlen, uint8_t* buffer)
     status = GetCbStatus();
     return status;
 }
-#endif
-#if(NXP_EXTNS == TRUE)
+
 /*******************************************************************************
  **
  ** Function:        NxpNfc_Send_CoreResetInit_Cmd()
@@ -1061,5 +1060,60 @@ tNFA_STATUS NxpNfc_Send_CoreResetInit_Cmd(void)
     }
     return status;
 }
+
+/*******************************************************************************
+ **
+ ** Function:        NxpNfcUpdateEeprom()
+ **
+ ** Description:     Sends extended nxp set config parameter
+ **
+ ** Returns:         NFA_STATUS_FAILED/NFA_STATUS_OK
+ **
+ *******************************************************************************/
+tNFA_STATUS NxpNfcUpdateEeprom(uint8_t* param, uint8_t len, uint8_t* val)
+{
+  tNFA_STATUS status = NFA_STATUS_FAILED;
+  uint8_t *cmdBuf = NULL;
+  uint8_t setCfgCmdLen = 0;   //Memory field len 1bytes
+  uint8_t setCfgCmdHdr[7] = {0x20, 0x02, //set_cfg header
+          0x00,   //len of following value
+          0x01,   //Num Param
+          param[0],//First byte of Address
+          param[1],//Second byte of Address
+          len//Data len
+  };
+  setCfgCmdLen = sizeof(setCfgCmdHdr) + len;
+  setCfgCmdHdr[2] = setCfgCmdLen - SETCONFIGLENPOS;
+  cmdBuf = (uint8_t*)malloc(setCfgCmdLen);
+  if(cmdBuf == NULL)
+  {
+      ALOGE("memory allocation failed");
+      return status;
+  }
+  ALOGV("setCfgCmdLen=%u", setCfgCmdLen);
+  memset(cmdBuf, 0, setCfgCmdLen);
+  memcpy(cmdBuf, setCfgCmdHdr, sizeof(setCfgCmdHdr));
+  memcpy(cmdBuf+sizeof(setCfgCmdHdr), val, len);
+
+  SetCbStatus(NFA_STATUS_FAILED);
+  SyncEventGuard guard (gnxpfeature_conf.NxpFeatureConfigEvt);
+  status = NFA_SendRawVsCommand(setCfgCmdLen, cmdBuf, NxpResponse_Cb);
+  if (status == NFA_STATUS_OK) {
+    ALOGV ("Success NFA_SendRawVsCommand");
+    gnxpfeature_conf.NxpFeatureConfigEvt.wait(2*ONE_SECOND_MS); /* wait for callback */
+  } else {
+      ALOGE ("Failed NFA_SendRawVsCommand");
+  }
+
+  if(cmdBuf)
+  {
+    free(cmdBuf);
+    cmdBuf = NULL;
+  }
+
+  status = GetCbStatus();
+  return status;
+}
+
 #endif
 } /*namespace android*/

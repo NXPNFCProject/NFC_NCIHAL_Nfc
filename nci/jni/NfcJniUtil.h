@@ -92,8 +92,12 @@
 #define NDEF_MODE_UNKNOWN                3
 
 #if(NXP_EXTNS == TRUE)
-#define VEN_POWER_STATE_ON                   9
-#define VEN_POWER_STATE_OFF                  10
+#define VEN_POWER_STATE_ON                9
+#define VEN_POWER_STATE_OFF               10
+#define NFC_FORUM_POLL                    0
+#define EMVCO_POLL_MODE                   1
+#define SETCONFIGLENPOS                   3
+#define PROPSETCONFIGMINLEN               4
 // ESE Suppored Technologies
 #define TARGET_TYPE_ISO14443_3A_3B        11
 #endif
