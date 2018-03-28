@@ -1670,10 +1670,9 @@ void nfaDeviceManagementCallback (uint8_t dmEvent, tNFA_DM_CBACK_DATA* eventData
              }
             else
             {
-                /*In case of 66T/67T if Field On is not received before activation, consider NFA_ACTIVATED_EVENT for
+                /*In case of if Field On is not received before activation, consider NFA_ACTIVATED_EVENT for
                  locking the transaction and use Field Off received while removing the reader from proximity to end the lock*/
-                if(((nfcFL.chipType == pn548C2) || (nfcFL.chipType == pn551)) &&
-                    pTransactionController->getCurTransactionRequestor() == TRANSACTION_REQUESTOR(NFA_ACTIVATED_EVENT))
+                if(pTransactionController->getCurTransactionRequestor() == TRANSACTION_REQUESTOR(NFA_ACTIVATED_EVENT))
                 {
                     pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(NFA_ACTIVATED_EVENT));
                 }
@@ -5889,7 +5888,7 @@ static void nfcManager_doSetScreenState (JNIEnv* e, jobject o, jint screen_state
 #endif
     pendingScreenState = false;
     int prevScreenState = getScreenState();
-    if(prevScreenState == state)
+    if(prevScreenState == state && get_lastScreenStateRequest() == NFA_SCREEN_STATE_UNKNOWN)
     {
         ALOGV("Screen state is not changed. ");
 #if (NXP_EXTNS == TRUE)
@@ -6097,7 +6096,7 @@ static void nfcManager_doSetScreenOrPowerState (JNIEnv* e, jobject o, jint state
 bool nfcManager_isRequestPending(void)
 {
     bool isPending = false;
-    if((transaction_data.current_transcation_state != NFA_TRANS_ACTIVATED_EVT) &&
+    if((transaction_data.current_transcation_state != NFA_TRANS_DM_RF_TRANS_END) &&
             ((pendingScreenState == true) || (get_last_request() != 0x00)))
     {
         isPending = true;
@@ -6428,7 +6427,8 @@ void checkforTranscation(uint8_t connEvent, void* eventData)
         if (eventDM_Conn_data->rf_field.status == NFA_STATUS_OK &&
                 (transaction_data.current_transcation_state == NFA_TRANS_EE_ACTION_EVT
                         || transaction_data.current_transcation_state == NFA_TRANS_CE_DEACTIVATED
-                        || transaction_data.current_transcation_state == NFA_TRANS_CE_ACTIVATED)
+                        || transaction_data.current_transcation_state == NFA_TRANS_CE_ACTIVATED
+                        || transaction_data.current_transcation_state == NFA_TRANS_ACTIVATED_EVT)
                 && eventDM_Conn_data->rf_field.rf_field_status == 0)
         {
             ALOGV("start_timer");
@@ -6436,6 +6436,7 @@ void checkforTranscation(uint8_t connEvent, void* eventData)
                 set_AGC_process_state(false);
             }
             transaction_data.current_transcation_state = NFA_TRANS_DM_RF_FIELD_EVT_OFF;
+            ALOGV("Start guard RF ON timer");
             pTransactionController->setAbortTimer(50/*msec*/);
         }
         else if (eventDM_Conn_data->rf_field.status == NFA_STATUS_OK &&
@@ -6456,6 +6457,7 @@ void checkforTranscation(uint8_t connEvent, void* eventData)
                 eventDM_Conn_data->rf_field.rf_field_status == 0)
         {
             ALOGV("Transcation is done");
+            pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(RF_FIELD_EVT));
             if(nfcFL.chipType != pn547C2) {
                 set_AGC_process_state(false);
             }
@@ -6507,6 +6509,7 @@ void *enableThread(void *arg)
     {
         ALOGV("update last screen state request: %d", last_screen_state_request);
         nfcManager_doSetScreenState(NULL, NULL, last_screen_state_request);
+        set_lastScreenStateRequest(NFA_SCREEN_STATE_UNKNOWN);
         if( last_screen_state_request == NFA_SCREEN_STATE_ON_LOCKED)
             screen_lock_flag = true;
     }
@@ -6521,6 +6524,7 @@ void *enableThread(void *arg)
         sDiscoveryEnabled = false;
         sPollingEnabled = false;
 
+        transaction_data.last_request &= ~(ENABLE_DISCOVERY);
         nfcManager_enableDiscovery(NULL, NULL, transaction_data.discovery_params.technologies_mask, transaction_data.discovery_params.enable_lptd,
                                          transaction_data.discovery_params.reader_mode, transaction_data.discovery_params.enable_p2p,
                                          transaction_data.discovery_params.restart);
@@ -6529,6 +6533,7 @@ void *enableThread(void *arg)
     if (last_request & DISABLE_DISCOVERY)
     {
         ALOGV("send the last request disable");
+        transaction_data.last_request &= ~(DISABLE_DISCOVERY);
         nfcManager_disableDiscovery(NULL, NULL);
         disable_discovery = true;
     }
@@ -6537,6 +6542,7 @@ void *enableThread(void *arg)
     {
         ALOGV("send the last request to enable P2P ");
         nfcManager_Enablep2p(NULL, NULL, transaction_data.discovery_params.enable_p2p);
+        transaction_data.last_request &= ~(ENABLE_P2P);
     }
 #if(NXP_NFCC_HCE_F == TRUE)
     if(last_request & T3T_CONFIGURE)
@@ -6546,6 +6552,7 @@ void *enableThread(void *arg)
         {
            RoutingManager::getInstance().deregisterT3tIdentifier(transaction_data.t3thandle);
         }
+        transaction_data.last_request &= ~(T3T_CONFIGURE);
         RoutingManager::getInstance().notifyT3tConfigure();
     }
 #endif
@@ -6567,7 +6574,13 @@ void *enableThread(void *arg)
     }
     screen_lock_flag = false;
     disable_discovery = false;
+    last_screen_state_request = transaction_data.last_screen_state_request;
+    last_request = transaction_data.last_request;
     memset(&transaction_data, 0x00, sizeof(Transcation_Check_t));
+
+    transaction_data.last_request = last_request;
+    set_lastScreenStateRequest(last_screen_state_request);
+
     if(nfcFL.chipType != pn547C2) {
         memset(&menableAGC_debug_t, 0x00, sizeof(enableAGC_debug_t));
     }

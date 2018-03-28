@@ -51,6 +51,8 @@ void transactionController::lastRequestResume(void)
     pthread_attr_t attr;
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+    pendingTransHandleTimer->kill();
+    pendingTransHandleTimer = new IntervalTimer();
 
     //Fork a thread which shall abort a stuck transaction and resume last trasaction*/
     irret = pthread_create(&transaction_thread, &attr, android::enableThread, NULL);
@@ -177,7 +179,7 @@ bool transactionController::transactionAttempt(eTransactionId transactionRequest
     //In case there is a chance that transaction will be stuck; start transaction abort timer
     if(transactionLiveLockable(transactionRequestor))
     {
-        abortTimer->set(10000, transactionAbortTimerCb);
+        abortTimer->set(1000000, transactionAbortTimerCb);
     }
     sem_getvalue(&barrier, &semVal);
     ALOGD ("%s: Transaction granted : %d and barrier is: %d", __FUNCTION__, transactionRequestor, semVal);
@@ -213,7 +215,7 @@ bool transactionController::transactionAttempt(eTransactionId transactionRequest
 
         if(transactionLiveLockable(transactionRequestor))
         {
-            abortTimer->set(10000, transactionAbortTimerCb);
+            abortTimer->set(1000000, transactionAbortTimerCb);
         }
         ALOGD ("%s: Transaction granted : %d ", __FUNCTION__, transactionRequestor);
 
@@ -237,7 +239,7 @@ bool transactionController::transactionAttempt(eTransactionId transactionRequest
 void transactionController::transactionEnd(eTransactionId transactionRequestor)
 {
     int val;
-
+     ALOGD ("%s: Enter",__FUNCTION__);
     if(requestor == transactionRequestor)
     {
         /*If any abort timer is running for this transaction then stop it*/
@@ -345,10 +347,8 @@ transactionController* transactionController::controller(void)
     {
         pInstance->pTransactionDetail->trans_in_progress = false;
         pInstance->requestor = NO_REQUESTOR;
-
         pInstance->abortTimer->kill();
         pInstance->pendingTransHandleTimer->kill();
-
         pInstance->abortTimer = new IntervalTimer();
         pInstance->pendingTransHandleTimer = new IntervalTimer();
 
