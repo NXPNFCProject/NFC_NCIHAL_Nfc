@@ -286,6 +286,18 @@ bool transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uint8_t* recvBuffe
 bool activate (jint seID);
 /*******************************************************************************
 **
+** Function:        getActiveSecureElementList
+**
+** Description:     Get the list of handles of all execution environments.
+**                  e: Java Virtual Machine.
+**
+** Returns:         List of handles of all execution environments.
+**
+*******************************************************************************/
+jintArray getActiveSecureElementList (JNIEnv* e);
+
+/*******************************************************************************
+**
 ** Function:        deactivate
 **
 ** Description:     Turn off the secure element.

@@ -180,6 +180,9 @@ public class NativeNfcManager implements DeviceHost {
     @Override
     public native boolean setDefaultRoute(int defaultRouteEntry, int defaultProtoRouteEntry, int defaultTechRouteEntry);
     
+    @Override
+    public native int[] doGetActiveSecureElementList();
+
     public native int doRegisterT3tIdentifier(byte[] t3tIdentifier);
 
     @Override

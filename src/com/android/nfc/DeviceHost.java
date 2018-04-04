@@ -200,6 +200,7 @@ public interface DeviceHost {
 
     public void disableDiscovery();
 
+    public int[] doGetActiveSecureElementList();
     public boolean sendRawFrame(byte[] data);
 
     public boolean routeAid(byte[] aid, int route, int aidInfo, int powerState);

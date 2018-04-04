@@ -121,6 +121,10 @@ import com.nxp.nfc.INxpNfcAdapter;
 import com.nxp.nfc.INxpNfcAdapterExtras;
 import java.io.IOException;
 import java.util.HashSet;
+import com.gsma.nfc.internal.NxpNfcController;
+import com.nxp.nfc.gsma.internal.INxpNfcController;
+import com.android.nfc.cardemulation.AidRoutingManager;
+import com.android.nfc.cardemulation.RegisteredAidCache;
 import android.hardware.secure_element.V1_0.*;
 
 public class NfcService implements DeviceHostListener {
@@ -245,7 +249,7 @@ public class NfcService implements DeviceHostListener {
     private final NfceeAccessControl mNfceeAccessControl;
 
     private final BackupManager mBackupManager;
-
+    private NxpNfcController mNxpNfcController;
     List<PackageInfo> mInstalledPackages; // cached version of installed packages
 
     // fields below are used in multiple threads and protected by synchronized(this)
@@ -314,6 +318,8 @@ public class NfcService implements DeviceHostListener {
     private HandoverDataParser mHandoverDataParser;
     private ContentResolver mContentResolver;
     private CardEmulationManager mCardEmulationManager;
+    private AidRoutingManager mAidRoutingManager;
+    private RegisteredAidCache mAidCache;
     private Vibrator mVibrator;
     private VibrationEffect mVibrationEffect;
 
@@ -331,6 +337,10 @@ public class NfcService implements DeviceHostListener {
 
     public static NfcService getInstance() {
         return sService;
+    }
+
+    public boolean getLastCommitRoutingStatus() {
+        return mAidRoutingManager.getLastCommitRoutingStatus();
     }
 
     @Override
@@ -531,7 +541,10 @@ public class NfcService implements DeviceHostListener {
         mIsHceFCapable =
                 pm.hasSystemFeature(PackageManager.FEATURE_NFC_HOST_CARD_EMULATION_NFCF);
         if (mIsHceCapable) {
+            mAidRoutingManager = new AidRoutingManager();
             mCardEmulationManager = new CardEmulationManager(mContext);
+            mAidCache = mCardEmulationManager.getRegisteredAidCache();
+            mNxpNfcController = new NxpNfcController(mContext, mCardEmulationManager);
         }
         mForegroundUtils = ForegroundUtils.getInstance();
 
@@ -1317,6 +1330,23 @@ public class NfcService implements DeviceHostListener {
         @Override
         public INxpNfcAdapterExtras getNxpNfcAdapterExtrasInterface() throws RemoteException {
             return mNxpExtrasService;
+        }
+         @Override
+        public int[] getActiveSecureElementList(String pkg) throws RemoteException {
+
+            int[] list = null;
+            if (isNfcEnabled()) {
+                list = mDeviceHost.doGetActiveSecureElementList();
+            }
+            for(int i=0; i< list.length; i++) {
+                Log.d(TAG, "Active element = "+ list[i]);
+            }
+            return list;
+        }
+        //GSMA Changes
+        @Override
+        public INxpNfcController getNxpNfcControllerInterface() {
+            return mNxpNfcController.getNxpNfcControllerInterface();
         }
     }
     final class ReaderModeDeathRecipient implements IBinder.DeathRecipient {
@@ -2686,6 +2716,11 @@ final class NfcWiredSe extends ISecureElement.Stub {
         boolean ret = mDeviceHost.setDefaultRoute(defaultRouteEntry, defaultProtoRouteEntry, defaultTechRouteEntry);
         return ret;
     }
+    public int getAidRoutingTableStatus() {
+        int aidTableStatus = 0x00;
+        aidTableStatus = mNxpPrefs.getInt("PREF_SET_AID_ROUTING_TABLE_FULL",0x00);
+        return aidTableStatus;
+    }
     public boolean sendData(byte[] data) {
         return mDeviceHost.sendRawFrame(data);
     }
@@ -3271,5 +3306,15 @@ final class NfcWiredSe extends ISecureElement.Stub {
             pw.flush();
             mDeviceHost.dump(fd);
         }
+    }
+   /**
+     * Update the status of all the services which were populated to commit to routing table
+     */
+    public void updateStatusOfServices(boolean commitStatus) {
+        if(commitStatus == true)
+        {
+            mAidCache.setPreviousPreferredPaymentService(null);
+        }
+        mCardEmulationManager.updateStatusOfServices(commitStatus);
     }
 }

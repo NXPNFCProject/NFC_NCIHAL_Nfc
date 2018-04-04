@@ -741,6 +741,57 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
 }
 /*******************************************************************************
 **
+** Function:        getActiveSecureElementList
+**
+** Description:     Get the list of Activated Secure elements.
+**                  e: Java Virtual Machine.
+**
+** Returns:         List of Activated Secure elements.
+**
+*******************************************************************************/
+jintArray SecureElement::getActiveSecureElementList (JNIEnv* e)
+{
+    uint8_t num_of_nfcee_present = 0;
+    tNFA_HANDLE nfcee_handle[MAX_NFCEE];
+    tNFA_EE_STATUS nfcee_status[MAX_NFCEE];
+    jint seId = 0;
+    int cnt = 0;
+    int i;
+
+    if (! getEeInfo())
+        return (NULL);
+
+    num_of_nfcee_present = mNfceeData_t.mNfceePresent;
+
+    jintArray list = e->NewIntArray (num_of_nfcee_present); //allocate array
+
+    for(i = 1; i<= num_of_nfcee_present ; i++)
+    {
+        nfcee_handle[i] = mNfceeData_t.mNfceeHandle[i];
+        nfcee_status[i] = mNfceeData_t.mNfceeStatus[i];
+
+        if(nfcee_handle[i] == EE_HANDLE_0xF3 && nfcee_status[i] == NFC_NFCEE_STATUS_ACTIVE)
+        {
+            seId = getGenericEseId(EE_HANDLE_0xF3 & ~NFA_HANDLE_GROUP_EE);
+        }
+
+        if(nfcee_handle[i] == EE_HANDLE_0xF4 && nfcee_status[i] == NFC_NFCEE_STATUS_ACTIVE)
+        {
+            seId = getGenericEseId(EE_HANDLE_0xF4 & ~NFA_HANDLE_GROUP_EE);
+        }
+
+        if(nfcee_handle[i] == EE_HANDLE_0xF8 && nfcee_status[i] == NFC_NFCEE_STATUS_ACTIVE)
+        {
+            seId = getGenericEseId(EE_HANDLE_0xF8 & ~NFA_HANDLE_GROUP_EE);
+        }
+
+        e->SetIntArrayRegion (list, cnt++, 1, &seId);
+    }
+
+    return list;
+}
+/*******************************************************************************
+**
 ** Function:        activate
 **
 ** Description:     Turn on the secure element.

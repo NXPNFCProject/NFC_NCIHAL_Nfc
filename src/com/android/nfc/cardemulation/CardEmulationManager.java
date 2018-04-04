@@ -38,6 +38,7 @@ import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.util.List;
 import java.util.ArrayList;
+import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -62,6 +63,7 @@ import com.android.nfc.NfcPermissions;
 import com.android.nfc.NfcService;
 import com.android.nfc.cardemulation.RegisteredServicesCache;
 import com.android.nfc.cardemulation.RegisteredNfcFServicesCache;
+import com.gsma.nfc.internal.RegisteredNxpServicesCache;
 
 /**
  * CardEmulationManager is the central entity
@@ -99,6 +101,7 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
     final CardEmulationInterface mCardEmulationInterface;
     final NfcFCardEmulationInterface mNfcFCardEmulationInterface;
     final PowerManager mPowerManager;
+    final RegisteredNxpServicesCache mRegisteredNxpServicesCache;
 
     public CardEmulationManager(Context context) {
         mContext = context;
@@ -113,7 +116,8 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         mPreferredServices = new PreferredServices(context, mServiceCache, mAidCache, this);
         mEnabledNfcFServices = new EnabledNfcFServices(
                 context, mNfcFServicesCache, mT3tIdentifiersCache, this);
-        mServiceCache.initialize();
+        mRegisteredNxpServicesCache = new RegisteredNxpServicesCache(context, mServiceCache);
+        mServiceCache.initialize(mRegisteredNxpServicesCache);
         mNfcFServicesCache.initialize();
         mPowerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
     }
@@ -125,7 +129,14 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
     public INfcFCardEmulation getNfcFCardEmulationInterface() {
         return mNfcFCardEmulationInterface;
     }
+        // To get Object of RegisteredAidCache to get the Default Offhost service.
+    public RegisteredAidCache getRegisteredAidCache() {
+        return mAidCache;
+    }
 
+    public RegisteredNxpServicesCache getRegisteredNxpServicesCache() {
+        return mRegisteredNxpServicesCache;
+    }
 
     public void onHostCardEmulationActivated(int technology) {
         if (mPowerManager != null) {
@@ -576,5 +587,12 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
     public void onEnabledForegroundNfcFServiceChanged(ComponentName service) {
         mT3tIdentifiersCache.onEnabledForegroundNfcFServiceChanged(service);
         mHostNfcFEmulationManager.onEnabledForegroundNfcFServiceChanged(service);
+    }
+     public List<NxpApduServiceInfo> getAllServices() {
+        int userId = ActivityManager.getCurrentUser();
+        return mServiceCache.getServices(userId);
+    }
+     public void updateStatusOfServices(boolean commitStatus) {
+        mServiceCache.updateStatusOfServices(commitStatus);
     }
 }

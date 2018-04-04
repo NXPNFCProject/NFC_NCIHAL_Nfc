@@ -869,7 +869,14 @@ void nfaDeviceManagementCallback(uint8_t dmEvent,
       break;
   }
 }
-
+#if(NXP_EXTNS == TRUE)
+static jintArray nfcManager_getActiveSecureElementList(JNIEnv *e, jobject o)
+{
+    (void)e;
+    (void)o;
+    return SecureElement::getInstance().getActiveSecureElementList(e);
+}
+#endif
 /*******************************************************************************
 **
 ** Function:        nfcManager_sendRawFrame
@@ -2240,8 +2247,9 @@ static JNINativeMethod gMethods[] = {
             (void *)nfcManager_doCheckJcopDlAtBoot},
      {"JCOSDownload", "()I",
             (void *)nfcManager_doJcosDownload},
+     {"doGetActiveSecureElementList", "()[I",
+            (void *)nfcManager_getActiveSecureElementList},
 #endif
-
 };
 
 /*******************************************************************************

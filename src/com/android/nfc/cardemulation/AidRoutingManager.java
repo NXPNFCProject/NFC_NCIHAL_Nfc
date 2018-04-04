@@ -80,6 +80,10 @@ public class AidRoutingManager {
     final int mAidMatchingSupport;
 
     final Object mLock = new Object();
+    //set the status of last AID routes commit to routing table
+    //if true, last commit was successful,
+    //if false, there was an overflow of routing table for commit using last set of AID's in (mRouteForAid)
+    boolean mLastCommitStatus;
 
     // mAidRoutingTable contains the current routing table. The index is the route ID.
     // The route can include routes to a eSE/UICC.
@@ -108,6 +112,7 @@ public class AidRoutingManager {
         mAidMatchingSupport = doGetAidMatchingMode();
         if (DBG) Log.d(TAG, "mAidMatchingSupport=0x" + Integer.toHexString(mAidMatchingSupport));
         mDefaultAidRoute =   NfcService.getInstance().GetDefaultRouteEntry() >> 0x08;
+        mLastCommitStatus = true;
     }
 
     public boolean supportsAidPrefixRouting() {
@@ -182,7 +187,16 @@ public class AidRoutingManager {
 
         synchronized (mLock) {
             if (routeForAid.equals(mRouteForAid)) {
-                if (DBG) Log.d(TAG, "Routing table unchanged, not updating");
+                if (DBG) Log.d(TAG, "Routing table unchanged, but commit the routing");
+                if(mLastCommitStatus == false){
+                    NfcService.getInstance().updateStatusOfServices(false);
+                }
+                else
+                {/*If last commit status was success, And a new service is added whose AID's are
+                already resolved by previously installed services, service state of newly installed app needs to be updated*/
+                    NfcService.getInstance().updateStatusOfServices(true);
+                }
+                NfcService.getInstance().commitRouting();
                 return false;
             }
 
@@ -288,6 +302,9 @@ public class AidRoutingManager {
             mAidRoutingTable.clear();
             mRouteForAid.clear();
         }
+    }
+    public boolean getLastCommitRoutingStatus() {
+        return mLastCommitStatus;
     }
 
     public void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
