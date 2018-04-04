@@ -59,7 +59,7 @@ public:
   uint8_t mNewPipeId;
 
   bool mIsWiredModeOpen;
-
+  uint32_t SmbTransceiveTimeOutVal;/* maximum time to wait for APDU response */
 
   SyncEvent   mPwrLinkCtrlEvent;
   tNFA_HANDLE EE_HANDLE_0xF4;   //handle to secure element in slot 1
@@ -147,6 +147,7 @@ void getEeHandleList(tNFA_HANDLE *list, uint8_t* count);
   uint8_t mNumEePresent;          // actual number of usable EE's
   uint8_t     mCreatedPipe;
   static uint8_t mStaticPipeProp;
+
 
 
 struct mNfceeData

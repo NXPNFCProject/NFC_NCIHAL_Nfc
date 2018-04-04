@@ -95,7 +95,7 @@ bool SecureElement::initialize(nfc_jni_native_data* native) {
     mbNewEE         = true;
     mNewPipeId      = 0;
     mNewSourceGate  = 0;
-
+    unsigned long val = 0;
     memset (mEeInfo, 0, sizeof(mEeInfo));
     memset (&mHciCfg, 0, sizeof(mHciCfg));
     memset(mAidForEmptySelect, 0, sizeof(mAidForEmptySelect));
@@ -103,6 +103,15 @@ bool SecureElement::initialize(nfc_jni_native_data* native) {
     {
         muicc2_selected = UICC2_ID;
     }
+    if (GetNxpNumValue(NAME_NXP_SMB_TRANSCEIVE_TIMEOUT, &val, sizeof(val)) == true)
+    {
+        SmbTransceiveTimeOutVal = val;
+    }
+    else
+    {
+        SmbTransceiveTimeOutVal = WIRED_MODE_TRANSCEIVE_TIMEOUT;
+    }
+    LOG(INFO) << StringPrintf("%s: SMB transceive timeout %d", fn, SmbTransceiveTimeOutVal);
     initializeEeHandle();
 
     // Get Fresh EE info.
