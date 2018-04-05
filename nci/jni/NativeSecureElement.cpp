@@ -77,7 +77,7 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection (JNIEnv*, jobje
     }
     else
     {
-       stat = se.SecEle_Modeset(0x01);
+       stat = se.SecEle_Modeset(se.NFCEE_ENABLE);
        se.mIsWiredModeOpen = true;
     }
 
@@ -171,7 +171,7 @@ static jboolean nativeNfcSecureElement_doResetSecureElement (JNIEnv*, jobject, j
              LOG(INFO) << StringPrintf("%s: power link command failed", __func__);
         }
         else {
-            stat = se.SecEle_Modeset(0x00);
+            stat = se.SecEle_Modeset(se.NFCEE_DISABLE);
             usleep(2000 * 1000);
         }
         status = se.setNfccPwrConfig(se.POWER_ALWAYS_ON|se.COMM_LINK_ACTIVE);
@@ -180,7 +180,7 @@ static jboolean nativeNfcSecureElement_doResetSecureElement (JNIEnv*, jobject, j
              LOG(INFO) << StringPrintf("%s: power link command failed", __func__);
         }
         else {
-            stat = se.SecEle_Modeset(0x01);
+            stat = se.SecEle_Modeset(se.NFCEE_ENABLE);
             usleep(2000 * 1000);
         }
     }

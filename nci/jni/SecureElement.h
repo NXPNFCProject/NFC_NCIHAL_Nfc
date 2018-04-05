@@ -52,6 +52,8 @@ public:
   static const uint8_t POWER_ALWAYS_ON  = 0x01;     //NFCEE Power Supply always On
   static const uint8_t COMM_LINK_ACTIVE = 0x02;     //NFCC to NFCEE Communication link always active when the NFCEE  is powered on.
   static const uint8_t EVT_END_OF_APDU_TRANSFER = 0x61;
+  static const uint8_t NFCEE_DISABLE = 0x00;
+  static const uint8_t NFCEE_ENABLE = 0x01;
   tNFA_STATUS  mPwrCmdstatus;     //completion status of the power link control command
   uint8_t      mNfccPowerMode;
   uint8_t mNewPipeId;

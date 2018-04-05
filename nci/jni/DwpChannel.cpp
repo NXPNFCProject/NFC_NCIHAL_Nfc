@@ -73,7 +73,7 @@ bool IsWiredMode_Enable()
                 else if(EeInfo[xx].ee_status == 0x01)
                 {
                     LOG(INFO) << StringPrintf("%s: Enable eSE-mode set ON", fn);
-                    se.SecEle_Modeset(0x01);
+                    se.SecEle_Modeset(se.NFCEE_ENABLE);
                     usleep(2000 * 1000);
                     stat = NFA_STATUS_OK;
                     break;
@@ -135,7 +135,7 @@ int16_t open()
         {
             LOG(ERROR) << StringPrintf("%s: power link command failed", __func__);
         }
-        se.SecEle_Modeset(0x01);
+        se.SecEle_Modeset(se.NFCEE_ENABLE);
         dwpHandle = se.mActiveEeHandle; 
     }
     LOG(INFO) << StringPrintf("%s: Exit. dwpHandle = 0x%02x", fn,dwpHandle);
@@ -278,11 +278,11 @@ void doeSE_Reset(void)
     LOG(INFO) << StringPrintf("%s: enter:", fn);
 
     LOG(INFO) << StringPrintf("1st mode set calling");
-    se.SecEle_Modeset(0x00);
+    se.SecEle_Modeset(se.NFCEE_DISABLE);
     usleep(100 * 1000);
     LOG(INFO) << StringPrintf("1st mode set called");
     LOG(INFO) << StringPrintf("2nd mode set calling");
-    se.SecEle_Modeset(0x01);
+    se.SecEle_Modeset(se.NFCEE_ENABLE);
     LOG(INFO) << StringPrintf("2nd mode set called");
     usleep(3000 * 1000);
 }
@@ -305,10 +305,10 @@ void doeSE_JcopDownLoadReset(void)
     LOG(INFO) << StringPrintf("%s: enter:", fn);
     se.setNfccPwrConfig(se.NFCC_DECIDES);
     LOG(INFO) << StringPrintf("1st mode set");
-    se.SecEle_Modeset(0x00);
+    se.SecEle_Modeset(se.NFCEE_DISABLE);
     usleep(100 * 1000);
     se.setNfccPwrConfig(se.POWER_ALWAYS_ON|se.COMM_LINK_ACTIVE);
-    se.SecEle_Modeset(0x01);
+    se.SecEle_Modeset(se.NFCEE_ENABLE);
     LOG(INFO) << StringPrintf("2nd mode set");
     usleep(3000 * 1000);
 }

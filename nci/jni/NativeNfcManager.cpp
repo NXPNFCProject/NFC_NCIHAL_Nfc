@@ -1085,7 +1085,9 @@ static jint nfcManager_getLfT3tMax(JNIEnv*, jobject) {
 **
 *******************************************************************************/
 static jboolean nfcManager_doInitialize(JNIEnv* e, jobject o) {
+#if (NXP_EXTNS == TRUE)
   tNFA_MW_VERSION mwVer;
+#endif
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: enter; ver=%s nfa=%s NCI_VERSION=0x%02X", __func__,
                       nfca_version_string, nfa_version_string, NCI_VERSION);
@@ -1098,11 +1100,12 @@ static jboolean nfcManager_doInitialize(JNIEnv* e, jobject o) {
         << StringPrintf("%s: already enabled", __func__);
     goto TheEnd;
   }
+#if (NXP_EXTNS == TRUE)
     mwVer=  NFA_GetMwVersion();
     LOG(ERROR) << StringPrintf("%s:  MW Version: NFC_NCIHALx_AR%X.%x.%x.%x_RC%x",
             __func__, mwVer.validation, mwVer.android_version,
             mwVer.major_version,mwVer.minor_version,mwVer.rc_version);
-
+#endif
   powerSwitch.initialize(PowerSwitch::FULL_POWER);
 
   {

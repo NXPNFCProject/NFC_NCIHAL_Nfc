@@ -189,9 +189,9 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
 
         // Set technology routes to UICC if it's there
         nfaStat = NFA_EeSetDefaultTechRouting(eeHandle, seTechMask, seTechMask,
-                                              seTechMask,
+                                              seTechMask
 #if(NXP_EXTNS == TRUE)
-                                              seTechMask, seTechMask, seTechMask
+                                              ,seTechMask, seTechMask, seTechMask
 #endif
                                               );
         if (nfaStat != NFA_STATUS_OK)
