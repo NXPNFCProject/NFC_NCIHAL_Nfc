@@ -2234,8 +2234,13 @@ final class NfcWiredSe extends ISecureElement.Stub {
     public java.util.ArrayList<Byte> getAtr()
     throws android.os.RemoteException {
         Log.i(TAG, "Mr Robot Inside getAtr");
-        ArrayList byteArray = new ArrayList<>();
-        return byteArray;
+        if (mNfcWiredSeHandle < 0) {
+            Log.e(TAG, "Mr Robot Secure Element handle NULL");
+            return null;
+        } else {
+            byte[] resp = mSecureElement.doGetAtr(mNfcWiredSeHandle);
+            return byteArrayToArrayList(resp);
+        }
     }
 
     @Override
