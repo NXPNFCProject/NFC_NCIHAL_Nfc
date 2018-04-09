@@ -114,9 +114,6 @@ static jboolean nativeNfcSecureElement_doDisconnectSecureElementConnection (JNIE
     LOG(INFO) << StringPrintf("%s: enter; handle=0x%04x", __func__, handle);
     bool stat = false;
     NFCSTATUS status = NFCSTATUS_FAILED;
-    const int32_t recvBufferMaxSize = 1024;
-    uint8_t recvBuffer [recvBufferMaxSize];
-    int32_t recvBufferActualSize = 0;
     SecureElement &se = SecureElement::getInstance();
 
     if(!se.mIsWiredModeOpen)
@@ -129,10 +126,9 @@ static jboolean nativeNfcSecureElement_doDisconnectSecureElementConnection (JNIE
     }
     else
     {
-        /*status = se.sendEvent(SecureElement::EVT_END_OF_APDU_TRANSFER);
+        status = se.sendEvent(SecureElement::EVT_END_OF_APDU_TRANSFER);
         if(status == NFA_STATUS_OK)
-            stat = true;*/
-        stat = se.getAtr(handle, recvBuffer, &recvBufferActualSize);
+            stat = true;
     }
 
     /* if nothing is active after this, then tell the controller to power down */
