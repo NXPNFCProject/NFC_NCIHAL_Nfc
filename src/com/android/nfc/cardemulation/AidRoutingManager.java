@@ -69,7 +69,7 @@ public class AidRoutingManager {
     //
     // For Nexus devices, the default route is always 0x00.
     final int mDefaultRoute;
-    final int mDefaultAidRoute;
+    int mDefaultAidRoute;
     // For Nexus devices, just a static route to the eSE
     // OEMs/Carriers could manually map off-host AIDs
     // to the correct eSE/UICC based on state they keep.
@@ -166,7 +166,8 @@ public class AidRoutingManager {
         SparseArray<Set<String>> aidRoutingTable = new SparseArray<Set<String>>(aidMap.size());
         HashMap<String, Integer> routeForAid = new HashMap<String, Integer>(aidMap.size());
         HashMap<String, Integer> infoForAid = new HashMap<String, Integer>(aidMap.size());
-        HashMap<String, Integer> powerForAid = new HashMap<String, Integer>(aidMap.size());        
+        HashMap<String, Integer> powerForAid = new HashMap<String, Integer>(aidMap.size());
+        mDefaultAidRoute =   NfcService.getInstance().GetDefaultRouteEntry() >> 0x08;
 // Then, populate internal data structures first
         for (Map.Entry<String, AidEntry> aidEntry : aidMap.entrySet())  {
             int route = aidEntry.getValue().isOnHost ? ROUTE_HOST : aidEntry.getValue().route;

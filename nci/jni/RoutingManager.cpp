@@ -460,6 +460,10 @@ bool RoutingManager::commitRouting() {
   tNFA_STATUS nfaStat = 0;
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s", fn);
   {
+#if(NXP_EXTNS == TRUE)
+    if(NFA_GetNCIVersion() == NCI_VERSION_2_0)
+      setEmptyAidEntry();
+#endif
     SyncEventGuard guard(mEeUpdateEvent);
     nfaStat = NFA_EeUpdateNow();
     if (nfaStat == NFA_STATUS_OK) {
@@ -958,10 +962,6 @@ bool RoutingManager::setDefaultRoute(const int defaultRoute, const int protoRout
           << StringPrintf("%s: enter; defaultRoute:0x%2X protoRoute:0x%2X TechRoute:0x%2X HostListenMask:0x%X", fn, defaultRoute, protoRoute, techRoute, mHostListnTechMask);
     extractRouteLocationAndPowerStates(defaultRoute,protoRoute,techRoute);
 
-
-    if(NFA_GetNCIVersion() == NCI_VERSION_2_0) {
-        setEmptyAidEntry();
-    }
 
     if (mHostListnTechMask)
     {

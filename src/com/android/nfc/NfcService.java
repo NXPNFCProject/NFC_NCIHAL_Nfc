@@ -742,6 +742,7 @@ public class NfcService implements DeviceHostListener {
             if (mIsHceCapable) {
                 // Generate the initial card emulation routing table
                 mCardEmulationManager.onNfcEnabled();
+                computeRoutingParameters();
             }
 
             nci_version = getNciVersion();
@@ -2480,16 +2481,19 @@ final class NfcWiredSe extends ISecureElement.Stub {
         if (mIsHceCapable && mScreenState >= ScreenStateHelper.SCREEN_STATE_ON_LOCKED && mReaderModeParams == null) {
             // Host routing is always enabled at lock screen or later, provided we aren't in reader mode
             paramsBuilder.setEnableHostRouting(true);
-            int protoRoute = mNxpPrefs.getInt("PREF_MIFARE_DESFIRE_PROTO_ROUTE_ID", GetDefaultMifareDesfireRouteEntry());
-            int defaultRoute=mNxpPrefs.getInt("PREF_SET_DEFAULT_ROUTE_ID", GetDefaultRouteEntry());
-            int techRoute=mNxpPrefs.getInt("PREF_MIFARE_CLT_ROUTE_ID", GetDefaultMifateCLTRouteEntry());
-            if (DBG) Log.d(TAG, "Set default Route Entry");
-            setDefaultRoute(defaultRoute, protoRoute, techRoute);
+
         }
 
         return paramsBuilder.build();
     }
 
+    public void computeRoutingParameters() {
+        int protoRoute = mNxpPrefs.getInt("PREF_MIFARE_DESFIRE_PROTO_ROUTE_ID", GetDefaultMifareDesfireRouteEntry());
+        int defaultRoute=mNxpPrefs.getInt("PREF_SET_DEFAULT_ROUTE_ID", GetDefaultRouteEntry());
+        int techRoute=mNxpPrefs.getInt("PREF_MIFARE_CLT_ROUTE_ID", GetDefaultMifateCLTRouteEntry());
+        if (DBG) Log.d(TAG, "Set default Route Entry");
+        setDefaultRoute(defaultRoute, protoRoute, techRoute);
+    }
     private boolean isTagPresent() {
         for (Object object : mObjectMap.values()) {
             if (object instanceof TagEndpoint) {
