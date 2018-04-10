@@ -359,7 +359,7 @@ tNFA_STATUS MposManager::etsiResetReaderConfig()
       /* Protocols that use Frame Interface do not need to be included in the interface mapping */
       { NCI_PROTOCOL_ISO_DEP, NCI_INTERFACE_MODE_POLL_N_LISTEN, NCI_INTERFACE_ISO_DEP },
       { NCI_PROTOCOL_NFC_DEP, NCI_INTERFACE_MODE_POLL_N_LISTEN, NCI_INTERFACE_NFC_DEP },
-      { NCI_PROTOCOL_MIFARE, NCI_INTERFACE_MODE_POLL, NCI_INTERFACE_MIFARE }
+      { NCI_PROTOCOL_T3T, NCI_INTERFACE_MODE_LISTEN, NCI_INTERFACE_FRAME}
   };
   ALOGV("%s: Enter", __func__);
 

@@ -3153,27 +3153,35 @@ void nfcManager_disableDiscovery (JNIEnv* e, jobject o)
 
     if (sIsSecElemSelected)
     {
-        handle = SecureElement::getInstance().getEseHandleFromGenericId(SecureElement::UICC_ID);
+        SecureElement& se = SecureElement::getInstance();
+        tNFA_HANDLE ee_handleList[nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED];
+        uint8_t count;
+        se.getEeHandleList(ee_handleList, &count);
+        for(int i = 0; i < count; i++)
         {
-            SyncEventGuard guard (SecureElement::getInstance().mUiccListenEvent);
-            status = NFA_CeConfigureUiccListenTech (handle, 0x00);
-            if (status == NFA_STATUS_OK)
+            handle = se.getEseHandleFromGenericId(se.getGenericEseId(ee_handleList[i]));
+            ALOGV("%s:Registering for active handle id=0x%x;", __func__, handle);
             {
-                SecureElement::getInstance().mUiccListenEvent.wait ();
+                SyncEventGuard guard (SecureElement::getInstance().mUiccListenEvent);
+                status = NFA_CeConfigureUiccListenTech (handle, 0x00);
+                if (status == NFA_STATUS_OK)
+                {
+                    SecureElement::getInstance().mUiccListenEvent.wait ();
+                }
+                else
+                    ALOGE("fail to start UICC listen");
             }
-            else
-                ALOGE("fail to start UICC listen");
-        }
 
-        {
-            SyncEventGuard guard (SecureElement::getInstance().mUiccListenEvent);
-            status = NFA_CeConfigureUiccListenTech (handle, (num & 0x07));
-            if(status == NFA_STATUS_OK)
             {
-                SecureElement::getInstance().mUiccListenEvent.wait ();
+                SyncEventGuard guard (SecureElement::getInstance().mUiccListenEvent);
+                status = NFA_CeConfigureUiccListenTech (handle, (num & 0x07));
+                if(status == NFA_STATUS_OK)
+                {
+                    SecureElement::getInstance().mUiccListenEvent.wait ();
+                }
+                else
+                    ALOGE("fail to start UICC listen");
             }
-            else
-                ALOGE("fail to start UICC listen");
         }
 
         PeerToPeer::getInstance().enableP2pListening (false);
