@@ -35,6 +35,10 @@
  ******************************************************************************/
 package com.android.nfc.cardemulation;
 
+import android.app.ActivityManager;
+import android.app.ActivityManager.RunningTaskInfo;
+import android.app.ActivityThread;
+import android.content.Context;
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -117,6 +121,8 @@ public class AidRoutingManager {
 
     final VzwRoutingCache mVzwRoutingCache;
 
+    final ActivityManager mActivityManager;
+
     public AidRoutingManager() {
         mDefaultRoute = doGetDefaultRouteDestination();
         mRoutingTableChanged = false;
@@ -129,6 +135,9 @@ public class AidRoutingManager {
         if (DBG) Log.d(TAG, "mAidTableSize=0x" + Integer.toHexString(mAidRoutingTableSize));
         mVzwRoutingCache = new VzwRoutingCache();
         mLastCommitStatus = true;
+
+        Context context = (Context) ActivityThread.currentApplication();
+        mActivityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
     }
 
     public boolean supportsAidPrefixRouting() {
@@ -232,7 +241,7 @@ public class AidRoutingManager {
 
         synchronized (mLock) {
             if (routeForAid.equals(mRouteForAid)) {
-                if (DBG) Log.d(TAG, "Routing table unchanged, but commit the routing");
+                if (DBG) Log.d(TAG, "Routing table unchanged");
                 if(mLastCommitStatus == false){
                     NfcService.getInstance().updateStatusOfServices(false);
                     NfcService.getInstance().notifyRoutingTableFull();
@@ -242,7 +251,12 @@ public class AidRoutingManager {
                 already resolved by previously installed services, service state of newly installed app needs to be updated*/
                     NfcService.getInstance().updateStatusOfServices(true);
                 }
-                NfcService.getInstance().commitRouting();
+                if (isProcessingTapAgain()) {
+                    if (DBG) Log.d(TAG, "Routing table unchanged, but commit the routing");
+                    NfcService.getInstance().commitRouting();
+                } else {
+                    if (DBG) Log.d(TAG, "Routing table unchanged, not updating");
+                }
                 return false;
             }
 
@@ -585,5 +599,21 @@ public class AidRoutingManager {
            return 0xFF;
        }
 
+    }
+
+    // Returns true if AppChooserActivity is foreground to restart RF discovery so that
+    // TapAgainDialog is dismissed when an external reader detects the device.
+    private boolean isProcessingTapAgain() {
+        String appChooserActivityClassName = AppChooserActivity.class.getName();
+        return appChooserActivityClassName.equals(getTopClass());
+    }
+
+    private String getTopClass() {
+        String topClass = null;
+        List<RunningTaskInfo> tasks = mActivityManager.getRunningTasks(1);
+        if (tasks != null && tasks.size() > 0) {
+            topClass = tasks.get(0).topActivity.getClassName();
+        }
+        return topClass;
     }
 }
