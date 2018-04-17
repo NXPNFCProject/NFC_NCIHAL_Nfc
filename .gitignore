@@ -20,13 +20,13 @@ ehthumbs.db
 Thumbs.db
 
 # Other files to be ignored
-.cmd
-.o
-.bak
-.mod
-.ko
-.obj
-.project
-.cproject
-.order
-.patch
+*.cmd
+*.o
+*.bak
+*.mod
+*.ko
+*.obj
+*.project
+*.cproject
+*.order
+*.patch
