@@ -232,7 +232,7 @@ static bool nativeNfcMposManager_doMposGetReaderMode(JNIEnv*, jobject)
 ** Returns:         None.
 **
 *******************************************************************************/
-static void nativeNfcMposManage_doStopPoll(JNIEnv*, jobject, int mode)
+static void nativeNfcMposManage_doStopPoll(JNIEnv* e, jobject, int mode)
 {
   ALOGV("%s:enter - %s mode", __func__, covertToString((POWER_MODE)mode));
   if (nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {

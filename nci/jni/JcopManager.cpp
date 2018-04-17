@@ -19,7 +19,6 @@
 #include <dlfcn.h>
 
 JcopManager* JcopManager::mJcpMgr = NULL;
-static void* Pgpx_JCP_handle = NULL;
 static phJcop_Context_t g_mPhJcpCtxt;
 static phJcop_Context_t *pg_mPhJcpCtxt = &g_mPhJcpCtxt;
 static void *Pgpx_Jcop_handle = NULL;

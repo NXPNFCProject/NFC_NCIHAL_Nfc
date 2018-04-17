@@ -20,6 +20,8 @@
 #include <phNciNfcTypes.h>
 #include <phFriNfc_MifareStdTimer.h>
 #include <phNxpLog.h>
+
+STATIC NFCSTATUS  phFriNfc_MifareStd_CreateTimer( phFriNfc_MifareStdTimer_t *TimerInfo );
 /*******************************************************************************
 **
 ** Function        phFriNfc_MifareStd_StartTimer

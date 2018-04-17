@@ -314,22 +314,7 @@ bool RoutingManager::initialize (nfc_jni_native_data* native)
     {
         //gSeDiscoverycount = ActualNumEe;
         SecureElement::getInstance().updateNfceeDiscoverInfo();
-        ALOGV("%s:gSeDiscoverycount=0x%lX;", __func__, gSeDiscoverycount);
-#if 0
-        if(mChipId == 0x02 || mChipId == 0x04)
-        {
-            for(int xx = 0; xx <  ActualNumEe; xx++)
-            {
-                ALOGE("xx=%d, ee_handle=0x0%x, status=0x0%x", xx, mEeInfo[xx].ee_handle,mEeInfo[xx].ee_status);
-                if ((mEeInfo[xx].ee_handle == SecureElement::EE_HANDLE_0xF3) &&
-                        (mEeInfo[xx].ee_status == 0x02))
-                {
-                    ee_removed_disc_ntf_handler(mEeInfo[xx].ee_handle, mEeInfo[xx].ee_status);
-                    break;
-                }
-            }
-        }
-#endif
+        ALOGV("%s:gSeDiscoverycount=0x%d;", __func__, gSeDiscoverycount);
     }
     printMemberData();
 
@@ -761,7 +746,7 @@ bool RoutingManager::setDefaultRoute(const int defaultRoute, const int protoRout
 
 void RoutingManager::setCeRouteStrictDisable(uint32_t state)
 {
-    ALOGV("%s: mCeRouteScreenLock = 0x%lX", __func__, state);
+    ALOGV("%s: mCeRouteScreenLock = 0x%u", __func__, state);
     mCeRouteStrictDisable = state;
 }
 
@@ -824,12 +809,12 @@ void RoutingManager::printMemberData()
     ALOGV("%s: AID_MATCHING_PLATFORM = 0x%0X", __func__, mAidMatchingPlatform);
     ALOGV("%s: HOST_LISTEN_TECH_MASK = 0x%0X;", __func__, mHostListnTechMask);
     ALOGV("%s: UICC_LISTEN_TECH_MASK = 0x%0X;", __func__, mUiccListnTechMask);
-    ALOGV("%s: DEFAULT_FELICA_CLT_ROUTE = 0x%0lX;", __func__, mDefaultTechFSeID);
-    ALOGV("%s: DEFAULT_FELICA_CLT_PWR_STATE = 0x%0lX;", __func__, mDefaultTechFPowerstate);
+    ALOGV("%s: DEFAULT_FELICA_CLT_ROUTE = 0x%0u;", __func__, mDefaultTechFSeID);
+    ALOGV("%s: DEFAULT_FELICA_CLT_PWR_STATE = 0x%0u;", __func__, mDefaultTechFPowerstate);
 
     ALOGV("%s: NXP_NFC_CHIP = 0x%0X;", __func__, mChipId);
     ALOGV("%s: NXP_DEFAULT_SE = 0x%0X;", __func__, mDefaultEe);
-    ALOGV("%s: NXP_ENABLE_ADD_AID = 0x%0lX;", __func__, mAddAid);
+    ALOGV("%s: NXP_ENABLE_ADD_AID = 0x%0u;", __func__, mAddAid);
     ALOGV("%s: NXP_ESE_WIRED_PRT_MASK = 0x%0X;", __func__, gEseVirtualWiredProtectMask);
     ALOGV("%s: NXP_UICC_WIRED_PRT_MASK = 0x%0X;", __func__, gUICCVirtualWiredProtectMask);
     ALOGV("%s: NXP_FWD_FUNCTIONALITY_ENABLE = 0x%0X;", __func__, mFwdFuntnEnable);
@@ -850,16 +835,16 @@ void RoutingManager::printMemberData()
 void RoutingManager::extractRouteLocationAndPowerStates(const int defaultRoute, const int protoRoute, const int techRoute)
 {
     static const char fn []   = "RoutingManager::extractRouteLocationAndPowerStates";
-    ALOGV("%s:mDefaultIso7816SeID:0x%2lX mDefaultIsoDepSeID:0x%lX mDefaultTechASeID 0x%X", fn, defaultRoute & 0x0300, protoRoute & 0x0300,techRoute & 0x0300);
+    ALOGV("%s:mDefaultIso7816SeID:0x%2X mDefaultIsoDepSeID:0x%X mDefaultTechASeID 0x%X", fn, defaultRoute & 0x0300, protoRoute & 0x0300,techRoute & 0x0300);
     mDefaultIso7816SeID = ((((defaultRoute & 0x0300) >> 8) == 0x00) ? ROUTE_LOC_HOST_ID : ((((defaultRoute & 0x0300)>>8 )== 0x01 ) ? ROUTE_LOC_ESE_ID : getUiccRouteLocId(defaultRoute)));
     mDefaultIso7816Powerstate = defaultRoute & 0x3F;
-    ALOGV("%s:mDefaultIso7816SeID:0x%2lX mDefaultIso7816Powerstate:0x%lX", fn, mDefaultIso7816SeID, mDefaultIso7816Powerstate);
+    ALOGV("%s:mDefaultIso7816SeID:0x%2u mDefaultIso7816Powerstate:0x%u", fn, mDefaultIso7816SeID, mDefaultIso7816Powerstate);
     mDefaultIsoDepSeID = ((((protoRoute & 0x0300) >> 8) == 0x00) ? ROUTE_LOC_HOST_ID : ((((protoRoute & 0x0300)>>8 )== 0x01 ) ? ROUTE_LOC_ESE_ID : getUiccRouteLocId(protoRoute)));
     mDefaultIsoDepPowerstate = protoRoute & 0x3F;
-    ALOGV("%s:mDefaultIsoDepSeID:0x%2lX mDefaultIsoDepPowerstate:0x%2lX", fn, mDefaultIsoDepSeID,mDefaultIsoDepPowerstate);
+    ALOGV("%s:mDefaultIsoDepSeID:0x%2u mDefaultIsoDepPowerstate:0x%2u", fn, mDefaultIsoDepSeID,mDefaultIsoDepPowerstate);
     mDefaultTechASeID = ((((techRoute & 0x0300) >> 8) == 0x00) ? ROUTE_LOC_HOST_ID : ((((techRoute & 0x0300)>>8 )== 0x01 ) ? ROUTE_LOC_ESE_ID : getUiccRouteLocId(techRoute)));
     mDefaultTechAPowerstate = techRoute & 0x3F;
-    ALOGV("%s:mDefaultTechASeID:0x%2lX mDefaultTechAPowerstate:0x%2lX", fn, mDefaultTechASeID,mDefaultTechAPowerstate);
+    ALOGV("%s:mDefaultTechASeID:0x%2u mDefaultTechAPowerstate:0x%2u", fn, mDefaultTechASeID,mDefaultTechAPowerstate);
 
 }
 /* Based on the features enabled :- NXP_NFCC_DYNAMIC_DUAL_UICC, NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH & NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH,
@@ -1061,7 +1046,7 @@ void RoutingManager::initialiseTableEntries(void)
      mTechSupportedByEse   = SecureElement::getInstance().getSETechnology(ROUTE_LOC_ESE_ID);
      mTechSupportedByUicc1 = SecureElement::getInstance().getSETechnology(SecureElement::getInstance().EE_HANDLE_0xF4);
      mTechSupportedByUicc2 = SecureElement::getInstance().getSETechnology(ROUTE_LOC_UICC2_ID);
-     ALOGV("%s: exit; mTechSupportedByEse:0x%0lX mTechSupportedByUicc1:0x%0lX mTechSupportedByUicc2:0x%0lX", fn, mTechSupportedByEse, mTechSupportedByUicc1, mTechSupportedByUicc2);
+     ALOGV("%s: exit; mTechSupportedByEse:0x%0u mTechSupportedByUicc1:0x%0u mTechSupportedByUicc2:0x%0u", fn, mTechSupportedByEse, mTechSupportedByUicc1, mTechSupportedByUicc2);
 }
 
 /* Compilation of Proto Table entries strictly based on config file parameters
@@ -1209,7 +1194,6 @@ void RoutingManager::setProtoRouting()
 void RoutingManager::setEmptyAidEntry() {
 
     ALOGV("%s: enter, ", __func__);
-    tNFA_HANDLE current_handle;
 
     uint16_t routeLoc;
     uint8_t power;
@@ -2545,7 +2529,7 @@ void RoutingManager::nfaEeCallback (tNFA_EE_EVT event, tNFA_EE_CBACK_DATA* event
             }
             /*gSeDiscoverycount++ incremented for new NFCEE discovery;*/
             SecureElement::getInstance().updateNfceeDiscoverInfo();
-            ALOGV(" gSeDiscoverycount = %ld gActualSeCount=%ld", gSeDiscoverycount,gActualSeCount);
+            ALOGV(" gSeDiscoverycount = %d gActualSeCount=%d", gSeDiscoverycount,gActualSeCount);
             if(gSeDiscoverycount >= gActualSeCount)
             {
                 SyncEventGuard g (gNfceeDiscCbEvent);
@@ -3006,7 +2990,6 @@ bool RoutingManager::is_ee_recovery_ongoing()
 
 void RoutingManager::setEERecovery(bool value)
 {
-    static const char fn [] = "RoutingManager::setEERecovery";
     if(!nfcFL.nfccFL._NFCEE_REMOVED_NTF_RECOVERY) {
         ALOGV("%s : NFCEE_REMOVED_NTF_RECOVERY not avaialble.Returning",__func__);
         return;
@@ -3147,7 +3130,7 @@ static jint getUiccRoute(jint uicc_slot)
 {
     if(!nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH) {
         ALOGV("%s : STAT_DUAL_UICC_WO_EXT_SWITCH not avaialble.Returning",__func__);
-        0xFF;
+        return 0xFF;
     }
     ALOGV("%s: Enter slot num = %d", __func__,uicc_slot);
     if((uicc_slot == 0x00) || (uicc_slot == 0x01))

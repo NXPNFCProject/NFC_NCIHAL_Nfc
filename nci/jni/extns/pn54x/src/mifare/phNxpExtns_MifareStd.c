@@ -1234,7 +1234,6 @@ phNciNfc_RecvMfResp(phNciNfc_Buff_t* RspBuffInfo,
     NFCSTATUS               status = NFCSTATUS_SUCCESS;
     uint16_t                wPldDataSize = 0;
     phNciNfc_ExtnRespId_t   RecvdExtnRspId = phNciNfc_e_InvalidRsp;
-    NFCSTATUS               writeResponse = NFCSTATUS_SUCCESS;
     if(NULL == RspBuffInfo)
     {
       status = NFCSTATUS_FAILED;
@@ -1271,7 +1270,7 @@ phNciNfc_RecvMfResp(phNciNfc_Buff_t* RspBuffInfo,
                         writeResponse = RspBuffInfo->pBuff[RspBuffInfo->wLen-1];
                     }
 
-                    if( (writeResponse == PH_NCINFC_STATUS_OK))
+                    if(writeResponse == PH_NCINFC_STATUS_OK)
                     {
                         status = NFCSTATUS_SUCCESS;
                         uint16_t wRecvDataSz = 0;

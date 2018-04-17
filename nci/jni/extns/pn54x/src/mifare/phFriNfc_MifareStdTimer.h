@@ -34,5 +34,3 @@ typedef struct phFriNfc_MifareStdTimer
 NFCSTATUS  phFriNfc_MifareStd_StartTimer( phFriNfc_MifareStdTimer_t *timer );
 
 NFCSTATUS  phFriNfc_MifareStd_StopTimer( phFriNfc_MifareStdTimer_t *timer );
-
-STATIC NFCSTATUS  phFriNfc_MifareStd_CreateTimer( phFriNfc_MifareStdTimer_t *TimerInfo );

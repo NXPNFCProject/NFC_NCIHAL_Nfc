@@ -59,17 +59,6 @@ extern int gMaxEERecoveryTimeout;
 static SyncEvent            sNfaVSCResponseEvent;
 //static bool sRfEnabled;           /*commented to eliminate warning defined but not used*/
 
-static void nfaVSCCallback(uint8_t event, uint16_t param_len, uint8_t *p_param);
-
-inline static void nfaVSCCallback(uint8_t event, uint16_t param_len, uint8_t *p_param)    /*defined as inline to eliminate warning defined but not used*/
-{
-    (void)event;
-    (void)param_len;
-    (void)p_param;
-    SyncEventGuard guard (sNfaVSCResponseEvent);
-    sNfaVSCResponseEvent.notifyOne ();
-}
-
 // These must match the EE_ERROR_ types in NfcService.java
 static const int EE_ERROR_IO = -1;
 static const int EE_ERROR_INIT = -3;
@@ -165,7 +154,9 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection (JNIEnv*, jobje
             }
             goto TheEnd;
             if(nfcFL.eseFL._ESE_WIRED_MODE_PRIO) {
-                if(se.mIsWiredModeOpen&&(se.mActiveEeHandle == (se.EE_HANDLE_0xF4 || SecureElement::EE_HANDLE_0xF8)))
+                if(se.mIsWiredModeOpen &&
+                      ((se.mActiveEeHandle == se.EE_HANDLE_0xF4) ||
+                      (se.mActiveEeHandle == SecureElement::EE_HANDLE_0xF8)))
                 {
                     stat = SecureElement::getInstance().disconnectEE (se.mActiveEeHandle);
                     se.mActiveEeHandle = NFA_HANDLE_INVALID;
@@ -662,7 +653,7 @@ static jbyteArray nativeNfcSecureElement_doGetAtr (JNIEnv* e, jobject, jint hand
         e->SetByteArrayRegion(result, 0, recvBufferActualSize, (jbyte *) recvBuffer);
     }
 
-    ALOGV("%s: exit: recv len=%ld", __func__, recvBufferActualSize);
+    ALOGV("%s: exit: recv len=%d", __func__, recvBufferActualSize);
 
     return result;
 }
@@ -711,7 +702,7 @@ static jbyteArray nativeNfcSecureElement_doTransceive (JNIEnv* e, jobject, jint 
         ALOGV("APDU Transceive CE wait");
         SecureElement::getInstance().startThread(0x01);
     }
-    ALOGV("%s: exit: recv len=%ld", __func__, recvBufferActualSize);
+    ALOGV("%s: exit: recv len=%d", __func__, recvBufferActualSize);
     return result;
 #else
     jbyteArray result = e->NewByteArray(0);
