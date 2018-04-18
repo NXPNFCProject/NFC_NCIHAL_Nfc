@@ -594,9 +594,7 @@ public class NfcService implements DeviceHostListener {
     boolean mIsSentUnicastReception = false;
 
     NfcWiredSe mNfcSeService;
-    ISecureElementHalCallback mSecureElementclientCallback;
-    boolean mIsSecureElementOpened = false;
-    boolean mSEClientAccessState = false;
+    ISecureElementHalCallback mSecureElementclientCallback = null;
 
     public void enforceNfcSeAdminPerm(String pkg) {
         if (pkg == null) {
@@ -1105,7 +1103,6 @@ public class NfcService implements DeviceHostListener {
             } catch (Exception e) {
                 Log.e(TAG, "WiredSe: Registration of service failed");
             }
-            mNfcSeService.configureRpcThreadpool(1, false);
         }
 
         new EnableDisableTask().execute(TASK_BOOT);  // do blocking boot tasks
@@ -1711,6 +1708,9 @@ public class NfcService implements DeviceHostListener {
             synchronized (NfcService.this) {
                 if (newState == mState) {
                     return;
+                }
+                if (newState == NfcAdapter.STATE_TURNING_OFF) {
+                    mNfcSeService.closeNfcWiredSeService();
                 }
                 mState = newState;
                 Intent intent = new Intent(NfcAdapter.ACTION_ADAPTER_STATE_CHANGED);
@@ -4224,10 +4224,37 @@ public class NfcService implements DeviceHostListener {
 
         int mNfcWiredSeHandle = 0;
         byte mOpenedchannelCount = 0;
+        boolean mIsSecureElementOpened = false;
 
-        private byte nfcWiredSeDeInit()
-        {
-            doDisconnect(mNfcWiredSeHandle);
+        private void closeNfcWiredSeService() {
+            if (mSecureElementclientCallback != null) {
+                try {
+                    mSecureElementclientCallback.onStateChange(false);
+                } catch (RemoteException re) {
+                    Log.e(TAG, "Exception while executing NfcWiredSe callback");
+                }
+            }
+            mNfcSeService.nfcWiredSeDeInit();
+            mNfcSeService.mOpenedchannelCount = 0;
+            mSecureElementclientCallback = null;
+        }
+
+        private boolean isSecureElementPresent(int secureElementId) {
+            int[] seList = mDeviceHost.doGetSecureElementList();
+            boolean isSePresent = false;
+            for (int i = 0; i < seList.length; i++) {
+                if (seList[i] == secureElementId) {
+	            isSePresent = true;
+                    break;
+                }
+            }
+            return isSePresent;
+        }
+
+        private byte nfcWiredSeDeInit() {
+            if (mIsSecureElementOpened) {
+                doDisconnect(mNfcWiredSeHandle);
+            }
             mNfcWiredSeHandle = 0;
             mIsSecureElementOpened = false;
             return SecureElementStatus.SUCCESS;
@@ -4332,10 +4359,10 @@ public class NfcService implements DeviceHostListener {
                 Log.i(TAG, "WiredSe: Opening SecureElementConnection");
                 mNfcWiredSeHandle = doOpenSecureElementConnection(0xF3);
                 if (mNfcWiredSeHandle < 0) {
-                 Log.e(TAG, "open secure element fails.");
-                 mNfcWiredSeHandle = 0;
-                 _hidl_cb.onValues(null, SecureElementStatus.IOERROR);
-                 return;
+                    Log.e(TAG, "open secure element fails.");
+                    mNfcWiredSeHandle = 0;
+                    _hidl_cb.onValues(null, SecureElementStatus.IOERROR);
+                    return;
                 } else {
                     mIsSecureElementOpened = true;
                 }
@@ -4420,7 +4447,7 @@ public class NfcService implements DeviceHostListener {
         @Override
         public boolean isCardPresent()
           throws android.os.RemoteException {
-            return true;
+            return isSecureElementPresent(SMART_MX_ID_TYPE);
         }
 
         @Override
@@ -4444,12 +4471,10 @@ public class NfcService implements DeviceHostListener {
                 if (mNfcWiredSeHandle < 0) {
                     Log.i(TAG, "open secure element fails.");
                     clientCallback.onStateChange(false);
-                    mSEClientAccessState = false;
                     mNfcWiredSeHandle = 0;
                 } else {
                     mIsSecureElementOpened = true;
                     clientCallback.onStateChange(true);
-                    mSEClientAccessState = true;
                     Log.i(TAG, "WiredSe: Completed Opening Secure Element");
                 }
             }
