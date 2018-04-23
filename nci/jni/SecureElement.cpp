@@ -3547,6 +3547,31 @@ void SecureElement::NfccStandByOperation(nfcc_standby_operation_t value)
         }
     }
     break;
+    case STANDBY_ESE_PWR_RELEASE:
+    {
+      int ret_val = -1;
+      tNFA_STATUS status = NFCSTATUS_FAILED;
+      /* Set the ESE VDD gpio to HIGH. */
+      ret_val = NFC_ReleaseEsePwr ((void *)&status);
+      if (ret_val < 0)
+      {
+        ALOGV("NFC_ReleaseEsePwr: Failed");
+      }
+    }
+    break;
+
+    case STANDBY_ESE_PWR_ACQUIRE:
+    {
+      int ret_val = -1;
+      tNFA_STATUS status = NFCSTATUS_FAILED;
+      /* Set the ESE VDD gpio to low. */
+      ret_val = NFC_AcquireEsePwr ((void *)&status);
+      if (ret_val < 0)
+      {
+        ALOGV("NFC_AcquireEsePwr: Failed");
+      }
+    }
+    break;
     default:
         ALOGE("Wrong param");
     break;

@@ -56,6 +56,7 @@
 #include "MposManager.h"
 #include <signal.h>
 #include <sys/types.h>
+#include <cutils/properties.h>
 #endif
 #include "DwpChannel.h"
 #include "TransactionController.h"
@@ -117,6 +118,7 @@ int32_t                     gActualSeCount = 0;
 uint16_t                    sCurrentSelectedUICCSlot = 1;
 SyncEvent                   gNfceeDiscCbEvent;
 uint8_t                     sSelectedUicc = 0;
+static bool                 sIsLowRamDevice = false;
 bool nfcManager_getTransanctionRequest(int t3thandle, bool registerRequest);
 extern bool createSPIEvtHandlerThread();
 extern void releaseSPIEvtHandlerThread();
@@ -526,6 +528,7 @@ void reconfigure_poll_cb(union sigval);
 void clear_multiprotocol();
 void multiprotocol_clear_flag(union sigval);
 bool update_transaction_stat(const char * req_handle, transaction_state_t req_state);
+bool isLowRamDevice();
 #endif
 extern tNFA_INTF_TYPE   sCurrentRfInterface;
 static Transcation_Check_t transaction_data;
@@ -2191,6 +2194,7 @@ static jboolean nfcManager_doInitialize (JNIEnv* e, jobject o)
     tNFA_PMID ven_config_addr[]  = {0xA0, 0x07};
     tNFA_PMID pollProfileAddr[] = {0xA0, 0x44};
     uint8_t pollProfileVal[] = {NFC_FORUM_POLL};
+    char lowRamSysProp[50] = {'\0'};
     bool isSuccess = false;
     sNfcee_disc_state = UICC_SESSION_NOT_INTIALIZED;
     IsEseCeDisabled = false;
@@ -2198,6 +2202,19 @@ static jboolean nfcManager_doInitialize (JNIEnv* e, jobject o)
     /* NFC initialization in progress */
     if(NFC_OFF == sNfcState)
         sNfcState = NFC_INITIALIZING_IN_PROGRESS;
+
+    if(!GetNxpStrValue(NAME_NXP_ESE_PWR_MGMT_PROP, (char*)lowRamSysProp, sizeof(lowRamSysProp)))
+    {
+      sIsLowRamDevice = false;
+    }
+    else
+    {
+      char propBuf[PROPERTY_VALUE_MAX] = {'\0'};
+      property_get(lowRamSysProp, propBuf, "");
+      sIsLowRamDevice = (propBuf[0] != '\0')?((strcmp(propBuf, "true") == 0)?true:false):true;
+      ALOGV("isLowRamDevice %s",sIsLowRamDevice?"true":"false");
+    }
+    NFA_SetLowRamDevice(sIsLowRamDevice);
 #endif
     ALOGV("%s: enter; ver=%s nfa=%s NCI_VERSION=0x%02X",
         __func__, nfca_version_string, nfa_version_string, NCI_VERSION);
@@ -3452,6 +3469,10 @@ static jboolean nfcManager_doDeinitialize (JNIEnv* e, jobject obj)
             ALOGE("%s: Force close DWP channel as JNIEnv is null",
                     __func__);
         }
+    }
+
+    if(isLowRamDevice()) {
+        SecureElement::getInstance().NfccStandByOperation(STANDBY_ESE_PWR_RELEASE);
     }
 
 if(nfcFL.eseFL._JCOP_WA_ENABLE) {
@@ -8482,6 +8503,21 @@ void register_signal_handler() {
         ALOGE("Failed to register signal handler");
      }
 }
+
+/*******************************************************************************
+ **
+ ** Function:        isLowRamDevice()
+ **
+ ** Description:     Provides whether device is low ram enabled or not
+ **
+ ** Returns:         None .
+ **
+*******************************************************************************/
+bool isLowRamDevice()
+{
+  return sIsLowRamDevice;
+}
+
 #endif
 }
 

@@ -54,6 +54,7 @@ extern bool isp2pActivated();
 extern void com_android_nfc_NfcManager_disableDiscovery (JNIEnv* e, jobject o);
 extern void com_android_nfc_NfcManager_enableDiscovery (JNIEnv* e, jobject o, jint mode);
 #if (NXP_EXTNS == TRUE)
+extern bool isLowRamDevice();
 extern int gMaxEERecoveryTimeout;
 #endif
 static SyncEvent            sNfaVSCResponseEvent;
@@ -374,6 +375,11 @@ if ((!stat) && (! PowerSwitch::getInstance ().setModeOff (PowerSwitch::SE_CONNEC
 {
     PowerSwitch::getInstance ().setLevel (PowerSwitch::LOW_POWER);
 }
+#if(NXP_EXTNS == TRUE)
+  if(isLowRamDevice()) {
+    se.NfccStandByOperation(STANDBY_ESE_PWR_ACQUIRE);
+  }
+#endif
 
 TheEnd:
 ALOGV("%s: exit; return handle=0x%X", __func__, secElemHandle);
@@ -403,6 +409,9 @@ static jboolean nativeNfcSecureElement_doDisconnectSecureElementConnection (JNIE
 
     SecureElement &se = SecureElement::getInstance();
     se.NfccStandByOperation(STANDBY_TIMER_STOP);
+    if(isLowRamDevice()) {
+      se.NfccStandByOperation(STANDBY_ESE_PWR_RELEASE);
+    }
 #endif
 
 #if(NXP_EXTNS == TRUE)

@@ -141,7 +141,10 @@ typedef enum operation{
     STANDBY_MODE_ON,      /* standby mode is on */
     STANDBY_MODE_OFF,     /* standby mode is off */
     STANDBY_MODE_SUSPEND, /* standby timer timed out */
-    STANDBY_MODE_TIMER_ON /* standby timer running */
+    STANDBY_MODE_TIMER_ON, /* standby timer running */
+    STANDBY_ESE_PWR_RELEASE,
+    STANDBY_ESE_PWR_ACQUIRE
+
 }nfcc_standby_operation_t;
 
 void spi_prio_signal_handler (int signum, siginfo_t *info, void *unused);
