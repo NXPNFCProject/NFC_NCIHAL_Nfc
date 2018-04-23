@@ -555,7 +555,7 @@ public class NfcService implements DeviceHostListener {
     boolean mIsDebugBuild;
     boolean mIsHceCapable;
     boolean mIsHceFCapable;
-    boolean mIsRoutingTableDirty;
+    public boolean mIsRoutingTableDirty;
     boolean mIsFelicaOnHostConfigured;
     boolean mIsFelicaOnHostConfiguring;
 

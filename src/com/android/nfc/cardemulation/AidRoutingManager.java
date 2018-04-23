@@ -251,7 +251,7 @@ public class AidRoutingManager {
                 already resolved by previously installed services, service state of newly installed app needs to be updated*/
                     NfcService.getInstance().updateStatusOfServices(true);
                 }
-                if (isProcessingTapAgain()) {
+                if (isProcessingTapAgain() || NfcService.getInstance().mIsRoutingTableDirty) {
                     if (DBG) Log.d(TAG, "Routing table unchanged, but commit the routing");
                     NfcService.getInstance().commitRouting();
                 } else {
