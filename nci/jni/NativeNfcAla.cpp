@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 NXP Semiconductors
+ * Copyright (C) 2015-2018 NXP Semiconductors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ extern SyncEvent            sNfaVSCResponseEvent;
 extern void startRfDiscovery (bool isStart);
 extern bool isDiscoveryStarted();
 extern void nfaVSCCallback(uint8_t event, uint16_t param_len, uint8_t *p_param);
+extern bool isLowRamDevice();
 
 }
 
@@ -221,10 +222,30 @@ jbyteArray nfcManager_lsExecuteScript(JNIEnv* e, jobject o, jstring name, jstrin
         bool stat = false;
         const char *choice = NULL;
 
+        if(isLowRamDevice()) {
+            SecureElement &se = SecureElement::getInstance();
+            if (se.isBusy() ||
+               (!pTransactionController->transactionAttempt(TRANSACTION_REQUESTOR(lsExecuteScript),
+                   TRANSACTION_ATTEMPT_FOR_SECONDS(5))))
+            {
+              ALOGE (" %s: Failed:SE Access Blocked by another process", __func__);
+              resSW[2] = 0x6F;
+              resSW[3] = 0x89;
+              //copy results back to java
+              result = e->NewByteArray(lsExecuteResponseSize);
+              if (result != NULL)
+              {
+                  e->SetByteArrayRegion(result, 0, lsExecuteResponseSize, (jbyte *) resSW);
+              }
+              return result;
+            }
+        }
+
         sRfEnabled = isDiscoveryStarted();
         wStatus = status = NFA_STATUS_FAILED;
 
-        if(!pTransactionController->transactionAttempt(TRANSACTION_REQUESTOR(lsExecuteScript),
+        if(!isLowRamDevice() &&
+           !pTransactionController->transactionAttempt(TRANSACTION_REQUESTOR(lsExecuteScript),
                                                     TRANSACTION_ATTEMPT_FOR_SECONDS(5)))
         {
             ALOGE("%s ERROR: Attempt to start transaction failed", __FUNCTION__);
