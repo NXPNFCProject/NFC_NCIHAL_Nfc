@@ -36,6 +36,8 @@ import android.os.ParcelUuid;
 import android.os.RemoteException;
 import android.util.Log;
 
+import java.util.Set;
+
 public class PeripheralHandoverService extends Service implements BluetoothPeripheralHandover.Callback {
     static final String TAG = "PeripheralHandoverService";
     static final boolean DBG = true;
@@ -49,6 +51,11 @@ public class PeripheralHandoverService extends Service implements BluetoothPerip
     public static final String EXTRA_PERIPHERAL_OOB_DATA = "oobdata";
     public static final String EXTRA_PERIPHERAL_UUIDS = "uuids";
     public static final String EXTRA_PERIPHERAL_CLASS = "class";
+    public static final String EXTRA_CLIENT = "client";
+    public static final String EXTRA_BT_ENABLED = "bt_enabled";
+
+    public static final int MSG_HEADSET_CONNECTED = 0;
+    public static final int MSG_HEADSET_NOT_CONNECTED = 1;
 
     // Amount of time to pause polling when connecting to peripherals
     private static final int PAUSE_POLLING_TIMEOUT_MS = 35000;
@@ -65,6 +72,8 @@ public class PeripheralHandoverService extends Service implements BluetoothPerip
     NfcAdapter mNfcAdapter;
     Handler mHandler;
     BluetoothPeripheralHandover mBluetoothPeripheralHandover;
+    BluetoothDevice mDevice;
+    Messenger mClient;
     boolean mBluetoothHeadsetConnected;
     boolean mBluetoothEnabledByNfc;
 
@@ -148,7 +157,7 @@ public class PeripheralHandoverService extends Service implements BluetoothPerip
             return false;
         }
 
-        BluetoothDevice device = msgData.getParcelable(EXTRA_PERIPHERAL_DEVICE);
+        mDevice = msgData.getParcelable(EXTRA_PERIPHERAL_DEVICE);
         String name = msgData.getString(EXTRA_PERIPHERAL_NAME);
         int transport = msgData.getInt(EXTRA_PERIPHERAL_TRANSPORT);
         OobData oobData = msgData.getParcelable(EXTRA_PERIPHERAL_OOB_DATA);
@@ -163,8 +172,11 @@ public class PeripheralHandoverService extends Service implements BluetoothPerip
             }
         }
 
+        mClient = msgData.getParcelable(EXTRA_CLIENT);
+        mBluetoothEnabledByNfc = msgData.getBoolean(EXTRA_BT_ENABLED);
+
         mBluetoothPeripheralHandover = new BluetoothPeripheralHandover(
-                this, device, name, transport, oobData, uuids, btClass, this);
+                this, mDevice, name, transport, oobData, uuids, btClass, this);
 
         if (transport == BluetoothDevice.TRANSPORT_LE) {
             mHandler.sendMessageDelayed(
@@ -226,6 +238,7 @@ public class PeripheralHandoverService extends Service implements BluetoothPerip
             mNfcAdapter.resumePolling();
         }
         disableBluetoothIfNeeded();
+        replyToClient(connected);
 
         synchronized (sLock) {
             stopSelf(mStartId);
@@ -244,6 +257,7 @@ public class PeripheralHandoverService extends Service implements BluetoothPerip
 
     void disableBluetoothIfNeeded() {
         if (!mBluetoothEnabledByNfc) return;
+        if (hasConnectedBluetoothDevices()) return;
 
         if (!mBluetoothHeadsetConnected) {
             mBluetoothAdapter.disable();
@@ -254,6 +268,40 @@ public class PeripheralHandoverService extends Service implements BluetoothPerip
    @Override
     public IBinder onBind(Intent intent) {
         return null;
+    }
+
+    boolean hasConnectedBluetoothDevices() {
+        Set<BluetoothDevice> bondedDevices = mBluetoothAdapter.getBondedDevices();
+
+        if (bondedDevices != null) {
+            for (BluetoothDevice device : bondedDevices) {
+                if (device.equals(mDevice)) {
+                    // Not required to check the remote BT "target" device
+                    // connection status, because sometimes the connection
+                    // state is not yet been updated upon disconnection.
+                    // It is enough to check the connection status for
+                    // "other" remote BT device/s.
+                    continue;
+                }
+                if (device.isConnected()) return true;
+            }
+        }
+        return false;
+    }
+
+    void replyToClient(boolean connected) {
+        if (mClient == null) {
+            return;
+        }
+
+        final int msgId = connected ? MSG_HEADSET_CONNECTED : MSG_HEADSET_NOT_CONNECTED;
+        final Message msg = Message.obtain(null, msgId);
+        msg.arg1 = mBluetoothEnabledByNfc ? 1 : 0;
+        try {
+            mClient.send(msg);
+        } catch (RemoteException e) {
+            // Ignore
+        }
     }
 
     @Override
