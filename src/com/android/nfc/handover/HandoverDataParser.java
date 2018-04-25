@@ -145,7 +145,12 @@ public class HandoverDataParser {
             }
 
             byte[] addressBytes = addressToReverseBytes(mLocalBluetoothAddress);
-            System.arraycopy(addressBytes, 0, payload, 2, 6);
+            if (addressBytes != null) {
+                System.arraycopy(addressBytes, 0, payload, 2, 6);
+            } else {
+                // don't cache unknown result
+                mLocalBluetoothAddress = null;
+            }
         }
 
         return new NdefRecord(NdefRecord.TNF_MIME_MEDIA, TYPE_BT_OOB, new byte[]{'b'}, payload);
@@ -559,7 +564,15 @@ public class HandoverDataParser {
     }
 
    static byte[] addressToReverseBytes(String address) {
+        if (address == null) {
+            Log.w(TAG, "BT address is null");
+            return null;
+        }
         String[] split = address.split(":");
+        if (split.length < 6) {
+            Log.w(TAG, "BT address " + address + " is invalid");
+            return null;
+        }
         byte[] result = new byte[split.length];
 
         for (int i = 0; i < split.length; i++) {
