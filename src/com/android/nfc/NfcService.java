@@ -2016,7 +2016,7 @@ public class NfcService implements DeviceHostListener {
 
 static final int DEFAULT_BASIC_CHANNEL = 0;
 static final int MAX_LOGICAL_CHANNELS = 4;
-final class NfcWiredSe extends ISecureElement.Stub {
+final class NfcWiredSe extends ISecureElement.Stub  implements android.os.IHwBinder.DeathRecipient{
 
     int mNfcWiredSeHandle = 0;
     byte mOpenedchannelCount = 0;
@@ -2253,6 +2253,10 @@ final class NfcWiredSe extends ISecureElement.Stub {
                 Log.e(TAG, "Mr Robot clientCallback NULL");
                 return;
             }
+            else
+            {
+                clientCallback.linkToDeath(this, 0);
+            }
             mSecureElementclientCallback = clientCallback;
             mNfcWiredSeHandle = doOpenSecureElementConnection();
             if (mNfcWiredSeHandle < 0) {
@@ -2270,6 +2274,12 @@ final class NfcWiredSe extends ISecureElement.Stub {
             }
         }
         return;
+    }
+    @Override
+    public void serviceDied(long cookie) {
+        // Deal with service going away
+        Log.i(TAG, "SecureElement service died de-initalize nfc terminal");
+        nfcWiredSeDeInit();
     }
 
     private ArrayList<Byte> byteArrayToArrayList(byte[] array) {
