@@ -37,8 +37,8 @@
  */
 
 #include <log/log.h>
-#include <ScopedLocalRef.h>
-#include <JNIHelp.h>
+#include <nativehelper/ScopedLocalRef.h>
+#include <nativehelper/JNIHelp.h>
 #include "config.h"
 #include "JavaClassConstants.h"
 #include "RoutingManager.h"

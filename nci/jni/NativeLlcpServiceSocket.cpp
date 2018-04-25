@@ -20,7 +20,7 @@
 #include "PeerToPeer.h"
 #include "JavaClassConstants.h"
 
-#include <JNIHelp.h>
+#include <nativehelper/JNIHelp.h>
 
 extern "C"
 {

@@ -46,12 +46,12 @@
 #include "PowerSwitch.h"
 #include "JavaClassConstants.h"
 #include "Pn544Interop.h"
-#include <ScopedLocalRef.h>
-#include <ScopedUtfChars.h>
+#include <nativehelper/ScopedLocalRef.h>
+#include <nativehelper/ScopedUtfChars.h>
 #include <sys/time.h>
 #include "HciRFParams.h"
 #include <pthread.h>
-#include <ScopedPrimitiveArray.h>
+#include <nativehelper/ScopedPrimitiveArray.h>
 #if(NXP_EXTNS == TRUE)
 #include "MposManager.h"
 #include <signal.h>

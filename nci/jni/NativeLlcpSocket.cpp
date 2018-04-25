@@ -16,8 +16,8 @@
 #include "_OverrideLog.h"
 #include "PeerToPeer.h"
 #include "JavaClassConstants.h"
-#include <ScopedPrimitiveArray.h>
-#include <ScopedUtfChars.h>
+#include <nativehelper/ScopedPrimitiveArray.h>
+#include <nativehelper/ScopedUtfChars.h>
 
 
 namespace android

@@ -19,7 +19,7 @@
 #include "NfcJniUtil.h"
 #include "JavaClassConstants.h"
 
-#include <JNIHelp.h>
+#include <nativehelper/JNIHelp.h>
 
 namespace android
 {

@@ -41,7 +41,7 @@
 #include "llcp_defs.h"
 #include "config.h"
 #include "JavaClassConstants.h"
-#include <ScopedLocalRef.h>
+#include <nativehelper/ScopedLocalRef.h>
 
 /* Some older PN544-based solutions would only send the first SYMM back
  * (as an initiator) after the full LTO (750ms). But our connect timer

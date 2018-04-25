@@ -21,8 +21,8 @@
 #include "_OverrideLog.h"
 #include "NfcJniUtil.h"
 #include "JavaClassConstants.h"
-#include <ScopedLocalRef.h>
-#include <ScopedPrimitiveArray.h>
+#include <nativehelper/ScopedLocalRef.h>
+#include <nativehelper/ScopedPrimitiveArray.h>
 extern "C"
 {
     #include "nfa_api.h"
