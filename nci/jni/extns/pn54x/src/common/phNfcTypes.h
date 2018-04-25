@@ -315,6 +315,4 @@ typedef enum p61_access_state{
     P61_STATE_JCP_DWNLD         = 0x8000, /* JCOP download is in progress */
 } p61_access_state_t;
 
-#define UNUSED(X) (void)(X);
-
 #endif /* PHNFCTYPES_H */

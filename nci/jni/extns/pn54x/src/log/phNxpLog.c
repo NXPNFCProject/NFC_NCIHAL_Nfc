@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define LOG_TAG "pn54x"
 
 #include <stdio.h>
 #include <string.h>
@@ -22,7 +21,10 @@
 #include "phNxpConfig.h"
 #endif
 #include <cutils/properties.h>
-#include <log/log.h>
+#include <base/logging.h>
+#include <android-base/stringprintf.h>
+
+using android::base::StringPrintf;
 
 const char * NXPLOG_ITEM_EXTNS   = "NxpExtns";
 const char * NXPLOG_ITEM_NCIHAL  = "NxpHal";
@@ -260,7 +262,7 @@ void phNxpLog_InitializeLogLevel(void)
     phNxpLog_SetDnldLogLevel (level);
     phNxpLog_SetNciTxLogLevel (level);
 
-    ALOGV("%s: global =%u, Fwdnld =%u, extns =%u, \
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: global =%u, Fwdnld =%u, extns =%u, \
                 hal =%u, tml =%u, ncir =%u, \
                 ncix =%u", \
                 __func__, gLog_level.global_log_level, gLog_level.dnld_log_level,

@@ -1,5 +1,9 @@
 EXTN_PN54X_PATH:= $(call my-dir)
 
+LOCAL_SHARED_LIBRARIES := \
+    libchrome \
+    libbase \
+
 LOCAL_C_INCLUDES += \
     $(EXTN_PN54X_PATH)/inc \
     $(EXTN_PN54X_PATH)/src/common \

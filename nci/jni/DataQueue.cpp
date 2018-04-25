@@ -19,10 +19,10 @@
  */
 
 #include "DataQueue.h"
+#include <base/logging.h>
+#include <android-base/stringprintf.h>
 
-#include <log/log.h>
-
-
+using android::base::StringPrintf;
 /*******************************************************************************
 **
 ** Function:        DataQueue
@@ -101,7 +101,7 @@ bool DataQueue::enqueue (uint8_t* data, uint16_t dataLen)
     }
     else
     {
-        ALOGE("DataQueue::enqueue: out of memory ?????");
+        LOG(ERROR) << StringPrintf("DataQueue::enqueue: out of memory ?????");
     }
     mMutex.unlock ();
     return retval;

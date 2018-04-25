@@ -27,35 +27,35 @@ namespace android
 
 static jboolean nativeP2pDeviceDoConnect (JNIEnv*, jobject)
 {
-    ALOGV("%s", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s", __func__);
     return JNI_TRUE;
 }
 
 
 static jboolean nativeP2pDeviceDoDisconnect (JNIEnv*, jobject)
 {
-    ALOGV("%s", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s", __func__);
     return JNI_TRUE;
 }
 
 
 static jbyteArray nativeP2pDeviceDoTransceive (JNIEnv*, jobject, jbyteArray)
 {
-    ALOGV("%s", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s", __func__);
     return NULL;
 }
 
 
 static jbyteArray nativeP2pDeviceDoReceive (JNIEnv*, jobject)
 {
-    ALOGV("%s", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s", __func__);
     return NULL;
 }
 
 
 static jboolean nativeP2pDeviceDoSend (JNIEnv*, jobject, jbyteArray)
 {
-    ALOGV("%s", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s", __func__);
     return JNI_TRUE;
 }
 

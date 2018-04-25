@@ -103,7 +103,7 @@ HciRFParams& HciRFParams::getInstance()
 bool HciRFParams::initialize ()
 {
     static const char fn [] = "HciRFParams::initialize";
-    ALOGV("%s: enter", fn);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", fn);
 
     tNFA_PMID param_ids[] = {0xA0, 0xF0};
     {
@@ -119,15 +119,15 @@ bool HciRFParams::initialize ()
             return false;
         }
     }
-    ALOGV("%s: status %x", __func__,get_config->status);
-    ALOGV("%s: tlv_size %d", __func__,get_config->tlv_size);
-    ALOGV("%s: param_tlvs %x", __func__,get_config->param_tlvs[0]);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: status %x", __func__,get_config->status);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: tlv_size %d", __func__,get_config->tlv_size);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: param_tlvs %x", __func__,get_config->param_tlvs[0]);
 
 #if(NXP_EXTNS == true)
     if((get_config->param_tlvs[1] == 0xA0 && get_config->param_tlvs[2] == 0xF0) &&
         (get_config->param_tlvs[5] == 0xFF || get_config->param_tlvs[43] == 0xFF) &&
          SecureElement::getInstance().getEeStatus(ESE_HANDLE) == NFA_EE_STATUS_ACTIVE) {
-        ALOGV("%s: CE with ESE is disabled", __func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: CE with ESE is disabled", __func__);
         IsEseCeDisabled = true;
     }
 #endif
@@ -186,7 +186,7 @@ bool HciRFParams::initialize ()
 
     mIsInit = true;
 
-    ALOGV("%s: exit", fn);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", fn);
     return (true);
 }
 
@@ -202,11 +202,11 @@ bool HciRFParams::initialize ()
 void HciRFParams::finalize ()
 {
     static const char fn [] = "HciRFParams::finalize";
-    ALOGV("%s: enter", fn);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", fn);
 
     mIsInit       = false;
 
-    ALOGV("%s: exit", fn);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", fn);
 }
 
 
@@ -270,7 +270,7 @@ bool HciRFParams::isTypeBSupported()
 bool HciRFParams::isCeWithEseDisabled ()
 {
     static const char fn [] = "HciRFParams::isCeWithEseDisabled";
-    ALOGV("%s: enter", fn);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", fn);
     bool status = false;
 
     tNFA_PMID param_ids[] = {0xA0, 0xF0};
@@ -283,21 +283,21 @@ bool HciRFParams::isCeWithEseDisabled ()
         }
         else
         {
-            ALOGE("%s: Get config is failed", __func__);
+            LOG(ERROR) << StringPrintf("%s: Get config is failed", __func__);
             return status;
         }
     }
-    ALOGV("%s: status %x", __func__,get_config->status);
-    ALOGV("%s: tlv_size %d", __func__,get_config->tlv_size);
-    ALOGV("%s: param_tlvs %x", __func__,get_config->param_tlvs[0]);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: status %x", __func__,get_config->status);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: tlv_size %d", __func__,get_config->tlv_size);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: param_tlvs %x", __func__,get_config->param_tlvs[0]);
 
     if((get_config->param_tlvs[1] == 0xA0 && get_config->param_tlvs[2] == 0xF0) &&
         (get_config->param_tlvs[5] == 0xFF || get_config->param_tlvs[43] == 0xFF) &&
          SecureElement::getInstance().getEeStatus(ESE_HANDLE) == NFA_EE_STATUS_ACTIVE) {
-        ALOGV("%s: CE with ESE is disabled", __func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: CE with ESE is disabled", __func__);
         status = true;
     }
-    ALOGV("%s: Exit status =%d", __func__, status);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Exit status =%d", __func__, status);
     return status;
 }
 #endif

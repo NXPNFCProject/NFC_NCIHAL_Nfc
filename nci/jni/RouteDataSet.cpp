@@ -41,6 +41,7 @@
 //#include "libxml/xmlmemory.h"
 #include <errno.h>
 #include <sys/stat.h>
+#include <base/logging.h>
 
 extern char bcm_nfc_location[];
 
@@ -137,11 +138,11 @@ RouteDataSet::~RouteDataSet ()
 *******************************************************************************/
 bool RouteDataSet::initialize()
 {
-    ALOGV("%s: enter", "RouteDataSet::initialize");
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", "RouteDataSet::initialize");
     //check that the libxml2 version in use is compatible
     //with the version the software has been compiled with
     //LIBXML_TEST_VERSION
-    ALOGV("%s: exit; return=true", "RouteDataSet::initialize");
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit; return=true", "RouteDataSet::initialize");
     return true;
 }
 
@@ -157,7 +158,7 @@ bool RouteDataSet::initialize()
 *******************************************************************************/
 void RouteDataSet::deleteDatabase()
 {
-    ALOGV("%s: default db size=%zu; sec elem db size=%zu", "RouteDataSet::deleteDatabase",
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: default db size=%zu; sec elem db size=%zu", "RouteDataSet::deleteDatabase",
             mDefaultRouteDatabase.size(), mSecElemRouteDatabase.size());
     Database::iterator it;
 
@@ -183,7 +184,7 @@ void RouteDataSet::deleteDatabase()
 bool RouteDataSet::import ()
 {
     static const char fn [] = "RouteDataSet::import";
-    ALOGV("%s: enter", fn);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", fn);
     bool retval = false;
 #if 0
     xmlDocPtr doc;
@@ -196,17 +197,17 @@ bool RouteDataSet::import ()
     doc = xmlParseFile (strFilename.c_str());
     if (doc == NULL)
     {
-        ALOGV("%s: fail parse", fn);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: fail parse", fn);
         goto TheEnd;
     }
 
     node1 = xmlDocGetRootElement (doc);
     if (node1 == NULL)
     {
-        ALOGE("%s: fail root element", fn);
+        LOG(ERROR) << StringPrintf("%s: fail root element", fn);
         goto TheEnd;
     }
-    ALOGV("%s: root=%s", fn, node1->name);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: root=%s", fn, node1->name);
 
     node1 = node1->xmlChildrenNode;
     while (node1) //loop through all elements in <Routes ...
@@ -216,7 +217,7 @@ bool RouteDataSet::import ()
             xmlChar* value = xmlGetProp (node1, (const xmlChar*) "Type");
             if (value && (xmlStrcmp (value, (const xmlChar*) "SecElemSelectedRoutes") == 0))
             {
-                ALOGV("%s: found SecElemSelectedRoutes", fn);
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: found SecElemSelectedRoutes", fn);
                 xmlNodePtr node2 = node1->xmlChildrenNode;
                 while (node2) //loop all elements in <Route Type="SecElemSelectedRoutes" ...
                 {
@@ -229,7 +230,7 @@ bool RouteDataSet::import ()
             }
             else if (value && (xmlStrcmp (value, (const xmlChar*) "DefaultRoutes") == 0))
             {
-                ALOGV("%s: found DefaultRoutes", fn);
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: found DefaultRoutes", fn);
                 xmlNodePtr node2 = node1->xmlChildrenNode;
                 while (node2) //loop all elements in <Route Type="DefaultRoutes" ...
                 {
@@ -250,7 +251,7 @@ bool RouteDataSet::import ()
 TheEnd:
     xmlFreeDoc (doc);
     xmlCleanupParser ();
-    ALOGV("%s: exit; return=%u", fn, retval);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit; return=%u", fn, retval);
 #endif
     return retval;
 }
@@ -279,22 +280,22 @@ bool RouteDataSet::saveToFile (const char* routesXml)
     fh = fopen (filename.c_str (), "w");
     if (fh == NULL)
     {
-        ALOGE("%s: fail to open file", fn);
+        LOG(ERROR) << StringPrintf("%s: fail to open file", fn);
         return false;
     }
 
     actualWritten = fwrite (routesXml, sizeof(char), strlen(routesXml), fh);
     retval = actualWritten == strlen(routesXml);
     fclose (fh);
-    ALOGV("%s: wrote %zu bytes", fn, actualWritten);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: wrote %zu bytes", fn, actualWritten);
     if (retval == false)
-        ALOGE("%s: error during write", fn);
+        LOG(ERROR) << StringPrintf("%s: error during write", fn);
 
     //set file permission to
     //owner read, write; group read; other read
     stat = chmod (filename.c_str (), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
     if (stat == -1)
-        ALOGE("%s: error during chmod", fn);
+        LOG(ERROR) << StringPrintf("%s: error during chmod", fn);
     return retval;
 }
 
@@ -320,7 +321,7 @@ bool RouteDataSet::loadFromFile (std::string& routesXml)
     fh = fopen (filename.c_str (), "r");
     if (fh == NULL)
     {
-        ALOGV("%s: fail to open file", "RouteDataSet::loadFromFile");
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: fail to open file", "RouteDataSet::loadFromFile");
         return false;
     }
 
@@ -332,7 +333,7 @@ bool RouteDataSet::loadFromFile (std::string& routesXml)
         routesXml.append (buffer, actual);
     }
     fclose (fh);
-    ALOGV("%s: read %zu bytes", "RouteDataSet::loadFromFile", routesXml.length());
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: read %zu bytes", "RouteDataSet::loadFromFile", routesXml.length());
     return true;
 }
 
@@ -362,7 +363,7 @@ void RouteDataSet::importProtocolRoute (xmlNodePtr& element, Database& database)
     RouteDataForProtocol* data = new RouteDataForProtocol;
     xmlChar* value = NULL;
 
-    ALOGV_IF(sDebug, "%s: element=%s", "RouteDataSet::importProtocolRoute", element->name);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: element=%s", "RouteDataSet::importProtocolRoute", element->name);
     value = xmlGetProp (element, id);
     if (value)
     {
@@ -375,7 +376,7 @@ void RouteDataSet::importProtocolRoute (xmlNodePtr& element, Database& database)
         else if (xmlStrcmp (value, (const xmlChar*) "IsoDep") == 0)
             data->mProtocol = NFA_PROTOCOL_MASK_ISO_DEP;
         xmlFree (value);
-        ALOGV_IF(sDebug, "%s: %s=0x%X", "RouteDataSet::importProtocolRoute", id, data->mProtocol);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: %s=0x%X", "RouteDataSet::importProtocolRoute", id, data->mProtocol);
     }
 
     value = xmlGetProp (element, secElem);
@@ -384,7 +385,7 @@ void RouteDataSet::importProtocolRoute (xmlNodePtr& element, Database& database)
         data->mNfaEeHandle = strtol ((char*) value, NULL, 16);
         xmlFree (value);
         data->mNfaEeHandle = data->mNfaEeHandle | NFA_HANDLE_GROUP_EE;
-        ALOGV_IF(sDebug, "%s: %s=0x%X", "RouteDataSet::importProtocolRoute", secElem, data->mNfaEeHandle);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: %s=0x%X", "RouteDataSet::importProtocolRoute", secElem, data->mNfaEeHandle);
     }
 
     value = xmlGetProp (element, switchOn);
@@ -433,7 +434,7 @@ void RouteDataSet::importTechnologyRoute (xmlNodePtr& element, Database& databas
     RouteDataForTechnology* data = new RouteDataForTechnology;
     xmlChar* value = NULL;
 
-    ALOGV_IF(sDebug, "%s: element=%s", "RouteDataSet::importTechnologyRoute", element->name);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: element=%s", "RouteDataSet::importTechnologyRoute", element->name);
     value = xmlGetProp (element, id);
     if (value)
     {
@@ -444,7 +445,7 @@ void RouteDataSet::importTechnologyRoute (xmlNodePtr& element, Database& databas
         else if (xmlStrcmp (value, (const xmlChar*) "NfcF") == 0)
             data->mTechnology = NFA_TECHNOLOGY_MASK_F;
         xmlFree (value);
-        ALOGV_IF(sDebug, "%s: %s=0x%X", "RouteDataSet::importTechnologyRoute", id, data->mTechnology);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: %s=0x%X", "RouteDataSet::importTechnologyRoute", id, data->mTechnology);
     }
 
     value = xmlGetProp (element, secElem);
@@ -453,7 +454,7 @@ void RouteDataSet::importTechnologyRoute (xmlNodePtr& element, Database& databas
         data->mNfaEeHandle = strtol ((char*) value, NULL, 16);
         xmlFree (value);
         data->mNfaEeHandle = data->mNfaEeHandle | NFA_HANDLE_GROUP_EE;
-        ALOGV_IF(sDebug, "%s: %s=0x%X", "RouteDataSet::importTechnologyRoute", secElem, data->mNfaEeHandle);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: %s=0x%X", "RouteDataSet::importTechnologyRoute", secElem, data->mNfaEeHandle);
     }
 
     value = xmlGetProp (element, switchOn);
@@ -495,7 +496,7 @@ bool RouteDataSet::deleteFile ()
     std::string filename (bcm_nfc_location);
     filename.append (sConfigFile);
     int stat = remove (filename.c_str());
-    ALOGV("%s: exit %u", fn, stat==0);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit %u", fn, stat==0);
     return stat == 0;
 }
 
@@ -537,7 +538,7 @@ void RouteDataSet::printDiagnostic ()
     static const char fn [] = "RouteDataSet::printDiagnostic";
     Database* db = getDatabase (DefaultRouteDatabase);
 
-    ALOGV("%s: default route database", fn);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: default route database", fn);
     for (Database::iterator iter = db->begin(); iter != db->end(); iter++)
     {
         RouteData* routeData = *iter;
@@ -546,19 +547,19 @@ void RouteDataSet::printDiagnostic ()
         case RouteData::ProtocolRoute:
             {
                 RouteDataForProtocol* proto = (RouteDataForProtocol*) routeData;
-                ALOGV("%s: ee h=0x%X; protocol=0x%X", fn, proto->mNfaEeHandle, proto->mProtocol);
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: ee h=0x%X; protocol=0x%X", fn, proto->mNfaEeHandle, proto->mProtocol);
             }
             break;
         case RouteData::TechnologyRoute:
             {
                 RouteDataForTechnology* tech = (RouteDataForTechnology*) routeData;
-                ALOGV("%s: ee h=0x%X; technology=0x%X", fn, tech->mNfaEeHandle, tech->mTechnology);
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: ee h=0x%X; technology=0x%X", fn, tech->mNfaEeHandle, tech->mTechnology);
             }
             break;
         }
     }
 
-    ALOGV("%s: sec elem route database", fn);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: sec elem route database", fn);
     db = getDatabase (SecElemRouteDatabase);
     for (Database::iterator iter2 = db->begin(); iter2 != db->end(); iter2++)
     {
@@ -568,13 +569,13 @@ void RouteDataSet::printDiagnostic ()
         case RouteData::ProtocolRoute:
             {
                 RouteDataForProtocol* proto = (RouteDataForProtocol*) routeData;
-                ALOGV("%s: ee h=0x%X; protocol=0x%X", fn, proto->mNfaEeHandle, proto->mProtocol);
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: ee h=0x%X; protocol=0x%X", fn, proto->mNfaEeHandle, proto->mProtocol);
             }
             break;
         case RouteData::TechnologyRoute:
             {
                 RouteDataForTechnology* tech = (RouteDataForTechnology*) routeData;
-                ALOGV("%s: ee h=0x%X; technology=0x%X", fn, tech->mNfaEeHandle, tech->mTechnology);
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: ee h=0x%X; technology=0x%X", fn, tech->mNfaEeHandle, tech->mTechnology);
             }
             break;
         }

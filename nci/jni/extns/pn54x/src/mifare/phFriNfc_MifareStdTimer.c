@@ -85,7 +85,7 @@ NFCSTATUS  phFriNfc_MifareStd_StopTimer( phFriNfc_MifareStdTimer_t *TimerInfo )
     NFCSTATUS status = NFCSTATUS_SUCCESS;
     if (TimerInfo->mTimerId == 0)
     {
-        NXPLOG_EXTNS_E(" phFriNfc_MifareStd_CreateTimer() failed to stop timer  ");
+         LOG(ERROR) << StringPrintf(" phFriNfc_MifareStd_CreateTimer() failed to stop timer  ");
         status = NFCSTATUS_FAILED;
         return status;
     }
@@ -124,7 +124,7 @@ STATIC NFCSTATUS  phFriNfc_MifareStd_CreateTimer( phFriNfc_MifareStdTimer_t *Tim
     stat = timer_create(CLOCK_MONOTONIC, &se, &(TimerInfo)->mTimerId);
     if (stat == 0)
     {
-        NXPLOG_EXTNS_E(" phFriNfc_MifareStd_CreateTimer() Timer created successfully ");
+         LOG(ERROR) << StringPrintf(" phFriNfc_MifareStd_CreateTimer() Timer created successfully ");
         return status;
     }else
     {

@@ -31,7 +31,6 @@ extern bool        isDiscoveryStarted ();
 extern void        startRfDiscovery (bool isStart);
 }
 
-//#define ALOGV ALOGD
 
 MposManager MposManager::mMposMgr;
 int32_t MposManager::mDiscNtfTimeout = 10;
@@ -158,7 +157,7 @@ tNFA_STATUS MposManager::setDedicatedReaderMode(bool on)
   int32_t state;
   SecureElement &se = SecureElement::getInstance();
 
-  ALOGV("%s:enter, Reader Mode %s", __FUNCTION__, on?"ON":"OFF");
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:enter, Reader Mode %s", __FUNCTION__, on?"ON":"OFF");
   if(se.isRfFieldOn() || se.isActivatedInListenMode())
   {
     status = NFA_STATUS_BUSY;
@@ -168,7 +167,7 @@ tNFA_STATUS MposManager::setDedicatedReaderMode(bool on)
   {
     state = getEtsiReaederState();
     rfStat = isDiscoveryStarted();
-    ALOGV("%x, rfStat=%x", on, rfStat);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%x, rfStat=%x", on, rfStat);
     if (on) {
       if(rfStat)
       {
@@ -189,7 +188,7 @@ tNFA_STATUS MposManager::setDedicatedReaderMode(bool on)
   }
   else
   {
-    ALOGE("Payment is in progress, aborting reader mode start");
+    LOG(ERROR) << StringPrintf("Payment is in progress, aborting reader mode start");
   }
   return status;
 }
@@ -243,7 +242,7 @@ se_rd_req_state_t MposManager::getEtsiReaederState()
 *******************************************************************************/
 void MposManager::etsiInitConfig()
 {
-  ALOGV("%s: Enter", __func__);
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter", __func__);
   swp_rdr_req_ntf_info.mMutex.lock();
 
   if ((swp_rdr_req_ntf_info.swp_rd_state == STATE_SE_RDR_MODE_START_CONFIG)
@@ -263,13 +262,13 @@ void MposManager::etsiInitConfig()
 
     swp_rdr_req_ntf_info.swp_rd_req_current_info.src = swp_rdr_req_ntf_info.swp_rd_req_info.src;
     swp_rdr_req_ntf_info.swp_rd_state = STATE_SE_RDR_MODE_START_IN_PROGRESS;
-    ALOGV("%s: new ETSI state : STATE_SE_RDR_MODE_START_IN_PROGRESS", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: new ETSI state : STATE_SE_RDR_MODE_START_IN_PROGRESS", __func__);
   } else if ((swp_rdr_req_ntf_info.swp_rd_state == STATE_SE_RDR_MODE_STOP_CONFIG)
       && (swp_rdr_req_ntf_info.swp_rd_req_current_info.src
           == swp_rdr_req_ntf_info.swp_rd_req_info.src)) {
     //pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(etsiReader));
     swp_rdr_req_ntf_info.swp_rd_state = STATE_SE_RDR_MODE_STOP_IN_PROGRESS;
-    ALOGV("%s: new ETSI state : STATE_SE_RDR_MODE_STOP_IN_PROGRESS", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: new ETSI state : STATE_SE_RDR_MODE_STOP_IN_PROGRESS", __func__);
 
   }
   swp_rdr_req_ntf_info.mMutex.unlock();
@@ -303,39 +302,39 @@ tNFA_STATUS MposManager::etsiReaderConfig(int32_t eeHandle)
       { NCI_PROTOCOL_ISO_DEP, NCI_INTERFACE_MODE_POLL, NCI_INTERFACE_ESE_DIRECT_STAT }
   };
 
-  ALOGV("%s: Enter; eeHandle : 0x%4x", __func__, eeHandle);
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter; eeHandle : 0x%4x", __func__, eeHandle);
   /* Setting up the emvco poll profile*/
   status = EmvCo_dosetPoll(enable);
   if (status != NFA_STATUS_OK) {
-    ALOGE("%s: fail enable polling; error=0x%X", __func__, status);
+    LOG(ERROR) << StringPrintf("%s: fail enable polling; error=0x%X", __func__, status);
     return status;
   }
 
   if (eeHandle == se.EE_HANDLE_0xF4) //UICC
   {
     SyncEventGuard guard(mDiscMapEvent);
-    ALOGV("%s: mapping intf for UICC", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: mapping intf for UICC", __func__);
     status = NFC_DiscoveryMap(NFC_SWP_RD_NUM_INTERFACE_MAP,
         (tNCI_DISCOVER_MAPS *) nfc_interface_mapping_uicc,
         MposManager::discoveryMapCb);
     if (status != NFA_STATUS_OK) {
-      ALOGE("%s: fail intf mapping for UICC; error=0x%X", __func__, status);
+      LOG(ERROR) << StringPrintf("%s: fail intf mapping for UICC; error=0x%X", __func__, status);
       return status;
     }
     status = mDiscMapEvent.wait(NFC_CMD_TIMEOUT)?NFA_STATUS_OK:NFA_STATUS_FAILED;
   } else if (eeHandle == SecureElement::EE_HANDLE_0xF3) {//ESE
     SyncEventGuard guard(mDiscMapEvent);
-    ALOGV("%s: mapping intf for ESE", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: mapping intf for ESE", __func__);
     status = NFC_DiscoveryMap(NFC_SWP_RD_NUM_INTERFACE_MAP,
         (tNCI_DISCOVER_MAPS *) nfc_interface_mapping_ese,
         MposManager::discoveryMapCb);
     if (status != NFA_STATUS_OK) {
-      ALOGE("%s: fail intf mapping for ESE; error=0x%X", __func__, status);
+      LOG(ERROR) << StringPrintf("%s: fail intf mapping for ESE; error=0x%X", __func__, status);
       return status;
     }
     status = mDiscMapEvent.wait(NFC_CMD_TIMEOUT)?NFA_STATUS_OK:NFA_STATUS_FAILED;
   } else {
-    ALOGV("%s: UNKNOWN SOURCE!!! ", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: UNKNOWN SOURCE!!! ", __func__);
     return NFA_STATUS_FAILED;
   }
 
@@ -361,20 +360,20 @@ tNFA_STATUS MposManager::etsiResetReaderConfig()
       { NCI_PROTOCOL_NFC_DEP, NCI_INTERFACE_MODE_POLL_N_LISTEN, NCI_INTERFACE_NFC_DEP },
       { NCI_PROTOCOL_T3T, NCI_INTERFACE_MODE_LISTEN, NCI_INTERFACE_FRAME}
   };
-  ALOGV("%s: Enter", __func__);
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter", __func__);
 
   status = EmvCo_dosetPoll(false);
   if (status != NFA_STATUS_OK) {
-    ALOGE("%s: fail enable polling; error=0x%X", __func__, status);
+    LOG(ERROR) << StringPrintf("%s: fail enable polling; error=0x%X", __func__, status);
     status = NFA_STATUS_FAILED;
   } else {
     SyncEventGuard guard(mDiscMapEvent);
-    ALOGV("%s: mapping intf for DH", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: mapping intf for DH", __func__);
     status = NFC_DiscoveryMap(NFC_NUM_INTERFACE_MAP,
         (tNCI_DISCOVER_MAPS *) nfc_interface_mapping_default,
         MposManager::discoveryMapCb);
     if (status != NFA_STATUS_OK) {
-      ALOGE("%s: fail intf mapping for ESE; error=0x%X", __func__, status);
+      LOG(ERROR) << StringPrintf("%s: fail intf mapping for ESE; error=0x%X", __func__, status);
       return status;
     }
     status = mDiscMapEvent.wait(NFC_CMD_TIMEOUT)?NFA_STATUS_OK:NFA_STATUS_FAILED;
@@ -396,17 +395,17 @@ void MposManager::notifyEEReaderEvent (etsi_rd_event_t evt)
   SecureElement& se = SecureElement::getInstance();
   struct timespec mLastRfFieldToggle = se.getLastRfFiledToggleTime();
 
-  ALOGV("%s: enter; event=%x", __func__, evt);
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter; event=%x", __func__, evt);
 
   swp_rdr_req_ntf_info.mMutex.lock();
   int ret = clock_gettime(CLOCK_MONOTONIC, &mLastRfFieldToggle);
   if (ret == -1) {
-    ALOGE("%s: clock_gettime failed", __func__);
+    LOG(ERROR) << StringPrintf("%s: clock_gettime failed", __func__);
     // There is no good choice here...
   }
   switch (evt) {
   case ETSI_READER_START_SUCCESS:
-    ALOGV("%s: ETSI_READER_START_SUCCESS", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: ETSI_READER_START_SUCCESS", __func__);
     {
       mSwpReaderTimer.kill();
       /*
@@ -420,23 +419,23 @@ void MposManager::notifyEEReaderEvent (etsi_rd_event_t evt)
     }
     break;
   case ETSI_READER_ACTIVATED:
-    ALOGV("%s: ETSI_READER_ACTIVATED", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: ETSI_READER_ACTIVATED", __func__);
     break;
   case ETSI_READER_STOP:
-    ALOGV("%s: ETSI_READER_STOP", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: ETSI_READER_STOP", __func__);
     pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(etsiReader));
 
     if (se.mIsWiredModeOpen)
       se.NfccStandByOperation (STANDBY_TIMER_START);
     break;
   default:
-    ALOGV("%s: UNKNOWN EVENT ??", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: UNKNOWN EVENT ??", __func__);
     break;
   }
 
   swp_rdr_req_ntf_info.mMutex.unlock();
 
-  ALOGV("%s: exit", __func__);
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
 }
 
 /*******************************************************************************
@@ -450,12 +449,12 @@ void MposManager::notifyEEReaderEvent (etsi_rd_event_t evt)
 *******************************************************************************/
 void MposManager::notifyMPOSReaderEvent(mpos_rd_state_t aEvent)
 {
-  ALOGV("%s: enter; event type is %s", __FUNCTION__, convertMposEventToString(aEvent));
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter; event type is %s", __FUNCTION__, convertMposEventToString(aEvent));
   JNIEnv* e = NULL;
 
   ScopedAttach attach(mNativeData->vm, &e);
   if (e == NULL) {
-    ALOGE("%s: jni env is null", __FUNCTION__);
+    LOG(ERROR) << StringPrintf("%s: jni env is null", __FUNCTION__);
     return;
   }
 
@@ -504,17 +503,17 @@ void MposManager::hanldeEtsiReaderReqEvent (tNFA_EE_DISCOVER_REQ* aInfo)
   for (unsigned char xx = 0; xx < aInfo->num_ee; xx++) {
     //for each technology (A, B, F, B'), print the bit field that shows
     //what protocol(s) is support by that technology
-    ALOGV("EE[%u] Handle: 0x%04x  PA: 0x%02x  PB: 0x%02x",
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("EE[%u] Handle: 0x%04x  PA: 0x%02x  PB: 0x%02x",
         xx, aInfo->ee_disc_info[xx].ee_handle, aInfo->ee_disc_info[xx].pa_protocol, aInfo->ee_disc_info[xx].pb_protocol);
 
-    ALOGV("swp_rd_state is %s", convertRdrStateToString(swp_rdr_req_ntf_info.swp_rd_state));
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("swp_rd_state is %s", convertRdrStateToString(swp_rdr_req_ntf_info.swp_rd_state));
     if ((aInfo->ee_disc_info[xx].ee_req_op == NFC_EE_DISC_OP_ADD)
         && (swp_rdr_req_ntf_info.swp_rd_state == STATE_SE_RDR_MODE_STOPPED
             || swp_rdr_req_ntf_info.swp_rd_state == STATE_SE_RDR_MODE_START_CONFIG
             || swp_rdr_req_ntf_info.swp_rd_state == STATE_SE_RDR_MODE_STOP_CONFIG)
         && (aInfo->ee_disc_info[xx].pa_protocol == NCI_PROTOCOL_ISO_DEP
             || aInfo->ee_disc_info[xx].pb_protocol == NCI_PROTOCOL_ISO_DEP)) {
-      ALOGV( "NFA_RD_SWP_READER_REQUESTED  EE[%u] Handle: 0x%04x  PA: 0x%02x  PB: 0x%02x",
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("NFA_RD_SWP_READER_REQUESTED  EE[%u] Handle: 0x%04x  PA: 0x%02x  PB: 0x%02x",
           xx, aInfo->ee_disc_info[xx].ee_handle, aInfo->ee_disc_info[xx].pa_protocol, aInfo->ee_disc_info[xx].pb_protocol);
 
       swp_rdr_req_ntf_info.swp_rd_req_info.src = aInfo->ee_disc_info[xx].ee_handle;
@@ -539,7 +538,7 @@ void MposManager::hanldeEtsiReaderReqEvent (tNFA_EE_DISCOVER_REQ* aInfo)
         mSwpRdrReqTimer.kill();
         if (swp_rdr_req_ntf_info.swp_rd_state != STATE_SE_RDR_MODE_STOP_CONFIG) {
           if(swp_rdr_req_ntf_info.swp_rd_req_info.tech_mask != (NFA_TECHNOLOGY_MASK_A | NFA_TECHNOLOGY_MASK_B)) {
-            ALOGV( "swp_rd_state is %s  evt: NFA_RD_SWP_READER_REQUESTED mSwpRdrReqTimer start",
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("swp_rd_state is %s  evt: NFA_RD_SWP_READER_REQUESTED mSwpRdrReqTimer start",
                 convertRdrStateToString(swp_rdr_req_ntf_info.swp_rd_state));
             mSwpRdrReqTimer.set(rdr_req_handling_timeout, readerReqEventNtf);
             swp_rdr_req_ntf_info.swp_rd_state = STATE_SE_RDR_MODE_START_CONFIG;
@@ -561,7 +560,7 @@ void MposManager::hanldeEtsiReaderReqEvent (tNFA_EE_DISCOVER_REQ* aInfo)
             || (swp_rdr_req_ntf_info.swp_rd_state == STATE_SE_RDR_MODE_ACTIVATED))
         && (aInfo->ee_disc_info[xx].pa_protocol == 0xFF
             || aInfo->ee_disc_info[xx].pb_protocol == 0xFF)) {
-      ALOGV( "NFA_RD_SWP_READER_STOP  EE[%u] Handle: 0x%04x  PA: 0x%02x  PB: 0x%02x",
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("NFA_RD_SWP_READER_STOP  EE[%u] Handle: 0x%04x  PA: 0x%02x  PB: 0x%02x",
           xx, aInfo->ee_disc_info[xx].ee_handle, aInfo->ee_disc_info[xx].pa_protocol, aInfo->ee_disc_info[xx].pb_protocol);
 
       if (swp_rdr_req_ntf_info.swp_rd_req_info.src == aInfo->ee_disc_info[xx].ee_handle) {
@@ -585,7 +584,7 @@ void MposManager::hanldeEtsiReaderReqEvent (tNFA_EE_DISCOVER_REQ* aInfo)
           mSwpRdrReqTimer.kill();
           if(swp_rdr_req_ntf_info.swp_rd_req_info.tech_mask)
           {
-            ALOGV("swp_rd_state is %s  evt: NFA_RD_SWP_READER_STOP mSwpRdrReqTimer start",
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("swp_rd_state is %s  evt: NFA_RD_SWP_READER_STOP mSwpRdrReqTimer start",
                 convertRdrStateToString(swp_rdr_req_ntf_info.swp_rd_state));
             mSwpRdrReqTimer.set(rdr_req_handling_timeout, readerReqEventNtf);
           }
@@ -627,9 +626,9 @@ void MposManager::discoveryMapCb (tNFC_DISCOVER_EVT event, tNFC_DISCOVER *p_data
 *******************************************************************************/
 Rdr_req_ntf_info_t MposManager::getSwpRrdReqInfo()
 {
-  ALOGE("%s Enter", __func__);
+  LOG(ERROR) << StringPrintf("%s Enter", __func__);
   if (!nfcFL.nfcNxpEse || !nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
-    ALOGV("%s : nfcNxpEse or ETSI_READER not avaialble.Returning", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s : nfcNxpEse or ETSI_READER not avaialble.Returning", __func__);
   }
   return swp_rdr_req_ntf_info;
 }
@@ -647,21 +646,21 @@ Rdr_req_ntf_info_t MposManager::getSwpRrdReqInfo()
 void MposManager::readerReqEventNtf (union sigval)
 {
   if (!nfcFL.nfcNxpEse || !nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
-    ALOGV("%s: nfcNxpEse or ETSI_READER not available. Returning", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: nfcNxpEse or ETSI_READER not available. Returning", __func__);
     return;
   }
-  ALOGV("%s:  ", __func__);
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:  ", __func__);
   JNIEnv* e = NULL;
 
   ScopedAttach attach(mMposMgr.mNativeData->vm, &e);
   if (e == NULL) {
-    ALOGE("%s: jni env is null", __func__);
+    LOG(ERROR) << StringPrintf("%s: jni env is null", __func__);
     return;
   }
 
   Rdr_req_ntf_info_t mSwp_info = mMposMgr.getSwpRrdReqInfo();
 
-  ALOGV("%s: swp_rdr_req_ntf_info.swp_rd_req_info.src = 0x%4x ", __func__,
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: swp_rdr_req_ntf_info.swp_rd_req_info.src = 0x%4x ", __func__,
       mSwp_info.swp_rd_req_info.src);
 
   if (mMposMgr.getEtsiReaederState() == STATE_SE_RDR_MODE_START_CONFIG) {
@@ -669,7 +668,7 @@ void MposManager::readerReqEventNtf (union sigval)
         mMposMgr.gCachedMposManagerNotifyETSIReaderModeStartConfig,
         (uint16_t) mSwp_info.swp_rd_req_info.src);
   } else if (mMposMgr.getEtsiReaederState() == STATE_SE_RDR_MODE_STOP_CONFIG) {
-    ALOGV("%s: mSwpReaderTimer.kill() ", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: mSwpReaderTimer.kill() ", __func__);
     mMposMgr.mSwpReaderTimer.kill();
     e->CallVoidMethod(mMposMgr.mNativeData->manager,
         mMposMgr.gCachedMposManagerNotifyETSIReaderModeStopConfig,
@@ -689,10 +688,10 @@ void MposManager::readerReqEventNtf (union sigval)
 void MposManager::startStopSwpReaderProc (union sigval)
 {
   if (!nfcFL.nfcNxpEse || !nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
-    ALOGV("%s: nfcNxpEse or ETSI_READER not enabled. Returning", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: nfcNxpEse or ETSI_READER not enabled. Returning", __func__);
     return;
   }
-  ALOGV("%s: Timeout!!!", __func__);
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Timeout!!!", __func__);
 
   mMposMgr.notifyMPOSReaderEvent(MPOS_READER_MODE_TIMEOUT);
 }
@@ -708,7 +707,7 @@ void MposManager::startStopSwpReaderProc (union sigval)
 *******************************************************************************/
 void MposManager::etsiReaderReStart()
 {
-  ALOGV (" %s: Enter",__FUNCTION__);
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(" %s: Enter",__FUNCTION__);
   pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(etsiReader));
   notifyMPOSReaderEvent(MPOS_READER_MODE_RESTART);
 }
@@ -747,13 +746,13 @@ tNFA_STATUS MposManager::validateHCITransactionEventParams(uint8_t *aData, int32
   }
   else if (aData != NULL && aDatalen == 0x01 && *aData == EVENT_EMV_POWER_OFF)
   {
-    ALOGV ("Power off procedure to be triggered");
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Power off procedure to be triggered");
     unsigned long num;
     if(GetNumValue(NAME_NFA_CONFIG_FORMAT, (void *)&num, sizeof(num)))
     {
         if (num == 0x05)
         {
-          ALOGV ("Power off procedure is triggered");
+          DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Power off procedure is triggered");
           NFA_Deactivate(false);
         }
         else
@@ -763,7 +762,7 @@ tNFA_STATUS MposManager::validateHCITransactionEventParams(uint8_t *aData, int32
     }
     else
     {
-      ALOGV ("NAME_NFA_CONFIG_FORMAT not found");
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("NAME_NFA_CONFIG_FORMAT not found");
     }
   }
   else

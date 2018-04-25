@@ -264,9 +264,9 @@ bool CNxpNfcConfig::readConfig(const char* name, bool bResetContent) {
   uint8_t* p_config = nullptr;
   size_t config_size = readConfigFile(name, &p_config);
   if (p_config == nullptr) {
-    ALOGE("%s Cannot open config file %s\n", __func__, name);
+    LOG(ERROR) << StringPrintf("%s Cannot open config file %s\n", __func__, name);
     if (bResetContent) {
-      ALOGE("%s Using default value for all settings\n", __func__);
+      LOG(ERROR) << StringPrintf("%s Using default value for all settings\n", __func__);
       mValidFile = false;
     }
     return false;
@@ -587,10 +587,10 @@ const CNxpNfcParam* CNxpNfcConfig::find(const char* p_name) const {
       continue;
     } else if (**it == p_name) {
       if ((*it)->str_len() > 0) {
-        NXPLOG_EXTNS_D("%s found %s=%s\n", __func__, p_name,
+        DLOG_IF(INFO, gLog_level.extns_log_level >= NXPLOG_LOG_DEBUG_LOGLEVEL) << StringPrintf("%s found %s=%s\n", __func__, p_name,
                        (*it)->str_value());
       } else {
-        NXPLOG_EXTNS_D("%s found %s=(0x%lx)\n", __func__, p_name,
+        DLOG_IF(INFO, gLog_level.extns_log_level >= NXPLOG_LOG_DEBUG_LOGLEVEL) << StringPrintf("%s found %s=(0x%lx)\n", __func__, p_name,
                        (*it)->numValue());
       }
       return *it;
@@ -610,7 +610,7 @@ const CNxpNfcParam* CNxpNfcConfig::find(const char* p_name) const {
 **
 *******************************************************************************/
 void CNxpNfcConfig::readNxpTransitConfig(const char* fileName) const {
-  ALOGD("readNxpTransitConfig-Enter..Reading %s", fileName);
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("readNxpTransitConfig-Enter..Reading %s", fileName);
   CNxpNfcConfig::GetInstance().readConfig(fileName, false);
 }
 
@@ -624,7 +624,7 @@ void CNxpNfcConfig::readNxpTransitConfig(const char* fileName) const {
 **
 *******************************************************************************/
 void CNxpNfcConfig::readNxpRFConfig(const char* fileName) const {
-  ALOGD("readNxpRFConfig-Enter..Reading %s", fileName);
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("readNxpRFConfig-Enter..Reading %s", fileName);
   CNxpNfcConfig::GetInstance().readConfig(fileName, false);
 }
 
@@ -660,7 +660,7 @@ void CNxpNfcConfig::add(const CNxpNfcParam* pParam) {
   }
   if ((mCurrentFile.find("nxpTransit") != std::string::npos) &&
       !isAllowed(pParam->c_str())) {
-    ALOGD("%s Token restricted. Returning", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s Token restricted. Returning", __func__);
     return;
   }
   for (list<const CNxpNfcParam*>::iterator it = m_list.begin(),
@@ -686,15 +686,15 @@ void CNxpNfcConfig::add(const CNxpNfcParam* pParam) {
 **
 *******************************************************************************/
 void CNxpNfcConfig::dump() {
-  ALOGD("%s Enter", __func__);
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s Enter", __func__);
 
   for (list<const CNxpNfcParam*>::iterator it = m_list.begin(),
                                         itEnd = m_list.end();
        it != itEnd; ++it) {
     if ((*it)->str_len() > 0)
-      ALOGD("%s %s \t= %s", __func__, (*it)->c_str(), (*it)->str_value());
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s %s \t= %s", __func__, (*it)->c_str(), (*it)->str_value());
     else
-      ALOGD("%s %s \t= (0x%0lX)\n", __func__, (*it)->c_str(),
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s %s \t= (0x%0lX)\n", __func__, (*it)->c_str(),
             (*it)->numValue());
   }
 }
@@ -764,7 +764,7 @@ void CNxpNfcConfig::moveToList() {
 bool CNxpNfcConfig::isModified() {
   FILE* fd = fopen(config_timestamp_path, "r+");
   if (fd == nullptr) {
-    ALOGE("%s Unable to open file '%s' - assuming modified", __func__,
+    LOG(ERROR) << StringPrintf("%s Unable to open file '%s' - assuming modified", __func__,
           config_timestamp_path);
     return true;
   }
@@ -772,7 +772,7 @@ bool CNxpNfcConfig::isModified() {
   uint32_t stored_crc32 = 0;
   fread(&stored_crc32, sizeof(uint32_t), 1, fd);
   fclose(fd);
- 
+
   return stored_crc32 != config_crc32_;
 }
 
@@ -787,7 +787,7 @@ bool CNxpNfcConfig::isModified(const char* pName) {
     fd = fopen(tr_config_timestamp_path, "r+");
   }
   if (fd == nullptr) {
-    ALOGE("%s Unable to open file '%s' - assuming modified", __func__,
+    LOG(ERROR) << StringPrintf("%s Unable to open file '%s' - assuming modified", __func__,
           (isRfFile?rf_config_timestamp_path:tr_config_timestamp_path));
     return true;
   }
@@ -807,7 +807,7 @@ void CNxpNfcConfig::resetModified() {
 
   fd = fopen(config_timestamp_path, "w+");
   if (fd == nullptr) {
-    ALOGE("%s Unable to open file '%s' for writing", __func__,
+    LOG(ERROR) << StringPrintf("%s Unable to open file '%s' for writing", __func__,
         config_timestamp_path);
   } else {
     fwrite(&config_crc32_, sizeof(uint32_t), 1, fd);
@@ -815,7 +815,7 @@ void CNxpNfcConfig::resetModified() {
   }
   fd = fopen(rf_config_timestamp_path, "w+");
   if (fd == nullptr) {
-    ALOGE("%s Unable to open file '%s' for writing", __func__,
+    LOG(ERROR) << StringPrintf("%s Unable to open file '%s' for writing", __func__,
         rf_config_timestamp_path);
   } else {
     fwrite(&config_crc32_rf_, sizeof(uint32_t), 1, fd);
@@ -824,7 +824,7 @@ void CNxpNfcConfig::resetModified() {
 
   fd = fopen(tr_config_timestamp_path, "w+");
   if (fd == nullptr) {
-    ALOGE("%s Unable to open file '%s' for writing", __func__,
+    LOG(ERROR) << StringPrintf("%s Unable to open file '%s' for writing", __func__,
         tr_config_timestamp_path);
   } else {
     fwrite(&config_crc32_tr_, sizeof(uint32_t), 1, fd);
@@ -1038,7 +1038,7 @@ extern "C" int isNxpRFConfigModified() {
   retRF = rConfig.isModified(nxp_rf_config_path);
   rettransit = rConfig.isModified(transit_config_path);
   ret = retRF | rettransit;
-  ALOGD("ret RF or Transit value %d", ret);
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("ret RF or Transit value %d", ret);
   return ret;
 }
 

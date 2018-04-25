@@ -61,7 +61,7 @@ static bool gAbortNow = false; //stop timer during next callback
 *******************************************************************************/
 void pn544InteropStopPolling ()
 {
-    ALOGV("%s: enter", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
     gMutex.lock ();
     gTimer.kill ();
     android::startStopPolling (false);
@@ -69,7 +69,7 @@ void pn544InteropStopPolling ()
     gAbortNow = false;
     gTimer.set (gIntervalTime, pn544InteropStartPolling); //after some time, start polling again
     gMutex.unlock ();
-    ALOGV("%s: exit", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
 }
 
 
@@ -85,32 +85,32 @@ void pn544InteropStopPolling ()
 *******************************************************************************/
 void pn544InteropStartPolling (union sigval)
 {
-    ALOGV("%s: enter", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
     gMutex.lock ();
     NfcTag::ActivationState state = NfcTag::getInstance ().getActivationState ();
 
     if (gAbortNow)
     {
-        ALOGV("%s: abort now", __func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: abort now", __func__);
         gIsBusy = false;
         goto TheEnd;
     }
 
     if (state == NfcTag::Idle)
     {
-        ALOGV("%s: start polling", __func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: start polling", __func__);
         android::startStopPolling (true);
         gIsBusy = false;
     }
     else
     {
-        ALOGV("%s: try again later", __func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: try again later", __func__);
         gTimer.set (gIntervalTime, pn544InteropStartPolling); //after some time, start polling again
     }
 
 TheEnd:
     gMutex.unlock ();
-    ALOGV("%s: exit", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
 }
 
 
@@ -129,7 +129,7 @@ bool pn544InteropIsBusy ()
     gMutex.lock ();
     isBusy = gIsBusy;
     gMutex.unlock ();
-    ALOGV("%s: %u", __func__, isBusy);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: %u", __func__, isBusy);
     return isBusy;
 }
 
@@ -145,7 +145,7 @@ bool pn544InteropIsBusy ()
 *******************************************************************************/
 void pn544InteropAbortNow ()
 {
-    ALOGV("%s", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s", __func__);
     gMutex.lock ();
     gAbortNow = true;
     gMutex.unlock ();

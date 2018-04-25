@@ -38,12 +38,12 @@ namespace android
 *******************************************************************************/
 static jboolean nativeLlcpSocket_doConnect (JNIEnv* e, jobject o, jint nSap)
 {
-    ALOGV("%s: enter; sap=%d", __func__, nSap);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter; sap=%d", __func__, nSap);
 
     PeerToPeer::tJNI_HANDLE jniHandle = (PeerToPeer::tJNI_HANDLE) nfc_jni_get_nfc_socket_handle(e, o);
     bool stat = PeerToPeer::getInstance().connectConnOriented (jniHandle, nSap);
 
-    ALOGV("%s: exit", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
     return stat ? JNI_TRUE : JNI_FALSE;
 }
 
@@ -62,7 +62,7 @@ static jboolean nativeLlcpSocket_doConnect (JNIEnv* e, jobject o, jint nSap)
 *******************************************************************************/
 static jboolean nativeLlcpSocket_doConnectBy (JNIEnv* e, jobject o, jstring sn)
 {
-    ALOGV("%s: enter", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
 
     PeerToPeer::tJNI_HANDLE jniHandle = (PeerToPeer::tJNI_HANDLE) nfc_jni_get_nfc_socket_handle(e, o);
 
@@ -73,7 +73,7 @@ static jboolean nativeLlcpSocket_doConnectBy (JNIEnv* e, jobject o, jstring sn)
     }
     bool stat = PeerToPeer::getInstance().connectConnOriented(jniHandle, serviceName.c_str());
 
-    ALOGV("%s: exit", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
     return stat ? JNI_TRUE : JNI_FALSE;
 }
 
@@ -91,12 +91,12 @@ static jboolean nativeLlcpSocket_doConnectBy (JNIEnv* e, jobject o, jstring sn)
 *******************************************************************************/
 static jboolean nativeLlcpSocket_doClose(JNIEnv *e, jobject o)
 {
-    ALOGV("%s: enter", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
 
     PeerToPeer::tJNI_HANDLE jniHandle = (PeerToPeer::tJNI_HANDLE) nfc_jni_get_nfc_socket_handle(e, o);
     bool stat = PeerToPeer::getInstance().disconnectConnOriented (jniHandle);
 
-    ALOGV("%s: exit", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
     return stat ? JNI_TRUE : JNI_FALSE;
 }
 
@@ -115,7 +115,7 @@ static jboolean nativeLlcpSocket_doClose(JNIEnv *e, jobject o)
 *******************************************************************************/
 static jboolean nativeLlcpSocket_doSend (JNIEnv* e, jobject o, jbyteArray data)
 {
-    ALOGV_IF((appl_trace_level>=BT_TRACE_LEVEL_DEBUG), "%s: enter", __func__);
+     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
 
     ScopedByteArrayRO bytes(e, data);
 
@@ -123,7 +123,7 @@ static jboolean nativeLlcpSocket_doSend (JNIEnv* e, jobject o, jbyteArray data)
     uint8_t* raw_ptr = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
     bool stat = PeerToPeer::getInstance().send(jniHandle, raw_ptr, bytes.size());
 
-    ALOGV_IF((appl_trace_level>=BT_TRACE_LEVEL_DEBUG), "%s: exit", __func__);
+     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
     return stat ? JNI_TRUE : JNI_FALSE;
 }
 
@@ -142,7 +142,7 @@ static jboolean nativeLlcpSocket_doSend (JNIEnv* e, jobject o, jbyteArray data)
 *******************************************************************************/
 static jint nativeLlcpSocket_doReceive(JNIEnv *e, jobject o, jbyteArray origBuffer)
 {
-    ALOGV_IF((appl_trace_level>=BT_TRACE_LEVEL_DEBUG), "%s: enter", __func__);
+     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
 
     ScopedByteArrayRW bytes(e, origBuffer);
 
@@ -158,7 +158,7 @@ static jint nativeLlcpSocket_doReceive(JNIEnv *e, jobject o, jbyteArray origBuff
     else
         retval = -1;
 
-    ALOGV_IF((appl_trace_level>=BT_TRACE_LEVEL_DEBUG), "%s: exit; actual len=%d", __func__, retval);
+     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit; actual len=%d", __func__, retval);
     return retval;
 }
 
@@ -176,12 +176,12 @@ static jint nativeLlcpSocket_doReceive(JNIEnv *e, jobject o, jbyteArray origBuff
 *******************************************************************************/
 static jint nativeLlcpSocket_doGetRemoteSocketMIU (JNIEnv* e, jobject o)
 {
-    ALOGV("%s: enter", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
 
     PeerToPeer::tJNI_HANDLE jniHandle = (PeerToPeer::tJNI_HANDLE) nfc_jni_get_nfc_socket_handle(e, o);
     jint miu = PeerToPeer::getInstance().getRemoteMaxInfoUnit(jniHandle);
 
-    ALOGV("%s: exit", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
     return miu;
 }
 
@@ -199,12 +199,12 @@ static jint nativeLlcpSocket_doGetRemoteSocketMIU (JNIEnv* e, jobject o)
 *******************************************************************************/
 static jint nativeLlcpSocket_doGetRemoteSocketRW (JNIEnv* e, jobject o)
 {
-    ALOGV("%s: enter", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
 
     PeerToPeer::tJNI_HANDLE jniHandle = (PeerToPeer::tJNI_HANDLE) nfc_jni_get_nfc_socket_handle(e, o);
     jint rw = PeerToPeer::getInstance().getRemoteRecvWindow (jniHandle);
 
-    ALOGV("%s: exit", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
     return rw;
 }
 

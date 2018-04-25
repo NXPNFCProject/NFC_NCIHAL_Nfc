@@ -1372,7 +1372,7 @@ static int phFriNfc_MfStd_MemCompare(void *s1, void *s2, unsigned int n )
     int8_t *char_2  =(int8_t *)s2;
     if(NULL == s1 || NULL == s2)
     {
-        NXPLOG_EXTNS_E("NULL pointer passed to memcompare");
+         LOG(ERROR) << StringPrintf("NULL pointer passed to memcompare");
     }
     else
     {

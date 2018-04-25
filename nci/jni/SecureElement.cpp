@@ -60,7 +60,6 @@ extern "C"{
 #include "nfa_api.h"
 }
 #endif
-#define ALOGV ALOGD
 /*****************************************************************************
 **
 ** public variables
@@ -248,7 +247,7 @@ SecureElement& SecureElement::getInstance()
 *******************************************************************************/
 void SecureElement::setActiveSeOverride(uint8_t activeSeOverride)
 {
-    ALOGV("SecureElement::setActiveSeOverride, seid=0x%X", activeSeOverride);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("SecureElement::setActiveSeOverride, seid=0x%X", activeSeOverride);
     mActiveSeOverride = activeSeOverride;
 }
 
@@ -270,17 +269,17 @@ bool SecureElement::initialize (nfc_jni_native_data* native)
     unsigned long num = 0;
     unsigned long retValue;
 
-    ALOGV("%s: enter", fn);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", fn);
     if (GetNumValue("NFA_HCI_DEFAULT_DEST_GATE", &num, sizeof(num)))
         mDestinationGate = num;
-    ALOGV("%s: Default destination gate: 0x%X", fn, mDestinationGate);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Default destination gate: 0x%X", fn, mDestinationGate);
 
     mStaticPipeProp = nfcFL.nfccFL._GEMALTO_SE_SUPPORT ? STATIC_PIPE_0x19 : STATIC_PIPE_0x70;
     // active SE, if not set active all SEs, use the first one.
     if (GetNumValue("ACTIVE_SE", &num, sizeof(num)))
     {
         mActiveSeOverride = num;
-        ALOGV("%s: Active SE override: 0x%X", fn, mActiveSeOverride);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Active SE override: 0x%X", fn, mActiveSeOverride);
     }
 #if(NXP_EXTNS == TRUE)
     if(nfcFL.nfcNxpEse) {
@@ -288,15 +287,15 @@ bool SecureElement::initialize (nfc_jni_native_data* native)
             if (GetNxpNumValue(NAME_NXP_NFCC_PASSIVE_LISTEN_TIMEOUT, &mPassiveListenTimeout, sizeof(mPassiveListenTimeout)) == false)
             {
                 mPassiveListenTimeout = 2500;
-                ALOGV("%s: NFCC Passive Listen Disable timeout =%u", fn, mPassiveListenTimeout);
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFCC Passive Listen Disable timeout =%u", fn, mPassiveListenTimeout);
             }
-            ALOGV("%s: NFCC Passive Listen Disable timeout =%u", fn, mPassiveListenTimeout);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFCC Passive Listen Disable timeout =%u", fn, mPassiveListenTimeout);
         }
         if (GetNxpNumValue(NAME_NXP_NFCC_STANDBY_TIMEOUT, &nfccStandbytimeout, sizeof(nfccStandbytimeout)) == false)
         {
             nfccStandbytimeout = 20000;
         }
-        ALOGV("%s: NFCC standby mode timeout =0x%u", fn, nfccStandbytimeout);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFCC standby mode timeout =0x%u", fn, nfccStandbytimeout);
         if(nfccStandbytimeout > 0 && nfccStandbytimeout < 5000 )
         {
             nfccStandbytimeout = 5000;
@@ -312,7 +311,7 @@ bool SecureElement::initialize (nfc_jni_native_data* native)
         }
         if (GetNxpNumValue(NAME_NXP_WM_MAX_WTX_COUNT, &mWmMaxWtxCount, sizeof(mWmMaxWtxCount)) == false || (mWmMaxWtxCount == 0))
             mWmMaxWtxCount = 9000;
-        ALOGD ("%s: NFCC Wired Mode Max WTX Count =%hu", fn, mWmMaxWtxCount);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFCC Wired Mode Max WTX Count =%hu", fn, mWmMaxWtxCount);
         dual_mode_current_state = SPI_DWPCL_NOT_ACTIVE;
         hold_the_transceive = false;
         active_ese_reset_control = 0;
@@ -323,7 +322,7 @@ bool SecureElement::initialize (nfc_jni_native_data* native)
         if (GetNxpNumValue(NAME_NXP_NFCC_RF_FIELD_EVENT_TIMEOUT, &mRfFieldEventTimeout, sizeof(mRfFieldEventTimeout)) == false)
         {
             mRfFieldEventTimeout = 2000;
-            ALOGV("%s: RF Field Off event timeout =%u", fn, mRfFieldEventTimeout);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: RF Field Off event timeout =%u", fn, mRfFieldEventTimeout);
         }
 
         if (GetNxpNumValue(NAME_NXP_ALLOW_WIRED_IN_MIFARE_DESFIRE_CLT, &retValue, sizeof(retValue)) == false)
@@ -390,7 +389,7 @@ bool SecureElement::initialize (nfc_jni_native_data* native)
     // if no SE is to be used, get out.
     if (mActiveSeOverride == 0)
     {
-        ALOGV("%s: No SE; No need to initialize SecureElement", fn);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: No SE; No need to initialize SecureElement", fn);
         return (false);
     }
 
@@ -407,14 +406,14 @@ bool SecureElement::initialize (nfc_jni_native_data* native)
            || (nfcFL.nfccFL._GEMALTO_SE_SUPPORT && (((mEeInfo[xx].ee_interface[0] == NCI_NFCEE_INTERFACE_HCI_ACCESS)
                  && (mEeInfo[xx].ee_status == NFC_NFCEE_STATUS_ACTIVE)) || (NFA_GetNCIVersion() == NCI_VERSION_2_0))))
             {
-                ALOGV("%s: Found HCI network, try hci register", fn);
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Found HCI network, try hci register", fn);
 
                 SyncEventGuard guard (mHciRegisterEvent);
 
                 nfaStat = NFA_HciRegister (const_cast<char*>(APP_NAME), nfaHciCallback, true);
                 if (nfaStat != NFA_STATUS_OK)
                 {
-                    ALOGE("%s: fail hci register; error=0x%X", fn, nfaStat);
+                    LOG(ERROR) << StringPrintf("%s: fail hci register; error=0x%X", fn, nfaStat);
                     return (false);
                 }
                 mHciRegisterEvent.wait();
@@ -423,7 +422,7 @@ bool SecureElement::initialize (nfc_jni_native_data* native)
     }
     GetStrValue(NAME_AID_FOR_EMPTY_SELECT, (char*)&mAidForEmptySelect[0], sizeof(mAidForEmptySelect));
     mIsInit = true;
-    ALOGV("%s: exit", fn);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", fn);
     return (true);
 }
 #if((NXP_EXTNS == TRUE))
@@ -442,7 +441,7 @@ bool SecureElement::updateEEStatus ()
 {
     tNFA_STATUS nfaStat;
     mActualNumEe    = nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED;
-    ALOGV("%s: Enter", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter", __func__);
 
     if (! getEeInfo())
         return (false);
@@ -454,14 +453,14 @@ bool SecureElement::updateEEStatus ()
             || (nfcFL.nfccFL._GEMALTO_SE_SUPPORT && (((mEeInfo[xx].ee_interface[0] == NCI_NFCEE_INTERFACE_HCI_ACCESS))
             || (NFA_GetNCIVersion() == NCI_VERSION_2_0))))
          {
-                ALOGV("%s: Found HCI network, try hci register", __func__);
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Found HCI network, try hci register", __func__);
 
                 SyncEventGuard guard (mHciRegisterEvent);
 
                 nfaStat = NFA_HciRegister (const_cast<char*>(APP_NAME), nfaHciCallback, true);
                 if (nfaStat != NFA_STATUS_OK)
                 {
-                    ALOGE("%s: fail hci register; error=0x%X", __func__, nfaStat);
+                    LOG(ERROR) << StringPrintf("%s: fail hci register; error=0x%X", __func__, nfaStat);
                     return (false);
                 }
                 mHciRegisterEvent.wait();
@@ -470,7 +469,7 @@ bool SecureElement::updateEEStatus ()
     }
 
     GetStrValue(NAME_AID_FOR_EMPTY_SELECT, (char*)&mAidForEmptySelect[0], sizeof(mAidForEmptySelect));
-    ALOGV("%s: exit", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
     return (true);
 }
 
@@ -487,11 +486,11 @@ bool SecureElement::updateEEStatus ()
  *******************************************************************************/
 bool SecureElement::isTeckInfoReceived (uint16_t eeHandle)
 {
-    ALOGV("%s: enter", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
     bool stat = false;
     if (! getEeInfo())
     {
-        ALOGE("%s: No updated eeInfo available", __func__);
+        LOG(ERROR) << StringPrintf("%s: No updated eeInfo available", __func__);
         stat = false;
     }
     else
@@ -507,7 +506,7 @@ bool SecureElement::isTeckInfoReceived (uint16_t eeHandle)
             }
         }
     }
-    ALOGV("%s: stat : 0x%02x", __func__,stat);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: stat : 0x%02x", __func__,stat);
     return stat;
 }
 #endif
@@ -523,7 +522,7 @@ bool SecureElement::isTeckInfoReceived (uint16_t eeHandle)
 void SecureElement::finalize ()
 {
     static const char fn [] = "SecureElement::finalize";
-    ALOGV("%s: enter", fn);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", fn);
 
 /*    if (mNfaHciHandle != NFA_HANDLE_INVALID)
         NFA_HciDeregister (const_cast<char*>(APP_NAME));*/
@@ -544,7 +543,7 @@ void SecureElement::finalize ()
     memset (mEeInfo, 0, sizeof(mEeInfo));
     memset (&mUiccInfo, 0, sizeof(mUiccInfo));
 
-    ALOGV("%s: exit", fn);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", fn);
 }
 
 
@@ -560,7 +559,7 @@ void SecureElement::finalize ()
 bool SecureElement::getEeInfo()
 {
     static const char fn [] = "SecureElement::getEeInfo";
-    ALOGV("%s: enter; mbNewEE=%d, mActualNumEe=%d", fn, mbNewEE, mActualNumEe);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter; mbNewEE=%d, mActualNumEe=%d", fn, mbNewEE, mActualNumEe);
     tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
 
     /*Reading latest eEinfo  incase it is updated*/
@@ -580,14 +579,14 @@ bool SecureElement::getEeInfo()
 
         if ((nfaStat = NFA_EeGetInfo (&mActualNumEe, mEeInfo)) != NFA_STATUS_OK)
         {
-            ALOGE("%s: fail get info; error=0x%X", fn, nfaStat);
+            LOG(ERROR) << StringPrintf("%s: fail get info; error=0x%X", fn, nfaStat);
             mActualNumEe = 0;
         }
         else
         {
             mbNewEE = false;
 
-            ALOGV("%s: num EEs discovered: %u", fn, mActualNumEe);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: num EEs discovered: %u", fn, mActualNumEe);
             if (mActualNumEe != 0)
             {
                 for (uint8_t xx = 0; xx < mActualNumEe; xx++)
@@ -595,7 +594,7 @@ bool SecureElement::getEeInfo()
                     if (mEeInfo[xx].ee_interface[0] != NCI_NFCEE_INTERFACE_HCI_ACCESS)
                         mNumEePresent++;
 
-                    ALOGV("%s: EE[%u] Handle: 0x%04x  Status: %s  Num I/f: %u: (0x%02x, 0x%02x)  Num TLVs: %u, Tech : (LA:0x%02x, LB:0x%02x, "
+                    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: EE[%u] Handle: 0x%04x  Status: %s  Num I/f: %u: (0x%02x, 0x%02x)  Num TLVs: %u, Tech : (LA:0x%02x, LB:0x%02x, "
                             "LF:0x%02x, LBP:0x%02x)", fn, xx, mEeInfo[xx].ee_handle, eeStatusToString(mEeInfo[xx].ee_status),
                             mEeInfo[xx].num_interface, mEeInfo[xx].ee_interface[0], mEeInfo[xx].ee_interface[1], mEeInfo[xx].num_tlvs,
                             mEeInfo[xx].la_protocol, mEeInfo[xx].lb_protocol, mEeInfo[xx].lf_protocol, mEeInfo[xx].lbp_protocol);
@@ -606,7 +605,7 @@ bool SecureElement::getEeInfo()
 #endif
                     for (size_t yy = 0; yy < mEeInfo[xx].num_tlvs; yy++)
                     {
-                        ALOGV("%s: EE[%u] TLV[%lu]  Tag: 0x%02x  Len: %u  Values[]: 0x%02x  0x%02x  0x%02x ...",
+                        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: EE[%u] TLV[%lu]  Tag: 0x%02x  Len: %u  Values[]: 0x%02x  0x%02x  0x%02x ...",
                                 fn, xx, yy, mEeInfo[xx].ee_tlv[yy].tag, mEeInfo[xx].ee_tlv[yy].len, mEeInfo[xx].ee_tlv[yy].info[0],
                                 mEeInfo[xx].ee_tlv[yy].info[1], mEeInfo[xx].ee_tlv[yy].info[2]);
                     }
@@ -614,7 +613,7 @@ bool SecureElement::getEeInfo()
             }
         }
     }
-    ALOGV("%s: exit; mActualNumEe=%d, mNumEePresent=%d", fn, mActualNumEe,mNumEePresent);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit; mActualNumEe=%d, mNumEePresent=%d", fn, mActualNumEe,mNumEePresent);
 
 #if(NXP_EXTNS == TRUE)
     mNfceeData_t.mNfceePresent = mNumEePresent;
@@ -641,7 +640,7 @@ bool SecureElement::activateAllNfcee()
 
     if((nfaStat = NFA_AllEeGetInfo(&numEe, mEeInfo)) != NFA_STATUS_OK)
     {
-        ALOGV("%s failed to get info, error = 0x%X ",__func__, nfaStat);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s failed to get info, error = 0x%X ",__func__, nfaStat);
         mActualNumEe = 0;
         return false;
     }
@@ -651,16 +650,16 @@ bool SecureElement::activateAllNfcee()
             for (uint8_t xx = 0; xx < numEe; xx++)
             {
                 tNFA_EE_INFO& eeItem = mEeInfo[xx];
-                ALOGV("%s: set EE mode activate; h=0x%X status : %d interface : 0x%X", fn, eeItem.ee_handle, eeItem.ee_status, eeItem.ee_interface[0]);
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: set EE mode activate; h=0x%X status : %d interface : 0x%X", fn, eeItem.ee_handle, eeItem.ee_status, eeItem.ee_interface[0]);
                 if (eeItem.ee_status != NFC_NFCEE_STATUS_INACTIVE || eeItem.ee_interface[0] == NCI_NFCEE_INTERFACE_HCI_ACCESS)
                 {
-                    ALOGV("%s: h=0x%X already activated", fn, eeItem.ee_handle);
+                    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: h=0x%X already activated", fn, eeItem.ee_handle);
                     numActivatedEe++;
                     continue;
                 }
                 else
                 {
-                    ALOGV("%s: set EE mode activate; h=0x%X", fn, eeItem.ee_handle);
+                    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: set EE mode activate; h=0x%X", fn, eeItem.ee_handle);
                     if ((nfaStat = SecElem_EeModeSet (eeItem.ee_handle, NFA_EE_MD_ACTIVATE)) == NFA_STATUS_OK)
                     {
                         if (eeItem.ee_status == NFC_NFCEE_STATUS_ACTIVE)
@@ -711,7 +710,7 @@ bool SecureElement::isRfFieldOn() {
     struct timespec now;
     int ret = clock_gettime(CLOCK_MONOTONIC, &now);
     if (ret == -1) {
-        ALOGE("isRfFieldOn(): clock_gettime failed");
+        LOG(ERROR) << StringPrintf("isRfFieldOn(): clock_gettime failed");
         return false;
     }
     if (TimeDiff(mLastRfFieldToggle, now) < 50) {
@@ -741,11 +740,11 @@ bool SecureElement::setEseListenTechMask(uint8_t tech_mask ) {
     static const char fn [] = "SecureElement::setEseListenTechMask";
     tNFA_STATUS nfaStat;
 
-    ALOGV("%s: enter", fn);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", fn);
 
     if (!mIsInit)
     {
-        ALOGE("%s: not init", fn);
+        LOG(ERROR) << StringPrintf("%s: not init", fn);
         return false;
     }
 
@@ -758,7 +757,7 @@ bool SecureElement::setEseListenTechMask(uint8_t tech_mask ) {
             return true;
         }
         else
-            ALOGE("fail to stop ESE listen");
+            LOG(ERROR) << StringPrintf("fail to stop ESE listen");
     }
 
     {
@@ -770,7 +769,7 @@ bool SecureElement::setEseListenTechMask(uint8_t tech_mask ) {
             return true;
         }
         else
-            ALOGE("fail to start ESE listen");
+            LOG(ERROR) << StringPrintf("fail to start ESE listen");
     }
 
     return false;
@@ -802,13 +801,13 @@ bool SecureElement::isActivatedInListenMode() {
 jintArray SecureElement::getListOfEeHandles (JNIEnv* e)
 {
     static const char fn [] = "SecureElement::getListOfEeHandles";
-    ALOGV("%s: enter", fn);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", fn);
     if (mNumEePresent == 0)
         return NULL;
 
     if (!mIsInit)
     {
-        ALOGE("%s: not init", fn);
+        LOG(ERROR) << StringPrintf("%s: not init", fn);
         return (NULL);
     }
 
@@ -821,7 +820,7 @@ jintArray SecureElement::getListOfEeHandles (JNIEnv* e)
     int cnt = 0;
     for (int ii = 0; ii < mActualNumEe && cnt < mNumEePresent; ii++)
     {
-        ALOGV("%s: %u = 0x%X", fn, ii, mEeInfo[ii].ee_handle);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: %u = 0x%X", fn, ii, mEeInfo[ii].ee_handle);
         if (mEeInfo[ii].ee_interface[0] == NCI_NFCEE_INTERFACE_HCI_ACCESS)
         {
             continue;
@@ -829,14 +828,14 @@ jintArray SecureElement::getListOfEeHandles (JNIEnv* e)
 
         jj = mEeInfo[ii].ee_handle & ~NFA_HANDLE_GROUP_EE;
 
-        ALOGV("%s: Handle %u = 0x%X", fn, ii, jj);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Handle %u = 0x%X", fn, ii, jj);
 
         jj = getGenericEseId(jj);
 
-        ALOGV("%s: Generic id %u = 0x%X", fn, ii, jj);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Generic id %u = 0x%X", fn, ii, jj);
         e->SetIntArrayRegion (list, cnt++, 1, &jj);
     }
-    ALOGV("%s: exit", fn);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", fn);
     return list;
 }
 
@@ -858,13 +857,13 @@ jintArray SecureElement::getActiveSecureElementList (JNIEnv* e)
     jint seId = 0;
     int cnt = 0;
     int i;
-    ALOGV("%s: ENTER", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: ENTER", __func__);
 
     if (! getEeInfo())
         return (NULL);
 
     num_of_nfcee_present = mNfceeData_t.mNfceePresent;
-    ALOGV("num_of_nfcee_present = %d",num_of_nfcee_present);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("num_of_nfcee_present = %d",num_of_nfcee_present);
 
     jintArray list = e->NewIntArray (num_of_nfcee_present); //allocate array
 
@@ -876,26 +875,26 @@ jintArray SecureElement::getActiveSecureElementList (JNIEnv* e)
         if(nfcee_handle[i] == EE_HANDLE_0xF3 && nfcee_status[i] == NFC_NFCEE_STATUS_ACTIVE)
         {
             seId = getGenericEseId(EE_HANDLE_0xF3 & ~NFA_HANDLE_GROUP_EE);
-            ALOGV("eSE  Active");
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("eSE  Active");
         }
 
         if(nfcee_handle[i] == EE_HANDLE_0xF4 && nfcee_status[i] == NFC_NFCEE_STATUS_ACTIVE)
         {
             seId = getGenericEseId(EE_HANDLE_0xF4 & ~NFA_HANDLE_GROUP_EE);
-            ALOGV("UICC  Active");
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("UICC  Active");
         }
 
         if(nfcee_handle[i] == EE_HANDLE_0xF8 && nfcee_status[i] == NFC_NFCEE_STATUS_ACTIVE)
         {
             seId = getGenericEseId(EE_HANDLE_0xF8 & ~NFA_HANDLE_GROUP_EE);
-            ALOGV("UICC2  Active");
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("UICC2  Active");
         }
 
-        ALOGV("%s: Generic id %u = 0x%X", __func__, i, seId);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Generic id %u = 0x%X", __func__, i, seId);
         e->SetIntArrayRegion (list, cnt++, 1, &seId);
     }
 
-    ALOGV("%s: exit", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
     return list;
 }
 
@@ -916,28 +915,28 @@ bool SecureElement::activate (jint seID)
     tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
     int numActivatedEe = 0;
 
-    ALOGV("%s: enter; seID=0x%X", fn, seID);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter; seID=0x%X", fn, seID);
 
     tNFA_HANDLE handle = getEseHandleFromGenericId(seID);
 
-    ALOGV("%s: handle=0x%X", fn, handle);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: handle=0x%X", fn, handle);
 
     if (!mIsInit)
     {
-        ALOGE("%s: not init", fn);
+        LOG(ERROR) << StringPrintf("%s: not init", fn);
         return false;
     }
 
     //if (mActiveEeHandle != NFA_HANDLE_INVALID)
     //{
-    //    ALOGV("%s: already active", fn);
+    //    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: already active", fn);
     //    return true;
     //}
 
     // Get Fresh EE info if needed.
     if (! getEeInfo())
     {
-        ALOGE("%s: no EE info", fn);
+        LOG(ERROR) << StringPrintf("%s: no EE info", fn);
         return false;
     }
 
@@ -948,10 +947,10 @@ bool SecureElement::activate (jint seID)
     else //NXP
         overrideEeHandle = handle;
 
-    ALOGV("%s: override ee h=0x%X", fn, overrideEeHandle );
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: override ee h=0x%X", fn, overrideEeHandle );
 
     if (!nfcFL.nfcNxpEse && mRfFieldIsOn) {
-        ALOGE("%s: RF field indication still on, resetting", fn);
+        LOG(ERROR) << StringPrintf("%s: RF field indication still on, resetting", fn);
         mRfFieldIsOn = false;
     }
 
@@ -968,13 +967,13 @@ bool SecureElement::activate (jint seID)
 
             if (eeItem.ee_status != NFC_NFCEE_STATUS_INACTIVE)
             {
-                ALOGV("%s: h=0x%X already activated", fn, eeItem.ee_handle);
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: h=0x%X already activated", fn, eeItem.ee_handle);
                 numActivatedEe++;
                 continue;
             }
 
             {
-                ALOGV("%s: set EE mode activate; h=0x%X", fn, eeItem.ee_handle);
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: set EE mode activate; h=0x%X", fn, eeItem.ee_handle);
 #if(NXP_EXTNS == TRUE)
                 if ((nfaStat = SecElem_EeModeSet (eeItem.ee_handle, NFA_EE_MD_ACTIVATE)) == NFA_STATUS_OK)
                 {
@@ -985,13 +984,13 @@ bool SecureElement::activate (jint seID)
                         SyncEventGuard guard (SecureElement::getInstance().mModeSetNtf);
                         if(SecureElement::getInstance().mModeSetNtf.wait(500) == false)
                         {
-                            ALOGE("%s: timeout waiting for setModeNtf", __func__);
+                            LOG(ERROR) << StringPrintf("%s: timeout waiting for setModeNtf", __func__);
                         }
                     }
                 }
                 else
 #endif
-                    ALOGE("%s: NFA_EeModeSet failed; error=0x%X", fn, nfaStat);
+                    LOG(ERROR) << StringPrintf("%s: NFA_EeModeSet failed; error=0x%X", fn, nfaStat);
             }
         }
     } //for
@@ -1002,8 +1001,8 @@ bool SecureElement::activate (jint seID)
 #endif
 
     if (mActiveEeHandle == NFA_HANDLE_INVALID)
-        ALOGE("%s: ee handle not found", fn);
-    ALOGV("%s: exit; active ee h=0x%X", fn, mActiveEeHandle);
+        LOG(ERROR) << StringPrintf("%s: ee handle not found", fn);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit; active ee h=0x%X", fn, mActiveEeHandle);
     return mActiveEeHandle != NFA_HANDLE_INVALID;
 }
 
@@ -1024,15 +1023,15 @@ bool SecureElement::deactivate (jint seID)
     tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
     bool retval = false;
 
-    ALOGV("%s: enter; seID=0x%X, mActiveEeHandle=0x%X", fn, seID, mActiveEeHandle);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter; seID=0x%X, mActiveEeHandle=0x%X", fn, seID, mActiveEeHandle);
 
     tNFA_HANDLE handle = getEseHandleFromGenericId(seID);
 
-    ALOGV("%s: handle=0x%X", fn, handle);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: handle=0x%X", fn, handle);
 
     if (!mIsInit)
     {
-        ALOGE("%s: not init", fn);
+        LOG(ERROR) << StringPrintf("%s: not init", fn);
         goto TheEnd;
     }
 
@@ -1040,19 +1039,19 @@ bool SecureElement::deactivate (jint seID)
     //then the secure element cannot be deactivated
     if ((mCurrentRouteSelection == SecElemRoute) || mIsPiping)
     {
-        ALOGE("%s: still busy", fn);
+        LOG(ERROR) << StringPrintf("%s: still busy", fn);
         goto TheEnd;
     }
 
 //    if (mActiveEeHandle == NFA_HANDLE_INVALID)
 //    {
-//        ALOGE("%s: invalid EE handle", fn);
+//        LOG(ERROR) << StringPrintf("%s: invalid EE handle", fn);
 //        goto TheEnd;
 //    }
 
     if (seID == NFA_HANDLE_INVALID)
     {
-        ALOGE("%s: invalid EE handle", fn);
+        LOG(ERROR) << StringPrintf("%s: invalid EE handle", fn);
         goto TheEnd;
     }
 
@@ -1069,31 +1068,31 @@ bool SecureElement::deactivate (jint seID)
                         (nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC && (eeItem.ee_handle == EE_HANDLE_0xF8)))) {
             if (eeItem.ee_status == NFC_NFCEE_STATUS_INACTIVE)
             {
-                ALOGV("%s: h=0x%X already deactivated", fn, eeItem.ee_handle);
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: h=0x%X already deactivated", fn, eeItem.ee_handle);
                 break;
             }
 
             {
-                ALOGV("%s: set EE mode activate; h=0x%X", fn, eeItem.ee_handle);
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: set EE mode activate; h=0x%X", fn, eeItem.ee_handle);
 #if(NXP_EXTNS == TRUE)
                 if ((nfaStat = SecElem_EeModeSet (eeItem.ee_handle, NFA_EE_MD_DEACTIVATE)) == NFA_STATUS_OK)
                 {
-                    ALOGV("%s: eeItem.ee_status =0x%X  NFC_NFCEE_STATUS_INACTIVE = %x", fn, eeItem.ee_status, NFC_NFCEE_STATUS_INACTIVE);
+                    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: eeItem.ee_status =0x%X  NFC_NFCEE_STATUS_INACTIVE = %x", fn, eeItem.ee_status, NFC_NFCEE_STATUS_INACTIVE);
                     if (eeItem.ee_status == NFC_NFCEE_STATUS_INACTIVE)
                     {
-                        ALOGE("%s: NFA_EeModeSet success; status=0x%X", fn, nfaStat);
+                        LOG(ERROR) << StringPrintf("%s: NFA_EeModeSet success; status=0x%X", fn, nfaStat);
                         retval = true;
                     }
                 }
                 else
 #endif
-                    ALOGE("%s: NFA_EeModeSet failed; error=0x%X", fn, nfaStat);
+                    LOG(ERROR) << StringPrintf("%s: NFA_EeModeSet failed; error=0x%X", fn, nfaStat);
             }
         }
     } //for
 
 TheEnd:
-    ALOGV("%s: exit; ok=%u", fn, retval);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit; ok=%u", fn, retval);
     return retval;
 }
 
@@ -1112,7 +1111,7 @@ TheEnd:
 void SecureElement::notifyTransactionListenersOfAid (const uint8_t* aidBuffer, uint8_t aidBufferLen, const uint8_t* dataBuffer, uint32_t dataBufferLen,uint32_t evtSrc)
 {
     static const char fn [] = "SecureElement::notifyTransactionListenersOfAid";
-    ALOGV("%s: enter; aid len=%u data len=%u", fn, aidBufferLen, dataBufferLen);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter; aid len=%u data len=%u", fn, aidBufferLen, dataBufferLen);
 
     if (aidBufferLen == 0) {
         return;
@@ -1122,7 +1121,7 @@ void SecureElement::notifyTransactionListenersOfAid (const uint8_t* aidBuffer, u
     ScopedAttach attach(mNativeData->vm, &e);
     if (e == NULL)
     {
-        ALOGE("%s: jni env is null", fn);
+        LOG(ERROR) << StringPrintf("%s: jni env is null", fn);
         return;
     }
 
@@ -1130,7 +1129,7 @@ void SecureElement::notifyTransactionListenersOfAid (const uint8_t* aidBuffer, u
     uint8_t* tlv = new uint8_t [tlvMaxLen];
     if (tlv == NULL)
     {
-        ALOGE("%s: fail allocate tlv", fn);
+        LOG(ERROR) << StringPrintf("%s: fail allocate tlv", fn);
         return;
     }
 
@@ -1140,7 +1139,7 @@ void SecureElement::notifyTransactionListenersOfAid (const uint8_t* aidBuffer, u
     ScopedLocalRef<jobject> tlvJavaArray(e, e->NewByteArray(tlvActualLen));
     if (tlvJavaArray.get() == NULL)
     {
-        ALOGE("%s: fail allocate array", fn);
+        LOG(ERROR) << StringPrintf("%s: fail allocate array", fn);
         goto TheEnd;
     }
 
@@ -1148,7 +1147,7 @@ void SecureElement::notifyTransactionListenersOfAid (const uint8_t* aidBuffer, u
     if (e->ExceptionCheck())
     {
         e->ExceptionClear();
-        ALOGE("%s: fail fill array", fn);
+        LOG(ERROR) << StringPrintf("%s: fail fill array", fn);
         goto TheEnd;
     }
 
@@ -1158,7 +1157,7 @@ void SecureElement::notifyTransactionListenersOfAid (const uint8_t* aidBuffer, u
         uint8_t* datatlv = new uint8_t [dataTlvMaxLen];
         if (datatlv == NULL)
         {
-            ALOGE("%s: fail allocate tlv", fn);
+            LOG(ERROR) << StringPrintf("%s: fail allocate tlv", fn);
             return;
         }
 
@@ -1168,7 +1167,7 @@ void SecureElement::notifyTransactionListenersOfAid (const uint8_t* aidBuffer, u
         ScopedLocalRef<jobject> dataTlvJavaArray(e, e->NewByteArray(dataTlvActualLen));
         if (dataTlvJavaArray.get() == NULL)
         {
-            ALOGE("%s: fail allocate array", fn);
+            LOG(ERROR) << StringPrintf("%s: fail allocate array", fn);
             goto Clean;
         }
 
@@ -1176,7 +1175,7 @@ void SecureElement::notifyTransactionListenersOfAid (const uint8_t* aidBuffer, u
         if (e->ExceptionCheck())
         {
             e->ExceptionClear();
-            ALOGE("%s: fail fill array", fn);
+            LOG(ERROR) << StringPrintf("%s: fail fill array", fn);
             goto Clean;
         }
 
@@ -1184,7 +1183,7 @@ void SecureElement::notifyTransactionListenersOfAid (const uint8_t* aidBuffer, u
         if (e->ExceptionCheck())
         {
             e->ExceptionClear();
-            ALOGE("%s: fail notify", fn);
+            LOG(ERROR) << StringPrintf("%s: fail notify", fn);
             goto Clean;
         }
 
@@ -1197,13 +1196,13 @@ void SecureElement::notifyTransactionListenersOfAid (const uint8_t* aidBuffer, u
         if (e->ExceptionCheck())
         {
             e->ExceptionClear();
-            ALOGE("%s: fail notify", fn);
+            LOG(ERROR) << StringPrintf("%s: fail notify", fn);
             goto TheEnd;
         }
     }
 TheEnd:
     delete [] tlv;
-    ALOGV("%s: exit", fn);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", fn);
 }
 
 /*******************************************************************************
@@ -1219,13 +1218,13 @@ TheEnd:
 void SecureElement::notifyConnectivityListeners (uint8_t evtSrc)
 {
     static const char fn [] = "SecureElement::notifyConnectivityListeners";
-    ALOGV("%s: enter; evtSrc =%u", fn, evtSrc);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter; evtSrc =%u", fn, evtSrc);
 
     JNIEnv* e = NULL;
     ScopedAttach attach(mNativeData->vm, &e);
     if (e == NULL)
     {
-        ALOGE("%s: jni env is null", fn);
+        LOG(ERROR) << StringPrintf("%s: jni env is null", fn);
         return;
     }
 
@@ -1233,12 +1232,12 @@ void SecureElement::notifyConnectivityListeners (uint8_t evtSrc)
     if (e->ExceptionCheck())
     {
         e->ExceptionClear();
-        ALOGE("%s: fail notify", fn);
+        LOG(ERROR) << StringPrintf("%s: fail notify", fn);
         goto TheEnd;
     }
 
 TheEnd:
-    ALOGV("%s: exit", fn);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", fn);
 }
 
 /*******************************************************************************
@@ -1254,13 +1253,13 @@ TheEnd:
 void SecureElement::notifyEmvcoMultiCardDetectedListeners ()
 {
     static const char fn [] = "SecureElement::notifyEmvcoMultiCardDetectedListeners";
-    ALOGV("%s: enter", fn);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", fn);
 
     JNIEnv* e = NULL;
     ScopedAttach attach(mNativeData->vm, &e);
     if (e == NULL)
     {
-        ALOGE("%s: jni env is null", fn);
+        LOG(ERROR) << StringPrintf("%s: jni env is null", fn);
         return;
     }
 
@@ -1268,12 +1267,12 @@ void SecureElement::notifyEmvcoMultiCardDetectedListeners ()
     if (e->ExceptionCheck())
     {
         e->ExceptionClear();
-        ALOGE("%s: fail notify", fn);
+        LOG(ERROR) << StringPrintf("%s: fail notify", fn);
         goto TheEnd;
     }
 
 TheEnd:
-    ALOGV("%s: exit", fn);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", fn);
 }
 
 /*******************************************************************************
@@ -1295,24 +1294,24 @@ bool SecureElement::connectEE ()
     char pipeConfName[40];
     tNFA_HANDLE  eeHandle = mActiveEeHandle;
 
-    ALOGV("%s: enter, mActiveEeHandle: 0x%04x, SEID: 0x%x, pipe_gate_num=%d, use pipe=%d",
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter, mActiveEeHandle: 0x%04x, SEID: 0x%x, pipe_gate_num=%d, use pipe=%d",
         fn, mActiveEeHandle, gSEId, gGatePipe, gUseStaticPipe);
 
     if (!mIsInit)
     {
-        ALOGE("%s: not init", fn);
+        LOG(ERROR) << StringPrintf("%s: not init", fn);
         return (false);
     }
 
     if (gSEId != -1)
     {
         eeHandle = gSEId | NFA_HANDLE_GROUP_EE;
-        ALOGV("%s: Using SEID: 0x%x", fn, eeHandle );
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Using SEID: 0x%x", fn, eeHandle );
     }
 
     if (eeHandle == NFA_HANDLE_INVALID)
     {
-        ALOGE("%s: invalid handle 0x%X", fn, eeHandle);
+        LOG(ERROR) << StringPrintf("%s: invalid handle 0x%X", fn, eeHandle);
         return (false);
     }
 
@@ -1320,7 +1319,7 @@ bool SecureElement::connectEE ()
 
     if (pEE == NULL)
     {
-        ALOGE("%s: Handle 0x%04x  NOT FOUND !!", fn, eeHandle);
+        LOG(ERROR) << StringPrintf("%s: Handle 0x%04x  NOT FOUND !!", fn, eeHandle);
         return (false);
     }
 
@@ -1354,11 +1353,11 @@ bool SecureElement::connectEE ()
         if (GetNumValue(pipeConfName, &num, sizeof(num)) && (num != 0))
         {
             mNewPipeId = num;
-            ALOGV("%s: Using static pipe id: 0x%X", __func__, mNewPipeId);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Using static pipe id: 0x%X", __func__, mNewPipeId);
         }
         else
         {
-            ALOGV("%s: Did not find value '%s' defined in the .conf", __func__, pipeConfName);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Did not find value '%s' defined in the .conf", __func__, pipeConfName);
         }
     }
     else
@@ -1405,14 +1404,14 @@ bool SecureElement::connectEE ()
         uint8_t gate = (mNewPipeId == mStaticPipeProp) ? 0xF0 : 0xF1;
 #endif
 #if(NXP_EXTNS == TRUE)
-        ALOGV("%s: Using host id : 0x%X,gate id : 0x%X,pipe id : 0x%X", __func__,host,gate, mNewPipeId);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Using host id : 0x%X,gate id : 0x%X,pipe id : 0x%X", __func__,host,gate, mNewPipeId);
 #endif
         if(nfcFL.eseFL._LEGACY_APDU_GATE && (getApduGateInfo() != ETSI_12_APDU_GATE))
         {
             nfaStat = NFA_HciAddStaticPipe(mNfaHciHandle, host, gate, mNewPipeId);
             if (nfaStat != NFA_STATUS_OK)
             {
-                ALOGE("%s: fail create static pipe; error=0x%X", fn, nfaStat);
+                LOG(ERROR) << StringPrintf("%s: fail create static pipe; error=0x%X", fn, nfaStat);
                 retVal = false;
                 goto TheEnd;
             }
@@ -1431,7 +1430,7 @@ bool SecureElement::connectEE ()
 
         // Get a list of existing gates and pipes
         {
-            ALOGV("%s: get gate, pipe list", fn);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: get gate, pipe list", fn);
             SyncEventGuard guard (mPipeListEvent);
             nfaStat = NFA_HciGetGateAndPipeList (mNfaHciHandle);
             if (nfaStat == NFA_STATUS_OK)
@@ -1447,7 +1446,7 @@ bool SecureElement::connectEE ()
                             mNewSourceGate = mHciCfg.pipe[xx].local_gate;
                             mNewPipeId     = mHciCfg.pipe[xx].pipe_id;
 
-                            ALOGV("%s: found configured gate: 0x%02x  pipe: 0x%02x", fn, mNewSourceGate, mNewPipeId);
+                            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: found configured gate: 0x%02x  pipe: 0x%02x", fn, mNewSourceGate, mNewPipeId);
                             break;
                         }
                     }
@@ -1457,12 +1456,12 @@ bool SecureElement::connectEE ()
 
         if (mNewSourceGate == 0)
         {
-            ALOGV("%s: allocate gate", fn);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: allocate gate", fn);
             //allocate a source gate and store in mNewSourceGate
             SyncEventGuard guard (mAllocateGateEvent);
             if ((nfaStat = NFA_HciAllocGate (mNfaHciHandle, mDestinationGate)) != NFA_STATUS_OK)
             {
-                ALOGE("%s: fail allocate source gate; error=0x%X", fn, nfaStat);
+                LOG(ERROR) << StringPrintf("%s: fail allocate source gate; error=0x%X", fn, nfaStat);
                 goto TheEnd;
             }
             mAllocateGateEvent.wait ();
@@ -1472,12 +1471,12 @@ bool SecureElement::connectEE ()
 
         if (mNewPipeId == 0)
         {
-            ALOGV("%s: create pipe", fn);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: create pipe", fn);
             SyncEventGuard guard (mCreatePipeEvent);
             nfaStat = NFA_HciCreatePipe (mNfaHciHandle, mNewSourceGate, destHost, mDestinationGate);
             if (nfaStat != NFA_STATUS_OK)
             {
-                ALOGE("%s: fail create pipe; error=0x%X", fn, nfaStat);
+                LOG(ERROR) << StringPrintf("%s: fail create pipe; error=0x%X", fn, nfaStat);
                 goto TheEnd;
             }
             mCreatePipeEvent.wait ();
@@ -1486,12 +1485,12 @@ bool SecureElement::connectEE ()
         }
 
         {
-            ALOGV("%s: open pipe", fn);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: open pipe", fn);
             SyncEventGuard guard (mPipeOpenedEvent);
             nfaStat = NFA_HciOpenPipe (mNfaHciHandle, mNewPipeId);
             if (nfaStat != NFA_STATUS_OK)
             {
-                ALOGE("%s: fail open pipe; error=0x%X", fn, nfaStat);
+                LOG(ERROR) << StringPrintf("%s: fail open pipe; error=0x%X", fn, nfaStat);
                 goto TheEnd;
             }
             mPipeOpenedEvent.wait ();
@@ -1510,7 +1509,7 @@ TheEnd:
         disconnectEE(0);
     }
 
-    ALOGV("%s: exit; ok=%u", fn, retVal);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit; ok=%u", fn, retVal);
     return retVal;
 }
 
@@ -1531,20 +1530,20 @@ bool SecureElement::disconnectEE (jint seID)
     tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
     tNFA_HANDLE eeHandle = seID;
 
-    ALOGV("%s: seID=0x%X; handle=0x%04x", fn, seID, eeHandle);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: seID=0x%X; handle=0x%04x", fn, seID, eeHandle);
 
     if (mUseOberthurWarmReset)
     {
         //send warm-reset command to Oberthur secure element which deselects the applet;
         //this is an Oberthur-specific command;
-        ALOGV("%s: try warm-reset on pipe id 0x%X; cmd=0x%X", fn, mNewPipeId, mOberthurWarmResetCommand);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: try warm-reset on pipe id 0x%X; cmd=0x%X", fn, mNewPipeId, mOberthurWarmResetCommand);
         SyncEventGuard guard (mRegistryEvent);
         nfaStat = NFA_HciSetRegistry (mNfaHciHandle, mNewPipeId,
                 1, 1, &mOberthurWarmResetCommand);
         if (nfaStat == NFA_STATUS_OK)
         {
             mRegistryEvent.wait ();
-            ALOGV("%s: completed warm-reset on pipe 0x%X", fn, mNewPipeId);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: completed warm-reset on pipe 0x%X", fn, mNewPipeId);
         }
     }
 
@@ -1554,7 +1553,7 @@ bool SecureElement::disconnectEE (jint seID)
         if ((nfaStat = NFA_HciDeallocGate (mNfaHciHandle, mNewSourceGate)) == NFA_STATUS_OK)
             mDeallocateGateEvent.wait ();
         else
-            ALOGE("%s: fail dealloc gate; error=0x%X", fn, nfaStat);
+            LOG(ERROR) << StringPrintf("%s: fail dealloc gate; error=0x%X", fn, nfaStat);
     }
 
     mIsPiping = false;
@@ -1629,7 +1628,7 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
     bool isEseAccessSuccess = false;
 #endif
 
-    ALOGV("%s: enter; xmitBufferSize=%d; recvBufferMaxSize=%d; timeout=%d", fn, xmitBufferSize, recvBufferMaxSize, timeoutMillisec);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter; xmitBufferSize=%d; recvBufferMaxSize=%d; timeout=%d", fn, xmitBufferSize, recvBufferMaxSize, timeoutMillisec);
 
     // Check if we need to replace an "empty" SELECT command.
     // 1. Has there been a AID configured, and
@@ -1669,7 +1668,7 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
         xmitBuffer = &newSelectCmd[0];
         xmitBufferSize = idx;
 
-        ALOGV("%s: Empty AID SELECT cmd detected, substituting AID from config file, new length=%d", fn, idx);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Empty AID SELECT cmd detected, substituting AID from config file, new length=%d", fn, idx);
     }
 
 #if(NXP_EXTNS == TRUE)
@@ -1686,11 +1685,11 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
             while(hold_the_transceive == true)
             {
                 android::start_timer_msec(&start_timer);
-                ALOGV("%s: holding the transceive for %d ms.\n", fn, (timeoutMillisec - time_elapsed));
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: holding the transceive for %d ms.\n", fn, (timeoutMillisec - time_elapsed));
                 SyncEventGuard guard(sSPIPrioSessionEndEvent);
                 if(sSPIPrioSessionEndEvent.wait(timeoutMillisec - time_elapsed)== false)
                 {
-                    ALOGE("%s: wait response timeout \n", fn);
+                    LOG(ERROR) << StringPrintf("%s: wait response timeout \n", fn);
                     time_elapsed = android::stop_timer_getdifference_msec(&start_timer, &end_timer);
                     time_elapsed = 0;
                     goto TheEnd;
@@ -1698,7 +1697,7 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
                 time_elapsed += android::stop_timer_getdifference_msec(&start_timer, &end_timer);
                 if((timeoutMillisec - time_elapsed) <= 0)
                 {
-                    ALOGE("%s: wait response timeout - time_elapsed \n", fn);
+                    LOG(ERROR) << StringPrintf("%s: wait response timeout - time_elapsed \n", fn);
                     time_elapsed = 0;
                     goto TheEnd;
                 }
@@ -1721,7 +1720,7 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
                     nfcFL.eseFL._ESE_DUAL_MODE_PRIO_SCHEME == nfcFL.eseFL._ESE_WIRED_MODE_RESUME ) {
                 if(!checkForWiredModeAccess())
                 {
-                    ALOGV("%s, Dont allow wired mode in this RF state", fn);
+                    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s, Dont allow wired mode in this RF state", fn);
                     goto TheEnd;
                 }
             }
@@ -1730,7 +1729,7 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
         if(((nfcFL.eseFL._NXP_ESE_VER == JCOP_VER_3_2) || (nfcFL.eseFL._NXP_ESE_VER == JCOP_VER_3_3)) &&nfcFL.eseFL._TRIPLE_MODE_PROTECTION){
             if(dual_mode_current_state == SPI_DWPCL_BOTH_ACTIVE)
             {
-                ALOGV("%s, Dont allow wired mode...Dual Mode..", fn);
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s, Dont allow wired mode...Dual Mode..", fn);
                 SyncEventGuard guard (mDualModeEvent);
                 mDualModeEvent.wait();
             }
@@ -1740,7 +1739,7 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
             active_ese_reset_control |= TRANS_WIRED_ONGOING;
             if ((((nfcFL.eseFL._NXP_ESE_VER == JCOP_VER_3_1) || (nfcFL.eseFL._NXP_ESE_VER == JCOP_VER_3_2))) && (NFC_GetEseAccess((void *)&timeoutMillisec) != 0))
             {
-                ALOGE("%s: NFC_ReqWiredAccess timeout", fn);
+                LOG(ERROR) << StringPrintf("%s: NFC_ReqWiredAccess timeout", fn);
                 goto TheEnd;
             }
             isEseAccessSuccess = true;
@@ -1754,7 +1753,7 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
         }
         else if (mNewPipeId == STATIC_PIPE_UICC)
         {
-            ALOGV("%s, Starting UICC wired mode!!!!!!.....", fn);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s, Starting UICC wired mode!!!!!!.....", fn);
             nfaStat = NFA_HciSendEvent (mNfaHciHandle, mNewPipeId, EVT_SEND_DATA, xmitBufferSize, xmitBuffer, recvBufferMaxSize, recvBuffer, timeoutMillisec);
         }
 #endif
@@ -1766,7 +1765,7 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
                 if (((nfcFL.eseFL._NXP_ESE_VER == JCOP_VER_3_1) || (nfcFL.eseFL._NXP_ESE_VER == JCOP_VER_3_2)) &&
                         (NFC_GetEseAccess((void *)&timeoutMillisec) != 0))
                 {
-                    ALOGE("%s: NFC_ReqWiredAccess timeout", fn);
+                    LOG(ERROR) << StringPrintf("%s: NFC_ReqWiredAccess timeout", fn);
                     goto TheEnd;
                 }
                 isEseAccessSuccess = true;
@@ -1816,7 +1815,7 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
                 }
                 if(mTransceiveWaitOk == false)
                 {
-                    ALOGE("%s: transceive timed out", fn);
+                    LOG(ERROR) << StringPrintf("%s: transceive timed out", fn);
                     goto TheEnd;
                 }
             }
@@ -1824,7 +1823,7 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
         }
         else
         {
-            ALOGE("%s: fail send data; error=0x%X", fn, nfaStat);
+            LOG(ERROR) << StringPrintf("%s: fail send data; error=0x%X", fn, nfaStat);
             goto TheEnd;
         }
     }
@@ -1845,7 +1844,7 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
             {
                 if (NFC_RelEseAccess((void *)&nfaStat) != 0)
                 {
-                    ALOGE("%s: NFC_RelEseAccess failed", fn);
+                    LOG(ERROR) << StringPrintf("%s: NFC_RelEseAccess failed", fn);
                 }
             }
             if((nfcFL.eseFL._JCOP_WA_ENABLE) && (active_ese_reset_control&TRANS_WIRED_ONGOING))
@@ -1854,10 +1853,10 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
 #endif
 
 #if(NXP_EXTNS == TRUE)
-    ALOGV ("%s: exit; tranStatus: %d; recvBufferActualSize: %d", fn, tranStatus, recvBufferActualSize);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit; tranStatus: %d; recvBufferActualSize: %d", fn, tranStatus, recvBufferActualSize);
     return (tranStatus);
 #else
-     ALOGV ("%s: exit; isSuccess: %d; recvBufferActualSize: %d", fn, isSuccess, recvBufferActualSize);
+     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit; isSuccess: %d; recvBufferActualSize: %d", fn, isSuccess, recvBufferActualSize);
      return (isSuccess);
 #endif
 }
@@ -1872,7 +1871,7 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
  *******************************************************************************/
 void SecureElement::setCLState(bool mState)
 {
-    ALOGV("%s: Entry setCLState \n", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Entry setCLState \n", __func__);
     /*Check if the state is already dual mode*/
     bool inDualModeAlready = (dual_mode_current_state == SPI_DWPCL_BOTH_ACTIVE);
     if(mState)
@@ -1914,7 +1913,7 @@ void SecureElement::setCLState(bool mState)
            }
        }
     }
-    ALOGV("%s: Exit setCLState = %d\n", __func__, dual_mode_current_state);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Exit setCLState = %d\n", __func__, dual_mode_current_state);
 }
 
 void SecureElement::notifyModeSet (tNFA_HANDLE eeHandle, bool success, tNFA_EE_STATUS eeStatus)
@@ -1926,10 +1925,10 @@ void SecureElement::notifyModeSet (tNFA_HANDLE eeHandle, bool success, tNFA_EE_S
         if (pEE)
         {
             pEE->ee_status = eeStatus;
-            ALOGV("%s: NFA_EE_MODE_SET_EVT; pEE->ee_status: %s (0x%04x)", fn, SecureElement::eeStatusToString(pEE->ee_status), pEE->ee_status);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_EE_MODE_SET_EVT; pEE->ee_status: %s (0x%04x)", fn, SecureElement::eeStatusToString(pEE->ee_status), pEE->ee_status);
         }
         else
-            ALOGE("%s: NFA_EE_MODE_SET_EVT; EE: 0x%04x not found.  mActiveEeHandle: 0x%04x", fn, eeHandle, sSecElem.mActiveEeHandle);
+            LOG(ERROR) << StringPrintf("%s: NFA_EE_MODE_SET_EVT; EE: 0x%04x not found.  mActiveEeHandle: 0x%04x", fn, eeHandle, sSecElem.mActiveEeHandle);
     }
     SyncEventGuard guard (sSecElem.mEeSetModeEvent);
     sSecElem.mEeSetModeEvent.notifyOne();
@@ -1939,10 +1938,10 @@ void SecureElement::notifyModeSet (tNFA_HANDLE eeHandle, bool success, tNFA_EE_S
 static void NFCC_StandbyModeTimerCallBack (union sigval)
 {
     if(!nfcFL.nfcNxpEse) {
-        ALOGV("%s tnfcNxpEse not available. Returning", __func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s tnfcNxpEse not available. Returning", __func__);
         return;
     }
-    ALOGV("%s timer timedout , sending standby mode cmd", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s timer timedout , sending standby mode cmd", __func__);
     SecureElement::getInstance().NfccStandByOperation(STANDBY_TIMER_TIMEOUT);
 }
 #endif
@@ -1960,19 +1959,19 @@ static void NFCC_StandbyModeTimerCallBack (union sigval)
 void SecureElement::notifyListenModeState (bool isActivated) {
     static const char fn [] = "SecureElement::notifyListenMode";
 
-    ALOGV("%s: enter; listen mode active=%u", fn, isActivated);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter; listen mode active=%u", fn, isActivated);
 
     JNIEnv* e = NULL;
     if (mNativeData == NULL)
     {
-        ALOGE("%s: mNativeData is null", fn);
+        LOG(ERROR) << StringPrintf("%s: mNativeData is null", fn);
         return;
     }
 
     ScopedAttach attach(mNativeData->vm, &e);
     if (e == NULL)
     {
-        ALOGE("%s: jni env is null", fn);
+        LOG(ERROR) << StringPrintf("%s: jni env is null", fn);
         return;
     }
 
@@ -2007,10 +2006,10 @@ void SecureElement::notifyListenModeState (bool isActivated) {
     if (e->ExceptionCheck())
     {
         e->ExceptionClear();
-        ALOGE("%s: fail notify", fn);
+        LOG(ERROR) << StringPrintf("%s: fail notify", fn);
     }
 
-    ALOGV("%s: exit", fn);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", fn);
 }
 
 /*******************************************************************************
@@ -2026,12 +2025,12 @@ void SecureElement::notifyListenModeState (bool isActivated) {
 void SecureElement::notifyRfFieldEvent (bool isActive)
 {
     static const char fn [] = "SecureElement::notifyRfFieldEvent";
-    ALOGV("%s: enter; is active=%u", fn, isActive);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter; is active=%u", fn, isActive);
 
     mMutex.lock();
     int ret = clock_gettime (CLOCK_MONOTONIC, &mLastRfFieldToggle);
     if (ret == -1) {
-        ALOGE("%s: clock_gettime failed", fn);
+        LOG(ERROR) << StringPrintf("%s: clock_gettime failed", fn);
         // There is no good choice here...
     }
 
@@ -2066,7 +2065,7 @@ void SecureElement::notifyRfFieldEvent (bool isActive)
     }
     mMutex.unlock();
 
-    ALOGV("%s: exit", fn);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", fn);
 }
 
 /*******************************************************************************
@@ -2082,18 +2081,18 @@ void SecureElement::notifyRfFieldEvent (bool isActive)
 void SecureElement::resetRfFieldStatus ()
 {
     static const char fn [] = "SecureElement::resetRfFieldStatus`";
-    ALOGV("%s: enter;", fn);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter;", fn);
 
     mMutex.lock();
     mRfFieldIsOn = false;
     int ret = clock_gettime (CLOCK_MONOTONIC, &mLastRfFieldToggle);
     if (ret == -1) {
-        ALOGE("%s: clock_gettime failed", fn);
+        LOG(ERROR) << StringPrintf("%s: clock_gettime failed", fn);
         // There is no good choice here...
     }
     mMutex.unlock();
 
-    ALOGV("%s: exit", fn);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", fn);
 }
 
 
@@ -2110,7 +2109,7 @@ void SecureElement::resetRfFieldStatus ()
 void SecureElement::storeUiccInfo (tNFA_EE_DISCOVER_REQ& info)
 {
     static const char fn [] = "SecureElement::storeUiccInfo";
-    ALOGV("%s:  Status: %u   Num EE: %u", fn, info.status, info.num_ee);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:  Status: %u   Num EE: %u", fn, info.status, info.num_ee);
 
     SyncEventGuard guard (mUiccInfoEvent);
     memcpy (&mUiccInfo, &info, sizeof(mUiccInfo));
@@ -2118,7 +2117,7 @@ void SecureElement::storeUiccInfo (tNFA_EE_DISCOVER_REQ& info)
     {
         //for each technology (A, B, F, B'), print the bit field that shows
         //what protocol(s) is support by that technology
-        ALOGV("%s   EE[%u] Handle: 0x%04x  techA: 0x%02x  techB: 0x%02x  techF: 0x%02x  techBprime: 0x%02x",
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s   EE[%u] Handle: 0x%04x  techA: 0x%02x  techB: 0x%02x  techF: 0x%02x  techBprime: 0x%02x",
                 fn, xx, info.ee_disc_info[xx].ee_handle,
                 info.ee_disc_info[xx].la_protocol,
                 info.ee_disc_info[xx].lb_protocol,
@@ -2142,11 +2141,11 @@ void SecureElement::storeUiccInfo (tNFA_EE_DISCOVER_REQ& info)
 *******************************************************************************/
 bool SecureElement::getSeVerInfo(int seIndex, char * verInfo, int verInfoSz, uint8_t * seid)
 {
-    ALOGV("%s: enter, seIndex=%d", __func__, seIndex);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter, seIndex=%d", __func__, seIndex);
 
     if (seIndex > (mActualNumEe-1))
     {
-        ALOGE("%s: invalid se index: %d, only %d SEs in system", __func__, seIndex, mActualNumEe);
+        LOG(ERROR) << StringPrintf("%s: invalid se index: %d, only %d SEs in system", __func__, seIndex, mActualNumEe);
         return false;
     }
 
@@ -2167,7 +2166,7 @@ bool SecureElement::getSeVerInfo(int seIndex, char * verInfo, int verInfoSz, uin
     tNFA_STATUS nfaStat = NFA_HciAddStaticPipe(mNfaHciHandle, host, gate, pipe);
     if (nfaStat != NFA_STATUS_OK)
     {
-        ALOGE("%s: NFA_HciAddStaticPipe() failed, pipe = 0x%x, error=0x%X", __func__, pipe, nfaStat);
+        LOG(ERROR) << StringPrintf("%s: NFA_HciAddStaticPipe() failed, pipe = 0x%x, error=0x%X", __func__, pipe, nfaStat);
         return true;
     }
 
@@ -2176,7 +2175,7 @@ bool SecureElement::getSeVerInfo(int seIndex, char * verInfo, int verInfoSz, uin
     {
         if (false == mVerInfoEvent.wait(200))
         {
-            ALOGE("%s: wait response timeout", __func__);
+            LOG(ERROR) << StringPrintf("%s: wait response timeout", __func__);
         }
         else
         {
@@ -2186,7 +2185,7 @@ bool SecureElement::getSeVerInfo(int seIndex, char * verInfo, int verInfoSz, uin
     }
     else
     {
-        ALOGE("%s: NFA_HciGetRegistry () failed: 0x%X", __func__, nfaStat);
+        LOG(ERROR) << StringPrintf("%s: NFA_HciGetRegistry () failed: 0x%X", __func__, nfaStat);
     }
     return true;
 }
@@ -2222,19 +2221,19 @@ uint8_t SecureElement::getActualNumEe()
 void SecureElement::handleClearAllPipe (tNFA_HCI_EVT_DATA* eventData)
 {
     static const char fn [] = "SecureElement::handleClearAllPipe";
-    ALOGV("%s: Deleted host=0x%X", fn, eventData->deleted.host);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Deleted host=0x%X", fn, eventData->deleted.host);
     if(eventData->deleted.host == (SecureElement::getInstance().EE_HANDLE_0xF4 & ~NFA_HANDLE_GROUP_EE))
      { /* To stop mode-set being called when a clear all pipe is being issued */
-        ALOGV("%s: NFA_HCI_DELETE_PIPE_EVT for UICC1 start", fn);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_HCI_DELETE_PIPE_EVT for UICC1 start", fn);
         sSecElem.eSE_ClearAllPipe_handler(SecureElement::getInstance().EE_HANDLE_0xF4 & ~NFA_HANDLE_GROUP_EE);
-        ALOGV("%s: NFA_HCI_DELETE_PIPE_EVT for UICC1 poll end", fn);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_HCI_DELETE_PIPE_EVT for UICC1 poll end", fn);
      }
      else if(eventData->deleted.host == (EE_HANDLE_0xF8 & ~NFA_HANDLE_GROUP_EE))
      {
         /* To stop mode-set being called when a clear all pipe is being issued */
-        ALOGV("%s: NFA_HCI_DELETE_PIPE_EVT for UICC2 start", fn);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_HCI_DELETE_PIPE_EVT for UICC2 start", fn);
         sSecElem.eSE_ClearAllPipe_handler(EE_HANDLE_0xF8 & ~NFA_HANDLE_GROUP_EE);
-        ALOGV("%s: NFA_HCI_DELETE_PIPE_EVT for UICC2 poll end", fn);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_HCI_DELETE_PIPE_EVT for UICC2 poll end", fn);
      }
 }
 
@@ -2252,14 +2251,14 @@ void SecureElement::handleClearAllPipe (tNFA_HCI_EVT_DATA* eventData)
 void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* eventData)
 {
     static const char fn [] = "SecureElement::nfaHciCallback";
-    ALOGV("%s: event=0x%X", fn, event);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: event=0x%X", fn, event);
     int evtSrc = 0xFF;
 
     switch (event)
     {
     case NFA_HCI_REGISTER_EVT:
         {
-            ALOGV("%s: NFA_HCI_REGISTER_EVT; status=0x%X; handle=0x%X", fn,
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_HCI_REGISTER_EVT; status=0x%X; handle=0x%X", fn,
                     eventData->hci_register.status, eventData->hci_register.hci_handle);
             SyncEventGuard guard (sSecElem.mHciRegisterEvent);
             sSecElem.mNfaHciHandle = eventData->hci_register.hci_handle;
@@ -2269,7 +2268,7 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
 
     case NFA_HCI_ALLOCATE_GATE_EVT:
         {
-            ALOGV("%s: NFA_HCI_ALLOCATE_GATE_EVT; status=0x%X; gate=0x%X", fn, eventData->status, eventData->allocated.gate);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_HCI_ALLOCATE_GATE_EVT; status=0x%X; gate=0x%X", fn, eventData->status, eventData->allocated.gate);
             SyncEventGuard guard (sSecElem.mAllocateGateEvent);
             sSecElem.mCommandStatus = eventData->status;
             sSecElem.mNewSourceGate = (eventData->allocated.status == NFA_STATUS_OK) ? eventData->allocated.gate : 0;
@@ -2280,7 +2279,7 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
     case NFA_HCI_DEALLOCATE_GATE_EVT:
         {
             tNFA_HCI_DEALLOCATE_GATE& deallocated = eventData->deallocated;
-            ALOGV("%s: NFA_HCI_DEALLOCATE_GATE_EVT; status=0x%X; gate=0x%X", fn, deallocated.status, deallocated.gate);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_HCI_DEALLOCATE_GATE_EVT; status=0x%X; gate=0x%X", fn, deallocated.status, deallocated.gate);
             SyncEventGuard guard (sSecElem.mDeallocateGateEvent);
             sSecElem.mDeallocateGateEvent.notifyOne();
         }
@@ -2288,7 +2287,7 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
 
     case NFA_HCI_GET_GATE_PIPE_LIST_EVT:
         {
-            ALOGV("%s: NFA_HCI_GET_GATE_PIPE_LIST_EVT; status=0x%X; num_pipes: %u  num_gates: %u", fn,
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_HCI_GET_GATE_PIPE_LIST_EVT; status=0x%X; num_pipes: %u  num_gates: %u", fn,
                     eventData->gates_pipes.status, eventData->gates_pipes.num_pipes, eventData->gates_pipes.num_gates);
             SyncEventGuard guard (sSecElem.mPipeListEvent);
             sSecElem.mCommandStatus = eventData->gates_pipes.status;
@@ -2299,18 +2298,18 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
 
     case NFA_HCI_CREATE_PIPE_EVT:
         {
-            ALOGV("%s: NFA_HCI_CREATE_PIPE_EVT; status=0x%X; pipe=0x%X; src gate=0x%X; dest host=0x%X; dest gate=0x%X", fn,
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_HCI_CREATE_PIPE_EVT; status=0x%X; pipe=0x%X; src gate=0x%X; dest host=0x%X; dest gate=0x%X", fn,
                     eventData->created.status, eventData->created.pipe, eventData->created.source_gate, eventData->created.dest_host, eventData->created.dest_gate);
             SyncEventGuard guard (sSecElem.mCreatePipeEvent);
             sSecElem.mCommandStatus = eventData->created.status;
             if(eventData->created.dest_gate == 0xF0)
             {
-                ALOGE("Pipe=0x%x is created and updated for se transcieve", eventData->created.pipe);
+                LOG(ERROR) << StringPrintf("Pipe=0x%x is created and updated for se transcieve", eventData->created.pipe);
                 sSecElem.mNewPipeId = eventData->created.pipe;
             }
 #if (NXP_EXTNS == TRUE)
             sSecElem.mCreatedPipe = eventData->created.pipe;
-            ALOGV("%s: NFA_HCI_CREATE_PIPE_EVT; pipe=0x%X", fn, eventData->created.pipe);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_HCI_CREATE_PIPE_EVT; pipe=0x%X", fn, eventData->created.pipe);
 #endif
             sSecElem.mCreatePipeEvent.notifyOne();
         }
@@ -2318,14 +2317,14 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
 #if (NXP_EXTNS == TRUE)
     case NFA_HCI_DELETE_PIPE_EVT:
         {
-             ALOGV("%s: NFA_HCI_DELETE_PIPE_EVT; status=0x%X; host=0x%X", fn, eventData->deleted.status, eventData->deleted.host);
+             DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_HCI_DELETE_PIPE_EVT; status=0x%X; host=0x%X", fn, eventData->deleted.status, eventData->deleted.host);
               sSecElem.handleClearAllPipe(eventData);
         }
         break;
 #endif
     case NFA_HCI_OPEN_PIPE_EVT:
         {
-            ALOGV("%s: NFA_HCI_OPEN_PIPE_EVT; status=0x%X; pipe=0x%X", fn, eventData->opened.status, eventData->opened.pipe);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_HCI_OPEN_PIPE_EVT; status=0x%X; pipe=0x%X", fn, eventData->opened.status, eventData->opened.pipe);
             SyncEventGuard guard (sSecElem.mPipeOpenedEvent);
             sSecElem.mCommandStatus = eventData->opened.status;
             sSecElem.mPipeOpenedEvent.notifyOne();
@@ -2333,13 +2332,13 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
         break;
 
     case NFA_HCI_EVENT_SENT_EVT:
-        ALOGV("%s: NFA_HCI_EVENT_SENT_EVT; status=0x%X", fn, eventData->evt_sent.status);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_HCI_EVENT_SENT_EVT; status=0x%X", fn, eventData->evt_sent.status);
         break;
 
     case NFA_HCI_RSP_RCVD_EVT: //response received from secure element
         {
             tNFA_HCI_RSP_RCVD& rsp_rcvd = eventData->rsp_rcvd;
-            ALOGV("%s: NFA_HCI_RSP_RCVD_EVT; status: 0x%X; code: 0x%X; pipe: 0x%X; len: %u", fn,
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_HCI_RSP_RCVD_EVT; status: 0x%X; code: 0x%X; pipe: 0x%X; len: %u", fn,
                     rsp_rcvd.status, rsp_rcvd.rsp_code, rsp_rcvd.pipe, rsp_rcvd.rsp_len);
             if((rsp_rcvd.rsp_code == NFA_HCI_ANY_E_PIPE_NOT_OPENED) && (sSecElem.IsCmdsentOnOpenDwpSession))
             {
@@ -2353,7 +2352,7 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
         break;
 
     case NFA_HCI_GET_REG_RSP_EVT :
-        ALOGV("%s: NFA_HCI_GET_REG_RSP_EVT; status: 0x%X; pipe: 0x%X, len: %d", fn,
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_HCI_GET_REG_RSP_EVT; status: 0x%X; pipe: 0x%X, len: %d", fn,
                 eventData->registry.status, eventData->registry.pipe, eventData->registry.data_len);
         if(sSecElem.mGetAtrRspwait == true)
         {
@@ -2377,24 +2376,24 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
         break;
 
     case NFA_HCI_EVENT_RCVD_EVT:
-        ALOGV("%s: NFA_HCI_EVENT_RCVD_EVT; code: 0x%X; pipe: 0x%X; data len: %u", fn,
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_HCI_EVENT_RCVD_EVT; code: 0x%X; pipe: 0x%X; data len: %u", fn,
                 eventData->rcvd_evt.evt_code, eventData->rcvd_evt.pipe, eventData->rcvd_evt.evt_len);
         if(eventData->rcvd_evt.pipe == 0x0A) //UICC
         {
-            ALOGV("%s: NFA_HCI_EVENT_RCVD_EVT; source UICC",fn);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_HCI_EVENT_RCVD_EVT; source UICC",fn);
             evtSrc = SecureElement::getInstance().getGenericEseId(SecureElement::getInstance().EE_HANDLE_0xF4 & ~NFA_HANDLE_GROUP_EE); //UICC
         }
         else if(eventData->rcvd_evt.pipe == 0x16) //ESE
         {
-            ALOGV("%s: NFA_HCI_EVENT_RCVD_EVT; source ESE",fn);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_HCI_EVENT_RCVD_EVT; source ESE",fn);
             evtSrc = SecureElement::getInstance().getGenericEseId(EE_HANDLE_0xF3 & ~NFA_HANDLE_GROUP_EE); //ESE
         }
         else if(nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH && (eventData->rcvd_evt.pipe == 0x23)) /*UICC2*/
         {
-            ALOGV("%s: NFA_HCI_EVENT_RCVD_EVT; source UICC2",fn);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_HCI_EVENT_RCVD_EVT; source UICC2",fn);
             evtSrc = SecureElement::getInstance().getGenericEseId(EE_HANDLE_0xF8 & ~NFA_HANDLE_GROUP_EE); /*UICC2*/
         }
-        ALOGV("%s: NFA_HCI_EVENT_RCVD_EVT; ################################### ", fn);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_HCI_EVENT_RCVD_EVT; ################################### ", fn);
 
         if(eventData->rcvd_evt.evt_code == NFA_HCI_EVT_WTX)
         {
@@ -2402,11 +2401,11 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
             gWtxCount++;
             if(sSecElem.mWmMaxWtxCount >= gWtxCount)
             {
-                ALOGV ("%s: NFA_HCI_EVENT_RCVD_EVT: NFA_HCI_EVT_WTX gWtxCount:%d", fn, gWtxCount);
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_HCI_EVENT_RCVD_EVT: NFA_HCI_EVT_WTX gWtxCount:%d", fn, gWtxCount);
             }
             else
             {
-                ALOGV ("%s: NFA_HCI_EVENT_RCVD_EVT: NFA_HCI_EVT_WTX gWtxCount:%d", fn, gWtxCount);
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_HCI_EVENT_RCVD_EVT: NFA_HCI_EVT_WTX gWtxCount:%d", fn, gWtxCount);
                 sSecElem.mTransceiveEvent.notifyOne ();
                 break;
             }
@@ -2424,7 +2423,7 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
         else if (((eventData->rcvd_evt.evt_code == NFA_HCI_ABORT) || (eventData->rcvd_evt.last_SentEvtType == EVT_ABORT))
                 &&(eventData->rcvd_evt.pipe == mStaticPipeProp))
         {
-            ALOGV("%s: NFA_HCI_EVENT_RCVD_EVT: NFA_HCI_ABORT; status:0x%X, pipe:0x%X, len:%d", fn,\
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_HCI_EVENT_RCVD_EVT: NFA_HCI_ABORT; status:0x%X, pipe:0x%X, len:%d", fn,\
                 eventData->rcvd_evt.status, eventData->rcvd_evt.pipe, eventData->rcvd_evt.evt_len);
             if(eventData->rcvd_evt.evt_len > 0)
             {
@@ -2445,7 +2444,7 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
 #endif
         else if ((eventData->rcvd_evt.pipe == mStaticPipeProp) || (eventData->rcvd_evt.pipe == STATIC_PIPE_0x71))
         {
-            ALOGV("%s: NFA_HCI_EVENT_RCVD_EVT; data from static pipe", fn);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_HCI_EVENT_RCVD_EVT; data from static pipe", fn);
 #if (NXP_EXTNS == TRUE)
             if(nfcFL.eseFL._ESE_DWP_SPI_SYNC_ENABLE &&
                     ((spiDwpSyncState & STATE_WK_WAIT_RSP) && (eventData->rcvd_evt.evt_len == 2)))
@@ -2468,7 +2467,7 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
                            (state == STATE_SE_RDR_MODE_STOP_CONFIG)) {
                             sSecElem.NfccStandByOperation(STANDBY_TIMER_START);
                         } else {
-                            ALOGV("ETSI in progress, do not start standby timer");
+                            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("ETSI in progress, do not start standby timer");
                         }
                     } else {
                       sSecElem.NfccStandByOperation(STANDBY_TIMER_START);
@@ -2492,14 +2491,14 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
         }
         else if (eventData->rcvd_evt.evt_code == NFA_HCI_EVT_POST_DATA)
         {
-            ALOGV("%s: NFA_HCI_EVENT_RCVD_EVT; NFA_HCI_EVT_POST_DATA", fn);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_HCI_EVENT_RCVD_EVT; NFA_HCI_EVT_POST_DATA", fn);
             SyncEventGuard guard (sSecElem.mTransceiveEvent);
             sSecElem.mActualResponseSize = (eventData->rcvd_evt.evt_len > MAX_RESPONSE_SIZE) ? MAX_RESPONSE_SIZE : eventData->rcvd_evt.evt_len;
             sSecElem.mTransceiveEvent.notifyOne ();
         }
         else if (eventData->rcvd_evt.evt_code == NFA_HCI_EVT_TRANSACTION)
         {
-            ALOGV("%s: NFA_HCI_EVENT_RCVD_EVT; NFA_HCI_EVT_TRANSACTION", fn);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_HCI_EVENT_RCVD_EVT; NFA_HCI_EVT_TRANSACTION", fn);
             // If we got an AID, notify any listeners
             if ((eventData->rcvd_evt.evt_len > 3) && (eventData->rcvd_evt.p_evt_buf[0] == 0x81) )
             {
@@ -2548,22 +2547,22 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
                 }
                 else
                 {
-                    ALOGE("Event data TLV length encoding Unsupported!");
+                    LOG(ERROR) << StringPrintf("Event data TLV length encoding Unsupported!");
                 }
             }
         }
         else if (eventData->rcvd_evt.evt_code == NFA_HCI_EVT_CONNECTIVITY)
         {
-            ALOGV("%s: NFA_HCI_EVENT_RCVD_EVT; NFA_HCI_EVT_CONNECTIVITY", fn);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_HCI_EVENT_RCVD_EVT; NFA_HCI_EVT_CONNECTIVITY", fn);
 
 //            int pipe = (eventData->rcvd_evt.pipe);                            /*commented to eliminate unused variable warning*/
                 sSecElem.notifyConnectivityListeners (evtSrc);
         }
         else
         {
-            ALOGV("%s: NFA_HCI_EVENT_RCVD_EVT; ################################### eventData->rcvd_evt.evt_code = 0x%x , NFA_HCI_EVT_CONNECTIVITY = 0x%x", fn, eventData->rcvd_evt.evt_code, NFA_HCI_EVT_CONNECTIVITY);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_HCI_EVENT_RCVD_EVT; ################################### eventData->rcvd_evt.evt_code = 0x%x , NFA_HCI_EVT_CONNECTIVITY = 0x%x", fn, eventData->rcvd_evt.evt_code, NFA_HCI_EVT_CONNECTIVITY);
 
-            ALOGV("%s: NFA_HCI_EVENT_RCVD_EVT; ################################### ", fn);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_HCI_EVENT_RCVD_EVT; ################################### ", fn);
 
         }
         break;
@@ -2571,7 +2570,7 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
     case NFA_HCI_SET_REG_RSP_EVT: //received response to write registry command
         {
             tNFA_HCI_REGISTRY& registry = eventData->registry;
-            ALOGV("%s: NFA_HCI_SET_REG_RSP_EVT; status=0x%X; pipe=0x%X", fn, registry.status, registry.pipe);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_HCI_SET_REG_RSP_EVT; status=0x%X; pipe=0x%X", fn, registry.status, registry.pipe);
             SyncEventGuard guard (sSecElem.mRegistryEvent);
             sSecElem.mRegistryEvent.notifyOne ();
             break;
@@ -2579,7 +2578,7 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
 #if(NXP_EXTNS == TRUE)
     case NFA_HCI_CONFIG_DONE_EVT:
         {
-            ALOGV("%s: NFA_HCI_CONFIG_DONE_EVT; status=0x%X", fn, eventData->admin_rsp_rcvd.status);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_HCI_CONFIG_DONE_EVT; status=0x%X", fn, eventData->admin_rsp_rcvd.status);
             sSecElem.mETSI12InitStatus = eventData->admin_rsp_rcvd.status;
             SyncEventGuard guard(sSecElem.mNfceeInitCbEvent);
             sSecElem.mNfceeInitCbEvent.notifyOne();
@@ -2588,12 +2587,12 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
     case NFA_HCI_EE_RECOVERY_EVT:
     {
         tNFA_HCI_EE_RECOVERY_EVT &ee_recovery = eventData->ee_recovery;
-        ALOGV("%s: NFA_HCI_EE_RECOVERY_EVT; status=0x%X", fn, ee_recovery.status);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_HCI_EE_RECOVERY_EVT; status=0x%X", fn, ee_recovery.status);
         if(ee_recovery.status == NFA_HCI_EE_RECOVERY_STARTED)
             RoutingManager::getInstance().setEERecovery(true);
         else if(ee_recovery.status == NFA_HCI_EE_RECOVERY_COMPLETED)
         {
-            ALOGV("%s: NFA_HCI_EE_RECOVERY_EVT; recovery completed status=0x%X", fn, ee_recovery.status);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_HCI_EE_RECOVERY_EVT; recovery completed status=0x%X", fn, ee_recovery.status);
             RoutingManager::getInstance().setEERecovery(false);
             if(active_ese_reset_control & TRANS_WIRED_ONGOING)
             {
@@ -2605,14 +2604,14 @@ void SecureElement::nfaHciCallback (tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* event
     }
     case NFA_HCI_ADD_STATIC_PIPE_EVT:
     {
-        ALOGV("%s: NFA_HCI_ADD_STATIC_PIPE_EVT; status=0x%X", fn, eventData->admin_rsp_rcvd.status);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_HCI_ADD_STATIC_PIPE_EVT; status=0x%X", fn, eventData->admin_rsp_rcvd.status);
         SyncEventGuard guard(sSecElem.mHciAddStaticPipe);
         sSecElem.mHciAddStaticPipe.notifyOne();
         break;
     }
 #endif
     default:
-        ALOGE("%s: unknown event code=0x%X ????", fn, event);
+        LOG(ERROR) << StringPrintf("%s: unknown event code=0x%X ????", fn, event);
         break;
     }
 }
@@ -2655,7 +2654,7 @@ jint SecureElement::getSETechnology(tNFA_HANDLE eeHandle)
     // Get Fresh EE info.
     if (! getEeInfo())
     {
-        ALOGE("%s: No updated eeInfo available", fn);
+        LOG(ERROR) << StringPrintf("%s: No updated eeInfo available", fn);
     }
 
     tNFA_EE_INFO* eeinfo = findEeByHandle(eeHandle);
@@ -2692,8 +2691,8 @@ tNFA_HANDLE SecureElement::getDefaultEeHandle ()
 {
     static const char fn [] = "SecureElement::activate";
 
-    ALOGV("%s: - Enter", fn);
-    ALOGV("%s: - mActualNumEe = %x mActiveSeOverride = 0x%02X", fn,mActualNumEe, mActiveSeOverride);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: - Enter", fn);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: - mActualNumEe = %x mActiveSeOverride = 0x%02X", fn,mActualNumEe, mActiveSeOverride);
 
     uint16_t overrideEeHandle = NFA_HANDLE_GROUP_EE | mActiveSeOverride;
     // Find the first EE that is not the HCI Access i/f.
@@ -2701,7 +2700,7 @@ tNFA_HANDLE SecureElement::getDefaultEeHandle ()
     {
         if ( (mActiveSeOverride != ACTIVE_SE_USE_ANY) && (overrideEeHandle != mEeInfo[xx].ee_handle))
             continue; //skip all the EE's that are ignored
-        ALOGV("%s: - mEeInfo[xx].ee_handle = 0x%02x, mEeInfo[xx].ee_status = 0x%02x", fn,mEeInfo[xx].ee_handle, mEeInfo[xx].ee_status);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: - mEeInfo[xx].ee_handle = 0x%02x, mEeInfo[xx].ee_status = 0x%02x", fn,mEeInfo[xx].ee_handle, mEeInfo[xx].ee_status);
 
               if((nfcFL.nfccFL._GEMALTO_SE_SUPPORT && (mEeInfo[xx].ee_interface[0] != NCI_NFCEE_INTERFACE_HCI_ACCESS)))
               {
@@ -2732,16 +2731,16 @@ tNFA_HANDLE SecureElement::getActiveEeHandle (tNFA_HANDLE handle)
 {
     static const char fn [] = "SecureElement::getActiveEeHandle";
 
-    ALOGE("%s: - Enter", fn);
-    ALOGE("%s: - mActualNumEe = %x mActiveSeOverride = 0x%02X", fn,mActualNumEe, mActiveSeOverride);
+    LOG(ERROR) << StringPrintf("%s: - Enter", fn);
+    LOG(ERROR) << StringPrintf("%s: - mActualNumEe = %x mActiveSeOverride = 0x%02X", fn,mActualNumEe, mActiveSeOverride);
 
     uint16_t overrideEeHandle = NFA_HANDLE_GROUP_EE | mActiveSeOverride;
-    ALOGE("%s: - mActualNumEe = %x overrideEeHandle = 0x%02X", fn,mActualNumEe, overrideEeHandle);
+    LOG(ERROR) << StringPrintf("%s: - mActualNumEe = %x overrideEeHandle = 0x%02X", fn,mActualNumEe, overrideEeHandle);
 
     for (uint8_t xx = 0; xx < mActualNumEe; xx++)
     {
         if ( (mActiveSeOverride != ACTIVE_SE_USE_ANY) && (overrideEeHandle != mEeInfo[xx].ee_handle))
-             ALOGE("%s: - mEeInfo[xx].ee_handle = 0x%02x, mEeInfo[xx].ee_status = 0x%02x", fn,mEeInfo[xx].ee_handle, mEeInfo[xx].ee_status);
+             LOG(ERROR) << StringPrintf("%s: - mEeInfo[xx].ee_handle = 0x%02x, mEeInfo[xx].ee_status = 0x%02x", fn,mEeInfo[xx].ee_handle, mEeInfo[xx].ee_status);
 
         if(nfcFL.nfccFL._GEMALTO_SE_SUPPORT && (mEeInfo[xx].ee_interface[0] != NCI_NFCEE_INTERFACE_HCI_ACCESS)
              && (mEeInfo[xx].ee_status != NFC_NFCEE_STATUS_INACTIVE) && (mEeInfo[xx].ee_handle == handle))
@@ -2778,7 +2777,7 @@ tNFA_EE_DISCOVER_INFO *SecureElement::findUiccByHandle (tNFA_HANDLE eeHandle)
             return (&mUiccInfo.ee_disc_info[index]);
         }
     }
-    ALOGE("SecureElement::findUiccByHandle:  ee h=0x%4x not found", eeHandle);
+    LOG(ERROR) << StringPrintf("SecureElement::findUiccByHandle:  ee h=0x%4x not found", eeHandle);
     return NULL;
 }
 
@@ -2854,7 +2853,7 @@ bool SecureElement::getAtr(jint seID, uint8_t* recvBuffer, int32_t *recvBufferSi
     tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
     uint8_t reg_index = 0x01;
     int timeoutMillisec = 10000;
-    ALOGV("%s: enter; seID=0x%X", fn, seID);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter; seID=0x%X", fn, seID);
 #if (NXP_EXTNS == TRUE)
     if(nfcFL.nfcNxpEse) {
         se_apdu_gate_info gateInfo = NO_APDU_GATE;
@@ -2871,12 +2870,12 @@ bool SecureElement::getAtr(jint seID, uint8_t* recvBuffer, int32_t *recvBufferSi
         }
         if(!checkForWiredModeAccess())
         {
-            ALOGV("Denying /atr in SE listen mode active");
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Denying /atr in SE listen mode active");
             return false;
         }
         if ((((nfcFL.eseFL._NXP_ESE_VER == JCOP_VER_3_1) || (nfcFL.eseFL._NXP_ESE_VER == JCOP_VER_3_2))) &&NFC_GetEseAccess((void *)&timeoutMillisec) != 0)
         {
-            ALOGE("%s: NFC_ReqWiredAccess timeout", fn);
+            LOG(ERROR) << StringPrintf("%s: NFC_ReqWiredAccess timeout", fn);
             return false;
         }
         NfccStandByOperation(STANDBY_MODE_OFF);
@@ -2890,7 +2889,7 @@ bool SecureElement::getAtr(jint seID, uint8_t* recvBuffer, int32_t *recvBufferSi
             {
                 mGetAtrRspwait = true;
                 mGetRegisterEvent.wait();
-                ALOGV("%s: Received ATR response on pipe 0x%x ", fn, mNewPipeId);
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Received ATR response on pipe 0x%x ", fn, mNewPipeId);
             }
             *recvBufferSize = mAtrInfolen;
             memcpy(recvBuffer, mAtrInfo, mAtrInfolen);
@@ -2908,7 +2907,7 @@ bool SecureElement::getAtr(jint seID, uint8_t* recvBuffer, int32_t *recvBufferSi
             }
             if(mAbortEventWaitOk == false)
             {
-                ALOGE("%s (EVT_ABORT)Wait reposne timeout", fn);
+                LOG(ERROR) << StringPrintf("%s (EVT_ABORT)Wait reposne timeout", fn);
                 nfaStat = NFA_STATUS_FAILED;
             }
             else
@@ -2923,7 +2922,7 @@ bool SecureElement::getAtr(jint seID, uint8_t* recvBuffer, int32_t *recvBufferSi
 
         if (((nfcFL.eseFL._NXP_ESE_VER == JCOP_VER_3_1) || (nfcFL.eseFL._NXP_ESE_VER == JCOP_VER_3_2)) &&NFC_RelEseAccess((void *)&nfaStat) != 0)
         {
-            ALOGE("%s: NFC_ReqWiredAccess timeout", fn);
+            LOG(ERROR) << StringPrintf("%s: NFC_ReqWiredAccess timeout", fn);
         }
 #endif
     }
@@ -2943,26 +2942,26 @@ bool SecureElement::getAtr(jint seID, uint8_t* recvBuffer, int32_t *recvBufferSi
 bool SecureElement::routeToSecureElement ()
 {
     static const char fn [] = "SecureElement::routeToSecureElement";
-    ALOGV("%s: enter", fn);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", fn);
 
 //    tNFA_TECHNOLOGY_MASK tech_mask = NFA_TECHNOLOGY_MASK_A | NFA_TECHNOLOGY_MASK_B;   /*commented to eliminate unused variable warning*/
     bool retval = false;
 
     if (! mIsInit)
     {
-        ALOGE("%s: not init", fn);
+        LOG(ERROR) << StringPrintf("%s: not init", fn);
         return false;
     }
 
     if (mCurrentRouteSelection == SecElemRoute)
     {
-        ALOGE("%s: already sec elem route", fn);
+        LOG(ERROR) << StringPrintf("%s: already sec elem route", fn);
         return true;
     }
 
     if (mActiveEeHandle == NFA_HANDLE_INVALID)
     {
-        ALOGE("%s: invalid EE handle", fn);
+        LOG(ERROR) << StringPrintf("%s: invalid EE handle", fn);
         return false;
     }
 
@@ -2974,7 +2973,7 @@ bool SecureElement::routeToSecureElement ()
         }
     }*/
 
-    ALOGV("%s: exit; ok=%u", fn, retval);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit; ok=%u", fn, retval);
     return retval;
 }
 
@@ -2992,7 +2991,7 @@ bool SecureElement::routeToSecureElement ()
 bool SecureElement::isBusy ()
 {
     bool retval = mIsPiping ;
-    ALOGV("SecureElement::isBusy: %u", retval);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("SecureElement::isBusy: %u", retval);
     return retval;
 }
 
@@ -3010,7 +3009,7 @@ jint SecureElement::getGenericEseId(tNFA_HANDLE handle)
 {
     jint ret = 0xFF;
     static const char fn [] = "SecureElement::getGenericEseId";
-    ALOGV("%s: enter; ESE-Handle = 0x%X", fn, handle);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter; ESE-Handle = 0x%X", fn, handle);
     //Map the actual handle to generic id
     if(handle == (EE_HANDLE_0xF3 & ~NFA_HANDLE_GROUP_EE) ) //ESE - 0xC0
     {
@@ -3026,7 +3025,7 @@ jint SecureElement::getGenericEseId(tNFA_HANDLE handle)
     {
         ret = UICC2_ID;
     }
-    ALOGV("%s: exit; ESE-Generic-ID = 0x%02X", fn, ret);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit; ESE-Generic-ID = 0x%02X", fn, ret);
     return ret;
 }
 
@@ -3044,7 +3043,7 @@ tNFA_HANDLE SecureElement::getEseHandleFromGenericId(jint eseId)
 {
     uint16_t handle = NFA_HANDLE_INVALID;
     static const char fn [] = "SecureElement::getEseHandleFromGenericId";
-    ALOGV("%s: enter; ESE-ID = 0x%02X", fn, eseId);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter; ESE-ID = 0x%02X", fn, eseId);
 
     //Map the generic id to actual handle
     if(eseId == ESE_ID) //ESE
@@ -3068,7 +3067,7 @@ tNFA_HANDLE SecureElement::getEseHandleFromGenericId(jint eseId)
     {
         handle = eseId;
     }
-    ALOGV("%s: enter; ESE-Handle = 0x%03X", fn, handle);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter; ESE-Handle = 0x%03X", fn, handle);
     return handle;
 }
 bool SecureElement::SecEle_Modeset(uint8_t type)
@@ -3076,14 +3075,14 @@ bool SecureElement::SecEle_Modeset(uint8_t type)
     tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
     bool retval = true;
 
-    ALOGV("set EE mode = 0x%X", type);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("set EE mode = 0x%X", type);
 #if(NXP_EXTNS == TRUE)
     if ((nfaStat = SecElem_EeModeSet (EE_HANDLE_0xF3, type)) == NFA_STATUS_OK)
     {
 #if 0
         if (eeItem.ee_status == NFC_NFCEE_STATUS_INACTIVE)
         {
-            ALOGE("NFA_EeModeSet enable or disable success; status=0x%X", nfaStat);
+            LOG(ERROR) << StringPrintf("NFA_EeModeSet enable or disable success; status=0x%X", nfaStat);
             retval = true;
         }
 #endif
@@ -3092,7 +3091,7 @@ bool SecureElement::SecEle_Modeset(uint8_t type)
 #endif
     {
         retval = false;
-        ALOGE("NFA_EeModeSet failed; error=0x%X",nfaStat);
+        LOG(ERROR) << StringPrintf("NFA_EeModeSet failed; error=0x%X",nfaStat);
     }
     return retval;
 }
@@ -3116,19 +3115,19 @@ void SecureElement::getEeHandleList(tNFA_HANDLE *list, uint8_t* count)
     *count = 0;
     for ( i = 0; i < mActualNumEe; i++)
     {
-        ALOGV("%s: %d = 0x%X", fn, i, mEeInfo[i].ee_handle);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: %d = 0x%X", fn, i, mEeInfo[i].ee_handle);
         if ((mEeInfo[i].ee_handle == 0x401) || (mEeInfo[i].ee_interface[0] == NCI_NFCEE_INTERFACE_HCI_ACCESS) ||
             (mEeInfo[i].ee_status == NFC_NFCEE_STATUS_INACTIVE))
         {
-            ALOGV("%s: %u = 0x%X", fn, i, mEeInfo[i].ee_handle);
-            ALOGV("0x%x: 0x%x 0x%x 0x%x",mEeInfo[i].ee_handle, mEeInfo[i].num_interface, mEeInfo[i].ee_interface[0], mEeInfo[i].ee_status);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: %u = 0x%X", fn, i, mEeInfo[i].ee_handle);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("0x%x: 0x%x 0x%x 0x%x",mEeInfo[i].ee_handle, mEeInfo[i].num_interface, mEeInfo[i].ee_interface[0], mEeInfo[i].ee_status);
             continue;
         }
 
         handle = mEeInfo[i].ee_handle & ~NFA_HANDLE_GROUP_EE;
         list[*count] = handle;
         *count = *count + 1 ;
-        ALOGV("%s: Handle %d = 0x%X", fn, i, handle);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Handle %d = 0x%X", fn, i, handle);
     }
 }
 
@@ -3148,7 +3147,7 @@ bool SecureElement::sendEvent(uint8_t event)
 bool SecureElement::configureNfceeETSI12()
 {
     static const char fn [] = "SecureElement::configureNfceeETSI12";
-    ALOGV("%s: enter", fn);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", fn);
     tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
     bool retval = true;
 
@@ -3168,7 +3167,7 @@ bool SecureElement::checkPipeStatusAndRecreate()
     se_apdu_gate_info gateInfo = NO_APDU_GATE;
     uint8_t xmitBuffer[] = {0x00, 0x00, 0x00, 0x00};
     uint8_t EVT_SEND_DATA = 0x10;
-    ALOGD ("checkPipeStatusAndRecreate: Enter");
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("checkPipeStatusAndRecreate: Enter");
     pipeCorrectStatus = NFA_IsPipeStatusNotCorrect();
     if(pipeCorrectStatus)
     {
@@ -3191,7 +3190,7 @@ bool SecureElement::checkPipeStatusAndRecreate()
                 nfaStat = NFA_HciOpenPipe (mNfaHciHandle, mNewPipeId);
                 if (nfaStat != NFA_STATUS_OK)
                 {
-                    ALOGE("checkPipeStatusAndRecreate:fail open pipe; error=0x%X", nfaStat);
+                    LOG(ERROR) << StringPrintf("checkPipeStatusAndRecreate:fail open pipe; error=0x%X", nfaStat);
                 }
 
                 if(!mPipeOpenedEvent.wait (500) || (mCommandStatus != NFA_STATUS_OK))
@@ -3201,7 +3200,7 @@ bool SecureElement::checkPipeStatusAndRecreate()
             }
         }
     }
- ALOGD ("checkPipeStatusAndRecreate: Exit status x%x",success);
+ DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("checkPipeStatusAndRecreate: Exit status x%x",success);
  return success;
 }
 /*******************************************************************************
@@ -3218,7 +3217,7 @@ uint8_t SecureElement::getUiccGateAndPipeList(uint8_t uiccNo)
     tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
     uint8_t pipeId = 0;
     static const char fn[] = "SecureElement::getUiccGateAndPipeList";
-    ALOGV("%s : get gate, pipe list mNfaHandle = %x ", fn, mNfaHciHandle);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s : get gate, pipe list mNfaHandle = %x ", fn, mNfaHciHandle);
     /*HCI initialised and secure element available*/
     if((mNfaHciHandle != NFA_HANDLE_INVALID))
     {
@@ -3231,22 +3230,22 @@ uint8_t SecureElement::getUiccGateAndPipeList(uint8_t uiccNo)
             {
                 for (uint8_t xx = 0; xx < mHciCfg.num_uicc_created_pipes; xx++)
                 {
-                    ALOGV("%s : get gate, pipe list host = 0x%x gate = 0x%x",fn, mHciCfg.pipe[xx].dest_host,
+                    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s : get gate, pipe list host = 0x%x gate = 0x%x",fn, mHciCfg.pipe[xx].dest_host,
                             mHciCfg.uicc_created_pipe[xx].dest_gate);
                     if (mHciCfg.uicc_created_pipe[xx].dest_gate == NFA_HCI_CONNECTIVITY_GATE)
                     {
-                        ALOGV("%s: found configured gate: 0x%02x  pipe: 0x%02x",fn, mNewSourceGate, mNewPipeId);
+                        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: found configured gate: 0x%02x  pipe: 0x%02x",fn, mNewSourceGate, mNewPipeId);
                         if((uiccNo == (EE_HANDLE_0xF4 & ~NFA_HANDLE_GROUP_EE) && mHciCfg.uicc_created_pipe[xx].pipe_id == CONNECTIVITY_PIPE_ID_UICC1) ||
                             (uiccNo == (EE_HANDLE_0xF8 & ~NFA_HANDLE_GROUP_EE) && mHciCfg.uicc_created_pipe[xx].pipe_id == CONNECTIVITY_PIPE_ID_UICC2))
                         {
-                            ALOGV("Found the pipeId = %x", mHciCfg.uicc_created_pipe[xx].pipe_id);
+                            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Found the pipeId = %x", mHciCfg.uicc_created_pipe[xx].pipe_id);
                             pipeId = mHciCfg.uicc_created_pipe[xx].pipe_id;
                             break;
                         }
                     }
                     else
                     {
-                        ALOGV("%s : No GatePresent", fn);
+                        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s : No GatePresent", fn);
                     }
                 }
             }
@@ -3281,20 +3280,20 @@ void *eSE_ClearAllPipe_thread_handler(void *data)
     static const char fn [] = "eSE_ClearAllPipe_thread_handler";
     uint8_t *host = NULL, nfcee_type = 0;
     SecureElement &se = SecureElement::getInstance();
-    ALOGV("%s: enter:", fn);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter:", fn);
     if(NULL == data)
     {
-        ALOGE("%s: Invalid argument", fn);
+        LOG(ERROR) << StringPrintf("%s: Invalid argument", fn);
         return NULL;
     }
     /*Nfc initialization not completed*/
     if(sNfcee_disc_state < UICC_SESSION_INTIALIZATION_DONE)
     {
-        ALOGV("eSE_ClearAllPipe_thread_handler PENDING return");
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("eSE_ClearAllPipe_thread_handler PENDING return");
         sNfcee_disc_state = UICC_CLEAR_ALL_PIPE_NTF_RECEIVED;
         return NULL;
     }
-    ALOGV("eSE_ClearAllPipe_thread_handler state NFCEE_STATE_DISCOVERED");
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("eSE_ClearAllPipe_thread_handler state NFCEE_STATE_DISCOVERED");
     /* Copying the host-id from the parent thread and freeing allocated space */
     host = (uint8_t *) data;
     nfcee_type = *host;
@@ -3356,14 +3355,14 @@ void SecureElement::eSE_ClearAllPipe_handler(uint8_t host)
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
     uint8_t *host_id = (uint8_t *) malloc(sizeof(uint8_t));
     *host_id = host;
-    ALOGE("%s; Enter", fn);
+    LOG(ERROR) << StringPrintf("%s; Enter", fn);
     if (pthread_create (&thread, &attr,  &eSE_ClearAllPipe_thread_handler, (void*)host_id) < 0)
     {
-        ALOGV("Thread creation failed");
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Thread creation failed");
     }
     else
     {
-        ALOGV("Thread creation success");
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Thread creation success");
     }
     pthread_attr_destroy(&attr);
 
@@ -3384,14 +3383,14 @@ void SecureElement::eSE_ClearAllPipe_handler(uint8_t host)
 void SecureElement::NfccStandByOperation(nfcc_standby_operation_t value)
 {
     if(!nfcFL.nfcNxpEse) {
-        ALOGV("%s  nfcNxpEse not available. Returning",__func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s  nfcNxpEse not available. Returning",__func__);
         return;
     }
     static IntervalTimer   mNFCCStandbyModeTimer; // timer to enable standby mode for NFCC
     tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
     bool stat = false;
     mNfccStandbyMutex.lock();
-    ALOGV("In SecureElement::NfccStandByOperation value = %d, state = %d", value, standby_state);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("In SecureElement::NfccStandByOperation value = %d, state = %d", value, standby_state);
     switch(value)
     {
     case STANDBY_TIMER_START:
@@ -3408,7 +3407,7 @@ void SecureElement::NfccStandByOperation(nfcc_standby_operation_t value)
                 if(mNfccPowerMode == 1) {
                     nfaStat = setNfccPwrConfig(POWER_ALWAYS_ON|COMM_LINK_ACTIVE);
                     if(nfaStat != NFA_STATUS_OK) {
-                        ALOGV("%s: power link command failed", __func__);
+                        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: power link command failed", __func__);
                         break;
                     } else {
                         SecEle_Modeset(0x01);
@@ -3445,7 +3444,7 @@ void SecureElement::NfccStandByOperation(nfcc_standby_operation_t value)
                 spiDwpSyncState = STATE_IDLE;
             if(dual_mode_current_state & SPI_ON)
             {
-                ALOGV("%s: SPI is ON-StandBy not allowed", __func__);
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: SPI is ON-StandBy not allowed", __func__);
                 standby_state = STANDBY_MODE_ON;
                 /*To maintain wired session close state during SPI on*/
                 spiDwpSyncState = STATE_DWP_CLOSE;
@@ -3456,7 +3455,7 @@ void SecureElement::NfccStandByOperation(nfcc_standby_operation_t value)
             if(stat)
             {
                 standby_state = STANDBY_MODE_ON;
-                ALOGV("%s sending standby mode command EVT_END_OF_APDU_TRANSFER successful", __func__);
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s sending standby mode command EVT_END_OF_APDU_TRANSFER successful", __func__);
             }
         }
     }
@@ -3478,7 +3477,7 @@ void SecureElement::NfccStandByOperation(nfcc_standby_operation_t value)
     }
     if(dual_mode_current_state & SPI_ON)
     {
-        ALOGV("%s: SPI is ON-StandBy not allowed", __func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: SPI is ON-StandBy not allowed", __func__);
         standby_state = STANDBY_MODE_ON;
         mNfccStandbyMutex.unlock();
         return;
@@ -3486,7 +3485,7 @@ void SecureElement::NfccStandByOperation(nfcc_standby_operation_t value)
     }
         if(nfcFL.eseFL._WIRED_MODE_STANDBY == true) {
             if(standby_state != STANDBY_MODE_TIMER_ON) {
-                ALOGV("%s the timer must be stopped by next atr/transceive, ignoring timeout", __func__);
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s the timer must be stopped by next atr/transceive, ignoring timeout", __func__);
                 break;
             }
         }
@@ -3500,7 +3499,7 @@ void SecureElement::NfccStandByOperation(nfcc_standby_operation_t value)
         if(stat)
         {
             standby_state = STANDBY_MODE_SUSPEND;
-            ALOGV("%s sending standby command successful", __func__);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s sending standby command successful", __func__);
             if (nfcFL.eseFL._ESE_DWP_SPI_SYNC_ENABLE && nfcFL.eseFL._WIRED_MODE_STANDBY_PROP)
                 spiDwpSyncState = STATE_IDLE;
         }
@@ -3517,13 +3516,13 @@ void SecureElement::NfccStandByOperation(nfcc_standby_operation_t value)
         ret_val = NFC_EnableWired ((void *)&status);
         if (ret_val < 0)
         {
-            ALOGV("NFC_EnableWired failed");
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("NFC_EnableWired failed");
         }
         else
         {
              if (status != NFCSTATUS_SUCCESS)
              {
-                 ALOGV("SE is being used by SPI");
+                 DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("SE is being used by SPI");
              }
         }
     }
@@ -3536,13 +3535,13 @@ void SecureElement::NfccStandByOperation(nfcc_standby_operation_t value)
         ret_val = NFC_DisableWired ((void *)&status);
         if (ret_val < 0)
         {
-            ALOGV("NFC_DisableWired failed");
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("NFC_DisableWired failed");
         }
         else
         {
             if (status != NFCSTATUS_SUCCESS)
             {
-                ALOGV("SE is not being released by Pn54x driver");
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("SE is not being released by Pn54x driver");
             }
         }
     }
@@ -3555,7 +3554,7 @@ void SecureElement::NfccStandByOperation(nfcc_standby_operation_t value)
       ret_val = NFC_ReleaseEsePwr ((void *)&status);
       if (ret_val < 0)
       {
-        ALOGV("NFC_ReleaseEsePwr: Failed");
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("NFC_ReleaseEsePwr: Failed");
       }
     }
     break;
@@ -3568,12 +3567,12 @@ void SecureElement::NfccStandByOperation(nfcc_standby_operation_t value)
       ret_val = NFC_AcquireEsePwr ((void *)&status);
       if (ret_val < 0)
       {
-        ALOGV("NFC_AcquireEsePwr: Failed");
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("NFC_AcquireEsePwr: Failed");
       }
     }
     break;
     default:
-        ALOGE("Wrong param");
+        LOG(ERROR) << StringPrintf("Wrong param");
     break;
 
     }
@@ -3592,19 +3591,19 @@ NFCSTATUS SecureElement::eSE_Chip_Reset(void)
 {
     jint ret_val = -1;
     NFCSTATUS status = NFCSTATUS_FAILED;
-    ALOGV("eSE_Chip_Reset");
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("eSE_Chip_Reset");
     SecureElement::getInstance().SecEle_Modeset(0x00);
     /* Reset P73 using ISO Reset Pin. */
     ret_val = NFC_eSEChipReset ((void *)&status);
     if (ret_val < 0)
     {
-        ALOGV("Reset eSE failed");
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Reset eSE failed");
     }
     else
     {
         if (status != NFCSTATUS_SUCCESS)
         {
-            ALOGV("SE is not being released by Pn54x driver");
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("SE is not being released by Pn54x driver");
         }
     }
     SecureElement::getInstance().SecEle_Modeset(0x01);
@@ -3624,17 +3623,17 @@ tNFA_STATUS SecureElement::reconfigureEseHciInit()
 {
     tNFA_STATUS status = NFA_STATUS_FAILED;
     if(!nfcFL.eseFL._JCOP_WA_ENABLE) {
-        ALOGV("reconfigureEseHciInit JCOP_WA_ENABLE not found. Returning");
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("reconfigureEseHciInit JCOP_WA_ENABLE not found. Returning");
         return status;
     }
 
     if (isActivatedInListenMode()) {
-        ALOGV("Denying HCI re-initialization due to SE listen mode active");
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Denying HCI re-initialization due to SE listen mode active");
         return status;
     }
 
     if (isRfFieldOn()) {
-        ALOGV("Denying HCI re-initialization due to SE in active RF field");
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Denying HCI re-initialization due to SE in active RF field");
         return status;
     }
     if(android::isDiscoveryStarted() == true)
@@ -3660,7 +3659,7 @@ se_apdu_gate_info SecureElement::getApduGateInfo()
     tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
     se_apdu_gate_info ret = NO_APDU_GATE;
 
-    ALOGV("getApduGateInfo : get gate, pipe list");
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("getApduGateInfo : get gate, pipe list");
     /*HCI initialised and secure element available*/
     if((mNfaHciHandle != NFA_HANDLE_INVALID) && (mActiveEeHandle != NFA_HANDLE_INVALID))
     {
@@ -3673,23 +3672,23 @@ se_apdu_gate_info SecureElement::getApduGateInfo()
             {
                 for (uint8_t xx = 0; xx < mHciCfg.num_pipes; xx++)
                 {
-                    ALOGV("getApduGateInfo : get gate, pipe list host = 0x%x gate = 0x%x", mHciCfg.pipe[xx].dest_host,
+                    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("getApduGateInfo : get gate, pipe list host = 0x%x gate = 0x%x", mHciCfg.pipe[xx].dest_host,
                             mHciCfg.pipe[xx].dest_gate);
                     if ( (mHciCfg.pipe[xx].dest_host == (EE_HANDLE_0xF3 & ~NFA_HANDLE_GROUP_EE)) && (mHciCfg.pipe[xx].dest_gate == NFA_HCI_ETSI12_APDU_GATE) )
                     {
                         ret = ETSI_12_APDU_GATE;
-                        ALOGV("getApduGateInfo: found configured gate: 0x%02x  pipe: 0x%02x", mNewSourceGate, mNewPipeId);
+                        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("getApduGateInfo: found configured gate: 0x%02x  pipe: 0x%02x", mNewSourceGate, mNewPipeId);
                         break;
                     }
                     else if( (mHciCfg.pipe[xx].dest_host == (EE_HANDLE_0xF3 & ~NFA_HANDLE_GROUP_EE)) && (mHciCfg.pipe[xx].dest_gate == 0xF0) )
                     {
                         ret = PROPREITARY_APDU_GATE;
-                        ALOGV("propreitary ApduGatePresent: found configured gate: 0x%02x  pipe: 0x%02x", mNewSourceGate, mNewPipeId);
+                        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("propreitary ApduGatePresent: found configured gate: 0x%02x  pipe: 0x%02x", mNewSourceGate, mNewPipeId);
                         break;
                     }
                     else
                     {
-                        ALOGV("No ApduGatePresent");
+                        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("No ApduGatePresent");
                     }
                 }
             }
@@ -3702,7 +3701,7 @@ bool SecureElement::checkForWiredModeAccess()
 {
     static const char fn[] = "checkForWiredModeAccess";
     bool status = true;
-    ALOGV("%s; enter", fn);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s; enter", fn);
 
     if(mIsExclusiveWiredMode)
     {
@@ -3732,7 +3731,7 @@ bool SecureElement::checkForWiredModeAccess()
             return status;
         }
     }
-    ALOGV("%s; status:%d  ",fn, status);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s; status:%d  ",fn, status);
     return status;
 }
 #endif
@@ -3743,7 +3742,7 @@ int SecureElement::decodeBerTlvLength(uint8_t* data,int index, int data_length )
     int length = 0;
     int temp = data[index] & 0xff;
 
-    ALOGV("decodeBerTlvLength index= %d data[index+0]=0x%x data[index+1]=0x%x len=%d",index, data[index], data[index+1], data_length);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("decodeBerTlvLength index= %d data[index+0]=0x%x data[index+1]=0x%x len=%d",index, data[index], data[index+1], data_length);
 
     if (temp < 0x80) {
         decoded_length = temp;
@@ -3751,15 +3750,15 @@ int SecureElement::decodeBerTlvLength(uint8_t* data,int index, int data_length )
         if( index < data_length ) {
             length = data[index+1] & 0xff;
             if (length < 0x80) {
-                ALOGE("Invalid TLV length encoding!");
+                LOG(ERROR) << StringPrintf("Invalid TLV length encoding!");
                 goto TheEnd;
             }
             if (data_length < length + index) {
-                ALOGE("Not enough data provided!");
+                LOG(ERROR) << StringPrintf("Not enough data provided!");
                 goto TheEnd;
             }
         } else {
-            ALOGE("Index %d out of range! [0..[%d",index, data_length);
+            LOG(ERROR) << StringPrintf("Index %d out of range! [0..[%d",index, data_length);
             goto TheEnd;
         }
         decoded_length = length;
@@ -3768,16 +3767,16 @@ int SecureElement::decodeBerTlvLength(uint8_t* data,int index, int data_length )
             length = ((data[index] & 0xff) << 8)
                     | (data[index + 1] & 0xff);
         } else {
-            ALOGE("Index out of range! [0..[%d" , data_length);
+            LOG(ERROR) << StringPrintf("Index out of range! [0..[%d" , data_length);
             goto TheEnd;
         }
         index += 2;
         if (length < 0x100) {
-            ALOGE("Invalid TLV length encoding!");
+            LOG(ERROR) << StringPrintf("Invalid TLV length encoding!");
             goto TheEnd;
         }
         if (data_length < length + index) {
-            ALOGE("Not enough data provided!");
+            LOG(ERROR) << StringPrintf("Not enough data provided!");
             goto TheEnd;
         }
         decoded_length = length;
@@ -3787,24 +3786,24 @@ int SecureElement::decodeBerTlvLength(uint8_t* data,int index, int data_length )
                     | ((data[index + 1] & 0xff) << 8)
                     | (data[index + 2] & 0xff);
         } else {
-            ALOGE("Index out of range! [0..[%d", data_length);
+            LOG(ERROR) << StringPrintf("Index out of range! [0..[%d", data_length);
             goto TheEnd;
         }
         index += 3;
         if (length < 0x10000) {
-            ALOGE("Invalid TLV length encoding!");
+            LOG(ERROR) << StringPrintf("Invalid TLV length encoding!");
             goto TheEnd;
         }
         if (data_length < length + index) {
-            ALOGE("Not enough data provided!");
+            LOG(ERROR) << StringPrintf("Not enough data provided!");
             goto TheEnd;
         }
         decoded_length = length;
     } else {
-        ALOGE("Unsupported TLV length encoding!");
+        LOG(ERROR) << StringPrintf("Unsupported TLV length encoding!");
     }
 TheEnd:
-    ALOGV("decoded_length = %d", decoded_length);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("decoded_length = %d", decoded_length);
 
     return decoded_length;
 }
@@ -3829,12 +3828,12 @@ void *spiEventHandlerThread(void *arg)
     SecureElement &se = SecureElement::getInstance();
 
     if(!nfcFL.nfcNxpEse) {
-        ALOGV("%s: nfcNxpEse not available. Returning", __func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: nfcNxpEse not available. Returning", __func__);
         return NULL;
     }
     if(!nfcFL.eseFL._ESE_SVDD_SYNC && !nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION &&
             !nfcFL.nfccFL._NFCC_SPI_FW_DOWNLOAD_SYNC && !nfcFL.eseFL._ESE_DWP_SPI_SYNC_ENABLE) {
-        ALOGV("%s: Not allowed. Returning", __func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Not allowed. Returning", __func__);
         return NULL;
     }
     (void)arg;
@@ -3843,7 +3842,7 @@ void *spiEventHandlerThread(void *arg)
 
     NFCSTATUS ese_status = NFA_STATUS_FAILED;
 
-    ALOGV("%s: enter", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
     while(android::nfcManager_isNfcActive()&&
             !android::nfcManager_isNfcDisabling() &&
             (android::nfcManager_getNfcState() != NFC_OFF))
@@ -3852,21 +3851,21 @@ void *spiEventHandlerThread(void *arg)
         { /* scope of the guard start */
             SyncEventGuard guard(sSPISignalHandlerEvent);
             sSPISignalHandlerEvent.wait();
-            ALOGE("%s: Empty evt received", __FUNCTION__);
+            LOG(ERROR) << StringPrintf("%s: Empty evt received", __FUNCTION__);
         } /* scope of the guard end */
         /* Dequeue the received signal */
         gSPIEvtQueue.dequeue((uint8_t*)&usEvent, (uint16_t)SIGNAL_EVENT_SIZE, usEvtLen);
-        ALOGV("%s: evt received %x len %x", __FUNCTION__, usEvent, usEvtLen);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: evt received %x len %x", __FUNCTION__, usEvent, usEvtLen);
 
         if(usEvent & P61_STATE_SPI_PRIO)
         {
-            ALOGV("%s: SPI PRIO request Signal....\n", __func__);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: SPI PRIO request Signal....\n", __func__);
             hold_the_transceive = true;
             setSPIState(true);
          }
          else if(usEvent & P61_STATE_SPI_PRIO_END)
          {
-             ALOGV("%s: SPI PRIO End Signal\n", __func__);
+             DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: SPI PRIO End Signal\n", __func__);
              hold_the_transceive = false;
              if(!se.mIsWiredModeOpen)
                 spiDwpSyncState = STATE_DWP_CLOSE;
@@ -3876,12 +3875,12 @@ void *spiEventHandlerThread(void *arg)
          }
         else if(usEvent & P61_STATE_SPI)
         {
-            ALOGV("%s: SPI OPEN request Signal....\n", __func__);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: SPI OPEN request Signal....\n", __func__);
             setSPIState(true);
         }
         else if(usEvent & P61_STATE_SPI_END)
         {
-            ALOGV("%s: SPI End Signal\n", __func__);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: SPI End Signal\n", __func__);
             hold_the_transceive = false;
             if(!se.mIsWiredModeOpen)
                 spiDwpSyncState = STATE_DWP_CLOSE;
@@ -3938,7 +3937,7 @@ void *spiEventHandlerThread(void *arg)
         if(nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION) {
             if(usEvent == JCP_DWNLD_INIT)
             {
-                ALOGV("%s: JCOP OS download  init request....=%d\n", __func__, usEvent);
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: JCOP OS download  init request....=%d\n", __func__, usEvent);
                 if(android::nfcManager_checkNfcStateBusy() ==  false)
                 {
                     if(android::isDiscoveryStarted() == true)
@@ -3950,7 +3949,7 @@ void *spiEventHandlerThread(void *arg)
             }
             else if(usEvent == JCP_DWP_DWNLD_COMPLETE)
             {
-                ALOGV("%s: JCOP OS download  end request...=%d\n", __func__, usEvent);
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: JCOP OS download  end request...=%d\n", __func__, usEvent);
                 if(android::isDiscoveryStarted() == false)
                 {
                     android::startRfDiscovery(true);
@@ -3967,7 +3966,7 @@ void *spiEventHandlerThread(void *arg)
             }
         }
     }
-    ALOGV("%s: exit", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
     /*Explicit cleanup to avoid any issue due to pthread datastructure corruption*/
     __pthread_cleanup_push(&__cleanup, pCleanupRoutine, NULL);
     __pthread_cleanup_pop(&__cleanup, 0);
@@ -3978,12 +3977,12 @@ void *spiEventHandlerThread(void *arg)
 bool createSPIEvtHandlerThread()
 {
     if(!nfcFL.nfcNxpEse) {
-        ALOGV("%s: nfcNxpEse not available. Returning", __func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: nfcNxpEse not available. Returning", __func__);
         return false;
     }
     if(!nfcFL.eseFL._ESE_SVDD_SYNC && !nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION &&
             !nfcFL.nfccFL._NFCC_SPI_FW_DOWNLOAD_SYNC && !nfcFL.eseFL._ESE_DWP_SPI_SYNC_ENABLE) {
-        ALOGV("%s: Not allowed. Returning", __func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Not allowed. Returning", __func__);
         return false;
     }
 
@@ -3993,7 +3992,7 @@ bool createSPIEvtHandlerThread()
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
     if (pthread_create(&spiEvtHandler_thread, &attr, spiEventHandlerThread, NULL) != 0)
     {
-        ALOGV("Unable to create the thread");
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Unable to create the thread");
         stat = false;
     }
     pthread_attr_destroy(&attr);
@@ -4003,23 +4002,23 @@ bool createSPIEvtHandlerThread()
 void releaseSPIEvtHandlerThread()
 {
     if(!nfcFL.nfcNxpEse) {
-        ALOGV("%s: nfcNxpEse not available. Returning", __func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: nfcNxpEse not available. Returning", __func__);
         return;
     }
     if(!nfcFL.eseFL._ESE_SVDD_SYNC && !nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION &&
             !nfcFL.nfccFL._NFCC_SPI_FW_DOWNLOAD_SYNC && !nfcFL.eseFL._ESE_DWP_SPI_SYNC_ENABLE) {
-        ALOGV("%s: Not allowed. Returning", __func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Not allowed. Returning", __func__);
         return;
     }
 
     uint16_t usEvent = 0;
     uint16_t usEvtLen = 0;
-    ALOGV("releaseSPIEvtHandlerThread");
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("releaseSPIEvtHandlerThread");
     while(!gSPIEvtQueue.isEmpty()) /* Wait for the event only if the queue is empty */
     { /* scope of the guard start */
         /* Dequeue the received signal */
         gSPIEvtQueue.dequeue((uint8_t*)&usEvent, (uint16_t)SIGNAL_EVENT_SIZE, usEvtLen);
-        ALOGE("%s: Clearing queue ", __func__);
+        LOG(ERROR) << StringPrintf("%s: Clearing queue ", __func__);
     } /* scope of the guard end */
 
     /* Notifying the signal handler thread to exit if it is waiting */
@@ -4043,21 +4042,21 @@ void releaseSPIEvtHandlerThread()
 static void nfaVSC_SVDDSyncOnOffCallback(uint8_t event, uint16_t param_len, uint8_t *p_param)
 {
     if(!nfcFL.nfcNxpEse || !nfcFL.eseFL._ESE_SVDD_SYNC) {
-        ALOGV("%s: nfcNxpEse or ESE_SVDD_SYNC not available. Returning", __func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: nfcNxpEse or ESE_SVDD_SYNC not available. Returning", __func__);
         return;
     }
 
     (void)event;
     tNFC_STATUS nfaStat;
     char fn[] = "nfaVSC_SVDDProtectionCallback";
-    ALOGV("%s", __func__);
-    ALOGV("%s param_len = %d ", __func__, param_len);
-    ALOGV("%s status = 0x%X ", __func__, p_param[3]);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s param_len = %d ", __func__, param_len);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s status = 0x%X ", __func__, p_param[3]);
     SyncEventGuard guard(sSPISVDDSyncOnOffEvent);
     sSPISVDDSyncOnOffEvent.notifyOne();
     if (NFC_RelSvddWait((void *)&nfaStat) != 0)
     {
-        ALOGE("%s: NFC_RelSvddWait failed ret = %d", fn, nfaStat);
+        LOG(ERROR) << StringPrintf("%s: NFC_RelSvddWait failed ret = %d", fn, nfaStat);
     }
 }
 /*******************************************************************************
@@ -4073,7 +4072,7 @@ static void nfaVSC_SVDDSyncOnOffCallback(uint8_t event, uint16_t param_len, uint
 static void nfaVSC_SVDDSyncOnOff(bool type)
 {
     if(!nfcFL.nfcNxpEse || !nfcFL.eseFL._ESE_SVDD_SYNC) {
-        ALOGV("%s: nfcNxpEse or ESE_SVDD_SYNC not available. Returning", __func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: nfcNxpEse or ESE_SVDD_SYNC not available. Returning", __func__);
         return;
     }
     tNFC_STATUS stat;
@@ -4086,7 +4085,7 @@ static void nfaVSC_SVDDSyncOnOff(bool type)
             android::nfcManager_isNfcDisabling() ||
                 (android::nfcManager_getNfcState() == NFC_OFF))
     {
-        ALOGE("%s: NFC is no longer active.", __func__);
+        LOG(ERROR) << StringPrintf("%s: NFC is no longer active.", __func__);
         return;
     }
     stat = NFA_SendVsCommand (0x31, 0x01, &param, nfaVSC_SVDDSyncOnOffCallback);
@@ -4094,11 +4093,11 @@ static void nfaVSC_SVDDSyncOnOff(bool type)
     {
         SyncEventGuard guard(sSPISVDDSyncOnOffEvent);
         sSPISVDDSyncOnOffEvent.wait(50);
-        ALOGV("%s: NFA_SendVsCommand pass stat = %d", __func__,stat);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_SendVsCommand pass stat = %d", __func__,stat);
     }
     else
     {
-        ALOGV("%s: NFA_SendVsCommand failed stat = %d", __func__,stat);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_SendVsCommand failed stat = %d", __func__,stat);
     }
 }
 
@@ -4115,7 +4114,7 @@ static void nfaVSC_SVDDSyncOnOff(bool type)
 static void nfaVSC_ForceDwpOnOff(bool type)
 {
     if(!nfcFL.nfcNxpEse || !nfcFL.eseFL._ESE_DWP_SPI_SYNC_ENABLE) {
-        ALOGV("%s: nfcNxpEse or DWP_SPI_SYNC_ENABLE not available."
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: nfcNxpEse or DWP_SPI_SYNC_ENABLE not available."
                 " Returning", __func__);
         return;
     }
@@ -4126,7 +4125,7 @@ static void nfaVSC_ForceDwpOnOff(bool type)
 
     if(standby_state == STANDBY_MODE_OFF)
     {
-        ALOGV("%s: DWP wired mode is On", __func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: DWP wired mode is On", __func__);
         return;
     }
 
@@ -4134,11 +4133,11 @@ static void nfaVSC_ForceDwpOnOff(bool type)
             android::nfcManager_isNfcDisabling() ||
                 (android::nfcManager_getNfcState() == NFC_OFF))
     {
-        ALOGV ("%s: NFC is not activated", __FUNCTION__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFC is not activated", __FUNCTION__);
         return;
     }
 
-    ALOGV("nfaVSC_ForceDwpOnOff: syncstate = %d, type = %d", spiDwpSyncState, type);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("nfaVSC_ForceDwpOnOff: syncstate = %d, type = %d", spiDwpSyncState, type);
     if((type == true) && !(spiDwpSyncState & STATE_WK_ENBLE))
     {
         if(nfcFL.eseFL._WIRED_MODE_STANDBY) {
@@ -4159,7 +4158,7 @@ static void nfaVSC_ForceDwpOnOff(bool type)
             }
             else
             {
-                ALOGV("%s: NFA_HciSendEvent failed stat = %d type = %d", __func__,stat, type);
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_HciSendEvent failed stat = %d type = %d", __func__,stat, type);
             }
         }
     }
@@ -4178,7 +4177,7 @@ static void nfaVSC_ForceDwpOnOff(bool type)
                 stat = SecureElement::getInstance().sendEvent(SecureElement::EVT_SUSPEND_APDU_TRANSFER);
                 if(stat)
                 {
-                    ALOGV("%s sending standby mode command successful", __func__);
+                    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s sending standby mode command successful", __func__);
                 }
                 standby_state = STANDBY_MODE_SUSPEND;
                 spiDwpSyncState = STATE_IDLE;
@@ -4193,24 +4192,24 @@ static void nfaVSC_ForceDwpOnOff(bool type)
             stat = NFA_HciSendEvent (NFA_HANDLE_GROUP_HCI, 0x19, EVT_END_OF_APDU_TRANSFER,
                     0x00, NULL, 0x00,NULL, 0);
             if(NFA_STATUS_OK != stat)
-                ALOGV("%s: NFA_HciSendEvent failed stat = %d, type = %d", __func__,stat, type);
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_HciSendEvent failed stat = %d, type = %d", __func__,stat, type);
         }
         spiDwpSyncState = STATE_IDLE;
     }
 
-    ALOGV("nfaVSC_ForceDwpOnOff: syncstate = %d, type = %d", spiDwpSyncState, type);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("nfaVSC_ForceDwpOnOff: syncstate = %d, type = %d", spiDwpSyncState, type);
 }
 
 bool SecureElement::enableDwp(void)
 {
     if(!nfcFL.nfcNxpEse || !nfcFL.eseFL._ESE_DWP_SPI_SYNC_ENABLE) {
-        ALOGV("%s: nfcNxpEse or DWP_SPI_SYNC_ENABLE not available."
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: nfcNxpEse or DWP_SPI_SYNC_ENABLE not available."
                 " Returning", __func__);
         return false;
     }
     bool stat = false;
     static const char fn [] = "SecureElement::enableDwp";
-    ALOGV("enter %s", fn);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("enter %s", fn);
 
     mActiveEeHandle = getDefaultEeHandle();
     if(mActiveEeHandle == EE_HANDLE_0xF3)
@@ -4218,17 +4217,17 @@ bool SecureElement::enableDwp(void)
         stat = connectEE();
     }
     mIsPiping = false;
-    ALOGV("exit %s.. stat = %d", fn, stat);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("exit %s.. stat = %d", fn, stat);
     return stat;
 }
 
 void spi_prio_signal_handler (int signum, siginfo_t *info, void *unused)
 {
-    ALOGV("%s: Inside the Signal Handler %d\n", __func__, SIG_NFC);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Inside the Signal Handler %d\n", __func__, SIG_NFC);
     uint16_t usEvent = 0;
     if (signum == SIG_NFC)
     {
-        ALOGV("%s: Signal is SIG_NFC\n", __func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Signal is SIG_NFC\n", __func__);
         if(nfcFL.eseFL._ESE_SVDD_SYNC || nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION ||
                 nfcFL.nfccFL._NFCC_SPI_FW_DOWNLOAD_SYNC || nfcFL.eseFL._ESE_DWP_SPI_SYNC_ENABLE) {
             usEvent = info->si_int;
@@ -4271,7 +4270,7 @@ void SecureElement::setCPTimeout()
         {
             nfaStat = NFA_STATUS_OK;
             handle = mEeInfo[i].ee_handle & ~NFA_HANDLE_GROUP_EE;
-            ALOGV("%s: %u = 0x%X", fn, i, mEeInfo[i].ee_handle);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: %u = 0x%X", fn, i, mEeInfo[i].ee_handle);
             break;
         }
     }
@@ -4280,13 +4279,13 @@ void SecureElement::setCPTimeout()
         if (GetNxpByteArrayValue(NAME_NXP_CP_TIMEOUT,(char *) CPTimeoutvalue,
                 sizeof(CPTimeoutvalue), &retlen))
         {
-           ALOGV("%s: READ NAME_CP_TIMEOUT Value", __func__);
+           DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: READ NAME_CP_TIMEOUT Value", __func__);
            memcpy((setCPTimeoutcmdbuff+(sizeof(setCPTimeoutcmdbuff)-2)),CPTimeoutvalue,2);
            found = true;
         }
         else
         {
-            ALOGV("%s:CP_TIMEOUT Value not found!!!", __func__);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:CP_TIMEOUT Value not found!!!", __func__);
         }
         if(found)
         {
@@ -4338,7 +4337,7 @@ void SecureElement::setCPTimeout()
 uint16_t SecureElement::enablePassiveListen (uint8_t event)
 {
     if(!nfcFL.eseFL._NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION) {
-        ALOGV("%s NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION not available."
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION not available."
                 " Returning",__func__);
         return NFA_STATUS_FAILED;
     }
@@ -4388,7 +4387,7 @@ uint16_t SecureElement::enablePassiveListen (uint8_t event)
         }
     }
     mPassiveListenMutex.unlock();
-    ALOGV(" enablePassiveListen exit");
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(" enablePassiveListen exit");
     return 0x00;
 }
 
@@ -4404,11 +4403,11 @@ uint16_t SecureElement::enablePassiveListen (uint8_t event)
 void *passiveListenEnableThread(void *arg)
 {
     if(!nfcFL.eseFL._NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION) {
-        ALOGV("%s NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION not available."
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION not available."
                 " Returning",__func__);
         return NULL;
     }
-    ALOGV(" passiveListenEnableThread  %d",*((uint8_t*)arg));
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(" passiveListenEnableThread  %d",*((uint8_t*)arg));
     if (*((uint8_t*)arg))
     {
         SecureElement::getInstance().enablePassiveListen(0x01);
@@ -4430,7 +4429,7 @@ uint16_t SecureElement::startThread(uint8_t thread_arg)
     mPassiveListenCnt = 0x00;
     if (pthread_create(&passiveListenEnable_thread, &attr, passiveListenEnableThread, (void*) &passiveListenState) != 0)
     {
-        ALOGV("Unable to create the thread");
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Unable to create the thread");
     }
     pthread_attr_destroy(&attr);
     return 0x00;
@@ -4448,11 +4447,11 @@ uint16_t SecureElement::startThread(uint8_t thread_arg)
 static void passiveListenDisablecallBack(union sigval)
 {
     if(!nfcFL.eseFL._NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION) {
-        ALOGV("%s NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION not available."
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION not available."
                 " Returning",__func__);
         return;
     }
-    ALOGV(" passiveListenDisablecallBack enter");
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(" passiveListenDisablecallBack enter");
 
     if(SecureElement::getInstance().isRfFieldOn() == true)
     {
@@ -4463,7 +4462,7 @@ static void passiveListenDisablecallBack(union sigval)
         }
         else if((SecureElement::getInstance().isActivatedInListenMode() == false) && (SecureElement::getInstance().mPassiveListenCnt < 0x02))
         {
-            ALOGV(" passiveListenEnableThread timer restart");
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(" passiveListenEnableThread timer restart");
             SecureElement::getInstance().mPassiveListenTimer.set(SecureElement::getInstance().mPassiveListenTimeout , passiveListenDisablecallBack);
             SecureElement::getInstance().mPassiveListenCnt++;
             return;
@@ -4486,7 +4485,7 @@ static void passiveListenDisablecallBack(union sigval)
  *******************************************************************************/
 static void setSPIState(bool mState)
 {
-    ALOGV("%s: Enter setSPIState \n", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter setSPIState \n", __func__);
     /*Check if the state is already dual mode*/
     bool inDualModeAlready = (dual_mode_current_state == SPI_DWPCL_BOTH_ACTIVE);
     if(mState)
@@ -4505,7 +4504,7 @@ static void setSPIState(bool mState)
             }
         }
     }
-    ALOGV("%s: Exit setSPIState = %d\n", __func__, dual_mode_current_state);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Exit setSPIState = %d\n", __func__, dual_mode_current_state);
 }
 
 /*******************************************************************************
@@ -4520,7 +4519,7 @@ static void setSPIState(bool mState)
 tNFA_STATUS SecureElement::SecElem_EeModeSet(uint16_t handle, uint8_t mode)
 {
     tNFA_STATUS stat = NFA_STATUS_FAILED;
-    ALOGV("%s:Enter mode = %d", __func__, mode);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:Enter mode = %d", __func__, mode);
 
     if(nfcFL.nfcNxpEse) {
         if(nfcFL.eseFL._JCOP_WA_ENABLE &&
@@ -4542,9 +4541,9 @@ tNFA_STATUS SecureElement::SecElem_EeModeSet(uint16_t handle, uint8_t mode)
             stat =  NFA_EeModeSet(handle, mode);
             if(stat == NFA_STATUS_OK && !android::nfcManager_isNfcDisabling() &&
                (android::nfcManager_getNfcState() != NFC_OFF)) {
-                ALOGD("Waiting for Mode Set Ntf");
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Waiting for Mode Set Ntf");
                 if(mModeSetNtf.wait(500) == false) {
-                    ALOGE("%s: timeout waiting for setModeNtf", __func__);
+                    LOG(ERROR) << StringPrintf("%s: timeout waiting for setModeNtf", __func__);
                 } else {
                     // do nothing
                 }
@@ -4593,14 +4592,14 @@ uint16_t SecureElement::getEeStatus(uint16_t eehandle)
 {
     int i;
     uint16_t ee_status = NFA_EE_STATUS_REMOVED;
-    ALOGV("%s  num_nfcee_present = %d",__func__,mNfceeData_t.mNfceePresent);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s  num_nfcee_present = %d",__func__,mNfceeData_t.mNfceePresent);
 
     for(i = 1; i<= mNfceeData_t.mNfceePresent ; i++)
     {
         if(mNfceeData_t.mNfceeHandle[i] == eehandle)
         {
             ee_status = mNfceeData_t.mNfceeStatus[i];
-            ALOGV("%s  EE is detected 0x%02x  status = 0x%02x",__func__,eehandle,ee_status);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s  EE is detected 0x%02x  status = 0x%02x",__func__,eehandle,ee_status);
             break;
         }
     }
@@ -4682,7 +4681,7 @@ uint8_t SecureElement::updateNfceeDiscoverInfo()
 
     if((nfaStat = NFA_AllEeGetInfo(&numEe, mEeInfo)) != NFA_STATUS_OK)
     {
-        ALOGV("%s failed to get info, error = 0x%X ",__func__, nfaStat);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s failed to get info, error = 0x%X ",__func__, nfaStat);
         mActualNumEe = 0;
 
     }
@@ -4727,7 +4726,7 @@ uint8_t SecureElement::updateNfceeDiscoverInfo()
         }
         else
         {
-            ALOGV("%s INVALID HANDLE ",__func__);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s INVALID HANDLE ",__func__);
         }
     }
     return gSeDiscoverycount;
@@ -4748,7 +4747,7 @@ uint8_t SecureElement::updateNfceeDiscoverInfo()
 tNFA_STATUS SecureElement::SecElem_sendEvt_Abort()
 {
     if(!nfcFL.nfcNxpEse) {
-        ALOGE("%s nfcNxpEse not available. Returning",__func__);
+        LOG(ERROR) << StringPrintf("%s nfcNxpEse not available. Returning",__func__);
         return NFA_STATUS_FAILED;
     }
     static const char fn[] = "SecureElement::SecElem_sendEvt_Abort";
@@ -4775,7 +4774,7 @@ tNFA_STATUS SecureElement::SecElem_sendEvt_Abort()
     }
     if(mAbortEventWaitOk == false)
     {
-        ALOGE("%s (EVT_ABORT)Wait reposne timeout",fn);
+        LOG(ERROR) << StringPrintf("%s (EVT_ABORT)Wait reposne timeout",fn);
         return NFA_STATUS_FAILED;
     }
     return nfaStat;
@@ -4794,10 +4793,10 @@ tNFA_STATUS SecureElement::SecElem_sendEvt_Abort()
 void SecureElement::setDwpTranseiveState(bool block, tNFCC_EVTS_NTF action)
 {
     if(!nfcFL.nfcNxpEse) {
-        ALOGE("%s nfcNxpEse not available. Returning",__func__);
+        LOG(ERROR) << StringPrintf("%s nfcNxpEse not available. Returning",__func__);
         return;
     }
-    ALOGV("%s  block = %d action = %d ",__func__,block,action);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s  block = %d action = %d ",__func__,block,action);
 
     switch(action)
     {
@@ -4879,7 +4878,7 @@ void SecureElement::setDwpTranseiveState(bool block, tNFCC_EVTS_NTF action)
                 mIsWiredModeBlocked = true;
             }
     }
-    ALOGV("%s  Exit",__func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s  Exit",__func__);
 }
 
 /*******************************************************************************
@@ -4893,7 +4892,7 @@ void SecureElement::setDwpTranseiveState(bool block, tNFCC_EVTS_NTF action)
 *******************************************************************************/
 static void rfFeildEventTimeoutCallback(union sigval)
 {
-    ALOGV("rfFeildEventTimeoutCallback  Enter");
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("rfFeildEventTimeoutCallback  Enter");
     SecureElement::getInstance().setDwpTranseiveState(false, NFCC_RF_FIELD_EVT);
 }
 
@@ -4924,7 +4923,7 @@ struct timespec SecureElement::getLastRfFiledToggleTime(void)
 tNFA_STATUS SecureElement::setNfccPwrConfig(uint8_t value)
 {
     if(!nfcFL.eseFL._WIRED_MODE_STANDBY) {
-        ALOGV("WIRED_MODE_STANDBY not enabled. Returning");
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("WIRED_MODE_STANDBY not enabled. Returning");
         return NFA_STATUS_FAILED;
     }
 
@@ -4940,7 +4939,7 @@ tNFA_STATUS SecureElement::setNfccPwrConfig(uint8_t value)
             android::nfcManager_isNfcDisabling() ||
                 (android::nfcManager_getNfcState() == NFC_OFF))
     {
-       ALOGE("%s: NFC is no longer active.", __func__);
+       LOG(ERROR) << StringPrintf("%s: NFC is no longer active.", __func__);
        return NFA_STATUS_OK;
     }
     else

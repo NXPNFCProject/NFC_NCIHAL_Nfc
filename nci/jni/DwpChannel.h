@@ -18,7 +18,6 @@ extern "C"
 {
     #include "nfa_ee_api.h"
 }
-#define ALOGV ALOGD
 class DwpChannel
 {
 public:

@@ -33,8 +33,6 @@
  *
  ******************************************************************************/
 #pragma once
-#undef LOG_TAG
-#define LOG_TAG "BrcmNfcJni"
 #include <JNIHelp.h>
 #include <jni.h>
 #include <pthread.h>
@@ -42,7 +40,6 @@
 #include <semaphore.h>
 #include "Nxp_Features.h"
 
-#define ALOGV ALOGD
 /* Discovery modes -- keep in sync with NFCManager.DISCOVERY_MODE_* */
 #define DISCOVERY_MODE_TAG_READER         0
 #define DISCOVERY_MODE_NFCIP1             1

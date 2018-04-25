@@ -91,7 +91,7 @@ tNFA_STATUS GetCbStatus(void)
 static void NxpResponse_Cb(uint8_t event, uint16_t param_len, uint8_t *p_param)
 {
     (void)event;
-    ALOGV("NxpResponse_Cb Received length data = 0x%x status = 0x%x", param_len, p_param[3]);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("NxpResponse_Cb Received length data = 0x%x status = 0x%x", param_len, p_param[3]);
 
     if(p_param[3] == 0x00)
     {
@@ -113,7 +113,7 @@ static void NxpResponse_Cb(uint8_t event, uint16_t param_len, uint8_t *p_param)
 static void NxpResponse_SetDhlf_Cb(uint8_t event, uint16_t param_len, uint8_t *p_param)
 {
     (void)event;
-    ALOGV("NxpResponse_SetDhlf_Cb Received length data = 0x%x status = 0x%x", param_len, p_param[3]);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("NxpResponse_SetDhlf_Cb Received length data = 0x%x status = 0x%x", param_len, p_param[3]);
 
     if(p_param[3] == 0x00)
     {
@@ -131,7 +131,7 @@ static void NxpResponse_SetDhlf_Cb(uint8_t event, uint16_t param_len, uint8_t *p
 
 static void NxpResponse_SetVenConfig_Cb(uint8_t event, uint16_t param_len, uint8_t *p_param)
 {
-    ALOGV("NxpResponse_SetVenConfig_Cb Received length data = 0x%x status = 0x%x", param_len, p_param[3]);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("NxpResponse_SetVenConfig_Cb Received length data = 0x%x status = 0x%x", param_len, p_param[3]);
     if(p_param[3] == 0x00)
     {
         SetCbStatus(NFA_STATUS_OK);
@@ -146,7 +146,7 @@ static void NxpResponse_SetVenConfig_Cb(uint8_t event, uint16_t param_len, uint8
 
 static void NxpResponse_SetSWPBitRate_Cb(uint8_t event, uint16_t param_len, uint8_t *p_param)
 {
-    ALOGV("NxpResponse_SetSWPBitRate_CbReceived length data = 0x%x status = 0x%x", param_len, p_param[3]);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("NxpResponse_SetSWPBitRate_CbReceived length data = 0x%x status = 0x%x", param_len, p_param[3]);
     if(p_param[3] == 0x00)
     {
         SetCbStatus(NFA_STATUS_OK);
@@ -173,10 +173,10 @@ static void NxpResponse_SetSWPBitRate_Cb(uint8_t event, uint16_t param_len, uint
 static void NxpResponse_SwitchUICC_Cb(uint8_t event, uint16_t param_len, uint8_t *p_param)
 {
     if(!nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH) {
-        ALOGV("%s STAT_DUAL_UICC_EXT_SWITCH not available. Returning",__func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s STAT_DUAL_UICC_EXT_SWITCH not available. Returning",__func__);
         return ;
     }
-    ALOGV("NxpResponse_SwitchUICC_Cb length data = 0x%x status = 0x%x", param_len, p_param[3]);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("NxpResponse_SwitchUICC_Cb length data = 0x%x status = 0x%x", param_len, p_param[3]);
     if(p_param[3] == 0x00)
     {
         SetCbStatus(NFA_STATUS_OK);
@@ -200,11 +200,11 @@ static void NxpResponse_SwitchUICC_Cb(uint8_t event, uint16_t param_len, uint8_t
 static void NxpResponse_EnableAGCDebug_Cb(uint8_t event, uint16_t param_len, uint8_t *p_param)
 {
     if(nfcFL.chipType == pn547C2) {
-        ALOGV("%s chipType : pn547C2. Not allowed. Returning", __func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s chipType : pn547C2. Not allowed. Returning", __func__);
         return;
     }
 
-    ALOGV("NxpResponse_EnableAGCDebug_Cb Received length data = 0x%x", param_len);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("NxpResponse_EnableAGCDebug_Cb Received length data = 0x%x", param_len);
     SetCbStatus(NFA_STATUS_FAILED);
     if(param_len > 0)
     {
@@ -227,7 +227,7 @@ static void NxpResponse_EnableAGCDebug_Cb(uint8_t event, uint16_t param_len, uin
 static void printDataByte(uint16_t param_len, uint8_t *p_param)
 {
     if(nfcFL.chipType == pn547C2) {
-            ALOGV("%s chipType : pn547C2. Not allowed. Returning", __func__);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s chipType : pn547C2. Not allowed. Returning", __func__);
             return;
         }
     char print_buffer[param_len * 3 + 1];
@@ -236,7 +236,7 @@ static void printDataByte(uint16_t param_len, uint8_t *p_param)
     {
         snprintf(&print_buffer[i * 2], 3 ,"%02X", p_param[i]);
     }
-    ALOGV("AGC Dynamic RSSI values  = %s", print_buffer);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("AGC Dynamic RSSI values  = %s", print_buffer);
 }
 /*******************************************************************************
  **
@@ -253,14 +253,14 @@ tNFA_STATUS SendAGCDebugCommand()
 {
     tNFA_STATUS status = NFA_STATUS_FAILED;
     if(nfcFL.chipType == pn547C2) {
-        ALOGV("%s chipType : pn547C2. Not allowed. Returning", __func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s chipType : pn547C2. Not allowed. Returning", __func__);
         return NFA_STATUS_FAILED;
     }
 
         uint8_t cmd_buf[] = {0x2F, 0x33, 0x04, 0x40, 0x00, 0x40, 0xD8};
 
         uint8_t cmd_buf2[] = {0x2F, 0x32, 0x01, 0x01};
-    ALOGV("%s: enter", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
     SetCbStatus(NFA_STATUS_FAILED);
     gnxpfeature_conf.rsp_len = 0;
     memset(gnxpfeature_conf.rsp_data, 0, 50);
@@ -271,12 +271,12 @@ tNFA_STATUS SendAGCDebugCommand()
         status = NFA_SendRawVsCommand(sizeof(cmd_buf2), cmd_buf2, NxpResponse_EnableAGCDebug_Cb);
     if (status == NFA_STATUS_OK)
     {
-        ALOGV("%s: Success NFA_SendRawVsCommand", __func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Success NFA_SendRawVsCommand", __func__);
         gnxpfeature_conf.NxpFeatureConfigEvt.wait(1000); /* wait for callback */
     }
     else
     {
-        ALOGE("%s: Failed NFA_SendRawVsCommand", __func__);
+        LOG(ERROR) << StringPrintf("%s: Failed NFA_SendRawVsCommand", __func__);
     }
     status = GetCbStatus();
     if(status == NFA_STATUS_OK && gnxpfeature_conf.rsp_len > 0)
@@ -299,27 +299,27 @@ tNFA_STATUS EmvCo_dosetPoll(jboolean enable)
     tNFA_STATUS status = NFA_STATUS_FAILED;
     uint8_t cmd_buf[] ={0x20, 0x02, 0x05, 0x01, 0xA0, 0x44, 0x01, 0x00};
 
-    ALOGV("%s: enter", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
 
     SetCbStatus(NFA_STATUS_FAILED);
     SyncEventGuard guard (gnxpfeature_conf.NxpFeatureConfigEvt);
     if(enable)
     {
         NFA_SetEmvCoState(true);
-        ALOGV("EMV-CO polling profile");
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("EMV-CO polling profile");
         cmd_buf[7] = 0x01; /*EMV-CO Poll*/
     }
     else
     {
         NFA_SetEmvCoState(false);
-        ALOGV("NFC forum polling profile");
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("NFC forum polling profile");
     }
     status = NFA_SendRawVsCommand(sizeof(cmd_buf), cmd_buf, NxpResponse_Cb);
     if (status == NFA_STATUS_OK) {
-        ALOGV("%s: Success NFA_SendRawVsCommand", __func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Success NFA_SendRawVsCommand", __func__);
         gnxpfeature_conf.NxpFeatureConfigEvt.wait(); /* wait for callback */
     } else {
-        ALOGE("%s: Failed NFA_SendRawVsCommand", __func__);
+        LOG(ERROR) << StringPrintf("%s: Failed NFA_SendRawVsCommand", __func__);
     }
 
     status = GetCbStatus();
@@ -340,35 +340,35 @@ tNFA_STATUS SetScreenState(jint state)
     tNFA_STATUS status = NFA_STATUS_FAILED;
     uint8_t screen_off_state_cmd_buff[] = {0x2F, 0x15, 0x01, 0x01};
 
-    ALOGV("%s: enter", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
 
     SetCbStatus(NFA_STATUS_FAILED);
     SyncEventGuard guard (gnxpfeature_conf.NxpFeatureConfigEvt);
     if(state == NFA_SCREEN_STATE_OFF_UNLOCKED || state == NFA_SCREEN_STATE_OFF_LOCKED)
     {
-        ALOGV("Set Screen OFF");
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Set Screen OFF");
         screen_off_state_cmd_buff[3] = 0x01;
     }
     else if(state == NFA_SCREEN_STATE_ON_LOCKED)
     {
-        ALOGV("Screen ON-locked");
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Screen ON-locked");
         screen_off_state_cmd_buff[3] = 0x02;
     }
     else if(state == NFA_SCREEN_STATE_ON_UNLOCKED)
     {
-        ALOGV("Screen ON-Unlocked");
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Screen ON-Unlocked");
         screen_off_state_cmd_buff[3] = 0x00;
     }
     else
     {
-        ALOGV("Invalid screen state");
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Invalid screen state");
     }
     status = NFA_SendRawVsCommand(sizeof(screen_off_state_cmd_buff), screen_off_state_cmd_buff, NxpResponse_SetDhlf_Cb);
     if (status == NFA_STATUS_OK) {
-        ALOGV("%s: Success NFA_SendRawVsCommand", __func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Success NFA_SendRawVsCommand", __func__);
         gnxpfeature_conf.NxpFeatureConfigEvt.wait(); /* wait for callback */
     } else {
-        ALOGE("%s: Failed NFA_SendRawVsCommand", __func__);
+        LOG(ERROR) << StringPrintf("%s: Failed NFA_SendRawVsCommand", __func__);
     }
 
     status = GetCbStatus();
@@ -391,19 +391,19 @@ tNFA_STATUS SendAutonomousMode(jint state ,uint8_t num)
     uint8_t core_standby = 0x0;
 
 
-    ALOGV("%s: enter", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
     SetCbStatus(NFA_STATUS_FAILED);
     SyncEventGuard guard (gnxpfeature_conf.NxpFeatureConfigEvt);
     if(state == NFA_SCREEN_STATE_OFF_UNLOCKED || state == NFA_SCREEN_STATE_OFF_LOCKED)
     {
-        ALOGV("Set Screen OFF");
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Set Screen OFF");
         /*Standby mode is automatically set with Autonomous mode
          * Value of core_standby will not be considering when state is in SCREEN_OFF Mode*/
         autonomos_cmd_buff[3] = 0x02;
     }
     else if(state == NFA_SCREEN_STATE_ON_UNLOCKED)
     {
-        ALOGV("Screen ON-Unlocked");
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Screen ON-Unlocked");
         core_standby = num;
         autonomos_cmd_buff[3] = 0x00 | core_standby;
     }
@@ -414,15 +414,15 @@ tNFA_STATUS SendAutonomousMode(jint state ,uint8_t num)
     }
     else
     {
-        ALOGV("Invalid screen state");
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Invalid screen state");
         return  NFA_STATUS_FAILED;
     }
     status = NFA_SendRawVsCommand(sizeof(autonomos_cmd_buff), autonomos_cmd_buff, NxpResponse_SetDhlf_Cb);
     if (status == NFA_STATUS_OK) {
-        ALOGV("%s: Success NFA_SendRawVsCommand", __func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Success NFA_SendRawVsCommand", __func__);
         gnxpfeature_conf.NxpFeatureConfigEvt.wait(); /* wait for callback */
     } else {
-        ALOGE("%s: Failed NFA_SendRawVsCommand", __func__);
+        LOG(ERROR) << StringPrintf("%s: Failed NFA_SendRawVsCommand", __func__);
     }
 
     status = GetCbStatus();
@@ -455,7 +455,7 @@ tNFA_STATUS Nxp_SelfTest(uint8_t testcase, uint8_t* param)
     //Factory Test Code for PRBS STOP --/
     uint8_t cmd_len = 0;
 
-    ALOGV("%s: enter", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
 
     NfcAdaptation& theInstance = NfcAdaptation::GetInstance();
     tHAL_NFC_ENTRY* halFuncEntries = theInstance.GetHalEntryFuncs ();
@@ -536,7 +536,7 @@ tNFA_STATUS Nxp_SelfTest(uint8_t testcase, uint8_t* param)
         break;
 
     default :
-        ALOGV("NXP_SelfTest Invalid Parameter!!");
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("NXP_SelfTest Invalid Parameter!!");
         return status;
     }
 
@@ -548,10 +548,10 @@ tNFA_STATUS Nxp_SelfTest(uint8_t testcase, uint8_t* param)
     }
 
     if (status == NFA_STATUS_OK) {
-        ALOGV("%s: Success NFA_SendRawVsCommand", __func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Success NFA_SendRawVsCommand", __func__);
         gnxpfeature_conf.NxpFeatureConfigEvt.wait(); /* wait for callback */
     } else {
-        ALOGE("%s: Failed NFA_SendRawVsCommand", __func__);
+        LOG(ERROR) << StringPrintf("%s: Failed NFA_SendRawVsCommand", __func__);
     }
 
     status = GetCbStatus();
@@ -572,20 +572,20 @@ tNFA_STATUS SetVenConfigValue(jint nfcMode)
 {
     tNFA_STATUS status = NFA_STATUS_FAILED;
     uint8_t cmd_buf[] = {0x20, 0x02, 0x05, 0x01, 0xA0, 0x07, 0x01, 0x03};
-    ALOGV("%s: enter", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
     if(nfcMode == NFC_MODE_OFF)
     {
-        ALOGV("Setting the VEN_CFG to 2, Disable ESE events");
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Setting the VEN_CFG to 2, Disable ESE events");
         cmd_buf[7] = 0x02;
     }
     else if(nfcMode == NFC_MODE_ON)
     {
-        ALOGV("Setting the VEN_CFG to 3, Make ");
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Setting the VEN_CFG to 3, Make ");
         cmd_buf[7] = 0x03;
     }
     else
     {
-        ALOGE("Wrong VEN_CFG Value");
+        LOG(ERROR) << StringPrintf("Wrong VEN_CFG Value");
         return status;
     }
     SetCbStatus(NFA_STATUS_FAILED);
@@ -593,12 +593,12 @@ tNFA_STATUS SetVenConfigValue(jint nfcMode)
     status = NFA_SendRawVsCommand(sizeof(cmd_buf), cmd_buf, NxpResponse_SetVenConfig_Cb);
     if (status == NFA_STATUS_OK)
     {
-        ALOGV("%s: Success NFA_SendRawVsCommand", __func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Success NFA_SendRawVsCommand", __func__);
         gnxpfeature_conf.NxpFeatureConfigEvt.wait(); /* wait for callback */
     }
     else
     {
-        ALOGE("%s: Failed NFA_SendRawVsCommand", __func__);
+        LOG(ERROR) << StringPrintf("%s: Failed NFA_SendRawVsCommand", __func__);
     }
     status = GetCbStatus();
     return status;
@@ -608,7 +608,7 @@ static void NxpResponse_GetNumNFCEEValueCb(uint8_t event, uint16_t param_len, ui
 {
     uint8_t cfg_param_offset = 0x05;
     swp_getconfig_status = SWP_DEFAULT;
-    ALOGV("NxpResponse_GetNumNFCEEValueCb length data = 0x%x status = 0x%x", param_len, p_param[3]);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("NxpResponse_GetNumNFCEEValueCb length data = 0x%x status = 0x%x", param_len, p_param[3]);
 
     if(p_param != NULL && param_len > 0x00 && p_param[3] == NFA_STATUS_OK && p_param[2] > 0x00)
     {
@@ -617,14 +617,14 @@ static void NxpResponse_GetNumNFCEEValueCb(uint8_t event, uint16_t param_len, ui
             if(nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH &&
                     (p_param[5] == 0xA0 && p_param[6] == 0xEC)) {
                 sSelectedUicc = (p_param[8] & 0x0F);
-                ALOGV("Selected Uicc:%d",sSelectedUicc);
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Selected Uicc:%d",sSelectedUicc);
             }
 
             if(p_param[cfg_param_offset] == NXP_NFC_SET_CONFIG_PARAM_EXT && p_param[cfg_param_offset+1] == NXP_NFC_PARAM_ID_SWP1)
             {
                 if(p_param[cfg_param_offset+3] != NXP_FEATURE_DISABLED)
                 {
-                     ALOGV("SWP1 Interface is enabled");
+                     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("SWP1 Interface is enabled");
                      swp_getconfig_status |= SWP1_UICC1;
                      gActualSeCount++;
                 }
@@ -633,7 +633,7 @@ static void NxpResponse_GetNumNFCEEValueCb(uint8_t event, uint16_t param_len, ui
             {
                 if (p_param[cfg_param_offset+3] != NXP_FEATURE_DISABLED)
                 {
-                    ALOGV("SWP2 Interface is enabled");
+                    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("SWP2 Interface is enabled");
                     swp_getconfig_status |= SWP2_ESE;
                     gActualSeCount++;
                 }
@@ -642,7 +642,7 @@ static void NxpResponse_GetNumNFCEEValueCb(uint8_t event, uint16_t param_len, ui
             {
                 if (p_param[cfg_param_offset+3] != NXP_FEATURE_DISABLED)
                 {
-                    ALOGV("SWP1A Interface is enabled");
+                    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("SWP1A Interface is enabled");
                     swp_getconfig_status |= SWP1A_UICC2;
                     gActualSeCount++;
                 }
@@ -688,7 +688,7 @@ tNFA_STATUS GetNumNFCEEConfigured(void)
     cmd_buf[2] = config_param_len;
     cmd_buf[3] = num_config_params;
 
-    ALOGV("%s: enter", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
 
     if(NFA_GetNCIVersion() == NCI_VERSION_2_0)
        gActualSeCount = 0;
@@ -698,15 +698,15 @@ tNFA_STATUS GetNumNFCEEConfigured(void)
     status = NFA_SendRawVsCommand(cmd_buf_len, cmd_buf, NxpResponse_GetNumNFCEEValueCb);
     if (status == NFA_STATUS_OK)
     {
-        ALOGV("%s: Success NFA_SendRawVsCommand", __func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Success NFA_SendRawVsCommand", __func__);
         gnxpfeature_conf.NxpFeatureConfigEvt.wait(); /* wait for callback */
     }
     else
     {
-        ALOGE("%s: Failed NFA_SendRawVsCommand", __func__);
+        LOG(ERROR) << StringPrintf("%s: Failed NFA_SendRawVsCommand", __func__);
     }
     status = GetCbStatus();
-    ALOGV("%s : gActualSeCount = %d",__func__, gActualSeCount);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s : gActualSeCount = %d",__func__, gActualSeCount);
     return status;
 }
 
@@ -743,29 +743,29 @@ tNFA_STATUS SetHfoConfigValue(void)
                                                  0xA0, 0x0D, 0x06, 0x06, 0x82, 0x13, 0x14, 0x17, 0x00,
                                                  0xA0, 0x0D, 0x06, 0x06, 0x84, 0xAA, 0x85, 0x00, 0x00,
                                                  0xA0, 0x0D, 0x06, 0x06, 0x81, 0x63, 0x02, 0x00, 0x00 };
-    ALOGV("%s: enter", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
 
     SetCbStatus(NFA_STATUS_FAILED);
     SyncEventGuard guard (gnxpfeature_conf.NxpFeatureConfigEvt);
     status = NFA_SendRawVsCommand(sizeof(cmd_buf), cmd_buf, NxpResponse_SetVenConfig_Cb);
     if (status == NFA_STATUS_OK)
     {
-        ALOGV("%s: Success NFA_SendRawVsCommand", __func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Success NFA_SendRawVsCommand", __func__);
         gnxpfeature_conf.NxpFeatureConfigEvt.wait(); /* wait for callback */
     }
     else
     {
-        ALOGE("%s: Failed NFA_SendRawVsCommand", __func__);
+        LOG(ERROR) << StringPrintf("%s: Failed NFA_SendRawVsCommand", __func__);
     }
     status = GetCbStatus();
     if (NFA_STATUS_OK == status)
     {
-        ALOGV("%s: HFO Settinng Success", __func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: HFO Settinng Success", __func__);
          // TBD write value in temp file in /data/vendor/nfc
         // At next boot hal will read this file and re-apply the
         // Default Clock setting
     }
-    ALOGV("%s: exit", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
     return status;
 }
 #endif
@@ -785,7 +785,7 @@ tNFA_STATUS ResetEseSession()
     tNFA_STATUS status = NFA_STATUS_FAILED;
     static uint8_t cmd_buf[] = { 0x20, 0x02, 0x0C, 0x01,
                                  0xA0, 0xEB, 0x08, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-    ALOGV("%s: enter", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
 
     SetCbStatus(NFA_STATUS_FAILED);
     {
@@ -793,17 +793,17 @@ tNFA_STATUS ResetEseSession()
         status = NFA_SendRawVsCommand(sizeof(cmd_buf), cmd_buf, NxpResponse_Cb);
         if (status == NFA_STATUS_OK)
         {
-            ALOGV("%s: Success NFA_SendRawVsCommand", __func__);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Success NFA_SendRawVsCommand", __func__);
             gnxpfeature_conf.NxpFeatureConfigEvt.wait(); /* wait for callback */
         }
         else
         {
-            ALOGE("%s: Failed NFA_SendRawVsCommand", __func__);
+            LOG(ERROR) << StringPrintf("%s: Failed NFA_SendRawVsCommand", __func__);
         }
     }
     status = GetCbStatus();
 
-    ALOGV("%s: exit", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
     return status;
 }
 
@@ -826,7 +826,7 @@ tNFA_STATUS enableSWPInterface()
             0xA0, 0xD4, 0x01, 0x00 };
     uint8_t cmd_buf[] = { 0x20, 0x02, 0x05, 0x01,
             0xA0, 0xEC, 0x01, 0x00 };
-    ALOGV("%s: enter", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
 
     status = NxpNfc_Write_Cmd(sizeof(get_eeprom_data), get_eeprom_data, NxpResponse_Cb);
     if((status == NFA_STATUS_OK) && (gnxpfeature_conf.rsp_len > 8))
@@ -849,7 +849,7 @@ tNFA_STATUS enableSWPInterface()
         if(((!nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH) && (cmd_buf[7] == 0x00)) ||
                 ((nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH) &&
                 (dual_uicc_cmd_buf[7] == 0x00 && dual_uicc_cmd_buf[11] == 0x00))) {
-            ALOGV("%s: No mismatch in UICC SWP and configuration set", __func__);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: No mismatch in UICC SWP and configuration set", __func__);
             status = NFA_STATUS_FAILED;
         }
         else
@@ -867,23 +867,23 @@ tNFA_STATUS enableSWPInterface()
 
                 if (status == NFA_STATUS_OK)
                 {
-                    ALOGV("%s: Success NFA_SendRawVsCommand", __func__);
+                    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Success NFA_SendRawVsCommand", __func__);
                     gnxpfeature_conf.NxpFeatureConfigEvt.wait(); /* wait for callback */
                 }
                 else
                 {
-                    ALOGE("%s: Failed NFA_SendRawVsCommand", __func__);
+                    LOG(ERROR) << StringPrintf("%s: Failed NFA_SendRawVsCommand", __func__);
                 }
             }
             status = GetCbStatus();
             if (NFA_STATUS_OK == status)
             {
-                ALOGV("%s: GetCbStatus():%d", __func__, status);
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: GetCbStatus():%d", __func__, status);
             }
         }
     }
 
-    ALOGV("%s: exit", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
     return status;
 }
 
@@ -903,12 +903,12 @@ tNFA_STATUS SetUICC_SWPBitRate(bool isMifareSupported)
 
     if(isMifareSupported)
     {
-        ALOGV("Setting the SWP_BITRATE_INT1 to 0x06 (1250 kb/s)");
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Setting the SWP_BITRATE_INT1 to 0x06 (1250 kb/s)");
         cmd_buf[7] = 0x06;
     }
     else
     {
-        ALOGV("Setting the SWP_BITRATE_INT1 to 0x04 (910 kb/s)");
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Setting the SWP_BITRATE_INT1 to 0x04 (910 kb/s)");
         cmd_buf[7] = 0x04;
     }
 
@@ -917,12 +917,12 @@ tNFA_STATUS SetUICC_SWPBitRate(bool isMifareSupported)
     status = NFA_SendRawVsCommand(sizeof(cmd_buf), cmd_buf, NxpResponse_SetSWPBitRate_Cb);
     if (status == NFA_STATUS_OK)
     {
-        ALOGV("%s: Success NFA_SendRawVsCommand", __func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Success NFA_SendRawVsCommand", __func__);
         gnxpfeature_conf.NxpFeatureConfigEvt.wait(); /* wait for callback */
     }
     else
     {
-         ALOGE("%s: Failed NFA_SendRawVsCommand", __func__);
+         LOG(ERROR) << StringPrintf("%s: Failed NFA_SendRawVsCommand", __func__);
     }
     status = GetCbStatus();
     return status;
@@ -944,12 +944,12 @@ tNFA_STATUS NxpNfc_Write_Cmd(uint8_t retlen, uint8_t* buffer, tNXP_RSP_CBACK* p_
     status = NFA_SendRawVsCommand(retlen, buffer, p_cback);
     if (status == NFA_STATUS_OK)
     {
-        ALOGV("%s: Success NFA_SendRawVsCommand", __func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Success NFA_SendRawVsCommand", __func__);
         gnxpfeature_conf.NxpFeatureConfigEvt.wait(); /* wait for callback */
     }
     else
     {
-         ALOGE("%s: Failed NFA_SendRawVsCommand", __func__);
+         LOG(ERROR) << StringPrintf("%s: Failed NFA_SendRawVsCommand", __func__);
     }
     status = GetCbStatus();
     return status;
@@ -980,17 +980,17 @@ long stop_timer_getdifference_msec(struct timeval  *start_tv, struct timeval  *s
 tNFA_STATUS Set_EERegisterValue(uint16_t RegAddr, uint8_t bitVal)
 {
     if(!nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH) {
-        ALOGV("%s STAT_DUAL_UICC_EXT_SWITCH not available. Returning",__func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s STAT_DUAL_UICC_EXT_SWITCH not available. Returning",__func__);
         return NFC_STATUS_FAILED;
     }
     tNFA_STATUS status = NFC_STATUS_FAILED;
     uint8_t swp1conf[] = {0x20,0x02,0x05,0x01,0x00,0x00,0x01,0x00};
-    ALOGV("Enter: Prepare SWP1 configurations");
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Enter: Prepare SWP1 configurations");
     swp1conf[4] = (uint8_t)((RegAddr & 0xFF00)>>8);
     swp1conf[5] = (uint8_t)(RegAddr & 0x00FF);
     swp1conf[7] = (uint8_t)(0xFF & bitVal);
     //swp1conf[7] = 0x01;
-    ALOGV("Exit: Prepare SWP1 configurations");
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Exit: Prepare SWP1 configurations");
 
     SetCbStatus(NFA_STATUS_FAILED);
     SyncEventGuard guard (gnxpfeature_conf.NxpFeatureConfigEvt);
@@ -998,13 +998,13 @@ tNFA_STATUS Set_EERegisterValue(uint16_t RegAddr, uint8_t bitVal)
     status = NFA_SendRawVsCommand(sizeof(swp1conf), swp1conf, NxpResponse_SwitchUICC_Cb);
     if (status == NFA_STATUS_OK)
     {
-        ALOGV("%s: Success NFA_SendRawVsCommand", __func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Success NFA_SendRawVsCommand", __func__);
         gnxpfeature_conf.NxpFeatureConfigEvt.wait(); /* wait for callback */
         status = NFA_STATUS_FAILED;
     }
     else
     {
-         ALOGE("%s: Failed NFA_SendRawVsCommand", __func__);
+         LOG(ERROR) << StringPrintf("%s: Failed NFA_SendRawVsCommand", __func__);
     }
     status = GetCbStatus();
     return status;
@@ -1028,12 +1028,12 @@ tNFA_STATUS NxpNfc_Write_Cmd_Common(uint8_t retlen, uint8_t* buffer)
     status = NFA_SendRawVsCommand(retlen, buffer, NxpResponse_Cb);
     if (status == NFA_STATUS_OK)
     {
-        ALOGV("%s: Success NFA_SendRawVsCommand", __func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Success NFA_SendRawVsCommand", __func__);
         gnxpfeature_conf.NxpFeatureConfigEvt.wait(); /* wait for callback */
     }
     else
     {
-         ALOGE("%s: Failed NFA_SendRawVsCommand", __func__);
+         LOG(ERROR) << StringPrintf("%s: Failed NFA_SendRawVsCommand", __func__);
     }
     status = GetCbStatus();
     return status;
@@ -1087,10 +1087,10 @@ tNFA_STATUS NxpNfcUpdateEeprom(uint8_t* param, uint8_t len, uint8_t* val)
   cmdBuf = (uint8_t*)malloc(setCfgCmdLen);
   if(cmdBuf == NULL)
   {
-      ALOGE("memory allocation failed");
+      LOG(ERROR) << StringPrintf("memory allocation failed");
       return status;
   }
-  ALOGV("setCfgCmdLen=%u", setCfgCmdLen);
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("setCfgCmdLen=%u", setCfgCmdLen);
   memset(cmdBuf, 0, setCfgCmdLen);
   memcpy(cmdBuf, setCfgCmdHdr, sizeof(setCfgCmdHdr));
   memcpy(cmdBuf+sizeof(setCfgCmdHdr), val, len);
@@ -1099,10 +1099,10 @@ tNFA_STATUS NxpNfcUpdateEeprom(uint8_t* param, uint8_t len, uint8_t* val)
   SyncEventGuard guard (gnxpfeature_conf.NxpFeatureConfigEvt);
   status = NFA_SendRawVsCommand(setCfgCmdLen, cmdBuf, NxpResponse_Cb);
   if (status == NFA_STATUS_OK) {
-    ALOGV ("Success NFA_SendRawVsCommand");
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Success NFA_SendRawVsCommand");
     gnxpfeature_conf.NxpFeatureConfigEvt.wait(2*ONE_SECOND_MS); /* wait for callback */
   } else {
-      ALOGE ("Failed NFA_SendRawVsCommand");
+      LOG(ERROR) << StringPrintf("Failed NFA_SendRawVsCommand");
   }
 
   if(cmdBuf)

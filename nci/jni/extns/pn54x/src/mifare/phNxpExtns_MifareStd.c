@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define LOG_TAG "pn54x"
-
-#include <log/log.h>
+#include <base/logging.h>
+#include <android-base/stringprintf.h>
 
 #include <nfc_api.h>
 #include <rw_api.h>
@@ -25,6 +24,8 @@
 #include <phNxpExtns_MifareStd.h>
 #include <nfc_int.h>
 #include <phFriNfc_MifareStdTimer.h>
+
+using android::base::StringPrintf;
 
 phNxpExtns_Context_t       gphNxpExtns_Context;
 phNciNfc_TransceiveInfo_t  tNciTranscvInfo;
@@ -303,7 +304,7 @@ clean_and_return:
 #endif
     if(status != NFCSTATUS_SUCCESS)
     {
-        NXPLOG_EXTNS_E("CRIT: Memory Allocation failed for MFC!");
+         LOG(ERROR) << StringPrintf("CRIT: Memory Allocation failed for MFC!");
         phNxpExtns_MfcModuleDeInit();
     }
     return status;
@@ -379,7 +380,7 @@ STATIC void Mfc_CheckNdef_Completion_Routine(void *NdefCtxt, NFCSTATUS status)
     timer_status = phFriNfc_MifareStd_StopTimer(&mTimerInfo);
     if(timer_status != NFCSTATUS_SUCCESS)
     {
-        NXPLOG_EXTNS_E("Failed to stop timer");
+         LOG(ERROR) << StringPrintf("Failed to stop timer");
     }
 
     if(NFCSTATUS_SUCCESS == status)
@@ -395,7 +396,7 @@ STATIC void Mfc_CheckNdef_Completion_Routine(void *NdefCtxt, NFCSTATUS status)
         NdefInfo.NdefActualSize = conn_evt_data.ndef_detect.cur_size;
         if ( PH_NDEFMAP_CARD_STATE_READ_ONLY == NdefMap->CardState )
         {
-            NXPLOG_EXTNS_D("Mfc_CheckNdef_Completion_Routine : READ_ONLY_CARD");
+            DLOG_IF(INFO, gLog_level.extns_log_level >= NXPLOG_LOG_DEBUG_LOGLEVEL) << StringPrintf("Mfc_CheckNdef_Completion_Routine : READ_ONLY_CARD");
             conn_evt_data.ndef_detect.flags = RW_NDEF_FL_READ_ONLY;
         }
         else
@@ -600,7 +601,7 @@ STATIC void Mfc_SetRdOnly_Completion_Routine(void *NdefCtxt, NFCSTATUS status)
 {
     (void)NdefCtxt;
     tNFA_CONN_EVT_DATA conn_evt_data;
-    ALOGE("%s status = 0x%x", __func__, status);
+    LOG(ERROR) << StringPrintf("%s status = 0x%x", __func__, status);
     conn_evt_data.status = status;
     (*gphNxpExtns_Context.p_conn_cback) (NFA_SET_TAG_RO_EVT, &conn_evt_data);
 
@@ -621,7 +622,7 @@ STATIC void Mfc_SetRdOnly_Completion_Routine(void *NdefCtxt, NFCSTATUS status)
 *******************************************************************************/
 NFCSTATUS Mfc_SetReadOnly(uint8_t *secrtkey, uint8_t len)
 {
-    NXPLOG_EXTNS_D("%s Entering ", __func__);
+    DLOG_IF(INFO, gLog_level.extns_log_level >= NXPLOG_LOG_DEBUG_LOGLEVEL) << StringPrintf("%s Entering ", __func__);
     NFCSTATUS status = NFCSTATUS_FAILED;
     uint8_t mif_secrete_key[6] = {0};
     uint8_t id = 0;
@@ -631,8 +632,8 @@ NFCSTATUS Mfc_SetReadOnly(uint8_t *secrtkey, uint8_t len)
     gphNxpExtns_Context.CallBackCtxt   = NdefMap;
     for (id = 0; id < len; id++)
     {
-        ALOGV("secrtkey[%d] = 0x%x", id, secrtkey[id]);
-        ALOGV("mif_secrete_key[%d] = 0x%x", id, mif_secrete_key[id]);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("secrtkey[%d] = 0x%x", id, secrtkey[id]);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("mif_secrete_key[%d] = 0x%x", id, mif_secrete_key[id]);
     }
     /* Set Completion Routine for ReadNdef */
     NdefMap->CompletionRoutine[0].CompletionRoutine = Mfc_SetRdOnly_Completion_Routine;
@@ -795,7 +796,7 @@ NFCSTATUS Mfc_PresenceCheck(void)
     {
         status = NFCSTATUS_NOT_ALLOWED;
     }
-    NXPLOG_EXTNS_D("%s status = 0x%x", __func__, status);
+    DLOG_IF(INFO, gLog_level.extns_log_level >= NXPLOG_LOG_DEBUG_LOGLEVEL) << StringPrintf("%s status = 0x%x", __func__, status);
     return status;
 }
 /*******************************************************************************
@@ -818,7 +819,7 @@ NFCSTATUS Mfc_WriteNdef(uint8_t *p_data, uint32_t len)
 
     if( p_data == NULL || len == 0 )
     {
-        NXPLOG_EXTNS_E("MFC Error: Invalid Parameters to Ndef Write");
+         LOG(ERROR) << StringPrintf("MFC Error: Invalid Parameters to Ndef Write");
         status = NFCSTATUS_FAILED;
         goto Mfc_WrNdefEnd;
     }
@@ -1027,7 +1028,7 @@ NFCSTATUS phNxNciExtns_MifareStd_Reconnect(void)
     EXTNS_SetDeactivateFlag(true);
     if (NFA_STATUS_OK != (status = NFA_Deactivate (true))) /* deactivate to sleep state */
     {
-        NXPLOG_EXTNS_E ("%s: deactivate failed, status = %d", __func__, status);
+        LOG(ERROR) << StringPrintf("%s: deactivate failed, status = %d", __func__, status);
         return NFCSTATUS_FAILED;
     }
 
@@ -1053,7 +1054,7 @@ void Mfc_DeactivateCbackSelect(void)
     if (NFA_STATUS_OK != (status = NFA_Select (0x01, phNciNfc_e_RfProtocolsMifCProtocol,
                                                      phNciNfc_e_RfInterfacesTagCmd_RF)))
     {
-        NXPLOG_EXTNS_E ("%s: NFA_Select failed, status = %d", __func__, status);
+        LOG(ERROR) << StringPrintf("%s: NFA_Select failed, status = %d", __func__, status);
     }
 
     return;
@@ -1185,7 +1186,7 @@ NFCSTATUS Mfc_Transceive(uint8_t *p_data, uint32_t len)
     }
     else
     {
-        NXPLOG_EXTNS_E("ERROR: Mfc_Transceive = 0x%x", status);
+         LOG(ERROR) << StringPrintf("ERROR: Mfc_Transceive = 0x%x", status);
     }
 
     return status;
@@ -1208,7 +1209,7 @@ STATIC NFCSTATUS nativeNfcExtns_doTransceive(uint8_t *buff, uint16_t buffSz)
 
     if (status != NFA_STATUS_OK)
     {
-        NXPLOG_EXTNS_E ("%s: fail send; error=%d", __func__, status);
+        LOG(ERROR) << StringPrintf("%s: fail send; error=%d", __func__, status);
         wStatus = NFCSTATUS_FAILED;
     }
 
@@ -1455,7 +1456,7 @@ NFCSTATUS Mfc_RecvPacket(uint8_t *buff, uint8_t buffSz)
     status = phNciNfc_RecvMfResp(&RspBuff, status);
     if (true == gAuthCmdBuf.auth_sent)
     {
-        ALOGV("%s Mfc Check Presence in progress", __func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s Mfc Check Presence in progress", __func__);
         gAuthCmdBuf.auth_sent = false;
         return status;
     }
@@ -1472,7 +1473,7 @@ NFCSTATUS Mfc_RecvPacket(uint8_t *buff, uint8_t buffSz)
         status = phNciNfc_SendMfReq(tNciTranscvInfo, pcmd_buff, &buffSize);
         if ( NFCSTATUS_PENDING != status )
         {
-            NXPLOG_EXTNS_E("ERROR : Mfc_RecvPacket: 0x%x", status);
+             LOG(ERROR) << StringPrintf("ERROR : Mfc_RecvPacket: 0x%x", status);
         }
         else
         {
@@ -1497,7 +1498,7 @@ NFCSTATUS Mfc_RecvPacket(uint8_t *buff, uint8_t buffSz)
         status = phNciNfc_SendMfReq(tNciTranscvInfo, pcmd_buff, &buffSize);
         if ( NFCSTATUS_PENDING != status )
         {
-            NXPLOG_EXTNS_E("ERROR : Mfc_RecvPacket: 0x%x", status);
+             LOG(ERROR) << StringPrintf("ERROR : Mfc_RecvPacket: 0x%x", status);
         }
         else
         {
@@ -1733,18 +1734,18 @@ STATIC NFCSTATUS phLibNfc_GetKeyNumberMFC(uint8_t *buffer,uint8_t *bKey)
                                   aMfc_keys[bIndex], PHLIBNFC_MFC_AUTHKEYLEN);
            if(!sdwStat)
            {
-               NXPLOG_EXTNS_E("Mifare : phLibNfc_GetKeyNumberMFC Key found");
+                LOG(ERROR) << StringPrintf("Mifare : phLibNfc_GetKeyNumberMFC Key found");
                *bKey = bIndex;
                wStatus = NFCSTATUS_SUCCESS;
                break;
            }
         }
-       NXPLOG_EXTNS_E("Mifare : phLibNfc_GetKeyNumberMFC returning = 0x%x Key = 0x%x", wStatus, *bKey);
+        LOG(ERROR) << StringPrintf("Mifare : phLibNfc_GetKeyNumberMFC returning = 0x%x Key = 0x%x", wStatus, *bKey);
     }
     else
     {
         wStatus = NFCSTATUS_FAILED;
-        NXPLOG_EXTNS_E("Mifare : phLibNfc_GetKeyNumberMFC returning = 0x%x", wStatus);
+         LOG(ERROR) << StringPrintf("Mifare : phLibNfc_GetKeyNumberMFC returning = 0x%x", wStatus);
     }
 
     return wStatus;
@@ -2174,12 +2175,12 @@ NFCSTATUS phFriNfc_ExtnsTransceive(phNfc_sTransceiveInfo_t *pTransceiveInfo,
         status = phNciNfc_SendMfReq(tNciTranscvInfo, buff, &buffSz);
         if (NFCSTATUS_PENDING != status)
         {
-            NXPLOG_EXTNS_E("ERROR : phNciNfc_SendMfReq()");
+             LOG(ERROR) << StringPrintf("ERROR : phNciNfc_SendMfReq()");
         }
     }
     else
     {
-        NXPLOG_EXTNS_E (" ERROR : Sending phNciNfc_SendMfReq");
+        LOG(ERROR) << StringPrintf(" ERROR : Sending phNciNfc_SendMfReq");
     }
     if( buff != NULL )
     {
@@ -2201,7 +2202,7 @@ NFCSTATUS phFriNfc_ExtnsTransceive(phNfc_sTransceiveInfo_t *pTransceiveInfo,
 *******************************************************************************/
 STATIC void Mfc_CheckNdef_timeoutcb_Routine(union sigval value)
 {
-    NXPLOG_EXTNS_E(" Inside Mfc_CheckNdef_timeoutcb_Routine() ");
+     LOG(ERROR) << StringPrintf(" Inside Mfc_CheckNdef_timeoutcb_Routine() ");
     tNFA_CONN_EVT_DATA conn_evt_data;
     /* NDEF Detection failed for other reasons */
     conn_evt_data.ndef_detect.status = NFCSTATUS_FAILED;

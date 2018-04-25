@@ -35,7 +35,6 @@ typedef struct nci_log_level
 extern nci_log_level_t gLog_level;
 
 /* define log module included when compile */
-#define ENABLE_EXTNS_TRACES   true
 #define ENABLE_HAL_TRACES     true
 #define ENABLE_TML_TRACES     true
 #define ENABLE_FWDNLD_TRACES  true
@@ -100,16 +99,6 @@ extern const char * NXPLOG_ITEM_HCPR;    /* Android logging tag for NxpHcpR   */
 /* ################################################################################################################ */
 /* ######################################## Logging APIs of actual modules ######################################## */
 /* ################################################################################################################ */
-/* Logging APIs used by NxpExtns module */
-#if (ENABLE_EXTNS_TRACES == true )
-#define NXPLOG_EXTNS_D(...)  {if (gLog_level.extns_log_level >= NXPLOG_LOG_DEBUG_LOGLEVEL) LOG_PRI (ANDROID_LOG_DEBUG, NXPLOG_ITEM_EXTNS, __VA_ARGS__);}
-#define NXPLOG_EXTNS_W(...)  {if (gLog_level.extns_log_level >= NXPLOG_LOG_WARN_LOGLEVEL) LOG_PRI (ANDROID_LOG_WARN, NXPLOG_ITEM_EXTNS, __VA_ARGS__);}
-#define NXPLOG_EXTNS_E(...)  {if (gLog_level.extns_log_level >= NXPLOG_LOG_ERROR_LOGLEVEL) LOG_PRI (ANDROID_LOG_ERROR, NXPLOG_ITEM_EXTNS, __VA_ARGS__);}
-#else
-#define NXPLOG_EXTNS_D(...)
-#define NXPLOG_EXTNS_W(...)
-#define NXPLOG_EXTNS_E(...)
-#endif /* Logging APIs used by NxpExtns module */
 
 /* Logging APIs used by NxpNciHal module */
 #if (ENABLE_HAL_TRACES == true )
@@ -191,13 +180,6 @@ extern const char * NXPLOG_ITEM_HCPR;    /* Android logging tag for NxpHcpR   */
 #endif /* NXP_HCI_REQ */
 
 #ifdef NXP_VRBS_REQ
-#if (ENABLE_EXTNS_TRACES == true )
-#define NXPLOG_EXTNS_ENTRY() NXPLOG_FUNC_ENTRY (NXPLOG_ITEM_EXTNS)
-#define NXPLOG_EXTNS_EXIT()  NXPLOG_FUNC_EXIT (NXPLOG_ITEM_EXTNS)
-#else
-#define NXPLOG_EXTNS_ENTRY()
-#define NXPLOG_EXTNS_EXIT()
-#endif
 
 #if (ENABLE_HAL_TRACES == true )
 #define NXPLOG_NCIHAL_ENTRY() NXPLOG_FUNC_ENTRY (NXPLOG_ITEM_NCIHAL)

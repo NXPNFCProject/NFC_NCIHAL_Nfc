@@ -20,6 +20,7 @@
 #include "PeerToPeer.h"
 #include "JavaClassConstants.h"
 
+#include <base/logging.h>
 #include <nativehelper/JNIHelp.h>
 
 extern "C"
@@ -56,7 +57,7 @@ static jobject nativeLlcpServiceSocket_doAccept(JNIEnv *e, jobject o, jint miu, 
     bool        stat = false;
     PeerToPeer::tJNI_HANDLE connHandle = PeerToPeer::getInstance().getNewJniHandle ();
 
-    ALOGV("%s: enter", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
 
     serverHandle = (PeerToPeer::tJNI_HANDLE) nfc_jni_get_nfc_socket_handle (e, o);
 
@@ -64,14 +65,14 @@ static jobject nativeLlcpServiceSocket_doAccept(JNIEnv *e, jobject o, jint miu, 
 
     if (! stat)
     {
-        ALOGE("%s: fail accept", __func__);
+        LOG(ERROR) << StringPrintf("%s: fail accept", __func__);
         goto TheEnd;
     }
 
     /* Create new LlcpSocket object */
     if (nfc_jni_cache_object_local(e, gNativeLlcpSocketClassName, &(clientSocket)) == -1)
     {
-        ALOGE("%s: fail create NativeLlcpSocket", __func__);
+        LOG(ERROR) << StringPrintf("%s: fail create NativeLlcpSocket", __func__);
         goto TheEnd;
     }
 
@@ -80,7 +81,7 @@ static jobject nativeLlcpServiceSocket_doAccept(JNIEnv *e, jobject o, jint miu, 
     if (e->ExceptionCheck())
     {
         e->ExceptionClear();
-        ALOGE("%s: get class object error", __func__);
+        LOG(ERROR) << StringPrintf("%s: get class object error", __func__);
         goto TheEnd;
     }
 
@@ -97,7 +98,7 @@ static jobject nativeLlcpServiceSocket_doAccept(JNIEnv *e, jobject o, jint miu, 
     e->SetIntField (clientSocket, f, (jint)rw);
 
 TheEnd:
-    ALOGV("%s: exit", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
     return clientSocket;
 }
 
@@ -115,7 +116,7 @@ TheEnd:
 *******************************************************************************/
 static jboolean nativeLlcpServiceSocket_doClose(JNIEnv *e, jobject o)
 {
-    ALOGV("%s: enter", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
     PeerToPeer::tJNI_HANDLE jniServerHandle = 0;
     bool stat = false;
 
@@ -123,7 +124,7 @@ static jboolean nativeLlcpServiceSocket_doClose(JNIEnv *e, jobject o)
 
     stat = PeerToPeer::getInstance().deregisterServer (jniServerHandle);
 
-    ALOGV("%s: exit", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
     return JNI_TRUE;
 }
 

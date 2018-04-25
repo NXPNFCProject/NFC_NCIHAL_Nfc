@@ -41,7 +41,6 @@
 #include <ScopedPrimitiveArray.h>
 #include "phNxpConfig.h"
 
-#define ALOGV ALOGD
 extern bool hold_the_transceive;
 extern int dual_mode_current_state;
 extern bool ceTransactionPending;
@@ -83,7 +82,7 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection (JNIEnv*, jobje
 static jint nativeNfcSecureElement_doOpenSecureElementConnection (JNIEnv*, jobject)
 #endif
 {
-    ALOGV("%s: enter", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
     bool stat = false;
     jint secElemHandle = EE_ERROR_INIT;
     long ret_val = -1;
@@ -109,18 +108,18 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection (JNIEnv*, jobje
             stat = se.checkForWiredModeAccess();
             if(stat == false)
             {
-                ALOGV("Denying SE open due to SE listen mode active");
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Denying SE open due to SE listen mode active");
                 secElemHandle = EE_ERROR_LISTEN_MODE;
                 goto TheEnd;
             }
 
-            ALOGV("%s: Activating UICC Wired Mode=0x%X", __func__, seId);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Activating UICC Wired Mode=0x%X", __func__, seId);
             stat = se.activate(seId);
-            ALOGV("%s: Check UICC activation status stat=%X", __func__, stat);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Check UICC activation status stat=%X", __func__, stat);
             if (stat)
             {
                 //establish a pipe to UICC
-                ALOGV("%s: Creatting a pipe to UICC!", __func__);
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Creatting a pipe to UICC!", __func__);
                 stat = se.connectEE();
                 if (stat)
                 {
@@ -182,7 +181,7 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection (JNIEnv*, jobje
                 stat = se.checkForWiredModeAccess();
                 if(stat == false)
                 {
-                    ALOGV("Denying SE open due to SE listen mode active");
+                    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Denying SE open due to SE listen mode active");
                     secElemHandle = EE_ERROR_LISTEN_MODE;
                     goto TheEnd;
                 }
@@ -190,13 +189,13 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection (JNIEnv*, jobje
             else
             {
                 if (se.isActivatedInListenMode()) {
-                    ALOGV("Denying SE open due to SE listen mode active");
+                    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Denying SE open due to SE listen mode active");
                     secElemHandle = EE_ERROR_LISTEN_MODE;
                     goto TheEnd;
                 }
 
                 if (se.isRfFieldOn()) {
-                    ALOGV("Denying SE open due to SE in active RF field");
+                    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Denying SE open due to SE in active RF field");
                     secElemHandle = EE_ERROR_EXT_FIELD;
                     goto TheEnd;
                 }
@@ -205,14 +204,14 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection (JNIEnv*, jobje
             ret_val = NFC_GetP61Status ((void *)&p61_current_state);
             if (ret_val < 0)
             {
-                ALOGV("NFC_GetP61Status failed");
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("NFC_GetP61Status failed");
                 goto TheEnd;
             }
-            ALOGV("P61 Status is: %x", p61_current_state);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("P61 Status is: %x", p61_current_state);
 
             if(nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION &&
                     (p61_current_state & P61_STATE_JCP_DWNLD))
-                ALOGV("Denying SE open due to JCOP OS Download is in progress");
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Denying SE open due to JCOP OS Download is in progress");
             secElemHandle = EE_ERROR_IO;
             goto TheEnd;
         }
@@ -233,14 +232,14 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection (JNIEnv*, jobje
         secElemHandle = NFC_ReqWiredAccess ((void *)&status);
         if (secElemHandle < 0)
         {
-            ALOGV("Denying SE open due to NFC_ReqWiredAccess failed");
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Denying SE open due to NFC_ReqWiredAccess failed");
             goto TheEnd;
         }
         else
         {
             if (status != NFCSTATUS_SUCCESS)
             {
-                ALOGV("Denying SE open due to SE is being used by SPI");
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Denying SE open due to SE is being used by SPI");
                 secElemHandle = EE_ERROR_IO;
                 goto TheEnd;
             }
@@ -268,7 +267,7 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection (JNIEnv*, jobje
     }
     else
     {
-        ALOGV("Denying SE open because SPI is already open");
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Denying SE open because SPI is already open");
         goto TheEnd;
 
     }
@@ -318,7 +317,7 @@ if(nfcFL.nfcNxpEse && stat)
         status = se.setNfccPwrConfig(se.POWER_ALWAYS_ON|se.COMM_LINK_ACTIVE);
         if(status != NFA_STATUS_OK)
         {
-            ALOGV("%s: power link command failed", __func__);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: power link command failed", __func__);
         }
         else
         {
@@ -330,14 +329,14 @@ if(nfcFL.nfcNxpEse && stat)
     if((status == NFA_STATUS_OK) && (se.mIsIntfRstEnabled))
     {
         gateInfo = se.getApduGateInfo();
-        ALOGV("%s: GateInfo %d", __func__, gateInfo);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: GateInfo %d", __func__, gateInfo);
         if(gateInfo == ETSI_12_APDU_GATE)
         {
             se.NfccStandByOperation(STANDBY_TIMER_STOP);
             status = se.SecElem_sendEvt_Abort();
             if(status != NFA_STATUS_OK)
             {
-                ALOGV("%s: EVT_ABORT failed", __func__);
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: EVT_ABORT failed", __func__);
                 se.sendEvent(SecureElement::EVT_END_OF_APDU_TRANSFER);
             }
         }
@@ -360,9 +359,9 @@ if(nfcFL.nfcNxpEse && stat)
 
         ret_val = NFC_RelWiredAccess((void*)&status);
         if(ret_val < 0)
-            ALOGV("Denying SE release due to NFC_RelWiredAccess failure");
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Denying SE release due to NFC_RelWiredAccess failure");
         else if(status != NFCSTATUS_SUCCESS)
-            ALOGV("Denying SE close, since SE is not released by PN54xx driver");
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Denying SE close, since SE is not released by PN54xx driver");
     }
     else
     {
@@ -382,7 +381,7 @@ if ((!stat) && (! PowerSwitch::getInstance ().setModeOff (PowerSwitch::SE_CONNEC
 #endif
 
 TheEnd:
-ALOGV("%s: exit; return handle=0x%X", __func__, secElemHandle);
+DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit; return handle=0x%X", __func__, secElemHandle);
 return secElemHandle;
 }
 
@@ -401,7 +400,7 @@ return secElemHandle;
 *******************************************************************************/
 static jboolean nativeNfcSecureElement_doDisconnectSecureElementConnection (JNIEnv*, jobject, jint handle)
 {
-    ALOGV("%s: enter; handle=0x%04x", __func__, handle);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter; handle=0x%04x", __func__, handle);
     bool stat = false;
 #if(NXP_EXTNS == TRUE)
     long ret_val = -1;
@@ -460,14 +459,14 @@ static jboolean nativeNfcSecureElement_doDisconnectSecureElementConnection (JNIE
         ret_val = NFC_RelWiredAccess ((void *)&status);
         if (ret_val < 0)
         {
-            ALOGV("Denying SE Release due to NFC_RelWiredAccess failed");
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Denying SE Release due to NFC_RelWiredAccess failed");
             goto TheEnd;
         }
         else
         {
             if (status != NFCSTATUS_SUCCESS)
             {
-                ALOGV("Denying SE close due to SE is not being released by Pn54x driver");
+                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Denying SE close due to SE is not being released by Pn54x driver");
                 stat = false;
             }
             if(nfcFL.eseFL._NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION) {
@@ -497,13 +496,13 @@ static jboolean nativeNfcSecureElement_doDisconnectSecureElementConnection (JNIE
 TheEnd:
 #if(NXP_EXTNS == TRUE)
 if(nfcFL.nfcNxpEse) {
-    ALOGV("%s: exit stat = %d", __func__, stat);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit stat = %d", __func__, stat);
 }
 else {
-    ALOGV("%s: exit", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
 }
 #else
-    ALOGV("%s: exit", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
 #endif
 
     return stat ? JNI_TRUE : JNI_FALSE;
@@ -512,7 +511,7 @@ else {
 static int checkP61Status(void)
 {
     if(!nfcFL.nfcNxpEse) {
-        ALOGV("%s : nfcNxpEse not available. Returning", __func__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s : nfcNxpEse not available. Returning", __func__);
         return -1;
     }
     jint ret_val = -1;
@@ -520,12 +519,12 @@ static int checkP61Status(void)
     ret_val = NFC_GetP61Status ((void *)&p61_current_state);
     if (ret_val < 0)
     {
-        ALOGV("NFC_GetP61Status failed");
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("NFC_GetP61Status failed");
         return -1;
     }
     if(p61_current_state & (P61_STATE_SPI)||(p61_current_state & (P61_STATE_SPI_PRIO)))
     {
-        ALOGV("No gpio change");
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("No gpio change");
         ret_val = 0;
     }
     else
@@ -554,20 +553,20 @@ static jboolean nativeNfcSecureElement_doResetSecureElement (JNIEnv*, jobject, j
         tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
         SecureElement &se = SecureElement::getInstance();
 
-        ALOGV("%s: enter; handle=0x%04x", __func__, handle);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter; handle=0x%04x", __func__, handle);
         if(!se.mIsWiredModeOpen)
         {
-            ALOGV("wired mode is not open");
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("wired mode is not open");
             return stat;
         }
         if(nfcFL.eseFL._ESE_DWP_SPI_SYNC_ENABLE && nfcFL.eseFL._WIRED_MODE_STANDBY && !checkP61Status()) {
-            ALOGV("Reset is not allowed while SPI ON");
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Reset is not allowed while SPI ON");
             return stat;
         }
         if(nfcFL.eseFL._WIRED_MODE_STANDBY && (se.mNfccPowerMode == 1))
         {
             nfaStat = se.setNfccPwrConfig(se.NFCC_DECIDES);
-            ALOGV("%s Power Mode is Legacy", __func__);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s Power Mode is Legacy", __func__);
         }
         {
             stat = se.SecEle_Modeset(0x00);
@@ -585,12 +584,12 @@ static jboolean nativeNfcSecureElement_doResetSecureElement (JNIEnv*, jobject, j
 
             if(nfcFL.eseFL._WIRED_MODE_STANDBY && (se.mNfccPowerMode == 1))
                 stat = se.setNfccPwrConfig(se.POWER_ALWAYS_ON |se.COMM_LINK_ACTIVE);
-            ALOGV("%s Power Mode is Legacy", __func__);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s Power Mode is Legacy", __func__);
         }
         usleep(2000 * 1000);
         stat = se.SecEle_Modeset(0x01);
     }
-ALOGV("%s: exit", __func__);
+DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
 return stat ? JNI_TRUE : JNI_FALSE;
 }
 
@@ -616,7 +615,7 @@ static jboolean nativeNfcSecureElement_doeSEChipResetSecureElement (JNIEnv*, job
     if(nfcFL.nfcNxpEse) {
         if (GetNxpNumValue("NXP_ESE_POWER_DH_CONTROL", &num, sizeof(num)))
         {
-            ALOGV("Power schemes enabled in config file is %ld", num);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Power schemes enabled in config file is %ld", num);
         }
         if(num == 0x02)
         {
@@ -651,7 +650,7 @@ static jbyteArray nativeNfcSecureElement_doGetAtr (JNIEnv* e, jobject, jint hand
     uint8_t recvBuffer [recvBufferMaxSize];
     int32_t recvBufferActualSize = 0;
     if(nfcFL.nfcNxpEse) {
-        ALOGV("%s: enter; handle=0x%04x", __func__, handle);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter; handle=0x%04x", __func__, handle);
 
         stat = SecureElement::getInstance().getAtr(handle, recvBuffer, &recvBufferActualSize);
 
@@ -662,7 +661,7 @@ static jbyteArray nativeNfcSecureElement_doGetAtr (JNIEnv* e, jobject, jint hand
         e->SetByteArrayRegion(result, 0, recvBufferActualSize, (jbyte *) recvBuffer);
     }
 
-    ALOGV("%s: exit: recv len=%d", __func__, recvBufferActualSize);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit: recv len=%d", __func__, recvBufferActualSize);
 
     return result;
 }
@@ -689,11 +688,11 @@ static jbyteArray nativeNfcSecureElement_doTransceive (JNIEnv* e, jobject, jint 
 
     ScopedByteArrayRW bytes(e, data);
 #if(NXP_EXTNS == TRUE)
-    ALOGV("%s: enter; handle=0x%X; buf len=%zu", __func__, handle, bytes.size());
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter; handle=0x%X; buf len=%zu", __func__, handle, bytes.size());
     tranStatus = SecureElement::getInstance().transceive(reinterpret_cast<uint8_t*>(&bytes[0]), bytes.size(), recvBuffer, recvBufferMaxSize, recvBufferActualSize, WIRED_MODE_TRANSCEIVE_TIMEOUT);
     if(tranStatus == TRANSCEIVE_STATUS_MAX_WTX_REACHED)
     {
-        ALOGE ("%s: Wired Mode Max WTX count reached", __FUNCTION__);
+        LOG(ERROR) << StringPrintf("%s: Wired Mode Max WTX count reached", __FUNCTION__);
         jbyteArray result = e->NewByteArray(0);
         nativeNfcSecureElement_doResetSecureElement(e,NULL,handle);
         return result;
@@ -708,10 +707,10 @@ static jbyteArray nativeNfcSecureElement_doTransceive (JNIEnv* e, jobject, jint 
     if (nfcFL.nfcNxpEse && nfcFL.eseFL._NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION &&
             (SecureElement::getInstance().mIsWiredModeBlocked == true))
     {
-        ALOGV("APDU Transceive CE wait");
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("APDU Transceive CE wait");
         SecureElement::getInstance().startThread(0x01);
     }
-    ALOGV("%s: exit: recv len=%d", __func__, recvBufferActualSize);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit: recv len=%d", __func__, recvBufferActualSize);
     return result;
 #else
     jbyteArray result = e->NewByteArray(0);

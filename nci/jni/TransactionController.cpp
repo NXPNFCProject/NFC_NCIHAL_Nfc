@@ -46,7 +46,7 @@ void transactionController::lastRequestResume(void)
 {
     pthread_t transaction_thread;
     int irret = -1;
-    ALOGD ("%s", __FUNCTION__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s", __FUNCTION__);
 
     pthread_attr_t attr;
     pthread_attr_init(&attr);
@@ -58,7 +58,7 @@ void transactionController::lastRequestResume(void)
     irret = pthread_create(&transaction_thread, &attr, android::enableThread, NULL);
     if(irret != 0)
     {
-        ALOGE("Unable to create the thread");
+        LOG(ERROR) << StringPrintf("Unable to create the thread");
     }
     pthread_attr_destroy(&attr);
     pTransactionDetail->current_transcation_state = NFA_TRANS_DM_RF_TRANS_END;
@@ -77,7 +77,7 @@ void transactionController::lastRequestResume(void)
 
 extern "C" void transactionController::transactionHandlePendingCb(union sigval)
 {
-    ALOGD("Inside %s", __FUNCTION__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Inside %s", __FUNCTION__);
 
     pInstance->lastRequestResume();
 }
@@ -93,7 +93,7 @@ extern "C" void transactionController::transactionHandlePendingCb(union sigval)
 
 extern "C" void transactionController::transactionAbortTimerCb(union sigval)
 {
-    ALOGD("Inside %s", __FUNCTION__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Inside %s", __FUNCTION__);
 
     pInstance->transactionTerminate(TRANSACTION_REQUESTOR(exec_pending_req));
 
@@ -111,7 +111,7 @@ extern "C" void transactionController::transactionAbortTimerCb(union sigval)
 
 transactionController::transactionController(void)
 {
-    ALOGD ("%s: transaction controller created", __FUNCTION__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: transaction controller created", __FUNCTION__);
 
     sem_init(&barrier, 0, 1);
 
@@ -131,7 +131,7 @@ transactionController::transactionController(void)
  *******************************************************************************/
 bool transactionController::transactionLiveLockable(eTransactionId transactionRequestor)
 {
-    ALOGD ("%s: Performing check for long duration transaction", __FUNCTION__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Performing check for long duration transaction", __FUNCTION__);
     return ((transactionRequestor == NFA_ACTIVATED_EVENT) ||
             (transactionRequestor == NFA_EE_ACTION_EVENT) ||
             (transactionRequestor == NFA_TRANS_CE_ACTIVATED_EVENT) ||
@@ -158,17 +158,17 @@ bool transactionController::transactionAttempt(eTransactionId transactionRequest
     timeout.tv_sec += timeoutInSec;
 
     sem_getvalue(&barrier, &semVal);
-    ALOGD ("%s: Transaction attempted : %d when barrier is: %d", __FUNCTION__, transactionRequestor, semVal);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Transaction attempted : %d when barrier is: %d", __FUNCTION__, transactionRequestor, semVal);
 
     if(pendingTransHandleTimer->isRunning())
     {
-        ALOGD ("%s: Transaction denied due to pending transaction: %d ", __FUNCTION__, transactionRequestor);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Transaction denied due to pending transaction: %d ", __FUNCTION__, transactionRequestor);
         return false;
     }
     //Block wait on barrier
     if(sem_timedwait(&barrier, &timeout) != 0)
     {
-        ALOGD ("%s: Transaction denied : %d ", __FUNCTION__, transactionRequestor);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Transaction denied : %d ", __FUNCTION__, transactionRequestor);
         return false;
     }
 
@@ -182,7 +182,7 @@ bool transactionController::transactionAttempt(eTransactionId transactionRequest
         abortTimer->set(1000000, transactionAbortTimerCb);
     }
     sem_getvalue(&barrier, &semVal);
-    ALOGD ("%s: Transaction granted : %d and barrier is: %d", __FUNCTION__, transactionRequestor, semVal);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Transaction granted : %d and barrier is: %d", __FUNCTION__, transactionRequestor, semVal);
     return true;
 
 }
@@ -201,11 +201,11 @@ bool transactionController::transactionAttempt(eTransactionId transactionRequest
     int semVal = 0;
 
     sem_getvalue(&barrier, &semVal);
-    ALOGD ("%s: Transaction attempted : %d when barrier is: %d", __FUNCTION__, transactionRequestor, semVal);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Transaction attempted : %d when barrier is: %d", __FUNCTION__, transactionRequestor, semVal);
 
     if(pendingTransHandleTimer->isRunning())
     {
-        ALOGD ("%s: Transaction denied due to pending transaction: %d ", __FUNCTION__, transactionRequestor);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Transaction denied due to pending transaction: %d ", __FUNCTION__, transactionRequestor);
         return false;
     }
 
@@ -217,14 +217,14 @@ bool transactionController::transactionAttempt(eTransactionId transactionRequest
         {
             abortTimer->set(1000000, transactionAbortTimerCb);
         }
-        ALOGD ("%s: Transaction granted : %d ", __FUNCTION__, transactionRequestor);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Transaction granted : %d ", __FUNCTION__, transactionRequestor);
 
         requestor = transactionRequestor;
         sem_getvalue(&barrier, &semVal);
-        ALOGD ("%s: Transaction granted : %d and barrier is: %d", __FUNCTION__, transactionRequestor, semVal);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Transaction granted : %d and barrier is: %d", __FUNCTION__, transactionRequestor, semVal);
         return true;
     }
-    ALOGD ("%s: Transaction denied : %d ", __FUNCTION__, transactionRequestor);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Transaction denied : %d ", __FUNCTION__, transactionRequestor);
     return false;
 }
 /*******************************************************************************
@@ -239,18 +239,18 @@ bool transactionController::transactionAttempt(eTransactionId transactionRequest
 void transactionController::transactionEnd(eTransactionId transactionRequestor)
 {
     int val;
-     ALOGD ("%s: Enter",__FUNCTION__);
+     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter",__FUNCTION__);
     if(requestor == transactionRequestor)
     {
         /*If any abort timer is running for this transaction then stop it*/
         abortTimer->kill();
         /*Create new abort timer for next use*/
         abortTimer = new IntervalTimer();
-        ALOGD ("%s: Transaction control timer killed", __FUNCTION__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Transaction control timer killed", __FUNCTION__);
 
         pTransactionDetail->trans_in_progress = false;
         requestor = NO_REQUESTOR;
-        ALOGD ("%s: Transaction ended : %d ", __FUNCTION__, transactionRequestor);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Transaction ended : %d ", __FUNCTION__, transactionRequestor);
 
         /*
         ** TODO: The below code needs to improved and thread dependency shall be reduced
@@ -279,7 +279,7 @@ bool  transactionController::transactionTerminate(eTransactionId transactionRequ
 {
     int val;
 
-    ALOGD ("%s: Enter. Requested by : %d ", __FUNCTION__, transactionRequestor);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter. Requested by : %d ", __FUNCTION__, transactionRequestor);
 
     if((requestor != 0) &&
        (requestor == transactionRequestor || transactionRequestor == exec_pending_req))
@@ -296,7 +296,7 @@ bool  transactionController::transactionTerminate(eTransactionId transactionRequ
         sem_getvalue(&barrier, &val);
         if(!val)
             sem_post(&barrier);
-        ALOGD ("%s: Transaction terminated : %d ", __FUNCTION__, transactionRequestor);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Transaction terminated : %d ", __FUNCTION__, transactionRequestor);
         return true;
     }
     return false;
@@ -356,7 +356,7 @@ transactionController* transactionController::controller(void)
 
         sem_init(&pInstance->barrier, 0, 1);
 
-        ALOGD ("%s: transaction controller initialized", __FUNCTION__);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: transaction controller initialized", __FUNCTION__);
 
     }
     memset(pInstance->pTransactionDetail, 0x00, sizeof(*(pInstance->pTransactionDetail)));
@@ -373,7 +373,7 @@ transactionController* transactionController::controller(void)
  *******************************************************************************/
 void transactionController::killAbortTimer(void)
 {
-    ALOGD ("%s: transaction controller abort timer killed", __FUNCTION__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: transaction controller abort timer killed", __FUNCTION__);
 
     if(transactionInProgress())
     {
@@ -392,7 +392,7 @@ void transactionController::killAbortTimer(void)
  *******************************************************************************/
 void transactionController::setAbortTimer(unsigned int msec)
 {
-    ALOGD ("%s: transaction controller abort timer set", __FUNCTION__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: transaction controller abort timer set", __FUNCTION__);
 
     if(transactionInProgress())
         abortTimer->set(msec, transactionAbortTimerCb);

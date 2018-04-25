@@ -55,6 +55,8 @@ LOCAL_SHARED_LIBRARIES := \
     libutils \
     liblog \
     libnfc-nci \
+    libchrome \
+    libbase \
     android.hardware.nfc@1.0\
     vendor.nxp.nxpnfc@1.0
 

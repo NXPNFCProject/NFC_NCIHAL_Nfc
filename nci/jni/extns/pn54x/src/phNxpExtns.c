@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define LOG_TAG "pn54x"
 
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
 
-#include <log/log.h>
+#include <base/logging.h>
+#include <android-base/stringprintf.h>
 
 #include <phNxpExtns_MifareStd.h>
 #include <phNxpLog.h>
 #include <phNxpConfig.h>
+
+using android::base::StringPrintf;
 
 phNxpExtns_Context_t         gphNxpExtns_Context;
 extern phFriNfc_NdefMap_t    *NdefMap;
@@ -57,7 +59,7 @@ NFCSTATUS EXTNS_Init (tNFA_DM_CBACK        *p_nfa_dm_cback,
     /* Validate parameters */
     if ((!p_nfa_dm_cback) || (!p_nfa_conn_cback))
     {
-        NXPLOG_EXTNS_E ("EXTNS_Init(): error null callback");
+        LOG(ERROR) << StringPrintf("EXTNS_Init(): error null callback");
         goto clean_and_return;
     }
 
@@ -66,7 +68,7 @@ NFCSTATUS EXTNS_Init (tNFA_DM_CBACK        *p_nfa_dm_cback,
 
     if (NFCSTATUS_SUCCESS != phNxpExtns_MfcModuleInit ())
     {
-       NXPLOG_EXTNS_E ("ERROR: MFC Module Init Failed");
+       LOG(ERROR) << StringPrintf("ERROR: MFC Module Init Failed");
        goto clean_and_return;
     }
     gphNxpExtns_Context.Extns_status = EXTNS_STATUS_OPEN;
@@ -121,7 +123,7 @@ NFCSTATUS EXTNS_MfcCallBack (uint8_t *buf, uint32_t buflen)
     status = phNxpExtns_SendMsg (&msg);
     if (NFCSTATUS_SUCCESS != status)
     {
-        NXPLOG_EXTNS_E ("Error Sending msg to Extension Thread");
+        LOG(ERROR) << StringPrintf("Error Sending msg to Extension Thread");
     }
     return status;
 }
@@ -154,7 +156,7 @@ NFCSTATUS EXTNS_MfcCheckNDef (void)
     status = phNxpExtns_SendMsg (&msg);
     if (NFCSTATUS_SUCCESS != status)
     {
-        NXPLOG_EXTNS_E ("Error Sending msg to Extension Thread");
+        LOG(ERROR) << StringPrintf("Error Sending msg to Extension Thread");
     }
 
     return status;
@@ -187,7 +189,7 @@ NFCSTATUS EXTNS_MfcReadNDef (void)
     status = phNxpExtns_SendMsg (&msg);
     if (NFCSTATUS_SUCCESS != status)
     {
-        NXPLOG_EXTNS_E("Error Sending msg to Extension Thread");
+         LOG(ERROR) << StringPrintf("Error Sending msg to Extension Thread");
     }
 
     return status;
@@ -217,14 +219,14 @@ NFCSTATUS EXTNS_MfcPresenceCheck (void)
     gAuthCmdBuf.status = NFCSTATUS_FAILED;
     if (sem_init (&gAuthCmdBuf.semPresenceCheck, 0, 0) == -1)
     {
-        ALOGE("%s: semaphore creation failed (errno=%d)", __func__, errno);
+        LOG(ERROR) << StringPrintf("%s: semaphore creation failed (errno=%d)", __func__, errno);
         return NFCSTATUS_FAILED;
     }
 
     status = phNxpExtns_SendMsg (&msg);
     if (NFCSTATUS_SUCCESS != status)
     {
-        NXPLOG_EXTNS_E ("Error Sending msg to Extension Thread");
+        LOG(ERROR) << StringPrintf("Error Sending msg to Extension Thread");
         sem_destroy (&gAuthCmdBuf.semPresenceCheck);
     }
 
@@ -260,7 +262,7 @@ NFCSTATUS EXTNS_MfcSetReadOnly (uint8_t *key, uint8_t len)
     status = phNxpExtns_SendMsg (&msg);
     if (NFCSTATUS_SUCCESS != status)
     {
-        NXPLOG_EXTNS_E ("Error Sending msg to Extension Thread");
+        LOG(ERROR) << StringPrintf("Error Sending msg to Extension Thread");
     }
 
     return status;
@@ -295,7 +297,7 @@ NFCSTATUS EXTNS_MfcWriteNDef (uint8_t *p_data, uint32_t len)
     status = phNxpExtns_SendMsg (&msg);
     if (NFCSTATUS_SUCCESS != status)
     {
-        NXPLOG_EXTNS_E ("Error Sending msg to Extension Thread");
+        LOG(ERROR) << StringPrintf("Error Sending msg to Extension Thread");
     }
 
     return status;
@@ -328,7 +330,7 @@ NFCSTATUS EXTNS_MfcFormatTag (uint8_t *key, uint8_t len)
     status = phNxpExtns_SendMsg (&msg);
     if (NFCSTATUS_SUCCESS != status)
     {
-        NXPLOG_EXTNS_E ("Error Sending msg to Extension Thread");
+        LOG(ERROR) << StringPrintf("Error Sending msg to Extension Thread");
     }
 
     return status;
@@ -358,7 +360,7 @@ NFCSTATUS EXTNS_MfcDisconnect (void)
     status = phNxpExtns_SendMsg (&msg);
     if (NFCSTATUS_SUCCESS != status)
     {
-        NXPLOG_EXTNS_E ("Error Sending msg to Extension Thread");
+        LOG(ERROR) << StringPrintf("Error Sending msg to Extension Thread");
     }
 
     return status;
@@ -387,7 +389,7 @@ NFCSTATUS EXTNS_MfcActivated (void)
     status = phNxpExtns_SendMsg (&msg);
     if (NFCSTATUS_SUCCESS != status)
     {
-        NXPLOG_EXTNS_E ("Error Sending msg to Extension Thread");
+        LOG(ERROR) << StringPrintf("Error Sending msg to Extension Thread");
     }
 
     return status;
@@ -416,7 +418,7 @@ NFCSTATUS EXTNS_MfcTransceive (uint8_t *p_data, uint32_t len)
     status = phNxpExtns_SendMsg (&msg);
     if (NFCSTATUS_SUCCESS != status)
     {
-        NXPLOG_EXTNS_E ("Error Sending msg to Extension Thread");
+        LOG(ERROR) << StringPrintf("Error Sending msg to Extension Thread");
     }
 
     return status;
@@ -514,7 +516,7 @@ static NFCSTATUS phNxpExtns_ProcessSysMessage (phLibNfc_Message_t *msg)
             break;
         default:
             status = NFCSTATUS_FAILED;
-            NXPLOG_EXTNS_E ("Illegal Command for Extension");
+            LOG(ERROR) << StringPrintf("Illegal Command for Extension");
             break;
         }
 
@@ -616,14 +618,14 @@ NFCSTATUS EXTNS_GetPresenceCheckStatus (void)
 
     if (sem_timedwait (&gAuthCmdBuf.semPresenceCheck, &ts))
     {
-        ALOGE("%s: failed to wait (errno=%d)", __func__, errno);
+        LOG(ERROR) << StringPrintf("%s: failed to wait (errno=%d)", __func__, errno);
         sem_destroy (&gAuthCmdBuf.semPresenceCheck);
         gAuthCmdBuf.auth_sent = false;
         return NFCSTATUS_FAILED;
     }
     if (sem_destroy (&gAuthCmdBuf.semPresenceCheck))
     {
-        ALOGE("%s: Failed to destroy check Presence semaphore (errno=%d)", __func__, errno);
+        LOG(ERROR) << StringPrintf("%s: Failed to destroy check Presence semaphore (errno=%d)", __func__, errno);
     }
     return gAuthCmdBuf.status;
 }
@@ -658,7 +660,7 @@ NFCSTATUS EXTNS_CheckMfcResponse (uint8_t** sTransceiveData, uint32_t *sTranscei
     {
         if((*sTransceiveData) [0] == 0x10 && (*sTransceiveData) [1] != 0x0A)
         {
-            NXPLOG_EXTNS_E ("Mifare Error in payload response");
+            LOG(ERROR) << StringPrintf("Mifare Error in payload response");
             *sTransceiveDataLen = 0x1;
             *sTransceiveData += 1;
             return NFCSTATUS_FAILED;
