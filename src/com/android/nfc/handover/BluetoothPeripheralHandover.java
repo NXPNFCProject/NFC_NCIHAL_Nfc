@@ -21,7 +21,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothClass;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothHeadset;
-import android.bluetooth.BluetoothInputDevice;
+import android.bluetooth.BluetoothHidHost;
 import android.bluetooth.BluetoothProfile;
 import android.bluetooth.BluetoothUuid;
 import android.bluetooth.OobData;
@@ -111,7 +111,7 @@ public class BluetoothPeripheralHandover implements BluetoothProfile.ServiceList
     // protected by mLock
     BluetoothA2dp mA2dp;
     BluetoothHeadset mHeadset;
-    BluetoothInputDevice mInput;
+    BluetoothHidHost mInput;
 
     public interface Callback {
         public void onBluetoothPeripheralHandoverComplete(boolean connected);
@@ -167,7 +167,7 @@ public class BluetoothPeripheralHandover implements BluetoothProfile.ServiceList
         filter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
         filter.addAction(BluetoothA2dp.ACTION_CONNECTION_STATE_CHANGED);
         filter.addAction(BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED);
-        filter.addAction(BluetoothInputDevice.ACTION_CONNECTION_STATE_CHANGED);
+        filter.addAction(BluetoothHidHost.ACTION_CONNECTION_STATE_CHANGED);
         filter.addAction(ACTION_ALLOW_CONNECT);
         filter.addAction(ACTION_DENY_CONNECT);
 
@@ -318,7 +318,7 @@ public class BluetoothPeripheralHandover implements BluetoothProfile.ServiceList
     boolean getProfileProxys() {
 
         if (mTransport == BluetoothDevice.TRANSPORT_LE) {
-            if (!mBluetoothAdapter.getProfileProxy(mContext, this, BluetoothProfile.INPUT_DEVICE))
+            if (!mBluetoothAdapter.getProfileProxy(mContext, this, BluetoothProfile.HID_HOST))
                 return false;
         } else {
             if(!mBluetoothAdapter.getProfileProxy(mContext, this, BluetoothProfile.HEADSET))
@@ -486,7 +486,7 @@ public class BluetoothPeripheralHandover implements BluetoothProfile.ServiceList
                     nextStep();
                 }
             }
-        } else if (BluetoothInputDevice.ACTION_CONNECTION_STATE_CHANGED.equals(action) &&
+        } else if (BluetoothHidHost.ACTION_CONNECTION_STATE_CHANGED.equals(action) &&
                 (mState == STATE_CONNECTING || mState == STATE_DISCONNECTING)) {
             int state = intent.getIntExtra(BluetoothProfile.EXTRA_STATE, BluetoothAdapter.ERROR);
             if (state == BluetoothProfile.STATE_CONNECTED) {
@@ -514,7 +514,7 @@ public class BluetoothPeripheralHandover implements BluetoothProfile.ServiceList
             }
 
             if (mInput != null) {
-                mBluetoothAdapter.closeProfileProxy(BluetoothProfile.INPUT_DEVICE, mInput);
+                mBluetoothAdapter.closeProfileProxy(BluetoothProfile.HID_HOST, mInput);
             }
 
             mA2dp = null;
@@ -633,8 +633,8 @@ public class BluetoothPeripheralHandover implements BluetoothProfile.ServiceList
                         mHandler.sendEmptyMessage(MSG_NEXT_STEP);
                     }
                     break;
-                case BluetoothProfile.INPUT_DEVICE:
-                    mInput = (BluetoothInputDevice) proxy;
+                case BluetoothProfile.HID_HOST:
+                    mInput = (BluetoothHidHost) proxy;
                     if (mInput != null) {
                         mHandler.sendEmptyMessage(MSG_NEXT_STEP);
                     }
