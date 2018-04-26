@@ -35,17 +35,17 @@
 /*
  *  Tag-reading, tag-writing operations.
  */
-#include "_OverrideLog.h"
 #include "NfcTag.h"
-#include "JavaClassConstants.h"
-#include "config.h"
 #include <base/logging.h>
 #include <nativehelper/ScopedLocalRef.h>
 #include <nativehelper/ScopedPrimitiveArray.h>
 #include "IntervalTimer.h"
-#include "rw_int.h"
+#include "JavaClassConstants.h"
+#include "_OverrideLog.h"
+#include "config.h"
 #include "nfc_brcm_defs.h"
 #include "phNxpExtns.h"
+#include "rw_int.h"
 
 #if (NXP_EXTNS == TRUE)
 static void deleteglobaldata(JNIEnv* e);
@@ -1218,7 +1218,7 @@ void NfcTag::fillNativeNfcTagMembers5(JNIEnv* e, jclass tag_cls, jobject tag,
   } else if (NFC_DISCOVERY_TYPE_POLL_V == mTechParams[0].mode ||
              NFC_DISCOVERY_TYPE_LISTEN_ISO15693 == mTechParams[0].mode) {
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: tech iso 15693", fn);
-    jbyte data[I93_UID_BYTE_LEN];  // 8 bytes
+    jbyte data[I93_UID_BYTE_LEN];               // 8 bytes
     for (int i = 0; i < I93_UID_BYTE_LEN; ++i)  // reverse the ID
       data[i] = activationData.params.i93.uid[I93_UID_BYTE_LEN - i - 1];
     uid.reset(e->NewByteArray(I93_UID_BYTE_LEN));
@@ -1748,7 +1748,7 @@ void NfcTag::setActive(bool active) { mIsActivated = active; }
 bool NfcTag::isDynamicTagId() {
   return mIsDynamicTagId &&
          (mTechList[0] == TARGET_TYPE_ISO14443_4) &&  // type-4 tag
-         (mTechList[1] == TARGET_TYPE_ISO14443_3A);  // tech A
+         (mTechList[1] == TARGET_TYPE_ISO14443_3A);   // tech A
 }
 
 /*******************************************************************************
@@ -1761,11 +1761,11 @@ bool NfcTag::isDynamicTagId() {
 **
 *******************************************************************************/
 void NfcTag::resetAllTransceiveTimeouts() {
-  mTechnologyTimeoutsTable[TARGET_TYPE_ISO14443_3A] = 618;  // NfcA
+  mTechnologyTimeoutsTable[TARGET_TYPE_ISO14443_3A] = 618;   // NfcA
   mTechnologyTimeoutsTable[TARGET_TYPE_ISO14443_3B] = 1000;  // NfcB
-  mTechnologyTimeoutsTable[TARGET_TYPE_ISO14443_4] = 618;  // ISO-DEP
-  mTechnologyTimeoutsTable[TARGET_TYPE_FELICA] = 255;  // Felica
-  mTechnologyTimeoutsTable[TARGET_TYPE_V] = 1000;  // NfcV
+  mTechnologyTimeoutsTable[TARGET_TYPE_ISO14443_4] = 618;    // ISO-DEP
+  mTechnologyTimeoutsTable[TARGET_TYPE_FELICA] = 255;        // Felica
+  mTechnologyTimeoutsTable[TARGET_TYPE_V] = 1000;            // NfcV
   mTechnologyTimeoutsTable[TARGET_TYPE_NDEF] = 1000;
   mTechnologyTimeoutsTable[TARGET_TYPE_NDEF_FORMATABLE] = 1000;
   mTechnologyTimeoutsTable[TARGET_TYPE_MIFARE_CLASSIC] = 618;  // MifareClassic

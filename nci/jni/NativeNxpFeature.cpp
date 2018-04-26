@@ -32,15 +32,15 @@
  *  limitations under the License.
  *
  ******************************************************************************/
-#include <semaphore.h>
 #include <errno.h>
-#include "_OverrideLog.h"
-#include "NfcJniUtil.h"
-#include "SyncEvent.h"
+#include <semaphore.h>
 #include "JavaClassConstants.h"
-#include "config.h"
 #include "NfcAdaptation.h"
+#include "NfcJniUtil.h"
 #include "RoutingManager.h"
+#include "SyncEvent.h"
+#include "_OverrideLog.h"
+#include "config.h"
 
 #include "nfa_api.h"
 #include "nfa_rw_api.h"
@@ -73,7 +73,7 @@ typedef void(tNXP_RSP_CBACK)(uint8_t event, uint16_t param_len,
 tNFA_STATUS NxpNfc_Write_Cmd(uint8_t retlen, uint8_t* buffer,
                              tNXP_RSP_CBACK* p_cback);
 #endif
-}
+}  // namespace android
 
 namespace android {
 void SetCbStatus(tNFA_STATUS status) { gnxpfeature_conf.wstatus = status; }
@@ -429,8 +429,8 @@ tNFA_STATUS Nxp_SelfTest(uint8_t testcase, uint8_t* param) {
   // Factory Test Code for PRBS STOP --/
   //    uint8_t prbs_stop[] ={0x2F, 0x30, 0x04, 0x53, 0x54, 0x4F, 0x50};
   //    //STOP!!    /*commented to eliminate unused variable warning*/
-  uint8_t rst_cmd[] = {0x20, 0x00, 0x01, 0x00};  // CORE_RESET_CMD
-  uint8_t init_cmd[] = {0x20, 0x01, 0x00};  // CORE_INIT_CMD
+  uint8_t rst_cmd[] = {0x20, 0x00, 0x01, 0x00};     // CORE_RESET_CMD
+  uint8_t init_cmd[] = {0x20, 0x01, 0x00};          // CORE_INIT_CMD
   uint8_t prop_ext_act_cmd[] = {0x2F, 0x02, 0x00};  // CORE_INIT_CMD
 
   // Factory Test Code for PRBS STOP --/
@@ -644,8 +644,13 @@ static void NxpResponse_GetNumNFCEEValueCb(uint8_t event, uint16_t param_len,
 tNFA_STATUS GetNumNFCEEConfigured(void) {
   tNFA_STATUS status = NFA_STATUS_FAILED;
   gActualSeCount = 1; /* default HCI present */
-  uint8_t cmd_buf[255] = {0x20, 0x03, 0x05, 0x02, NXP_NFC_SET_CONFIG_PARAM_EXT,
-                          NXP_NFC_PARAM_ID_SWP1, NXP_NFC_SET_CONFIG_PARAM_EXT,
+  uint8_t cmd_buf[255] = {0x20,
+                          0x03,
+                          0x05,
+                          0x02,
+                          NXP_NFC_SET_CONFIG_PARAM_EXT,
+                          NXP_NFC_PARAM_ID_SWP1,
+                          NXP_NFC_SET_CONFIG_PARAM_EXT,
                           NXP_NFC_PARAM_ID_SWP2};
   uint8_t cmd_buf_len = 0x08;
   uint8_t num_config_params = 0x02;
@@ -1032,11 +1037,11 @@ tNFA_STATUS NxpNfcUpdateEeprom(uint8_t* param, uint8_t len, uint8_t* val) {
   uint8_t setCfgCmdLen = 0;  // Memory field len 1bytes
   uint8_t setCfgCmdHdr[7] = {
       0x20,     0x02,  // set_cfg header
-      0x00,  // len of following value
-      0x01,  // Num Param
-      param[0],  // First byte of Address
-      param[1],  // Second byte of Address
-      len  // Data len
+      0x00,            // len of following value
+      0x01,            // Num Param
+      param[0],        // First byte of Address
+      param[1],        // Second byte of Address
+      len              // Data len
   };
   setCfgCmdLen = sizeof(setCfgCmdHdr) + len;
   setCfgCmdHdr[2] = setCfgCmdLen - SETCONFIGLENPOS;

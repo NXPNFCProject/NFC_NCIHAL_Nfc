@@ -32,34 +32,34 @@
  *  limitations under the License.
  *
  ******************************************************************************/
-#include <semaphore.h>
-#include <errno.h>
-#include <time.h>
-#include <signal.h>
-#include "_OverrideLog.h"
-#include "NfcJniUtil.h"
-#include "NfcTag.h"
-#include "config.h"
-#include "Mutex.h"
-#include "IntervalTimer.h"
-#include "JavaClassConstants.h"
-#include "Pn544Interop.h"
 #include <base/logging.h>
+#include <errno.h>
 #include <nativehelper/ScopedLocalRef.h>
 #include <nativehelper/ScopedPrimitiveArray.h>
+#include <semaphore.h>
+#include <signal.h>
+#include <time.h>
 #include <string>
+#include "IntervalTimer.h"
+#include "JavaClassConstants.h"
+#include "Mutex.h"
+#include "NfcJniUtil.h"
+#include "NfcTag.h"
+#include "Pn544Interop.h"
 #include "TransactionController.h"
+#include "_OverrideLog.h"
+#include "config.h"
+#include "ndef_utils.h"
 #include "nfa_api.h"
 #include "nfa_rw_api.h"
 #include "nfc_brcm_defs.h"
-#include "ndef_utils.h"
-#include "rw_api.h"
 #include "phNxpExtns.h"
+#include "rw_api.h"
 namespace android {
 extern nfc_jni_native_data* getNative(JNIEnv* e, jobject o);
 extern bool nfcManager_isNfcActive();
 extern uint16_t getrfDiscoveryDuration();
-}
+}  // namespace android
 
 extern bool gActivated;
 extern SyncEvent gDeactivatedEvent;
@@ -81,7 +81,7 @@ bool gGotDeact2IdleNtf = false;
 bool fNeedToSwitchBack = false;
 void nativeNfcTag_acquireRfInterfaceMutexLock();
 void nativeNfcTag_releaseRfInterfaceMutexLock();
-}
+}  // namespace android
 
 /*****************************************************************************
 **
@@ -316,13 +316,13 @@ void nativeNfcTag_doReadCompleted(tNFA_STATUS status) {
 
 /*******************************************************************************
  **
-** Function:        nativeNfcTag_setRfInterface
-**
-** Description:     Set rf interface.
-**
-** Returns:         void
-**
-*******************************************************************************/
+ ** Function:        nativeNfcTag_setRfInterface
+ **
+ ** Description:     Set rf interface.
+ **
+ ** Returns:         void
+ **
+ *******************************************************************************/
 void nativeNfcTag_setRfInterface(tNFA_INTF_TYPE rfInterface) {
   sCurrentRfInterface = rfInterface;
 }
@@ -983,7 +983,7 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
 #if (NXP_EXTNS == TRUE && NFC_NXP_NON_STD_CARD == TRUE)
           || sNonNciCard_t.chinaTransp_Card == true
 #endif
-          ) {
+      ) {
         setReconnectState(true);
         DLOG_IF(INFO, nfc_debug_enabled)
             << StringPrintf("%s: Deactivate to IDLE", __func__);
@@ -1075,7 +1075,7 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
 #if (NXP_EXTNS == TRUE && NFC_NXP_NON_STD_CARD == TRUE)
           || sNonNciCard_t.chinaTransp_Card == true
 #endif
-          ) {
+      ) {
         setReconnectState(true);
         DLOG_IF(INFO, nfc_debug_enabled)
             << StringPrintf("%s: Start RF discovery", __func__);
@@ -1695,7 +1695,7 @@ void nativeNfcTag_doCheckNdefResult(tNFA_STATUS status, uint32_t maxSize,
   //#define RW_NDEF_FL_FORMATED   0x02    /* Tag formated for NDEF         */
   //#define RW_NDEF_FL_SUPPORTED  0x04    /* NDEF supported by the tag     */
   //#define RW_NDEF_FL_UNKNOWN    0x08    /* Unable to find if tag is ndef
-  //capable/formated/read only */
+  // capable/formated/read only */
   //#define RW_NDEF_FL_FORMATABLE 0x10    /* Tag supports format operation */
 
   if (!sCheckNdefWaitingForComplete) {
@@ -2272,16 +2272,16 @@ static jboolean nativeNfcTag_doIsIsoDepNdefFormatable(JNIEnv* e, jobject o,
 /*******************************************************************************
  **
  ** Function:        nativeNfcTag_makeMifareNdefFormat
-**
-** Description:     Format a mifare classic tag so it can store NDEF message.
-**                  e: JVM environment.
-**                  o: Java object.
-**                  key: Key to acces tag.
-**                  keySize: size of Key.
-**
-** Returns:         True if ok.
-**
-*******************************************************************************/
+ **
+ ** Description:     Format a mifare classic tag so it can store NDEF message.
+ **                  e: JVM environment.
+ **                  o: Java object.
+ **                  key: Key to acces tag.
+ **                  keySize: size of Key.
+ **
+ ** Returns:         True if ok.
+ **
+ *******************************************************************************/
 static jboolean nativeNfcTag_makeMifareNdefFormat(JNIEnv* e, jobject o,
                                                   uint8_t* key,
                                                   uint32_t keySize) {
@@ -2399,17 +2399,17 @@ void nativeNfcTag_doMakeReadonlyResult(tNFA_STATUS status) {
 
 /*******************************************************************************
  **
-** Function:        nativeNfcTag_makeMifareReadonly
-**
-** Description:     Make the mifare classic tag read-only.
-**                  e: JVM environment.
-**                  o: Java object.
-**                  key: Key to access the tag.
-**                  keySize: size of Key.
-**
-** Returns:         True if ok.
-**
-*******************************************************************************/
+ ** Function:        nativeNfcTag_makeMifareReadonly
+ **
+ ** Description:     Make the mifare classic tag read-only.
+ **                  e: JVM environment.
+ **                  o: Java object.
+ **                  key: Key to access the tag.
+ **                  keySize: size of Key.
+ **
+ ** Returns:         True if ok.
+ **
+ *******************************************************************************/
 static jboolean nativeNfcTag_makeMifareReadonly(JNIEnv* e, jobject o,
                                                 uint8_t* key, int32_t keySize) {
   jboolean result = JNI_FALSE;

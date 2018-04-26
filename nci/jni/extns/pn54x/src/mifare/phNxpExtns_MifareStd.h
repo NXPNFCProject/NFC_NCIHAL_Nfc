@@ -17,13 +17,13 @@
 #ifndef _PHNXPEXTNS_MFCRF_H_
 #define _PHNXPEXTNS_MFCRF_H_
 
-#include <phNfcTypes.h>
-#include <phNciNfcTypes.h>
-#include <phFriNfc_MifareStdMap.h>
 #include <phFriNfc_MifStdFormat.h>
+#include <phFriNfc_MifareStdMap.h>
+#include <phNciNfcTypes.h>
+#include <phNfcTypes.h>
 #include <phNxpExtns.h>
-#include <semaphore.h>
 #include <pthread.h>
+#include <semaphore.h>
 
 extern uint8_t current_key[];
 /* Enable this macro to set key configuration for mifare classic Tag */
@@ -73,8 +73,8 @@ extern uint8_t current_key[];
 
 #define NXP_MFC_KEYS                            \
   {                                             \
-    { 0xA0, 0XA1, 0xA2, 0XA3, 0xA4, 0XA5 }      \
-    , {0xD3, 0XF7, 0xD3, 0XF7, 0xD3, 0XF7},     \
+    {0xA0, 0XA1, 0xA2, 0XA3, 0xA4, 0XA5},       \
+        {0xD3, 0XF7, 0xD3, 0XF7, 0xD3, 0XF7},   \
         {0xFF, 0XFF, 0xFF, 0XFF, 0xFF, 0XFF}, { \
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00        \
     }                                           \
@@ -186,7 +186,7 @@ typedef struct nci_data_package {
 typedef void (*CallBackMifare_t)(void*, uint16_t);
 
 /*
-  * Auth Cmd Data
+ * Auth Cmd Data
  */
 typedef struct nci_mfc_package {
   bool_t auth_status;

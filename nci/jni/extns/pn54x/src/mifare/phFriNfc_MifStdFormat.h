@@ -22,9 +22,9 @@
 #define PHFRINFC_MIFSTDFORMAT_H
 
 #include <phFriNfc.h>
+#include <phFriNfc_SmtCrdFmt.h>
 #include <phNfcStatus.h>
 #include <phNfcTypes.h>
-#include <phFriNfc_SmtCrdFmt.h>
 
 /********************* Definitions and structures *****************************/
 
@@ -54,8 +54,9 @@
   1 /* Trying to authenticate with the MAD key */
 #define PH_FRINFC_MFSTD_FMT_AUTH_MAD_KEY \
   2 /* Trying to authenticate with the NFC forum key */
-#define PH_FRINFC_MFSTD_FMT_AUTH_KEYB 3 /* Trying to authenticate with key B \
-                                           */
+#define PH_FRINFC_MFSTD_FMT_AUTH_KEYB    \
+  3 /* Trying to authenticate with key B \
+     */
 #define PH_FRINFC_MFSTD_FMT_AUTH_SCRT_KEYB \
   4 /* Trying to authenticate with secret key B */
 
@@ -74,7 +75,7 @@
 
 /*
  * Mifare standard - Update MAD block flag
-*/
+ */
 #define PH_FRINFC_SMTCRDFMT_MSTD_MADSECT_KEYA_ACS_BIT_1K \
   { 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0x78, 0x77, 0x88, 0xC1 }
 #define PH_FRINFC_SMTCRDFMT_MSTD_MADSECT_KEYA_ACS_BIT_2K \
@@ -143,9 +144,10 @@ typedef enum {
 /*
  * Mifare standard - NDEF information constants
  */
-#define PH_FRINFC_MFSTD_FMT_NON_NDEF_COMPL 0 /* Sector is not ndef compliant \
-                                                */
-#define PH_FRINFC_MFSTD_FMT_NDEF_COMPL 1     /* Sector is ndef compliant */
+#define PH_FRINFC_MFSTD_FMT_NON_NDEF_COMPL                               \
+  0                                      /* Sector is not ndef compliant \
+                                          */
+#define PH_FRINFC_MFSTD_FMT_NDEF_COMPL 1 /* Sector is ndef compliant */
 #define PH_FRINFC_MFSTD_FMT_NDEF_INFO1                     \
   0x03 /* If sector is ndef compliant, then one of the MAD \
          sector byte is 0x03 */
@@ -212,13 +214,13 @@ typedef enum {
 /*
  * Copy MAD sector keyB to send buffer
  */
-#define PH_FRINFC_MFSTD_FMT_AUTH_SEND_BUF_SCRT_KEY(mem)                   \
-  do {                                                                    \
-    (void) memcpy(&NdefSmtCrdFmt->SendRecvBuf[PH_FRINFC_MFSTD_FMT_VAL_1], \
-                  NdefSmtCrdFmt->AddInfo.MfStdInfo.ScrtKeyB,              \
-                  PH_FRINFC_MFSTD_FMT_VAL_6);                             \
-    NdefSmtCrdFmt->Cmd.MfCmd = phHal_eMifareAuthentB;                     \
-    NdefSmtCrdFmt->SendLength = PH_FRINFC_MFSTD_FMT_VAL_7;                \
+#define PH_FRINFC_MFSTD_FMT_AUTH_SEND_BUF_SCRT_KEY(mem)                  \
+  do {                                                                   \
+    (void)memcpy(&NdefSmtCrdFmt->SendRecvBuf[PH_FRINFC_MFSTD_FMT_VAL_1], \
+                 NdefSmtCrdFmt->AddInfo.MfStdInfo.ScrtKeyB,              \
+                 PH_FRINFC_MFSTD_FMT_VAL_6);                             \
+    NdefSmtCrdFmt->Cmd.MfCmd = phHal_eMifareAuthentB;                    \
+    NdefSmtCrdFmt->SendLength = PH_FRINFC_MFSTD_FMT_VAL_7;               \
   } while (0)
 
 /*

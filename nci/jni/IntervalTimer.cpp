@@ -37,8 +37,8 @@
  */
 
 #include "IntervalTimer.h"
-#include "_OverrideLog.h"
 #include <string.h>
+#include "_OverrideLog.h"
 
 IntervalTimer::IntervalTimer() {
   mTimerId = 0;

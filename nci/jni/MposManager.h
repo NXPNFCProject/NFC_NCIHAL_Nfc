@@ -16,14 +16,14 @@
  *
  ******************************************************************************/
 #pragma once
-#include "Mutex.h"
-#include "SyncEvent.h"
 #include "IntervalTimer.h"
+#include "Mutex.h"
 #include "NfcJniUtil.h"
+#include "SyncEvent.h"
 
 #include "nfa_api.h"
-#include "nfc_api.h"
 #include "nfa_ee_api.h"
+#include "nfc_api.h"
 
 typedef struct {
   tNFA_HANDLE src;

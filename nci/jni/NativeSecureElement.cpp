@@ -32,13 +32,13 @@
  *  limitations under the License.
  *
  ******************************************************************************/
-#include "_OverrideLog.h"
-#include "SecureElement.h"
-#include "JavaClassConstants.h"
-#include "PowerSwitch.h"
-#include "NfcTag.h"
-#include "RoutingManager.h"
 #include <ScopedPrimitiveArray.h>
+#include "JavaClassConstants.h"
+#include "NfcTag.h"
+#include "PowerSwitch.h"
+#include "RoutingManager.h"
+#include "SecureElement.h"
+#include "_OverrideLog.h"
 #include "phNxpConfig.h"
 
 extern bool hold_the_transceive;
@@ -362,7 +362,7 @@ TheEnd:
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: exit; return handle=0x%X", __func__, secElemHandle);
   return secElemHandle;
-}
+}  // namespace android
 
 /*******************************************************************************
 **
@@ -564,16 +564,16 @@ static jboolean nativeNfcSecureElement_doResetSecureElement(JNIEnv*, jobject,
 
 /*******************************************************************************
  **
-** Function:        nativeNfcSecureElement_doeSEChipResetSecureElement
-**
-** Description:     Reset the secure element.
-**                  e: JVM environment.
-**                  o: Java object.
-**                  handle: Handle of secure element.
-**
-** Returns:         True if ok.
-**
-*******************************************************************************/
+ ** Function:        nativeNfcSecureElement_doeSEChipResetSecureElement
+ **
+ ** Description:     Reset the secure element.
+ **                  e: JVM environment.
+ **                  o: Java object.
+ **                  handle: Handle of secure element.
+ **
+ ** Returns:         True if ok.
+ **
+ *******************************************************************************/
 static jboolean nativeNfcSecureElement_doeSEChipResetSecureElement(JNIEnv*,
                                                                    jobject) {
   bool stat = false;

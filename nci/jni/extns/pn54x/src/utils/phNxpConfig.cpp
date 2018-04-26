@@ -39,10 +39,10 @@
 
 #include <phNxpConfig.h>
 #include <stdio.h>
+#include <sys/stat.h>
+#include <list>
 #include <string>
 #include <vector>
-#include <list>
-#include <sys/stat.h>
 
 #include <phNxpLog.h>
 #include "sparse_crc32.h"

@@ -36,12 +36,12 @@
 
 #include "NfcJniUtil.h"
 
-#include <log/log.h>
 #include <errno.h>
-#include "_OverrideLog.h"
+#include <log/log.h>
 #include <nativehelper/JNIHelp.h>
 #include <nativehelper/ScopedLocalRef.h>
 #include "RoutingManager.h"
+#include "_OverrideLog.h"
 
 /*******************************************************************************
 **

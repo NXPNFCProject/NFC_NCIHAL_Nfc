@@ -15,16 +15,16 @@
  */
 
 /*include files*/
-#include <phNfcTypes.h>
-#include <phNfcStatus.h>
 #include <phNciNfcTypes.h>
+#include <phNfcStatus.h>
+#include <phNfcTypes.h>
 #include <time.h>
 
 typedef void (*TIMER_FUNC)(union sigval);
 
 typedef struct phFriNfc_MifareStdTimer {
-  timer_t mTimerId;  // timer id which will be assigned by create timer
-  TIMER_FUNC mCb;  // callback function for timeout
+  timer_t mTimerId;   // timer id which will be assigned by create timer
+  TIMER_FUNC mCb;     // callback function for timeout
   uint32_t mtimeout;  // timeout value in ms.
 } phFriNfc_MifareStdTimer_t;
 

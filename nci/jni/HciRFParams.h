@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include "_OverrideLog.h"
-#include "SyncEvent.h"
 #include <cstdlib>
 #include <cstring>
+#include "SyncEvent.h"
+#include "_OverrideLog.h"
 
 #include "nfa_api.h"
 

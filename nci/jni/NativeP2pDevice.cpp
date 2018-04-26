@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include "_OverrideLog.h"
 #include <log/log.h>
-#include "NfcJniUtil.h"
 #include "JavaClassConstants.h"
+#include "NfcJniUtil.h"
+#include "_OverrideLog.h"
 
 #include <nativehelper/JNIHelp.h>
 
@@ -76,4 +76,4 @@ int register_com_android_nfc_NativeP2pDevice(JNIEnv* e) {
                                   NELEM(gMethods));
 }
 
-}  // namepspace android
+}  // namespace android

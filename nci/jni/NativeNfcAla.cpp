@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "NfcJniUtil.h"
-#include "PowerSwitch.h"
-#include "JavaClassConstants.h"
-#include "_OverrideLog.h"
 #include <ScopedPrimitiveArray.h>
 #include "DwpChannel.h"
+#include "JavaClassConstants.h"
+#include "JcopManager.h"
+#include "NfcJniUtil.h"
+#include "PowerSwitch.h"
 #include "SecureElement.h"
 #include "TransactionController.h"
-#include "JcopManager.h"
+#include "_OverrideLog.h"
 #include "phNxpConfig.h"
 #define LS_DEFAULT_VERSION 0x20
 namespace android {
@@ -30,7 +30,7 @@ extern void startRfDiscovery(bool isStart);
 extern bool isDiscoveryStarted();
 extern void nfaVSCCallback(uint8_t event, uint16_t param_len, uint8_t* p_param);
 extern bool isLowRamDevice();
-}
+}  // namespace android
 
 namespace android {
 
@@ -229,10 +229,9 @@ jbyteArray nfcManager_lsExecuteScript(JNIEnv* e, jobject o, jstring name,
     sRfEnabled = isDiscoveryStarted();
     wStatus = status = NFA_STATUS_FAILED;
 
-    if (!isLowRamDevice() &&
-        !pTransactionController->transactionAttempt(
-            TRANSACTION_REQUESTOR(lsExecuteScript),
-            TRANSACTION_ATTEMPT_FOR_SECONDS(5))) {
+    if (!isLowRamDevice() && !pTransactionController->transactionAttempt(
+                                 TRANSACTION_REQUESTOR(lsExecuteScript),
+                                 TRANSACTION_ATTEMPT_FOR_SECONDS(5))) {
       LOG(ERROR) << StringPrintf(
           "%s ERROR: Attempt to start transaction failed", __FUNCTION__);
       return result;

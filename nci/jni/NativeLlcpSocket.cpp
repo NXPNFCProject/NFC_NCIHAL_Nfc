@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "_OverrideLog.h"
-#include "PeerToPeer.h"
-#include "JavaClassConstants.h"
 #include <nativehelper/ScopedPrimitiveArray.h>
 #include <nativehelper/ScopedUtfChars.h>
+#include "JavaClassConstants.h"
+#include "PeerToPeer.h"
+#include "_OverrideLog.h"
 
 namespace android {
 

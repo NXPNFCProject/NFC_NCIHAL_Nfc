@@ -20,9 +20,9 @@
 #pragma once
 #include <utils/RefBase.h>
 #include <utils/StrongPointer.h>
-#include "SyncEvent.h"
-#include "NfcJniUtil.h"
 #include <string>
+#include "NfcJniUtil.h"
+#include "SyncEvent.h"
 #include "nfa_p2p_api.h"
 
 class P2pServer;

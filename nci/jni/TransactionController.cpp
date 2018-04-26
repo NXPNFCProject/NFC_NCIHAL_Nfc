@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "IntervalTimer.h"
 #include "TransactionController.h"
 #include <time.h>
+#include "IntervalTimer.h"
 //#include <OverrideLog.h>
-#include "_OverrideLog.h"
 #include <string.h>
+#include "_OverrideLog.h"
 
 namespace android {
 extern void* enableThread(void* arg);
 extern Transcation_Check_t* nfcManager_transactionDetail(void);
 extern bool nfcManager_isRequestPending(void);
-}
+}  // namespace android
 
 /*Transaction Controller Instance Reference*/
 transactionController* transactionController::pInstance = NULL;

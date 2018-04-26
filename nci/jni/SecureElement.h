@@ -37,15 +37,15 @@
  *  controller.
  */
 #pragma once
-#include "SyncEvent.h"
 #include "DataQueue.h"
+#include "IntervalTimer.h"
 #include "NfcJniUtil.h"
 #include "RouteDataSet.h"
-#include "IntervalTimer.h"
+#include "SyncEvent.h"
+#include "nfa_ce_api.h"
 #include "nfa_ee_api.h"
 #include "nfa_hci_api.h"
 #include "nfa_hci_defs.h"
-#include "nfa_ce_api.h"
 #include "phNxpExtns.h"
 #if (NXP_EXTNS == TRUE)
 #include "phNfcTypes.h"
@@ -185,7 +185,7 @@ class SecureElement {
   static const tNFA_HANDLE EE_HANDLE_0xF3 =
       0x4C0;  // 0x401; //handle to secure element in slot 0
   static const tNFA_HANDLE EE_HANDLE_0xF8 =
-      0x481;  // handle to secure element in slot 2
+      0x481;                   // handle to secure element in slot 2
   tNFA_HANDLE EE_HANDLE_0xF4;  // handle to secure element in slot 1
   static const tNFA_HANDLE EE_HANDLE_0xF0 = 0x400;  // NFCEE handle for host
 #endif
@@ -634,7 +634,7 @@ class SecureElement {
    **
    ** Returns:         True if ok.
    **
-  *******************************************************************************/
+   *******************************************************************************/
   bool updateEEStatus();
 
   /*******************************************************************************
@@ -671,7 +671,7 @@ class SecureElement {
   IntervalTimer mPassiveListenTimer;
   uint32_t mPassiveListenTimeout;  // Retry timout value for passive listen
                                    // enable timer
-  uint8_t mPassiveListenCnt;  // Retry cnt for passive listen enable timer
+  uint8_t mPassiveListenCnt;       // Retry cnt for passive listen enable timer
   SyncEvent mPassiveListenEvt;
   Mutex mPassiveListenMutex;
   Mutex mNfccStandbyMutex;
@@ -746,9 +746,9 @@ class SecureElement {
   bool mIsWiredModeBlocked; /* for wired mode resume feature support */
   IntervalTimer mRfFieldEventTimer;
   uint32_t mRfFieldEventTimeout;
-  tNFA_STATUS mModeSetInfo; /*Mode set info status*/
-  static const uint8_t NFCC_DECIDES = 0x00;  // NFCC decides
-  static const uint8_t POWER_ALWAYS_ON = 0x01;  // NFCEE Power Supply always On
+  tNFA_STATUS mModeSetInfo;                      /*Mode set info status*/
+  static const uint8_t NFCC_DECIDES = 0x00;      // NFCC decides
+  static const uint8_t POWER_ALWAYS_ON = 0x01;   // NFCEE Power Supply always On
   static const uint8_t COMM_LINK_ACTIVE = 0x02;  // NFCC to NFCEE Communication
                                                  // link always active when the
                                                  // NFCEE  is powered on.
@@ -797,7 +797,7 @@ class SecureElement {
   static SecureElement sSecElem;
   static const char* APP_NAME;
 
-  uint8_t mDestinationGate;  // destination gate of the UICC
+  uint8_t mDestinationGate;   // destination gate of the UICC
   tNFA_HANDLE mNfaHciHandle;  // NFA handle to NFA's HCI component
   nfc_jni_native_data* mNativeData;
   bool mIsInit;           // whether EE is initialized
@@ -808,16 +808,16 @@ class SecureElement {
   uint8_t mNewSourceGate;
   uint16_t mActiveSeOverride;  // active "enable" seid, 0 means activate all SEs
   tNFA_STATUS mCommandStatus;  // completion status of the last command
-  bool mIsPiping;  // is a pipe connected to the controller?
+  bool mIsPiping;              // is a pipe connected to the controller?
   RouteSelection mCurrentRouteSelection;
   int mActualResponseSize;  // number of bytes in the response received from
                             // secure element
   int mAtrInfolen;
   uint8_t mAtrStatus;
-  bool mUseOberthurWarmReset;  // whether to use warm-reset command
-  bool mActivatedInListenMode;  // whether we're activated in listen mode
+  bool mUseOberthurWarmReset;         // whether to use warm-reset command
+  bool mActivatedInListenMode;        // whether we're activated in listen mode
   uint8_t mOberthurWarmResetCommand;  // warm-reset command byte
-  tNFA_EE_INFO mEeInfo[MAX_NUM_EE];  // actual size stored in mActualNumEe
+  tNFA_EE_INFO mEeInfo[MAX_NUM_EE];   // actual size stored in mActualNumEe
   tNFA_EE_DISCOVER_REQ mUiccInfo;
   tNFA_HCI_GET_GATE_PIPE_LIST mHciCfg;
   SyncEvent mEeRegisterEvent;
@@ -840,7 +840,7 @@ class SecureElement {
   uint8_t mVerInfo[3];
   uint8_t mAtrInfo[40];
   bool mGetAtrRspwait;
-  RouteDataSet mRouteDataSet;  // routing data
+  RouteDataSet mRouteDataSet;          // routing data
   std::vector<std::string> mUsedAids;  // AID's that are used in current routes
   uint8_t mAidForEmptySelect[NCI_MAX_AID_LEN + 1];
   Mutex mMutex;                        // protects fields below

@@ -18,11 +18,11 @@
  * Smart Card Completion Routing component
  */
 
-#include <phNfcTypes.h>
 #include <phFriNfc.h>
+#include <phFriNfc_MifStdFormat.h>
 #include <phFriNfc_SmtCrdFmt.h>
 #include <phNfcCompId.h>
-#include <phFriNfc_MifStdFormat.h>
+#include <phNfcTypes.h>
 
 /*******************************************************************************
 **

@@ -36,8 +36,8 @@
 #include <JNIHelp.h>
 #include <jni.h>
 #include <pthread.h>
-#include <sys/queue.h>
 #include <semaphore.h>
+#include <sys/queue.h>
 #include "Nxp_Features.h"
 
 /* Discovery modes -- keep in sync with NFCManager.DISCOVERY_MODE_* */

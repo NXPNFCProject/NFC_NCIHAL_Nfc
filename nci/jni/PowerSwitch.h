@@ -18,8 +18,8 @@
  *  Adjust the controller's power states.
  */
 #pragma once
-#include "nfa_api.h"
 #include "SyncEvent.h"
+#include "nfa_api.h"
 
 /*****************************************************************************
 **

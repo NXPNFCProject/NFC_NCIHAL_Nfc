@@ -37,9 +37,9 @@
  */
 
 #pragma once
-#include "SyncEvent.h"
-#include "NfcJniUtil.h"
 #include <vector>
+#include "NfcJniUtil.h"
+#include "SyncEvent.h"
 #include "nfa_rw_api.h"
 
 #define MIN_FWI (1)

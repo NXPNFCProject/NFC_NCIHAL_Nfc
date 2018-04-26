@@ -21,9 +21,9 @@
 #include "Mutex.h"
 #include "NfcJniUtil.h"
 
-#include "_OverrideLog.h"
 #include <base/logging.h>
 #include <errno.h>
+#include "_OverrideLog.h"
 
 /*******************************************************************************
 **

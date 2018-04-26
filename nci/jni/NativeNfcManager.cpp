@@ -32,47 +32,47 @@
  *  limitations under the License.
  *
  ******************************************************************************/
-#include <semaphore.h>
-#include <errno.h>
-#include "_OverrideLog.h"
-#include "NfcJniUtil.h"
-#include "NfcAdaptation.h"
-#include "SyncEvent.h"
-#include "PeerToPeer.h"
-#include "SecureElement.h"
-#include "RoutingManager.h"
-#include "NfcTag.h"
-#include "config.h"
-#include "PowerSwitch.h"
-#include "JavaClassConstants.h"
-#include "Pn544Interop.h"
-#include <base/logging.h>
 #include <android-base/stringprintf.h>
+#include <base/logging.h>
+#include <errno.h>
 #include <nativehelper/ScopedLocalRef.h>
+#include <nativehelper/ScopedPrimitiveArray.h>
 #include <nativehelper/ScopedUtfChars.h>
+#include <pthread.h>
+#include <semaphore.h>
 #include <sys/time.h>
 #include "HciRFParams.h"
-#include <pthread.h>
-#include <nativehelper/ScopedPrimitiveArray.h>
+#include "JavaClassConstants.h"
+#include "NfcAdaptation.h"
+#include "NfcJniUtil.h"
+#include "NfcTag.h"
+#include "PeerToPeer.h"
+#include "Pn544Interop.h"
+#include "PowerSwitch.h"
+#include "RoutingManager.h"
+#include "SecureElement.h"
+#include "SyncEvent.h"
+#include "_OverrideLog.h"
+#include "config.h"
 #if (NXP_EXTNS == TRUE)
-#include "MposManager.h"
+#include <cutils/properties.h>
 #include <signal.h>
 #include <sys/types.h>
-#include <cutils/properties.h>
+#include "MposManager.h"
 #endif
-#include "DwpChannel.h"
-#include "TransactionController.h"
 #include <fcntl.h>
+#include "DwpChannel.h"
 #include "JcopManager.h"
-#include "nfc_api.h"
-#include "nfa_api.h"
-#include "nfa_p2p_api.h"
-#include "rw_api.h"
-#include "nfa_ee_api.h"
-#include "nfc_brcm_defs.h"
+#include "TransactionController.h"
 #include "ce_api.h"
-#include "phNxpExtns.h"
+#include "nfa_api.h"
+#include "nfa_ee_api.h"
+#include "nfa_p2p_api.h"
+#include "nfc_api.h"
+#include "nfc_brcm_defs.h"
 #include "phNxpConfig.h"
+#include "phNxpExtns.h"
+#include "rw_api.h"
 
 #define SAK_VALUE_AT 17
 extern const uint8_t nfca_version_string[];
@@ -187,7 +187,7 @@ extern tNFA_STATUS NxpNfcUpdateEeprom(uint8_t* param, uint8_t len,
 extern uint8_t checkTagNtf;
 extern uint8_t checkCmdSent;
 #endif
-}
+}  // namespace android
 
 /*****************************************************************************
 **
@@ -251,7 +251,7 @@ void disableRfDiscovery();
 void storeLastDiscoveryParams(int technologies_mask, bool enable_lptd,
                               bool reader_mode, bool enable_p2p, bool restart);
 #endif
-}
+}  // namespace android
 
 /*****************************************************************************
 **
@@ -264,16 +264,16 @@ static jmethodID sCachedNfcManagerNotifySeApduReceived;
 static jmethodID sCachedNfcManagerNotifySeMifareAccess;
 static jmethodID sCachedNfcManagerNotifySeEmvCardRemoval;
 static jmethodID sCachedNfcManagerNotifyTargetDeselected;
-static SyncEvent sNfaEnableEvent;  // event for NFA_Enable()
-static SyncEvent sNfaDisableEvent;  // event for NFA_Disable()
+static SyncEvent sNfaEnableEvent;         // event for NFA_Enable()
+static SyncEvent sNfaDisableEvent;        // event for NFA_Disable()
 SyncEvent sNfaEnableDisablePollingEvent;  // event for NFA_EnablePolling(),
                                           // NFA_DisablePolling()
-SyncEvent sNfaSetConfigEvent;  // event for Set_Config....
-SyncEvent sNfaGetConfigEvent;  // event for Get_Config....
+SyncEvent sNfaSetConfigEvent;             // event for Set_Config....
+SyncEvent sNfaGetConfigEvent;             // event for Get_Config....
 
 static bool sIsNfaEnabled = false;
 static bool sDiscoveryEnabled = false;  // is polling or listening
-static bool sPollingEnabled = false;  // is polling for tag?
+static bool sPollingEnabled = false;    // is polling for tag?
 static bool sIsDisabling = false;
 static bool sRfEnabled = false;   // whether RF discovery is enabled
 static bool sSeRfActive = false;  // whether RF with SE is likely active
@@ -387,7 +387,7 @@ static uint8_t sDefaultGuardTime[] = {0x00, 0x11};
 Mutex gTransactionMutex;
 const char* cur_transaction_handle = NULL;
 /*Proprietary cmd sent to HAL to send reader mode flag
-* Last byte of sProprietaryCmdBuf contains ReaderMode flag */
+ * Last byte of sProprietaryCmdBuf contains ReaderMode flag */
 #define PROPRIETARY_CMD_FELICA_READER_MODE 0xFE
 static uint8_t sProprietaryCmdBuf[] = {0xFE, 0xFE, 0xFE, 0x00};
 uint8_t felicaReader_Disc_id;
@@ -523,7 +523,8 @@ typedef struct Transcation_Check {
   int t3thandle;
   bool isInstallRequest;
 #endif
-} Transcation_Check_t;
+}  // namespace android
+Transcation_Check_t;
 static struct nfc_jni_native_data* gNativeData = NULL;
 #if (NXP_EXTNS == TRUE)
 static bool sRfFieldOff = true;
@@ -2692,15 +2693,15 @@ static void nfaConnectionCallback(uint8_t connEvent,
 #if (NXP_EXTNS == TRUE)
   /*******************************************************************************
    **
-  ** Function:        nfcManager_Enablep2p
-  **
-  ** Description:     enable P2P
-  **                  e: JVM environment.
-  **                  o: Java object.
-  **
-  ** Returns:         None.
-  **
-  *******************************************************************************/
+   ** Function:        nfcManager_Enablep2p
+   **
+   ** Description:     enable P2P
+   **                  e: JVM environment.
+   **                  o: Java object.
+   **
+   ** Returns:         None.
+   **
+   *******************************************************************************/
   static void nfcManager_Enablep2p(JNIEnv * e, jobject o, jboolean p2pFlag) {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("Enter :%s  p2pFlag = %d", __func__, p2pFlag);
@@ -3978,9 +3979,9 @@ static void nfaConnectionCallback(uint8_t connEvent,
 
   TheEnd:
     /*
-    * conditional check is added to avoid multiple dicovery cmds
-    * at the time of NFC OFF in progress
-    */
+     * conditional check is added to avoid multiple dicovery cmds
+     * at the time of NFC OFF in progress
+     */
     if ((gGeneralPowershutDown != NFC_MODE_OFF) && bRestartDiscovery)
       startRfDiscovery(true);
 
@@ -5137,13 +5138,13 @@ static void nfaConnectionCallback(uint8_t connEvent,
 
   /*******************************************************************************
    **
-  ** Function:        isDiscoveryStarted
-  **
-  ** Description:     Indicates whether the discovery is started.
-  **
-  ** Returns:         True if discovery is started
-  **
-  *******************************************************************************/
+   ** Function:        isDiscoveryStarted
+   **
+   ** Description:     Indicates whether the discovery is started.
+   **
+   ** Returns:         True if discovery is started
+   **
+   *******************************************************************************/
   bool isDiscoveryStarted() { return sRfEnabled; }
 
   /*******************************************************************************
@@ -5833,8 +5834,9 @@ static void nfaConnectionCallback(uint8_t connEvent,
           "%s: auto_num : %lu  sAutonomousSet : %d  sRfFieldOff : %d", __func__,
           auto_num, sAutonomousSet, sRfFieldOff);
       if ((auto_num == 0x01) && (sAutonomousSet != 1) &&
-          (sRfFieldOff == true) && (state == NFA_SCREEN_STATE_OFF_LOCKED ||
-                                    state == NFA_SCREEN_STATE_OFF_UNLOCKED)) {
+          (sRfFieldOff == true) &&
+          (state == NFA_SCREEN_STATE_OFF_LOCKED ||
+           state == NFA_SCREEN_STATE_OFF_UNLOCKED)) {
         buffer = (uint8_t*)malloc(bufflen * sizeof(uint8_t));
         if (buffer == NULL) {
           DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
@@ -5917,7 +5919,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
    **
    ** Returns:         true if any request pending else false
    **
-  *******************************************************************************/
+   *******************************************************************************/
   bool nfcManager_isRequestPending(void) {
     bool isPending = false;
     if ((transaction_data.current_transcation_state !=
@@ -6531,9 +6533,9 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
 
     if (sReaderModeEnabled && (sTechMask & NFA_TECHNOLOGY_MASK_F)) {
       /*Deactivate RF to go to W4_HOST_SELECT state
-           *Send Select Command to Switch to FrameRF interface from NFCDEP
-        *interface
-           *After NFC-DEP activation with FrameRF Intf, invoke T3T Polling Cmd*/
+       *Send Select Command to Switch to FrameRF interface from NFCDEP
+       *interface
+       *After NFC-DEP activation with FrameRF Intf, invoke T3T Polling Cmd*/
       {
         SyncEventGuard g(sRespCbEvent);
         if (NFA_STATUS_OK !=
@@ -7327,8 +7329,9 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
       if (slotnum == 1) {
         lseek(fileStream, 0, SEEK_SET);
       } else if (slotnum == 2) {
-        lseek(fileStream, sizeof(dualUiccInfo.sUicc1Cntx) +
-                              sizeof(dualUiccInfo.sUicc1TechCapblty),
+        lseek(fileStream,
+              sizeof(dualUiccInfo.sUicc1Cntx) +
+                  sizeof(dualUiccInfo.sUicc1TechCapblty),
               SEEK_SET);
       }
 
@@ -7412,8 +7415,9 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
       if (slotnum == 1) {
         lseek(fileStream, 0, SEEK_SET);
       } else if (slotnum == 2) {
-        lseek(fileStream, sizeof(dualUiccInfo.sUicc1Cntx) +
-                              sizeof(dualUiccInfo.sUicc1TechCapblty),
+        lseek(fileStream,
+              sizeof(dualUiccInfo.sUicc1Cntx) +
+                  sizeof(dualUiccInfo.sUicc1TechCapblty),
               SEEK_SET);
       }
       actualReadCntxLen = read(fileStream, &readCntxLen, 1);
@@ -8332,7 +8336,7 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
    **
    ** Returns:         True/False
    **
-  *******************************************************************************/
+   *******************************************************************************/
   bool nfcManager_sendEmptyDataMsg() {
     if (!nfcFL.nfccFL._NXP_NFCC_EMPTY_DATA_PACKET) {
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
@@ -8359,7 +8363,7 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
    **
    ** Returns:         Pointer to transaction data
    **
-  *******************************************************************************/
+   *******************************************************************************/
   Transcation_Check_t* nfcManager_transactionDetail(void) {
     return &android::transaction_data;
   }
@@ -8371,7 +8375,7 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
    **
    ** Returns:         None
    **
-  *******************************************************************************/
+   *******************************************************************************/
   void nfcManager_getFeatureList() {
     tNFC_chipType chipType;  // = pn553;
     chipType = NFC_GetChipType();
@@ -8386,7 +8390,7 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
    **
    ** Returns:         None .
    **
-  *******************************************************************************/
+   *******************************************************************************/
   void register_signal_handler() {
     struct sigaction sig;
 
@@ -8411,7 +8415,7 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
    **
    ** Returns:         None .
    **
-  *******************************************************************************/
+   *******************************************************************************/
   bool isLowRamDevice() { return sIsLowRamDevice; }
 
 #endif

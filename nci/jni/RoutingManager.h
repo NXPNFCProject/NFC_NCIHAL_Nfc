@@ -36,11 +36,11 @@
  *  Manage the listen-mode routing table.
  */
 #pragma once
-#include "SyncEvent.h"
+#include <vector>
 #include "NfcJniUtil.h"
 #include "RouteDataSet.h"
 #include "SecureElement.h"
-#include <vector>
+#include "SyncEvent.h"
 #include "nfa_api.h"
 #include "nfa_ee_api.h"
 

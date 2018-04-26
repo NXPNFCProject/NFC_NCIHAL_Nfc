@@ -17,12 +17,12 @@
 #include <stdio.h>
 #include <string.h>
 #if !defined(NXPLOG__H_INCLUDED)
-#include "phNxpLog.h"
 #include "phNxpConfig.h"
+#include "phNxpLog.h"
 #endif
-#include <cutils/properties.h>
-#include <base/logging.h>
 #include <android-base/stringprintf.h>
+#include <base/logging.h>
+#include <cutils/properties.h>
 
 using android::base::StringPrintf;
 

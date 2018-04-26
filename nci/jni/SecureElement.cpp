@@ -36,19 +36,19 @@
  *  Communicate with secure elements that are attached to the NFC
  *  controller.
  */
-#include <semaphore.h>
-#include <errno.h>
-#include <ScopedLocalRef.h>
-#include "_OverrideLog.h"
 #include "SecureElement.h"
-#include "config.h"
-#include "PowerSwitch.h"
+#include <ScopedLocalRef.h>
+#include <errno.h>
+#include <semaphore.h>
+#include "DataQueue.h"
 #include "JavaClassConstants.h"
+#include "PeerToPeer.h"
+#include "PowerSwitch.h"
+#include "TransactionController.h"
+#include "_OverrideLog.h"
+#include "config.h"
 #include "nfc_api.h"
 #include "phNxpConfig.h"
-#include "PeerToPeer.h"
-#include "DataQueue.h"
-#include "TransactionController.h"
 
 #if (NXP_EXTNS == TRUE)
 #include "MposManager.h"
@@ -107,7 +107,7 @@ extern bool nfcManager_isNfcDisabling();
 extern int gMaxEERecoveryTimeout;
 extern uint8_t nfcManager_getNfcState();
 #endif
-}
+}  // namespace android
 #if (NXP_EXTNS == TRUE)
 static uint32_t
     nfccStandbytimeout;  // timeout for secelem standby mode detection
@@ -438,7 +438,7 @@ bool SecureElement::initialize(nfc_jni_native_data* native) {
  **
  ** Returns:         True if ok.
  **
-*******************************************************************************/
+ *******************************************************************************/
 bool SecureElement::updateEEStatus() {
   tNFA_STATUS nfaStat;
   mActualNumEe = nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED;
@@ -2389,7 +2389,7 @@ void SecureElement::nfaHciCallback(tNFA_HCI_EVT event,
             << StringPrintf("%s: NFA_HCI_EVENT_RCVD_EVT; source UICC", fn);
         evtSrc = SecureElement::getInstance().getGenericEseId(
             SecureElement::getInstance().EE_HANDLE_0xF4 &
-            ~NFA_HANDLE_GROUP_EE);  // UICC
+            ~NFA_HANDLE_GROUP_EE);                  // UICC
       } else if (eventData->rcvd_evt.pipe == 0x16)  // ESE
       {
         DLOG_IF(INFO, nfc_debug_enabled)
@@ -3054,7 +3054,7 @@ tNFA_HANDLE SecureElement::getEseHandleFromGenericId(jint eseId) {
   // Map the generic id to actual handle
   if (eseId == ESE_ID)  // ESE
   {
-    handle = EE_HANDLE_0xF3;  // 0x4C0;
+    handle = EE_HANDLE_0xF3;    // 0x4C0;
   } else if (eseId == UICC_ID)  // UICC
   {
     handle = SecureElement::getInstance().EE_HANDLE_0xF4;  // 0x402;
@@ -3276,7 +3276,7 @@ tNFA_HANDLE SecureElement::getHciHandleInfo() { return mNfaHciHandle; }
 *******************************************************************************/
 void* eSE_ClearAllPipe_thread_handler(void* data) {
   static const char fn[] = "eSE_ClearAllPipe_thread_handler";
-  uint8_t* host = NULL, nfcee_type = 0;
+  uint8_t *host = NULL, nfcee_type = 0;
   SecureElement& se = SecureElement::getInstance();
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter:", fn);
   if (NULL == data) {
@@ -4072,13 +4072,13 @@ static void nfaVSC_SVDDSyncOnOff(bool type) {
 /*******************************************************************************
  **
  ** Function:        nfaVSC_ForceDwpOnOff
-**
+ **
  ** Description:     starts and stops the dwp channel
  **
  **
  ** Returns:         void.
  **
-*******************************************************************************/
+ *******************************************************************************/
 static void nfaVSC_ForceDwpOnOff(bool type) {
   if (!nfcFL.nfcNxpEse || !nfcFL.eseFL._ESE_DWP_SPI_SYNC_ENABLE) {
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(

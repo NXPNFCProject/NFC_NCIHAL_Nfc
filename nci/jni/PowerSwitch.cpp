@@ -35,11 +35,11 @@
 /*
  *  Adjust the controller's power states.
  */
-#include "_OverrideLog.h"
 #include "PowerSwitch.h"
 #include "NfcJniUtil.h"
-#include "config.h"
 #include "SecureElement.h"
+#include "_OverrideLog.h"
+#include "config.h"
 
 namespace android {
 void doStartupConfig();

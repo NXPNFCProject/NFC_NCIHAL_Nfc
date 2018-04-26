@@ -21,16 +21,16 @@
 **                  operations with PN544 controller.
 **
 *****************************************************************************/
-#include "_OverrideLog.h"
 #include "Pn544Interop.h"
 #include "IntervalTimer.h"
 #include "Mutex.h"
 #include "NfcTag.h"
+#include "_OverrideLog.h"
 namespace android {
 extern void startStopPolling(bool isStartPolling);
 extern void nativeNfcTag_releaseRfInterfaceMutexLock();
 extern void nativeNfcTag_acquireRfInterfaceMutexLock();
-}
+}  // namespace android
 
 /*****************************************************************************
 **
@@ -43,8 +43,8 @@ static const int gIntervalTime =
 static IntervalTimer gTimer;
 static Mutex gMutex;
 static void pn544InteropStartPolling(
-    union sigval);  // callback function for interval timer
-static bool gIsBusy = false;  // is timer busy?
+    union sigval);              // callback function for interval timer
+static bool gIsBusy = false;    // is timer busy?
 static bool gAbortNow = false;  // stop timer during next callback
 
 /*******************************************************************************

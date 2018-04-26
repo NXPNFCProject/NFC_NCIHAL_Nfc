@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#include <malloc.h>
-#include <semaphore.h>
-#include <string.h>
 #include <errno.h>
-#include "_OverrideLog.h"
-#include "NfcJniUtil.h"
-#include "JavaClassConstants.h"
+#include <malloc.h>
 #include <nativehelper/ScopedLocalRef.h>
 #include <nativehelper/ScopedPrimitiveArray.h>
+#include <semaphore.h>
+#include <string.h>
+#include "JavaClassConstants.h"
+#include "NfcJniUtil.h"
+#include "_OverrideLog.h"
 #include "nfa_api.h"
 #include "nfa_p2p_api.h"
 
@@ -297,4 +297,4 @@ int register_com_android_nfc_NativeLlcpConnectionlessSocket(JNIEnv* e) {
                                   gMethods, NELEM(gMethods));
 }
 
-}  // android namespace
+}  // namespace android

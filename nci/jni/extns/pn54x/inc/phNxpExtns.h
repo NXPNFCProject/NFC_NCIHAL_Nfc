@@ -17,10 +17,10 @@
 #ifndef _PHNXPEXTNS_H_
 #define _PHNXPEXTNS_H_
 
-#include <nfa_api.h>
-#include <sys/types.h>
 #include <errno.h>
+#include <nfa_api.h>
 #include <phNfcStatus.h>
+#include <sys/types.h>
 
 NFCSTATUS EXTNS_Init(tNFA_DM_CBACK* p_dm_cback, tNFA_CONN_CBACK* p_conn_cback);
 void EXTNS_Close(void);

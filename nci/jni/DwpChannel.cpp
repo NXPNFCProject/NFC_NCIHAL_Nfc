@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 #include "DwpChannel.h"
-#include "SecureElement.h"
-#include "RoutingManager.h"
 #include <cutils/log.h>
+#include "RoutingManager.h"
+#include "SecureElement.h"
 #include "config.h"
 #include "phNxpConfig.h"
 
@@ -29,7 +29,7 @@ DwpChannel DwpChannel::sDwpChannel;
 namespace android {
 extern void checkforNfceeConfig();
 extern int gMaxEERecoveryTimeout;
-}
+}  // namespace android
 
 /*******************************************************************************
 **
@@ -331,7 +331,7 @@ void doDwpChannel_ForceExit() {
   dwpChannelForceClose = true;
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", fn);
 }
-}
+}  // namespace android
 /*******************************************************************************
 **
 ** Function:        doeSE_JcopDownLoadReset

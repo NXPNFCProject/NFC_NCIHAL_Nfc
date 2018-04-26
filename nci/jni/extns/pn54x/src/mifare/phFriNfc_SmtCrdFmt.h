@@ -108,7 +108,7 @@ typedef struct phFriNfc_sNdefSmtCrdFmt {
   uint8_t* SendRecvBuf;     /* Holds the ack of some intial commands */
   uint16_t SendLength;      /* Holds the length of the data to be sent */
   NFCSTATUS
-      FmtProcStatus; /* Stores the output/result of the format procedure */
+  FmtProcStatus; /* Stores the output/result of the format procedure */
   phFriNfc_sNdefSmtCrdFmt_AddInfo_t AddInfo; /* Stores Additional Information
                                                 needed to format the different
                                                 types of tags*/

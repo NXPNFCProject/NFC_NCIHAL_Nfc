@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <base/logging.h>
 #include <android-base/stringprintf.h>
+#include <base/logging.h>
 
 #include <nfc_api.h>
-#include <rw_api.h>
-#include <signal.h>
-#include <phNfcCompId.h>
-#include <phNxpLog.h>
-#include <phNxpExtns_MifareStd.h>
 #include <nfc_int.h>
 #include <phFriNfc_MifareStdTimer.h>
+#include <phNfcCompId.h>
+#include <phNxpExtns_MifareStd.h>
+#include <phNxpLog.h>
+#include <rw_api.h>
+#include <signal.h>
 
 using android::base::StringPrintf;
 
@@ -47,10 +47,9 @@ phLibNfc_SendRawCmd(phNfc_sTransceiveInfo_t* pTransceiveInfo,
 STATIC NFCSTATUS
 phLibNfc_SendWrt16Cmd(phNfc_sTransceiveInfo_t* pTransceiveInfo,
                       pphNciNfc_TransceiveInfo_t pMappedTranscvIf);
-STATIC NFCSTATUS
-phLibNfc_SendAuthCmd(phNfc_sTransceiveInfo_t* pTransceiveInfo,
-                     phNciNfc_TransceiveInfo_t* tNciTranscvInfo)
-    __attribute__((unused));
+STATIC NFCSTATUS phLibNfc_SendAuthCmd(
+    phNfc_sTransceiveInfo_t* pTransceiveInfo,
+    phNciNfc_TransceiveInfo_t* tNciTranscvInfo) __attribute__((unused));
 STATIC NFCSTATUS phLibNfc_MapCmds(phNciNfc_RFDevType_t RemDevType,
                                   phNfc_sTransceiveInfo_t* pTransceiveInfo,
                                   pphNciNfc_TransceiveInfo_t pMappedTranscvIf);
@@ -61,26 +60,25 @@ STATIC NFCSTATUS
 phLibNfc_ChkAuthCmdMFC(phNfc_sTransceiveInfo_t* pTransceiveInfo, uint8_t* bKey);
 STATIC NFCSTATUS phLibNfc_GetKeyNumberMFC(uint8_t* buffer, uint8_t* bKey);
 STATIC void phLibNfc_CalSectorAddress(uint8_t* Sector_Address);
-STATIC NFCSTATUS
-phNciNfc_MfCreateAuthCmdHdr(phNciNfc_TransceiveInfo_t tTranscvInfo,
-                            uint8_t bBlockAddr, uint8_t* buff,
-                            uint16_t* buffSz);
-STATIC NFCSTATUS
-phNciNfc_MfCreateXchgDataHdr(phNciNfc_TransceiveInfo_t tTranscvInfo,
-                             uint8_t* buff, uint16_t* buffSz);
+STATIC NFCSTATUS phNciNfc_MfCreateAuthCmdHdr(
+    phNciNfc_TransceiveInfo_t tTranscvInfo, uint8_t bBlockAddr, uint8_t* buff,
+    uint16_t* buffSz);
+STATIC NFCSTATUS phNciNfc_MfCreateXchgDataHdr(
+    phNciNfc_TransceiveInfo_t tTranscvInfo, uint8_t* buff, uint16_t* buffSz);
 STATIC NFCSTATUS
 phLibNfc_SendWrt16CmdPayload(phNfc_sTransceiveInfo_t* pTransceiveInfo,
                              pphNciNfc_TransceiveInfo_t pMappedTranscvIf);
-STATIC NFCSTATUS
-phNciNfc_RecvMfResp(phNciNfc_Buff_t* RspBuffInfo, NFCSTATUS wStatus);
+STATIC NFCSTATUS phNciNfc_RecvMfResp(phNciNfc_Buff_t* RspBuffInfo,
+                                     NFCSTATUS wStatus);
 STATIC NFCSTATUS nativeNfcExtns_doTransceive(uint8_t* buff, uint16_t buffSz);
 STATIC NFCSTATUS
 phFriNfc_NdefSmtCrd_Reset__(phFriNfc_sNdefSmtCrdFmt_t* NdefSmtCrdFmt,
                             uint8_t* SendRecvBuffer, uint16_t* SendRecvBuffLen);
-STATIC NFCSTATUS
-phFriNfc_ValidateParams(uint8_t* PacketData, uint32_t* PacketDataLength,
-                        uint8_t Offset, phFriNfc_NdefMap_t* pNdefMap,
-                        uint8_t bNdefReq);
+STATIC NFCSTATUS phFriNfc_ValidateParams(uint8_t* PacketData,
+                                         uint32_t* PacketDataLength,
+                                         uint8_t Offset,
+                                         phFriNfc_NdefMap_t* pNdefMap,
+                                         uint8_t bNdefReq);
 STATIC void Mfc_FormatNdef_Completion_Routine(void* NdefCtxt, NFCSTATUS status);
 STATIC void Mfc_WriteNdef_Completion_Routine(void* NdefCtxt, NFCSTATUS status);
 STATIC void Mfc_ReadNdef_Completion_Routine(void* NdefCtxt, NFCSTATUS status);
@@ -486,10 +484,11 @@ STATIC void Mfc_FormatNdef_Completion_Routine(void* NdefCtxt,
 **                  NFCSTATUS_FAILED   - otherwise
 **
 *******************************************************************************/
-STATIC NFCSTATUS
-phFriNfc_ValidateParams(uint8_t* PacketData, uint32_t* PacketDataLength,
-                        uint8_t Offset, phFriNfc_NdefMap_t* pNdefMap,
-                        uint8_t bNdefReq) {
+STATIC NFCSTATUS phFriNfc_ValidateParams(uint8_t* PacketData,
+                                         uint32_t* PacketDataLength,
+                                         uint8_t Offset,
+                                         phFriNfc_NdefMap_t* pNdefMap,
+                                         uint8_t bNdefReq) {
   if ((pNdefMap == NULL) || (PacketData == NULL) ||
       (PacketDataLength == NULL)) {
     return NFCSTATUS_FAILED;
@@ -817,10 +816,9 @@ Mfc_WrNdefEnd:
 ** Returns          NFCSTATUS_SUCCESS
 **
 *******************************************************************************/
-STATIC NFCSTATUS
-phFriNfc_NdefSmtCrd_Reset__(phFriNfc_sNdefSmtCrdFmt_t* NdefSmtCrdFmt,
-                            uint8_t* SendRecvBuffer,
-                            uint16_t* SendRecvBuffLen) {
+STATIC NFCSTATUS phFriNfc_NdefSmtCrd_Reset__(
+    phFriNfc_sNdefSmtCrdFmt_t* NdefSmtCrdFmt, uint8_t* SendRecvBuffer,
+    uint16_t* SendRecvBuffLen) {
   //    NFCSTATUS status = NFCSTATUS_FAILED;                      /*commented to
   //    eliminate unused variable warning*/
   uint8_t index;
@@ -1119,8 +1117,8 @@ STATIC NFCSTATUS nativeNfcExtns_doTransceive(uint8_t* buff, uint16_t buffSz) {
 **                  NFCSTATUS_FAILED  - Data Reception failed
 **
 *******************************************************************************/
-STATIC NFCSTATUS
-phNciNfc_RecvMfResp(phNciNfc_Buff_t* RspBuffInfo, NFCSTATUS wStatus) {
+STATIC NFCSTATUS phNciNfc_RecvMfResp(phNciNfc_Buff_t* RspBuffInfo,
+                                     NFCSTATUS wStatus) {
   NFCSTATUS status = NFCSTATUS_SUCCESS;
   uint16_t wPldDataSize = 0;
   phNciNfc_ExtnRespId_t RecvdExtnRspId = phNciNfc_e_InvalidRsp;
@@ -1590,9 +1588,8 @@ STATIC NFCSTATUS phLibNfc_GetKeyNumberMFC(uint8_t* buffer, uint8_t* bKey) {
 **                  NFCSTATUS_FAILED   - otherwise
 **
 *******************************************************************************/
-STATIC NFCSTATUS
-phLibNfc_ChkAuthCmdMFC(phNfc_sTransceiveInfo_t* pTransceiveInfo,
-                       uint8_t* bKey) {
+STATIC NFCSTATUS phLibNfc_ChkAuthCmdMFC(
+    phNfc_sTransceiveInfo_t* pTransceiveInfo, uint8_t* bKey) {
   NFCSTATUS wStatus = NFCSTATUS_SUCCESS;
 
   if (NULL != pTransceiveInfo && NULL != pTransceiveInfo->sSendData.buffer &&
@@ -1805,10 +1802,9 @@ phLibNfc_SendWrt16Cmd(phNfc_sTransceiveInfo_t* pTransceiveInfo,
 **                  NFCSTATUS_INVALID_PARAMETER - Otherwise
 **
 *******************************************************************************/
-STATIC NFCSTATUS
-phLibNfc_SendIncDecCmd(phNfc_sTransceiveInfo_t* pTransceiveInfo,
-                       pphNciNfc_TransceiveInfo_t pMappedTranscvIf,
-                       uint8_t IncDecCmd) {
+STATIC NFCSTATUS phLibNfc_SendIncDecCmd(
+    phNfc_sTransceiveInfo_t* pTransceiveInfo,
+    pphNciNfc_TransceiveInfo_t pMappedTranscvIf, uint8_t IncDecCmd) {
   NFCSTATUS wStatus = NFCSTATUS_SUCCESS;
   uint8_t bBuffIdx = 0x00;
 

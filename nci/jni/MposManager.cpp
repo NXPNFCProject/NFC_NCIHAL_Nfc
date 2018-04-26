@@ -1,27 +1,27 @@
 /******************************************************************************
-*
-*  Licensed under the Apache License, Version 2.0 (the "License");
-*  you may not use this file except in compliance with the License.
-*  You may obtain a copy of the License at
-*
-*  http://www.apache.org/licenses/LICENSE-2.0
-*
-*  Unless required by applicable law or agreed to in writing, software
-*  distributed under the License is distributed on an "AS IS" BASIS,
-*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-*  See the License for the specific language governing permissions and
-*  limitations under the License.
-*
-*  Copyright 2018 NXP
-*
-******************************************************************************/
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ *  Copyright 2018 NXP
+ *
+ ******************************************************************************/
 #include "MposManager.h"
 #include <ScopedLocalRef.h>
-#include "_OverrideLog.h"
-#include "phNxpConfig.h"
-#include "config.h"
 #include "SecureElement.h"
 #include "TransactionController.h"
+#include "_OverrideLog.h"
+#include "config.h"
+#include "phNxpConfig.h"
 
 using namespace android;
 
@@ -29,7 +29,7 @@ namespace android {
 extern tNFA_STATUS EmvCo_dosetPoll(jboolean enable);
 extern bool isDiscoveryStarted();
 extern void startRfDiscovery(bool isStart);
-}
+}  // namespace android
 
 MposManager MposManager::mMposMgr;
 int32_t MposManager::mDiscNtfTimeout = 10;

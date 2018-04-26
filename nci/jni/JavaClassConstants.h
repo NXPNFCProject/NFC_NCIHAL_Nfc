@@ -75,4 +75,4 @@ extern const char* gNativeNfcSecureElementClassName;
 extern const char* gNativeNfcAlaClassName;
 extern const char* gNativeNfcMposManagerClassName;
 #endif
-}
+}  // namespace android

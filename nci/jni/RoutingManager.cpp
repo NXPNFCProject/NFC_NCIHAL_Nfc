@@ -36,19 +36,19 @@
  *  Manage the listen-mode routing table.
  */
 
-#include "_OverrideLog.h"
-#include <base/logging.h>
-#include <nativehelper/ScopedLocalRef.h>
-#include <nativehelper/JNIHelp.h>
-#include "config.h"
-#include "JavaClassConstants.h"
 #include "RoutingManager.h"
+#include <base/logging.h>
+#include <nativehelper/JNIHelp.h>
+#include <nativehelper/ScopedLocalRef.h>
+#include "JavaClassConstants.h"
 #include "SecureElement.h"
+#include "_OverrideLog.h"
+#include "config.h"
 #if (NXP_EXTNS == TRUE)
 #include "MposManager.h"
-#include "phNxpConfig.h"
-#include "nfc_api.h"
 #include "nfa_api.h"
+#include "nfc_api.h"
+#include "phNxpConfig.h"
 
 extern int32_t gSeDiscoverycount;
 extern SyncEvent gNfceeDiscCbEvent;
@@ -96,7 +96,7 @@ extern bool nfcManager_getTransanctionRequest(int t3thandle,
                                               bool registerRequest);
 #endif
 #endif
-}
+}  // namespace android
 
 #if (NXP_EXTNS == TRUE)
 static RouteInfo_t gRouteInfo;
@@ -638,29 +638,29 @@ void RoutingManager::setRouting(bool isHCEEnabled) {
     LOG(ERROR) << StringPrintf("Failed to commit routing configuration");
 }
 /*This function takes the default AID route, protocol(ISO-DEP) route and
-* Tech(A&B) route as arguments in following format
-* -----------------------------------------------------------------------------------------------------------
-* | RFU(TechA/B) | RouteLocBit1 | RouteLocBit0 | ScreenOff | ScreenLock |
-* BatteryOff | SwitchOff | SwitchOn |
-* -----------------------------------------------------------------------------------------------------------
-* Route location is set as below
-* ----------------------------------------------
-* | RouteLocBit1 | RouteLocBit0 | RouteLocation|
-* ----------------------------------------------
-* |       0      |      0       |    Host      |
-* ----------------------------------------------
-* |       0      |      1       |    eSE       |
-* ----------------------------------------------
-* |       1      |      0       |    Uicc1     |
-* ----------------------------------------------
-* |       1      |      1       |    Uicc2     | => Valid if DYNAMIC_DUAL_UICC
-* is enabled
-* ----------------------------------------------
-* Based on these parameters, this function creates the protocol route entries/
-* technology route entries
-* which are required to be pushed to listen mode routing table using
-* NFA_EeSetDefaultProtoRouting/TechRouting
-*/
+ * Tech(A&B) route as arguments in following format
+ * -----------------------------------------------------------------------------------------------------------
+ * | RFU(TechA/B) | RouteLocBit1 | RouteLocBit0 | ScreenOff | ScreenLock |
+ * BatteryOff | SwitchOff | SwitchOn |
+ * -----------------------------------------------------------------------------------------------------------
+ * Route location is set as below
+ * ----------------------------------------------
+ * | RouteLocBit1 | RouteLocBit0 | RouteLocation|
+ * ----------------------------------------------
+ * |       0      |      0       |    Host      |
+ * ----------------------------------------------
+ * |       0      |      1       |    eSE       |
+ * ----------------------------------------------
+ * |       1      |      0       |    Uicc1     |
+ * ----------------------------------------------
+ * |       1      |      1       |    Uicc2     | => Valid if DYNAMIC_DUAL_UICC
+ * is enabled
+ * ----------------------------------------------
+ * Based on these parameters, this function creates the protocol route entries/
+ * technology route entries
+ * which are required to be pushed to listen mode routing table using
+ * NFA_EeSetDefaultProtoRouting/TechRouting
+ */
 bool RoutingManager::setDefaultRoute(const int defaultRoute,
                                      const int protoRoute,
                                      const int techRoute) {
@@ -1013,13 +1013,13 @@ void RoutingManager::initialiseTableEntries(void) {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", fn);
 
   /* Defined Protocol Masks
-  * T1T      0x01
-  * T2T      0x02
-  * T3T      0x04
-  * ISO-DEP  0x08
-  * NFC-DEP  0x10
-  * ISO-7816 0x20
-  */
+   * T1T      0x01
+   * T2T      0x02
+   * T3T      0x04
+   * ISO-DEP  0x08
+   * NFC-DEP  0x10
+   * ISO-7816 0x20
+   */
 
   mProtoTableEntries[PROTO_T3T_IDX].protocol = NFA_PROTOCOL_MASK_T3T;
   mProtoTableEntries[PROTO_ISODEP_IDX].protocol = NFA_PROTOCOL_MASK_ISO_DEP;

@@ -15,8 +15,8 @@
  */
 
 #include "JcopManager.h"
-#include "_OverrideLog.h"
 #include <dlfcn.h>
+#include "_OverrideLog.h"
 
 JcopManager* JcopManager::mJcpMgr = NULL;
 static phJcop_Context_t g_mPhJcpCtxt;

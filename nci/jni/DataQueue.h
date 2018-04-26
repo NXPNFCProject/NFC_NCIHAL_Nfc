@@ -19,11 +19,11 @@
  */
 
 #pragma once
-#include "NfcJniUtil.h"
-#include "gki.h"
-#include "Mutex.h"
 #include <cstdlib>
 #include <list>
+#include "Mutex.h"
+#include "NfcJniUtil.h"
+#include "gki.h"
 
 class DataQueue {
  public:
@@ -90,7 +90,7 @@ class DataQueue {
  private:
   struct tHeader {
     uint16_t mDataLen;  // number of octets of data
-    uint16_t mOffset;  // offset of the first octet of data
+    uint16_t mOffset;   // offset of the first octet of data
   };
   typedef std::list<tHeader*> Queue;
 

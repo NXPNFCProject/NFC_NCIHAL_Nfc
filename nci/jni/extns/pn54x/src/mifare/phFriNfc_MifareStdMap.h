@@ -15,16 +15,16 @@
  */
 
 /*
-* NFC Ndef Mapping For Remote Devices.
-*/
+ * NFC Ndef Mapping For Remote Devices.
+ */
 
 #ifndef PHFRINFC_MIFARESTDMAP_H
 #define PHFRINFC_MIFARESTDMAP_H
 
 #include <phFriNfc.h>
+#include <phFriNfc_NdefMap.h>
 #include <phNfcStatus.h>
 #include <phNfcTypes.h>
-#include <phFriNfc_NdefMap.h>
 
 /* NFC Device Major and Minor Version numbers */
 /* !!CAUTION!! these needs to be updated periodically.Major and Minor version

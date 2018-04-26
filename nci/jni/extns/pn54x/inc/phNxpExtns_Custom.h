@@ -17,10 +17,10 @@
 #ifndef _PHNXPEXTNS_CUSTOM_H_
 #define _PHNXPEXTNS_CUSTOM_H_
 
-#include <nfa_api.h>
-#include <sys/types.h>
 #include <errno.h>
+#include <nfa_api.h>
 #include <phNfcStatus.h>
+#include <sys/types.h>
 
 /*
  * TLV structure

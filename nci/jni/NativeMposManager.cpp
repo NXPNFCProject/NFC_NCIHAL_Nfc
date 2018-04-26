@@ -15,8 +15,8 @@
  *  Copyright 2018 NXP
  *
  ******************************************************************************/
-#include "MposManager.h"
 #include "JavaClassConstants.h"
+#include "MposManager.h"
 #include "_OverrideLog.h"
 
 namespace android {

@@ -15,10 +15,10 @@
  */
 
 /*include files*/
-#include <phNfcTypes.h>
-#include <phNfcStatus.h>
-#include <phNciNfcTypes.h>
 #include <phFriNfc_MifareStdTimer.h>
+#include <phNciNfcTypes.h>
+#include <phNfcStatus.h>
+#include <phNfcTypes.h>
 #include <phNxpLog.h>
 
 STATIC NFCSTATUS

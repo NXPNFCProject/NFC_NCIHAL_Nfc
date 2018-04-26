@@ -20,9 +20,9 @@
  */
 
 #include <phFriNfc_MifStdFormat.h>
+#include <phFriNfc_MifareStdMap.h>
 #include <phNfcCompId.h>
 #include <phNxpExtns_MifareStd.h>
-#include <phFriNfc_MifareStdMap.h>
 
 /**************** local methods used in this file only ************************/
 static NFCSTATUS phFriNfc_MifStd_H_RdABlock(phFriNfc_NdefMap_t* NdefMap);

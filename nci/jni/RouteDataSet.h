@@ -40,8 +40,8 @@
 #include "NfcJniUtil.h"
 #include "nfa_api.h"
 //#include <libxml/parser.h>
-#include <vector>
 #include <string>
+#include <vector>
 
 /*****************************************************************************
 **

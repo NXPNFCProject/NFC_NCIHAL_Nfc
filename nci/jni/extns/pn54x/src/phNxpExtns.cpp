@@ -18,12 +18,12 @@
 #include <sys/ioctl.h>
 #include <sys/time.h>
 
-#include <base/logging.h>
 #include <android-base/stringprintf.h>
+#include <base/logging.h>
 
+#include <phNxpConfig.h>
 #include <phNxpExtns_MifareStd.h>
 #include <phNxpLog.h>
-#include <phNxpConfig.h>
 
 using android::base::StringPrintf;
 

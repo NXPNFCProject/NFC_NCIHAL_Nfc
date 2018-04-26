@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#include "_OverrideLog.h"
 #include "NfcJniUtil.h"
+#include "_OverrideLog.h"
 //#include "NfcAdaptation.h"
-#include "PeerToPeer.h"
 #include "JavaClassConstants.h"
+#include "PeerToPeer.h"
 
 #include <base/logging.h>
 #include <nativehelper/JNIHelp.h>

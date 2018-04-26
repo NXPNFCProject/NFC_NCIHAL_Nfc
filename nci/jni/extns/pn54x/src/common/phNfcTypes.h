@@ -18,9 +18,9 @@
 #define PHNFCTYPES_H
 
 #include <stdint.h>
-#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #ifndef true
@@ -143,14 +143,13 @@ typedef struct phNfc_sSupProtocol {
   unsigned int Felica : 1;      /* Protocol Felica. */
   unsigned int NFC : 1;         /* Protocol NFC. */
   unsigned int Jewel : 1;       /* Protocol Innovision Jewel Tag. or Any T1T*/
-  unsigned int
-      Desfire : 1;          /* true indicates specified feature (mapping
-                               or formatting)for DESFire tag supported else not
-                               supported.*/
-  unsigned int Kovio : 1;   /* Protocol Kovio Tag*/
-  unsigned int HID : 1;     /* Protocol HID(Picopass) Tag*/
-  unsigned int Bprime : 1;  /* Protocol BPrime Tag*/
-  unsigned int EPCGEN2 : 1; /* Protocol EPCGEN2 Tag*/
+  unsigned int Desfire : 1;     /* true indicates specified feature (mapping
+                                   or formatting)for DESFire tag supported else not
+                                   supported.*/
+  unsigned int Kovio : 1;       /* Protocol Kovio Tag*/
+  unsigned int HID : 1;         /* Protocol HID(Picopass) Tag*/
+  unsigned int Bprime : 1;      /* Protocol BPrime Tag*/
+  unsigned int EPCGEN2 : 1;     /* Protocol EPCGEN2 Tag*/
 } phNfc_sSupProtocol_t;
 
 /*
@@ -211,11 +210,11 @@ typedef union phNfc_uRemoteDevInfo {
 } phNfc_uRemoteDevInfo_t;
 
 /*
-*
-*  The RF Device Type List is used to identify the type of
-*  remote device that is discovered and connected.
-*
-*/
+ *
+ *  The RF Device Type List is used to identify the type of
+ *  remote device that is discovered and connected.
+ *
+ */
 
 typedef enum phNfc_eRFDevType {
   phNfc_eUnknown_DevType = 0x00U,

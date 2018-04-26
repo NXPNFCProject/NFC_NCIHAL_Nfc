@@ -265,9 +265,8 @@ typedef union phNciNfc_TagCmdList {
 /* Transceive info */
 typedef struct phNciNfc_TransceiveInfo {
   phNciNfc_TagCmdList_t uCmd; /* Technology Specific commands */
-  uint8_t
-      bAddr; /* Start address to perform operation,Valid for T1T T2T T3T and
-                some Propriatery tags */
+  uint8_t bAddr; /* Start address to perform operation,Valid for T1T T2T T3T and
+                    some Propriatery tags */
   uint8_t bNumBlock;         /* Number of blocks */
   uint16_t wTimeout;         /* Timeout value to be used during transceive */
   phNciNfc_Data_t tSendData; /* Buffer information for sending data */
@@ -275,6 +274,6 @@ typedef struct phNciNfc_TransceiveInfo {
   /* Details for Felica To be Added if Check and Update supported */
 } phNciNfc_TransceiveInfo_t,
     *pphNciNfc_TransceiveInfo_t; /* pointer to struct #phNciNfc_TransceiveInfo_t
-                                    */
+                                  */
 
 #endif /* end of #ifndef PHNCINFCTYPES_H */

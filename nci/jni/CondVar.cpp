@@ -19,10 +19,10 @@
  */
 
 #include "CondVar.h"
-#include "NfcJniUtil.h"
-#include <errno.h>
-#include <base/logging.h>
 #include <android-base/stringprintf.h>
+#include <base/logging.h>
+#include <errno.h>
+#include "NfcJniUtil.h"
 
 using android::base::StringPrintf;
 /*******************************************************************************

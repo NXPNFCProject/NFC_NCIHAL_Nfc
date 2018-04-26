@@ -19,8 +19,8 @@
  */
 
 #include <phFriNfc_MifStdFormat.h>
-#include <phNxpExtns_MifareStd.h>
 #include <phNfcCompId.h>
+#include <phNxpExtns_MifareStd.h>
 #include <phNxpLog.h>
 
 /* Function prototype declarations */
@@ -293,12 +293,12 @@ static void phFriNfc_MfStd_H_FillSendBuf(
       PH_FRINFC_SMTCRDFMT_MSTD_MADSECT_KEYA_ACS_BIT_1K, /* MAD key A,
                                                   Access bits and GPB of MAD
                                                   sector */
-      MADSectTr2k
-          [] = PH_FRINFC_SMTCRDFMT_MSTD_MADSECT_KEYA_ACS_BIT_2K, /* MAD key A,
-                                                           Access bits and GPB
-                                                           of MAD sector */
-      MADSectTr4k
-          [] = PH_FRINFC_SMTCRDFMT_MSTD_MADSECT_KEYA_ACS_BIT_4K,   /* MAD key A,
+      MADSectTr2k[] =
+          PH_FRINFC_SMTCRDFMT_MSTD_MADSECT_KEYA_ACS_BIT_2K, /* MAD key A,
+                                                      Access bits and GPB
+                                                      of MAD sector */
+      MADSectTr4k[] =
+          PH_FRINFC_SMTCRDFMT_MSTD_MADSECT_KEYA_ACS_BIT_4K,        /* MAD key A,
                                                                      Access bits
                                                                      and GPB of
                                                                      MAD sector */
@@ -307,10 +307,10 @@ static void phFriNfc_MfStd_H_FillSendBuf(
                                                                    Access bits
                                                                    and GPB of
                                                                    NFC sector */
-      NDEFMsgTLV
-          [16] = {0x03, 0x00, 0xFE, 0x00, 0x00, 0x00, /* NDEF message TLV
-                                                         (INITIALISED state) */
-                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+      NDEFMsgTLV[16] =
+          {0x03, 0x00, 0xFE, 0x00, 0x00, 0x00, /* NDEF message TLV
+                                                  (INITIALISED state) */
+           0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
           MADBlk[16] = {0x0F, 0x00, 0x03, 0xE1, 0x03, 0xE1, 0x03, 0xE1,
                         0x03, 0xE1, 0x03, 0xE1, 0x03, 0xE1, 0x03, 0xE1};
   /* Block number in send buffer */

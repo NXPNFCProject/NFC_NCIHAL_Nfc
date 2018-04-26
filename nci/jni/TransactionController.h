@@ -16,8 +16,8 @@
  *
  ******************************************************************************/
 #pragma once
-#include <semaphore.h>
 #include <NfcJniUtil.h>
+#include <semaphore.h>
 #include "nfa_api.h"
 
 #define TRANSACTION_REQUESTOR(name) name
@@ -99,7 +99,7 @@ class transactionController {
                                            // schedule pending transaction
                                            // handler thread
   Transcation_Check_t*
-      pTransactionDetail;  // transactionDetail: holds last transaction detail
+      pTransactionDetail;    // transactionDetail: holds last transaction detail
   eTransactionId requestor;  // requestor: Identifier of transaction trigger
 
   transactionController(void);  // Constructor

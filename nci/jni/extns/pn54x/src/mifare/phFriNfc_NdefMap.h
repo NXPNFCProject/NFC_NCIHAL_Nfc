@@ -23,9 +23,9 @@
 #define PHFRINFC_NDEFMAP_H
 
 /*include files*/
-#include <phNfcTypes.h>
-#include <phNfcStatus.h>
 #include <phFriNfc.h>
+#include <phNfcStatus.h>
+#include <phNfcTypes.h>
 #include <phNfcTypes_Mapping.h>
 
 /*  NDEF Mapping Component
