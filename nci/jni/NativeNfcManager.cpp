@@ -466,6 +466,9 @@ static void nfaConnectionCallback(uint8_t connEvent,
         // listen mode then it is likely for an SE transaction.
         // Send the RF Event.
         if (isListenMode(eventData->activated)) {
+#if(NXP_EXTNS == TRUE)
+          SecureElement::getInstance().notifyListenModeState (true);
+#endif
           sSeRfActive = true;
         }
       }
@@ -500,6 +503,9 @@ static void nfaConnectionCallback(uint8_t connEvent,
           (eventData->deactivated.type == NFA_DEACTIVATE_TYPE_DISCOVERY)) {
         if (sSeRfActive) {
           sSeRfActive = false;
+#if(NXP_EXTNS == TRUE)
+          SecureElement::getInstance().notifyListenModeState (false);
+#endif
         } else if (sP2pActive) {
           sP2pActive = false;
           // Make sure RF field events are re-enabled
@@ -737,6 +743,10 @@ static jboolean nfcManager_initNativeStruc(JNIEnv* e, jobject o) {
   gCachedNfcManagerNotifyRfFieldDeactivated =
       e->GetMethodID(cls.get(), "notifyRfFieldDeactivated", "()V");
 
+  gCachedNfcManagerNotifySeListenActivated =
+      e->GetMethodID(cls.get(),"notifySeListenActivated", "()V");
+  gCachedNfcManagerNotifySeListenDeactivated =
+      e->GetMethodID(cls.get(),"notifySeListenDeactivated", "()V");
   if (nfc_jni_cache_object(e, gNativeNfcTagClassName, &(nat->cached_NfcTag)) ==
       -1) {
     LOG(ERROR) << StringPrintf("%s: fail cache NativeNfcTag", __func__);
@@ -821,7 +831,11 @@ void nfaDeviceManagementCallback(uint8_t dmEvent,
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
           "%s: NFA_DM_RF_FIELD_EVT; status=0x%X; field status=%u", __func__,
           eventData->rf_field.status, eventData->rf_field.rf_field_status);
-      if (!sP2pActive && eventData->rf_field.status == NFA_STATUS_OK) {
+#if(NXP_EXTNS == TRUE)
+      SecureElement::getInstance().notifyRfFieldEvent (
+                    eventData->rf_field.rf_field_status == NFA_DM_RF_FIELD_ON);
+#endif
+if (!sP2pActive && eventData->rf_field.status == NFA_STATUS_OK) {
         struct nfc_jni_native_data* nat = getNative(NULL, NULL);
         JNIEnv* e = NULL;
         ScopedAttach attach(nat->vm, &e);

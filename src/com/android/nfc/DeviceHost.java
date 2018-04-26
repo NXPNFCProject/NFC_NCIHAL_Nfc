@@ -49,7 +49,15 @@ public interface DeviceHost {
         public void onHostCardEmulationActivated(int technology);
         public void onHostCardEmulationData(int technology, byte[] data);
         public void onHostCardEmulationDeactivated(int technology);
+        /**
+         * Notifies that the SE has been activated in listen mode
+         */
+        public void onSeListenActivated();
 
+        /**
+         * Notifies that the SE has been deactivated
+         */
+        public void onSeListenDeactivated();
         /**
          * Notifies P2P Device detected, to activate LLCP link
          */

@@ -382,7 +382,19 @@ public class NfcService implements DeviceHostListener {
             mCardEmulationManager.onHostCardEmulationActivated(technology);
         }
     }
+    @Override
+    public void onSeListenActivated() {
+        if (mIsHceCapable) {
+            mCardEmulationManager.onHostCardEmulationActivated(TagTechnology.NFC_A);
+        }
+    }
 
+    @Override
+    public void onSeListenDeactivated() {
+        if( mIsHceCapable) {
+            mCardEmulationManager.onHostCardEmulationDeactivated(TagTechnology.NFC_A);
+        }
+    }
     @Override
     public void onHostCardEmulationData(int technology, byte[] data) {
         if (mCardEmulationManager != null) {

@@ -341,6 +341,17 @@ bool getAtr(jint seID, uint8_t* recvBuffer, int32_t *recvBufferSize);
  *******************************************************************************/
 bool SecEle_Modeset(uint8_t type);
 /*******************************************************************************
+ **
+ ** Function:        notifyRfFieldEvent
+ **
+ ** Description:     Notify the NFC service about RF field events from the stack.
+ **                  isActive: Whether any secure element is activated.
+ **
+ ** Returns:         None
+ **
+*******************************************************************************/
+    void notifyRfFieldEvent (bool isActive);
+/*******************************************************************************
 **
 ** Function:        initializeEeHandle
 **
@@ -394,6 +405,17 @@ bool isRfFieldOn();
 tNFA_EE_INFO *findEeByHandle (tNFA_HANDLE eeHandle);
 /*******************************************************************************
 **
+** Function:        notifyListenModeState
+**
+** Description:     Notify the NFC service about whether the SE was activated
+**                  in listen mode.
+**                  isActive: Whether the secure element is activated.
+**
+** Returns:         None
+**
+*******************************************************************************/
+void notifyListenModeState (bool isActivated);
+/*******************************************************************************
 ** Function:        getActiveEeHandle
 **
 ** Description:     Get the handle of the active execution environment.

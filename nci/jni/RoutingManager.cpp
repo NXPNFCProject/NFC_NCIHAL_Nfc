@@ -661,6 +661,7 @@ void RoutingManager::nfaEeCallback(tNFA_EE_EVT event,
   RoutingManager& routingManager = RoutingManager::getInstance();
 #if (NXP_EXTNS == TRUE)
   SecureElement& se = SecureElement::getInstance();
+  tNFA_EE_DISCOVER_REQ info = eventData->discover_req;
 #endif
 
   switch (event) {

@@ -283,7 +283,6 @@ void MposManager::etsiInitConfig()
   } else if ((swp_rdr_req_ntf_info.swp_rd_state == STATE_SE_RDR_MODE_STOP_CONFIG)
       && (swp_rdr_req_ntf_info.swp_rd_req_current_info.src
           == swp_rdr_req_ntf_info.swp_rd_req_info.src)) {
-    //pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(etsiReader));
     swp_rdr_req_ntf_info.swp_rd_state = STATE_SE_RDR_MODE_STOP_IN_PROGRESS;
     DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: new ETSI state : STATE_SE_RDR_MODE_STOP_IN_PROGRESS", __func__);

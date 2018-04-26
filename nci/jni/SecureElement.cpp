@@ -239,6 +239,60 @@ bool SecureElement::isRfFieldOn() {
 }
 /*******************************************************************************
 **
+** Function:        notifyListenModeState
+**
+** Description:     Notify the NFC service about whether the SE was activated
+**                  in listen mode.
+**                  isActive: Whether the secure element is activated.
+**
+** Returns:         None
+**
+*******************************************************************************/
+void SecureElement::notifyListenModeState (bool isActivated) {
+    static const char fn [] = "SecureElement::notifyListenMode";
+
+    DLOG_IF(INFO, nfc_debug_enabled)
+                << StringPrintf("%s: enter; listen mode active=%u", fn, isActivated);
+
+    JNIEnv* e = NULL;
+    if (mNativeData == NULL)
+    {
+        DLOG_IF(ERROR, nfc_debug_enabled)
+                << StringPrintf("%s: mNativeData is null", fn);
+        return;
+    }
+
+    ScopedAttach attach(mNativeData->vm, &e);
+    if (e == NULL)
+    {
+        DLOG_IF(ERROR, nfc_debug_enabled)
+                << StringPrintf("%s: jni env is null", fn);
+        return;
+    }
+
+    mActivatedInListenMode = isActivated;
+
+    if (mNativeData != NULL) {
+        if (isActivated) {
+            e->CallVoidMethod (mNativeData->manager, android::gCachedNfcManagerNotifySeListenActivated);
+        }
+        else {
+            e->CallVoidMethod (mNativeData->manager, android::gCachedNfcManagerNotifySeListenDeactivated);
+        }
+    }
+
+    if (e->ExceptionCheck())
+    {
+        e->ExceptionClear();
+        DLOG_IF(ERROR, nfc_debug_enabled)
+                << StringPrintf("%s: fail notify", fn);
+    }
+
+    DLOG_IF(INFO, nfc_debug_enabled)
+                << StringPrintf("%s: exit", fn);
+}
+/*******************************************************************************
+**
 ** Function:        notifyTransactionListenersOfAid
 **
 ** Description:     Notify the NFC service about a transaction event from
@@ -433,7 +487,42 @@ TheEnd:
 
     return decoded_length;
 }
+/*******************************************************************************
+**
+** Function:        notifyRfFieldEvent
+**
+** Description:     Notify the NFC service about RF field events from the stack.
+**                  isActive: Whether any secure element is activated.
+**
+** Returns:         None
+**
+*******************************************************************************/
+void SecureElement::notifyRfFieldEvent (bool isActive)
+{
+    static const char fn [] = "SecureElement::notifyRfFieldEvent";
+    DLOG_IF(ERROR, nfc_debug_enabled)
+                << StringPrintf("%s: enter; is active=%u", fn, isActive);
 
+
+    mMutex.lock();
+    int ret = clock_gettime (CLOCK_MONOTONIC, &mLastRfFieldToggle);
+    if (ret == -1) {
+        DLOG_IF(ERROR, nfc_debug_enabled)
+                << StringPrintf("%s: clock_gettime failed", fn);
+        // There is no good choice here...
+    }
+    if (isActive)
+    {
+        mRfFieldIsOn = true;
+    }
+    else
+    {
+        mRfFieldIsOn = false;
+    }
+    mMutex.unlock();
+    DLOG_IF(ERROR, nfc_debug_enabled)
+                << StringPrintf("%s: exit", fn);
+}
 /*******************************************************************************
 **
 ** Function:        nfaHciCallback
