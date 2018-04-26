@@ -1684,7 +1684,7 @@ bool P2pServer::registerWithStack()
        LOG(ERROR) << StringPrintf("%s: fail set LLCP config; error=0x%X", fn, stat);
 
    if (sSnepServiceName.compare(mServiceName) == 0)
-       serverSap = LLCP_SAP_SNEP; //LLCP_SAP_SNEP == 4
+       serverSap = 4; //LLCP_SAP_SNEP == 4
 
    {
        SyncEventGuard guard (mRegServerEvent);

@@ -2405,11 +2405,11 @@ static jboolean nfcManager_doInitialize (JNIEnv* e, jobject o)
                     if(gIsDtaEnabled == true){
                         uint8_t configData = 0;
                         configData = 0x01;    /**< Poll NFC-DEP : Highest Available Bit Rates */
-                        NFA_SetConfig(NFC_PMID_BITR_NFC_DEP, sizeof(uint8_t), &configData);
+                        NFA_SetConfig(NCI_PARAM_ID_BITR_NFC_DEP, sizeof(uint8_t), &configData);
                         configData = 0x0B;    /**< Listen NFC-DEP : Waiting Time */
                         NFA_SetConfig(NFC_PMID_WT, sizeof(uint8_t), &configData);
                         configData = 0x0F;    /**< Specific Parameters for NFC-DEP RF Interface */
-                        NFA_SetConfig(NFC_PMID_NFC_DEP_OP, sizeof(uint8_t), &configData);
+                        NFA_SetConfig(NCI_PARAM_ID_NFC_DEP_OP, sizeof(uint8_t), &configData);
                     }
 
                 struct nfc_jni_native_data *nat = getNative(e, o);
@@ -5790,7 +5790,7 @@ static void nfcManager_doSetScreenState (JNIEnv* e, jobject o, jint screen_state
     long bufflen = 260;
     long retlen = 0;
     int isfound;
-    uint8_t  discovry_param = NFA_LISTEN_DH_NFCEE_ENABLE_MASK | NFA_POLLING_DH_ENABLE_MASK;
+    uint8_t  discovry_param = NCI_LISTEN_DH_NFCEE_ENABLE_MASK | NCI_POLLING_DH_ENABLE_MASK;
     uint8_t state = (screen_state_mask & NFA_SCREEN_STATE_MASK);
 
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter state = %d", __func__, state);
@@ -5836,22 +5836,22 @@ static void nfcManager_doSetScreenState (JNIEnv* e, jobject o, jint screen_state
 
         if( state == NFA_SCREEN_STATE_OFF_LOCKED || state == NFA_SCREEN_STATE_OFF_UNLOCKED) {
             // disable both poll and listen on DH 0x02
-            discovry_param = NFA_POLLING_DH_DISABLE_MASK | NFA_LISTEN_DH_NFCEE_DISABLE_MASK;
+            discovry_param = NCI_POLLING_DH_DISABLE_MASK | NCI_LISTEN_DH_NFCEE_DISABLE_MASK;
          }
 
         if( state == NFA_SCREEN_STATE_ON_LOCKED) {
             // disable poll and enable listen on DH 0x00
-            discovry_param = (screen_state_mask & NFA_SCREEN_POLLING_TAG_MASK) ? (NFA_LISTEN_DH_NFCEE_ENABLE_MASK | NFA_POLLING_DH_ENABLE_MASK):
-                (NFA_POLLING_DH_DISABLE_MASK | NFA_LISTEN_DH_NFCEE_ENABLE_MASK);
+            discovry_param = (screen_state_mask & NFA_SCREEN_POLLING_TAG_MASK) ? (NCI_LISTEN_DH_NFCEE_ENABLE_MASK | NCI_POLLING_DH_ENABLE_MASK):
+                (NCI_POLLING_DH_DISABLE_MASK | NCI_LISTEN_DH_NFCEE_ENABLE_MASK);
          }
 
         if( state == NFA_SCREEN_STATE_ON_UNLOCKED) {
            // enable both poll and listen on DH 0x01
-           discovry_param = NFA_LISTEN_DH_NFCEE_ENABLE_MASK | NFA_POLLING_DH_ENABLE_MASK;
+           discovry_param = NCI_LISTEN_DH_NFCEE_ENABLE_MASK | NCI_POLLING_DH_ENABLE_MASK;
         }
 
         SyncEventGuard guard (sNfaSetConfigEvent);
-        status = NFA_SetConfig(NFC_PMID_CON_DISCOVERY_PARAM, NCI_PARAM_LEN_CON_DISCOVERY_PARAM, &discovry_param);
+        status = NFA_SetConfig(NCI_PARAM_ID_CON_DISCOVERY_PARAM, NCI_PARAM_LEN_CON_DISCOVERY_PARAM, &discovry_param);
         if (status == NFA_STATUS_OK) {
             sNfaSetConfigEvent.wait ();
             DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf ("%s: Disabled RF field events", __FUNCTION__);

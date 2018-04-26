@@ -402,7 +402,7 @@ static jbyteArray nativeNfcTag_doRead (JNIEnv* e, jobject o)
         {
             SyncEventGuard g (sReadEvent);
             sIsReadingNdefMessage = true;
-            if (sCurrentConnectedTargetProtocol == NFA_PROTOCOL_MIFARE)
+            if (sCurrentConnectedTargetProtocol == NFC_PROTOCOL_MIFARE)
             {
                 status = EXTNS_MfcReadNDef ();
             }
@@ -676,7 +676,7 @@ static jboolean nativeNfcTag_doWrite (JNIEnv* e, jobject, jbyteArray buf)
             DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: try format", __func__);
             sem_init (&sFormatSem, 0, 0);
             sFormatOk = false;
-            if (sCurrentConnectedTargetProtocol == NFA_PROTOCOL_MIFARE)
+            if (sCurrentConnectedTargetProtocol == NFC_PROTOCOL_MIFARE)
             {
 #if(NXP_EXTNS == TRUE)
                 isMifare = true;
@@ -713,7 +713,7 @@ static jboolean nativeNfcTag_doWrite (JNIEnv* e, jobject, jbyteArray buf)
         NDEF_MsgInit (buffer, maxBufferSize, &curDataSize);
         status = NDEF_MsgAddRec (buffer, maxBufferSize, &curDataSize, NDEF_TNF_EMPTY, NULL, 0, NULL, 0, NULL, 0);
         DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: create empty ndef msg; status=%u; size=%u", __func__, status, curDataSize);
-        if (sCurrentConnectedTargetProtocol == NFA_PROTOCOL_MIFARE)
+        if (sCurrentConnectedTargetProtocol == NFC_PROTOCOL_MIFARE)
         {
             status = EXTNS_MfcWriteNDef (buffer, curDataSize);
         }
@@ -725,7 +725,7 @@ static jboolean nativeNfcTag_doWrite (JNIEnv* e, jobject, jbyteArray buf)
     else
     {
         DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_RwWriteNDef", __func__);
-        if (sCurrentConnectedTargetProtocol == NFA_PROTOCOL_MIFARE)
+        if (sCurrentConnectedTargetProtocol == NFC_PROTOCOL_MIFARE)
         {
             status = EXTNS_MfcWriteNDef (p_data, bytes.size());
         }
@@ -985,7 +985,7 @@ static int reSelect (tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded)
         }
 
 #if (NFC_NXP_NON_STD_CARD == TRUE)
-        if(!retry_cnt && (natTag.mTechLibNfcTypes[handle] != NFA_PROTOCOL_MIFARE))
+        if(!retry_cnt && (natTag.mTechLibNfcTypes[handle] != NFC_PROTOCOL_MIFARE))
         {
             DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Cashbee detected", __func__);
             natTag.mCashbeeDetected = true;
@@ -1377,7 +1377,7 @@ static jint nativeNfcTag_doReconnect (JNIEnv*, jobject)
         retCode = reSelect(NFA_INTERFACE_ISO_DEP, false);
     else if (sCurrentConnectedTargetProtocol == NFA_PROTOCOL_T2T)
         retCode = reSelect(NFA_INTERFACE_FRAME, false);
-    else if (sCurrentConnectedTargetProtocol == NFA_PROTOCOL_MIFARE)
+    else if (sCurrentConnectedTargetProtocol == NFC_PROTOCOL_MIFARE)
         retCode = reSelect(NFA_INTERFACE_MIFARE, false);
 
 TheEnd:
@@ -1464,7 +1464,7 @@ void nativeNfcTag_doTransceiveStatus (tNFA_STATUS status, uint8_t* buf, uint32_t
     SyncEventGuard g (sTransceiveEvent);
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: data len=%d, cur connection handle =%d", __func__, bufLen, sCurrentConnectedHandle);
 
-    if (sCurrentConnectedTargetProtocol == NFA_PROTOCOL_MIFARE)
+    if (sCurrentConnectedTargetProtocol == NFC_PROTOCOL_MIFARE)
     {
        if (EXTNS_GetCallBackFlag () == false)
        {
@@ -1479,7 +1479,7 @@ void nativeNfcTag_doTransceiveStatus (tNFA_STATUS status, uint8_t* buf, uint32_t
         return;
     }
     sRxDataStatus = status;
-    if (sRxDataStatus == NFA_STATUS_OK || sRxDataStatus == NFA_STATUS_CONTINUE)
+    if (sRxDataStatus == NFA_STATUS_OK || sRxDataStatus == NFC_STATUS_CONTINUE)
         sRxDataBuffer.append (buf, bufLen);
 
     if (sRxDataStatus == NFA_STATUS_OK)
@@ -1525,7 +1525,7 @@ static jbyteArray nativeNfcTag_doTransceive (JNIEnv* e, jobject o, jbyteArray da
 #if(NXP_EXTNS == TRUE && NFC_NXP_NON_STD_CARD == TRUE)
     bool fNeedToSwitchBack = false;
 #endif
-    if (sCurrentConnectedTargetProtocol == NFA_PROTOCOL_MIFARE)
+    if (sCurrentConnectedTargetProtocol == NFC_PROTOCOL_MIFARE)
     {
         if( doReconnectFlag == 0)
         {
@@ -1582,7 +1582,7 @@ static jbyteArray nativeNfcTag_doTransceive (JNIEnv* e, jobject o, jbyteArray da
             sWaitingForTransceive = true;
             sRxDataStatus = NFA_STATUS_OK;
             sRxDataBuffer.clear ();
-            if (sCurrentConnectedTargetProtocol == NFA_PROTOCOL_MIFARE)
+            if (sCurrentConnectedTargetProtocol == NFC_PROTOCOL_MIFARE)
             {
                 status = EXTNS_MfcTransceive (buf, bufLen);
             }
@@ -1635,7 +1635,7 @@ static jbyteArray nativeNfcTag_doTransceive (JNIEnv* e, jobject o, jbyteArray da
                 nativeNfcTag_doReconnect (NULL, NULL);
                 DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: reconnect finish", __func__);
             }
-            else if (sCurrentConnectedTargetProtocol == NFA_PROTOCOL_MIFARE)
+            else if (sCurrentConnectedTargetProtocol == NFC_PROTOCOL_MIFARE)
             {
                 uint32_t transDataLen = sRxDataBuffer.size ();
                 uint8_t *transData = (uint8_t *)sRxDataBuffer.data ();
@@ -1723,7 +1723,7 @@ static jint nativeNfcTag_doGetNdefType (JNIEnv*, jobject, jint libnfcType, jint 
     {
         ndefType = NDEF_TYPE4_TAG;
     }
-    else if(NFA_PROTOCOL_MIFARE == libnfcType)
+    else if(NFC_PROTOCOL_MIFARE == libnfcType)
     {
         ndefType = NDEF_MIFARE_CLASSIC_TAG;
     }
@@ -1867,7 +1867,7 @@ static jint nativeNfcTag_doCheckNdef (JNIEnv* e, jobject o, jintArray ndefInfo)
         sIsCheckingNDef = false;
         return NFA_STATUS_FAILED;
     }
-    if (sCurrentConnectedTargetProtocol == NFA_PROTOCOL_MIFARE)
+    if (sCurrentConnectedTargetProtocol == NFC_PROTOCOL_MIFARE)
     {
         nativeNfcTag_doReconnect (e, o);
     }
@@ -1893,7 +1893,7 @@ static jint nativeNfcTag_doCheckNdef (JNIEnv* e, jobject o, jintArray ndefInfo)
 
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NfcTag::getInstance ().mTechLibNfcTypes[%d]=%d", __func__, handle, NfcTag::getInstance ().mTechLibNfcTypes[handle]);
 
-    if (sCurrentConnectedTargetProtocol == NFA_PROTOCOL_MIFARE)
+    if (sCurrentConnectedTargetProtocol == NFC_PROTOCOL_MIFARE)
     {
         status = EXTNS_MfcCheckNDef ();
     }
@@ -1959,7 +1959,7 @@ static jint nativeNfcTag_doCheckNdef (JNIEnv* e, jobject o, jintArray ndefInfo)
     }
 
     /* Reconnect Mifare Classic Tag for furture use */
-    if (sCurrentConnectedTargetProtocol == NFA_PROTOCOL_MIFARE)
+    if (sCurrentConnectedTargetProtocol == NFC_PROTOCOL_MIFARE)
     {
         nativeNfcTag_doReconnect (e, o);
     }
@@ -2218,7 +2218,7 @@ static jboolean nativeNfcTag_doPresenceCheck (JNIEnv*, jobject)
     }
 #endif
 
-    if (sCurrentConnectedTargetProtocol == NFA_PROTOCOL_MIFARE)
+    if (sCurrentConnectedTargetProtocol == NFC_PROTOCOL_MIFARE)
     {
          status = EXTNS_MfcPresenceCheck ();
          if (status == NFCSTATUS_SUCCESS)
@@ -2268,7 +2268,7 @@ static jboolean nativeNfcTag_doIsNdefFormatable (JNIEnv* e,
 
     tNFC_PROTOCOL protocol = NfcTag::getInstance().getProtocol();
     if (NFA_PROTOCOL_T1T == protocol || NFA_PROTOCOL_T5T == protocol
-            || NFA_PROTOCOL_MIFARE == protocol)
+            || NFC_PROTOCOL_MIFARE == protocol)
     {
         isFormattable = JNI_TRUE;
     }
@@ -2417,7 +2417,7 @@ static jboolean nativeNfcTag_doNdefFormat (JNIEnv *e, jobject o, jbyteArray)
         return JNI_FALSE;
     }
 
-    if (sCurrentConnectedTargetProtocol == NFA_PROTOCOL_MIFARE)
+    if (sCurrentConnectedTargetProtocol == NFC_PROTOCOL_MIFARE)
     {
          static uint8_t mfc_key1[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
          static uint8_t mfc_key2[6] = {0xD3, 0xF7, 0xD3, 0xF7, 0xD3, 0xF7};
@@ -2561,7 +2561,7 @@ static jboolean nativeNfcTag_doMakeReadonly (JNIEnv *e, jobject o, jbyteArray)
 
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s", __func__);
 
-    if (sCurrentConnectedTargetProtocol == NFA_PROTOCOL_MIFARE)
+    if (sCurrentConnectedTargetProtocol == NFC_PROTOCOL_MIFARE)
     {
         static uint8_t mfc_key1[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
         static uint8_t mfc_key2[6] = {0xD3, 0xF7, 0xD3, 0xF7, 0xD3, 0xF7};

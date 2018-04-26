@@ -386,7 +386,7 @@ STATIC void Mfc_CheckNdef_Completion_Routine(void *NdefCtxt, NFCSTATUS status)
     if(NFCSTATUS_SUCCESS == status)
     {
         /* NDef Tag Detected */
-        conn_evt_data.ndef_detect.protocol   = NFA_PROTOCOL_MIFARE;
+        conn_evt_data.ndef_detect.protocol   = NFC_PROTOCOL_MIFARE;
         phFrinfc_MifareClassic_GetContainerSize(NdefMap,
                                                 (uint32_t *)&(conn_evt_data.ndef_detect.max_size),
                                                 (uint32_t *)&(conn_evt_data.ndef_detect.cur_size));

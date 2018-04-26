@@ -1430,7 +1430,7 @@ void NfcTag::selectFirstTag ()
         {
             rf_intf = NFA_INTERFACE_ISO_DEP;
         }
-        else if(mTechLibNfcTypes [foundIdx] == NFA_PROTOCOL_MIFARE)
+        else if(mTechLibNfcTypes [foundIdx] == NFC_PROTOCOL_MIFARE)
         {
             rf_intf = NFA_INTERFACE_MIFARE;
         }
@@ -1518,7 +1518,7 @@ void NfcTag::selectNextTag ()
         {
             rf_intf = NFA_INTERFACE_ISO_DEP;
         }
-        else if(mTechLibNfcTypes [foundIdx] == NFA_PROTOCOL_MIFARE)
+        else if(mTechLibNfcTypes [foundIdx] == NFC_PROTOCOL_MIFARE)
         {
             rf_intf = NFA_INTERFACE_MIFARE;
         }
