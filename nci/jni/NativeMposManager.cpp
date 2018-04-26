@@ -19,12 +19,11 @@
 #include "JavaClassConstants.h"
 #include "_OverrideLog.h"
 
-namespace android
-{
+namespace android {
 typedef enum {
   LOW_POWER = 0x00,
   ULTRA_LOW_POWER,
-}POWER_MODE;
+} POWER_MODE;
 
 static const char* covertToString(POWER_MODE mode);
 extern void enableRfDiscovery();
@@ -42,13 +41,14 @@ extern void disableRfDiscovery();
 ** Returns:         None.
 **
 *******************************************************************************/
-static void nativeNfcMposManager_doSetEtsiReaederState (JNIEnv*, jobject, se_rd_req_state_t newState)
-{
+static void nativeNfcMposManager_doSetEtsiReaederState(
+    JNIEnv*, jobject, se_rd_req_state_t newState) {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter ", __func__);
   if (nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
     MposManager::getInstance().setEtsiReaederState(newState);
   } else {
-    LOG(ERROR) << StringPrintf("%s: ETSI_READER not available. Returning", __func__);
+    LOG(ERROR) << StringPrintf("%s: ETSI_READER not available. Returning",
+                               __func__);
   }
 }
 
@@ -63,13 +63,13 @@ static void nativeNfcMposManager_doSetEtsiReaederState (JNIEnv*, jobject, se_rd_
 ** Returns:         State.
 **
 *******************************************************************************/
-static int nativeNfcMposManager_doGetEtsiReaederState (JNIEnv*, jobject)
-{
+static int nativeNfcMposManager_doGetEtsiReaederState(JNIEnv*, jobject) {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter ", __func__);
   if (nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
     return MposManager::getInstance().getEtsiReaederState();
   } else {
-    LOG(ERROR) << StringPrintf("%s: ETSI_READER not available. Returning", __func__);
+    LOG(ERROR) << StringPrintf("%s: ETSI_READER not available. Returning",
+                               __func__);
     return STATE_SE_RDR_MODE_STOPPED;
   }
 }
@@ -85,8 +85,8 @@ static int nativeNfcMposManager_doGetEtsiReaederState (JNIEnv*, jobject)
 ** Returns:         None.
 **
 *******************************************************************************/
-static void nativeNfcMposManager_doEtsiReaderConfig (JNIEnv*, jobject, int eeHandle)
-{
+static void nativeNfcMposManager_doEtsiReaderConfig(JNIEnv*, jobject,
+                                                    int eeHandle) {
   tNFC_STATUS status;
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter ", __func__);
   if (nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
@@ -94,10 +94,12 @@ static void nativeNfcMposManager_doEtsiReaderConfig (JNIEnv*, jobject, int eeHan
     if (status != NFA_STATUS_OK) {
       LOG(ERROR) << StringPrintf("%s: etsiReaderConfig Failed ", __func__);
     } else {
-      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: etsiReaderConfig Success ", __func__);
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("%s: etsiReaderConfig Success ", __func__);
     }
   } else {
-    LOG(ERROR) << StringPrintf("%s: ETSI_READER not available. Returning", __func__);
+    LOG(ERROR) << StringPrintf("%s: ETSI_READER not available. Returning",
+                               __func__);
   }
 }
 
@@ -112,19 +114,21 @@ static void nativeNfcMposManager_doEtsiReaderConfig (JNIEnv*, jobject, int eeHan
 ** Returns:         None.
 **
 *******************************************************************************/
-static void nativeNfcMposManager_doEtsiResetReaderConfig (JNIEnv*, jobject)
-{
+static void nativeNfcMposManager_doEtsiResetReaderConfig(JNIEnv*, jobject) {
   tNFC_STATUS status;
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter ", __func__);
   if (nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
     status = MposManager::getInstance().etsiResetReaderConfig();
     if (status != NFA_STATUS_OK) {
-      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: etsiReaderConfig Failed ", __func__);
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("%s: etsiReaderConfig Failed ", __func__);
     } else {
-      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: etsiReaderConfig Success ", __func__);
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("%s: etsiReaderConfig Success ", __func__);
     }
   } else {
-    LOG(ERROR) << StringPrintf("%s: ETSI_READER not available. Returning", __func__);
+    LOG(ERROR) << StringPrintf("%s: ETSI_READER not available. Returning",
+                               __func__);
   }
 }
 
@@ -139,14 +143,15 @@ static void nativeNfcMposManager_doEtsiResetReaderConfig (JNIEnv*, jobject)
 ** Returns:         None.
 **
 *******************************************************************************/
-static void nativeNfcMposManager_doNotifyEEReaderEvent (JNIEnv*, jobject, int evt)
-{
+static void nativeNfcMposManager_doNotifyEEReaderEvent(JNIEnv*, jobject,
+                                                       int evt) {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter ", __func__);
 
   if (nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
     MposManager::getInstance().notifyEEReaderEvent((etsi_rd_event_t)evt);
   } else {
-    LOG(ERROR) << StringPrintf("%s: ETSI_READER not available. Returning", __func__);
+    LOG(ERROR) << StringPrintf("%s: ETSI_READER not available. Returning",
+                               __func__);
   }
 }
 
@@ -161,13 +166,13 @@ static void nativeNfcMposManager_doNotifyEEReaderEvent (JNIEnv*, jobject, int ev
 ** Returns:         None.
 **
 *******************************************************************************/
-static void nativeNfcMposManager_doEtsiInitConfig (JNIEnv*, jobject, int evt)
-{
+static void nativeNfcMposManager_doEtsiInitConfig(JNIEnv*, jobject, int evt) {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter ", __func__);
   if (nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
     MposManager::getInstance().etsiInitConfig();
   } else {
-    LOG(ERROR) << StringPrintf("%s: ETSI_READER not available. Returning", __func__);
+    LOG(ERROR) << StringPrintf("%s: ETSI_READER not available. Returning",
+                               __func__);
   }
 }
 
@@ -182,14 +187,14 @@ static void nativeNfcMposManager_doEtsiInitConfig (JNIEnv*, jobject, int evt)
 ** Returns:         STATUS_OK/FAILED.
 **
 *******************************************************************************/
-static int nativeNfcMposManage_doMposSetReaderMode(JNIEnv*, jobject, bool on)
-{
+static int nativeNfcMposManage_doMposSetReaderMode(JNIEnv*, jobject, bool on) {
   tNFA_STATUS status = NFA_STATUS_REJECTED;
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:enter", __func__);
   if (nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
     status = MposManager::getInstance().setDedicatedReaderMode(on);
   } else {
-    LOG(ERROR) << StringPrintf("%s: ETSI_READER not available. Returning", __func__);
+    LOG(ERROR) << StringPrintf("%s: ETSI_READER not available. Returning",
+                               __func__);
   }
   return status;
 }
@@ -205,8 +210,7 @@ static int nativeNfcMposManage_doMposSetReaderMode(JNIEnv*, jobject, bool on)
 ** Returns:         TRUE/FALSE.
 **
 *******************************************************************************/
-static bool nativeNfcMposManager_doMposGetReaderMode(JNIEnv*, jobject)
-{
+static bool nativeNfcMposManager_doMposGetReaderMode(JNIEnv*, jobject) {
   bool isEnabled = false;
   int state = MposManager::getInstance().getEtsiReaederState();
 
@@ -232,22 +236,23 @@ static bool nativeNfcMposManager_doMposGetReaderMode(JNIEnv*, jobject)
 ** Returns:         None.
 **
 *******************************************************************************/
-static void nativeNfcMposManage_doStopPoll(JNIEnv* e, jobject, int mode)
-{
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:enter - %s mode", __func__, covertToString((POWER_MODE)mode));
+static void nativeNfcMposManage_doStopPoll(JNIEnv* e, jobject, int mode) {
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+      "%s:enter - %s mode", __func__, covertToString((POWER_MODE)mode));
   if (nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
     switch (mode) {
-    case LOW_POWER:
-      disableRfDiscovery();
-      break;
-    case ULTRA_LOW_POWER:
-      startRfDiscovery(false);
-      break;
-    default:
-      break;
+      case LOW_POWER:
+        disableRfDiscovery();
+        break;
+      case ULTRA_LOW_POWER:
+        startRfDiscovery(false);
+        break;
+      default:
+        break;
     }
   } else {
-    LOG(ERROR) << StringPrintf("%s: ETSI_READER not available. Returning", __func__);
+    LOG(ERROR) << StringPrintf("%s: ETSI_READER not available. Returning",
+                               __func__);
   }
 }
 
@@ -262,13 +267,13 @@ static void nativeNfcMposManage_doStopPoll(JNIEnv* e, jobject, int mode)
 ** Returns:         None.
 **
 *******************************************************************************/
-static void nativeNfcMposManage_doStartPoll(JNIEnv*, jobject)
-{
+static void nativeNfcMposManage_doStartPoll(JNIEnv*, jobject) {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:enter", __func__);
   if (nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
     enableRfDiscovery();
   } else {
-    LOG(ERROR) << StringPrintf("%s: ETSI_READER not available. Returning", __func__);
+    LOG(ERROR) << StringPrintf("%s: ETSI_READER not available. Returning",
+                               __func__);
   }
 }
 
@@ -281,16 +286,14 @@ static void nativeNfcMposManage_doStartPoll(JNIEnv*, jobject)
 ** Returns:         String.
 **
 *******************************************************************************/
-static const char* covertToString(POWER_MODE mode)
-{
-  switch(mode)
-  {
-  case LOW_POWER:
-    return "LOW_POWER";
-  case ULTRA_LOW_POWER:
-    return "ULTRA_LOW_POWER";
-  default:
-    return "INVALID";
+static const char* covertToString(POWER_MODE mode) {
+  switch (mode) {
+    case LOW_POWER:
+      return "LOW_POWER";
+    case ULTRA_LOW_POWER:
+      return "ULTRA_LOW_POWER";
+    default:
+      return "INVALID";
   }
 }
 
@@ -299,39 +302,33 @@ static const char* covertToString(POWER_MODE mode)
 ** Description:     JNI functions
 **
 *****************************************************************************/
-static JNINativeMethod gMethods[] =
-{
+static JNINativeMethod gMethods[] = {
     {"doSetEtsiReaederState", "(I)V",
-        (void *)nativeNfcMposManager_doSetEtsiReaederState},
+     (void*)nativeNfcMposManager_doSetEtsiReaederState},
 
     {"doGetEtsiReaederState", "()I",
-        (void *)nativeNfcMposManager_doGetEtsiReaederState},
+     (void*)nativeNfcMposManager_doGetEtsiReaederState},
 
     {"doEtsiReaderConfig", "(I)V",
-            (void *)nativeNfcMposManager_doEtsiReaderConfig},
+     (void*)nativeNfcMposManager_doEtsiReaderConfig},
 
     {"doEtsiResetReaderConfig", "()V",
-            (void *)nativeNfcMposManager_doEtsiResetReaderConfig},
+     (void*)nativeNfcMposManager_doEtsiResetReaderConfig},
 
     {"doNotifyEEReaderEvent", "(I)V",
-            (void *)nativeNfcMposManager_doNotifyEEReaderEvent},
+     (void*)nativeNfcMposManager_doNotifyEEReaderEvent},
 
-    {"doEtsiInitConfig", "()V",
-            (void *)nativeNfcMposManager_doEtsiInitConfig},
+    {"doEtsiInitConfig", "()V", (void*)nativeNfcMposManager_doEtsiInitConfig},
 
     {"doMposSetReaderMode", "(Z)I",
-            (void *)nativeNfcMposManage_doMposSetReaderMode},
+     (void*)nativeNfcMposManage_doMposSetReaderMode},
 
     {"doMposGetReaderMode", "()Z",
-            (void *)nativeNfcMposManager_doMposGetReaderMode},
+     (void*)nativeNfcMposManager_doMposGetReaderMode},
 
-    {"doStopPoll", "(I)V",
-            (void *)nativeNfcMposManage_doStopPoll},
+    {"doStopPoll", "(I)V", (void*)nativeNfcMposManage_doStopPoll},
 
-    {"doStartPoll", "()V",
-            (void *)nativeNfcMposManage_doStartPoll}
-};
-
+    {"doStartPoll", "()V", (void*)nativeNfcMposManage_doStartPoll}};
 
 /*******************************************************************************
 **
@@ -343,10 +340,9 @@ static JNINativeMethod gMethods[] =
 ** Returns:         Status of registration.
 **
 *******************************************************************************/
-int register_com_android_nfc_NativeNfcMposManager(JNIEnv *e)
-{
+int register_com_android_nfc_NativeNfcMposManager(JNIEnv* e) {
   return jniRegisterNativeMethods(e, gNativeNfcMposManagerClassName, gMethods,
-      NELEM(gMethods));
+                                  NELEM(gMethods));
 }
 
-} // namespace android
+}  // namespace android

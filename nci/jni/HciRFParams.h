@@ -21,8 +21,8 @@
 
 #include "nfa_api.h"
 
-#if(NXP_EXTNS == TRUE)
-#define ESE_HANDLE    0x4C0
+#if (NXP_EXTNS == TRUE)
+#define ESE_HANDLE 0x4C0
 #endif
 
 namespace android {
@@ -31,114 +31,105 @@ extern SyncEvent sNfaGetConfigEvent;
 
 }  // namespace android
 
-class HciRFParams
-{
-public:
-    /*******************************************************************************
-    **
-    ** Function:        getInstance
-    **
-    ** Description:     Get the HciRFParams singleton object.
-    **
-    ** Returns:         HciRFParams object.
-    **
-    *******************************************************************************/
-    static HciRFParams& getInstance ();
+class HciRFParams {
+ public:
+  /*******************************************************************************
+  **
+  ** Function:        getInstance
+  **
+  ** Description:     Get the HciRFParams singleton object.
+  **
+  ** Returns:         HciRFParams object.
+  **
+  *******************************************************************************/
+  static HciRFParams& getInstance();
 
-    /*******************************************************************************
-    **
-    ** Function:        initialize
-    **
-    ** Description:     Initialize all member variables.
-    **                  native: Native data.
-    **
-    ** Returns:         True if ok.
-    **
-    *******************************************************************************/
-    bool initialize ();
+  /*******************************************************************************
+  **
+  ** Function:        initialize
+  **
+  ** Description:     Initialize all member variables.
+  **                  native: Native data.
+  **
+  ** Returns:         True if ok.
+  **
+  *******************************************************************************/
+  bool initialize();
 
+  /*******************************************************************************
+  **
+  ** Function:        finalize
+  **
+  ** Description:     Release all resources.
+  **
+  ** Returns:         None
+  **
+  *******************************************************************************/
+  void finalize();
 
-    /*******************************************************************************
-    **
-    ** Function:        finalize
-    **
-    ** Description:     Release all resources.
-    **
-    ** Returns:         None
-    **
-    *******************************************************************************/
-    void finalize ();
+  bool isTypeBSupported();
 
-    bool isTypeBSupported();
+  void connectionEventHandler(uint8_t dmEvent, tNFA_DM_CBACK_DATA* eventData);
 
-    void connectionEventHandler (uint8_t dmEvent, tNFA_DM_CBACK_DATA* eventData);
-
-    void getESeUid(uint8_t* uidbuff, uint8_t* uidlen);
-    uint8_t getESeSak();
-#if(NXP_EXTNS == TRUE)
-    bool isCeWithEseDisabled();
+  void getESeUid(uint8_t* uidbuff, uint8_t* uidlen);
+  uint8_t getESeSak();
+#if (NXP_EXTNS == TRUE)
+  bool isCeWithEseDisabled();
 #endif
-private:
+ private:
+  uint8_t bPipeStatus_CeA;
+  uint8_t bMode_CeA;
+  uint8_t bUidRegSize_CeA;
+  uint8_t aUidReg_CeA[10];
+  uint8_t bSak_CeA;
+  uint8_t aATQA_CeA[2];
+  uint8_t bApplicationDataSize_CeA;
+  uint8_t aApplicationData_CeA[15];
+  uint8_t bFWI_SFGI_CeA;
+  uint8_t bCidSupport_CeA;
+  uint8_t bCltSupport_CeA;
+  uint8_t aDataRateMax_CeA[3];
+  uint8_t bPipeStatus_CeB;
+  uint8_t bMode_CeB;
+  uint8_t aPupiRegDataSize_CeB;
+  uint8_t aPupiReg_CeB[4];
+  uint8_t bAfi_CeB;
+  uint8_t aATQB_CeB[4];
+  uint8_t bHighLayerRspSize_CeB;
+  uint8_t aHighLayerRsp_CeB_CeB[15];
+  uint8_t aDataRateMax_CeB[3];
 
-    uint8_t bPipeStatus_CeA;
-    uint8_t bMode_CeA;
-    uint8_t bUidRegSize_CeA;
-    uint8_t aUidReg_CeA[10];
-    uint8_t bSak_CeA;
-    uint8_t aATQA_CeA[2];
-    uint8_t bApplicationDataSize_CeA;
-    uint8_t aApplicationData_CeA[15];
-    uint8_t bFWI_SFGI_CeA;
-    uint8_t bCidSupport_CeA;
-    uint8_t bCltSupport_CeA;
-    uint8_t aDataRateMax_CeA[3];
-    uint8_t bPipeStatus_CeB;
-    uint8_t bMode_CeB;
-    uint8_t aPupiRegDataSize_CeB;
-    uint8_t aPupiReg_CeB[4];
-    uint8_t bAfi_CeB;
-    uint8_t aATQB_CeB[4];
-    uint8_t bHighLayerRspSize_CeB;
-    uint8_t aHighLayerRsp_CeB_CeB[15];
-    uint8_t aDataRateMax_CeB[3];
+  tNFA_GET_CONFIG* get_config;
 
-    tNFA_GET_CONFIG *get_config;
+  static HciRFParams sHciRFParams;
 
-    static HciRFParams sHciRFParams;
+  bool mIsInit;  // whether HciRFParams is initialized
+  SyncEvent mGetConfigEvent;
 
-    bool mIsInit;                // whether HciRFParams is initialized
-    SyncEvent mGetConfigEvent;
+  SyncEvent mUiccListenEvent;
+  SyncEvent mAidRegisterEvent;
+  SyncEvent mAidDegisterEvent;
+  SyncEvent mDataRecvEvent;
 
+  /*******************************************************************************
+  **
+  ** Function:        HciRFParams
+  **
+  ** Description:     Initialize member variables.
+  **
+  ** Returns:         None
+  **
+  *******************************************************************************/
+  HciRFParams();
 
-    SyncEvent mUiccListenEvent;
-    SyncEvent mAidRegisterEvent;
-    SyncEvent mAidDegisterEvent;
-    SyncEvent mDataRecvEvent;
-
-
-    /*******************************************************************************
-    **
-    ** Function:        HciRFParams
-    **
-    ** Description:     Initialize member variables.
-    **
-    ** Returns:         None
-    **
-    *******************************************************************************/
-    HciRFParams ();
-
-
-    /*******************************************************************************
-    **
-    ** Function:        ~HciRFParams
-    **
-    ** Description:     Release all resources.
-    **
-    ** Returns:         None
-    **
-    *******************************************************************************/
-    ~HciRFParams ();
-
-
-
+  /*******************************************************************************
+  **
+  ** Function:        ~HciRFParams
+  **
+  ** Description:     Release all resources.
+  **
+  ** Returns:         None
+  **
+  *******************************************************************************/
+  ~HciRFParams();
 };

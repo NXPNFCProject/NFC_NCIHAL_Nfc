@@ -26,13 +26,12 @@
 #include "nfa_ee_api.h"
 
 typedef struct {
-    tNFA_HANDLE src;
-    tNFA_TECHNOLOGY_MASK tech_mask;
-    bool reCfg;
-}rd_swp_req_t;
+  tNFA_HANDLE src;
+  tNFA_TECHNOLOGY_MASK tech_mask;
+  bool reCfg;
+} rd_swp_req_t;
 
-typedef enum
-{
+typedef enum {
   MPOS_READER_MODE_INVALID = 0x00,
   MPOS_READER_MODE_START,
   MPOS_READER_MODE_START_SUCCESS,
@@ -45,10 +44,9 @@ typedef enum
   MPOS_READER_MODE_RECOVERY_COMPLETE,
   MPOS_READER_MODE_RECOVERY_TIMEOUT,
   MPOS_READER_MODE_FAIL
-}mpos_rd_state_t;
+} mpos_rd_state_t;
 
-typedef enum
-{
+typedef enum {
   STATE_SE_RDR_MODE_INVALID = 0x00,
   STATE_SE_RDR_MODE_START_CONFIG,
   STATE_SE_RDR_MODE_START_IN_PROGRESS,
@@ -57,7 +55,7 @@ typedef enum
   STATE_SE_RDR_MODE_STOP_CONFIG,
   STATE_SE_RDR_MODE_STOP_IN_PROGRESS,
   STATE_SE_RDR_MODE_STOPPED,
-}se_rd_req_state_t;
+} se_rd_req_state_t;
 
 typedef enum {
   /* Reader over SWP Events*/
@@ -65,9 +63,9 @@ typedef enum {
   ETSI_READER_START_FAIL,
   ETSI_READER_ACTIVATED,
   ETSI_READER_STOP,
-}etsi_rd_event_t;
+} etsi_rd_event_t;
 
-typedef struct{
+typedef struct {
   rd_swp_req_t swp_rd_req_info;
   rd_swp_req_t swp_rd_req_current_info;
   se_rd_req_state_t swp_rd_state;
@@ -77,16 +75,15 @@ typedef struct{
 #define NFC_NUM_INTERFACE_MAP 3
 #define NFC_SWP_RD_NUM_INTERFACE_MAP 1
 
-class MposManager
-{
-public:
+class MposManager {
+ public:
   Rdr_req_ntf_info_t swp_rdr_req_ntf_info;
-  static jmethodID  gCachedMposManagerNotifyETSIReaderRequested;
-  static jmethodID  gCachedMposManagerNotifyETSIReaderRequestedFail;
-  static jmethodID  gCachedMposManagerNotifyETSIReaderModeStartConfig;
-  static jmethodID  gCachedMposManagerNotifyETSIReaderModeStopConfig;
-  static jmethodID  gCachedMposManagerNotifyETSIReaderModeSwpTimeout;
-  static jmethodID  gCachedMposManagerNotifyETSIReaderRestart;
+  static jmethodID gCachedMposManagerNotifyETSIReaderRequested;
+  static jmethodID gCachedMposManagerNotifyETSIReaderRequestedFail;
+  static jmethodID gCachedMposManagerNotifyETSIReaderModeStartConfig;
+  static jmethodID gCachedMposManagerNotifyETSIReaderModeStopConfig;
+  static jmethodID gCachedMposManagerNotifyETSIReaderModeSwpTimeout;
+  static jmethodID gCachedMposManagerNotifyETSIReaderRestart;
 
   /*******************************************************************************
   **
@@ -141,7 +138,7 @@ public:
   ** Returns:         None
   **
   *******************************************************************************/
-  void finalize ();
+  void finalize();
 
   /*******************************************************************************
   **
@@ -222,7 +219,7 @@ public:
   ** Returns:         None
   **
   *******************************************************************************/
-  void notifyEEReaderEvent (etsi_rd_event_t evt);
+  void notifyEEReaderEvent(etsi_rd_event_t evt);
 
   /*******************************************************************************
   **
@@ -244,7 +241,7 @@ public:
   ** Returns:         None
   **
   *******************************************************************************/
-  void hanldeEtsiReaderReqEvent (tNFA_EE_DISCOVER_REQ* aInfo);
+  void hanldeEtsiReaderReqEvent(tNFA_EE_DISCOVER_REQ* aInfo);
 
   /*******************************************************************************
   **
@@ -267,7 +264,8 @@ public:
   ** Returns:         OK/FAILED.
   **
   *******************************************************************************/
-  tNFA_STATUS validateHCITransactionEventParams(uint8_t *aData, int32_t aDatalen);
+  tNFA_STATUS validateHCITransactionEventParams(uint8_t* aData,
+                                                int32_t aDatalen);
 
   /*******************************************************************************
   **
@@ -291,21 +289,25 @@ public:
   *******************************************************************************/
   const char* convertRdrStateToString(se_rd_req_state_t aState);
 
-private:
+ private:
   nfc_jni_native_data* mNativeData;
   static MposManager mMposMgr;
   static int32_t mDiscNtfTimeout;
   static int32_t mRdrTagOpTimeout;
-  static const uint8_t EVENT_RF_ERROR   = 0x80; //HCI_TRANSACTION_EVENT parameter type
-  static const uint8_t EVENT_RF_VERSION = 0x00; //HCI_TRANSACTION_EVENT parameter version
-  static const uint8_t EVENT_EMV_POWER_OFF = 0x72; //HCI_TRANSACTION_EVENT parameter power off
-  static const uint8_t EVENT_RDR_MODE_RESTART = 0x04; //EVENT to Restart Reader mode
+  static const uint8_t EVENT_RF_ERROR =
+      0x80;  // HCI_TRANSACTION_EVENT parameter type
+  static const uint8_t EVENT_RF_VERSION =
+      0x00;  // HCI_TRANSACTION_EVENT parameter version
+  static const uint8_t EVENT_EMV_POWER_OFF =
+      0x72;  // HCI_TRANSACTION_EVENT parameter power off
+  static const uint8_t EVENT_RDR_MODE_RESTART =
+      0x04;  // EVENT to Restart Reader mode
   static const unsigned short rdr_req_handling_timeout = 50;
 
   IntervalTimer mSwpReaderTimer; /*timer swp reader timeout*/
   IntervalTimer mSwpRdrReqTimer;
 
-  SyncEvent       mDiscMapEvent;
+  SyncEvent mDiscMapEvent;
 
   /*******************************************************************************
   **
@@ -316,7 +318,7 @@ private:
   ** Returns:         None
   **
   *******************************************************************************/
-  static void discoveryMapCb (tNFC_DISCOVER_EVT event, tNFC_DISCOVER *p_data);
+  static void discoveryMapCb(tNFC_DISCOVER_EVT event, tNFC_DISCOVER* p_data);
 
   /*******************************************************************************
   **
@@ -328,7 +330,7 @@ private:
   ** Returns:         None
   **
   *******************************************************************************/
-  static void readerReqEventNtf (union sigval);
+  static void readerReqEventNtf(union sigval);
 
   /*******************************************************************************
   **
@@ -339,7 +341,7 @@ private:
   ** Returns:         None
   **
   *******************************************************************************/
-  static void startStopSwpReaderProc (union sigval);
+  static void startStopSwpReaderProc(union sigval);
 
   /*******************************************************************************
   **

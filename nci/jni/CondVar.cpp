@@ -34,22 +34,19 @@ using android::base::StringPrintf;
 ** Returns:         None.
 **
 *******************************************************************************/
-CondVar::CondVar ()
-{
-    pthread_condattr_t attr;
-    pthread_condattr_init(&attr);
-    pthread_condattr_setclock(&attr, CLOCK_MONOTONIC);
-    memset (&mCondition, 0, sizeof(mCondition));
-    int const res = pthread_cond_init (&mCondition, &attr);
-    if (res)
-    {
-        LOG(ERROR) << StringPrintf("CondVar::CondVar: fail init; error=0x%X", res);
-    }
+CondVar::CondVar() {
+  pthread_condattr_t attr;
+  pthread_condattr_init(&attr);
+  pthread_condattr_setclock(&attr, CLOCK_MONOTONIC);
+  memset(&mCondition, 0, sizeof(mCondition));
+  int const res = pthread_cond_init(&mCondition, &attr);
+  if (res) {
+    LOG(ERROR) << StringPrintf("CondVar::CondVar: fail init; error=0x%X", res);
+  }
 #if (NXP_EXTNS == TRUE)
-    pthread_condattr_destroy(&attr);
+  pthread_condattr_destroy(&attr);
 #endif
 }
-
 
 /*******************************************************************************
 **
@@ -60,15 +57,13 @@ CondVar::CondVar ()
 ** Returns:         None.
 **
 *******************************************************************************/
-CondVar::~CondVar ()
-{
-    int const res = pthread_cond_destroy (&mCondition);
-    if (res)
-    {
-        LOG(ERROR) << StringPrintf("CondVar::~CondVar: fail destroy; error=0x%X", res);
-    }
+CondVar::~CondVar() {
+  int const res = pthread_cond_destroy(&mCondition);
+  if (res) {
+    LOG(ERROR) << StringPrintf("CondVar::~CondVar: fail destroy; error=0x%X",
+                               res);
+  }
 }
-
 
 /*******************************************************************************
 **
@@ -79,15 +74,12 @@ CondVar::~CondVar ()
 ** Returns:         None.
 **
 *******************************************************************************/
-void CondVar::wait (Mutex& mutex)
-{
-    int const res = pthread_cond_wait (&mCondition, mutex.nativeHandle());
-    if (res)
-    {
-        LOG(ERROR) << StringPrintf("CondVar::wait: fail wait; error=0x%X", res);
-    }
+void CondVar::wait(Mutex& mutex) {
+  int const res = pthread_cond_wait(&mCondition, mutex.nativeHandle());
+  if (res) {
+    LOG(ERROR) << StringPrintf("CondVar::wait: fail wait; error=0x%X", res);
+  }
 }
-
 
 /*******************************************************************************
 **
@@ -99,35 +91,31 @@ void CondVar::wait (Mutex& mutex)
 ** Returns:         True if wait is successful; false if timeout occurs.
 **
 *******************************************************************************/
-bool CondVar::wait (Mutex& mutex, long millisec)
-{
-    bool retVal = false;
-    struct timespec absoluteTime;
+bool CondVar::wait(Mutex& mutex, long millisec) {
+  bool retVal = false;
+  struct timespec absoluteTime;
 
-    if (clock_gettime (CLOCK_MONOTONIC, &absoluteTime) == -1)
-    {
-        LOG(ERROR) << StringPrintf("CondVar::wait: fail get time; errno=0x%X", errno);
-    }
-    else
-    {
-        absoluteTime.tv_sec += millisec / 1000;
-        long ns = absoluteTime.tv_nsec + ((millisec % 1000) * 1000000);
-        if (ns > 1000000000)
-        {
-            absoluteTime.tv_sec++;
-            absoluteTime.tv_nsec = ns - 1000000000;
-        }
-        else
-            absoluteTime.tv_nsec = ns;
-    }
+  if (clock_gettime(CLOCK_MONOTONIC, &absoluteTime) == -1) {
+    LOG(ERROR) << StringPrintf("CondVar::wait: fail get time; errno=0x%X",
+                               errno);
+  } else {
+    absoluteTime.tv_sec += millisec / 1000;
+    long ns = absoluteTime.tv_nsec + ((millisec % 1000) * 1000000);
+    if (ns > 1000000000) {
+      absoluteTime.tv_sec++;
+      absoluteTime.tv_nsec = ns - 1000000000;
+    } else
+      absoluteTime.tv_nsec = ns;
+  }
 
-    int waitResult = pthread_cond_timedwait (&mCondition, mutex.nativeHandle(), &absoluteTime);
-    if ((waitResult != 0) && (waitResult != ETIMEDOUT))
-        LOG(ERROR) << StringPrintf("CondVar::wait: fail timed wait; error=0x%X", waitResult);
-    retVal = (waitResult == 0); //waited successfully
-    return retVal;
+  int waitResult =
+      pthread_cond_timedwait(&mCondition, mutex.nativeHandle(), &absoluteTime);
+  if ((waitResult != 0) && (waitResult != ETIMEDOUT))
+    LOG(ERROR) << StringPrintf("CondVar::wait: fail timed wait; error=0x%X",
+                               waitResult);
+  retVal = (waitResult == 0);  // waited successfully
+  return retVal;
 }
-
 
 /*******************************************************************************
 **
@@ -138,11 +126,10 @@ bool CondVar::wait (Mutex& mutex, long millisec)
 ** Returns:         None.
 **
 *******************************************************************************/
-void CondVar::notifyOne ()
-{
-    int const res = pthread_cond_signal (&mCondition);
-    if (res)
-    {
-        LOG(ERROR) << StringPrintf("CondVar::notifyOne: fail signal; error=0x%X", res);
-    }
+void CondVar::notifyOne() {
+  int const res = pthread_cond_signal(&mCondition);
+  if (res) {
+    LOG(ERROR) << StringPrintf("CondVar::notifyOne: fail signal; error=0x%X",
+                               res);
+  }
 }

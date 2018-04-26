@@ -26,13 +26,11 @@
 #include "IntervalTimer.h"
 #include "Mutex.h"
 #include "NfcTag.h"
-namespace android
-{
-    extern void startStopPolling (bool isStartPolling);
-    extern void nativeNfcTag_releaseRfInterfaceMutexLock();
-    extern void nativeNfcTag_acquireRfInterfaceMutexLock();
+namespace android {
+extern void startStopPolling(bool isStartPolling);
+extern void nativeNfcTag_releaseRfInterfaceMutexLock();
+extern void nativeNfcTag_acquireRfInterfaceMutexLock();
 }
-
 
 /*****************************************************************************
 **
@@ -40,14 +38,14 @@ namespace android
 **
 *****************************************************************************/
 
-
-static const int gIntervalTime = 1000; //millisecond between the check to restore polling
+static const int gIntervalTime =
+    1000;  // millisecond between the check to restore polling
 static IntervalTimer gTimer;
 static Mutex gMutex;
-static void pn544InteropStartPolling (union sigval); //callback function for interval timer
-static bool gIsBusy = false; //is timer busy?
-static bool gAbortNow = false; //stop timer during next callback
-
+static void pn544InteropStartPolling(
+    union sigval);  // callback function for interval timer
+static bool gIsBusy = false;  // is timer busy?
+static bool gAbortNow = false;  // stop timer during next callback
 
 /*******************************************************************************
 **
@@ -59,19 +57,18 @@ static bool gAbortNow = false; //stop timer during next callback
 ** Returns:         None
 **
 *******************************************************************************/
-void pn544InteropStopPolling ()
-{
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
-    gMutex.lock ();
-    gTimer.kill ();
-    android::startStopPolling (false);
-    gIsBusy = true;
-    gAbortNow = false;
-    gTimer.set (gIntervalTime, pn544InteropStartPolling); //after some time, start polling again
-    gMutex.unlock ();
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
+void pn544InteropStopPolling() {
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+  gMutex.lock();
+  gTimer.kill();
+  android::startStopPolling(false);
+  gIsBusy = true;
+  gAbortNow = false;
+  gTimer.set(gIntervalTime,
+             pn544InteropStartPolling);  // after some time, start polling again
+  gMutex.unlock();
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
 }
-
 
 /*******************************************************************************
 **
@@ -83,36 +80,34 @@ void pn544InteropStopPolling ()
 ** Returns:         None
 **
 *******************************************************************************/
-void pn544InteropStartPolling (union sigval)
-{
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
-    gMutex.lock ();
-    NfcTag::ActivationState state = NfcTag::getInstance ().getActivationState ();
+void pn544InteropStartPolling(union sigval) {
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+  gMutex.lock();
+  NfcTag::ActivationState state = NfcTag::getInstance().getActivationState();
 
-    if (gAbortNow)
-    {
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: abort now", __func__);
-        gIsBusy = false;
-        goto TheEnd;
-    }
+  if (gAbortNow) {
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: abort now", __func__);
+    gIsBusy = false;
+    goto TheEnd;
+  }
 
-    if (state == NfcTag::Idle)
-    {
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: start polling", __func__);
-        android::startStopPolling (true);
-        gIsBusy = false;
-    }
-    else
-    {
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: try again later", __func__);
-        gTimer.set (gIntervalTime, pn544InteropStartPolling); //after some time, start polling again
-    }
+  if (state == NfcTag::Idle) {
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s: start polling", __func__);
+    android::startStopPolling(true);
+    gIsBusy = false;
+  } else {
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s: try again later", __func__);
+    gTimer.set(
+        gIntervalTime,
+        pn544InteropStartPolling);  // after some time, start polling again
+  }
 
 TheEnd:
-    gMutex.unlock ();
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
+  gMutex.unlock();
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
 }
-
 
 /*******************************************************************************
 **
@@ -123,16 +118,14 @@ TheEnd:
 ** Returns:         True if the code is busy.
 **
 *******************************************************************************/
-bool pn544InteropIsBusy ()
-{
-    bool isBusy = false;
-    gMutex.lock ();
-    isBusy = gIsBusy;
-    gMutex.unlock ();
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: %u", __func__, isBusy);
-    return isBusy;
+bool pn544InteropIsBusy() {
+  bool isBusy = false;
+  gMutex.lock();
+  isBusy = gIsBusy;
+  gMutex.unlock();
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: %u", __func__, isBusy);
+  return isBusy;
 }
-
 
 /*******************************************************************************
 **
@@ -143,10 +136,9 @@ bool pn544InteropIsBusy ()
 ** Returns:         None.
 **
 *******************************************************************************/
-void pn544InteropAbortNow ()
-{
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s", __func__);
-    gMutex.lock ();
-    gAbortNow = true;
-    gMutex.unlock ();
+void pn544InteropAbortNow() {
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s", __func__);
+  gMutex.lock();
+  gAbortNow = true;
+  gMutex.unlock();
 }

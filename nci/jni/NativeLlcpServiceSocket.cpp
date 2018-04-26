@@ -26,9 +26,7 @@
 #include "nfa_api.h"
 #include "nfa_p2p_api.h"
 
-namespace android
-{
-
+namespace android {
 
 /*******************************************************************************
 **
@@ -44,60 +42,59 @@ namespace android
 ** Returns:         LlcpSocket Java object.
 **
 *******************************************************************************/
-static jobject nativeLlcpServiceSocket_doAccept(JNIEnv *e, jobject o, jint miu, jint rw, jint /*linearBufferLength*/)
-{
-    jobject     clientSocket = NULL;
-    jclass      clsNativeLlcpSocket = NULL;
-    jfieldID    f = 0;
-    PeerToPeer::tJNI_HANDLE serverHandle; //handle of the local server
-    bool        stat = false;
-    PeerToPeer::tJNI_HANDLE connHandle = PeerToPeer::getInstance().getNewJniHandle ();
+static jobject nativeLlcpServiceSocket_doAccept(JNIEnv* e, jobject o, jint miu,
+                                                jint rw,
+                                                jint /*linearBufferLength*/) {
+  jobject clientSocket = NULL;
+  jclass clsNativeLlcpSocket = NULL;
+  jfieldID f = 0;
+  PeerToPeer::tJNI_HANDLE serverHandle;  // handle of the local server
+  bool stat = false;
+  PeerToPeer::tJNI_HANDLE connHandle =
+      PeerToPeer::getInstance().getNewJniHandle();
 
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
 
-    serverHandle = (PeerToPeer::tJNI_HANDLE) nfc_jni_get_nfc_socket_handle (e, o);
+  serverHandle = (PeerToPeer::tJNI_HANDLE)nfc_jni_get_nfc_socket_handle(e, o);
 
-    stat = PeerToPeer::getInstance().accept (serverHandle, connHandle, miu, rw);
+  stat = PeerToPeer::getInstance().accept(serverHandle, connHandle, miu, rw);
 
-    if (! stat)
-    {
-        LOG(ERROR) << StringPrintf("%s: fail accept", __func__);
-        goto TheEnd;
-    }
+  if (!stat) {
+    LOG(ERROR) << StringPrintf("%s: fail accept", __func__);
+    goto TheEnd;
+  }
 
-    /* Create new LlcpSocket object */
-    if (nfc_jni_cache_object_local(e, gNativeLlcpSocketClassName, &(clientSocket)) == -1)
-    {
-        LOG(ERROR) << StringPrintf("%s: fail create NativeLlcpSocket", __func__);
-        goto TheEnd;
-    }
+  /* Create new LlcpSocket object */
+  if (nfc_jni_cache_object_local(e, gNativeLlcpSocketClassName,
+                                 &(clientSocket)) == -1) {
+    LOG(ERROR) << StringPrintf("%s: fail create NativeLlcpSocket", __func__);
+    goto TheEnd;
+  }
 
-    /* Get NativeConnectionOriented class object */
-    clsNativeLlcpSocket = e->GetObjectClass (clientSocket);
-    if (e->ExceptionCheck())
-    {
-        e->ExceptionClear();
-        LOG(ERROR) << StringPrintf("%s: get class object error", __func__);
-        goto TheEnd;
-    }
+  /* Get NativeConnectionOriented class object */
+  clsNativeLlcpSocket = e->GetObjectClass(clientSocket);
+  if (e->ExceptionCheck()) {
+    e->ExceptionClear();
+    LOG(ERROR) << StringPrintf("%s: get class object error", __func__);
+    goto TheEnd;
+  }
 
-    /* Set socket handle */
-    f = e->GetFieldID (clsNativeLlcpSocket, "mHandle", "I");
-    e->SetIntField (clientSocket, f, (jint) connHandle);
+  /* Set socket handle */
+  f = e->GetFieldID(clsNativeLlcpSocket, "mHandle", "I");
+  e->SetIntField(clientSocket, f, (jint)connHandle);
 
-    /* Set socket MIU */
-    f = e->GetFieldID (clsNativeLlcpSocket, "mLocalMiu", "I");
-    e->SetIntField (clientSocket, f, (jint)miu);
+  /* Set socket MIU */
+  f = e->GetFieldID(clsNativeLlcpSocket, "mLocalMiu", "I");
+  e->SetIntField(clientSocket, f, (jint)miu);
 
-    /* Set socket RW */
-    f = e->GetFieldID (clsNativeLlcpSocket, "mLocalRw", "I");
-    e->SetIntField (clientSocket, f, (jint)rw);
+  /* Set socket RW */
+  f = e->GetFieldID(clsNativeLlcpSocket, "mLocalRw", "I");
+  e->SetIntField(clientSocket, f, (jint)rw);
 
 TheEnd:
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
-    return clientSocket;
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
+  return clientSocket;
 }
-
 
 /*******************************************************************************
 **
@@ -110,32 +107,29 @@ TheEnd:
 ** Returns:         True if ok.
 **
 *******************************************************************************/
-static jboolean nativeLlcpServiceSocket_doClose(JNIEnv *e, jobject o)
-{
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
-    PeerToPeer::tJNI_HANDLE jniServerHandle = 0;
-    bool stat = false;
+static jboolean nativeLlcpServiceSocket_doClose(JNIEnv* e, jobject o) {
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+  PeerToPeer::tJNI_HANDLE jniServerHandle = 0;
+  bool stat = false;
 
-    jniServerHandle = nfc_jni_get_nfc_socket_handle (e, o);
+  jniServerHandle = nfc_jni_get_nfc_socket_handle(e, o);
 
-    stat = PeerToPeer::getInstance().deregisterServer (jniServerHandle);
+  stat = PeerToPeer::getInstance().deregisterServer(jniServerHandle);
 
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
-    return JNI_TRUE;
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
+  return JNI_TRUE;
 }
-
 
 /*****************************************************************************
 **
 ** Description:     JNI functions
 **
 *****************************************************************************/
-static JNINativeMethod gMethods[] =
-{
-    {"doAccept", "(III)Lcom/android/nfc/dhimpl/NativeLlcpSocket;", (void*) nativeLlcpServiceSocket_doAccept},
-    {"doClose", "()Z", (void*) nativeLlcpServiceSocket_doClose},
+static JNINativeMethod gMethods[] = {
+    {"doAccept", "(III)Lcom/android/nfc/dhimpl/NativeLlcpSocket;",
+     (void*)nativeLlcpServiceSocket_doAccept},
+    {"doClose", "()Z", (void*)nativeLlcpServiceSocket_doClose},
 };
-
 
 /*******************************************************************************
 **
@@ -147,11 +141,9 @@ static JNINativeMethod gMethods[] =
 ** Returns:         Status of registration.
 **
 *******************************************************************************/
-int register_com_android_nfc_NativeLlcpServiceSocket (JNIEnv* e)
-{
-    return jniRegisterNativeMethods (e, gNativeLlcpServiceSocketClassName,
-            gMethods, NELEM(gMethods));
+int register_com_android_nfc_NativeLlcpServiceSocket(JNIEnv* e) {
+  return jniRegisterNativeMethods(e, gNativeLlcpServiceSocketClassName,
+                                  gMethods, NELEM(gMethods));
 }
 
-
-} //namespace android
+}  // namespace android

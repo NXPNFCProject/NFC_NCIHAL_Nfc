@@ -15,82 +15,78 @@
  */
 
 #include "nfa_ee_api.h"
-class DwpChannel
-{
-public:
+class DwpChannel {
+ public:
+  /*******************************************************************************
+  **
+  ** Function:        DwpChannel's get class instance
+  **
+  ** Description:     Returns instance object of the class
+  **
+  ** Returns:         DwpChannel instance.
+  **
+  *******************************************************************************/
+  static DwpChannel& getInstance();
 
-/*******************************************************************************
-**
-** Function:        DwpChannel's get class instance
-**
-** Description:     Returns instance object of the class
-**
-** Returns:         DwpChannel instance.
-**
-*******************************************************************************/
-static DwpChannel& getInstance ();
+  /*******************************************************************************
+  **
+  ** Function:        DwpChannel's force exit
+  **
+  ** Description:     Force exit of DWP channel
+  **
+  ** Returns:         None.
+  **
+  *******************************************************************************/
+  void forceClose();
 
-/*******************************************************************************
-**
-** Function:        DwpChannel's force exit
-**
-** Description:     Force exit of DWP channel
-**
-** Returns:         None.
-**
-*******************************************************************************/
-void forceClose();
+  /*******************************************************************************
+  **
+  ** Function:        finalize
+  **
+  ** Description:     Release all resources.
+  **
+  ** Returns:         None
+  **
+  *******************************************************************************/
+  void finalize();
 
-/*******************************************************************************
-**
-** Function:        finalize
-**
-** Description:     Release all resources.
-**
-** Returns:         None
-**
-*******************************************************************************/
-void finalize();
+  /*******************************************************************************
+  **
+  ** Function:        initialize
+  **
+  ** Description:     Initialize all member variables.
+  **
+  ** Returns:         None.
+  **
+  *******************************************************************************/
+  void Initialize();
 
-/*******************************************************************************
-**
-** Function:        initialize
-**
-** Description:     Initialize all member variables.
-**
-** Returns:         None.
-**
-*******************************************************************************/
-void Initialize();
+  bool dwpChannelForceClose;
 
-bool dwpChannelForceClose;
+ private:
+  static DwpChannel sDwpChannel;
 
-private:
+  /*******************************************************************************
+  **
+  ** Function:        DwpChannel Constructor
+  **
+  ** Description:     Class constructor
+  **
+  ** Returns:         None.
+  **
+  *******************************************************************************/
+  DwpChannel();
 
-static DwpChannel sDwpChannel;
-
-/*******************************************************************************
-**
-** Function:        DwpChannel Constructor
-**
-** Description:     Class constructor
-**
-** Returns:         None.
-**
-*******************************************************************************/
-DwpChannel () ;
-
-/*******************************************************************************
-**
-** Function:        DwpChannel Destructor
-**
-** Description:     Class destructor
-**
-** Returns:         None.
-**
-*******************************************************************************/
-~DwpChannel () ;
-
+  /*******************************************************************************
+  **
+  ** Function:        DwpChannel Destructor
+  **
+  ** Description:     Class destructor
+  **
+  ** Returns:         None.
+  **
+  *******************************************************************************/
+  ~DwpChannel();
 };
 
 /*******************************************************************************
@@ -106,8 +102,9 @@ extern bool dwpChannelForceClose;
 int16_t open();
 bool close(int16_t mHandle);
 
-bool transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uint8_t* recvBuffer,
-				 int32_t recvBufferMaxSize, int32_t& recvBufferActualSize, int32_t timeoutMillisec);
+bool transceive(uint8_t* xmitBuffer, int32_t xmitBufferSize,
+                uint8_t* recvBuffer, int32_t recvBufferMaxSize,
+                int32_t& recvBufferActualSize, int32_t timeoutMillisec);
 
 void doeSE_Reset();
 void doeSE_JcopDownLoadReset();

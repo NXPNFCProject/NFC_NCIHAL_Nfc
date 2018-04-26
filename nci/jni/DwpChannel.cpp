@@ -20,16 +20,15 @@
 #include "config.h"
 #include "phNxpConfig.h"
 
-static const int EE_ERROR_OPEN_FAIL =  -1;
+static const int EE_ERROR_OPEN_FAIL = -1;
 
 bool IsWiredMode_Enable();
 bool eSE_connected = false;
 bool dwpChannelForceClose = false;
 DwpChannel DwpChannel::sDwpChannel;
-namespace android
-{
-    extern void checkforNfceeConfig();
-    extern int gMaxEERecoveryTimeout;
+namespace android {
+extern void checkforNfceeConfig();
+extern int gMaxEERecoveryTimeout;
 }
 
 /*******************************************************************************
@@ -41,16 +40,15 @@ namespace android
 ** Returns:         True if ok.
 **
 *******************************************************************************/
-bool IsWiredMode_Enable()
-{
-    static const char fn [] = "DwpChannel::IsWiredMode_Enable";
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", fn);
-    SecureElement &se = SecureElement::getInstance();
-    tNFA_STATUS stat = NFA_STATUS_FAILED;
+bool IsWiredMode_Enable() {
+  static const char fn[] = "DwpChannel::IsWiredMode_Enable";
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", fn);
+  SecureElement& se = SecureElement::getInstance();
+  tNFA_STATUS stat = NFA_STATUS_FAILED;
 
-    uint8_t mActualNumEe  = nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED;
-    uint16_t meSE         = 0x4C0;
-    tNFA_EE_INFO EeInfo[mActualNumEe];
+  uint8_t mActualNumEe = nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED;
+  uint16_t meSE = 0x4C0;
+  tNFA_EE_INFO EeInfo[mActualNumEe];
 
 #if 0
     if(mIsInit == false)
@@ -59,47 +57,39 @@ bool IsWiredMode_Enable()
         goto TheEnd;
     }
 #endif
-    stat = NFA_EeGetInfo(&mActualNumEe, EeInfo);
-    if(stat == NFA_STATUS_OK)
-    {
-        for(int xx = 0; xx <  mActualNumEe; xx++)
-        {
-            ALOGI("xx=%d, ee_handle=0x0%x, status=0x0%x", xx, EeInfo[xx].ee_handle,EeInfo[xx].ee_status);
-            if (EeInfo[xx].ee_handle == meSE)
-            {
-                if(EeInfo[xx].ee_status == 0x00)
-                {
-                    stat = NFA_STATUS_OK;
-                    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: status = 0x%x", fn, stat);
-                    break;
-                }
-                else if(EeInfo[xx].ee_status == 0x01)
-                {
-                    LOG(ERROR) << StringPrintf("%s: Enable eSE-mode set ON", fn);
-                    se.SecEle_Modeset(0x01);
-                    usleep(2000 * 1000);
-                    stat = NFA_STATUS_OK;
-                    break;
-                }
-                else
-                {
-                    stat = NFA_STATUS_FAILED;
-                    break;
-                }
-            }
-            else
-            {
-                stat = NFA_STATUS_FAILED;
-            }
-
+  stat = NFA_EeGetInfo(&mActualNumEe, EeInfo);
+  if (stat == NFA_STATUS_OK) {
+    for (int xx = 0; xx < mActualNumEe; xx++) {
+      ALOGI("xx=%d, ee_handle=0x0%x, status=0x0%x", xx, EeInfo[xx].ee_handle,
+            EeInfo[xx].ee_status);
+      if (EeInfo[xx].ee_handle == meSE) {
+        if (EeInfo[xx].ee_status == 0x00) {
+          stat = NFA_STATUS_OK;
+          DLOG_IF(INFO, nfc_debug_enabled)
+              << StringPrintf("%s: status = 0x%x", fn, stat);
+          break;
+        } else if (EeInfo[xx].ee_status == 0x01) {
+          LOG(ERROR) << StringPrintf("%s: Enable eSE-mode set ON", fn);
+          se.SecEle_Modeset(0x01);
+          usleep(2000 * 1000);
+          stat = NFA_STATUS_OK;
+          break;
+        } else {
+          stat = NFA_STATUS_FAILED;
+          break;
         }
+      } else {
+        stat = NFA_STATUS_FAILED;
+      }
     }
-//TheEnd: /*commented to eliminate the label defined but not used warning*/
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit; status = 0x%X", fn, stat);
-    if(stat == NFA_STATUS_OK)
-        return true;
-    else
-        return false;
+  }
+  // TheEnd: /*commented to eliminate the label defined but not used warning*/
+  DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("%s: exit; status = 0x%X", fn, stat);
+  if (stat == NFA_STATUS_OK)
+    return true;
+  else
+    return false;
 }
 
 /*******************************************************************************
@@ -112,66 +102,62 @@ bool IsWiredMode_Enable()
 **
 *******************************************************************************/
 
-int16_t open()
-{
-    static const char fn [] = "DwpChannel::open";
-    bool stat = false;
-    int16_t dwpHandle = EE_ERROR_OPEN_FAIL;
-    SecureElement &se = SecureElement::getInstance();
+int16_t open() {
+  static const char fn[] = "DwpChannel::open";
+  bool stat = false;
+  int16_t dwpHandle = EE_ERROR_OPEN_FAIL;
+  SecureElement& se = SecureElement::getInstance();
 
-    LOG(ERROR) << StringPrintf("DwpChannel: Sec Element open Enter");
-if(nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION) {
+  LOG(ERROR) << StringPrintf("DwpChannel: Sec Element open Enter");
+  if (nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION) {
     DwpChannel::getInstance().Initialize();
-}
-    LOG(ERROR) << StringPrintf("DwpChannel: Sec Element open Enter");
-    if (se.isBusy())
-    {
-        LOG(ERROR) << StringPrintf("DwpChannel: SE is busy");
-        return EE_ERROR_OPEN_FAIL;
-    }
+  }
+  LOG(ERROR) << StringPrintf("DwpChannel: Sec Element open Enter");
+  if (se.isBusy()) {
+    LOG(ERROR) << StringPrintf("DwpChannel: SE is busy");
+    return EE_ERROR_OPEN_FAIL;
+  }
 
-    eSE_connected = IsWiredMode_Enable();
-    if(eSE_connected != true)
-    {
-        LOG(ERROR) << StringPrintf("DwpChannel: Wired mode is not connected");
-        return EE_ERROR_OPEN_FAIL;
-    }
+  eSE_connected = IsWiredMode_Enable();
+  if (eSE_connected != true) {
+    LOG(ERROR) << StringPrintf("DwpChannel: Wired mode is not connected");
+    return EE_ERROR_OPEN_FAIL;
+  }
 
-    /*turn on the sec elem*/
-    stat = se.activate(SecureElement::ESE_ID);
+  /*turn on the sec elem*/
+  stat = se.activate(SecureElement::ESE_ID);
 
-    if (stat)
-    {
-        //establish a pipe to sec elem
-        stat = se.connectEE();
-        if (!stat)
-        {
-          se.deactivate (0);
-        }else
-        {
-            dwpChannelForceClose = false;
-            dwpHandle = se.mActiveEeHandle;
-            if(nfcFL.eseFL._ESE_DUAL_MODE_PRIO_SCHEME ==
-                    nfcFL.eseFL._ESE_WIRED_MODE_RESUME) {
-                /*NFCC shall keep secure element always powered on ;
-                 * however NFCC may deactivate communication link with
-                 * secure element.
-                 * NOTE: Since open() api does not call
-                 * nativeNfcSecureElement_doOpenSecureElementConnection()
-                 * and LS application can invoke
-                 * open(), POWER_ALWAYS_ON is needed.
-                 */
-                if(se.setNfccPwrConfig(se.POWER_ALWAYS_ON|se.COMM_LINK_ACTIVE) != NFA_STATUS_OK)
-                {
-                    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: power link command failed", __func__);
-                }
-                se.SecEle_Modeset(0x01);
-            }
+  if (stat) {
+    // establish a pipe to sec elem
+    stat = se.connectEE();
+    if (!stat) {
+      se.deactivate(0);
+    } else {
+      dwpChannelForceClose = false;
+      dwpHandle = se.mActiveEeHandle;
+      if (nfcFL.eseFL._ESE_DUAL_MODE_PRIO_SCHEME ==
+          nfcFL.eseFL._ESE_WIRED_MODE_RESUME) {
+        /*NFCC shall keep secure element always powered on ;
+         * however NFCC may deactivate communication link with
+         * secure element.
+         * NOTE: Since open() api does not call
+         * nativeNfcSecureElement_doOpenSecureElementConnection()
+         * and LS application can invoke
+         * open(), POWER_ALWAYS_ON is needed.
+         */
+        if (se.setNfccPwrConfig(se.POWER_ALWAYS_ON | se.COMM_LINK_ACTIVE) !=
+            NFA_STATUS_OK) {
+          DLOG_IF(INFO, nfc_debug_enabled)
+              << StringPrintf("%s: power link command failed", __func__);
         }
+        se.SecEle_Modeset(0x01);
+      }
     }
+  }
 
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Exit. dwpHandle = 0x%02x", fn,dwpHandle);
-    return dwpHandle;
+  DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("%s: Exit. dwpHandle = 0x%02x", fn, dwpHandle);
+  return dwpHandle;
 }
 /*******************************************************************************
 **
@@ -183,66 +169,59 @@ if(nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION) {
 **
 *******************************************************************************/
 
-bool close(int16_t mHandle)
-{
-    static const char fn [] = "DwpChannel::close";
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", fn);
-    bool stat = false;
-    SecureElement &se = SecureElement::getInstance();
-    if(nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION) {
-        DwpChannel::getInstance().finalize();
-    }
-    if(mHandle == EE_ERROR_OPEN_FAIL)
-    {
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Channel access denied. Returning", fn);
-        return stat;
-    }
-    if(eSE_connected != true)
-        return true;
+bool close(int16_t mHandle) {
+  static const char fn[] = "DwpChannel::close";
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", fn);
+  bool stat = false;
+  SecureElement& se = SecureElement::getInstance();
+  if (nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION) {
+    DwpChannel::getInstance().finalize();
+  }
+  if (mHandle == EE_ERROR_OPEN_FAIL) {
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s: Channel access denied. Returning", fn);
+    return stat;
+  }
+  if (eSE_connected != true) return true;
 
-#if(NXP_EXTNS == TRUE)
-    if(nfcFL.nfcNxpEse) {
-        se.NfccStandByOperation(STANDBY_MODE_ON);
-    }
+#if (NXP_EXTNS == TRUE)
+  if (nfcFL.nfcNxpEse) {
+    se.NfccStandByOperation(STANDBY_MODE_ON);
+  }
 #endif
 
-    stat = se.disconnectEE (SecureElement::ESE_ID);
+  stat = se.disconnectEE(SecureElement::ESE_ID);
 
-    //if controller is not routing AND there is no pipe connected,
-    //then turn off the sec elem
-    if(((nfcFL.chipType == pn547C2) && (nfcFL.nfcNxpEse)) &&
-            (! se.isBusy())) {
-        se.deactivate (SecureElement::ESE_ID);
-    }
-     return stat;
+  // if controller is not routing AND there is no pipe connected,
+  // then turn off the sec elem
+  if (((nfcFL.chipType == pn547C2) && (nfcFL.nfcNxpEse)) && (!se.isBusy())) {
+    se.deactivate(SecureElement::ESE_ID);
+  }
+  return stat;
 }
 
-bool transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uint8_t* recvBuffer,
-                 int32_t recvBufferMaxSize, int32_t& recvBufferActualSize, int32_t timeoutMillisec)
-{
-    static const char fn [] = "DwpChannel::transceive";
-    eTransceiveStatus stat = TRANSCEIVE_STATUS_FAILED;
-    SecureElement &se = SecureElement::getInstance();
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", fn);
+bool transceive(uint8_t* xmitBuffer, int32_t xmitBufferSize,
+                uint8_t* recvBuffer, int32_t recvBufferMaxSize,
+                int32_t& recvBufferActualSize, int32_t timeoutMillisec) {
+  static const char fn[] = "DwpChannel::transceive";
+  eTransceiveStatus stat = TRANSCEIVE_STATUS_FAILED;
+  SecureElement& se = SecureElement::getInstance();
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", fn);
 
-    /*When Nfc deinitialization triggered*/
-    if(dwpChannelForceClose == true)
-        return stat;
+  /*When Nfc deinitialization triggered*/
+  if (dwpChannelForceClose == true) return stat;
 
-    if(nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION && DwpChannel::getInstance().dwpChannelForceClose)
-    {
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", fn);
-        return stat;
-    }
-
-    stat = se.transceive (xmitBuffer,
-                          xmitBufferSize,
-                          recvBuffer,
-                          recvBufferMaxSize,
-                          recvBufferActualSize,
-                          timeoutMillisec);
+  if (nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION &&
+      DwpChannel::getInstance().dwpChannelForceClose) {
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", fn);
-    return ((stat == TRANSCEIVE_STATUS_OK) ? true : false);
+    return stat;
+  }
+
+  stat =
+      se.transceive(xmitBuffer, xmitBufferSize, recvBuffer, recvBufferMaxSize,
+                    recvBufferActualSize, timeoutMillisec);
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", fn);
+  return ((stat == TRANSCEIVE_STATUS_OK) ? true : false);
 }
 
 /*******************************************************************************
@@ -254,10 +233,7 @@ bool transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uint8_t* recvBuffe
 ** Returns:         None.
 **
 *******************************************************************************/
-DwpChannel::DwpChannel ()
-    :dwpChannelForceClose(false)
-{
-}
+DwpChannel::DwpChannel() : dwpChannelForceClose(false) {}
 
 /*******************************************************************************
 **
@@ -268,9 +244,7 @@ DwpChannel::DwpChannel ()
 ** Returns:         None.
 **
 *******************************************************************************/
-DwpChannel::~DwpChannel ()
-{
-}
+DwpChannel::~DwpChannel() {}
 
 /*******************************************************************************
 **
@@ -281,10 +255,7 @@ DwpChannel::~DwpChannel ()
 ** Returns:         DwpChannel instance.
 **
 *******************************************************************************/
-DwpChannel& DwpChannel::getInstance()
-{
-    return sDwpChannel;
-}
+DwpChannel& DwpChannel::getInstance() { return sDwpChannel; }
 
 /*******************************************************************************
 **
@@ -295,10 +266,7 @@ DwpChannel& DwpChannel::getInstance()
 ** Returns:         None
 **
 *******************************************************************************/
-void DwpChannel::finalize()
-{
-    dwpChannelForceClose = false;
-}
+void DwpChannel::finalize() { dwpChannelForceClose = false; }
 
 /*******************************************************************************
 **
@@ -309,10 +277,7 @@ void DwpChannel::finalize()
 ** Returns:         None.
 **
 *******************************************************************************/
-void DwpChannel::Initialize()
-{
-    dwpChannelForceClose = false;
-}
+void DwpChannel::Initialize() { dwpChannelForceClose = false; }
 /*******************************************************************************
 **
 ** Function:        DwpChannel's force exit
@@ -322,54 +287,50 @@ void DwpChannel::Initialize()
 ** Returns:         None.
 **
 *******************************************************************************/
-void DwpChannel::forceClose()
-{
-    static const char fn [] = "DwpChannel::doDwpChannel_ForceExit";
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter:", fn);
-    if(!nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION) {
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: ESE_JCOP_DWNLD_PROTECTION not available. Returning", fn);
-        return;
-    }
-    dwpChannelForceClose = true;
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Exit:", fn);
+void DwpChannel::forceClose() {
+  static const char fn[] = "DwpChannel::doDwpChannel_ForceExit";
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter:", fn);
+  if (!nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION) {
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+        "%s: ESE_JCOP_DWNLD_PROTECTION not available. Returning", fn);
+    return;
+  }
+  dwpChannelForceClose = true;
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Exit:", fn);
 }
 
-void doeSE_Reset(void)
-{
-    static const char fn [] = "DwpChannel::doeSE_Reset";
-    SecureElement &se = SecureElement::getInstance();
-    RoutingManager &rm = RoutingManager::getInstance();
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter:", fn);
+void doeSE_Reset(void) {
+  static const char fn[] = "DwpChannel::doeSE_Reset";
+  SecureElement& se = SecureElement::getInstance();
+  RoutingManager& rm = RoutingManager::getInstance();
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter:", fn);
 
-    rm.mResetHandlerMutex.lock();
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("1st mode set calling");
-    se.SecEle_Modeset(0x00);
-    usleep(100 * 1000);
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("1st mode set called");
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("2nd mode set calling");
+  rm.mResetHandlerMutex.lock();
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("1st mode set calling");
+  se.SecEle_Modeset(0x00);
+  usleep(100 * 1000);
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("1st mode set called");
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("2nd mode set calling");
 
-    se.SecEle_Modeset(0x01);
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("2nd mode set called");
+  se.SecEle_Modeset(0x01);
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("2nd mode set called");
 
-    usleep(3000 * 1000);
-    rm.mResetHandlerMutex.unlock();
-    if((nfcFL.nfccFL._NFCEE_REMOVED_NTF_RECOVERY) &&
-            (RoutingManager::getInstance().is_ee_recovery_ongoing()))
-    {
-        LOG(ERROR) << StringPrintf("%s: is_ee_recovery_ongoing ", fn);
-        SyncEventGuard guard (se.mEEdatapacketEvent);
-        se.mEEdatapacketEvent.wait(android::gMaxEERecoveryTimeout);
-    }
+  usleep(3000 * 1000);
+  rm.mResetHandlerMutex.unlock();
+  if ((nfcFL.nfccFL._NFCEE_REMOVED_NTF_RECOVERY) &&
+      (RoutingManager::getInstance().is_ee_recovery_ongoing())) {
+    LOG(ERROR) << StringPrintf("%s: is_ee_recovery_ongoing ", fn);
+    SyncEventGuard guard(se.mEEdatapacketEvent);
+    se.mEEdatapacketEvent.wait(android::gMaxEERecoveryTimeout);
+  }
 }
-namespace android
-{
-    void doDwpChannel_ForceExit()
-    {
-        static const char fn [] = "DwpChannel::doDwpChannel_ForceExit";
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter:", fn);
-        dwpChannelForceClose = true;
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", fn);
-    }
+namespace android {
+void doDwpChannel_ForceExit() {
+  static const char fn[] = "DwpChannel::doDwpChannel_ForceExit";
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter:", fn);
+  dwpChannelForceClose = true;
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", fn);
+}
 }
 /*******************************************************************************
 **
@@ -381,115 +342,119 @@ namespace android
 ** Returns:         void.
 **
 *******************************************************************************/
-void doeSE_JcopDownLoadReset(void)
-{
-    static const char fn [] = "DwpChannel::JcopDownLoadReset";
-    /*tNFA_STATUS nfaStat = NFA_STATUS_FAILED;*/
-    SecureElement &se = SecureElement::getInstance();
-    RoutingManager &rm = RoutingManager::getInstance();
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter:", fn);
+void doeSE_JcopDownLoadReset(void) {
+  static const char fn[] = "DwpChannel::JcopDownLoadReset";
+  /*tNFA_STATUS nfaStat = NFA_STATUS_FAILED;*/
+  SecureElement& se = SecureElement::getInstance();
+  RoutingManager& rm = RoutingManager::getInstance();
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter:", fn);
 
-    rm.mResetHandlerMutex.lock();
-if (nfcFL.eseFL._ESE_RESET_METHOD && nfcFL.eseFL._ESE_POWER_MODE) {
+  rm.mResetHandlerMutex.lock();
+  if (nfcFL.eseFL._ESE_RESET_METHOD && nfcFL.eseFL._ESE_POWER_MODE) {
     unsigned long int num = 0;
-    if (GetNxpNumValue (NAME_NXP_ESE_POWER_DH_CONTROL, (void*)&num, sizeof(num)) == true)
-    {
-        if(num ==1)
-        {
-            if(NFA_GetNCIVersion() == NCI_VERSION_2_0)
-            {
-                se.setNfccPwrConfig(se.NFCC_DECIDES);
-            }
+    if (GetNxpNumValue(NAME_NXP_ESE_POWER_DH_CONTROL, (void*)&num,
+                       sizeof(num)) == true) {
+      if (num == 1) {
+        if (NFA_GetNCIVersion() == NCI_VERSION_2_0) {
+          se.setNfccPwrConfig(se.NFCC_DECIDES);
+        }
 
-            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("1st mode set calling");
-            se.SecEle_Modeset(0x00);
-            usleep(100 * 1000);
-            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("1st mode set called");
-            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("2nd mode set calling");
-
-            if(NFA_GetNCIVersion() == NCI_VERSION_2_0)
-            {
-                se.setNfccPwrConfig(se.POWER_ALWAYS_ON|se.COMM_LINK_ACTIVE);
-            }
-
-            se.SecEle_Modeset(0x01);
-            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("2nd mode set called");
-            usleep(3000 * 1000);
-        }
-        else if(num ==2)
-        {
-            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: eSE CHIP reset  on DWP Channel:", fn);
-            se.SecEle_Modeset(0x00);
-            usleep(100 * 1000);
-            se.eSE_Chip_Reset();
-            se.SecEle_Modeset(0x01);
-            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Chip Reset DONE");
-            usleep(3000 * 1000);
-        }
-        else
-        {
-            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Invalid Power scheme:", fn);
-        }
-        /*
-        if( (num == 1) || (num == 2))
-        {
-            if((se.eSE_Compliancy == se.eSE_Compliancy_ETSI_12)&&(se.mDeletePipeHostId == 0xC0))
-            {
-                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Clear All pipes received.....Create pipe at APDU Gate:", fn);
-                se.mDeletePipeHostId = 0x00;
-                android ::checkforNfceeConfig();
-                SyncEventGuard guard (se.mCreatePipeEvent);
-                nfaStat = NFA_HciCreatePipe(NFA_HANDLE_GROUP_HCI,NFA_HCI_ETSI12_APDU_GATE,0xC0,NFA_HCI_ETSI12_APDU_GATE);
-                if(nfaStat == NFA_STATUS_OK)
-                {
-                    se.mCreatePipeEvent.wait();
-                    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Created pipe at APDU Gate Open the pipe!!!", fn);
-                    SyncEventGuard guard (se.mPipeOpenedEvent);
-                    nfaStat = NFA_STATUS_FAILED;
-                    se.mAbortEventWaitOk = false;
-                    nfaStat = NFA_HciOpenPipe(NFA_HANDLE_GROUP_HCI,se.mCreatedPipe);
-                    if(nfaStat == NFA_STATUS_OK)
-                    {
-                        se.mPipeOpenedEvent.wait();
-                        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:Pipe at APDU Gate opened successfully!!!", fn);
-                        if(se.mAbortEventWaitOk == false)
-                        {
-                            SyncEventGuard guard (se.mAbortEvent);
-                            se.mAbortEvent.wait();
-                        }
-                        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:ATR received successfully!!!", fn);
-                    }
-                    else
-                    {
-                        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: fail open pipe; error=0x%X", fn, nfaStat);
-                    }
-                }
-                else
-                {
-                    LOG(ERROR) << StringPrintf("%s: fail create pipe; error=0x%X", fn, nfaStat);
-                }
-            }
-        }
-             */
-        }
-    }
-    else {
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("1st mode set calling");
+        DLOG_IF(INFO, nfc_debug_enabled)
+            << StringPrintf("1st mode set calling");
         se.SecEle_Modeset(0x00);
         usleep(100 * 1000);
         DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("1st mode set called");
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("2nd mode set calling");
+        DLOG_IF(INFO, nfc_debug_enabled)
+            << StringPrintf("2nd mode set calling");
+
+        if (NFA_GetNCIVersion() == NCI_VERSION_2_0) {
+          se.setNfccPwrConfig(se.POWER_ALWAYS_ON | se.COMM_LINK_ACTIVE);
+        }
 
         se.SecEle_Modeset(0x01);
         DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("2nd mode set called");
-
         usleep(3000 * 1000);
+      } else if (num == 2) {
+        DLOG_IF(INFO, nfc_debug_enabled)
+            << StringPrintf("%s: eSE CHIP reset  on DWP Channel:", fn);
+        se.SecEle_Modeset(0x00);
+        usleep(100 * 1000);
+        se.eSE_Chip_Reset();
+        se.SecEle_Modeset(0x01);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Chip Reset DONE");
+        usleep(3000 * 1000);
+      } else {
+        DLOG_IF(INFO, nfc_debug_enabled)
+            << StringPrintf("%s: Invalid Power scheme:", fn);
+      }
+      /*
+      if( (num == 1) || (num == 2))
+      {
+          if((se.eSE_Compliancy ==
+      se.eSE_Compliancy_ETSI_12)&&(se.mDeletePipeHostId == 0xC0))
+          {
+              DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Clear All
+      pipes received.....Create pipe at APDU Gate:", fn);
+              se.mDeletePipeHostId = 0x00;
+              android ::checkforNfceeConfig();
+              SyncEventGuard guard (se.mCreatePipeEvent);
+              nfaStat =
+      NFA_HciCreatePipe(NFA_HANDLE_GROUP_HCI,NFA_HCI_ETSI12_APDU_GATE,0xC0,NFA_HCI_ETSI12_APDU_GATE);
+              if(nfaStat == NFA_STATUS_OK)
+              {
+                  se.mCreatePipeEvent.wait();
+                  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Created
+      pipe at APDU Gate Open the pipe!!!", fn);
+                  SyncEventGuard guard (se.mPipeOpenedEvent);
+                  nfaStat = NFA_STATUS_FAILED;
+                  se.mAbortEventWaitOk = false;
+                  nfaStat =
+      NFA_HciOpenPipe(NFA_HANDLE_GROUP_HCI,se.mCreatedPipe);
+                  if(nfaStat == NFA_STATUS_OK)
+                  {
+                      se.mPipeOpenedEvent.wait();
+                      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:Pipe
+      at APDU Gate opened successfully!!!", fn);
+                      if(se.mAbortEventWaitOk == false)
+                      {
+                          SyncEventGuard guard (se.mAbortEvent);
+                          se.mAbortEvent.wait();
+                      }
+                      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:ATR
+      received successfully!!!", fn);
+                  }
+                  else
+                  {
+                      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: fail
+      open pipe; error=0x%X", fn, nfaStat);
+                  }
+              }
+              else
+              {
+                  LOG(ERROR) << StringPrintf("%s: fail create pipe; error=0x%X",
+      fn, nfaStat);
+              }
+          }
+      }
+           */
     }
-    rm.mResetHandlerMutex.unlock();
+  } else {
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("1st mode set calling");
+    se.SecEle_Modeset(0x00);
+    usleep(100 * 1000);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("1st mode set called");
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("2nd mode set calling");
 
-    if(nfcFL.nfccFL._NFCEE_REMOVED_NTF_RECOVERY && (RoutingManager::getInstance().is_ee_recovery_ongoing()))
-    {
-        SyncEventGuard guard (se.mEEdatapacketEvent);
-        se.mEEdatapacketEvent.wait(android::gMaxEERecoveryTimeout);
-    }
+    se.SecEle_Modeset(0x01);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("2nd mode set called");
+
+    usleep(3000 * 1000);
+  }
+  rm.mResetHandlerMutex.unlock();
+
+  if (nfcFL.nfccFL._NFCEE_REMOVED_NTF_RECOVERY &&
+      (RoutingManager::getInstance().is_ee_recovery_ongoing())) {
+    SyncEventGuard guard(se.mEEdatapacketEvent);
+    se.mEEdatapacketEvent.wait(android::gMaxEERecoveryTimeout);
+  }
 }

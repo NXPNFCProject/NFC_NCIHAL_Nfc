@@ -20,17 +20,13 @@
 
 JcopManager* JcopManager::mJcpMgr = NULL;
 static phJcop_Context_t g_mPhJcpCtxt;
-static phJcop_Context_t *pg_mPhJcpCtxt = &g_mPhJcpCtxt;
-static void *Pgpx_Jcop_handle = NULL;
+static phJcop_Context_t* pg_mPhJcpCtxt = &g_mPhJcpCtxt;
+static void* Pgpx_Jcop_handle = NULL;
 #define DL_STATUS_OK 0x00
 
-JcopManager::JcopManager()
-{
-}
+JcopManager::JcopManager() {}
 
-JcopManager::~JcopManager()
-{
-}
+JcopManager::~JcopManager() {}
 
 /*******************************************************************************
 **
@@ -41,12 +37,11 @@ JcopManager::~JcopManager()
 ** Returns:         JcopManager object.
 **
 *******************************************************************************/
-JcopManager* JcopManager::getInstance ()
-{
-    if(mJcpMgr == NULL){
-        mJcpMgr = new JcopManager();
-    }
-    return mJcpMgr;
+JcopManager* JcopManager::getInstance() {
+  if (mJcpMgr == NULL) {
+    mJcpMgr = new JcopManager();
+  }
+  return mJcpMgr;
 }
 
 /*******************************************************************************
@@ -56,13 +51,11 @@ JcopManager* JcopManager::getInstance ()
 ** Description:     Delete the JcopManager singleton object.
 **
 *******************************************************************************/
-void JcopManager::deleteInstance ()
-{
-    if(mJcpMgr != NULL)
-    {
-        delete mJcpMgr;
-        mJcpMgr = NULL;
-    }
+void JcopManager::deleteInstance() {
+  if (mJcpMgr != NULL) {
+    delete mJcpMgr;
+    mJcpMgr = NULL;
+  }
 }
 
 /*******************************************************************************
@@ -75,75 +68,101 @@ void JcopManager::deleteInstance ()
 **                  STATUS_FAILED if unSuccessfull
 **
 *******************************************************************************/
-tNFA_STATUS JcopManager::JcopInitialize ()
-{
-    tNFA_STATUS wStatus = NFA_STATUS_OK;
-    //Getting pointer to JCOP module
-    Pgpx_Jcop_handle = dlopen("system/lib64/libp61-jcop-kit.so",RTLD_NOW);
-    if(Pgpx_Jcop_handle == NULL){
-        LOG(ERROR) << StringPrintf("%s: Error : opening (system/lib64/libp61-jcop-kit.so) !!", __func__);
-        return NFA_STATUS_FAILED;
-    }
-    // Getting pointer to ALA_Init function
-    if((pg_mPhJcpCtxt->ala_init = (tJCOP_INIT_CBACK *)dlsym(Pgpx_Jcop_handle, "ALA_Init")) == NULL){
-        LOG(ERROR) << StringPrintf("%s: Error while linking JCOP context (ALA_Init) !!", __func__);
-        return NFA_STATUS_FAILED;
-    }
-    // Getting pointer to ALA_Start function
-    if((pg_mPhJcpCtxt->ala_start = (tALA_START_CBACK *)dlsym(Pgpx_Jcop_handle, "ALA_Start")) == NULL){
-        wStatus = NFA_STATUS_FAILED;
-        LOG(ERROR) << StringPrintf("%s: Error while linking JCOP context (ALA_Start) !!", __func__);
-    }
+tNFA_STATUS JcopManager::JcopInitialize() {
+  tNFA_STATUS wStatus = NFA_STATUS_OK;
+  // Getting pointer to JCOP module
+  Pgpx_Jcop_handle = dlopen("system/lib64/libp61-jcop-kit.so", RTLD_NOW);
+  if (Pgpx_Jcop_handle == NULL) {
+    LOG(ERROR) << StringPrintf(
+        "%s: Error : opening (system/lib64/libp61-jcop-kit.so) !!", __func__);
+    return NFA_STATUS_FAILED;
+  }
+  // Getting pointer to ALA_Init function
+  if ((pg_mPhJcpCtxt->ala_init =
+           (tJCOP_INIT_CBACK*)dlsym(Pgpx_Jcop_handle, "ALA_Init")) == NULL) {
+    LOG(ERROR) << StringPrintf(
+        "%s: Error while linking JCOP context (ALA_Init) !!", __func__);
+    return NFA_STATUS_FAILED;
+  }
+  // Getting pointer to ALA_Start function
+  if ((pg_mPhJcpCtxt->ala_start =
+           (tALA_START_CBACK*)dlsym(Pgpx_Jcop_handle, "ALA_Start")) == NULL) {
+    wStatus = NFA_STATUS_FAILED;
+    LOG(ERROR) << StringPrintf(
+        "%s: Error while linking JCOP context (ALA_Start) !!", __func__);
+  }
 
 #if (NXP_LDR_SVC_VER_2 == FALSE)
-    // Getting pointer to ALA_GetlistofApplets function
-    if((pg_mPhJcpCtxt->ala_applets_list = (tALA_APPLET_LIST_CBACK *)dlsym(Pgpx_Jcop_handle, "ALA_GetlistofApplets")) == NULL){
-        wStatus = NFA_STATUS_FAILED;
-        LOG(ERROR) << StringPrintf("%s: Error while linking JCOP context (ALA_GetlistofApplets) !!", __func__);
-    }
-    // Getting pointer to ALA_GetCertificateKey function
-    if((pg_mPhJcpCtxt->ala_get_certkey = (tALA_GET_CERTKEY_CBACK *)dlsym(Pgpx_Jcop_handle, "ALA_GetCertificateKey")) == NULL){
-        wStatus = NFA_STATUS_FAILED;
-        LOG(ERROR) << StringPrintf("%s: Error while linking JCOP context (ALA_GetCertificateKey) !!", __func__);
-    }
+  // Getting pointer to ALA_GetlistofApplets function
+  if ((pg_mPhJcpCtxt->ala_applets_list = (tALA_APPLET_LIST_CBACK*)dlsym(
+           Pgpx_Jcop_handle, "ALA_GetlistofApplets")) == NULL) {
+    wStatus = NFA_STATUS_FAILED;
+    LOG(ERROR) << StringPrintf(
+        "%s: Error while linking JCOP context (ALA_GetlistofApplets) !!",
+        __func__);
+  }
+  // Getting pointer to ALA_GetCertificateKey function
+  if ((pg_mPhJcpCtxt->ala_get_certkey = (tALA_GET_CERTKEY_CBACK*)dlsym(
+           Pgpx_Jcop_handle, "ALA_GetCertificateKey")) == NULL) {
+    wStatus = NFA_STATUS_FAILED;
+    LOG(ERROR) << StringPrintf(
+        "%s: Error while linking JCOP context (ALA_GetCertificateKey) !!",
+        __func__);
+  }
 #endif
 
-    // Getting pointer to ALA_DeInit function
-    if((pg_mPhJcpCtxt->ala_deinit = (tJCOP_DEINIT_CBACK *)dlsym(Pgpx_Jcop_handle, "ALA_DeInit")) == NULL){
-        wStatus = NFA_STATUS_FAILED;
-        LOG(ERROR) << StringPrintf("%s: Error while linking JCOP context (ALA_DeInit) !!", __func__);
-    }
-    // Getting pointer to ALA_lsGetVersion function
-    if((pg_mPhJcpCtxt->ala_lsgetversion = (tALA_LS_CBACK *)dlsym(Pgpx_Jcop_handle, "ALA_lsGetVersion")) == NULL){
-        wStatus = NFA_STATUS_FAILED;
-        LOG(ERROR) << StringPrintf("%s: Error while linking JCOP context (ALA_lsGetVersion) !!", __func__);
-    }
-    // Getting pointer to ALA_lsGetStatus function
-    if((pg_mPhJcpCtxt->ala_lsgetstatus = (tALA_LS_CBACK *)dlsym(Pgpx_Jcop_handle, "ALA_lsGetStatus")) == NULL){
-        wStatus = NFA_STATUS_FAILED;
-        LOG(ERROR) << StringPrintf("%s: Error while linking JCOP context (ALA_lsGetStatus) !!", __func__);
-    }
-    // Getting pointer to ALA_lsGetAppletStatus function
-    if((pg_mPhJcpCtxt->ala_lsgetappletstatus = (tALA_LS_CBACK *)dlsym(Pgpx_Jcop_handle, "ALA_lsGetAppletStatus")) == NULL){
-        wStatus = NFA_STATUS_FAILED;
-        LOG(ERROR) << StringPrintf("%s: Error while linking JCOP context (ALA_lsGetAppletStatus) !!", __func__);
-    }
-    // Getting pointer to JCDNLD_Init function
-    if((pg_mPhJcpCtxt->jcop_init = (tJCOP_INIT_CBACK *)dlsym(Pgpx_Jcop_handle, "JCDNLD_Init")) == NULL){
-        wStatus = NFA_STATUS_FAILED;
-        LOG(ERROR) << StringPrintf("%s: Error while linking JCOP context (JCDNLD_Init) !!", __func__);
-    }
-    // Getting pointer to JCDNLD_StartDownload function
-    if((pg_mPhJcpCtxt->jcdnld_startdnld = (tJCDNLD_DWLD_CBACK *)dlsym(Pgpx_Jcop_handle, "JCDNLD_StartDownload")) == NULL){
-        wStatus = NFA_STATUS_FAILED;
-        LOG(ERROR) << StringPrintf("%s: Error while linking JCOP context (JCDNLD_StartDownload) !!", __func__);
-    }
-    // Getting pointer to JCDNLD_DeInit function
-    if((pg_mPhJcpCtxt->jcdnld_deinit = (tJCOP_DEINIT_CBACK *)dlsym(Pgpx_Jcop_handle, "JCDNLD_DeInit")) == NULL){
-        wStatus = NFA_STATUS_FAILED;
-        LOG(ERROR) << StringPrintf("%s: Error while linking JCOP context (JCDNLD_DeInit) !!", __func__);
-    }
-    return wStatus;
+  // Getting pointer to ALA_DeInit function
+  if ((pg_mPhJcpCtxt->ala_deinit = (tJCOP_DEINIT_CBACK*)dlsym(
+           Pgpx_Jcop_handle, "ALA_DeInit")) == NULL) {
+    wStatus = NFA_STATUS_FAILED;
+    LOG(ERROR) << StringPrintf(
+        "%s: Error while linking JCOP context (ALA_DeInit) !!", __func__);
+  }
+  // Getting pointer to ALA_lsGetVersion function
+  if ((pg_mPhJcpCtxt->ala_lsgetversion = (tALA_LS_CBACK*)dlsym(
+           Pgpx_Jcop_handle, "ALA_lsGetVersion")) == NULL) {
+    wStatus = NFA_STATUS_FAILED;
+    LOG(ERROR) << StringPrintf(
+        "%s: Error while linking JCOP context (ALA_lsGetVersion) !!", __func__);
+  }
+  // Getting pointer to ALA_lsGetStatus function
+  if ((pg_mPhJcpCtxt->ala_lsgetstatus = (tALA_LS_CBACK*)dlsym(
+           Pgpx_Jcop_handle, "ALA_lsGetStatus")) == NULL) {
+    wStatus = NFA_STATUS_FAILED;
+    LOG(ERROR) << StringPrintf(
+        "%s: Error while linking JCOP context (ALA_lsGetStatus) !!", __func__);
+  }
+  // Getting pointer to ALA_lsGetAppletStatus function
+  if ((pg_mPhJcpCtxt->ala_lsgetappletstatus = (tALA_LS_CBACK*)dlsym(
+           Pgpx_Jcop_handle, "ALA_lsGetAppletStatus")) == NULL) {
+    wStatus = NFA_STATUS_FAILED;
+    LOG(ERROR) << StringPrintf(
+        "%s: Error while linking JCOP context (ALA_lsGetAppletStatus) !!",
+        __func__);
+  }
+  // Getting pointer to JCDNLD_Init function
+  if ((pg_mPhJcpCtxt->jcop_init =
+           (tJCOP_INIT_CBACK*)dlsym(Pgpx_Jcop_handle, "JCDNLD_Init")) == NULL) {
+    wStatus = NFA_STATUS_FAILED;
+    LOG(ERROR) << StringPrintf(
+        "%s: Error while linking JCOP context (JCDNLD_Init) !!", __func__);
+  }
+  // Getting pointer to JCDNLD_StartDownload function
+  if ((pg_mPhJcpCtxt->jcdnld_startdnld = (tJCDNLD_DWLD_CBACK*)dlsym(
+           Pgpx_Jcop_handle, "JCDNLD_StartDownload")) == NULL) {
+    wStatus = NFA_STATUS_FAILED;
+    LOG(ERROR) << StringPrintf(
+        "%s: Error while linking JCOP context (JCDNLD_StartDownload) !!",
+        __func__);
+  }
+  // Getting pointer to JCDNLD_DeInit function
+  if ((pg_mPhJcpCtxt->jcdnld_deinit = (tJCOP_DEINIT_CBACK*)dlsym(
+           Pgpx_Jcop_handle, "JCDNLD_DeInit")) == NULL) {
+    wStatus = NFA_STATUS_FAILED;
+    LOG(ERROR) << StringPrintf(
+        "%s: Error while linking JCOP context (JCDNLD_DeInit) !!", __func__);
+  }
+  return wStatus;
 }
 
 /*******************************************************************************
@@ -156,37 +175,36 @@ tNFA_STATUS JcopManager::JcopInitialize ()
 **                  STATUS_FAILED if unSuccessfull
 **
 *******************************************************************************/
-tNFA_STATUS JcopManager::JcopDeInitialize ()
-{
-    if(Pgpx_Jcop_handle != NULL){
-        if((dlclose(Pgpx_Jcop_handle)) != DL_STATUS_OK){
-            LOG(ERROR) << StringPrintf("%s: Error : closing (system/lib64/libp61-jcop-kit.so) !!", __func__);
-            return NFA_STATUS_FAILED;
-        }
-    }else{
-        LOG(ERROR) << StringPrintf("%s: Invalid handle !!", __func__);
+tNFA_STATUS JcopManager::JcopDeInitialize() {
+  if (Pgpx_Jcop_handle != NULL) {
+    if ((dlclose(Pgpx_Jcop_handle)) != DL_STATUS_OK) {
+      LOG(ERROR) << StringPrintf(
+          "%s: Error : closing (system/lib64/libp61-jcop-kit.so) !!", __func__);
+      return NFA_STATUS_FAILED;
     }
-    return NFA_STATUS_OK;
+  } else {
+    LOG(ERROR) << StringPrintf("%s: Invalid handle !!", __func__);
+  }
+  return NFA_STATUS_OK;
 }
 
 /*******************************************************************************
 **
 ** Function:        AlaInitialize
 **
-** Description:     Initializes the ALA library and opens the DWP communication channel
+** Description:     Initializes the ALA library and opens the DWP communication
+*channel
 **
 ** Returns:         STATUS_OK if Success.
 **                  STATUS_FAILED if unSuccessfull
 **
 *******************************************************************************/
-tNFC_JBL_STATUS JcopManager::AlaInitialize (IChannel_t *channel)
-{
-    if(channel == NULL)
-    {
-        LOG(ERROR) << StringPrintf("%s: Invalid handle !!", __func__);
-        return NFA_STATUS_FAILED;
-    }
-    return pg_mPhJcpCtxt->ala_init(channel);
+tNFC_JBL_STATUS JcopManager::AlaInitialize(IChannel_t* channel) {
+  if (channel == NULL) {
+    LOG(ERROR) << StringPrintf("%s: Invalid handle !!", __func__);
+    return NFA_STATUS_FAILED;
+  }
+  return pg_mPhJcpCtxt->ala_init(channel);
 }
 
 /*******************************************************************************
@@ -198,7 +216,7 @@ tNFC_JBL_STATUS JcopManager::AlaInitialize (IChannel_t *channel)
 ** Returns:         True if ok.
 **
 *******************************************************************************/
-bool JcopManager::AlaDeInitialize () { return pg_mPhJcpCtxt->ala_deinit(); }
+bool JcopManager::AlaDeInitialize() { return pg_mPhJcpCtxt->ala_deinit(); }
 
 /*******************************************************************************
 **
@@ -211,22 +229,23 @@ bool JcopManager::AlaDeInitialize () { return pg_mPhJcpCtxt->ala_deinit(); }
 **
 *******************************************************************************/
 #if (NXP_LDR_SVC_VER_2 == TRUE)
-tNFC_JBL_STATUS JcopManager::AlaStart (const char *name, const char *dest, uint8_t *pdata, uint16_t len, uint8_t *respSW)
-{
-    if( !name || !dest || !pdata || !respSW){
-        LOG(ERROR) << StringPrintf("%s: Invalid Params !!", __func__);
-        return NFA_STATUS_FAILED;
-    }
-    return pg_mPhJcpCtxt->ala_start(name, dest, pdata, len, respSW);
+tNFC_JBL_STATUS JcopManager::AlaStart(const char* name, const char* dest,
+                                      uint8_t* pdata, uint16_t len,
+                                      uint8_t* respSW) {
+  if (!name || !dest || !pdata || !respSW) {
+    LOG(ERROR) << StringPrintf("%s: Invalid Params !!", __func__);
+    return NFA_STATUS_FAILED;
+  }
+  return pg_mPhJcpCtxt->ala_start(name, dest, pdata, len, respSW);
 }
 #else
-tNFC_JBL_STATUS JcopManager::AlaStart (const char *name, uint8_t *pdata, uint16_t len)
-{
-    if( !name || !pdata ){
-        LOG(ERROR) << StringPrintf("%s: Invalid Params !!", __func__);
-        return NFA_STATUS_FAILED;
-    }
-    return pg_mPhJcpCtxt->ala_start(name, dest, pdata, len, respSW);
+tNFC_JBL_STATUS JcopManager::AlaStart(const char* name, uint8_t* pdata,
+                                      uint16_t len) {
+  if (!name || !pdata) {
+    LOG(ERROR) << StringPrintf("%s: Invalid Params !!", __func__);
+    return NFA_STATUS_FAILED;
+  }
+  return pg_mPhJcpCtxt->ala_start(name, dest, pdata, len, respSW);
 }
 #endif
 
@@ -238,13 +257,12 @@ tNFC_JBL_STATUS JcopManager::AlaStart (const char *name, uint8_t *pdata, uint16_
 ** Description:     list all the applets.
 **
 *******************************************************************************/
-void JcopManager::AlaGetlistofApplets (char *list[], uint8_t* num)
-{
-    if(!list || !num){
-        LOG(ERROR) << StringPrintf("%s: Invalid Params !!", __func__);
-        return;
-    }
-    pg_mPhJcpCtxt->ala_applets_list(list, num);
+void JcopManager::AlaGetlistofApplets(char* list[], uint8_t* num) {
+  if (!list || !num) {
+    LOG(ERROR) << StringPrintf("%s: Invalid Params !!", __func__);
+    return;
+  }
+  pg_mPhJcpCtxt->ala_applets_list(list, num);
 }
 
 /*******************************************************************************
@@ -256,13 +274,13 @@ void JcopManager::AlaGetlistofApplets (char *list[], uint8_t* num)
 ** Returns:         True if ok.
 **
 *******************************************************************************/
-tNFC_JBL_STATUS JcopManager::AlaGetCertificateKey (uint8_t *pKey, int32_t *pKeylen)
-{
-    if(!pKey || !pKeylen){
-        LOG(ERROR) << StringPrintf("%s: Invalid Params !!", __func__);
-        return NFA_STATUS_FAILED;
-    }
-    return pg_mPhJcpCtxt->ala_get_certkey(pKey, pKeylen);
+tNFC_JBL_STATUS JcopManager::AlaGetCertificateKey(uint8_t* pKey,
+                                                  int32_t* pKeylen) {
+  if (!pKey || !pKeylen) {
+    LOG(ERROR) << StringPrintf("%s: Invalid Params !!", __func__);
+    return NFA_STATUS_FAILED;
+  }
+  return pg_mPhJcpCtxt->ala_get_certkey(pKey, pKeylen);
 }
 #endif
 
@@ -276,13 +294,12 @@ tNFC_JBL_STATUS JcopManager::AlaGetCertificateKey (uint8_t *pKey, int32_t *pKeyl
 **                  STATUS_FAILED if unSuccessfull
 **
 *******************************************************************************/
-tNFC_JBL_STATUS JcopManager::AlaLsGetVersion (uint8_t *pVersion)
-{
-    if(!pVersion){
-        LOG(ERROR) << StringPrintf("%s: Invalid Params !!", __func__);
-        return NFA_STATUS_FAILED;
-    }
-    return pg_mPhJcpCtxt->ala_lsgetversion(pVersion);
+tNFC_JBL_STATUS JcopManager::AlaLsGetVersion(uint8_t* pVersion) {
+  if (!pVersion) {
+    LOG(ERROR) << StringPrintf("%s: Invalid Params !!", __func__);
+    return NFA_STATUS_FAILED;
+  }
+  return pg_mPhJcpCtxt->ala_lsgetversion(pVersion);
 }
 
 /*******************************************************************************
@@ -295,13 +312,12 @@ tNFC_JBL_STATUS JcopManager::AlaLsGetVersion (uint8_t *pVersion)
 **                  STATUS_FAILED if unSuccessfull
 **
 *******************************************************************************/
-tNFC_JBL_STATUS JcopManager::AlaLsGetAppletStatus (uint8_t *pVersion)
-{
-    if(!pVersion){
-        LOG(ERROR) << StringPrintf("%s: Invalid Params !!", __func__);
-        return NFA_STATUS_FAILED;
-    }
-    return pg_mPhJcpCtxt->ala_lsgetappletstatus(pVersion);
+tNFC_JBL_STATUS JcopManager::AlaLsGetAppletStatus(uint8_t* pVersion) {
+  if (!pVersion) {
+    LOG(ERROR) << StringPrintf("%s: Invalid Params !!", __func__);
+    return NFA_STATUS_FAILED;
+  }
+  return pg_mPhJcpCtxt->ala_lsgetappletstatus(pVersion);
 }
 
 /*******************************************************************************
@@ -314,32 +330,31 @@ tNFC_JBL_STATUS JcopManager::AlaLsGetAppletStatus (uint8_t *pVersion)
 **                  STATUS_FAILED if unSuccessfull
 **
 *******************************************************************************/
-tNFC_JBL_STATUS JcopManager::AlaLsGetStatus (uint8_t *pVersion)
-{
-    if(!pVersion){
-        LOG(ERROR) << StringPrintf("%s: Invalid Params !!", __func__);
-        return NFA_STATUS_FAILED;
-    }
-    return pg_mPhJcpCtxt->ala_lsgetstatus(pVersion);
+tNFC_JBL_STATUS JcopManager::AlaLsGetStatus(uint8_t* pVersion) {
+  if (!pVersion) {
+    LOG(ERROR) << StringPrintf("%s: Invalid Params !!", __func__);
+    return NFA_STATUS_FAILED;
+  }
+  return pg_mPhJcpCtxt->ala_lsgetstatus(pVersion);
 }
 
 /*******************************************************************************
 **
 ** Function:        JCDnldInit
 **
-** Description:     Initializes the JCOP library and opens the DWP communication channel
+** Description:     Initializes the JCOP library and opens the DWP communication
+*channel
 **
 ** Returns:         STATUS_OK if Success.
 **                  STATUS_FAILED if unSuccessfull
 **
 *******************************************************************************/
-tNFC_JBL_STATUS JcopManager::JCDnldInit (IChannel_t *channel)
-{
-    if(!channel){
-        LOG(ERROR) << StringPrintf("%s: Invalid Params !!", __func__);
-        return NFA_STATUS_FAILED;
-    }
-    return pg_mPhJcpCtxt->jcop_init(channel);
+tNFC_JBL_STATUS JcopManager::JCDnldInit(IChannel_t* channel) {
+  if (!channel) {
+    LOG(ERROR) << StringPrintf("%s: Invalid Params !!", __func__);
+    return NFA_STATUS_FAILED;
+  }
+  return pg_mPhJcpCtxt->jcop_init(channel);
 }
 
 /*******************************************************************************
@@ -352,7 +367,9 @@ tNFC_JBL_STATUS JcopManager::JCDnldInit (IChannel_t *channel)
 **                  STATUS_FAILED if unSuccessfull
 **
 *******************************************************************************/
-tNFC_JBL_STATUS JcopManager::JCDnldStartDownload () { return pg_mPhJcpCtxt->jcdnld_startdnld(); }
+tNFC_JBL_STATUS JcopManager::JCDnldStartDownload() {
+  return pg_mPhJcpCtxt->jcdnld_startdnld();
+}
 
 /*******************************************************************************
 **
@@ -363,6 +380,4 @@ tNFC_JBL_STATUS JcopManager::JCDnldStartDownload () { return pg_mPhJcpCtxt->jcdn
 ** Returns:         True if ok.
 **
 *******************************************************************************/
-bool JcopManager::JCDnldDeInit () { return pg_mPhJcpCtxt->jcdnld_deinit(); }
-
-
+bool JcopManager::JCDnldDeInit() { return pg_mPhJcpCtxt->jcdnld_deinit(); }

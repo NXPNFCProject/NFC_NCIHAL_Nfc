@@ -40,94 +40,71 @@
 #include "_OverrideLog.h"
 #include <string.h>
 
-
-IntervalTimer::IntervalTimer()
-{
-    mTimerId = 0;
-    mCb = NULL;
+IntervalTimer::IntervalTimer() {
+  mTimerId = 0;
+  mCb = NULL;
 }
 
+bool IntervalTimer::set(int ms, TIMER_FUNC cb) {
+  if (mTimerId == 0) {
+    if (cb == NULL) return false;
 
-bool IntervalTimer::set(int ms, TIMER_FUNC cb)
-{
-    if (mTimerId == 0)
-    {
-        if (cb == NULL)
-            return false;
-
-        if (!create(cb))
-            return false;
-    }
-    if (cb != mCb)
-    {
-        kill();
-        if (!create(cb))
-            return false;
-    }
-
-    int stat = 0;
-    struct itimerspec ts;
-    ts.it_value.tv_sec = ms / 1000;
-    ts.it_value.tv_nsec = (ms % 1000) * 1000000;
-
-    ts.it_interval.tv_sec = 0;
-    ts.it_interval.tv_nsec = 0;
-
-    stat = timer_settime(mTimerId, 0, &ts, 0);
-    if (stat == -1)
-        LOG(ERROR) << StringPrintf("fail set timer");
-    return stat == 0;
-}
-
-
-IntervalTimer::~IntervalTimer()
-{
+    if (!create(cb)) return false;
+  }
+  if (cb != mCb) {
     kill();
+    if (!create(cb)) return false;
+  }
+
+  int stat = 0;
+  struct itimerspec ts;
+  ts.it_value.tv_sec = ms / 1000;
+  ts.it_value.tv_nsec = (ms % 1000) * 1000000;
+
+  ts.it_interval.tv_sec = 0;
+  ts.it_interval.tv_nsec = 0;
+
+  stat = timer_settime(mTimerId, 0, &ts, 0);
+  if (stat == -1) LOG(ERROR) << StringPrintf("fail set timer");
+  return stat == 0;
 }
 
+IntervalTimer::~IntervalTimer() { kill(); }
 
-void IntervalTimer::kill()
-{
-    if (mTimerId == 0)
-        return;
+void IntervalTimer::kill() {
+  if (mTimerId == 0) return;
 
-    timer_delete(mTimerId);
-    mTimerId = 0;
-    mCb = NULL;
+  timer_delete(mTimerId);
+  mTimerId = 0;
+  mCb = NULL;
 }
 
+bool IntervalTimer::create(TIMER_FUNC cb) {
+  struct sigevent se;
+  memset(&se, 0, sizeof(struct sigevent));
+  int stat = 0;
 
-bool IntervalTimer::create(TIMER_FUNC cb)
-{
-    struct sigevent se;
-    memset(&se,0,sizeof(struct sigevent));
-    int stat = 0;
-
-    /*
-     * Set the sigevent structure to cause the signal to be
-     * delivered by creating a new thread.
-     */
-    se.sigev_notify = SIGEV_THREAD;
-    se.sigev_value.sival_ptr = &mTimerId;
-    se.sigev_notify_function = cb;
-    se.sigev_notify_attributes = NULL;
-    mCb = cb;
-    stat = timer_create(CLOCK_MONOTONIC, &se, &mTimerId);
-    if (stat == -1)
-        LOG(ERROR) << StringPrintf("fail create timer");
-    return stat == 0;
+  /*
+   * Set the sigevent structure to cause the signal to be
+   * delivered by creating a new thread.
+   */
+  se.sigev_notify = SIGEV_THREAD;
+  se.sigev_value.sival_ptr = &mTimerId;
+  se.sigev_notify_function = cb;
+  se.sigev_notify_attributes = NULL;
+  mCb = cb;
+  stat = timer_create(CLOCK_MONOTONIC, &se, &mTimerId);
+  if (stat == -1) LOG(ERROR) << StringPrintf("fail create timer");
+  return stat == 0;
 }
 
-bool IntervalTimer::isRunning(void)
-{
-   if (mTimerId == 0)
-       return false;
+bool IntervalTimer::isRunning(void) {
+  if (mTimerId == 0) return false;
 
-    int stat = 0;
-    struct itimerspec ts;
+  int stat = 0;
+  struct itimerspec ts;
 
-    stat = timer_gettime(mTimerId, &ts);
-    if (stat != 0)
-        return false;
-    return ((ts.it_value.tv_sec > 0 || ts.it_value.tv_nsec > 0) ? true : false);
+  stat = timer_gettime(mTimerId, &ts);
+  if (stat != 0) return false;
+  return ((ts.it_value.tv_sec > 0 || ts.it_value.tv_nsec > 0) ? true : false);
 }

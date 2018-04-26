@@ -24,7 +24,6 @@
 #pragma once
 #include "NfcJniUtil.h"
 
-
 /*******************************************************************************
 **
 ** Function:        pn544InteropStopPolling
@@ -35,8 +34,7 @@
 ** Returns:         None
 **
 *******************************************************************************/
-void pn544InteropStopPolling ();
-
+void pn544InteropStopPolling();
 
 /*******************************************************************************
 **
@@ -47,8 +45,7 @@ void pn544InteropStopPolling ();
 ** Returns:         True if the code is busy.
 **
 *******************************************************************************/
-bool pn544InteropIsBusy ();
-
+bool pn544InteropIsBusy();
 
 /*******************************************************************************
 **
@@ -59,4 +56,4 @@ bool pn544InteropIsBusy ();
 ** Returns:         None.
 **
 *******************************************************************************/
-void pn544InteropAbortNow ();
+void pn544InteropAbortNow();

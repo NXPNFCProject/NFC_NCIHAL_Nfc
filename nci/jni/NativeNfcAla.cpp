@@ -24,29 +24,28 @@
 #include "JcopManager.h"
 #include "phNxpConfig.h"
 #define LS_DEFAULT_VERSION 0x20
-namespace android
-{
-extern SyncEvent            sNfaVSCResponseEvent;
-extern void startRfDiscovery (bool isStart);
+namespace android {
+extern SyncEvent sNfaVSCResponseEvent;
+extern void startRfDiscovery(bool isStart);
 extern bool isDiscoveryStarted();
-extern void nfaVSCCallback(uint8_t event, uint16_t param_len, uint8_t *p_param);
+extern void nfaVSCCallback(uint8_t event, uint16_t param_len, uint8_t* p_param);
 extern bool isLowRamDevice();
-
 }
 
-namespace android
-{
+namespace android {
 
 static bool sRfEnabled;
-jbyteArray nfcManager_lsExecuteScript(JNIEnv* e, jobject o, jstring src, jstring dest, jbyteArray);
+jbyteArray nfcManager_lsExecuteScript(JNIEnv* e, jobject o, jstring src,
+                                      jstring dest, jbyteArray);
 jbyteArray nfcManager_lsGetVersion(JNIEnv* e, jobject o);
-int nfcManager_doAppletLoadApplet(JNIEnv* e, jobject o, jstring choice, jbyteArray);
+int nfcManager_doAppletLoadApplet(JNIEnv* e, jobject o, jstring choice,
+                                  jbyteArray);
 int nfcManager_getLoaderServiceConfVersion(JNIEnv* e, jobject o);
 int nfcManager_GetAppletsList(JNIEnv* e, jobject o, jobjectArray list);
 jbyteArray nfcManager_GetCertificateKey(JNIEnv* e, jobject);
 jbyteArray nfcManager_lsGetStatus(JNIEnv* e, jobject);
 jbyteArray nfcManager_lsGetAppletStatus(JNIEnv* e, jobject);
-extern void DWPChannel_init(IChannel_t *DWP);
+extern void DWPChannel_init(IChannel_t* DWP);
 extern IChannel_t Dwp;
 
 /*******************************************************************************
@@ -60,55 +59,49 @@ extern IChannel_t Dwp;
 ** Returns:         None.
 **
 *******************************************************************************/
-int nfcManager_GetAppletsList(JNIEnv* e, jobject o, jobjectArray list)
-{
-    (void)e;
-    (void)o;
-    (void)list;
-    uint8_t xx=0;
+int nfcManager_GetAppletsList(JNIEnv* e, jobject o, jobjectArray list) {
+  (void)e;
+  (void)o;
+  (void)list;
+  uint8_t xx = 0;
 #if (NXP_LDR_SVC_VER_2 == FALSE)
-    if(nfcFL.nfcNxpEse) {
-        char *name[10];
-        uint8_t num =0;
-        uint8_t list_len = e->GetArrayLength(list);
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+  if (nfcFL.nfcNxpEse) {
+    char* name[10];
+    uint8_t num = 0;
+    uint8_t list_len = e->GetArrayLength(list);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
 
-        sRfEnabled = isDiscoveryStarted();
-        if (sRfEnabled) {
-            // Stop RF Discovery if we were polling
-            startRfDiscovery (false);
-        }
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: list_len=0x%x", __func__, list_len);
-        pJcopMgr->AlaGetlistofApplets(name, &num);
+    sRfEnabled = isDiscoveryStarted();
+    if (sRfEnabled) {
+      // Stop RF Discovery if we were polling
+      startRfDiscovery(false);
+    }
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s: list_len=0x%x", __func__, list_len);
+    pJcopMgr->AlaGetlistofApplets(name, &num);
 
-        if((num != 0) &&
-                (list_len >= num))
-        {
-            while(num > 0)
-            {
-                jstring tmp = e->NewStringUTF(name[xx]);
-                e->SetObjectArrayElement(list, xx, tmp);
-                if(name[xx] != NULL)
-                {
-                    free(name[xx]);
-                }
-                xx++;
-                num--;
-            }
+    if ((num != 0) && (list_len >= num)) {
+      while (num > 0) {
+        jstring tmp = e->NewStringUTF(name[xx]);
+        e->SetObjectArrayElement(list, xx, tmp);
+        if (name[xx] != NULL) {
+          free(name[xx]);
         }
-        else
-        {
-            LOG(ERROR) << StringPrintf("%s: No applets found",__func__);
-        }
-        startRfDiscovery (true);
+        xx++;
+        num--;
+      }
+    } else {
+      LOG(ERROR) << StringPrintf("%s: No applets found", __func__);
     }
-    else {
-        xx = -1;
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: No p61", __func__);
-    }
+    startRfDiscovery(true);
+  } else {
+    xx = -1;
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: No p61", __func__);
+  }
 #endif
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit; num_applets =0x%X", __func__,xx);
-    return xx;
+  DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("%s: exit; num_applets =0x%X", __func__, xx);
+  return xx;
 }
 
 /*******************************************************************************
@@ -125,66 +118,62 @@ int nfcManager_GetAppletsList(JNIEnv* e, jobject o, jobjectArray list)
 **
 *******************************************************************************/
 
-int nfcManager_doAppletLoadApplet(JNIEnv* e, jobject o, jstring name, jbyteArray data)
-{
-    (void)e;
-    (void)o;
-    (void)name;
-    tNFA_STATUS wStatus = NFA_STATUS_FAILED;
+int nfcManager_doAppletLoadApplet(JNIEnv* e, jobject o, jstring name,
+                                  jbyteArray data) {
+  (void)e;
+  (void)o;
+  (void)name;
+  tNFA_STATUS wStatus = NFA_STATUS_FAILED;
 #if (NXP_LDR_SVC_VER_2 == FALSE)
-    if(nfcFL.nfcNxpEse) {
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
-        IChannel_t Dwp;
-        bool stat = false;
-        const char *choice = NULL;
+  if (nfcFL.nfcNxpEse) {
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+    IChannel_t Dwp;
+    bool stat = false;
+    const char* choice = NULL;
 
-        sRfEnabled = isDiscoveryStarted();
+    sRfEnabled = isDiscoveryStarted();
 
-        if(!pTransactionController->transactionAttempt(TRANSACTION_REQUESTOR(AppletLoadApplet),
-                                                    TRANSACTION_ATTEMPT_FOR_SECONDS(5)))
-        {
-            LOG(ERROR) << StringPrintf("%s ERROR: attempt to start transaction has failed", __FUNCTION__);
-            return wStatus;
-        }
-        if (sRfEnabled) {
-            // Stop RF Discovery if we were polling
-            startRfDiscovery (false);
-        }
-        DWPChannel_init(&Dwp);
-        wStatus = pJcopMgr->AlaInitialize(&Dwp);
-        if(wStatus != NFA_STATUS_OK)
-        {
-            LOG(ERROR) << StringPrintf("%s: ALA initialization failed", __func__);
-        }
-        else
-        {
-            LOG(ERROR) << StringPrintf("%s: start Applet load applet", __func__);
-            choice = e->GetStringUTFChars(name, 0);
-            LOG(ERROR) << StringPrintf("choice= %s", choice);
-            ScopedByteArrayRO bytes(e, data);
-            uint8_t* buf = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
-            size_t bufLen = bytes.size();
-            wStatus = pJcopMgr->AlaStart(choice, buf, bufLen);
-        }
-        stat = pJcopMgr->AlaDeInitialize();
-        if(choice != NULL)
-            e->ReleaseStringUTFChars(name, choice);
-
-        if(dwpChannelForceClose == false)
-            startRfDiscovery (true);
-
-        pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(AppletLoadApplet));
-
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit; wStatus =0x%X", __func__,wStatus);
+    if (!pTransactionController->transactionAttempt(
+            TRANSACTION_REQUESTOR(AppletLoadApplet),
+            TRANSACTION_ATTEMPT_FOR_SECONDS(5))) {
+      LOG(ERROR) << StringPrintf(
+          "%s ERROR: attempt to start transaction has failed", __FUNCTION__);
+      return wStatus;
     }
-    else {
-
-        wStatus = 0x0F;
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: No p61", __func__);
+    if (sRfEnabled) {
+      // Stop RF Discovery if we were polling
+      startRfDiscovery(false);
     }
+    DWPChannel_init(&Dwp);
+    wStatus = pJcopMgr->AlaInitialize(&Dwp);
+    if (wStatus != NFA_STATUS_OK) {
+      LOG(ERROR) << StringPrintf("%s: ALA initialization failed", __func__);
+    } else {
+      LOG(ERROR) << StringPrintf("%s: start Applet load applet", __func__);
+      choice = e->GetStringUTFChars(name, 0);
+      LOG(ERROR) << StringPrintf("choice= %s", choice);
+      ScopedByteArrayRO bytes(e, data);
+      uint8_t* buf =
+          const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
+      size_t bufLen = bytes.size();
+      wStatus = pJcopMgr->AlaStart(choice, buf, bufLen);
+    }
+    stat = pJcopMgr->AlaDeInitialize();
+    if (choice != NULL) e->ReleaseStringUTFChars(name, choice);
+
+    if (dwpChannelForceClose == false) startRfDiscovery(true);
+
+    pTransactionController->transactionEnd(
+        TRANSACTION_REQUESTOR(AppletLoadApplet));
+
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s: exit; wStatus =0x%X", __func__, wStatus);
+  } else {
+    wStatus = 0x0F;
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: No p61", __func__);
+  }
 #endif
-    return wStatus;
-
+  return wStatus;
 }
 
 /*******************************************************************************
@@ -200,125 +189,120 @@ int nfcManager_doAppletLoadApplet(JNIEnv* e, jobject o, jstring name, jbyteArray
 ** Returns:         True if ok.
 **
 *******************************************************************************/
-jbyteArray nfcManager_lsExecuteScript(JNIEnv* e, jobject o, jstring name, jstring dest, jbyteArray data)
+jbyteArray nfcManager_lsExecuteScript(JNIEnv* e, jobject o, jstring name,
+                                      jstring dest, jbyteArray data) {
+  (void)e;
+  (void)o;
+  (void)name;
+  (void)dest;
+  const char* destpath = NULL;
+  const uint8_t lsExecuteResponseSize = 4;
+  uint8_t resSW[4] = {0x4e, 0x02, 0x69, 0x87};
+  jbyteArray result = e->NewByteArray(0);
+#if (NXP_LDR_SVC_VER_2 == TRUE)
+  if (nfcFL.nfcNxpEse) {
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+    tNFA_STATUS wStatus, status;
+    IChannel_t Dwp;
+    bool stat = false;
+    const char* choice = NULL;
+
+    if (isLowRamDevice()) {
+      SecureElement& se = SecureElement::getInstance();
+      if (se.isBusy() || (!pTransactionController->transactionAttempt(
+                             TRANSACTION_REQUESTOR(lsExecuteScript),
+                             TRANSACTION_ATTEMPT_FOR_SECONDS(5)))) {
+        LOG(ERROR) << StringPrintf(
+            " %s: Failed:SE Access Blocked by another process", __func__);
+        resSW[2] = 0x6F;
+        resSW[3] = 0x89;
+        // copy results back to java
+        result = e->NewByteArray(lsExecuteResponseSize);
+        if (result != NULL) {
+          e->SetByteArrayRegion(result, 0, lsExecuteResponseSize,
+                                (jbyte*)resSW);
+        }
+        return result;
+      }
+    }
+
+    sRfEnabled = isDiscoveryStarted();
+    wStatus = status = NFA_STATUS_FAILED;
+
+    if (!isLowRamDevice() &&
+        !pTransactionController->transactionAttempt(
+            TRANSACTION_REQUESTOR(lsExecuteScript),
+            TRANSACTION_ATTEMPT_FOR_SECONDS(5))) {
+      LOG(ERROR) << StringPrintf(
+          "%s ERROR: Attempt to start transaction failed", __FUNCTION__);
+      return result;
+    }
+    if (sRfEnabled) {
+      // Stop RF Discovery if we were polling
+      startRfDiscovery(false);
+    }
+    DWPChannel_init(&Dwp);
+    wStatus = pJcopMgr->AlaInitialize(&Dwp);
+    if (wStatus != NFA_STATUS_OK) {
+      LOG(ERROR) << StringPrintf("%s: ALA initialization failed", __func__);
+    } else {
+      // Commented the Disabling standby
+      /* uint8_t param[] = {0x00}; //Disable standby
+  SyncEventGuard guard (sNfaVSCResponseEvent);
+  status = NFA_SendVsCommand (0x00,0x01,param,nfaVSCCallback);
+  if(NFA_STATUS_OK == status)
+  {
+      sNfaVSCResponseEvent.wait(); //wait for NFA VS command to finish
+      LOG(ERROR) << StringPrintf("%s: start Applet load applet", __func__);
+      choice = e->GetStringUTFChars(name, 0);
+      LOG(ERROR) << StringPrintf("choice= %s", choice);
+      wStatus = ALA_Start(choice);
+  }*/
+      destpath = e->GetStringUTFChars(dest, 0);
+      LOG(ERROR) << StringPrintf("destpath= %s", destpath);
+      LOG(ERROR) << StringPrintf("%s: start Applet load applet", __func__);
+      choice = e->GetStringUTFChars(name, 0);
+      LOG(ERROR) << StringPrintf("choice= %s", choice);
+      ScopedByteArrayRO bytes(e, data);
+      uint8_t* buf =
+          const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
+      size_t bufLen = bytes.size();
+      wStatus = pJcopMgr->AlaStart(choice, destpath, buf, bufLen, resSW);
+
+      // copy results back to java
+      result = e->NewByteArray(lsExecuteResponseSize);
+      if (result != NULL) {
+        e->SetByteArrayRegion(result, 0, lsExecuteResponseSize, (jbyte*)resSW);
+      }
+    }
+
+    // Commented the Enabling standby
+    /* uint8_t param[] = {0x01}; //Enable standby
+SyncEventGuard guard (sNfaVSCResponseEvent);
+status = NFA_SendVsCommand (0x00,0x01,param,nfaVSCCallback);
+if(NFA_STATUS_OK == status)
 {
-    (void)e;
-    (void)o;
-    (void)name;
-    (void)dest;
-    const char *destpath = NULL;
-    const uint8_t lsExecuteResponseSize = 4;
-    uint8_t resSW [4]={0x4e,0x02,0x69,0x87};
-    jbyteArray result = e->NewByteArray(0);
-    #if (NXP_LDR_SVC_VER_2 == TRUE)
-    if(nfcFL.nfcNxpEse) {
+    sNfaVSCResponseEvent.wait(); //wait for NFA VS command to finish
+}*/
 
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
-        tNFA_STATUS wStatus, status;
-        IChannel_t Dwp;
-        bool stat = false;
-        const char *choice = NULL;
+    stat = pJcopMgr->AlaDeInitialize();
+    if (choice != NULL) e->ReleaseStringUTFChars(name, choice);
 
-        if(isLowRamDevice()) {
-            SecureElement &se = SecureElement::getInstance();
-            if (se.isBusy() ||
-               (!pTransactionController->transactionAttempt(TRANSACTION_REQUESTOR(lsExecuteScript),
-                   TRANSACTION_ATTEMPT_FOR_SECONDS(5))))
-            {
-              LOG(ERROR) << StringPrintf(" %s: Failed:SE Access Blocked by another process", __func__);
-              resSW[2] = 0x6F;
-              resSW[3] = 0x89;
-              //copy results back to java
-              result = e->NewByteArray(lsExecuteResponseSize);
-              if (result != NULL)
-              {
-                  e->SetByteArrayRegion(result, 0, lsExecuteResponseSize, (jbyte *) resSW);
-              }
-              return result;
-            }
-        }
+    if (dwpChannelForceClose == false) startRfDiscovery(true);
 
-        sRfEnabled = isDiscoveryStarted();
-        wStatus = status = NFA_STATUS_FAILED;
+    pTransactionController->transactionEnd(
+        TRANSACTION_REQUESTOR(lsExecuteScript));
 
-        if(!isLowRamDevice() &&
-           !pTransactionController->transactionAttempt(TRANSACTION_REQUESTOR(lsExecuteScript),
-                                                    TRANSACTION_ATTEMPT_FOR_SECONDS(5)))
-        {
-            LOG(ERROR) << StringPrintf("%s ERROR: Attempt to start transaction failed", __FUNCTION__);
-            return result;
-        }
-        if (sRfEnabled) {
-            // Stop RF Discovery if we were polling
-            startRfDiscovery (false);
-        }
-        DWPChannel_init(&Dwp);
-        wStatus = pJcopMgr->AlaInitialize(&Dwp);
-        if(wStatus != NFA_STATUS_OK)
-        {
-            LOG(ERROR) << StringPrintf("%s: ALA initialization failed", __func__);
-        }
-        else
-        {
-            // Commented the Disabling standby
-            /* uint8_t param[] = {0x00}; //Disable standby
-        SyncEventGuard guard (sNfaVSCResponseEvent);
-        status = NFA_SendVsCommand (0x00,0x01,param,nfaVSCCallback);
-        if(NFA_STATUS_OK == status)
-        {
-            sNfaVSCResponseEvent.wait(); //wait for NFA VS command to finish
-            LOG(ERROR) << StringPrintf("%s: start Applet load applet", __func__);
-            choice = e->GetStringUTFChars(name, 0);
-            LOG(ERROR) << StringPrintf("choice= %s", choice);
-            wStatus = ALA_Start(choice);
-        }*/
-            destpath = e->GetStringUTFChars(dest, 0);
-            LOG(ERROR) << StringPrintf("destpath= %s", destpath);
-            LOG(ERROR) << StringPrintf("%s: start Applet load applet", __func__);
-            choice = e->GetStringUTFChars(name, 0);
-            LOG(ERROR) << StringPrintf("choice= %s", choice);
-            ScopedByteArrayRO bytes(e, data);
-            uint8_t* buf = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
-            size_t bufLen = bytes.size();
-            wStatus = pJcopMgr->AlaStart(choice,destpath, buf, bufLen,resSW);
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s: exit; status =0x%X", __func__, wStatus);
+  } else {
+    if (destpath != NULL) e->ReleaseStringUTFChars(dest, destpath);
 
-            //copy results back to java
-            result = e->NewByteArray(lsExecuteResponseSize);
-            if (result != NULL)
-            {
-                e->SetByteArrayRegion(result, 0, lsExecuteResponseSize, (jbyte *) resSW);
-            }
-        }
-
-        // Commented the Enabling standby
-        /* uint8_t param[] = {0x01}; //Enable standby
-    SyncEventGuard guard (sNfaVSCResponseEvent);
-    status = NFA_SendVsCommand (0x00,0x01,param,nfaVSCCallback);
-    if(NFA_STATUS_OK == status)
-    {
-        sNfaVSCResponseEvent.wait(); //wait for NFA VS command to finish
-    }*/
-
-        stat = pJcopMgr->AlaDeInitialize();
-        if(choice != NULL)
-            e->ReleaseStringUTFChars(name, choice);
-
-        if(dwpChannelForceClose == false)
-            startRfDiscovery (true);
-
-        pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(lsExecuteScript));
-
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit; status =0x%X", __func__,wStatus);
-    }
-    else {
-        if(destpath != NULL)
-            e->ReleaseStringUTFChars(dest, destpath);
-
-        result = e->NewByteArray(0);
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: No p61", __func__);
-    }
+    result = e->NewByteArray(0);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: No p61", __func__);
+  }
 #endif
-    return result;
+  return result;
 }
 
 /*******************************************************************************
@@ -333,55 +317,53 @@ jbyteArray nfcManager_lsExecuteScript(JNIEnv* e, jobject o, jstring name, jstrin
 **
 *******************************************************************************/
 
-jbyteArray nfcManager_GetCertificateKey(JNIEnv* e, jobject)
-{
-    jbyteArray result = e->NewByteArray(0);
+jbyteArray nfcManager_GetCertificateKey(JNIEnv* e, jobject) {
+  jbyteArray result = e->NewByteArray(0);
 #if (NXP_LDR_SVC_VER_2 == FALSE)
-    if(nfcFL.nfcNxpEse) {
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
-        tNFA_STATUS wStatus = NFA_STATUS_FAILED;
-        IChannel_t Dwp;
-        bool stat = false;
-        const int32_t recvBufferMaxSize = 256;
-        uint8_t recvBuffer [recvBufferMaxSize];
-        int32_t recvBufferActualSize = 0;
+  if (nfcFL.nfcNxpEse) {
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+    tNFA_STATUS wStatus = NFA_STATUS_FAILED;
+    IChannel_t Dwp;
+    bool stat = false;
+    const int32_t recvBufferMaxSize = 256;
+    uint8_t recvBuffer[recvBufferMaxSize];
+    int32_t recvBufferActualSize = 0;
 
-        sRfEnabled = isDiscoveryStarted();
+    sRfEnabled = isDiscoveryStarted();
 
-        if (sRfEnabled) {
-            // Stop RF Discovery if we were polling
-            startRfDiscovery (false);
-        }
-        DWPChannel_init(&Dwp);
-        wStatus = pJcopMgr->AlaInitialize(&Dwp);
-        if(wStatus != NFA_STATUS_OK)
-        {
-            LOG(ERROR) << StringPrintf("%s: ALA initialization failed", __func__);
-        }
-        else
-        {
-            LOG(ERROR) << StringPrintf("%s: start Get reference Certificate Key", __func__);
-            wStatus = pJcopMgr->AlaGetCertificateKey(recvBuffer, &recvBufferActualSize);
-        }
-
-        //copy results back to java
-        result = e->NewByteArray(recvBufferActualSize);
-        if (result != NULL)
-        {
-            e->SetByteArrayRegion(result, 0, recvBufferActualSize, (jbyte *) recvBuffer);
-        }
-
-        stat = pJcopMgr->AlaDeInitialize();
-        startRfDiscovery (true);
-
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit: recv len=%ld", __func__, recvBufferActualSize);
+    if (sRfEnabled) {
+      // Stop RF Discovery if we were polling
+      startRfDiscovery(false);
     }
-    else {
-        result = e->NewByteArray(0);
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: No p61", __func__);
+    DWPChannel_init(&Dwp);
+    wStatus = pJcopMgr->AlaInitialize(&Dwp);
+    if (wStatus != NFA_STATUS_OK) {
+      LOG(ERROR) << StringPrintf("%s: ALA initialization failed", __func__);
+    } else {
+      LOG(ERROR) << StringPrintf("%s: start Get reference Certificate Key",
+                                 __func__);
+      wStatus =
+          pJcopMgr->AlaGetCertificateKey(recvBuffer, &recvBufferActualSize);
     }
+
+    // copy results back to java
+    result = e->NewByteArray(recvBufferActualSize);
+    if (result != NULL) {
+      e->SetByteArrayRegion(result, 0, recvBufferActualSize,
+                            (jbyte*)recvBuffer);
+    }
+
+    stat = pJcopMgr->AlaDeInitialize();
+    startRfDiscovery(true);
+
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+        "%s: exit: recv len=%ld", __func__, recvBufferActualSize);
+  } else {
+    result = e->NewByteArray(0);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: No p61", __func__);
+  }
 #endif
-    return result;
+  return result;
 }
 
 /*******************************************************************************
@@ -395,64 +377,59 @@ jbyteArray nfcManager_GetCertificateKey(JNIEnv* e, jobject)
 ** Returns:         version of Loder service.
 **
 *******************************************************************************/
-jbyteArray nfcManager_lsGetVersion(JNIEnv* e, jobject)
-{
-    jbyteArray result;
+jbyteArray nfcManager_lsGetVersion(JNIEnv* e, jobject) {
+  jbyteArray result;
 #if (NXP_LDR_SVC_VER_2 == TRUE)
-    if(nfcFL.nfcNxpEse) {
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
-        tNFA_STATUS wStatus = NFA_STATUS_FAILED;
-        IChannel_t Dwp;
-        bool stat = false;
-        const int32_t recvBufferMaxSize = 4;
-        uint8_t recvBuffer [recvBufferMaxSize];
-        result = e->NewByteArray(0);
-        sRfEnabled = isDiscoveryStarted();
+  if (nfcFL.nfcNxpEse) {
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+    tNFA_STATUS wStatus = NFA_STATUS_FAILED;
+    IChannel_t Dwp;
+    bool stat = false;
+    const int32_t recvBufferMaxSize = 4;
+    uint8_t recvBuffer[recvBufferMaxSize];
+    result = e->NewByteArray(0);
+    sRfEnabled = isDiscoveryStarted();
 
-        if(!pTransactionController->transactionAttempt(TRANSACTION_REQUESTOR(lsGetVersion),TRANSACTION_ATTEMPT_FOR_SECONDS(5)))
-        {
-            LOG(ERROR) << StringPrintf("%s ERRROR: Attempt to start transaction, failed",__FUNCTION__);
-            return result;
-        }
-        if (sRfEnabled) {
-            // Stop RF Discovery if we were polling
-            startRfDiscovery (false);
-        }
-        DWPChannel_init(&Dwp);
-        wStatus = pJcopMgr->AlaInitialize(&Dwp);
-        if(wStatus != NFA_STATUS_OK)
-        {
-            LOG(ERROR) << StringPrintf("%s: ALA initialization failed", __func__);
-        }
-        else
-        {
-            LOG(ERROR) << StringPrintf("%s: start Get reference Certificate Key", __func__);
-            wStatus = pJcopMgr->AlaLsGetVersion(recvBuffer);
-        }
-
-        //copy results back to java
-        result = e->NewByteArray(recvBufferMaxSize);
-        if (result != NULL)
-        {
-            e->SetByteArrayRegion(result, 0, recvBufferMaxSize, (jbyte *) recvBuffer);
-        }
-
-        stat = pJcopMgr->AlaDeInitialize();
-        if(dwpChannelForceClose == false)
-            startRfDiscovery (true);
-
-        pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(lsGetVersion));
-
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit: recv len=%d", __func__, recvBufferMaxSize);
+    if (!pTransactionController->transactionAttempt(
+            TRANSACTION_REQUESTOR(lsGetVersion),
+            TRANSACTION_ATTEMPT_FOR_SECONDS(5))) {
+      LOG(ERROR) << StringPrintf(
+          "%s ERRROR: Attempt to start transaction, failed", __FUNCTION__);
+      return result;
     }
-    else
-    {
-        result = e->NewByteArray(0);
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: No p61", __func__);
+    if (sRfEnabled) {
+      // Stop RF Discovery if we were polling
+      startRfDiscovery(false);
     }
+    DWPChannel_init(&Dwp);
+    wStatus = pJcopMgr->AlaInitialize(&Dwp);
+    if (wStatus != NFA_STATUS_OK) {
+      LOG(ERROR) << StringPrintf("%s: ALA initialization failed", __func__);
+    } else {
+      LOG(ERROR) << StringPrintf("%s: start Get reference Certificate Key",
+                                 __func__);
+      wStatus = pJcopMgr->AlaLsGetVersion(recvBuffer);
+    }
+
+    // copy results back to java
+    result = e->NewByteArray(recvBufferMaxSize);
+    if (result != NULL) {
+      e->SetByteArrayRegion(result, 0, recvBufferMaxSize, (jbyte*)recvBuffer);
+    }
+
+    stat = pJcopMgr->AlaDeInitialize();
+    if (dwpChannelForceClose == false) startRfDiscovery(true);
+
+    pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(lsGetVersion));
+
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s: exit: recv len=%d", __func__, recvBufferMaxSize);
+  } else {
+    result = e->NewByteArray(0);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: No p61", __func__);
+  }
 #endif
-    return result;
-
+  return result;
 }
 
 /*******************************************************************************
@@ -466,55 +443,52 @@ jbyteArray nfcManager_lsGetVersion(JNIEnv* e, jobject)
 ** Returns:         LS Previous execution Applet status .
 **
 *******************************************************************************/
-jbyteArray nfcManager_lsGetAppletStatus(JNIEnv* e, jobject)
-{
-    jbyteArray result = e->NewByteArray(0);
+jbyteArray nfcManager_lsGetAppletStatus(JNIEnv* e, jobject) {
+  jbyteArray result = e->NewByteArray(0);
 #if (NXP_LDR_SVC_VER_2 == TRUE)
-    if(nfcFL.nfcNxpEse) {
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
-        tNFA_STATUS wStatus = NFA_STATUS_FAILED;
-        bool stat = false;
-        const int32_t recvBufferMaxSize = 2;
-        uint8_t recvBuffer [recvBufferMaxSize]={0x63,0x40};
-        IChannel_t Dwp;
-        sRfEnabled = isDiscoveryStarted();
+  if (nfcFL.nfcNxpEse) {
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+    tNFA_STATUS wStatus = NFA_STATUS_FAILED;
+    bool stat = false;
+    const int32_t recvBufferMaxSize = 2;
+    uint8_t recvBuffer[recvBufferMaxSize] = {0x63, 0x40};
+    IChannel_t Dwp;
+    sRfEnabled = isDiscoveryStarted();
 
-        if (sRfEnabled) {
-            // Stop RF Discovery if we were polling
-            startRfDiscovery (false);
-        }
-        DWPChannel_init(&Dwp);
-        wStatus = pJcopMgr->AlaInitialize(&Dwp);
-        if(wStatus != NFA_STATUS_OK)
-        {
-            LOG(ERROR) << StringPrintf("%s: ALA initialization failed", __func__);
-        }
-        else
-        {
-            LOG(ERROR) << StringPrintf("%s: start Get reference Certificate Key", __func__);
-            wStatus = pJcopMgr->AlaLsGetAppletStatus(recvBuffer);
-        }
-
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: lsGetAppletStatus values %x %x", __func__, recvBuffer[0], recvBuffer[1]);
-        //copy results back to java
-        result = e->NewByteArray(recvBufferMaxSize);
-        if (result != NULL)
-        {
-            e->SetByteArrayRegion(result, 0, recvBufferMaxSize, (jbyte *) recvBuffer);
-        }
-        stat = pJcopMgr->AlaDeInitialize();
-
-        if(dwpChannelForceClose == false)
-            startRfDiscovery (true);
-
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit: recv len=%d", __func__, recvBufferMaxSize);
+    if (sRfEnabled) {
+      // Stop RF Discovery if we were polling
+      startRfDiscovery(false);
     }
-    else {
-        result = e->NewByteArray(0);
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: No p61", __func__);
+    DWPChannel_init(&Dwp);
+    wStatus = pJcopMgr->AlaInitialize(&Dwp);
+    if (wStatus != NFA_STATUS_OK) {
+      LOG(ERROR) << StringPrintf("%s: ALA initialization failed", __func__);
+    } else {
+      LOG(ERROR) << StringPrintf("%s: start Get reference Certificate Key",
+                                 __func__);
+      wStatus = pJcopMgr->AlaLsGetAppletStatus(recvBuffer);
     }
+
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s: lsGetAppletStatus values %x %x", __func__,
+                        recvBuffer[0], recvBuffer[1]);
+    // copy results back to java
+    result = e->NewByteArray(recvBufferMaxSize);
+    if (result != NULL) {
+      e->SetByteArrayRegion(result, 0, recvBufferMaxSize, (jbyte*)recvBuffer);
+    }
+    stat = pJcopMgr->AlaDeInitialize();
+
+    if (dwpChannelForceClose == false) startRfDiscovery(true);
+
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s: exit: recv len=%d", __func__, recvBufferMaxSize);
+  } else {
+    result = e->NewByteArray(0);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: No p61", __func__);
+  }
 #endif
-    return result;
+  return result;
 }
 
 /*******************************************************************************
@@ -528,33 +502,32 @@ jbyteArray nfcManager_lsGetAppletStatus(JNIEnv* e, jobject)
 ** Returns:         version of Loder service.
 **
 *******************************************************************************/
-jbyteArray nfcManager_lsGetStatus(JNIEnv* e, jobject)
-{
-    jbyteArray result = e->NewByteArray(0);
+jbyteArray nfcManager_lsGetStatus(JNIEnv* e, jobject) {
+  jbyteArray result = e->NewByteArray(0);
 #if (NXP_LDR_SVC_VER_2 == TRUE)
-    if(nfcFL.nfcNxpEse) {
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
-        tNFA_STATUS wStatus = NFA_STATUS_FAILED;
-        const int32_t recvBufferMaxSize = 2;
-        uint8_t recvBuffer [recvBufferMaxSize] = {0x63,0x40};
+  if (nfcFL.nfcNxpEse) {
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+    tNFA_STATUS wStatus = NFA_STATUS_FAILED;
+    const int32_t recvBufferMaxSize = 2;
+    uint8_t recvBuffer[recvBufferMaxSize] = {0x63, 0x40};
 
-        wStatus = pJcopMgr->AlaLsGetStatus(recvBuffer);
+    wStatus = pJcopMgr->AlaLsGetStatus(recvBuffer);
 
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: lsGetStatus values %x %x", __func__, recvBuffer[0], recvBuffer[1]);
-        //copy results back to java
-        result = e->NewByteArray(recvBufferMaxSize);
-        if (result != NULL)
-        {
-            e->SetByteArrayRegion(result, 0, recvBufferMaxSize, (jbyte *) recvBuffer);
-        }
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit: recv len=%d", __func__, recvBufferMaxSize);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+        "%s: lsGetStatus values %x %x", __func__, recvBuffer[0], recvBuffer[1]);
+    // copy results back to java
+    result = e->NewByteArray(recvBufferMaxSize);
+    if (result != NULL) {
+      e->SetByteArrayRegion(result, 0, recvBufferMaxSize, (jbyte*)recvBuffer);
     }
-    else {
-        result = e->NewByteArray(0);
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: No p61", __func__);
-    }
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s: exit: recv len=%d", __func__, recvBufferMaxSize);
+  } else {
+    result = e->NewByteArray(0);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: No p61", __func__);
+  }
 #endif
-    return result;
+  return result;
 }
 
 /*******************************************************************************
@@ -568,30 +541,28 @@ jbyteArray nfcManager_lsGetStatus(JNIEnv* e, jobject)
 ** Returns:         Void.
 **
 *******************************************************************************/
-int nfcManager_getLoaderServiceConfVersion(JNIEnv* e, jobject o)
-{
-    unsigned long num = 0;
-    uint8_t ls_version = LS_DEFAULT_VERSION;
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+int nfcManager_getLoaderServiceConfVersion(JNIEnv* e, jobject o) {
+  unsigned long num = 0;
+  uint8_t ls_version = LS_DEFAULT_VERSION;
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
 #if (NXP_LDR_SVC_VER_2 == TRUE)
-    if(nfcFL.nfcNxpEse) {
-        if(GetNxpNumValue (NAME_NXP_LOADER_SERICE_VERSION, (void*)&num, sizeof(num))==false)
-        {
-            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("LOADER_SERVICE_VERSION not found");
-            num = 0;
-        }
-        /*If LS version exists in config file*/
-        if(num != 0)
-        {
-            ls_version = num;
-        }
+  if (nfcFL.nfcNxpEse) {
+    if (GetNxpNumValue(NAME_NXP_LOADER_SERICE_VERSION, (void*)&num,
+                       sizeof(num)) == false) {
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("LOADER_SERVICE_VERSION not found");
+      num = 0;
     }
-    else {
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: No P61", __func__);
+    /*If LS version exists in config file*/
+    if (num != 0) {
+      ls_version = num;
     }
+  } else {
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: No P61", __func__);
+  }
 #endif
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
-    return ls_version;
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
+  return ls_version;
 }
 
 /*****************************************************************************
@@ -599,27 +570,22 @@ int nfcManager_getLoaderServiceConfVersion(JNIEnv* e, jobject o)
  ** Description:     JNI functions
  **
  *****************************************************************************/
-static JNINativeMethod gMethods[] =
-{
-    {"doLsExecuteScript","(Ljava/lang/String;Ljava/lang/String;[B)[B",
-                (void *)nfcManager_lsExecuteScript},
-    {"doLsGetVersion","()[B",
-                (void *)nfcManager_lsGetVersion},
-    {"doLsGetStatus","()[B",
-      (void *)nfcManager_lsGetStatus},
-    {"doLsGetAppletStatus","()[B",
-      (void *)nfcManager_lsGetAppletStatus},
+static JNINativeMethod gMethods[] = {
+    {"doLsExecuteScript", "(Ljava/lang/String;Ljava/lang/String;[B)[B",
+     (void*)nfcManager_lsExecuteScript},
+    {"doLsGetVersion", "()[B", (void*)nfcManager_lsGetVersion},
+    {"doLsGetStatus", "()[B", (void*)nfcManager_lsGetStatus},
+    {"doLsGetAppletStatus", "()[B", (void*)nfcManager_lsGetAppletStatus},
     {"doGetLSConfigVersion", "()I",
-       (void *)nfcManager_getLoaderServiceConfVersion},
+     (void*)nfcManager_getLoaderServiceConfVersion},
 
     {"GetAppletsList", "([Ljava/lang/String;)I",
-                (void *)nfcManager_GetAppletsList},
+     (void*)nfcManager_GetAppletsList},
 
     {"doAppletLoadApplet", "(Ljava/lang/String;[B)I",
-                (void *)nfcManager_doAppletLoadApplet},
+     (void*)nfcManager_doAppletLoadApplet},
 
-    {"GetCertificateKey", "()[B",
-                (void *)nfcManager_GetCertificateKey},
+    {"GetCertificateKey", "()[B", (void*)nfcManager_GetCertificateKey},
 };
 
 /*******************************************************************************
@@ -632,9 +598,8 @@ static JNINativeMethod gMethods[] =
  ** Returns:         Status of registration.
  **
  *******************************************************************************/
-int register_com_android_nfc_NativeNfcAla(JNIEnv *e)
-{
-    return jniRegisterNativeMethods(e, gNativeNfcAlaClassName,
-            gMethods, NELEM(gMethods));
+int register_com_android_nfc_NativeNfcAla(JNIEnv* e) {
+  return jniRegisterNativeMethods(e, gNativeNfcAlaClassName, gMethods,
+                                  NELEM(gMethods));
 }
 } /*namespace android*/

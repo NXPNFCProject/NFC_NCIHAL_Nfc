@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
- /*include files*/
+/*include files*/
 #include <phNfcTypes.h>
 #include <phNfcStatus.h>
 #include <phNciNfcTypes.h>
 #include <phFriNfc_MifareStdTimer.h>
 #include <phNxpLog.h>
 
-STATIC NFCSTATUS  phFriNfc_MifareStd_CreateTimer( phFriNfc_MifareStdTimer_t *TimerInfo );
+STATIC NFCSTATUS
+phFriNfc_MifareStd_CreateTimer(phFriNfc_MifareStdTimer_t* TimerInfo);
 /*******************************************************************************
 **
 ** Function        phFriNfc_MifareStd_StartTimer
@@ -34,41 +35,34 @@ STATIC NFCSTATUS  phFriNfc_MifareStd_CreateTimer( phFriNfc_MifareStdTimer_t *Tim
 ** Returns:        NFCSTATUS_SUCCESS  -  timer started successfully
 **                 NFCSTATUS_FAILED   -  otherwise
 *******************************************************************************/
-NFCSTATUS  phFriNfc_MifareStd_StartTimer( phFriNfc_MifareStdTimer_t *TimerInfo )
-{
-    NFCSTATUS status = NFCSTATUS_SUCCESS;
-    int stat = 0;
-    struct itimerspec ts;
-    if ( TimerInfo->mTimerId == 0)
-    {
-        if (TimerInfo->mCb == 0)
-        {
-            return NFCSTATUS_FAILED;
-        }
-
-        if (phFriNfc_MifareStd_CreateTimer(TimerInfo) != NFCSTATUS_SUCCESS)
-            return NFCSTATUS_FAILED;
+NFCSTATUS phFriNfc_MifareStd_StartTimer(phFriNfc_MifareStdTimer_t* TimerInfo) {
+  NFCSTATUS status = NFCSTATUS_SUCCESS;
+  int stat = 0;
+  struct itimerspec ts;
+  if (TimerInfo->mTimerId == 0) {
+    if (TimerInfo->mCb == 0) {
+      return NFCSTATUS_FAILED;
     }
 
-    ts.it_value.tv_sec = (TimerInfo->mtimeout) / 1000;
-    ts.it_value.tv_nsec = (TimerInfo->mtimeout % 1000) * 1000000;
+    if (phFriNfc_MifareStd_CreateTimer(TimerInfo) != NFCSTATUS_SUCCESS)
+      return NFCSTATUS_FAILED;
+  }
 
-    ts.it_interval.tv_sec = 0;
-    ts.it_interval.tv_nsec = 0;
+  ts.it_value.tv_sec = (TimerInfo->mtimeout) / 1000;
+  ts.it_value.tv_nsec = (TimerInfo->mtimeout % 1000) * 1000000;
 
-    stat = timer_settime(TimerInfo->mTimerId, 0, &ts, 0);
-    if (stat == 0)
-    {
+  ts.it_interval.tv_sec = 0;
+  ts.it_interval.tv_nsec = 0;
 
-        status = NFCSTATUS_SUCCESS;
-        return status;
-    }else
-    {
-        status= NFCSTATUS_FAILED;
-        return status;
-    }
+  stat = timer_settime(TimerInfo->mTimerId, 0, &ts, 0);
+  if (stat == 0) {
+    status = NFCSTATUS_SUCCESS;
+    return status;
+  } else {
+    status = NFCSTATUS_FAILED;
+    return status;
+  }
 }
-
 
 /*******************************************************************************
 **
@@ -80,22 +74,20 @@ NFCSTATUS  phFriNfc_MifareStd_StartTimer( phFriNfc_MifareStdTimer_t *TimerInfo )
 ** Returns:         NFCSTATUS_SUCCESS  -  timer stopped successfully
 **                  NFCSTATUS_FAILED   -  otherwise
 *******************************************************************************/
-NFCSTATUS  phFriNfc_MifareStd_StopTimer( phFriNfc_MifareStdTimer_t *TimerInfo )
-{
-    NFCSTATUS status = NFCSTATUS_SUCCESS;
-    if (TimerInfo->mTimerId == 0)
-    {
-         LOG(ERROR) << StringPrintf(" phFriNfc_MifareStd_CreateTimer() failed to stop timer  ");
-        status = NFCSTATUS_FAILED;
-        return status;
-    }
-
-    timer_delete(TimerInfo->mTimerId);
-    TimerInfo->mTimerId = 0;
-    TimerInfo->mCb = NULL;
+NFCSTATUS phFriNfc_MifareStd_StopTimer(phFriNfc_MifareStdTimer_t* TimerInfo) {
+  NFCSTATUS status = NFCSTATUS_SUCCESS;
+  if (TimerInfo->mTimerId == 0) {
+    LOG(ERROR) << StringPrintf(
+        " phFriNfc_MifareStd_CreateTimer() failed to stop timer  ");
+    status = NFCSTATUS_FAILED;
     return status;
-}
+  }
 
+  timer_delete(TimerInfo->mTimerId);
+  TimerInfo->mTimerId = 0;
+  TimerInfo->mCb = NULL;
+  return status;
+}
 
 /*******************************************************************************
 **
@@ -107,28 +99,27 @@ NFCSTATUS  phFriNfc_MifareStd_StopTimer( phFriNfc_MifareStdTimer_t *TimerInfo )
 ** Returns:         NFCSTATUS_SUCCESS  -  timer created successfully
 **                  NFCSTATUS_FAILED   -  otherwise
 *******************************************************************************/
-STATIC NFCSTATUS  phFriNfc_MifareStd_CreateTimer( phFriNfc_MifareStdTimer_t *TimerInfo )
-{
-    NFCSTATUS status = NFCSTATUS_SUCCESS;
-    struct sigevent se;
-    memset(&se,0,sizeof(struct sigevent));
-    int stat = 0;
-    /*
-     * Set the sigevent structure to cause the signal to be
-     * delivered by creating a new thread.
-     */
-    se.sigev_notify = SIGEV_THREAD;
-    se.sigev_value.sival_ptr = &(TimerInfo)->mTimerId;
-    se.sigev_notify_function = TimerInfo->mCb;
-    se.sigev_notify_attributes = NULL;
-    stat = timer_create(CLOCK_MONOTONIC, &se, &(TimerInfo)->mTimerId);
-    if (stat == 0)
-    {
-         LOG(ERROR) << StringPrintf(" phFriNfc_MifareStd_CreateTimer() Timer created successfully ");
-        return status;
-    }else
-    {
-        status= NFCSTATUS_FAILED;
-        return status;
-    }
+STATIC NFCSTATUS
+phFriNfc_MifareStd_CreateTimer(phFriNfc_MifareStdTimer_t* TimerInfo) {
+  NFCSTATUS status = NFCSTATUS_SUCCESS;
+  struct sigevent se;
+  memset(&se, 0, sizeof(struct sigevent));
+  int stat = 0;
+  /*
+   * Set the sigevent structure to cause the signal to be
+   * delivered by creating a new thread.
+   */
+  se.sigev_notify = SIGEV_THREAD;
+  se.sigev_value.sival_ptr = &(TimerInfo)->mTimerId;
+  se.sigev_notify_function = TimerInfo->mCb;
+  se.sigev_notify_attributes = NULL;
+  stat = timer_create(CLOCK_MONOTONIC, &se, &(TimerInfo)->mTimerId);
+  if (stat == 0) {
+    LOG(ERROR) << StringPrintf(
+        " phFriNfc_MifareStd_CreateTimer() Timer created successfully ");
+    return status;
+  } else {
+    status = NFCSTATUS_FAILED;
+    return status;
+  }
 }
