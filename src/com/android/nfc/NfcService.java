@@ -804,6 +804,7 @@ public class NfcService implements DeviceHostListener {
                             (mSEClientAccessState == true)) {
                         mSecureElementclientCallback.onStateChange(false);
                         mSEClientAccessState = false;
+                        mNfcSeService.nfcWiredSeDeInit();
                         Log.e(TAG, "mSecureElementclientCallback.onStateChange false ################# ");
                     } else {
                         Log.e(TAG, "mSecureElementclientCallback is NULL");
@@ -2021,11 +2022,12 @@ final class NfcWiredSe extends ISecureElement.Stub  implements android.os.IHwBin
     int mNfcWiredSeHandle = 0;
     byte mOpenedchannelCount = 0;
 
-    private byte nfcWiredSeDeInit()
+    byte nfcWiredSeDeInit()
     {
         doDisconnect(mNfcWiredSeHandle);
         mNfcWiredSeHandle = 0;
         mIsSecureElementOpened = false;
+        mOpenedchannelCount = 0;
         return SecureElementStatus.SUCCESS;
     }
 
@@ -2215,7 +2217,7 @@ final class NfcWiredSe extends ISecureElement.Stub  implements android.os.IHwBin
     @Override
     public java.util.ArrayList<Byte> transmit(java.util.ArrayList<Byte> data)
     throws android.os.RemoteException {
-        if (mNfcWiredSeHandle < 0) {
+        if (mNfcWiredSeHandle <= 0) {
             Log.e(TAG, "Mr Robot Secure Element handle NULL");
             return null;
         } else {
