@@ -39,10 +39,6 @@
 #ifndef _NXP_CONFIG_H
 #define _NXP_CONFIG_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 int GetNxpStrValue(const char* name, char* p_value, unsigned long len);
 int GetNxpNumValue(const char* name, void* p_value, unsigned long len);
 int GetNxpByteArrayValue(const char* name, char* pValue, long bufflen,
@@ -51,10 +47,6 @@ void resetNxpConfig(void);
 int isNxpRFConfigModified();
 int isNxpConfigModified();
 int updateNxpConfigTimestamp();
-
-#ifdef __cplusplus
-};
-#endif
 
 #define NAME_NXPLOG_EXTNS_LOGLEVEL          "NXPLOG_EXTNS_LOGLEVEL"
 #define NAME_NXPLOG_NCIHAL_LOGLEVEL         "NXPLOG_NCIHAL_LOGLEVEL"

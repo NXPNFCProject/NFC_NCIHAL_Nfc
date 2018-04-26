@@ -42,17 +42,14 @@
 #include "NfcJniUtil.h"
 #include "RouteDataSet.h"
 #include "IntervalTimer.h"
-extern "C"
-{
-    #include "nfa_ee_api.h"
-    #include "nfa_hci_api.h"
-    #include "nfa_hci_defs.h"
-    #include "nfa_ce_api.h"
-    #include "phNxpExtns.h"
+#include "nfa_ee_api.h"
+#include "nfa_hci_api.h"
+#include "nfa_hci_defs.h"
+#include "nfa_ce_api.h"
+#include "phNxpExtns.h"
 #if(NXP_EXTNS == TRUE)
-    #include "phNfcTypes.h"
+#include "phNfcTypes.h"
 #endif
-}
 #if(NXP_EXTNS == TRUE)
 #define CONNECTIVITY_PIPE_ID_UICC1 0x0A
 #define CONNECTIVITY_PIPE_ID_UICC2 0x23

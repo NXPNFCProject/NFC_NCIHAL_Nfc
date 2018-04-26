@@ -49,16 +49,12 @@
 #include <nativehelper/ScopedPrimitiveArray.h>
 #include <string>
 #include "TransactionController.h"
-
-extern "C"
-{
-    #include "nfa_api.h"
-    #include "nfa_rw_api.h"
-    #include "nfc_brcm_defs.h"
-    #include "ndef_utils.h"
-    #include "rw_api.h"
-    #include "phNxpExtns.h"
-}
+#include "nfa_api.h"
+#include "nfa_rw_api.h"
+#include "nfc_brcm_defs.h"
+#include "ndef_utils.h"
+#include "rw_api.h"
+#include "phNxpExtns.h"
 namespace android
 {
     extern nfc_jni_native_data* getNative(JNIEnv *e, jobject o);

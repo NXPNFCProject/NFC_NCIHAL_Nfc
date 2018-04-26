@@ -23,10 +23,7 @@
 #include "SyncEvent.h"
 #include "NfcJniUtil.h"
 #include <string>
-extern "C"
-{
-    #include "nfa_p2p_api.h"
-}
+#include "nfa_p2p_api.h"
 
 class P2pServer;
 class P2pClient;

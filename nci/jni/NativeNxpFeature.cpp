@@ -42,11 +42,8 @@
 #include "NfcAdaptation.h"
 #include "RoutingManager.h"
 
-extern "C"
-{
 #include "nfa_api.h"
 #include "nfa_rw_api.h"
-}
 
 typedef struct nxp_feature_data
 {

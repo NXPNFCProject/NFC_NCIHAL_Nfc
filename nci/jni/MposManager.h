@@ -21,11 +21,9 @@
 #include "IntervalTimer.h"
 #include "NfcJniUtil.h"
 
-extern "C" {
-  #include "nfa_api.h"
-  #include "nfc_api.h"
-  #include "nfa_ee_api.h"
-}
+#include "nfa_api.h"
+#include "nfc_api.h"
+#include "nfa_ee_api.h"
 
 typedef struct {
     tNFA_HANDLE src;

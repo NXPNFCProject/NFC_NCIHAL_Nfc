@@ -16,9 +16,7 @@
 
 #pragma once
 
-extern "C"{
 #include "nfa_api.h"
-}
 
 typedef struct IChannel
 {

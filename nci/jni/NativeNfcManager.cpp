@@ -64,19 +64,16 @@
 #include "TransactionController.h"
 #include <fcntl.h>
 #include "JcopManager.h"
-extern "C"
-{
-    #include "nfc_api.h"
-    #include "nfa_api.h"
-    #include "nfa_p2p_api.h"
-    #include "rw_api.h"
-    #include "nfa_ee_api.h"
-    #include "nfc_brcm_defs.h"
-    #include "ce_api.h"
-    #include "phNxpExtns.h"
-    #include "phNxpConfig.h"
+#include "nfc_api.h"
+#include "nfa_api.h"
+#include "nfa_p2p_api.h"
+#include "rw_api.h"
+#include "nfa_ee_api.h"
+#include "nfc_brcm_defs.h"
+#include "ce_api.h"
+#include "phNxpExtns.h"
+#include "phNxpConfig.h"
 
-}
 #define SAK_VALUE_AT 17
 extern const uint8_t          nfca_version_string [];
 extern const uint8_t          nfa_version_string [];

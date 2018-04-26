@@ -191,12 +191,7 @@ private:
         JavaVM* vm_;
 };
 
-
-extern "C"
-{
-    jint JNI_OnLoad(JavaVM *jvm, void *reserved);
-}
-
+jint JNI_OnLoad(JavaVM *jvm, void *reserved);
 
 namespace android
 {

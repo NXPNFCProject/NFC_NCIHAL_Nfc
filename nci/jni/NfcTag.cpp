@@ -43,12 +43,10 @@
 #include <nativehelper/ScopedLocalRef.h>
 #include <nativehelper/ScopedPrimitiveArray.h>
 #include "IntervalTimer.h"
-extern "C"
-{
-    #include "rw_int.h"
-    #include "nfc_brcm_defs.h"
-    #include "phNxpExtns.h"
-}
+#include "rw_int.h"
+#include "nfc_brcm_defs.h"
+#include "phNxpExtns.h"
+
 #if(NXP_EXTNS == TRUE)
 static void deleteglobaldata(JNIEnv* e);
 static void selectCompleteCallBack(union sigval);

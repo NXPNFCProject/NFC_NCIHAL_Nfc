@@ -75,7 +75,7 @@ void transactionController::lastRequestResume(void)
  **
  *******************************************************************************/
 
-extern "C" void transactionController::transactionHandlePendingCb(union sigval)
+void transactionController::transactionHandlePendingCb(union sigval)
 {
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Inside %s", __FUNCTION__);
 
@@ -91,7 +91,7 @@ extern "C" void transactionController::transactionHandlePendingCb(union sigval)
  **
  *******************************************************************************/
 
-extern "C" void transactionController::transactionAbortTimerCb(union sigval)
+void transactionController::transactionAbortTimerCb(union sigval)
 {
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Inside %s", __FUNCTION__);
 

@@ -23,12 +23,8 @@
 #include <base/logging.h>
 #include <nativehelper/JNIHelp.h>
 
-extern "C"
-{
-    #include "nfa_api.h"
-    #include "nfa_p2p_api.h"
-}
-
+#include "nfa_api.h"
+#include "nfa_p2p_api.h"
 
 namespace android
 {

@@ -19,10 +19,7 @@
 #include <cstdlib>
 #include <cstring>
 
-extern "C"
-{
-    #include "nfa_api.h"
-}/*namespace android*/
+#include "nfa_api.h"
 
 #if(NXP_EXTNS == TRUE)
 #define ESE_HANDLE    0x4C0

@@ -38,7 +38,6 @@
 typedef uint8_t         utf8_t;       /* UTF8 Character String */
 typedef uint8_t         bool_t;       /* boolean data type */
 typedef uint16_t        NFCSTATUS;    /* Return values */
-#define STATIC static
 
 #define PHNFC_MAX_UID_LENGTH            0x0AU    /* Maximum UID length expected */
 #define PHNFC_MAX_ATR_LENGTH            0x30U    /* Maximum ATR_RES (General Bytes) length expected */

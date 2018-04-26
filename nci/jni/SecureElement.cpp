@@ -56,9 +56,7 @@
 
 #include <signal.h>
 #include <sys/types.h>
-extern "C"{
 #include "nfa_api.h"
-}
 #endif
 /*****************************************************************************
 **

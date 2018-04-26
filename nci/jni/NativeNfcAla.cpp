@@ -22,10 +22,7 @@
 #include "SecureElement.h"
 #include "TransactionController.h"
 #include "JcopManager.h"
-extern "C"
-{
-    #include "phNxpConfig.h"
-}
+#include "phNxpConfig.h"
 #define LS_DEFAULT_VERSION 0x20
 namespace android
 {

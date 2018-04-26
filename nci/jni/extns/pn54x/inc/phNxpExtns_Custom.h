@@ -22,9 +22,6 @@
 #include <errno.h>
 #include <phNfcStatus.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /*
  * TLV structure

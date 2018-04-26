@@ -46,11 +46,10 @@
 #include "SecureElement.h"
 #if(NXP_EXTNS == TRUE)
 #include "MposManager.h"
-extern "C"{
 #include "phNxpConfig.h"
 #include "nfc_api.h"
 #include "nfa_api.h"
-}
+
 extern int32_t gSeDiscoverycount;
 extern SyncEvent gNfceeDiscCbEvent;
 

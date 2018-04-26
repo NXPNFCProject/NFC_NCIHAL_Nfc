@@ -41,11 +41,9 @@
 #include "RouteDataSet.h"
 #include "SecureElement.h"
 #include <vector>
-extern "C"
-{
-    #include "nfa_api.h"
-    #include "nfa_ee_api.h"
-}
+#include "nfa_api.h"
+#include "nfa_ee_api.h"
+
 #if(NXP_EXTNS == TRUE)
 #define TECHNOLOGY_BASED_ROUTING        0x00
 #define PROTOCOL_BASED_ROUTING          0x01

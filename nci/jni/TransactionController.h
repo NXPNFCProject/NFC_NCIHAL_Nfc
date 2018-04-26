@@ -18,10 +18,8 @@
 #pragma once
 #include <semaphore.h>
 #include <NfcJniUtil.h>
-extern "C"
-{
-    #include "nfa_api.h"
-}
+#include "nfa_api.h"
+
 #define TRANSACTION_REQUESTOR(name) name
 #define TRANSACTION_ATTEMPT_FOR_SECONDS(seconds)  (seconds)
 #define pTransactionController      (transactionController::getInstance())

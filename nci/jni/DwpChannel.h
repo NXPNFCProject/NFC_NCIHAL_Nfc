@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-extern "C"
-{
-    #include "nfa_ee_api.h"
-}
+#include "nfa_ee_api.h"
 class DwpChannel
 {
 public:

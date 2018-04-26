@@ -21,9 +21,6 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <phNfcStatus.h>
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 NFCSTATUS EXTNS_Init (tNFA_DM_CBACK        *p_dm_cback,
                      tNFA_CONN_CBACK      *p_conn_cback);
@@ -50,9 +47,6 @@ NFCSTATUS EXTNS_CheckMfcResponse (uint8_t** sTransceiveData, uint32_t *sTranscei
 void MfcPresenceCheckResult (NFCSTATUS status);
 void MfcResetPresenceCheckStatus (void);
 NFCSTATUS EXTNS_GetPresenceCheckStatus (void);
-#ifdef __cplusplus
-}
-#endif
 
 /*
  * Events from JNI for NXP Extensions
