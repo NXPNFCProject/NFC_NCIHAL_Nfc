@@ -22,3 +22,7 @@
 BasedOnStyle: Google
 CommentPragmas: NOLINT:.*
 DerivePointerAlignment: false
+
+---
+Language: Java
+DisableFormat: true
