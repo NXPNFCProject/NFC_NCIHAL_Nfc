@@ -228,6 +228,13 @@ public class NativeNfcManager implements DeviceHost {
         doFactoryReset();
     }
 
+    private native void doShutdown();
+
+    @Override
+    public void shutdown() {
+        doShutdown();
+    }
+
     private native boolean doDeinitialize();
 
     @Override

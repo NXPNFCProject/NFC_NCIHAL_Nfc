@@ -447,6 +447,8 @@ public interface DeviceHost {
 
     public void factoryReset();
 
+    public void shutdown();
+
     public int doselectUicc(int uiccSlot);
 
     public int doGetSelectedUicc();

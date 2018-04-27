@@ -603,6 +603,10 @@ nfc_jni_native_data* getNative(JNIEnv* e, jobject o) {
   return sCachedNat;
 }
 
+static void nfcManager_doShutdown(JNIEnv*, jobject) {
+  NfcAdaptation& theInstance = NfcAdaptation::GetInstance();
+  theInstance.DeviceShutdown();
+}
 /*******************************************************************************
 **
 ** Function:        handleRfDiscoveryEvent
@@ -5093,6 +5097,7 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
     {"doEnableDtaMode", "()V", (void*)nfcManager_doEnableDtaMode},
     {"doDisableDtaMode", "()V", (void*)nfcManager_doDisableDtaMode},
     {"doFactoryReset", "()V", (void*)nfcManager_doFactoryReset},
+    {"doShutdown", "()V", (void*)nfcManager_doShutdown},
     {"getIsoDepMaxTransceiveLength", "()I",
      (void*)nfcManager_getIsoDepMaxTransceiveLength}
 #if (NXP_EXTNS == TRUE)

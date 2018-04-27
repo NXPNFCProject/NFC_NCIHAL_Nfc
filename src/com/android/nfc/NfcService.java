@@ -1049,6 +1049,7 @@ public class NfcService implements DeviceHostListener {
 
         IntentFilter ownerFilter = new IntentFilter(Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE);
         ownerFilter.addAction(Intent.ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE);
+        ownerFilter.addAction(Intent.ACTION_SHUTDOWN);
         mContext.registerReceiver(mOwnerReceiver, ownerFilter);
 
         ownerFilter = new IntentFilter();
@@ -3031,6 +3032,11 @@ public class NfcService implements DeviceHostListener {
             }
             else {
                 status = ErrorCodes.ERROR_NOT_SUPPORTED;
+                }
+            } else if (action.equals(Intent.ACTION_SHUTDOWN)) {
+                if (DBG) Log.d(TAG, "Device is shutting down.");
+                if (isNfcEnabled()) {
+                    mDeviceHost.shutdown();
                 }
             }
             else {
