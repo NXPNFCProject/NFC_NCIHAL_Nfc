@@ -14,6 +14,7 @@ LOCAL_SRC_FILES += \
         $(call all-java-files-under, nci)
 
 LOCAL_PACKAGE_NAME := NfcNci
+LOCAL_PRIVATE_PLATFORM_APIS := true
 LOCAL_CERTIFICATE := platform
 
 LOCAL_JNI_SHARED_LIBRARIES := libnfc_nci_jni
