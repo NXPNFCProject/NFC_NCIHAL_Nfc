@@ -129,7 +129,7 @@ public final class HandoverServer {
                 } catch (LlcpException e) {
                     Log.e(TAG, "llcp error", e);
                 } catch (IOException e) {
-                    Log.e(TAG, "IO error", e);
+                    if (DBG) Log.d(TAG, "IO error");
                 } finally {
                     synchronized (HandoverServer.this) {
                         if (mServerSocket != null) {

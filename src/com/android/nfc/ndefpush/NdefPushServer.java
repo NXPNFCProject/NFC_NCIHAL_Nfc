@@ -165,7 +165,7 @@ public class NdefPushServer {
                 } catch (LlcpException e) {
                     Log.e(TAG, "llcp error", e);
                 } catch (IOException e) {
-                    Log.e(TAG, "IO error", e);
+                    if (DBG) Log.d(TAG, "IO error");
                 } finally {
                     synchronized (NdefPushServer.this) {
                         if (mServerSocket != null) {
