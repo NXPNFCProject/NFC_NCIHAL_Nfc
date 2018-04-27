@@ -42,6 +42,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <sys/time.h>
+#include "HciEventManager.h"
 #include "HciRFParams.h"
 #include "JavaClassConstants.h"
 #include "NfcAdaptation.h"
@@ -1566,6 +1567,9 @@ static void nfaConnectionCallback(uint8_t connEvent,
     sCachedNfcManagerNotifySeEmvCardRemoval =
         e->GetMethodID(cls.get(), "notifySeEmvCardRemoval", "()V");
 
+    gCachedNfcManagerNotifyTransactionListeners = e->GetMethodID(
+        cls.get(), "notifyTransactionListeners", "([B[BLjava/lang/String;)V");
+
 #if (NXP_EXTNS == TRUE)
     gCachedNfcManagerNotifyReRoutingEntry =
         e->GetMethodID(cls.get(), "notifyReRoutingEntry", "()V");
@@ -2330,6 +2334,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
           NfcTag::getInstance().initialize(getNative(e, o));
           PeerToPeer::getInstance().initialize();
           PeerToPeer::getInstance().handleNfcOnOff(true);
+          HciEventManager::getInstance().initialize(getNative(e, o));
 #if (NXP_EXTNS == TRUE)
           if (GetNxpNumValue(NAME_NXP_DEFAULT_NFCEE_DISC_TIMEOUT,
                              (void*)&gdisc_timeout,
@@ -3515,6 +3520,7 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
     RoutingManager::getInstance().onNfccShutdown();
     SecureElement::getInstance().finalize();
     PowerSwitch::getInstance().initialize(PowerSwitch::UNKNOWN_LEVEL);
+    HciEventManager::getInstance().finalize();
     // Stop the discovery before calling NFA_Disable.
     if (sRfEnabled) startRfDiscovery(false);
     tNFA_STATUS stat = NFA_STATUS_OK;

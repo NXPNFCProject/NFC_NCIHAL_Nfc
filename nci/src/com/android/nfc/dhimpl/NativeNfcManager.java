@@ -935,6 +935,10 @@ public class NativeNfcManager implements DeviceHost {
        mListener.onUiccStatusEvent(uiccStat);
    }
 
+    private void notifyTransactionListeners(byte[] aid, byte[] data, String evtSrc) {
+        mListener.onNfcTransactionEvent(aid, data, evtSrc);
+    }
+
     static String toHexString(byte[] buffer, int offset, int length) {
         final char[] HEX_CHARS = "0123456789abcdef".toCharArray();
         char[] chars = new char[2 * length];

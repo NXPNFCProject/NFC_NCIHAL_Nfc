@@ -125,6 +125,8 @@ public interface DeviceHost {
         public void onETSIReaderModeRestart();
 
         public void onUiccStatusEvent(int uiccStat);
+
+        public void onNfcTransactionEvent(byte[] aid, byte[] data, String seName);
     }
 
     public interface TagEndpoint {
