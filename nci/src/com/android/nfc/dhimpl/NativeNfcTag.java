@@ -91,7 +91,7 @@ public class NativeNfcTag implements TagEndpoint {
     class PresenceCheckWatchdog extends Thread {
 
         private final int watchdogTimeout;
-        private final DeviceHost.TagDisconnectedCallback tagDisconnectedCallback;
+        private DeviceHost.TagDisconnectedCallback tagDisconnectedCallback;
 
         private boolean isPresent = true;
         private boolean isStopped = false;
@@ -118,9 +118,12 @@ public class NativeNfcTag implements TagEndpoint {
             this.notifyAll();
         }
 
-        public synchronized void end() {
+        public synchronized void end(boolean disableCallback) {
             isStopped = true;
             doCheck = false;
+            if (disableCallback) {
+                tagDisconnectedCallback = null;
+            }
             this.notifyAll();
         }
 
@@ -248,6 +251,14 @@ public class NativeNfcTag implements TagEndpoint {
     }
 
     @Override
+    public synchronized void stopPresenceChecking() {
+        mIsPresent = false;
+        if (mWatchdog != null) {
+            mWatchdog.end(true);
+        }
+    }
+
+    @Override
     public synchronized void startPresenceChecking(int presenceCheckDelay,
                                                    DeviceHost.TagDisconnectedCallback callback) {
         // Once we start presence checking, we allow the upper layers
@@ -276,7 +287,7 @@ public class NativeNfcTag implements TagEndpoint {
         }
         if (watchdog != null) {
             // Watchdog has already disconnected or will do it
-            watchdog.end();
+            watchdog.end(false);
             try {
                 watchdog.join();
             } catch (InterruptedException e) {

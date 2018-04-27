@@ -136,6 +136,7 @@ public interface DeviceHost {
         boolean isPresent();
         void startPresenceChecking(int presenceCheckDelay,
                                    @Nullable TagDisconnectedCallback callback);
+        void stopPresenceChecking();
 
         int[] getTechList();
         void removeTechnology(int tech); // TODO remove this one

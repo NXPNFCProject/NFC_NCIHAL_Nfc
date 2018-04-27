@@ -2177,6 +2177,7 @@ public class NfcService implements DeviceHostListener {
                 } else {
                     try {
                         mReaderModeParams = null;
+                        StopPresenceChecking();
                         binder.unlinkToDeath(mReaderModeDeathRecipient, 0);
                     } catch (NoSuchElementException e) {
                         Log.e(TAG, "Reader mode Binder was never registered.");
@@ -4790,6 +4791,17 @@ public class NfcService implements DeviceHostListener {
         }
         return false;
     }
+
+    private void StopPresenceChecking() {
+        Object[] objectValues = mObjectMap.values().toArray();
+        for (Object object : objectValues) {
+            if (object instanceof TagEndpoint) {
+                TagEndpoint tag = (TagEndpoint)object;
+                ((TagEndpoint) object).stopPresenceChecking();
+            }
+        }
+    }
+
     /**
      * Disconnect any target if present
      */
