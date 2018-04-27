@@ -38,7 +38,7 @@
 #include "PowerSwitch.h"
 #include "NfcJniUtil.h"
 #include "SecureElement.h"
-#include "config.h"
+#include "nfc_config.h"
 
 #include <android-base/stringprintf.h>
 #include <base/logging.h>
@@ -108,14 +108,14 @@ PowerSwitch& PowerSwitch::getInstance() { return sPowerSwitch; }
 *******************************************************************************/
 void PowerSwitch::initialize(PowerLevel level) {
   static const char fn[] = "PowerSwitch::initialize";
-  unsigned long num = 0;
 
   mMutex.lock();
 
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
       "%s: level=%s (%u)", fn, powerLevelToString(level), level);
-  if (GetNumValue(NAME_SCREEN_OFF_POWER_STATE, &num, sizeof(num)))
-    mDesiredScreenOffPowerState = (int)num;
+  if (NfcConfig::hasKey(NAME_SCREEN_OFF_POWER_STATE))
+    mDesiredScreenOffPowerState =
+        (int)NfcConfig::getUnsigned(NAME_SCREEN_OFF_POWER_STATE);
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
       "%s: desired screen-off state=%d", fn, mDesiredScreenOffPowerState);
 

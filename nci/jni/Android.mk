@@ -46,6 +46,7 @@ LOCAL_C_INCLUDES += \
     $(VOB_COMPONENTS)/include \
     $(VOB_COMPONENTS)/gki/ulinux \
     $(VOB_COMPONENTS)/gki/common \
+    system/nfc/utils/include \
     vendor/nxp/opensource/hardware/interfaces/nxpnfc/1.0/default/
 
 LOCAL_SHARED_LIBRARIES := \

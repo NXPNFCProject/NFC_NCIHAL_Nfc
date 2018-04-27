@@ -48,7 +48,6 @@
 #include "NfcTag.h"
 #include "Pn544Interop.h"
 #include "TransactionController.h"
-#include "config.h"
 #include "ndef_utils.h"
 #include "nfa_api.h"
 #include "nfa_rw_api.h"

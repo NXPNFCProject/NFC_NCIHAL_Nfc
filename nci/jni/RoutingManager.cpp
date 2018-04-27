@@ -43,7 +43,7 @@
 #include "JavaClassConstants.h"
 #include "SecureElement.h"
 #include "RoutingManager.h"
-#include "config.h"
+#include "nfc_config.h"
 #if (NXP_EXTNS == TRUE)
 #include "MposManager.h"
 #include "nfa_api.h"
@@ -114,53 +114,32 @@ RoutingManager::RoutingManager()
       mAddAid(0),
       mDefaultHCEFRspTimeout(5000) {
   static const char fn[] = "RoutingManager::RoutingManager()";
-  unsigned long num = 0;
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:enter", fn);
   // Get the active SE
-  if (GetNumValue("ACTIVE_SE", &num, sizeof(num)))
-    mActiveSe = num;
-  else
-    mActiveSe = 0x00;
+  mActiveSe = NfcConfig::getUnsigned("ACTIVE_SE", 0x00);
   // Get the active SE for Nfc-F
-  if (GetNumValue("ACTIVE_SE_NFCF", &num, sizeof(num)))
-    mActiveSeNfcF = num;
-  else
-    mActiveSeNfcF = 0x00;
+  mActiveSeNfcF = NfcConfig::getUnsigned("ACTIVE_SE_NFCF", 0x00);
   // Get the "default" route
-  if (GetNumValue("DEFAULT_ISODEP_ROUTE", &num, sizeof(num))) {
+  mDefaultEe = NfcConfig::getUnsigned("DEFAULT_ISODEP_ROUTE", 0x00);
     if (nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH) {
-      if ((num == 0xF4 || num == 0xF8) && sCurrentSelectedUICCSlot) {
+      if ((mDefaultEe == 0xF4 || mDefaultEe == 0xF8) && sCurrentSelectedUICCSlot) {
         mDefaultEe = (sCurrentSelectedUICCSlot != 0x02) ? 0xF4 : 0xF8;
-      } else {
-        mDefaultEe = num;
       }
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
           "%s: DEFAULT_ISODEP_ROUTE mDefaultEe : %d", fn, mDefaultEe);
-    } else {
-      mDefaultEe = num;
     }
-  } else {
-    mDefaultEe = 0x00;
-  }
+
   // Get the "default" route for Nfc-F
-  if (GetNumValue("DEFAULT_NFCF_ROUTE", &num, sizeof(num)))
-    mDefaultEeNfcF = num;
-  else
-    mDefaultEeNfcF = 0x00;
+  mDefaultEeNfcF = NfcConfig::getUnsigned("DEFAULT_NFCF_ROUTE", 0x00);
   // Get the default "off-host" route.  This is hard-coded at the Java layer
   // but we can override it here to avoid forcing Java changes.
-  if (GetNumValue("DEFAULT_OFFHOST_ROUTE", &num, sizeof(num)))
-    mOffHostEe = num;
-  else
-    mOffHostEe = 0x02;
-  if (GetNumValue("AID_MATCHING_MODE", &num, sizeof(num)))
-    mAidMatchingMode = num;
-  else
-    mAidMatchingMode = AID_MATCHING_EXACT_ONLY;
-  if (GetNxpNumValue("AID_MATCHING_PLATFORM", &num, sizeof(num)))
-    mAidMatchingPlatform = num;
-  else
-    mAidMatchingPlatform = AID_MATCHING_L;
+  mOffHostEe = NfcConfig::getUnsigned("DEFAULT_OFFHOST_ROUTE", 0xf4);
+
+  mAidMatchingMode =
+      NfcConfig::getUnsigned("AID_MATCHING_MODE", AID_MATCHING_EXACT_ONLY);
+
+  mAidMatchingPlatform =
+      NfcConfig::getUnsigned("AID_MATCHING_PLATFORM", AID_MATCHING_L);
 
   mSeTechMask = 0x00;  // unused
   mNfcFOnDhHandle = NFA_HANDLE_INVALID;

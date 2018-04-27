@@ -42,7 +42,7 @@
 #include <nativehelper/ScopedPrimitiveArray.h>
 #include "IntervalTimer.h"
 #include "JavaClassConstants.h"
-#include "config.h"
+#include "nfc_config.h"
 #include "nfc_brcm_defs.h"
 #include "phNxpExtns.h"
 #include "rw_int.h"
@@ -125,7 +125,6 @@ NfcTag& NfcTag::getInstance() {
 **
 *******************************************************************************/
 void NfcTag::initialize(nfc_jni_native_data* native) {
-  long num = 0;
 
   mNativeData = native;
   mIsActivated = false;
@@ -139,8 +138,9 @@ void NfcTag::initialize(nfc_jni_native_data* native) {
   mReadCompletedStatus = NFA_STATUS_OK;
   mNfcDisableinProgress = false;
   resetTechnologies();
-  if (GetNumValue(NAME_PRESENCE_CHECK_ALGORITHM, &num, sizeof(num)))
-    mPresenceCheckAlgorithm = num;
+  if (NfcConfig::hasKey(NAME_PRESENCE_CHECK_ALGORITHM))
+    mPresenceCheckAlgorithm =
+        NfcConfig::getUnsigned(NAME_PRESENCE_CHECK_ALGORITHM);
 }
 
 /*******************************************************************************

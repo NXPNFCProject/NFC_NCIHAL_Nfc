@@ -42,7 +42,7 @@
 #include <nativehelper/ScopedLocalRef.h>
 #include "JavaClassConstants.h"
 #include "NfcJniUtil.h"
-#include "config.h"
+#include "nfc_config.h"
 #include "llcp_defs.h"
 
 using android::base::StringPrintf;
@@ -125,11 +125,10 @@ PeerToPeer& PeerToPeer::getInstance() { return sP2p; }
 *******************************************************************************/
 void PeerToPeer::initialize() {
   static const char fn[] = "PeerToPeer::initialize";
-  unsigned long num = 0;
 
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", fn);
-  if (GetNumValue("P2P_LISTEN_TECH_MASK", &num, sizeof(num)))
-    mP2pListenTechMask = num;
+  if (NfcConfig::hasKey("P2P_LISTEN_TECH_MASK"))
+    mP2pListenTechMask = NfcConfig::getUnsigned("P2P_LISTEN_TECH_MASK");
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", fn);
 }
 
@@ -1121,12 +1120,11 @@ tNFA_TECHNOLOGY_MASK PeerToPeer::getP2pListenMask() {
 **
 *******************************************************************************/
 void PeerToPeer::resetP2pListenMask() {
-  unsigned long num = 0;
   mP2pListenTechMask = NFA_TECHNOLOGY_MASK_A | NFA_TECHNOLOGY_MASK_F |
                        NFA_TECHNOLOGY_MASK_A_ACTIVE |
                        NFA_TECHNOLOGY_MASK_F_ACTIVE;
-  if (GetNumValue("P2P_LISTEN_TECH_MASK", &num, sizeof(num)))
-    mP2pListenTechMask = num;
+  if (NfcConfig::hasKey("P2P_LISTEN_TECH_MASK"))
+    mP2pListenTechMask = NfcConfig::getUnsigned("P2P_LISTEN_TECH_MASK");
 }
 
 /*******************************************************************************
