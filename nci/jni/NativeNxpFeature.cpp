@@ -32,6 +32,8 @@
  *  limitations under the License.
  *
  ******************************************************************************/
+#include <android-base/stringprintf.h>
+#include <base/logging.h>
 #include <errno.h>
 #include <semaphore.h>
 #include "JavaClassConstants.h"
@@ -39,11 +41,14 @@
 #include "NfcJniUtil.h"
 #include "RoutingManager.h"
 #include "SyncEvent.h"
-#include "_OverrideLog.h"
 #include "config.h"
 
 #include "nfa_api.h"
 #include "nfa_rw_api.h"
+
+using android::base::StringPrintf;
+
+extern bool nfc_debug_enabled;
 
 typedef struct nxp_feature_data {
   SyncEvent NxpFeatureConfigEvt;

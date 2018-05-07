@@ -36,12 +36,16 @@
  *  Communicate with a peer using NFC-DEP, LLCP, SNEP.
  */
 #include "PeerToPeer.h"
+
+#include <android-base/stringprintf.h>
+#include <base/logging.h>
 #include <nativehelper/ScopedLocalRef.h>
 #include "JavaClassConstants.h"
 #include "NfcJniUtil.h"
-#include "_OverrideLog.h"
 #include "config.h"
 #include "llcp_defs.h"
+
+using android::base::StringPrintf;
 
 /* Some older PN544-based solutions would only send the first SYMM back
  * (as an initiator) after the full LTO (750ms). But our connect timer
@@ -65,6 +69,8 @@ extern int gGeneralPowershutDown;
 
 PeerToPeer PeerToPeer::sP2p;
 const std::string P2pServer::sSnepServiceName("urn:nfc:sn:snep");
+
+extern bool nfc_debug_enabled;
 
 /*******************************************************************************
 **

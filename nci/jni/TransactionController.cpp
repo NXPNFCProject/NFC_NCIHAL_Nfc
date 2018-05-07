@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <android-base/stringprintf.h>
+#include <base/logging.h>
 #include "TransactionController.h"
 #include <time.h>
 #include "IntervalTimer.h"
-//#include <OverrideLog.h>
 #include <string.h>
-#include "_OverrideLog.h"
 
+using android::base::StringPrintf;
+
+extern bool nfc_debug_enabled;
 namespace android {
 extern void* enableThread(void* arg);
 extern Transcation_Check_t* nfcManager_transactionDetail(void);

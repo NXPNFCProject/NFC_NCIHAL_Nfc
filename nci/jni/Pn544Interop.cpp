@@ -25,7 +25,14 @@
 #include "IntervalTimer.h"
 #include "Mutex.h"
 #include "NfcTag.h"
-#include "_OverrideLog.h"
+
+#include <android-base/stringprintf.h>
+#include <base/logging.h>
+
+using android::base::StringPrintf;
+
+extern bool nfc_debug_enabled;
+
 namespace android {
 extern void startStopPolling(bool isStartPolling);
 extern void nativeNfcTag_releaseRfInterfaceMutexLock();

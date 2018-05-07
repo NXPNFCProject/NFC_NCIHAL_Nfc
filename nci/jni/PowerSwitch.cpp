@@ -38,14 +38,19 @@
 #include "PowerSwitch.h"
 #include "NfcJniUtil.h"
 #include "SecureElement.h"
-#include "_OverrideLog.h"
 #include "config.h"
+
+#include <android-base/stringprintf.h>
+#include <base/logging.h>
+
+using android::base::StringPrintf;
 
 namespace android {
 void doStartupConfig();
 }
 
 extern bool gActivated;
+extern bool nfc_debug_enabled;
 extern SyncEvent gDeactivatedEvent;
 
 PowerSwitch PowerSwitch::sPowerSwitch;

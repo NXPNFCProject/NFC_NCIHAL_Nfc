@@ -34,6 +34,7 @@
  ******************************************************************************/
 #include <android-base/stringprintf.h>
 #include <base/logging.h>
+#include <cutils/properties.h>
 #include <errno.h>
 #include <nativehelper/ScopedLocalRef.h>
 #include <nativehelper/ScopedPrimitiveArray.h>
@@ -52,7 +53,6 @@
 #include "RoutingManager.h"
 #include "SecureElement.h"
 #include "SyncEvent.h"
-#include "_OverrideLog.h"
 #include "config.h"
 #if (NXP_EXTNS == TRUE)
 #include <cutils/properties.h>
@@ -73,6 +73,8 @@
 #include "phNxpConfig.h"
 #include "phNxpExtns.h"
 #include "rw_api.h"
+
+using android::base::StringPrintf;
 
 #define SAK_VALUE_AT 17
 extern const uint8_t nfca_version_string[];
@@ -563,6 +565,27 @@ static void register_signal_handler();
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
+bool nfc_debug_enabled;
+
+namespace {
+void initializeGlobalDebugEnabledFlag() {
+  unsigned trace_level = 1;
+  if (GetNumValue(NAME_APPL_TRACE_LEVEL, &trace_level, sizeof(trace_level)))
+    nfc_debug_enabled = (trace_level == 0) ? false : true;
+
+  char valueStr[PROPERTY_VALUE_MAX] = {0};
+  int len = property_get("nfc.app_log_level", valueStr, "");
+  if (len > 0) {
+    // let Android property override .conf variable
+    sscanf(valueStr, "%u", &trace_level);
+    nfc_debug_enabled = (trace_level == 0) ? false : true;
+  }
+
+  DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("%s: level=%u", __func__, nfc_debug_enabled);
+}
+}  // namespace
+
 /*******************************************************************************
 **
 ** Function:        getNative
@@ -964,6 +987,8 @@ static void nfaConnectionCallback(uint8_t connEvent,
       if (sIsDisabling || !sIsNfaEnabled) break;
 
       gActivated = true;
+
+      initializeGlobalDebugEnabledFlag();
 
       NfcTag::getInstance().setActivationState();
 
@@ -2265,7 +2290,6 @@ static void nfaConnectionCallback(uint8_t connEvent,
     powerSwitch.initialize(PowerSwitch::FULL_POWER);
     register_signal_handler();
     {
-      unsigned long num = 0;
 
       NfcAdaptation& theInstance = NfcAdaptation::GetInstance();
       theInstance.Initialize();  // start GKI, NCI task, NFC task
@@ -2449,7 +2473,9 @@ static void nfaConnectionCallback(uint8_t connEvent,
                           &configData);
           }
 
-          struct nfc_jni_native_data* nat = getNative(e, o);
+        unsigned long num = 0;
+
+        struct nfc_jni_native_data* nat = getNative(e, o);
 
           if (nat) {
             if (GetNumValue(NAME_POLLING_TECH_MASK, &num, sizeof(num)))
@@ -2563,7 +2589,6 @@ static void nfaConnectionCallback(uint8_t connEvent,
       NFA_Init(halFuncEntries);
       stat = NFA_Enable(nfaDeviceManagementCallback, nfaConnectionCallback);
       if (stat == NFA_STATUS_OK) {
-        num = initializeGlobalAppLogLevel();
         sNfaEnableEvent.wait();  // wait for NFA command to finish
       }
       retryCount++;

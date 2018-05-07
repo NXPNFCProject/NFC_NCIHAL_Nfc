@@ -13,11 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <android-base/stringprintf.h>
+#include <base/logging.h>
 #include <nativehelper/ScopedPrimitiveArray.h>
 #include <nativehelper/ScopedUtfChars.h>
 #include "JavaClassConstants.h"
 #include "PeerToPeer.h"
-#include "_OverrideLog.h"
+
+using android::base::StringPrintf;
+
+extern bool nfc_debug_enabled;
 
 namespace android {
 

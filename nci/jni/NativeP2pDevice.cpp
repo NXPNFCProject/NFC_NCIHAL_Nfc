@@ -14,12 +14,16 @@
  * limitations under the License.
  */
 
+#include <android-base/stringprintf.h>
+#include <base/logging.h>
 #include <log/log.h>
 #include "JavaClassConstants.h"
 #include "NfcJniUtil.h"
-#include "_OverrideLog.h"
-
 #include <nativehelper/JNIHelp.h>
+
+using android::base::StringPrintf;
+
+extern bool nfc_debug_enabled;
 
 namespace android {
 

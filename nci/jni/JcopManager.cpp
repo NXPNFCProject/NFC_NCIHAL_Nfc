@@ -13,10 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#include <android-base/stringprintf.h>
+#include <base/logging.h>
 #include "JcopManager.h"
 #include <dlfcn.h>
-#include "_OverrideLog.h"
+
+using android::base::StringPrintf;
+
+extern bool nfc_debug_enabled;
 
 JcopManager* JcopManager::mJcpMgr = NULL;
 static phJcop_Context_t g_mPhJcpCtxt;

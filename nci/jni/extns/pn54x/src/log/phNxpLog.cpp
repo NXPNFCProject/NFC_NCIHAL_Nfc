@@ -25,6 +25,7 @@
 #include <cutils/properties.h>
 
 using android::base::StringPrintf;
+extern bool nfc_debug_enabled;
 
 const char* NXPLOG_ITEM_EXTNS = "NxpExtns";
 const char* NXPLOG_ITEM_NCIHAL = "NxpHal";

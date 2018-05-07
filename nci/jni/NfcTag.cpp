@@ -36,16 +36,20 @@
  *  Tag-reading, tag-writing operations.
  */
 #include "NfcTag.h"
+#include <android-base/stringprintf.h>
 #include <base/logging.h>
 #include <nativehelper/ScopedLocalRef.h>
 #include <nativehelper/ScopedPrimitiveArray.h>
 #include "IntervalTimer.h"
 #include "JavaClassConstants.h"
-#include "_OverrideLog.h"
 #include "config.h"
 #include "nfc_brcm_defs.h"
 #include "phNxpExtns.h"
 #include "rw_int.h"
+
+using android::base::StringPrintf;
+
+extern bool nfc_debug_enabled;
 
 #if (NXP_EXTNS == TRUE)
 static void deleteglobaldata(JNIEnv* e);

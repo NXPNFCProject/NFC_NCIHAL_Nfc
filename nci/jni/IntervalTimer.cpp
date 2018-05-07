@@ -38,7 +38,11 @@
 
 #include "IntervalTimer.h"
 #include <string.h>
-#include "_OverrideLog.h"
+
+#include <android-base/stringprintf.h>
+#include <base/logging.h>
+
+using android::base::StringPrintf;
 
 IntervalTimer::IntervalTimer() {
   mTimerId = 0;

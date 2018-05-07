@@ -23,6 +23,11 @@
 #include <phNxpExtns_MifareStd.h>
 #include <phNxpLog.h>
 
+#include <android-base/stringprintf.h>
+#include <base/logging.h>
+
+using android::base::StringPrintf;
+
 /* Function prototype declarations */
 static void phFriNfc_MfStd_H_FillSendBuf(
     phFriNfc_sNdefSmtCrdFmt_t* NdefSmtCrdFmt, uint16_t BlockNo);

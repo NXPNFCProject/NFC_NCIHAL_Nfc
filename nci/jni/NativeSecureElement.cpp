@@ -32,15 +32,19 @@
  *  limitations under the License.
  *
  ******************************************************************************/
+#include <android-base/stringprintf.h>
+#include <base/logging.h>
 #include <ScopedPrimitiveArray.h>
 #include "JavaClassConstants.h"
 #include "NfcTag.h"
 #include "PowerSwitch.h"
 #include "RoutingManager.h"
 #include "SecureElement.h"
-#include "_OverrideLog.h"
 #include "phNxpConfig.h"
 
+using android::base::StringPrintf;
+
+extern bool nfc_debug_enabled;
 extern bool hold_the_transceive;
 extern int dual_mode_current_state;
 extern bool ceTransactionPending;

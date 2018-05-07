@@ -15,9 +15,14 @@
  *  Copyright 2018 NXP
  *
  ******************************************************************************/
+#include <android-base/stringprintf.h>
+#include <base/logging.h>
 #include "JavaClassConstants.h"
 #include "MposManager.h"
-#include "_OverrideLog.h"
+
+using android::base::StringPrintf;
+
+extern bool nfc_debug_enabled;
 
 namespace android {
 typedef enum {

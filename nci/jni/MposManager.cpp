@@ -15,15 +15,19 @@
  *  Copyright 2018 NXP
  *
  ******************************************************************************/
+#include <android-base/stringprintf.h>
+#include <base/logging.h>
 #include "MposManager.h"
 #include <ScopedLocalRef.h>
 #include "SecureElement.h"
 #include "TransactionController.h"
-#include "_OverrideLog.h"
 #include "config.h"
 #include "phNxpConfig.h"
 
 using namespace android;
+using android::base::StringPrintf;
+
+extern bool nfc_debug_enabled;
 
 namespace android {
 extern tNFA_STATUS EmvCo_dosetPoll(jboolean enable);

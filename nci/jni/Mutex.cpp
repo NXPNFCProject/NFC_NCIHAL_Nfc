@@ -21,9 +21,11 @@
 #include "Mutex.h"
 #include "NfcJniUtil.h"
 
+#include <android-base/stringprintf.h>
 #include <base/logging.h>
 #include <errno.h>
-#include "_OverrideLog.h"
+
+using android::base::StringPrintf;
 
 /*******************************************************************************
 **

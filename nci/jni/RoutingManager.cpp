@@ -36,13 +36,13 @@
  *  Manage the listen-mode routing table.
  */
 
-#include "RoutingManager.h"
+#include <android-base/stringprintf.h>
 #include <base/logging.h>
 #include <nativehelper/JNIHelp.h>
 #include <nativehelper/ScopedLocalRef.h>
 #include "JavaClassConstants.h"
 #include "SecureElement.h"
-#include "_OverrideLog.h"
+#include "RoutingManager.h"
 #include "config.h"
 #if (NXP_EXTNS == TRUE)
 #include "MposManager.h"
@@ -50,8 +50,11 @@
 #include "nfc_api.h"
 #include "phNxpConfig.h"
 
+using android::base::StringPrintf;
+
 extern int32_t gSeDiscoverycount;
 extern SyncEvent gNfceeDiscCbEvent;
+extern bool nfc_debug_enabled;
 
 uint8_t nfcee_swp_discovery_status;
 extern int32_t gActualSeCount;

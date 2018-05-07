@@ -32,6 +32,7 @@
  *  limitations under the License.
  *
  ******************************************************************************/
+#include <android-base/stringprintf.h>
 #include <base/logging.h>
 #include <errno.h>
 #include <nativehelper/ScopedLocalRef.h>
@@ -47,7 +48,6 @@
 #include "NfcTag.h"
 #include "Pn544Interop.h"
 #include "TransactionController.h"
-#include "_OverrideLog.h"
 #include "config.h"
 #include "ndef_utils.h"
 #include "nfa_api.h"
@@ -55,6 +55,8 @@
 #include "nfc_brcm_defs.h"
 #include "phNxpExtns.h"
 #include "rw_api.h"
+using android::base::StringPrintf;
+
 namespace android {
 extern nfc_jni_native_data* getNative(JNIEnv* e, jobject o);
 extern bool nfcManager_isNfcActive();
@@ -63,6 +65,7 @@ extern uint16_t getrfDiscoveryDuration();
 
 extern bool gActivated;
 extern SyncEvent gDeactivatedEvent;
+extern bool nfc_debug_enabled;
 
 /*****************************************************************************
 **

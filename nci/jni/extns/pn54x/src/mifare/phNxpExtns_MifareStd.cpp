@@ -27,6 +27,8 @@
 
 using android::base::StringPrintf;
 
+extern bool nfc_debug_enabled;
+
 phNxpExtns_Context_t gphNxpExtns_Context;
 phNciNfc_TransceiveInfo_t tNciTranscvInfo;
 phFriNfc_sNdefSmtCrdFmt_t* NdefSmtCrdFmt = NULL;

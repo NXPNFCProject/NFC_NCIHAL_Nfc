@@ -36,6 +36,8 @@
  *  Communicate with secure elements that are attached to the NFC
  *  controller.
  */
+#include <android-base/stringprintf.h>
+#include <base/logging.h>
 #include "SecureElement.h"
 #include <ScopedLocalRef.h>
 #include <errno.h>
@@ -45,7 +47,6 @@
 #include "PeerToPeer.h"
 #include "PowerSwitch.h"
 #include "TransactionController.h"
-#include "_OverrideLog.h"
 #include "config.h"
 #include "nfc_api.h"
 #include "phNxpConfig.h"
@@ -58,6 +59,9 @@
 #include <sys/types.h>
 #include "nfa_api.h"
 #endif
+using android::base::StringPrintf;
+
+extern bool nfc_debug_enabled;
 /*****************************************************************************
 **
 ** public variables

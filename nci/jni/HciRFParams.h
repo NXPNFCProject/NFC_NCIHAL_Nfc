@@ -13,17 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#include <android-base/stringprintf.h>
+#include <base/logging.h>
 #include <cstdlib>
 #include <cstring>
 #include "SyncEvent.h"
-#include "_OverrideLog.h"
 
 #include "nfa_api.h"
 
 #if (NXP_EXTNS == TRUE)
 #define ESE_HANDLE 0x4C0
 #endif
+
+using android::base::StringPrintf;
+
+extern bool nfc_debug_enabled;
 
 namespace android {
 

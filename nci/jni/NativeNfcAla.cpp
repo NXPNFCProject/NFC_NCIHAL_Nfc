@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <android-base/stringprintf.h>
+#include <base/logging.h>
 #include <ScopedPrimitiveArray.h>
 #include "DwpChannel.h"
 #include "JavaClassConstants.h"
@@ -21,8 +23,11 @@
 #include "PowerSwitch.h"
 #include "SecureElement.h"
 #include "TransactionController.h"
-#include "_OverrideLog.h"
 #include "phNxpConfig.h"
+
+using android::base::StringPrintf;
+
+extern bool nfc_debug_enabled;
 #define LS_DEFAULT_VERSION 0x20
 namespace android {
 extern SyncEvent sNfaVSCResponseEvent;
