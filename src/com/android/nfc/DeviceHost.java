@@ -445,6 +445,8 @@ public interface DeviceHost {
 
     public void disableDtaMode();
 
+    public void factoryReset();
+
     public int doselectUicc(int uiccSlot);
 
     public int doGetSelectedUicc();

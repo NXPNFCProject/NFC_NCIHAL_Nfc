@@ -2709,6 +2709,11 @@ static void nfaConnectionCallback(uint8_t connEvent,
     gIsDtaEnabled = false;
   }
 
+static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
+  NfcAdaptation& theInstance = NfcAdaptation::GetInstance();
+  theInstance.FactoryReset();
+}
+
 #if (NXP_EXTNS == TRUE)
   /*******************************************************************************
    **
@@ -5087,6 +5092,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
     {"doCheckJcopDlAtBoot", "()Z", (void*)nfcManager_doCheckJcopDlAtBoot},
     {"doEnableDtaMode", "()V", (void*)nfcManager_doEnableDtaMode},
     {"doDisableDtaMode", "()V", (void*)nfcManager_doDisableDtaMode},
+    {"doFactoryReset", "()V", (void*)nfcManager_doFactoryReset},
     {"getIsoDepMaxTransceiveLength", "()I",
      (void*)nfcManager_getIsoDepMaxTransceiveLength}
 #if (NXP_EXTNS == TRUE)
