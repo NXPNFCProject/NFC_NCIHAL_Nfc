@@ -15,11 +15,15 @@
  */
 
 /*include files*/
+#include <android-base/stringprintf.h>
+#include <base/logging.h>
 #include <phFriNfc_MifareStdTimer.h>
 #include <phNciNfcTypes.h>
 #include <phNfcStatus.h>
 #include <phNfcTypes.h>
 #include <phNxpLog.h>
+
+using android::base::StringPrintf;
 
 STATIC NFCSTATUS
 phFriNfc_MifareStd_CreateTimer(phFriNfc_MifareStdTimer_t* TimerInfo);

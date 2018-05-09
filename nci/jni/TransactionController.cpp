@@ -17,7 +17,6 @@
 #include <base/logging.h>
 #include "TransactionController.h"
 #include <time.h>
-#include "IntervalTimer.h"
 #include <string.h>
 
 using android::base::StringPrintf;

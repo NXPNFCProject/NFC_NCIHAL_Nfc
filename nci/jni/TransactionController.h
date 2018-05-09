@@ -18,6 +18,7 @@
 #pragma once
 #include <NfcJniUtil.h>
 #include <semaphore.h>
+#include "IntervalTimer.h"
 #include "nfa_api.h"
 
 #define TRANSACTION_REQUESTOR(name) name

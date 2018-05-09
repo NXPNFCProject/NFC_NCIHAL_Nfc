@@ -882,7 +882,7 @@ bool PeerToPeer::send(tJNI_HANDLE jniHandle, uint8_t* buffer,
     return (false);
   }
 
-  ALOGV_IF((appl_trace_level >= BT_TRACE_LEVEL_DEBUG),
+  DLOG_IF(INFO, nfc_debug_enabled)  << StringPrintf(
            "%s: send data; jniHandle: %u  nfaHandle: 0x%04X", fn,
            pConn->mJniHandle, pConn->mNfaConnHandle);
 
@@ -897,14 +897,14 @@ bool PeerToPeer::send(tJNI_HANDLE jniHandle, uint8_t* buffer,
     if (pConn->mNfaConnHandle ==
         NFA_HANDLE_INVALID)  // peer already disconnected
     {
-      ALOGV_IF((appl_trace_level >= BT_TRACE_LEVEL_DEBUG),
+      DLOG_IF(INFO, nfc_debug_enabled)  << StringPrintf(
                "%s: peer disconnected", fn);
       return (false);
     }
   }
 
   if (nfaStat == NFA_STATUS_OK)
-    ALOGV_IF((appl_trace_level >= BT_TRACE_LEVEL_DEBUG),
+    DLOG_IF(INFO, nfc_debug_enabled)  << StringPrintf(
              "%s: exit OK; JNI handle: %u  NFA Handle: 0x%04x", fn, jniHandle,
              pConn->mNfaConnHandle);
   else
@@ -931,7 +931,7 @@ bool PeerToPeer::send(tJNI_HANDLE jniHandle, uint8_t* buffer,
 bool PeerToPeer::receive(tJNI_HANDLE jniHandle, uint8_t* buffer,
                          uint16_t bufferLen, uint16_t& actualLen) {
   static const char fn[] = "PeerToPeer::receive";
-  ALOGV_IF((appl_trace_level >= BT_TRACE_LEVEL_DEBUG),
+  DLOG_IF(INFO, nfc_debug_enabled)  << StringPrintf(
            "%s: enter; jniHandle: %u  bufferLen: %u", fn, jniHandle, bufferLen);
   sp<NfaConn> pConn = NULL;
   tNFA_STATUS stat = NFA_STATUS_FAILED;
@@ -945,7 +945,7 @@ bool PeerToPeer::receive(tJNI_HANDLE jniHandle, uint8_t* buffer,
     return (false);
   }
 
-  ALOGV_IF((appl_trace_level >= BT_TRACE_LEVEL_DEBUG),
+  DLOG_IF(INFO, nfc_debug_enabled)  << StringPrintf(
            "%s: jniHandle: %u  nfaHandle: 0x%04X  buf len=%u", fn,
            pConn->mJniHandle, pConn->mNfaConnHandle, bufferLen);
 
@@ -959,7 +959,7 @@ bool PeerToPeer::receive(tJNI_HANDLE jniHandle, uint8_t* buffer,
       retVal = true;
       break;
     }
-    ALOGV_IF((appl_trace_level >= BT_TRACE_LEVEL_DEBUG),
+    DLOG_IF(INFO, nfc_debug_enabled)  << StringPrintf(
              "%s: waiting for data...", fn);
     {
       SyncEventGuard guard(pConn->mReadEvent);
@@ -967,7 +967,7 @@ bool PeerToPeer::receive(tJNI_HANDLE jniHandle, uint8_t* buffer,
     }
   }  // while
 
-  ALOGV_IF((appl_trace_level >= BT_TRACE_LEVEL_DEBUG),
+  DLOG_IF(INFO, nfc_debug_enabled)  << StringPrintf(
            "%s: exit; nfa h: 0x%X  ok: %u  actual len: %u", fn,
            pConn->mNfaConnHandle, retVal, actualLen);
   return retVal;
@@ -1241,7 +1241,7 @@ void PeerToPeer::nfaServerCallback(tNFA_P2P_EVT p2pEvent,
   sp<P2pServer> pSrv = NULL;
   sp<NfaConn> pConn = NULL;
 
-  ALOGV_IF((appl_trace_level >= BT_TRACE_LEVEL_DEBUG), "%s: enter; event=0x%X",
+  DLOG_IF(INFO, nfc_debug_enabled)  << StringPrintf( "%s: enter; event=0x%X",
            fn, p2pEvent);
 
   switch (p2pEvent) {
@@ -1368,7 +1368,7 @@ void PeerToPeer::nfaServerCallback(tNFA_P2P_EVT p2pEvent,
             "%s: NFA_P2P_DATA_EVT: can't find conn for NFA handle: 0x%04x", fn,
             eventData->data.handle);
       } else {
-        ALOGV_IF((appl_trace_level >= BT_TRACE_LEVEL_DEBUG),
+        DLOG_IF(INFO, nfc_debug_enabled)  << StringPrintf(
                  "%s: NFA_P2P_DATA_EVT; h=0x%X; remote sap=0x%X", fn,
                  eventData->data.handle, eventData->data.remote_sap);
         SyncEventGuard guard(pConn->mReadEvent);
@@ -1397,7 +1397,7 @@ void PeerToPeer::nfaServerCallback(tNFA_P2P_EVT p2pEvent,
       LOG(ERROR) << StringPrintf("%s: unknown event 0x%X ????", fn, p2pEvent);
       break;
   }
-  ALOGV_IF((appl_trace_level >= BT_TRACE_LEVEL_DEBUG), "%s: exit", fn);
+  DLOG_IF(INFO, nfc_debug_enabled)  << StringPrintf( "%s: exit", fn);
 }
 
 /*******************************************************************************
@@ -1417,7 +1417,7 @@ void PeerToPeer::nfaClientCallback(tNFA_P2P_EVT p2pEvent,
   sp<NfaConn> pConn = NULL;
   sp<P2pClient> pClient = NULL;
 
-  ALOGV_IF((appl_trace_level >= BT_TRACE_LEVEL_DEBUG), "%s: enter; event=%u",
+  DLOG_IF(INFO, nfc_debug_enabled)  << StringPrintf( "%s: enter; event=%u",
            fn, p2pEvent);
 
   switch (p2pEvent) {
@@ -1535,7 +1535,7 @@ void PeerToPeer::nfaClientCallback(tNFA_P2P_EVT p2pEvent,
             "%s: NFA_P2P_DATA_EVT: can't find conn for NFA handle: 0x%04x", fn,
             eventData->data.handle);
       } else {
-        ALOGV_IF((appl_trace_level >= BT_TRACE_LEVEL_DEBUG),
+        DLOG_IF(INFO, nfc_debug_enabled)  << StringPrintf(
                  "%s: NFA_P2P_DATA_EVT; h=0x%X; remote sap=0x%X", fn,
                  eventData->data.handle, eventData->data.remote_sap);
         SyncEventGuard guard(pConn->mReadEvent);
@@ -1550,7 +1550,7 @@ void PeerToPeer::nfaClientCallback(tNFA_P2P_EVT p2pEvent,
             "%s: NFA_P2P_CONGEST_EVT: can't find conn for NFA handle: 0x%04x",
             fn, eventData->congest.handle);
       } else {
-        ALOGV_IF((appl_trace_level >= BT_TRACE_LEVEL_DEBUG),
+        DLOG_IF(INFO, nfc_debug_enabled)  << StringPrintf(
                  "%s: NFA_P2P_CONGEST_EVT; nfa handle: 0x%04x  congested: %u",
                  fn, eventData->congest.handle,
                  eventData->congest.is_congested);

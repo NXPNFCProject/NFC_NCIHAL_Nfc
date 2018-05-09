@@ -24,13 +24,13 @@
 #include <unistd.h>
 
 #ifndef true
-#define true(0x01) /* Logical True Value */
+#define true (0x01) /* Logical True Value */
 #endif
 #ifndef TRUE
 #define TRUE (0x01) /* Logical True Value */
 #endif
 #ifndef false
-#define false(0x00) /* Logical False Value */
+#define false (0x00) /* Logical False Value */
 #endif
 #ifndef FALSE
 #define FALSE (0x00) /* Logical False Value */
@@ -38,6 +38,7 @@
 typedef uint8_t utf8_t;     /* UTF8 Character String */
 typedef uint8_t bool_t;     /* boolean data type */
 typedef uint16_t NFCSTATUS; /* Return values */
+#define STATIC static
 
 #define PHNFC_MAX_UID_LENGTH 0x0AU /* Maximum UID length expected */
 #define PHNFC_MAX_ATR_LENGTH \

@@ -155,7 +155,7 @@ RoutingManager::~RoutingManager() { NFA_EeDeregister(nfaEeCallback); }
 
 bool RoutingManager::initialize(nfc_jni_native_data* native) {
   static const char fn[] = "RoutingManager::initialize()";
-  unsigned long num = 0, tech = 0;
+  unsigned long num = 0;
   mNativeData = native;
   uint8_t ActualNumEe = nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED;
   tNFA_EE_INFO mEeInfo[ActualNumEe];
@@ -164,47 +164,58 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
 #if (NXP_EXTNS == TRUE)
   memset(&gRouteInfo, 0x00, sizeof(RouteInfo_t));
   nfcee_swp_discovery_status = SWP_DEFAULT;
-  if ((GetNumValue(NAME_HOST_LISTEN_TECH_MASK, &tech, sizeof(tech))))
-    mHostListnTechMask = tech;
-  else
+
+  if (NfcConfig::hasKey(NAME_HOST_LISTEN_TECH_MASK)) {
+    mHostListnTechMask = NfcConfig::getUnsigned(NAME_HOST_LISTEN_TECH_MASK);
+  } else {
     mHostListnTechMask = 0x07;
+  }
 
-  if ((GetNumValue(NAME_UICC_LISTEN_TECH_MASK, &tech, sizeof(tech))))
-    mUiccListnTechMask = tech;
-  else
+  if (NfcConfig::hasKey(NAME_UICC_LISTEN_TECH_MASK)) {
+    mUiccListnTechMask = NfcConfig::getUnsigned(NAME_UICC_LISTEN_TECH_MASK);
+  } else {
     mUiccListnTechMask = 0x07;
+  }
 
-  if ((GetNumValue(NAME_NXP_FWD_FUNCTIONALITY_ENABLE, &tech, sizeof(tech))))
-    mFwdFuntnEnable = tech;
-  else
-    mFwdFuntnEnable = 0x01;
+  if (NfcConfig::hasKey(NAME_NXP_FWD_FUNCTIONALITY_ENABLE)) {
+    mFwdFuntnEnable = NfcConfig::getUnsigned(NAME_NXP_FWD_FUNCTIONALITY_ENABLE);
+  } else {
+    mFwdFuntnEnable = 0x07;
+  }
 
-  if (GetNxpNumValue(NAME_NXP_DEFAULT_SE, (void*)&num, sizeof(num)))
-    mDefaultEe = num;
-  else
+  if (NfcConfig::hasKey(NAME_NXP_DEFAULT_SE)) {
+    mDefaultEe = NfcConfig::getUnsigned(NAME_NXP_DEFAULT_SE);
+  } else {
     mDefaultEe = 0x02;
+  }
 
-  if (GetNxpNumValue(NAME_NXP_ENABLE_ADD_AID, (void*)&num, sizeof(num)))
-    mAddAid = num;
-  else
+  if (NfcConfig::hasKey(NAME_NXP_ENABLE_ADD_AID)) {
+    mAddAid = NfcConfig::getUnsigned(NAME_NXP_ENABLE_ADD_AID);
+  } else {
     mAddAid = 0x01;
+  }
 
   if (nfcFL.nfcNxpEse && (nfcFL.chipType != pn547C2)) {
-    if (GetNxpNumValue(NAME_NXP_ESE_WIRED_PRT_MASK, (void*)&num, sizeof(num)))
-      gEseVirtualWiredProtectMask = num;
-    else
+    if (NfcConfig::hasKey(NAME_NXP_ESE_WIRED_PRT_MASK)) {
+      gEseVirtualWiredProtectMask =
+          NfcConfig::getUnsigned(NAME_NXP_ESE_WIRED_PRT_MASK);
+    } else {
       gEseVirtualWiredProtectMask = 0x00;
+    }
 
-    if (GetNxpNumValue(NAME_NXP_UICC_WIRED_PRT_MASK, (void*)&num, sizeof(num)))
-      gUICCVirtualWiredProtectMask = num;
-    else
+    if (NfcConfig::hasKey(NAME_NXP_UICC_WIRED_PRT_MASK)) {
+      gUICCVirtualWiredProtectMask =
+          NfcConfig::getUnsigned(NAME_NXP_UICC_WIRED_PRT_MASK);
+    } else {
       gUICCVirtualWiredProtectMask = 0x00;
+    }
 
-    if (GetNxpNumValue(NAME_NXP_WIRED_MODE_RF_FIELD_ENABLE, (void*)&num,
-                       sizeof(num)))
-      gWiredModeRfFieldEnable = num;
-    else
+    if (NfcConfig::hasKey(NAME_NXP_WIRED_MODE_RF_FIELD_ENABLE)) {
+      gWiredModeRfFieldEnable =
+          NfcConfig::getUnsigned(NAME_NXP_WIRED_MODE_RF_FIELD_ENABLE);
+    } else {
       gWiredModeRfFieldEnable = 0x00;
+    }
   }
   if (nfcFL.eseFL._ESE_FELICA_CLT) {
     if (GetNxpNumValue(NAME_DEFAULT_FELICA_CLT_ROUTE, (void*)&num,
@@ -444,9 +455,12 @@ void RoutingManager::setRouting(bool isHCEEnabled) {
   static const char fn[] = "SecureElement::setRouting";
   unsigned long num = 0;
 
-  if ((GetNumValue(NAME_UICC_LISTEN_TECH_MASK, &num, sizeof(num)))) {
-    LOG(ERROR) << StringPrintf("%s:UICC_LISTEN_MASK=0x0%lu;", __func__, num);
+  if (NfcConfig::hasKey(NAME_UICC_LISTEN_TECH_MASK)) {
+    num = NfcConfig::getUnsigned(NAME_UICC_LISTEN_TECH_MASK);
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s:UICC_LISTEN_MASK=0x0%lu;", __func__, num);
   }
+
   SecureElement& se = SecureElement::getInstance();
   if (isHCEEnabled) {
     defaultHandle = NFA_EE_HANDLE_DH;
@@ -1790,11 +1804,12 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route,
                             screen_off_lock_mask);
   }
 
-  if ((GetNumValue(NAME_UICC_LISTEN_TECH_MASK, &uiccListenTech,
-                   sizeof(uiccListenTech)))) {
+  if (NfcConfig::hasKey(NAME_UICC_LISTEN_TECH_MASK)) {
+    uiccListenTech = NfcConfig::getUnsigned(NAME_UICC_LISTEN_TECH_MASK);
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s:UICC_TECH_MASK=0x0%lu;", __func__, uiccListenTech);
   }
+
   if ((ActDevHandle != NFA_HANDLE_INVALID) && (0 != uiccListenTech)) {
     {
       SyncEventGuard guard(SecureElement::getInstance().mUiccListenEvent);

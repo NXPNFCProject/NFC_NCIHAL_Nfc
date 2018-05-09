@@ -27,7 +27,7 @@
 
 using android::base::StringPrintf;
 
-phNxpExtns_Context_t gphNxpExtns_Context;
+extern phNxpExtns_Context_t gphNxpExtns_Context;
 extern phFriNfc_NdefMap_t* NdefMap;
 extern phNci_mfc_auth_cmd_t gAuthCmdBuf;
 
@@ -445,7 +445,7 @@ static NFCSTATUS phNxpExtns_ProcessSysMessage(phLibNfc_Message_t* msg) {
 
   switch (msg->eMsgType) {
     case PH_NXPEXTNS_RX_DATA:
-      status = Mfc_RecvPacket(msg->pMsgData, msg->Size);
+      status = Mfc_RecvPacket((uint8_t*)msg->pMsgData, msg->Size);
       break;
 
     case PH_NXPEXTNS_MIFARE_CHECK_NDEF:
@@ -461,11 +461,11 @@ static NFCSTATUS phNxpExtns_ProcessSysMessage(phLibNfc_Message_t* msg) {
       break;
 
     case PH_NXPEXTNS_MIFARE_WRITE_NDEF:
-      status = Mfc_WriteNdef(msg->pMsgData, msg->Size);
+      status = Mfc_WriteNdef((uint8_t*)msg->pMsgData, msg->Size);
       break;
 
     case PH_NXPEXTNS_MIFARE_FORMAT_NDEF:
-      status = Mfc_FormatNdef(msg->pMsgData, msg->Size);
+      status = Mfc_FormatNdef((uint8_t*)msg->pMsgData, msg->Size);
       break;
 
     case PH_NXPEXTNS_DISCONNECT:
@@ -477,11 +477,11 @@ static NFCSTATUS phNxpExtns_ProcessSysMessage(phLibNfc_Message_t* msg) {
       break;
 
     case PH_NXPEXTNS_MIFARE_TRANSCEIVE:
-      status = Mfc_Transceive(msg->pMsgData, msg->Size);
+      status = Mfc_Transceive((uint8_t*)msg->pMsgData, msg->Size);
       break;
 
     case PH_NXPEXTNS_MIFARE_READ_ONLY:
-      status = Mfc_SetReadOnly(msg->pMsgData, msg->Size);
+      status = Mfc_SetReadOnly((uint8_t*)msg->pMsgData, msg->Size);
       break;
     case PH_NXPEXTNS_MIFARE_PRESENCE_CHECK:
       pthread_mutex_init(&gAuthCmdBuf.syncmutex, NULL);

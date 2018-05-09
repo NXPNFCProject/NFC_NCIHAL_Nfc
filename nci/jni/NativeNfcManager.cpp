@@ -710,11 +710,11 @@ void* p2p_prio_logic_multiprotocol(void* arg) {
     } else {
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: re-configure polling to default", __FUNCTION__);
-      unsigned long num = 0;
-      if (GetNumValue(NAME_POLLING_TECH_MASK, &num, sizeof(num)))
-        tech_mask = num;
-      else
+      if (NfcConfig::hasKey(NAME_POLLING_TECH_MASK)) {
+        tech_mask = NfcConfig::getUnsigned(NAME_POLLING_TECH_MASK);
+      } else {
         tech_mask = DEFAULT_TECH_MASK;
+      }
     }
 
     {
@@ -2514,10 +2514,11 @@ static void nfaConnectionCallback(uint8_t connEvent,
               }
             }
           }
+          unsigned long num = 0;
           if (GetNxpNumValue(NAME_NXP_CE_ROUTE_STRICT_DISABLE, (void*)&num,
-                             sizeof(num)) == false)
+                             sizeof(num)) == false) {
             num = 0x01;  // default value
-
+          }
           // TODO: Check this in L_OSP_EXT[PN547C2]
           //                NFA_SetCEStrictDisable(num);
           RoutingManager::getInstance().setCeRouteStrictDisable(num);
@@ -2584,7 +2585,6 @@ static void nfaConnectionCallback(uint8_t connEvent,
   *******************************************************************************/
   static tNFA_STATUS nfcManagerEnableNfc(NfcAdaptation & theInstance) {
     uint8_t retryCount = 0;
-    unsigned long num = 0;
     tNFA_STATUS stat = NFA_STATUS_OK;
     do {
       SyncEventGuard guard(sNfaEnableEvent);
@@ -2920,11 +2920,11 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
       startRfDiscovery(false);
     }
 
-    if ((GetNumValue(NAME_UICC_LISTEN_TECH_MASK, &num, sizeof(num)))) {
+    if (NfcConfig::hasKey(NAME_UICC_LISTEN_TECH_MASK)) {
+      num = NfcConfig::getUnsigned(NAME_UICC_LISTEN_TECH_MASK);
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s:UICC_LISTEN_MASK=0x0%lu;", __func__, num);
     }
-
     // Check polling configuration
     if (tech_mask != 0) {
       DLOG_IF(INFO, nfc_debug_enabled)
@@ -3177,16 +3177,17 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
     if (sPollingEnabled) status = stopPolling_rfDiscoveryDisabled();
     sDiscoveryEnabled = false;
 
-    if ((GetNumValue(NAME_UICC_LISTEN_TECH_MASK, &num, sizeof(num)))) {
+    if (NfcConfig::hasKey(NAME_UICC_LISTEN_TECH_MASK)) {
+      num = NfcConfig::getUnsigned(NAME_UICC_LISTEN_TECH_MASK);
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s:UICC_LISTEN_MASK=0x0%lu;", __func__, num);
     }
-    if ((GetNumValue("P2P_LISTEN_TECH_MASK", &p2p_listen_mask,
-                     sizeof(p2p_listen_mask)))) {
+
+    if (NfcConfig::hasKey(NAME_P2P_LISTEN_TECH_MASK)) {
+      p2p_listen_mask = NfcConfig::getUnsigned(NAME_P2P_LISTEN_TECH_MASK);
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
           "%s:P2P_LISTEN_MASK=0x0%lu;", __func__, p2p_listen_mask);
     }
-
     PeerToPeer::getInstance().enableP2pListening(false);
     NFA_PauseP2p();
 
@@ -3931,9 +3932,9 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
       } else {
       }
     } else {
-      unsigned long num = 0;
-      if (GetNumValue(NAME_POLLING_TECH_MASK, &num, sizeof(num)))
-        tech_mask = num;
+      if (NfcConfig::hasKey(NAME_POLLING_TECH_MASK)) {
+        tech_mask = NfcConfig::getUnsigned(NAME_POLLING_TECH_MASK);
+      }
     }
 
     DLOG_IF(INFO, nfc_debug_enabled)

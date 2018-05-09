@@ -21,7 +21,7 @@
 #include <ScopedLocalRef.h>
 #include "SecureElement.h"
 #include "TransactionController.h"
-#include "config.h"
+#include "nfc_config.h"
 #include "phNxpConfig.h"
 
 using namespace android;
@@ -99,8 +99,7 @@ MposManager& MposManager::getInstance() { return mMposMgr; }
 bool MposManager::initialize(nfc_jni_native_data* native) {
   mNativeData = native;
   initializeReaderInfo();
-  GetNumValue(NAME_NFA_DM_DISC_NTF_TIMEOUT, &mDiscNtfTimeout,
-              sizeof(mDiscNtfTimeout));
+  mDiscNtfTimeout = NfcConfig::getUnsigned(NAME_NFA_DM_DISC_NTF_TIMEOUT);
   GetNxpNumValue(NAME_NXP_SWP_RD_TAG_OP_TIMEOUT, (void*)&mRdrTagOpTimeout,
                  sizeof(mRdrTagOpTimeout));
   return true;
@@ -792,8 +791,9 @@ tNFA_STATUS MposManager::validateHCITransactionEventParams(uint8_t* aData,
              *aData == EVENT_EMV_POWER_OFF) {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("Power off procedure to be triggered");
-    unsigned long num;
-    if (GetNumValue(NAME_NFA_CONFIG_FORMAT, (void*)&num, sizeof(num))) {
+
+    if (NfcConfig::hasKey(NAME_NFA_CONFIG_FORMAT)) {
+      unsigned long num = NfcConfig::getUnsigned(NAME_NFA_CONFIG_FORMAT);
       if (num == 0x05) {
         DLOG_IF(INFO, nfc_debug_enabled)
             << StringPrintf("Power off procedure is triggered");

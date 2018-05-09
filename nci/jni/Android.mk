@@ -47,7 +47,7 @@ LOCAL_C_INCLUDES += \
     $(VOB_COMPONENTS)/gki/ulinux \
     $(VOB_COMPONENTS)/gki/common \
     system/nfc/utils/include \
-    vendor/nxp/opensource/hardware/interfaces/nxpnfc/1.0/default/
+    hardware/nxp/nfc/extns/impl
 
 LOCAL_SHARED_LIBRARIES := \
     libicuuc \
@@ -58,7 +58,8 @@ LOCAL_SHARED_LIBRARIES := \
     libnfc-nci \
     libchrome \
     libbase \
-    android.hardware.nfc@1.0\
+    android.hardware.nfc@1.0 \
+    android.hardware.nfc@1.1 \
     vendor.nxp.nxpnfc@1.0
 
 #LOCAL_STATIC_LIBRARIES := libxml2

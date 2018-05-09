@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <android-base/stringprintf.h>
+#include <base/logging.h>
 #include "DwpChannel.h"
 #include <cutils/log.h>
 #include "RoutingManager.h"
@@ -20,6 +22,7 @@
 #include "config.h"
 #include "phNxpConfig.h"
 
+using android::base::StringPrintf;
 static const int EE_ERROR_OPEN_FAIL = -1;
 
 bool IsWiredMode_Enable();

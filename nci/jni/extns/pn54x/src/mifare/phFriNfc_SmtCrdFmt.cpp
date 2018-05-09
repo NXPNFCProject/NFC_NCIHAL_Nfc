@@ -90,7 +90,7 @@ NFCSTATUS phFriNfc_NdefSmtCrd_Reset(
     /* Lower Device(Always Overlapped HAL Struct initialized in application
      * is registered in NdefMap Lower Device)
      */
-    NdefSmtCrdFmt->pTransceiveInfo = LowerDevice;
+    NdefSmtCrdFmt->pTransceiveInfo = (phNfc_sTransceiveInfo_t *)LowerDevice;
 
     /* Remote Device info received from Manual Device Discovery is registered
      * here */

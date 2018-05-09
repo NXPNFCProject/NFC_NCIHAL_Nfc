@@ -158,10 +158,10 @@ import com.nxp.nfc.NxpConstants;
 import com.vzw.nfc.RouteEntry;
 import com.gsma.nfc.internal.NxpNfcController;
 import com.nxp.nfc.gsma.internal.INxpNfcController;
-import vendor.nxp.secure_element.V1_0.ISecureElementHalCallback;
-import vendor.nxp.secure_element.V1_0.ISecureElement;
-import vendor.nxp.secure_element.V1_0.SecureElementStatus;
-import vendor.nxp.secure_element.V1_0.LogicalChannelResponse;
+import android.hardware.secure_element.V1_0.ISecureElementHalCallback;
+import android.hardware.secure_element.V1_0.ISecureElement;
+import android.hardware.secure_element.V1_0.SecureElementStatus;
+import android.hardware.secure_element.V1_0.LogicalChannelResponse;
 
 public class NfcService implements DeviceHostListener {
     private static final String ACTION_MASTER_CLEAR_NOTIFICATION = "android.intent.action.MASTER_CLEAR_NOTIFICATION";
@@ -1727,7 +1727,8 @@ public class NfcService implements DeviceHostListener {
                     return;
                 }
                 if (newState == NfcAdapter.STATE_TURNING_OFF) {
-                    mNfcSeService.closeNfcWiredSeService();
+                    if(mNfcSeService != null)
+                        mNfcSeService.closeNfcWiredSeService();
                 }
                 mState = newState;
                 Intent intent = new Intent(NfcAdapter.ACTION_ADAPTER_STATE_CHANGED);
@@ -3042,13 +3043,7 @@ public class NfcService implements DeviceHostListener {
             else {
                 status = ErrorCodes.ERROR_NOT_SUPPORTED;
                 }
-            } else if (action.equals(Intent.ACTION_SHUTDOWN)) {
-                if (DBG) Log.d(TAG, "Device is shutting down.");
-                if (isNfcEnabled()) {
-                    mDeviceHost.shutdown();
-                }
-            }
-            else {
+            } else {
                 status = ErrorCodes.ERROR_NOT_SUPPORTED;
             }
             return status;
@@ -5930,11 +5925,11 @@ public class NfcService implements DeviceHostListener {
                     return;
                 }
                 ArrayList<String> packages = new ArrayList<String>();
-                Intent intent = new Intent(NfcAdapter.ACTION_TRANSACTION_DETECTED);
+                Intent intent = new Intent(NxpConstants.ACTION_TRANSACTION_DETECTED);
                 intent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
-                intent.putExtra(NfcAdapter.EXTRA_AID, aid);
-                intent.putExtra(NfcAdapter.EXTRA_DATA, data);
-                intent.putExtra(NfcAdapter.EXTRA_SE_NAME, reader);
+                intent.putExtra(NxpConstants.EXTRA_AID, aid);
+                intent.putExtra(NxpConstants.EXTRA_DATA, data);
+                intent.putExtra(NxpConstants.EXTRA_SE_NAME, reader);
                 for (int i = 0; i < nfcAccess.length; i++) {
                     if (nfcAccess[i]) {
                         intent.setPackage(mNfcEventInstalledPackages.get(i).packageName);
@@ -6000,10 +5995,6 @@ public class NfcService implements DeviceHostListener {
             // Resume app switches so the receivers can start activites without delay
             mNfcDispatcher.resumeAppSwitches();
             Log.d(TAG, "NFCINTENT sendNfcEeAccessProtectedBroadcast");
-            if(mInstalledPackages == null) {
-                Log.d(TAG, "No packages to send broadcast.");
-                return;
-            }
             synchronized(this) {
                 ArrayList<String> SEPackages = getSEAccessAllowedPackages();
                 if (SEPackages!= null && !SEPackages.isEmpty()) {
@@ -6352,6 +6343,9 @@ public class NfcService implements DeviceHostListener {
                 mPowerShutDown = true;
                 if (DBG) Log.d(TAG,"Device is shutting down.");
                 mDeviceHost.doSetScreenOrPowerState(ScreenStateHelper.POWER_STATE_OFF);
+                if (isNfcEnabled()) {
+                    mDeviceHost.shutdown();
+                }
             }
         }
     };

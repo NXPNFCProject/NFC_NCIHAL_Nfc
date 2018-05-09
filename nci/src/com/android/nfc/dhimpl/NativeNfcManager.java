@@ -619,8 +619,11 @@ public class NativeNfcManager implements DeviceHost {
     @Override
     public boolean getExtendedLengthApdusSupported() {
         /* 261 is the default size if extended length frames aren't supported */
-        if (getMaxTransceiveLength(TagTechnology.ISO_DEP) > 261)
+        if (getMaxTransceiveLength(TagTechnology.ISO_DEP) > 261) {
             return true;
+        } else {
+            return false;
+        }
     }
 
     @Override

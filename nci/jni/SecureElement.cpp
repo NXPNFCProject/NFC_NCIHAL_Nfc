@@ -48,6 +48,7 @@
 #include "PowerSwitch.h"
 #include "TransactionController.h"
 #include "config.h"
+#include "nfc_config.h"
 #include "nfc_api.h"
 #include "phNxpConfig.h"
 
@@ -266,16 +267,24 @@ bool SecureElement::initialize(nfc_jni_native_data* native) {
   unsigned long retValue;
 
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", fn);
-  if (GetNumValue("NFA_HCI_DEFAULT_DEST_GATE", &num, sizeof(num)))
-    mDestinationGate = num;
+  if (NfcConfig::hasKey("NFA_HCI_DEFAULT_DEST_GATE")) {
+    mDestinationGate = NfcConfig::getUnsigned("NFA_HCI_DEFAULT_DEST_GATE");
+  }
+
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
       "%s: Default destination gate: 0x%X", fn, mDestinationGate);
 
   mStaticPipeProp =
       nfcFL.nfccFL._GEMALTO_SE_SUPPORT ? STATIC_PIPE_0x19 : STATIC_PIPE_0x70;
   // active SE, if not set active all SEs, use the first one.
-  if (GetNumValue("ACTIVE_SE", &num, sizeof(num))) {
-    mActiveSeOverride = num;
+   if (NfcConfig::hasKey("ACTIVE_SE")) {
+    mActiveSeOverride = NfcConfig::getUnsigned("ACTIVE_SE");
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s: Active SE override: 0x%X", fn, mActiveSeOverride);
+  }
+
+  if (NfcConfig::hasKey("ACTIVE_SE")) {
+    mActiveSeOverride = NfcConfig::getUnsigned("ACTIVE_SE");
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: Active SE override: 0x%X", fn, mActiveSeOverride);
   }
@@ -354,14 +363,6 @@ bool SecureElement::initialize(nfc_jni_native_data* native) {
     }
   }
 #endif
-  /*
-   * Since NXP doesn't support OBERTHUR RESET COMMAND, Hence commented
-  if (GetNumValue("OBERTHUR_WARM_RESET_COMMAND", &num, sizeof(num)))
-  {
-      mUseOberthurWarmReset = true;
-      mOberthurWarmResetCommand = (uint8_t) num;
-  }*/
-
   mActiveEeHandle = NFA_HANDLE_INVALID;
   mNfaHciHandle = NFA_HANDLE_INVALID;
 
@@ -425,8 +426,16 @@ bool SecureElement::initialize(nfc_jni_native_data* native) {
       break;
     }
   }
-  GetStrValue(NAME_AID_FOR_EMPTY_SELECT, (char*)&mAidForEmptySelect[0],
-              sizeof(mAidForEmptySelect));
+
+  if (NfcConfig::hasKey(NAME_AID_FOR_EMPTY_SELECT)) {
+    std::vector<uint8_t> emptyAidVector;
+    emptyAidVector.resize(9);
+    emptyAidVector = NfcConfig::getBytes(NAME_AID_FOR_EMPTY_SELECT);
+    for(unsigned int i=0;i<emptyAidVector.size();i++) {
+      mAidForEmptySelect[i] = emptyAidVector[i];
+    }
+  }
+
   mIsInit = true;
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", fn);
   return (true);
@@ -474,8 +483,15 @@ bool SecureElement::updateEEStatus() {
     }
   }
 
-  GetStrValue(NAME_AID_FOR_EMPTY_SELECT, (char*)&mAidForEmptySelect[0],
-              sizeof(mAidForEmptySelect));
+  if (NfcConfig::hasKey(NAME_AID_FOR_EMPTY_SELECT)) {
+    std::vector<uint8_t> emptyAidVector;
+    emptyAidVector.resize(9);
+    emptyAidVector = NfcConfig::getBytes(NAME_AID_FOR_EMPTY_SELECT);
+    for(unsigned int i=0;i < emptyAidVector.size();i++) {
+      mAidForEmptySelect[i] = emptyAidVector[i];
+    }
+  }
+
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
   return (true);
 }
@@ -1284,7 +1300,6 @@ bool SecureElement::connectEE() {
   tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
   bool retVal = false;
   uint8_t destHost = 0;
-  unsigned long num = 0;
   char pipeConfName[40];
   tNFA_HANDLE eeHandle = mActiveEeHandle;
 
@@ -1343,8 +1358,8 @@ bool SecureElement::connectEE() {
     snprintf(pipeConfName, sizeof(pipeConfName), "NFA_HCI_STATIC_PIPE_ID_%02X",
              eeHandle & NFA_HANDLE_MASK);
 
-    if (GetNumValue(pipeConfName, &num, sizeof(num)) && (num != 0)) {
-      mNewPipeId = num;
+    if (NfcConfig::hasKey(pipeConfName)) {
+      mNewPipeId = NfcConfig::getUnsigned(pipeConfName);
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
           "%s: Using static pipe id: 0x%X", __func__, mNewPipeId);
     } else {

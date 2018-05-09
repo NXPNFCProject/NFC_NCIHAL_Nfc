@@ -218,9 +218,9 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection(JNIEnv*,
     }
   }
 
-  if (((nfcFL.eseFL._NXP_ESE_VER == JCOP_VER_3_1)) &&
+  if (((nfcFL.eseFL._NXP_ESE_VER == JCOP_VER_3_1) &&
           (!(p61_current_state & P61_STATE_SPI) &&
-           !(p61_current_state & P61_STATE_SPI_PRIO)) ||
+           !(p61_current_state & P61_STATE_SPI_PRIO))) ||
       (nfcFL.eseFL._NXP_ESE_VER != JCOP_VER_3_1)) {
     if (p61_current_state & (P61_STATE_SPI) ||
         (p61_current_state & (P61_STATE_SPI_PRIO))) {
