@@ -1666,7 +1666,9 @@ static jboolean nfcManager_doDeinitialize(JNIEnv*, jobject) {
   pn544InteropAbortNow();
   RoutingManager::getInstance().onNfccShutdown();
   PowerSwitch::getInstance().initialize(PowerSwitch::UNKNOWN_LEVEL);
-
+#if (NXP_EXTNS == TRUE)
+  SecureElement::getInstance().releasePendingTransceive();
+#endif
   if (sIsNfaEnabled) {
     SyncEventGuard guard(sNfaDisableEvent);
     EXTNS_Close();

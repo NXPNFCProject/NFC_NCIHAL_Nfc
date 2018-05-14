@@ -1537,3 +1537,24 @@ void SecureElement::finalize() {
   mIsInit     = false;
   mNativeData = NULL;
 }
+
+/*******************************************************************************
+**
+** Function:        releasePendingTransceive
+**
+** Description:     release any pending transceive wait.
+**
+** Returns:         None.
+**
+*******************************************************************************/
+void SecureElement::releasePendingTransceive()
+{
+    static const char fn [] = "SecureElement::releasePendingTransceive";
+    LOG(INFO) << StringPrintf("%s: Entered", fn);
+    if(mIsWiredModeOpen)
+    {
+        SyncEventGuard guard (mTransceiveEvent);
+        mTransceiveEvent.notifyOne();
+    }
+    LOG(INFO) << StringPrintf("%s: Exit", fn);
+}

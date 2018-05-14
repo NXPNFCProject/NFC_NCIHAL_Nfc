@@ -118,6 +118,8 @@ static jboolean nativeNfcSecureElement_doDisconnectSecureElementConnection (JNIE
 
     if(!se.mIsWiredModeOpen)
          return false;
+     /* release any pending transceive wait */
+    se.releasePendingTransceive();
 
     status = se.setNfccPwrConfig(se.POWER_ALWAYS_ON);
     if(status != NFA_STATUS_OK)
@@ -130,12 +132,12 @@ static jboolean nativeNfcSecureElement_doDisconnectSecureElementConnection (JNIE
         if(status == NFA_STATUS_OK)
             stat = true;
     }
+    se.mIsWiredModeOpen = false;
 
     /* if nothing is active after this, then tell the controller to power down */
     if (! PowerSwitch::getInstance ().setModeOff (PowerSwitch::SE_CONNECTED))
         PowerSwitch::getInstance ().setLevel (PowerSwitch::LOW_POWER);
     LOG(INFO) << StringPrintf("%s: exit", __func__);
-
     return stat ? JNI_TRUE : JNI_FALSE;
 }
 /*******************************************************************************

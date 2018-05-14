@@ -484,4 +484,14 @@ uint8_t getGateAndPipeList();
 **
 *******************************************************************************/
 void finalize();
+/*******************************************************************************
+**
+** Function:        releasePendingTransceive
+**
+** Description:     release any pending transceive wait.
+**
+** Returns:         None.
+**
+*******************************************************************************/
+void releasePendingTransceive();
 };
