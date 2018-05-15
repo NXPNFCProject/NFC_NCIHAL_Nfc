@@ -49,7 +49,7 @@ public final class NfcWifiProtectedSetup {
 
     private static final short AUTH_TYPE_EXPECTED_SIZE = 2;
 
-    private static final short AUTH_TYPE_OPEN = 0;
+    private static final short AUTH_TYPE_OPEN = 0x0001;
     private static final short AUTH_TYPE_WPA_PSK = 0x0002;
     private static final short AUTH_TYPE_WPA_EAP =  0x0008;
     private static final short AUTH_TYPE_WPA2_EAP = 0x0010;
@@ -137,7 +137,9 @@ public final class NfcWifiProtectedSetup {
                     }
                     byte[] networkKey = new byte[fieldSize];
                     payload.get(networkKey);
-                    result.preSharedKey = "\"" + new String(networkKey) + "\"";
+                    if (fieldSize > 0) {
+                        result.preSharedKey = "\"" + new String(networkKey) + "\"";
+                    }
                     break;
                 case AUTH_TYPE_FIELD_ID:
                     if (fieldSize != AUTH_TYPE_EXPECTED_SIZE) {
@@ -155,8 +157,16 @@ public final class NfcWifiProtectedSetup {
             }
         }
 
-        if (result.preSharedKey != null && result.SSID != null) {
-            return result;
+        if (result.SSID != null) {
+            if (result.getAuthType() == WifiConfiguration.KeyMgmt.NONE) {
+                if (result.preSharedKey == null) {
+                    return result;
+                }
+            } else {
+                if (result.preSharedKey != null) {
+                    return result;
+                }
+            }
         }
 
         return null;
