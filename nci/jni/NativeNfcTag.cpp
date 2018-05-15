@@ -791,7 +791,7 @@ static jint nativeNfcTag_doHandleReconnect(JNIEnv* e, jobject o,
 ** Returns:         True if ok.
 **
 *******************************************************************************/
-static jboolean nativeNfcTag_doDisconnect(JNIEnv*, jobject) {
+jboolean nativeNfcTag_doDisconnect(JNIEnv*, jobject) {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
   tNFA_STATUS nfaStat = NFA_STATUS_OK;
 
