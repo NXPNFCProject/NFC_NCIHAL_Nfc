@@ -992,8 +992,6 @@ static void nfaConnectionCallback(uint8_t connEvent,
 
       gActivated = true;
 
-      initializeGlobalDebugEnabledFlag();
-
       NfcTag::getInstance().setActivationState();
 
       if (gIsSelectingRfInterface) {
@@ -1485,6 +1483,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
   **
   *******************************************************************************/
   static jboolean nfcManager_initNativeStruc(JNIEnv * e, jobject o) {
+    initializeGlobalDebugEnabledFlag();
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
 #if (NXP_EXTNS == TRUE)
     nfc_jni_native_data* nat =
@@ -2238,6 +2237,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
   **
   *******************************************************************************/
   static jboolean nfcManager_doInitialize(JNIEnv * e, jobject o) {
+    initializeGlobalDebugEnabledFlag();
     tNFA_MW_VERSION mwVer;
     gSeDiscoverycount = 0;
     gActualSeCount = 0;
