@@ -424,8 +424,6 @@ static void nfaConnectionCallback(uint8_t connEvent,
       if (sIsDisabling || !sIsNfaEnabled) break;
       gActivated = true;
 
-      initializeGlobalDebugEnabledFlag();
-
       NfcTag::getInstance().setActivationState();
       if (gIsSelectingRfInterface) {
         nativeNfcTag_doConnectStatus(true);
@@ -695,6 +693,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
 **
 *******************************************************************************/
 static jboolean nfcManager_initNativeStruc(JNIEnv* e, jobject o) {
+  initializeGlobalDebugEnabledFlag();
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
 
   nfc_jni_native_data* nat =
@@ -1156,6 +1155,7 @@ static jboolean nfcManager_doInitialize(JNIEnv* e, jobject o) {
 #if (NXP_EXTNS == TRUE)
   tNFA_MW_VERSION mwVer;
 #endif
+  initializeGlobalDebugEnabledFlag();
   tNFA_STATUS stat = NFA_STATUS_OK;
 
   PowerSwitch& powerSwitch = PowerSwitch::getInstance();
