@@ -485,7 +485,7 @@ public class NfcService implements DeviceHostListener {
     private int mEeRoutingState;  // contactless interface routing
     private int mLockscreenPollMask;
     // cached version of installed packages requesting Android.permission.NFC_TRANSACTION_EVENTS
-    List<PackageInfo> mNfcEventInstalledPackages;
+    List<String> mNfcEventInstalledPackages = new ArrayList<String>();
     private NativeNfcAla mNfcAla;
 
     private final BackupManager mBackupManager;
@@ -1163,7 +1163,10 @@ public class NfcService implements DeviceHostListener {
                 new String[] {android.Manifest.permission.NFC_TRANSACTION_EVENT},
                 PackageManager.GET_ACTIVITIES);
         synchronized (this) {
-            mNfcEventInstalledPackages = packagesNfcEvents;
+            mNfcEventInstalledPackages.clear();
+            for (int i = 0; i < packagesNfcEvents.size(); i++) {
+                mNfcEventInstalledPackages.add(packagesNfcEvents.get(i).packageName);
+            }
         }
     }
 
@@ -5932,7 +5935,7 @@ public class NfcService implements DeviceHostListener {
                 intent.putExtra(NxpConstants.EXTRA_SE_NAME, reader);
                 for (int i = 0; i < nfcAccess.length; i++) {
                     if (nfcAccess[i]) {
-                        intent.setPackage(mNfcEventInstalledPackages.get(i).packageName);
+                        intent.setPackage(mNfcEventInstalledPackages.get(i));
                         mContext.sendBroadcast(intent);
                     }
                 }
@@ -5984,7 +5987,7 @@ public class NfcService implements DeviceHostListener {
             ArrayList<String> packages = new ArrayList<String>();
             for (int i = 0; i < nfcAccessFinal.length; i++) {
                 if (nfcAccessFinal[i]) {
-                    packages.add(mNfcEventInstalledPackages.get(i).packageName);
+                    packages.add(mNfcEventInstalledPackages.get(i));
                 }
             }
             return packages;
@@ -6004,15 +6007,21 @@ public class NfcService implements DeviceHostListener {
                         mContext.sendBroadcast(intent);
                     }
                 }
-                for (PackageInfo info : mNfcEventInstalledPackages) {
-                    if (SEPackages != null && SEPackages.contains(info.packageName)) {
-                        continue;
-                    }
-                    if (info.applicationInfo != null &&
-                            ((info.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0 ||
-                            (info.applicationInfo.privateFlags & ApplicationInfo.PRIVATE_FLAG_PRIVILEGED) != 0)) {
-                        intent.setPackage(info.packageName);
-                        mContext.sendBroadcast(intent);
+                PackageManager pm = mContext.getPackageManager();
+                for (String packageName : mNfcEventInstalledPackages) {
+                    try {
+                        PackageInfo info = pm.getPackageInfo(packageName, 0);
+                        if (SEPackages != null && SEPackages.contains(packageName)) {
+                            continue;
+                        }
+                        if (info.applicationInfo != null &&
+                                ((info.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0 ||
+                                (info.applicationInfo.privateFlags & ApplicationInfo.PRIVATE_FLAG_PRIVILEGED) != 0)) {
+                            intent.setPackage(packageName);
+                            mContext.sendBroadcast(intent);
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Exception in getPackageInfo " + e);
                     }
                 }
             }
