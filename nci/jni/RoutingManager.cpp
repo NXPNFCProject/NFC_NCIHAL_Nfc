@@ -73,32 +73,19 @@ static const int MAX_NUM_EE = 5;
 RoutingManager::RoutingManager() {
   static const char fn[] = "RoutingManager::RoutingManager()";
 
-  // Get the active SE
-  mActiveSe = NfcConfig::getUnsigned("ACTIVE_SE", 0x00);
+  mDefaultOffHostRoute =
+      NfcConfig::getUnsigned(NAME_DEFAULT_OFFHOST_ROUTE, 0x00);
 
-  // Get the active SE for Nfc-F
-  mActiveSeNfcF = NfcConfig::getUnsigned("ACTIVE_SE_NFCF", 0x00);
-  DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: Active SE for Nfc-F is 0x%02X", fn, mActiveSeNfcF);
+  mDefaultFelicaRoute = NfcConfig::getUnsigned(NAME_DEFAULT_NFCF_ROUTE, 0x00);
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+      "%s: Active SE for Nfc-F is 0x%02X", fn, mDefaultFelicaRoute);
 
-  // Get the "default" route
-  mDefaultEe = NfcConfig::getUnsigned("DEFAULT_ISODEP_ROUTE", 0x00);
+  mDefaultEe = NfcConfig::getUnsigned(NAME_DEFAULT_ROUTE, 0x00);
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: default route is 0x%02X", fn, mDefaultEe);
 
-  // Get the "default" route for Nfc-F
-  mDefaultEeNfcF = NfcConfig::getUnsigned("DEFAULT_NFCF_ROUTE", 0x00);
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-      "%s: default route for Nfc-F is 0x%02X", fn, mDefaultEeNfcF);
-
-  // Get the default "off-host" route.  This is hard-coded at the Java layer
-  // but we can override it here to avoid forcing Java changes.
-  mOffHostEe = NfcConfig::getUnsigned("DEFAULT_OFFHOST_ROUTE", 0xf4);
-  DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: mOffHostEe=0x%02X", fn, mOffHostEe);
-
   mAidMatchingMode =
-      NfcConfig::getUnsigned("AID_MATCHING_MODE", AID_MATCHING_EXACT_ONLY);
+      NfcConfig::getUnsigned(NAME_AID_MATCHING_MODE, AID_MATCHING_EXACT_ONLY);
 
   memset(&mEeInfo, 0, sizeof(mEeInfo));
   mReceivedEeInfo = false;
@@ -146,10 +133,10 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
         mDefaultEe = 0x02;
     mUiccListnTechMask = NfcConfig::getUnsigned("NAME_UICC_LISTEN_TECH_MASK", 0x07);
 #endif
-  if ((mActiveSe != 0) || (mActiveSeNfcF != 0)) {
+  if ((mDefaultOffHostRoute != 0) || (mDefaultFelicaRoute != 0)) {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: Technology Routing (NfcASe:0x%02x, NfcFSe:0x%02x)",
-                        fn, mActiveSe, mActiveSeNfcF);
+                        fn, mDefaultOffHostRoute, mDefaultFelicaRoute);
     {
       // Wait for EE info if needed
       SyncEventGuard guard(mEeInfoEvent);
@@ -172,12 +159,13 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
           mEeInfo.ee_disc_info[i].lb_protocol,
           mEeInfo.ee_disc_info[i].lf_protocol,
           mEeInfo.ee_disc_info[i].lbp_protocol);
-      if ((mActiveSe != 0) && (eeHandle == (mActiveSe | NFA_HANDLE_GROUP_EE))) {
+      if ((mDefaultOffHostRoute != 0) &&
+          (eeHandle == (mDefaultOffHostRoute | NFA_HANDLE_GROUP_EE))) {
         if (mEeInfo.ee_disc_info[i].la_protocol != 0)
           seTechMask |= NFA_TECHNOLOGY_MASK_A;
       }
-      if ((mActiveSeNfcF != 0) &&
-          (eeHandle == (mActiveSeNfcF | NFA_HANDLE_GROUP_EE))) {
+      if ((mDefaultFelicaRoute != 0) &&
+          (eeHandle == (mDefaultFelicaRoute | NFA_HANDLE_GROUP_EE))) {
         if (mEeInfo.ee_disc_info[i].lf_protocol != 0)
           seTechMask |= NFA_TECHNOLOGY_MASK_F;
       }
@@ -228,7 +216,6 @@ RoutingManager& RoutingManager::getInstance() {
 }
 
 void RoutingManager::enableRoutingToHost() {
-
   tNFA_STATUS nfaStat;
   tNFA_TECHNOLOGY_MASK techMask;
   tNFA_PROTOCOL_MASK protoMask;
@@ -236,7 +223,7 @@ void RoutingManager::enableRoutingToHost() {
 
   // Set default routing at one time when the NFCEE IDs for Nfc-A and Nfc-F are
   // same
-  if (mDefaultEe == mDefaultEeNfcF) {
+  if (mDefaultEe == mDefaultFelicaRoute) {
     // Route Nfc-A/Nfc-F to host if we don't have a SE
     techMask = (mSeTechMask ^ (NFA_TECHNOLOGY_MASK_A | NFA_TECHNOLOGY_MASK_F));
     if (techMask != 0) {
@@ -294,7 +281,7 @@ void RoutingManager::enableRoutingToHost() {
     // Route Nfc-F to host if we don't have a SE
     techMask = NFA_TECHNOLOGY_MASK_F;
     if ((mSeTechMask & NFA_TECHNOLOGY_MASK_F) == 0) {
-      nfaStat = NFA_EeSetDefaultTechRouting(mDefaultEeNfcF, techMask, 0, 0
+      nfaStat = NFA_EeSetDefaultTechRouting(mDefaultFelicaRoute, techMask, 0, 0
 #if(NXP_EXTNS == TRUE)
       ,0,0,0
 #endif
@@ -307,7 +294,7 @@ void RoutingManager::enableRoutingToHost() {
     }
     // Default routing for T3T protocol
     protoMask = NFA_PROTOCOL_MASK_T3T;
-    nfaStat = NFA_EeSetDefaultProtoRouting(mDefaultEeNfcF, protoMask, 0, 0
+    nfaStat = NFA_EeSetDefaultProtoRouting(mDefaultFelicaRoute, protoMask, 0, 0
 #if(NXP_EXTNS == TRUE)
     	,0,0,0
 #endif
@@ -326,7 +313,7 @@ void RoutingManager::disableRoutingToHost() {
 
   // Set default routing at one time when the NFCEE IDs for Nfc-A and Nfc-F are
   // same
-  if (mDefaultEe == mDefaultEeNfcF) {
+  if (mDefaultEe == mDefaultFelicaRoute) {
     // Default routing for Nfc-A/Nfc-F technology if we don't have a SE
     techMask = (mSeTechMask ^ (NFA_TECHNOLOGY_MASK_A | NFA_TECHNOLOGY_MASK_F));
     if (techMask != 0) {
@@ -380,7 +367,7 @@ void RoutingManager::disableRoutingToHost() {
 
     // Default routing for Nfc-F technology if we don't have a SE
     if ((mSeTechMask & NFA_TECHNOLOGY_MASK_F) == 0) {
-      nfaStat = NFA_EeSetDefaultTechRouting(mDefaultEeNfcF, 0, 0, 0
+      nfaStat = NFA_EeSetDefaultTechRouting(mDefaultFelicaRoute, 0, 0, 0
 #if(NXP_EXTNS == TRUE)
       	,0,0,0
 #endif
@@ -392,7 +379,7 @@ void RoutingManager::disableRoutingToHost() {
             "Fail to set default tech routing for Nfc-F");
     }
     // Default routing for T3T protocol
-    nfaStat = NFA_EeSetDefaultProtoRouting(mDefaultEeNfcF, 0, 0, 0
+    nfaStat = NFA_EeSetDefaultProtoRouting(mDefaultFelicaRoute, 0, 0, 0
 #if(NXP_EXTNS == TRUE)
     	,0,0,0
 #endif
@@ -476,7 +463,7 @@ bool RoutingManager::commitRouting() {
 
 void RoutingManager::onNfccShutdown() {
   static const char fn[] = "RoutingManager:onNfccShutdown";
-  if (mActiveSe == 0x00) return;
+  if (mDefaultOffHostRoute == 0x00) return;
 
   tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
   uint8_t actualNumEe = MAX_NUM_EE;
@@ -907,7 +894,7 @@ int RoutingManager::com_android_nfc_cardemulation_doGetDefaultRouteDestination(
 
 int RoutingManager::
     com_android_nfc_cardemulation_doGetDefaultOffHostRouteDestination(JNIEnv*) {
-  return getInstance().mOffHostEe;
+  return getInstance().mDefaultOffHostRoute;
 }
 
 int RoutingManager::com_android_nfc_cardemulation_doGetAidMatchingMode(

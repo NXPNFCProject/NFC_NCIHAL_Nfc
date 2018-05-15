@@ -154,11 +154,9 @@ class RoutingManager {
 
   // Fields below are final after initialize()
   nfc_jni_native_data* mNativeData;
+  int mDefaultOffHostRoute;
+  int mDefaultFelicaRoute;
   int mDefaultEe;
-  int mDefaultEeNfcF;
-  int mOffHostEe;
-  int mActiveSe;
-  int mActiveSeNfcF;
   int mAidMatchingMode;
   int mNfcFOnDhHandle;
   bool mReceivedEeInfo;

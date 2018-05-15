@@ -107,8 +107,8 @@ PeerToPeer& PeerToPeer::getInstance() { return sP2p; }
 void PeerToPeer::initialize() {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("PeerToPeer::initialize");
 
-  if (NfcConfig::hasKey("P2P_LISTEN_TECH_MASK"))
-    mP2pListenTechMask = NfcConfig::getUnsigned("P2P_LISTEN_TECH_MASK");
+  if (NfcConfig::hasKey(NAME_P2P_LISTEN_TECH_MASK))
+    mP2pListenTechMask = NfcConfig::getUnsigned(NAME_P2P_LISTEN_TECH_MASK);
 }
 
 /*******************************************************************************
