@@ -135,6 +135,7 @@ extern void nativeNfcTag_notifyRfTimeout();
 extern void nativeNfcTag_doConnectStatus(jboolean is_connect_ok);
 extern void nativeNfcTag_doDeactivateStatus(int status);
 extern void nativeNfcTag_doWriteStatus(jboolean is_write_ok);
+extern jboolean nativeNfcTag_doDisconnect(JNIEnv*, jobject);
 extern void nativeNfcTag_doCheckNdefResult(tNFA_STATUS status,
                                            uint32_t max_size,
                                            uint32_t current_size,
@@ -5823,6 +5824,13 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
           sNfaSetPowerSubState.wait();
         }
       }
+      if ((state == NFA_SCREEN_STATE_OFF_LOCKED ||
+            state == NFA_SCREEN_STATE_OFF_UNLOCKED) &&
+            prevScreenState == NFA_SCREEN_STATE_ON_UNLOCKED) {
+            // screen turns off, disconnect tag if connected
+          nativeNfcTag_doDisconnect(NULL, NULL);
+      }
+
       StoreScreenState(state);
 #if (NXP_EXTNS == TRUE)
       pTransactionController->transactionEnd(
