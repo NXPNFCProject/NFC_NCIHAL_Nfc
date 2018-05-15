@@ -290,13 +290,13 @@ bool CNxpNfcConfig::readConfig(const char* name, bool bResetContent) {
   mCurrentFile = name;
 
   if (strcmp(default_nxp_config_path, name) == 0) {
-    config_crc32_ = sparse_crc32(0,(const void *)p_config, (int)config_size);
+    config_crc32_ = sparse_crc32(0,(const void *)p_config, config_size);
   }
   if (strcmp(nxp_rf_config_path, name) == 0) {
-    config_crc32_rf_ = sparse_crc32(0, (const void *)p_config, (int)config_size);
+    config_crc32_rf_ = sparse_crc32(0, (const void *)p_config, config_size);
   }
   if (strcmp(transit_config_path, name) == 0) {
-    config_crc32_tr_ = sparse_crc32(0, (const void *)p_config, (int)config_size);
+    config_crc32_tr_ = sparse_crc32(0, (const void *)p_config, config_size);
   }
   mValidFile = true;
   if (size() > 0) {
