@@ -121,6 +121,7 @@ public class HostEmulationManager {
     Messenger mPaymentService;
     boolean mPaymentServiceBound;
     ComponentName mPaymentServiceName;
+    ComponentName mLastBoundPaymentServiceName;
 
     // mActiveService denotes the service interface
     // that is the current active one, until a new SELECT AID
@@ -433,6 +434,7 @@ public class HostEmulationManager {
 
         Intent intent = new Intent(HostApduService.SERVICE_INTERFACE);
         intent.setComponent(service);
+        mLastBoundPaymentServiceName = service;
         if (!mContext.bindServiceAsUser(intent, mPaymentConnection,
                 Context.BIND_AUTO_CREATE, new UserHandle(userId))) {
             Log.e(TAG, "Could not bind (persistent) payment service.");
@@ -524,6 +526,10 @@ public class HostEmulationManager {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             synchronized (mLock) {
+                /* Preferred Payment Service has been changed. */
+                if (!mLastBoundPaymentServiceName.equals(name)) {
+                    return;
+                }
                 mPaymentServiceName = name;
                 mPaymentService = new Messenger(service);
                 mPaymentServiceBound = true;
