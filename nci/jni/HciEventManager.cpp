@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "HciEventManager.h"
+#include <android-base/stringprintf.h>
 #include <base/logging.h>
 #include <nativehelper/ScopedLocalRef.h>
 #include "JavaClassConstants.h"
@@ -24,6 +25,8 @@ extern bool nfc_debug_enabled;
 const char* APP_NAME = "NfcNci";
 uint8_t HciEventManager::sEsePipe;
 uint8_t HciEventManager::sSimPipe;
+
+using android::base::StringPrintf;
 
 HciEventManager::HciEventManager() : mNativeData(nullptr) {}
 
@@ -58,7 +61,7 @@ void HciEventManager::notifyTransactionListenersOfAid(std::vector<uint8_t> aid,
   CHECK(aidJavaArray.get());
   e->SetByteArrayRegion((jbyteArray)aidJavaArray.get(), 0, aid.size(),
                         (jbyte*)&aid[0]);
-  CHECK(e->ExceptionCheck());
+  CHECK(!e->ExceptionCheck());
 
   ScopedLocalRef<jobject> srcJavaString(e, e->NewStringUTF(evtSrc.c_str()));
   CHECK(srcJavaString.get());
@@ -68,7 +71,7 @@ void HciEventManager::notifyTransactionListenersOfAid(std::vector<uint8_t> aid,
     CHECK(dataJavaArray.get());
     e->SetByteArrayRegion((jbyteArray)dataJavaArray.get(), 0, data.size(),
                           (jbyte*)&data[0]);
-    CHECK(e->ExceptionCheck());
+    CHECK(!e->ExceptionCheck());
     e->CallVoidMethod(mNativeData->manager,
                       android::gCachedNfcManagerNotifyTransactionListeners,
                       aidJavaArray.get(), dataJavaArray.get(),
@@ -135,10 +138,9 @@ void HciEventManager::nfaHciCallback(tNFA_HCI_EVT event,
     return;
   }
 
-  DLOG_IF(INFO, nfc_debug_enabled)
-      << "event= " << event << "code= " << eventData->rcvd_evt.evt_code
-      << "pipe= " << eventData->rcvd_evt.pipe
-      << "len= " << eventData->rcvd_evt.evt_len;
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+      "event=%d code=%d pipe=%d len=%d", event, eventData->rcvd_evt.evt_code,
+      eventData->rcvd_evt.pipe, eventData->rcvd_evt.evt_len);
 
   std::string evtSrc;
   if (eventData->rcvd_evt.pipe == sEsePipe) {
@@ -146,6 +148,7 @@ void HciEventManager::nfaHciCallback(tNFA_HCI_EVT event,
   } else if (eventData->rcvd_evt.pipe == sSimPipe) {
     evtSrc = "SIM1";
   } else {
+    LOG(ERROR) << "Incorrect Pipe Id";
     return;
   }
 

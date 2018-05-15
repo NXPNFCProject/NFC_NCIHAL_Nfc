@@ -121,6 +121,7 @@ import com.android.nfc.handover.HandoverDataParser;
 
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.io.InputStream;
@@ -5909,19 +5910,21 @@ public class NfcService implements DeviceHostListener {
                         mCardEmulationManager.onOffHostAidSelected();
                     }
                     byte[][] data = (byte[][]) msg.obj;
-                    sendOffHostTransactionEvent(data[0], data[1], Arrays.toString(data[2]));
+                    sendOffHostTransactionEvent(data[0], data[1], data[2]);
+                    break;
                 default:
                     Log.e(TAG, "Unknown message received");
                     break;
             }
         }
 
-        public void sendOffHostTransactionEvent(byte[] aid, byte[] data, String reader) {
+        private void sendOffHostTransactionEvent(byte[] aid, byte[] data, byte[] readerByteArray) {
             if (mSEService == null || mNfcEventInstalledPackages.isEmpty()) {
                 return;
             }
-            String[] installedPackages = new String[mNfcEventInstalledPackages.size()];
             try {
+                String reader = new String(readerByteArray, "UTF-8");
+                String[] installedPackages = new String[mNfcEventInstalledPackages.size()];
                 boolean[] nfcAccess = mSEService.isNFCEventAllowed(reader, aid,
                         mNfcEventInstalledPackages.toArray(installedPackages));
                 if (nfcAccess == null) {
@@ -5930,9 +5933,16 @@ public class NfcService implements DeviceHostListener {
                 ArrayList<String> packages = new ArrayList<String>();
                 Intent intent = new Intent(NxpConstants.ACTION_TRANSACTION_DETECTED);
                 intent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 intent.putExtra(NxpConstants.EXTRA_AID, aid);
                 intent.putExtra(NxpConstants.EXTRA_DATA, data);
                 intent.putExtra(NxpConstants.EXTRA_SE_NAME, reader);
+                StringBuilder aidString = new StringBuilder(aid.length);
+                for (byte b : aid) {
+                    aidString.append(String.format("%02X", b));
+                }
+                String url = new String ("nfc://secure:0/" + reader + "/" + aidString.toString());
+                intent.setData(Uri.parse(url));
                 for (int i = 0; i < nfcAccess.length; i++) {
                     if (nfcAccess[i]) {
                         intent.setPackage(mNfcEventInstalledPackages.get(i));
@@ -5941,6 +5951,8 @@ public class NfcService implements DeviceHostListener {
                 }
             } catch (RemoteException e) {
                 Log.e(TAG, "Error in isNFCEventAllowed() " + e);
+            } catch (UnsupportedEncodingException e) {
+                Log.e(TAG, "Incorrect format for Secure Element name" + e);
             }
         }
 
