@@ -78,8 +78,6 @@
 using android::base::StringPrintf;
 
 #define SAK_VALUE_AT 17
-extern const uint8_t nfca_version_string[];
-extern const uint8_t nfa_version_string[];
 extern tNFA_DM_DISC_FREQ_CFG* p_nfa_dm_rf_disc_freq_cfg;
 bool sHCEEnabled = true;
 
@@ -2272,9 +2270,6 @@ static void nfaConnectionCallback(uint8_t connEvent,
     }
     NFA_SetLowRamDevice(sIsLowRamDevice);
 #endif
-    DLOG_IF(INFO, nfc_debug_enabled)
-        << StringPrintf("%s: enter; ver=%s nfa=%s NCI_VERSION=0x%02X", __func__,
-                        nfca_version_string, nfa_version_string, NCI_VERSION);
     mwVer = NFA_GetMwVersion();
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s:  MW Version: NFC_NCIHALx_AR%X.%x.%x.%x", __func__,
