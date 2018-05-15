@@ -1094,6 +1094,8 @@ static jint nfcManager_doRegisterT3tIdentifier(JNIEnv* e, jobject,
 
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: handle=%d", __func__, handle);
+  if (handle != NFA_HANDLE_INVALID)
+    RoutingManager::getInstance().commitRouting();
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
 
   return handle;
@@ -1117,6 +1119,7 @@ static void nfcManager_doDeregisterT3tIdentifier(JNIEnv*, jobject,
       << StringPrintf("%s: enter; handle=%d", __func__, handle);
 
   RoutingManager::getInstance().deregisterT3tIdentifier(handle);
+  RoutingManager::getInstance().commitRouting();
 
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
 }
