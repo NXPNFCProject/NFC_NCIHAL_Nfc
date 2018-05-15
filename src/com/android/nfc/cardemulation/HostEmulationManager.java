@@ -452,6 +452,10 @@ public class HostEmulationManager {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             synchronized (mLock) {
+                /* Service is already deactivated, don't bind */
+                if (mState == STATE_IDLE) {
+                  return;
+                }
                 mService = new Messenger(service);
                 mServiceBound = true;
                 mServiceName = name;
