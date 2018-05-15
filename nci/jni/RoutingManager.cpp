@@ -85,7 +85,7 @@ const JNINativeMethod RoutingManager::sMethods[] = {
 uint16_t lastcehandle = 0;
 // SCBR from host works only when App is in foreground
 static const uint8_t SYS_CODE_PWR_STATE_HOST = 0x01;
-static const uint16_t DEFAULT_SYS_CODE = 0xFEFF;
+static const uint16_t DEFAULT_SYS_CODE = 0xFEFE;
 
 namespace android {
 extern void checkforTranscation(uint8_t connEvent, void* eventData);
