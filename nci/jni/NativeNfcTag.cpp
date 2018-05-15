@@ -973,10 +973,9 @@ static jbyteArray nativeNfcTag_doTransceive(JNIEnv* e, jobject o,
         if (EXTNS_CheckMfcResponse(&transData, &transDataLen) ==
             NFCSTATUS_FAILED) {
           nativeNfcTag_doReconnect(e, o);
-        } else {
-          if (transDataLen != 0) {
-            result.reset(e->NewByteArray(transDataLen));
-          }
+        }
+        if (transDataLen != 0) {
+          result.reset(e->NewByteArray(transDataLen));
           if (result.get() != NULL) {
             e->SetByteArrayRegion(result.get(), 0, transDataLen,
                                   (const jbyte*)transData);
