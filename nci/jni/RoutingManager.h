@@ -299,17 +299,14 @@ class RoutingManager {
       JNIEnv* e);
   static int com_android_nfc_cardemulation_doGetDefaultOffHostRouteDestination(
       JNIEnv* e);
+
   static int com_android_nfc_cardemulation_doGetAidMatchingMode(JNIEnv* e);
   static int com_android_nfc_cardemulation_doGetAidMatchingPlatform(JNIEnv* e);
 
   std::vector<uint8_t> mRxDataBuffer;
 
   // Fields below are final after initialize()
-  // int mDefaultEe;
-  int mDefaultEeNfcF;
-  int mOffHostEe;
-  int mActiveSe;
-  int mActiveSeNfcF;
+  int mDefaultOffHostRoute;
   int mAidMatchingMode;
   int mNfcFOnDhHandle;
   int mAidMatchingPlatform;

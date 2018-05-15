@@ -127,8 +127,8 @@ void PeerToPeer::initialize() {
   static const char fn[] = "PeerToPeer::initialize";
 
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", fn);
-  if (NfcConfig::hasKey("P2P_LISTEN_TECH_MASK"))
-    mP2pListenTechMask = NfcConfig::getUnsigned("P2P_LISTEN_TECH_MASK");
+  if (NfcConfig::hasKey(NAME_P2P_LISTEN_TECH_MASK))
+    mP2pListenTechMask = NfcConfig::getUnsigned(NAME_P2P_LISTEN_TECH_MASK);
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", fn);
 }
 
@@ -1123,8 +1123,8 @@ void PeerToPeer::resetP2pListenMask() {
   mP2pListenTechMask = NFA_TECHNOLOGY_MASK_A | NFA_TECHNOLOGY_MASK_F |
                        NFA_TECHNOLOGY_MASK_A_ACTIVE |
                        NFA_TECHNOLOGY_MASK_F_ACTIVE;
-  if (NfcConfig::hasKey("P2P_LISTEN_TECH_MASK"))
-    mP2pListenTechMask = NfcConfig::getUnsigned("P2P_LISTEN_TECH_MASK");
+  if (NfcConfig::hasKey(NAME_P2P_LISTEN_TECH_MASK))
+    mP2pListenTechMask = NfcConfig::getUnsigned(NAME_P2P_LISTEN_TECH_MASK);
 }
 
 /*******************************************************************************

@@ -115,12 +115,10 @@ RoutingManager::RoutingManager()
       mDefaultHCEFRspTimeout(5000) {
   static const char fn[] = "RoutingManager::RoutingManager()";
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:enter", fn);
-  // Get the active SE
-  mActiveSe = NfcConfig::getUnsigned("ACTIVE_SE", 0x00);
-  // Get the active SE for Nfc-F
-  mActiveSeNfcF = NfcConfig::getUnsigned("ACTIVE_SE_NFCF", 0x00);
+  mDefaultOffHostRoute =
+      NfcConfig::getUnsigned(NAME_DEFAULT_OFFHOST_ROUTE, 0x00);
   // Get the "default" route
-  mDefaultEe = NfcConfig::getUnsigned("DEFAULT_ISODEP_ROUTE", 0x00);
+  mDefaultEe = NfcConfig::getUnsigned(NAME_DEFAULT_ROUTE, 0x00);
     if (nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH) {
       if ((mDefaultEe == 0xF4 || mDefaultEe == 0xF8) && sCurrentSelectedUICCSlot) {
         mDefaultEe = (sCurrentSelectedUICCSlot != 0x02) ? 0xF4 : 0xF8;
@@ -129,14 +127,8 @@ RoutingManager::RoutingManager()
           "%s: DEFAULT_ISODEP_ROUTE mDefaultEe : %d", fn, mDefaultEe);
     }
 
-  // Get the "default" route for Nfc-F
-  mDefaultEeNfcF = NfcConfig::getUnsigned("DEFAULT_NFCF_ROUTE", 0x00);
-  // Get the default "off-host" route.  This is hard-coded at the Java layer
-  // but we can override it here to avoid forcing Java changes.
-  mOffHostEe = NfcConfig::getUnsigned("DEFAULT_OFFHOST_ROUTE", 0xf4);
-
   mAidMatchingMode =
-      NfcConfig::getUnsigned("AID_MATCHING_MODE", AID_MATCHING_EXACT_ONLY);
+      NfcConfig::getUnsigned(NAME_AID_MATCHING_MODE, AID_MATCHING_EXACT_ONLY);
 
   mAidMatchingPlatform =
       NfcConfig::getUnsigned("AID_MATCHING_PLATFORM", AID_MATCHING_L);
@@ -761,18 +753,10 @@ void RoutingManager::nfaEEDisconnect() {
 }
 
 void RoutingManager::printMemberData() {
-  DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: ACTIVE_SE = 0x%0X", __func__, mActiveSe);
-  DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: ACTIVE_SE_NFCF = 0x%0X", __func__, mActiveSeNfcF);
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
       "%s: AID_MATCHING_MODE = 0x%0X", __func__, mAidMatchingMode);
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-      "%s: DEFAULT_NFCF_ROUTE = 0x%0X", __func__, mDefaultEeNfcF);
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: DEFAULT_ISODEP_ROUTE = 0x%0X", __func__, mDefaultEe);
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-      "%s: DEFAULT_OFFHOST_ROUTE = 0x%0X", __func__, mOffHostEe);
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
       "%s: AID_MATCHING_PLATFORM = 0x%0X", __func__, mAidMatchingPlatform);
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
@@ -2192,7 +2176,7 @@ void RoutingManager::onNfccShutdown() {
   uint8_t actualNumEe = nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED;
   tNFA_EE_INFO eeInfo[actualNumEe];
 
-  if (mActiveSe == 0x00) return;
+  if (mDefaultOffHostRoute == 0x00) return;
 
   memset(&eeInfo, 0, sizeof(eeInfo));
 
@@ -2895,7 +2879,7 @@ int RoutingManager::com_android_nfc_cardemulation_doGetDefaultRouteDestination(
 
 int RoutingManager::
     com_android_nfc_cardemulation_doGetDefaultOffHostRouteDestination(JNIEnv*) {
-  return getInstance().mOffHostEe;
+  return getInstance().mDefaultOffHostRoute;
 }
 
 int RoutingManager::com_android_nfc_cardemulation_doGetAidMatchingMode(
