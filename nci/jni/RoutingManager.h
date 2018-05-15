@@ -43,6 +43,9 @@
 #include "SyncEvent.h"
 #include "nfa_api.h"
 #include "nfa_ee_api.h"
+#include <map>
+
+using namespace std;
 
 #if (NXP_EXTNS == TRUE)
 #define TECHNOLOGY_BASED_ROUTING 0x00
@@ -304,11 +307,17 @@ class RoutingManager {
   static int com_android_nfc_cardemulation_doGetAidMatchingPlatform(JNIEnv* e);
 
   std::vector<uint8_t> mRxDataBuffer;
+  map<int, uint16_t> mMapScbrHandle;
 
   // Fields below are final after initialize()
   int mDefaultOffHostRoute;
   int mAidMatchingMode;
   int mNfcFOnDhHandle;
+  bool mIsScbrSupported;
+  uint16_t mDefaultSysCode;
+  uint16_t mDefaultSysCodeRoute;
+  uint8_t mDefaultSysCodePowerstate;
+  tNFA_EE_CBACK_DATA mCbEventData;
   int mAidMatchingPlatform;
   tNFA_TECHNOLOGY_MASK mSeTechMask;
   static const JNINativeMethod sMethods[];

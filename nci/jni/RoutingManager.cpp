@@ -44,6 +44,7 @@
 #include "SecureElement.h"
 #include "RoutingManager.h"
 #include "nfc_config.h"
+#include "nfa_ee_api.h"
 #if (NXP_EXTNS == TRUE)
 #include "MposManager.h"
 #include "nfa_api.h"
@@ -82,6 +83,9 @@ const JNINativeMethod RoutingManager::sMethods[] = {
          com_android_nfc_cardemulation_doGetAidMatchingPlatform}};
 
 uint16_t lastcehandle = 0;
+// SCBR from host works only when App is in foreground
+static const uint8_t SYS_CODE_PWR_STATE_HOST = 0x01;
+static const uint16_t DEFAULT_SYS_CODE = 0xFEFF;
 
 namespace android {
 extern void checkforTranscation(uint8_t connEvent, void* eventData);
@@ -133,8 +137,25 @@ RoutingManager::RoutingManager()
   mAidMatchingPlatform =
       NfcConfig::getUnsigned("AID_MATCHING_PLATFORM", AID_MATCHING_L);
 
+  mDefaultSysCodeRoute =
+      NfcConfig::getUnsigned(NAME_DEFAULT_SYS_CODE_ROUTE, 0xC0);
+
+  mDefaultSysCodePowerstate =
+      NfcConfig::getUnsigned(NAME_DEFAULT_SYS_CODE_PWR_STATE, 0x19);
+
+  mDefaultSysCode = DEFAULT_SYS_CODE;
+  if (NfcConfig::hasKey(NAME_DEFAULT_SYS_CODE)) {
+    std::vector<uint8_t> pSysCode = NfcConfig::getBytes(NAME_DEFAULT_SYS_CODE);
+    if (pSysCode.size() == 0x02) {
+      mDefaultSysCode = ((pSysCode[0] << 8) | ((int)pSysCode[1] << 0));
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+          "%s: DEFAULT_SYS_CODE: 0x%02X", __func__, mDefaultSysCode);
+    }
+  }
+
   mSeTechMask = 0x00;  // unused
   mNfcFOnDhHandle = NFA_HANDLE_INVALID;
+  mIsScbrSupported = false;
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:exit", fn);
 }
 
@@ -295,6 +316,24 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
         "%s:gSeDiscoverycount=0x%d;", __func__, gSeDiscoverycount);
   }
   printMemberData();
+
+  if (NFC_GetNCIVersion() == NCI_VERSION_2_0) {
+    SyncEventGuard guard(mRoutingEvent);
+    // Register System Code for routing
+    nfaStat = NFA_EeAddSystemCodeRouting(mDefaultSysCode, mDefaultSysCodeRoute,
+                                         mDefaultSysCodePowerstate);
+    if (nfaStat == NFA_STATUS_NOT_SUPPORTED) {
+      mIsScbrSupported = false;
+      LOG(ERROR) << StringPrintf("%s: SCBR not supported", fn);
+    } else if (nfaStat == NFA_STATUS_OK) {
+      mIsScbrSupported = true;
+      mRoutingEvent.wait();
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("%s: Succeed to register system code", fn);
+    } else {
+      LOG(ERROR) << StringPrintf("%s: Fail to register system code", fn);
+    }
+  }
 
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", fn);
   return true;
@@ -2425,6 +2464,7 @@ void RoutingManager::nfaEeCallback(tNFA_EE_EVT event,
 
   SecureElement& se = SecureElement::getInstance();
   RoutingManager& routingManager = RoutingManager::getInstance();
+  if (eventData) routingManager.mCbEventData = *eventData;
   tNFA_EE_DISCOVER_REQ info = eventData->discover_req;
 
   switch (event) {
@@ -2433,6 +2473,20 @@ void RoutingManager::nfaEeCallback(tNFA_EE_EVT event,
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
           "%s: NFA_EE_REGISTER_EVT; status=%u", fn, eventData->ee_register);
       routingManager.mEeRegisterEvent.notifyOne();
+    } break;
+
+    case NFA_EE_ADD_SYSCODE_EVT: {
+      SyncEventGuard guard(routingManager.mRoutingEvent);
+      routingManager.mRoutingEvent.notifyOne();
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+          "%s: NFA_EE_ADD_SYSCODE_EVT  status=%u", fn, eventData->status);
+    } break;
+
+    case NFA_EE_REMOVE_SYSCODE_EVT: {
+      SyncEventGuard guard(routingManager.mRoutingEvent);
+      routingManager.mRoutingEvent.notifyOne();
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+          "%s: NFA_EE_REMOVE_SYSCODE_EVT  status=%u", fn, eventData->status);
     } break;
 
     case NFA_EE_MODE_SET_EVT: {
@@ -2744,10 +2798,9 @@ int RoutingManager::registerT3tIdentifier(uint8_t* t3tId, uint8_t t3tIdLen) {
   }
 #endif
 
-  SyncEventGuard guard(mRoutingEvent);
   mNfcFOnDhHandle = NFA_HANDLE_INVALID;
 
-  int systemCode;
+  uint16_t systemCode;
   uint8_t nfcid2[NCI_RF_F_UID_LEN];
   uint8_t t3tPmm[NCI_T3T_PMM_LEN];
 
@@ -2755,17 +2808,40 @@ int RoutingManager::registerT3tIdentifier(uint8_t* t3tId, uint8_t t3tIdLen) {
   memcpy(nfcid2, t3tId + 2, NCI_RF_F_UID_LEN);
   memcpy(t3tPmm, t3tId + 10, NCI_T3T_PMM_LEN);
 
-  tNFA_STATUS nfaStat = NFA_CeRegisterFelicaSystemCodeOnDH(
-      systemCode, nfcid2, t3tPmm, nfcFCeCallback);
-  if (nfaStat == NFA_STATUS_OK) {
-    mRoutingEvent.wait();
-  } else {
-    LOG(ERROR) << StringPrintf("%s: Fail to register NFC-F system on DH", fn);
-    return NFA_HANDLE_INVALID;
-  }
+  {
+    SyncEventGuard guard(mRoutingEvent);
+    tNFA_STATUS nfaStat = NFA_CeRegisterFelicaSystemCodeOnDH(
+        systemCode, nfcid2, t3tPmm, nfcFCeCallback);
+    if (nfaStat == NFA_STATUS_OK) {
+      mRoutingEvent.wait();
+    } else {
+      LOG(ERROR) << StringPrintf("%s: Fail to register NFC-F system on DH", fn);
+      return NFA_HANDLE_INVALID;
+    }
+   }
 
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: Succeed to register NFC-F system on DH", fn);
+
+  // Register System Code for routing
+  if (mIsScbrSupported) {
+    SyncEventGuard guard(mRoutingEvent);
+    tNFA_STATUS nfaStat = NFA_EeAddSystemCodeRouting(systemCode, NCI_DH_ID,
+                                                     SYS_CODE_PWR_STATE_HOST);
+    if (nfaStat == NFA_STATUS_OK) {
+      mRoutingEvent.wait();
+    }
+    if ((nfaStat != NFA_STATUS_OK) || (mCbEventData.status != NFA_STATUS_OK)) {
+      LOG(ERROR) << StringPrintf("%s: Fail to register system code on DH", fn);
+      return NFA_HANDLE_INVALID;
+    }
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s: Succeed to register system code on DH", fn);
+    // add handle and system code pair to the map
+    mMapScbrHandle.emplace(mNfcFOnDhHandle, systemCode);
+  } else {
+    LOG(ERROR) << StringPrintf("%s: SCBR Not supported", fn);
+  }
 
   return mNfcFOnDhHandle;
 }
@@ -2786,15 +2862,38 @@ void RoutingManager::deregisterT3tIdentifier(int handle) {
     enable = true;
   }
 #endif
-  SyncEventGuard guard(mRoutingEvent);
-  tNFA_STATUS nfaStat = NFA_CeDeregisterFelicaSystemCodeOnDH(handle);
-  if (nfaStat == NFA_STATUS_OK) {
-    mRoutingEvent.wait();
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-        "%s: Succeeded in deregistering NFC-F system on DH", fn);
-  } else {
-    LOG(ERROR) << StringPrintf("%s: Fail to deregister NFC-F system on DH", fn);
+   {
+    SyncEventGuard guard(mRoutingEvent);
+    tNFA_STATUS nfaStat = NFA_CeDeregisterFelicaSystemCodeOnDH(handle);
+    if (nfaStat == NFA_STATUS_OK) {
+      mRoutingEvent.wait();
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+          "%s: Succeeded in deregistering NFC-F system on DH", fn);
+    } else {
+      LOG(ERROR) << StringPrintf("%s: Fail to deregister NFC-F system on DH",
+                                 fn);
+    }
   }
+  if (mIsScbrSupported) {
+    map<int, uint16_t>::iterator it = mMapScbrHandle.find(handle);
+    // find system code for given handle
+    if (it != mMapScbrHandle.end()) {
+      uint16_t systemCode = it->second;
+      mMapScbrHandle.erase(handle);
+      if (systemCode != 0) {
+        SyncEventGuard guard(mRoutingEvent);
+        tNFA_STATUS nfaStat = NFA_EeRemoveSystemCodeRouting(systemCode);
+        if (nfaStat == NFA_STATUS_OK) {
+          mRoutingEvent.wait();
+          DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+              "%s: Succeeded in deregistering system Code on DH", fn);
+        } else {
+          LOG(ERROR) << StringPrintf("%s: Fail to deregister system Code on DH",
+                                     fn);
+        }
+      }
+    }
+   }
 #if (NXP_EXTNS == TRUE && NXP_NFCC_HCE_F == TRUE)
   if (enable) {
     // Stop RF discovery to reconfigure
