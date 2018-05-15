@@ -361,7 +361,16 @@ public class BluetoothPeripheralHandover implements BluetoothProfile.ServiceList
                 // HFP then A2DP connect
                 mState = STATE_CONNECTING;
                 synchronized (mLock) {
-                    if (mTransport != BluetoothDevice.TRANSPORT_LE) {
+                    if (mTransport == BluetoothDevice.TRANSPORT_LE) {
+                        if (mInput.getConnectionState(mDevice)
+                                != BluetoothProfile.STATE_CONNECTED) {
+                            mHidResult = RESULT_PENDING;
+                            toast(getToastString(R.string.connecting_peripheral));
+                            break;
+                        } else {
+                            mHidResult = RESULT_CONNECTED;
+                        }
+                    } else {
                         if (mHeadset.getConnectionState(mDevice) !=
                                 BluetoothProfile.STATE_CONNECTED) {
                             if (mIsHeadsetAvailable) {
@@ -396,7 +405,18 @@ public class BluetoothPeripheralHandover implements BluetoothProfile.ServiceList
                 }
                 // fall-through
             case STATE_CONNECTING:
-                if (mTransport != BluetoothDevice.TRANSPORT_LE) {
+                if (mTransport == BluetoothDevice.TRANSPORT_LE) {
+                    if (mHidResult == RESULT_PENDING) {
+                        break;
+                    } else if (mHidResult == RESULT_CONNECTED) {
+                        toast(getToastString(R.string.connected_peripheral));
+                        mDevice.setAlias(mName);
+                        complete(true);
+                    } else {
+                        toast (getToastString(R.string.connect_peripheral_failed));
+                        complete(false);
+                    }
+                } else {
                     if (mA2dpResult == RESULT_PENDING || mHfpResult == RESULT_PENDING) {
                         // another connection type still pending
                         break;
