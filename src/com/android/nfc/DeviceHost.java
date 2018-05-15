@@ -87,6 +87,8 @@ public interface DeviceHost {
         public void onETSIReaderModeSwpTimeout(int disc_ntf_timeout);
 
         public void onETSIReaderModeRestart();
+
+        public void onNfcTransactionEvent(byte[] aid, byte[] data, String seName);
     }
 
     public interface TagEndpoint {

@@ -40,6 +40,7 @@
 #include <nativehelper/ScopedPrimitiveArray.h>
 #include <nativehelper/ScopedUtfChars.h>
 #include <semaphore.h>
+#include "HciEventManager.h"
 #include "JavaClassConstants.h"
 #include "NfcAdaptation.h"
 #include "NfcJniUtil.h"
@@ -747,6 +748,9 @@ static jboolean nfcManager_initNativeStruc(JNIEnv* e, jobject o) {
       e->GetMethodID(cls.get(),"notifySeListenActivated", "()V");
   gCachedNfcManagerNotifySeListenDeactivated =
       e->GetMethodID(cls.get(),"notifySeListenDeactivated", "()V");
+  gCachedNfcManagerNotifyTransactionListeners = e->GetMethodID(
+      cls.get(), "notifyTransactionListeners", "([B[BLjava/lang/String;)V");
+
   if (nfc_jni_cache_object(e, gNativeNfcTagClassName, &(nat->cached_NfcTag)) ==
       -1) {
     LOG(ERROR) << StringPrintf("%s: fail cache NativeNfcTag", __func__);
@@ -1202,6 +1206,7 @@ static jboolean nfcManager_doInitialize(JNIEnv* e, jobject o) {
         NfcTag::getInstance().initialize(getNative(e, o));
         PeerToPeer::getInstance().initialize();
         PeerToPeer::getInstance().handleNfcOnOff(true);
+        HciEventManager::getInstance().initialize(getNative(e, o));
 #if(NXP_EXTNS == TRUE)
         MposManager::getInstance().initialize(getNative(e, o));
 #endif
@@ -1666,6 +1671,7 @@ static jboolean nfcManager_doDeinitialize(JNIEnv*, jobject) {
   pn544InteropAbortNow();
   RoutingManager::getInstance().onNfccShutdown();
   PowerSwitch::getInstance().initialize(PowerSwitch::UNKNOWN_LEVEL);
+  HciEventManager::getInstance().finalize();
 #if (NXP_EXTNS == TRUE)
   SecureElement::getInstance().releasePendingTransceive();
 #endif

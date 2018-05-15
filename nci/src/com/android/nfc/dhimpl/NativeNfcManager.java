@@ -559,6 +559,9 @@ public class NativeNfcManager implements DeviceHost {
         mListener.onRemoteFieldDeactivated();
     }
 
+    private void notifyTransactionListeners(byte[] aid, byte[] data, String evtSrc) {
+        mListener.onNfcTransactionEvent(aid, data, evtSrc);
+    }
 /* NXP extension are here */
     @Override
     public native boolean doCheckJcopDlAtBoot();
