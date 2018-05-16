@@ -186,23 +186,6 @@ static int decodeBerTlvLength(uint8_t* data, int index, int data_length);
 
 /*******************************************************************************
 **
-** Function:        notifyTransactionListenersOfAid
-**
-** Description:     Notify the NFC service about a transaction event from
-**                  secure element.
-**                  aid: Buffer contains application ID.
-**                  aidLen: Length of application ID.
-**
-** Returns:         None
-**
-*******************************************************************************/
-void notifyTransactionListenersOfAid(const uint8_t* aidBuffer,
-                                       uint8_t aidBufferLen,
-                                       const uint8_t* dataBuffer,
-                                       uint32_t dataBufferLen, uint32_t evtSrc);
-
-/*******************************************************************************
-**
 ** Function:        nfaHciCallback
 **
 ** Description:     Receive HCI-related events from stack.

@@ -28,6 +28,7 @@
 #include "phNxpConfig.h"
 #include "nfc_config.h"
 #include "RoutingManager.h"
+#include "HciEventManager.h"
 using android::base::StringPrintf;
 
 SecureElement SecureElement::sSecElem;
@@ -290,118 +291,6 @@ void SecureElement::notifyListenModeState (bool isActivated) {
 
     DLOG_IF(INFO, nfc_debug_enabled)
                 << StringPrintf("%s: exit", fn);
-}
-/*******************************************************************************
-**
-** Function:        notifyTransactionListenersOfAid
-**
-** Description:     Notify the NFC service about a transaction event from
-**                  secure element.
-**                  aid: Buffer contains application ID.
-**                  aidLen: Length of application ID.
-**
-** Returns:         None
-**
-*******************************************************************************/
-void SecureElement::notifyTransactionListenersOfAid(const uint8_t* aidBuffer,
-                                                    uint8_t aidBufferLen,
-                                                    const uint8_t* dataBuffer,
-                                                    uint32_t dataBufferLen,
-                                                    uint32_t evtSrc) {
-{
-        static const char fn [] = "SecureElement::notifyTransactionListenersOfAid";
-
-        if (aidBufferLen == 0) {
-            return;
-        }
-
-        JNIEnv* e = NULL;
-        ScopedAttach attach(mNativeData->vm, &e);
-        if (e == NULL)
-        {
-            LOG(ERROR) << StringPrintf("%s: jni env is null", fn);
-            return;
-        }
-
-        const uint16_t tlvMaxLen = aidBufferLen + 10;
-        uint8_t* tlv = new uint8_t [tlvMaxLen];
-        if (tlv == NULL)
-        {
-            LOG(ERROR) << StringPrintf("%s: fail allocate tlv", fn);
-            return;
-        }
-
-        memcpy (tlv, aidBuffer, aidBufferLen);
-        uint16_t tlvActualLen = aidBufferLen;
-
-        ScopedLocalRef<jobject> tlvJavaArray(e, e->NewByteArray(tlvActualLen));
-        if (tlvJavaArray.get() == NULL)
-        {
-            LOG(ERROR) << StringPrintf("%s: fail allocate array", fn);
-            goto TheEnd;
-        }
-
-        e->SetByteArrayRegion ((jbyteArray)tlvJavaArray.get(), 0, tlvActualLen, (jbyte *)tlv);
-        if (e->ExceptionCheck())
-        {
-            e->ExceptionClear();
-            LOG(ERROR) << StringPrintf("%s: fail fill array", fn);
-            goto TheEnd;
-        }
-
-        if(dataBufferLen > 0)
-        {
-            const uint32_t dataTlvMaxLen = dataBufferLen + 10;
-            uint8_t* datatlv = new uint8_t [dataTlvMaxLen];
-            if (datatlv == NULL)
-            {
-                LOG(ERROR) << StringPrintf("%s: fail allocate tlv", fn);
-                return;
-            }
-
-            memcpy (datatlv, dataBuffer, dataBufferLen);
-            uint16_t dataTlvActualLen = dataBufferLen;
-
-            ScopedLocalRef<jobject> dataTlvJavaArray(e, e->NewByteArray(dataTlvActualLen));
-            if (dataTlvJavaArray.get() == NULL)
-            {
-                LOG(ERROR) << StringPrintf("%s: fail allocate array", fn);
-                goto Clean;
-            }
-
-            e->SetByteArrayRegion ((jbyteArray)dataTlvJavaArray.get(), 0, dataTlvActualLen, (jbyte *)datatlv);
-            if (e->ExceptionCheck())
-            {
-                e->ExceptionClear();
-                LOG(ERROR) << StringPrintf("%s: fail fill array", fn);
-                goto Clean;
-            }
-
-            e->CallVoidMethod (mNativeData->manager, android::gCachedNfcManagerNotifyTransactionListeners, tlvJavaArray.get(), dataTlvJavaArray.get(), evtSrc);
-            if (e->ExceptionCheck())
-            {
-                e->ExceptionClear();
-                LOG(ERROR) << StringPrintf("%s: fail notify", fn);
-                goto Clean;
-            }
-
-         Clean:
-            delete [] datatlv;
-        }
-        else
-        {
-            e->CallVoidMethod (mNativeData->manager, android::gCachedNfcManagerNotifyTransactionListeners, tlvJavaArray.get(), NULL, evtSrc);
-            if (e->ExceptionCheck())
-            {
-                e->ExceptionClear();
-                LOG(ERROR) << StringPrintf("%s: fail notify", fn);
-                goto TheEnd;
-            }
-        }
-    TheEnd:
-        delete [] tlv;
-        LOG(INFO) << StringPrintf("%s: exit", fn);
-    }
 }
 
 /*******************************************************************************
@@ -710,7 +599,7 @@ void SecureElement::nfaHciCallback(tNFA_HCI_EVT event,
                 sSecElem.mAbortEvent.notifyOne();
             }
         }
-        else if (eventData->rcvd_evt.evt_code == NFA_HCI_EVT_POST_DATA)
+        if (eventData->rcvd_evt.evt_code == NFA_HCI_EVT_POST_DATA)
         {
             LOG(INFO) << StringPrintf("%s: NFA_HCI_EVENT_RCVD_EVT; NFA_HCI_EVT_POST_DATA", fn);
             SyncEventGuard guard (sSecElem.mTransceiveEvent);
@@ -756,12 +645,10 @@ void SecureElement::nfaHciCallback(tNFA_HCI_EVT event,
                     if (nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE)
                     {
                         if(MposManager::getInstance().validateHCITransactionEventParams(data, datalen) == NFA_STATUS_OK)
-                            sSecElem.notifyTransactionListenersOfAid(&eventData->rcvd_evt.p_evt_buf[2],
-                                                                     aidlen, data, datalen, evtSrc);
+                            HciEventManager::getInstance().nfaHciCallback(event, eventData);
                     }
                     else
-                        sSecElem.notifyTransactionListenersOfAid(&eventData->rcvd_evt.p_evt_buf[2],
-                                                                 aidlen, data, datalen, evtSrc);
+                            HciEventManager::getInstance().nfaHciCallback(event, eventData);
                 }
                 else
                 {
