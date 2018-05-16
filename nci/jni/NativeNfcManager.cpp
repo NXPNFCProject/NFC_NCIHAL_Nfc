@@ -1468,7 +1468,6 @@ void nfcManager_disableDiscovery(JNIEnv* e, jobject o) {
             Rdr_req_ntf_info_t mSwp_info = MposManager::getInstance().getSwpRrdReqInfo();
             //        if(android::isDiscoveryStarted() == true)
             android::startRfDiscovery(false);
-            PeerToPeer::getInstance().enableP2pListening (false);
             {
                 status = NFA_CeConfigureUiccListenTech (mSwp_info.swp_rd_req_info.src, 0x00);
             }
@@ -2689,6 +2688,7 @@ void enableLastRfDiscovery()
 {
     DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: enter", __FUNCTION__);
+    RoutingManager::getInstance().configureOffHostNfceeTechMask();
     nfcManager_enableDiscovery(NULL, NULL,
         mDiscParams.technologies_mask,
         mDiscParams.enable_lptd,
