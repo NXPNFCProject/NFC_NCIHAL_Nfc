@@ -71,7 +71,7 @@ const JNINativeMethod RoutingManager::sMethods[] = {
 static const int MAX_NUM_EE = 5;
 // SCBR from host works only when App is in foreground
 static const uint8_t SYS_CODE_PWR_STATE_HOST = 0x01;
-static const uint16_t DEFAULT_SYS_CODE = 0xFEFF;
+static const uint16_t DEFAULT_SYS_CODE = 0xFEFE;
 
 RoutingManager::RoutingManager() {
   static const char fn[] = "RoutingManager::RoutingManager()";
