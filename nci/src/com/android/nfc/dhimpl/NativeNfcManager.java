@@ -423,7 +423,7 @@ public class NativeNfcManager implements DeviceHost {
             case (TagTechnology.ISO_DEP):
                 return mIsoDepMaxTransceiveLength;
             case (TagTechnology.NFC_F):
-                return 252; // PN544 RF buffer = 255 bytes, subtract one for SoD, two for CRC
+                return 255;
             default:
                 return 0;
         }
