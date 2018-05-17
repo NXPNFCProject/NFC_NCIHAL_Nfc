@@ -210,8 +210,6 @@ static jbyteArray nativeNfcSecureElement_doGetAtr (JNIEnv* e, jobject, jint hand
     int32_t recvBufferActualSize = 0;
     LOG(INFO) << StringPrintf("%s: enter; handle=0x%04x", __func__, handle);
     SecureElement &se = SecureElement::getInstance();
-    if(!se.mIsWiredModeOpen)
-         return NULL;
 
     stat = se.getAtr(handle, recvBuffer, &recvBufferActualSize);
 
