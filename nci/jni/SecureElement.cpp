@@ -865,7 +865,7 @@ jintArray SecureElement::getActiveSecureElementList(JNIEnv* e) {
   jint seId = 0;
   int cnt = 0;
   int i;
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: ENTER", __func__);
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
 
   if (!getEeInfo()) return (NULL);
 
@@ -875,7 +875,7 @@ jintArray SecureElement::getActiveSecureElementList(JNIEnv* e) {
 
   jintArray list = e->NewIntArray(num_of_nfcee_present);  // allocate array
 
-  for (i = 1; i <= num_of_nfcee_present; i++) {
+  for (i = 0; i <= num_of_nfcee_present; i++) {
     nfcee_handle[i] = mNfceeData_t.mNfceeHandle[i];
     nfcee_status[i] = mNfceeData_t.mNfceeStatus[i];
 
@@ -888,17 +888,17 @@ jintArray SecureElement::getActiveSecureElementList(JNIEnv* e) {
     if (nfcee_handle[i] == EE_HANDLE_0xF4 &&
         nfcee_status[i] == NFC_NFCEE_STATUS_ACTIVE) {
       seId = getGenericEseId(EE_HANDLE_0xF4 & ~NFA_HANDLE_GROUP_EE);
-      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("UICC  Active");
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("UICC/SIM/SIM1  Active");
     }
 
     if (nfcee_handle[i] == EE_HANDLE_0xF8 &&
         nfcee_status[i] == NFC_NFCEE_STATUS_ACTIVE) {
       seId = getGenericEseId(EE_HANDLE_0xF8 & ~NFA_HANDLE_GROUP_EE);
-      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("UICC2  Active");
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("UICC2/SIM2  Active");
     }
 
     DLOG_IF(INFO, nfc_debug_enabled)
-        << StringPrintf("%s: Generic id %u = 0x%X", __func__, i, seId);
+        << StringPrintf("%s: Generic-ID %u = 0x%02X", __func__, i, seId);
     e->SetIntArrayRegion(list, cnt++, 1, &seId);
   }
 
