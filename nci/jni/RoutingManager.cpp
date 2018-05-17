@@ -1029,6 +1029,7 @@ bool RoutingManager::setDefaultRoute(const int defaultRoute, const int protoRout
          LOG(ERROR) << StringPrintf("Failed to register wildcard AID for DH");
     }
 
+    NFA_CeConfigureUiccListenTech (SecureElement::getInstance().getEseHandleFromGenericId(ROUTE_LOC_ESE_ID), 0x07);
     checkProtoSeID();
 
     initialiseTableEntries ();
