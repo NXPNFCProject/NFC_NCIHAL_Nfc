@@ -1513,8 +1513,6 @@ static void nfaConnectionCallback(uint8_t connEvent,
     gCachedNfcManagerNotifyNdefMessageListeners =
         e->GetMethodID(cls.get(), "notifyNdefMessageListeners",
                        "(Lcom/android/nfc/dhimpl/NativeNfcTag;)V");
-    gCachedNfcManagerNotifyTransactionListeners =
-        e->GetMethodID(cls.get(), "notifyTransactionListeners", "([B[BI)V");
     gCachedNfcManagerNotifyConnectivityListeners =
         e->GetMethodID(cls.get(), "notifyConnectivityListeners", "(I)V");
     gCachedNfcManagerNotifyEmvcoMultiCardDetectedListeners = e->GetMethodID(

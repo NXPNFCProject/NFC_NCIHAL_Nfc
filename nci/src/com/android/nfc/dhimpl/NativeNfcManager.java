@@ -802,13 +802,6 @@ public class NativeNfcManager implements DeviceHost {
     /**
      * Notifies transaction
      */
-    private void notifyTransactionListeners(byte[] aid, byte[] data, int evtSrc) {
-        mListener.onCardEmulationAidSelected(aid,data,evtSrc);
-    }
-
-    /**
-     * Notifies transaction
-     */
     private void notifyConnectivityListeners(int evtSrc) {
         mListener.onConnectivityEvent(evtSrc);
     }

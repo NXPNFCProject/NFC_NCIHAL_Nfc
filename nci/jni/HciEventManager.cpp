@@ -37,13 +37,12 @@ HciEventManager& HciEventManager::getInstance() {
 
 void HciEventManager::initialize(nfc_jni_native_data* native) {
   mNativeData = native;
-  tNFA_STATUS nfaStat = NFA_HciRegister(const_cast<char*>(APP_NAME),
-                                        (tNFA_HCI_CBACK*)&nfaHciCallback, true);
-  if (nfaStat != NFA_STATUS_OK) {
-    LOG(ERROR) << "HCI registration failed; status=" << nfaStat;
+  if (NfcConfig::hasKey(NAME_NFA_HCI_STATIC_PIPE_ID_ESE)) {
+    sEsePipe = NfcConfig::getUnsigned(NAME_NFA_HCI_STATIC_PIPE_ID_ESE, 0x16);
   }
-  sEsePipe = NfcConfig::getUnsigned(NAME_OFF_HOST_ESE_PIPE_ID, 0x16);
-  sSimPipe = NfcConfig::getUnsigned(NAME_OFF_HOST_SIM_PIPE_ID, 0x0A);
+  if (NfcConfig::hasKey(NAME_NFA_HCI_STATIC_PIPE_ID_SIM)) {
+    sSimPipe = NfcConfig::getUnsigned(NAME_NFA_HCI_STATIC_PIPE_ID_SIM, 0x0A);
+  }
 }
 
 void HciEventManager::notifyTransactionListenersOfAid(std::vector<uint8_t> aid,
@@ -132,15 +131,15 @@ std::vector<uint8_t> HciEventManager::getDataFromBerTlv(
   return std::vector<uint8_t>();
 }
 
-void HciEventManager::nfaHciCallback(tNFA_HCI_EVT event,
-                                     tNFA_HCI_EVT_DATA* eventData) {
+void HciEventManager::nfaHciEvtHandler(tNFA_HCI_EVT event,
+                                       tNFA_HCI_EVT_DATA* eventData) {
   if (eventData == nullptr) {
     return;
   }
-
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-      "event=%d code=%d pipe=%d len=%d", event, eventData->rcvd_evt.evt_code,
-      eventData->rcvd_evt.pipe, eventData->rcvd_evt.evt_len);
+  DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("event=%d code=%d pipe=%d len=%d sSimPipe=%d", event,
+                      eventData->rcvd_evt.evt_code, eventData->rcvd_evt.pipe,
+                      eventData->rcvd_evt.evt_len, sSimPipe);
 
   std::string evtSrc;
   if (eventData->rcvd_evt.pipe == sEsePipe) {

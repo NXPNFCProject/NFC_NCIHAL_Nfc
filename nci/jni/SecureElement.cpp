@@ -36,22 +36,22 @@
  *  Communicate with secure elements that are attached to the NFC
  *  controller.
  */
-#include <android-base/stringprintf.h>
-#include <base/logging.h>
 #include "SecureElement.h"
 #include <ScopedLocalRef.h>
+#include <android-base/stringprintf.h>
+#include <base/logging.h>
 #include <errno.h>
 #include <semaphore.h>
 #include "DataQueue.h"
+#include "HciEventManager.h"
 #include "JavaClassConstants.h"
 #include "PeerToPeer.h"
 #include "PowerSwitch.h"
 #include "TransactionController.h"
 #include "config.h"
-#include "nfc_config.h"
 #include "nfc_api.h"
+#include "nfc_config.h"
 #include "phNxpConfig.h"
-
 #if (NXP_EXTNS == TRUE)
 #include "MposManager.h"
 #include "RoutingManager.h"
@@ -369,7 +369,6 @@ bool SecureElement::initialize(nfc_jni_native_data* native) {
   mNativeData = native;
   mthreadnative = native;
   mActualNumEe = nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED;
-  ;
   mbNewEE = true;
   mNewPipeId = 0;
   mNewSourceGate = 0;
@@ -2262,7 +2261,6 @@ void SecureElement::nfaHciCallback(tNFA_HCI_EVT event,
                                    tNFA_HCI_EVT_DATA* eventData) {
   static const char fn[] = "SecureElement::nfaHciCallback";
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: event=0x%X", fn, event);
-  int evtSrc = 0xFF;
 
   switch (event) {
     case NFA_HCI_REGISTER_EVT: {
@@ -2402,30 +2400,6 @@ void SecureElement::nfaHciCallback(tNFA_HCI_EVT event,
           "%s: NFA_HCI_EVENT_RCVD_EVT; code: 0x%X; pipe: 0x%X; data len: %u",
           fn, eventData->rcvd_evt.evt_code, eventData->rcvd_evt.pipe,
           eventData->rcvd_evt.evt_len);
-      if (eventData->rcvd_evt.pipe == 0x0A)  // UICC
-      {
-        DLOG_IF(INFO, nfc_debug_enabled)
-            << StringPrintf("%s: NFA_HCI_EVENT_RCVD_EVT; source UICC", fn);
-        evtSrc = SecureElement::getInstance().getGenericEseId(
-            SecureElement::getInstance().EE_HANDLE_0xF4 &
-            ~NFA_HANDLE_GROUP_EE);                  // UICC
-      } else if (eventData->rcvd_evt.pipe == 0x16)  // ESE
-      {
-        DLOG_IF(INFO, nfc_debug_enabled)
-            << StringPrintf("%s: NFA_HCI_EVENT_RCVD_EVT; source ESE", fn);
-        evtSrc = SecureElement::getInstance().getGenericEseId(
-            EE_HANDLE_0xF3 & ~NFA_HANDLE_GROUP_EE);  // ESE
-      } else if (nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH &&
-                 (eventData->rcvd_evt.pipe == 0x23)) /*UICC2*/
-      {
-        DLOG_IF(INFO, nfc_debug_enabled)
-            << StringPrintf("%s: NFA_HCI_EVENT_RCVD_EVT; source UICC2", fn);
-        evtSrc = SecureElement::getInstance().getGenericEseId(
-            EE_HANDLE_0xF8 & ~NFA_HANDLE_GROUP_EE); /*UICC2*/
-      }
-      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-          "%s: NFA_HCI_EVENT_RCVD_EVT; ################################### ",
-          fn);
 
       if (eventData->rcvd_evt.evt_code == NFA_HCI_EVT_WTX) {
 #if (NXP_EXTNS == TRUE)
@@ -2567,14 +2541,11 @@ void SecureElement::nfaHciCallback(tNFA_HCI_EVT event,
             if (nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
               if (MposManager::getInstance().validateHCITransactionEventParams(
                       data, datalen) == NFA_STATUS_OK) {
-                sSecElem.notifyTransactionListenersOfAid(
-                    &eventData->rcvd_evt.p_evt_buf[2], aidlen, data, datalen,
-                    evtSrc);
+                HciEventManager::getInstance().nfaHciEvtHandler(event,
+                                                                eventData);
               }
             } else {
-              sSecElem.notifyTransactionListenersOfAid(
-                  &eventData->rcvd_evt.p_evt_buf[2], aidlen, data, datalen,
-                  evtSrc);
+              HciEventManager::getInstance().nfaHciEvtHandler(event, eventData);
             }
           } else {
             LOG(ERROR) << StringPrintf(
@@ -2584,7 +2555,28 @@ void SecureElement::nfaHciCallback(tNFA_HCI_EVT event,
       } else if (eventData->rcvd_evt.evt_code == NFA_HCI_EVT_CONNECTIVITY) {
         DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
             "%s: NFA_HCI_EVENT_RCVD_EVT; NFA_HCI_EVT_CONNECTIVITY", fn);
-
+        int evtSrc = 0xFF;
+        if (eventData->rcvd_evt.pipe == 0x0A)  // UICC
+        {
+          DLOG_IF(INFO, nfc_debug_enabled)
+              << StringPrintf("%s: NFA_HCI_EVENT_RCVD_EVT; source UICC", fn);
+          evtSrc = SecureElement::getInstance().getGenericEseId(
+              SecureElement::getInstance().EE_HANDLE_0xF4 &
+              ~NFA_HANDLE_GROUP_EE);                  // UICC
+        } else if (eventData->rcvd_evt.pipe == 0x16)  // ESE
+        {
+          DLOG_IF(INFO, nfc_debug_enabled)
+              << StringPrintf("%s: NFA_HCI_EVENT_RCVD_EVT; source ESE", fn);
+          evtSrc = SecureElement::getInstance().getGenericEseId(
+              EE_HANDLE_0xF3 & ~NFA_HANDLE_GROUP_EE);  // ESE
+        } else if (nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH &&
+                   (eventData->rcvd_evt.pipe == 0x23)) /*UICC2*/
+        {
+          DLOG_IF(INFO, nfc_debug_enabled)
+              << StringPrintf("%s: NFA_HCI_EVENT_RCVD_EVT; source UICC2", fn);
+          evtSrc = SecureElement::getInstance().getGenericEseId(
+              EE_HANDLE_0xF8 & ~NFA_HANDLE_GROUP_EE); /*UICC2*/
+        }
         //            int pipe = (eventData->rcvd_evt.pipe);
         //            /*commented to eliminate unused variable warning*/
         sSecElem.notifyConnectivityListeners(evtSrc);

@@ -51,11 +51,6 @@ public interface DeviceHost {
         public void onCardEmulationDeselected();
 
         /**
-         * Notifies transaction
-         */
-        public void onCardEmulationAidSelected(byte[] aid,byte[] data, int evtSrc);
-
-        /**
          * Notifies connectivity event from the SE
          */
         public void onConnectivityEvent(int evtSrc);
