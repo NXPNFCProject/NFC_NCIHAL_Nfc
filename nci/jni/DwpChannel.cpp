@@ -25,6 +25,8 @@
 using android::base::StringPrintf;
 static const int EE_ERROR_OPEN_FAIL = -1;
 
+extern bool nfc_debug_enabled;
+
 bool IsWiredMode_Enable();
 bool eSE_connected = false;
 bool dwpChannelForceClose = false;
