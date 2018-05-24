@@ -68,14 +68,8 @@
 #include "phNxpExtns.h"
 #include "rw_api.h"
 
-
-
-
 using android::base::StringPrintf;
 
-#if(NXP_EXTNS == TRUE)
-extern bool nfc_debug_enabled;
-#endif
 extern tNFA_DM_DISC_FREQ_CFG* p_nfa_dm_rf_disc_freq_cfg;  // defined in stack
 namespace android {
 extern bool gIsTagDeactivating;
@@ -121,6 +115,7 @@ IChannel_t Dwp;
 bool gActivated = false;
 SyncEvent gDeactivatedEvent;
 SyncEvent sNfaSetPowerSubState;
+#if(NXP_EXTNS == TRUE)
 /*Structure to store  discovery parameters*/
 typedef struct discovery_Parameters
 {
@@ -132,7 +127,7 @@ typedef struct discovery_Parameters
     bool restart;
 }discovery_Parameters_t;
 discovery_Parameters_t mDiscParams;
-
+#endif
 namespace android {
 jmethodID gCachedNfcManagerNotifyNdefMessageListeners;
 jmethodID gCachedNfcManagerNotifyTransactionListeners;
@@ -227,9 +222,9 @@ static int NFA_SCREEN_POLLING_TAG_MASK = 0x10;
 static bool gIsDtaEnabled = false;
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
-#if (NXP_EXTNS != TRUE)
+
 bool nfc_debug_enabled;
-#endif
+
 namespace {
 void initializeGlobalDebugEnabledFlag() {
   nfc_debug_enabled =

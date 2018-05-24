@@ -202,12 +202,10 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
               "Failed to configure UICC listen technologies.");
 
         // Set technology routes to UICC if it's there
-        nfaStat = NFA_EeSetDefaultTechRouting(eeHandle, seTechMask, seTechMask,
-                                              seTechMask
-#if(NXP_EXTNS == TRUE)
-                                              ,seTechMask, seTechMask, seTechMask
-#endif
-                                              );
+        nfaStat =
+            NFA_EeSetDefaultTechRouting(eeHandle, seTechMask, seTechMask, 0,
+                                        seTechMask, seTechMask, seTechMask);
+
         if (nfaStat != NFA_STATUS_OK)
           LOG(ERROR) << StringPrintf(
               "Failed to configure UICC technology routing.");
@@ -652,6 +650,7 @@ void RoutingManager::nfaEeCallback(tNFA_EE_EVT event,
   static const char fn[] = "RoutingManager::nfaEeCallback";
 
   RoutingManager& routingManager = RoutingManager::getInstance();
+  if (eventData) routingManager.mCbEventData = *eventData;
 #if (NXP_EXTNS == TRUE)
   SecureElement& se = SecureElement::getInstance();
   tNFA_EE_DISCOVER_REQ info = eventData->discover_req;

@@ -50,6 +50,7 @@
 #define AVAILABLE_PROTO_ENTRIES() 0x05
 #endif
 using namespace std;
+#if(NXP_EXTNS == TRUE)
 typedef struct
 {
     uint8_t protocol;
@@ -83,6 +84,7 @@ typedef struct
     tNFA_PROTOCOL_MASK      proto_screen_off_lock;  /* default routing - protocols screen_off_lock  */
 
 } LmrtEntry_t;
+#endif
 class RoutingManager {
  public:
   static RoutingManager& getInstance();
