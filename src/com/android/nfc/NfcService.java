@@ -2188,6 +2188,7 @@ final class NfcWiredSe extends ISecureElement.Stub  implements android.os.IHwBin
 
     int mNfcWiredSeHandle = 0;
     byte mOpenedchannelCount = 0;
+    byte[] atrBuffer = null;
 
     byte nfcWiredSeDeInit()
     {
@@ -2403,14 +2404,15 @@ final class NfcWiredSe extends ISecureElement.Stub  implements android.os.IHwBin
     @Override
     public java.util.ArrayList<Byte> getAtr()
     throws android.os.RemoteException {
-        Log.i(TAG, "Mr Robot Inside getAtr");
-        if (mNfcWiredSeHandle < 0) {
-            Log.e(TAG, "Mr Robot Secure Element handle NULL");
-            return null;
-        } else {
-            byte[] resp = mSecureElement.doGetAtr(mNfcWiredSeHandle);
-            return byteArrayToArrayList(resp);
-        }
+      Log.i(TAG, "Mr Robot Inside getAtr");
+      if(atrBuffer != null)
+      {
+        return byteArrayToArrayList(atrBuffer);
+      }
+      else
+      {
+        return null;
+      }
     }
 
     @Override
@@ -2436,6 +2438,7 @@ final class NfcWiredSe extends ISecureElement.Stub  implements android.os.IHwBin
             }
             else
             {
+                atrBuffer = mSecureElement.doGetAtr(mNfcWiredSeHandle);
                 mIsSecureElementOpened = true;
                 clientCallback.onStateChange(true);
                 mSEClientAccessState = true;
