@@ -1093,14 +1093,11 @@ public class NfcService implements DeviceHostListener {
         ServiceManager.addService(SERVICE_NAME, mNfcAdapter);
 
         ActivityManager activityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
-        if (activityManager.isLowRamDevice()) {
-            Log.d(TAG,"Low RAM device");
-            mNfcSeService = new NfcWiredSe();
-            try {
-                mNfcSeService.registerAsService("wiredse");
-            } catch (Exception e) {
-                Log.e(TAG, "WiredSe: Registration of service failed");
-            }
+        mNfcSeService = new NfcWiredSe();
+        try {
+            mNfcSeService.registerAsService("wiredse1");
+        } catch (Exception e) {
+            Log.e(TAG, "WiredSe: Registration of service failed");
         }
 
         new EnableDisableTask().execute(TASK_BOOT);  // do blocking boot tasks
