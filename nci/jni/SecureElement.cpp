@@ -1354,8 +1354,12 @@ bool SecureElement::connectEE() {
 
     // Construct the PIPE name based on the EE handle (e.g.
     // NFA_HCI_STATIC_PIPE_ID_F3 for UICC0).
-    snprintf(pipeConfName, sizeof(pipeConfName), "NFA_HCI_STATIC_PIPE_ID_%02X",
-             eeHandle & NFA_HANDLE_MASK);
+    if(eeHandle == 0x4C0) {
+        snprintf(pipeConfName, sizeof(pipeConfName), "OFF_HOST_ESE_PIPE_ID");
+      }
+    else {
+        snprintf(pipeConfName, sizeof(pipeConfName), "OFF_HOST_SIM_PIPE_ID");
+      }
 
     if (NfcConfig::hasKey(pipeConfName)) {
       mNewPipeId = NfcConfig::getUnsigned(pipeConfName);
