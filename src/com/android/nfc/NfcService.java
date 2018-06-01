@@ -148,13 +148,7 @@ import java.util.HashSet;
 import java.util.concurrent.ExecutionException;
 
 import com.nxp.nfc.INxpNfcAdapter;
-import com.nxp.intf.ILoaderService;
-import com.nxp.intf.IJcopService;
-import com.nxp.intf.INxpExtrasService;
-import com.nxp.intf.IeSEClientServicesAdapter;
 import com.nxp.nfc.INfcVzw;
-import com.nxp.nfc.INxpNfcAdapterExtras;
-import com.nxp.nfc.INxpNfcAccessExtras;
 import com.nxp.nfc.NxpConstants;
 import com.vzw.nfc.RouteEntry;
 import com.gsma.nfc.internal.NxpNfcController;
@@ -490,8 +484,6 @@ public class NfcService implements DeviceHostListener {
 
     private final BackupManager mBackupManager;
 
-    NfcAccessExtrasService mNfcAccessExtrasService;
-
     // fields below are used in multiple threads and protected by synchronized(this)
     final HashMap<Integer, Object> mObjectMap = new HashMap<Integer, Object>();
     // mSePackages holds packages that accessed the SE, but only for the owner user,
@@ -555,9 +547,6 @@ public class NfcService implements DeviceHostListener {
     NfcAdapterExtrasService mExtrasService;
 //    CardEmulationService mCardEmulationService;
     NxpNfcAdapterService mNxpNfcAdapter;
-    NxpNfcAdapterExtrasService mNxpExtrasService;
-    NxpExtrasService mNxpExtras;
-    EseClientServicesAdapter mEseClientServicesAdapter;
     boolean mIsDebugBuild;
     boolean mIsHceCapable;
     boolean mIsHceFCapable;
@@ -568,8 +557,6 @@ public class NfcService implements DeviceHostListener {
     public boolean mIsRouteForced;
     NfcSccAccessControl mNfcSccAccessControl;
     NfcSeAccessControl mNfcSeAccessControl;
-    NfcAlaService mAlaService;
-    NfcJcopService mJcopService;
     NfcDtaService mNfcDtaService;
     NfcVzwService mVzwService;
     private NfcDispatcher mNfcDispatcher;
@@ -924,7 +911,6 @@ public class NfcService implements DeviceHostListener {
         mNfcAdapter = new NfcAdapterService();
         mNxpNfcAdapter = new NxpNfcAdapterService();
         mExtrasService = new NfcAdapterExtrasService();
-        mNxpExtrasService = new NxpNfcAdapterExtrasService();
       //  mCardEmulationService = new CardEmulationService();
 
         Log.i(TAG, "Starting NFC service");
@@ -1064,7 +1050,6 @@ public class NfcService implements DeviceHostListener {
 
         IntentFilter lsFilter = new IntentFilter(NfcAdapter.ACTION_ADAPTER_STATE_CHANGED);
         //mContext.registerReceiver(mAlaReceiver, lsFilter);
-        mContext.registerReceiverAsUser(mAlaReceiver, UserHandle.ALL, lsFilter, null, null);
 
         IntentFilter policyFilter = new IntentFilter(DevicePolicyManager.ACTION_DEVICE_POLICY_MANAGER_STATE_CHANGED);
         mContext.registerReceiverAsUser(mPolicyReceiver, UserHandle.ALL, policyFilter, null, null);
@@ -1217,23 +1202,6 @@ public class NfcService implements DeviceHostListener {
             e.printStackTrace();
         }
         return null;
-    }
-
-    public static String getCallingAppPkg(Context context) {
-        String localTAG = "getCallingAppPkg";
-        ActivityManager am = (ActivityManager) context.getSystemService(context.ACTIVITY_SERVICE);
-
-        // get the info from the currently running task
-        List< ActivityManager.RunningTaskInfo > taskInfo = am.getRunningTasks(1);
-
-        Log.d("topActivity", "CURRENT Activity ::"
-                + taskInfo.get(0).topActivity.getClassName());
-        String s = taskInfo.get(0).topActivity.getClassName();
-
-        ComponentName componentInfo = taskInfo.get(0).topActivity;
-        componentInfo.getPackageName();
-        Log.i(localTAG,"componentInfo.getPackageName()" + componentInfo.getPackageName());
-        return componentInfo.getPackageName();
     }
 
     /**
@@ -1551,23 +1519,6 @@ public class NfcService implements DeviceHostListener {
             synchronized (NfcService.this) {
                 mObjectMap.clear();
                 mP2pLinkManager.enableDisable(mIsNdefPushEnabled, true);
-                if(mChipVer == PN80T_ID || mChipVer == PN67T_ID || mChipVer == PN66T_ID || mChipVer == PN65T_ID) {
-                    /*Added for Loader service recover during NFC Off/On*/
-                     NfcAlaService nas = new NfcAlaService();
-                     nas.LSReexecute();
-                     IntentFilter lsFilter = new IntentFilter(NfcAdapter.ACTION_ADAPTER_STATE_CHANGED);
-                     mContext.registerReceiverAsUser(mAlaReceiver, UserHandle.ALL, lsFilter, null, null);
-                } else {
-                    // do nothing
-                }
-            }
-
-            synchronized (NfcService.this) {
-                if(mDeviceHost.doCheckJcopDlAtBoot()) {
-                    /* start jcop download */
-                    Log.i(TAG, "Calling Jcop Download");
-                    jcopOsDownload();
-                }
             }
 
             synchronized (NfcService.this) {
@@ -2248,18 +2199,6 @@ public class NfcService implements DeviceHostListener {
 
     }
     final class NxpNfcAdapterService extends INxpNfcAdapter.Stub {
-        @Override
-        public INxpNfcAdapterExtras getNxpNfcAdapterExtrasInterface() throws RemoteException {
-            return mNxpExtrasService;
-        }
-        @Override
-        public IeSEClientServicesAdapter getNfcEseClientServicesAdapterInterface() {
-            if(mEseClientServicesAdapter == null){
-                mEseClientServicesAdapter = new EseClientServicesAdapter();
-            }
-            return mEseClientServicesAdapter;
-        }
-
         //GSMA Changes
         @Override
         public INxpNfcController getNxpNfcControllerInterface() {
@@ -2283,17 +2222,6 @@ public class NfcService implements DeviceHostListener {
         }
 
         @Override
-        public int[] getSecureElementList(String pkg) throws RemoteException {
-            NfcService.this.enforceNfcSeAdminPerm(pkg);
-
-            int[] list = null;
-            if (isNfcEnabled()) {
-                list = mDeviceHost.doGetSecureElementList();
-            }
-            return list;
-        }
-
-        @Override
         public int[] getActiveSecureElementList(String pkg) throws RemoteException {
 
             int[] list = null;
@@ -2306,157 +2234,7 @@ public class NfcService implements DeviceHostListener {
             return list;
         }
 
-        public INxpNfcAccessExtras getNxpNfcAccessExtrasInterface(String pkg) {
-            NfcService.this.enforceNfcSccAdminPerm(pkg);
-            Log.d(TAG, "getNxpNfcAccessExtrasInterface1");
-            if(mNfcAccessExtrasService == null){
-                mNfcAccessExtrasService = new NfcAccessExtrasService();
-            }
-            return mNfcAccessExtrasService;
-        }
-
         @Override
-        public int getSelectedSecureElement(String pkg) throws RemoteException {
-            NfcService.this.enforceNfcSeAdminPerm(pkg);
-            return mSelectedSeId;
-        }
-        @Override
-        public int deselectSecureElement(String pkg) throws RemoteException {
-            NfcService.this.enforceNfcSeAdminPerm(pkg);
-            if(mChipVer < PN553_ID) {
-                mSelectedSeId &= ~UICC2_ID_TYPE;
-            }
-            // Check if NFC is enabled
-            if (!isNfcEnabled()) {
-                return ErrorCodes.ERROR_NOT_INITIALIZED;
-            }
-
-            if (mSelectedSeId == 0) {
-                return ErrorCodes.ERROR_NO_SE_CONNECTED;
-            }
-
-            if (mSelectedSeId != ALL_SE_ID_TYPE/* SECURE_ELEMENT_ALL */) {
-                mDeviceHost.doDeselectSecureElement(mSelectedSeId);
-            } else {
-
-                /* Get SE List */
-                int[] seList = mDeviceHost.doGetSecureElementList();
-
-                for (int i = 0; i < seList.length; i++) {
-                    mDeviceHost.doDeselectSecureElement(seList[i]);
-                }
-
-             //   mDeviceHost.doSetMultiSEState(false);
-            }
-            mNfcSecureElementState = false;
-            mSelectedSeId = 0;
-
-            /* store preference */
-            mNxpPrefsEditor.putBoolean(PREF_SECURE_ELEMENT_ON, false);
-            mNxpPrefsEditor.putInt(PREF_SECURE_ELEMENT_ID, 0);
-            mNxpPrefsEditor.apply();
-
-            return ErrorCodes.SUCCESS;
-        }
-
-
-
-
-
-        @Override
-        public void storeSePreference(int seId) {
-            if(mChipVer < PN553_ID) {
-                seId &= ~UICC2_ID_TYPE;
-            }
-            NfcPermissions.enforceAdminPermissions(mContext);
-            /* store */
-            Log.d(TAG, "SE Preference stored");
-            mNxpPrefsEditor.putBoolean(PREF_SECURE_ELEMENT_ON, true);
-            mNxpPrefsEditor.putInt(PREF_SECURE_ELEMENT_ID, seId);
-            mNxpPrefsEditor.apply();
-        }
-
-        @Override
-        public int selectSecureElement(String pkg,int seId) throws RemoteException {
-            NfcService.this.enforceNfcSeAdminPerm(pkg);
-
-            if(mChipVer < PN553_ID) {
-                seId &= ~UICC2_ID_TYPE;
-            }
-
-            // Check if NFC is enabled
-            if (!isNfcEnabled()) {
-                return ErrorCodes.ERROR_NOT_INITIALIZED;
-            }
-
-            if (mSelectedSeId == seId) {
-                return ErrorCodes.ERROR_SE_ALREADY_SELECTED;
-            }
-
-            if (mSelectedSeId != 0) {
-                return ErrorCodes.ERROR_SE_CONNECTED;
-            }
-            /* Get SE List */
-            int[] seList = mDeviceHost.doGetSecureElementList();
-
-            mSelectedSeId = seId;
-            if (seId != ALL_SE_ID_TYPE/* SECURE_ELEMENT_ALL */) {
-                mDeviceHost.doSelectSecureElement(mSelectedSeId);
-            } else {
-                if (seList.length > 1) {
-                    for (int i = 0; i < seList.length; i++) {
-                        mDeviceHost.doSelectSecureElement(seList[i]);
-                        try{
-                            //Delay b/w two SE selection.
-                            Thread.sleep(200);
-                        } catch(Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            }
-            /* store */
-            mNxpPrefsEditor.putBoolean(PREF_SECURE_ELEMENT_ON, true);
-            mNxpPrefsEditor.putInt(PREF_SECURE_ELEMENT_ID, mSelectedSeId);
-            mNxpPrefsEditor.apply();
-
-            mNfcSecureElementState = true;
-
-            return ErrorCodes.SUCCESS;
-        }
-
-        public void MifareDesfireRouteSet(int routeLoc, boolean fullPower, boolean lowPower, boolean noPower)
-        throws RemoteException
-        {
-            if((mChipVer < PN553_ID) && (routeLoc == UICC2_ID_TYPE)) {
-                throw new RemoteException("UICC2 is not supported");
-            }
-            int protoRouteEntry = 0;
-                             /*UICC2 ID-4(fromApp) mapped to 3 (JNI)*/
-            protoRouteEntry=((routeLoc & 0x07) == 0x04) ? (0x03 << ROUTE_LOC_MASK) : /*UICC2*/
-                            ((routeLoc & 0x07) == 0x02) ? (0x02 << ROUTE_LOC_MASK) : /*UICC1*/
-                            ((routeLoc & 0x07) == 0x01) ? (0x01 << ROUTE_LOC_MASK) : /*eSE*/
-                            0x00;
-            protoRouteEntry |= ((fullPower ? (mDeviceHost.getDefaultDesfirePowerState() & 0x1F) | 0x01 : 0) | (lowPower ? 0x01 << 1 :0 ) | (noPower ? 0x01 << 2 :0));
-
-            if(routeLoc == 0x00)
-            {
-                /*
-                bit pos 1 = Power Off
-                bit pos 2 = Battery Off
-                bit pos 4 = Screen Off
-                Set these bits to 0 because in case routeLoc = HOST it can not work on POWER_OFF, BATTERY_OFF and SCREEN_OFF*/
-                protoRouteEntry &= 0xE9;
-            }
-
-            Log.i(TAG,"MifareDesfireRouteSet : " + protoRouteEntry);
-            mNxpPrefsEditor = mNxpPrefs.edit();
-            mNxpPrefsEditor.putInt("PREF_MIFARE_DESFIRE_PROTO_ROUTE_ID", protoRouteEntry);
-            mNxpPrefsEditor.commit();
-            Log.i(TAG,"MifareDesfireRouteSet function in");
-            commitRouting();
-        }
-
         public void DefaultRouteSet(int routeLoc, boolean fullPower, boolean lowPower, boolean noPower)
                 throws RemoteException
         {
@@ -2499,27 +2277,6 @@ public class NfcService implements DeviceHostListener {
             }
         }
 
-        public void MifareCLTRouteSet(int routeLoc, boolean fullPower, boolean lowPower, boolean noPower)
-        throws RemoteException
-        {
-            if((mChipVer < PN553_ID) && (routeLoc == UICC2_ID_TYPE)) {
-                throw new RemoteException("UICC2 is not supported");
-            }
-
-            int techRouteEntry=0;
-            techRouteEntry=((routeLoc & 0x07) == 0x04) ? (0x03 << ROUTE_LOC_MASK) : /*UICC2*/
-                           ((routeLoc & 0x07) == 0x02) ? (0x02 << ROUTE_LOC_MASK) : /*UICC1*/
-                           ((routeLoc & 0x07) == 0x01) ? (0x01 << ROUTE_LOC_MASK) : /*eSE*/
-                           0x00;
-            techRouteEntry |= ((fullPower ? (mDeviceHost.getDefaultMifareCLTPowerState() & 0x1F) | 0x01 : 0) | (lowPower ? 0x01 << 1 :0 ) | (noPower ? 0x01 << 2 :0));
-            techRouteEntry |= (TECH_TYPE_A << TECH_TYPE_MASK);
-
-            Log.i(TAG,"MifareCLTRouteSet : " + techRouteEntry);
-            mNxpPrefsEditor = mNxpPrefs.edit();
-            mNxpPrefsEditor.putInt("PREF_MIFARE_CLT_ROUTE_ID", techRouteEntry);
-            mNxpPrefsEditor.commit();
-            commitRouting();
-        }
         @Override
         public byte[] getFWVersion()
         {
@@ -2541,11 +2298,6 @@ public class NfcService implements DeviceHostListener {
         @Override
         public int updateServiceState(int userId , Map serviceState) {
             return mCardEmulationManager.updateServiceState(userId ,serviceState);
-        }
-
-        @Override
-        public int getSeInterface(int type) throws RemoteException {
-            return mDeviceHost.doGetSeInterface(type);
         }
 
         @Override
@@ -2670,6 +2422,48 @@ public class NfcService implements DeviceHostListener {
                 mDeviceHost.startPoll();
             }
         }
+
+        @Override
+        public int getSelectedUicc() throws RemoteException {
+            if (!isNfcEnabled()) {
+                throw new RemoteException("NFC is not enabled");
+            }
+            return mDeviceHost.doGetSelectedUicc();
+        }
+
+        @Override
+        public int selectUicc(int uiccSlot) throws RemoteException {
+            synchronized(NfcService.this) {
+                if (!isNfcEnabled()) {
+                    throw new RemoteException("NFC is not enabled");
+                }
+                int status =  mDeviceHost.doselectUicc(uiccSlot);
+                Log.i(TAG, "Update routing table");
+                /*In case of UICC connected and Enabled or Removed ,
+                 *Reconfigure the routing table based on current UICC parameters
+                 **/
+                if((status == 0x00)||(status == 0x01))
+                {
+                    mPrefsEditor.putInt(PREF_CUR_SELECTED_UICC_ID, uiccSlot);
+                    mPrefsEditor.apply();
+                    if((mAidRoutingManager != null) && (mCardEmulationManager != null))
+                    {
+                        Log.i(TAG, "Update routing table");
+                        mAidRoutingManager.onNfccRoutingTableCleared();
+                        mIsRoutingTableDirty = true;
+                        mCardEmulationManager.onNfcEnabled();
+                    }
+                    else
+                    {
+                        Log.i(TAG, "Update only Mifare and Desfire route");
+                        mIsRoutingTableDirty = true;
+                        applyRouting(false);
+                    }
+                }
+                return status;
+            }
+        }
+
     }
 
     final class ReaderModeDeathRecipient implements IBinder.DeathRecipient {
@@ -3012,586 +2806,6 @@ public class NfcService implements DeviceHostListener {
         }
     }
 
-    final class NfcJcopService extends IJcopService.Stub{
-
-        public int jcopOsDownload(String pkg) throws RemoteException
-        {
-            NfcService.this.enforceNfceeAdminPerm(pkg);
-            int status = ErrorCodes.SUCCESS;
-            boolean mode;
-            mode = mDeviceHost.doCheckJcopDlAtBoot();
-            if(mode == false) {
-                Log.i(TAG, "Starting getChipName");
-                int Ver = mDeviceHost.getChipVer();
-                if(Ver == PN80T_ID || Ver == PN67T_ID || Ver == PN66T_ID || Ver == PN65T_ID) {
-                    status = mDeviceHost.JCOSDownload();
-            }
-            else {
-                status = ErrorCodes.ERROR_NOT_SUPPORTED;
-                }
-            } else {
-                status = ErrorCodes.ERROR_NOT_SUPPORTED;
-            }
-            return status;
-        }
-    }
-    final class EseClientServicesAdapter extends IeSEClientServicesAdapter.Stub{
-        @Override
-        public IJcopService getJcopService() {
-            if(mJcopService == null){
-                mJcopService = new NfcJcopService();
-            }
-            return mJcopService;
-        }
-        @Override
-        public ILoaderService getLoaderService() {
-            if(mAlaService == null){
-                mAlaService = new NfcAlaService();
-            }
-            return mAlaService;
-        }
-        @Override
-        public INxpExtrasService getNxpExtrasService() {
-            if(mNxpExtras == null){
-                mNxpExtras = new NxpExtrasService();
-            }
-            return mNxpExtras;
-        }
-    };
-
-    final class NfcAlaService extends ILoaderService.Stub{
-        private boolean isRecovery = false;
-        private String appName = null;
-        private String srcIn = null;
-        private String respOut = null;
-        private String status = "false";
-
-        void NfcAlaService()
-        {
-            appName = null;
-            srcIn = null;
-            respOut = null;
-            status = "false";
-            isRecovery = false;
-        }
-        private synchronized void LSReexecute()
-        {
-             byte[] ret = {0x4E,0x02,(byte)0x69,(byte)0x87};
-             byte retry = LS_RETRY_CNT;
-             PrintWriter out= null;
-             BufferedReader br = null;
-             Log.i(TAG, "Enter: NfcAlaService constructor");
-             try{
-             File f = new File(LS_BACKUP_PATH);
-
-             Log.i(TAG, "Enter: NfcAlaService constructor file open");
-             /*If the file does not exists*/
-             if(!(f.isFile()))
-             {
-                 Log.i(TAG, "FileNotFound ls backup");
-                 this.status = null;
-             }
-             /*If the file exists*/
-             else
-             {
-                 Log.i(TAG, "File Found ls backup");
-                 br = new BufferedReader(new FileReader(LS_BACKUP_PATH));
-                 this.appName = br.readLine();
-                 this.srcIn = br.readLine();
-                 this.respOut = br.readLine();
-                 this.status = br.readLine();
-             }
-             }catch(FileNotFoundException f)
-             {
-                 Log.i(TAG, "FileNotFoundException Raised during LS Initialization");
-                 return;
-             }
-             catch(IOException ie)
-             {
-                 Log.i(TAG, "IOException Raised during LS Initialization ");
-                 return;
-             }
-             finally{
-                 try{
-                 if(br != null)
-                     br.close();
-                 /*If the file does not exist or empty file */
-                 if(this.status == null)
-                 {
-                     out = new PrintWriter(LS_BACKUP_PATH);
-                     this.status = "true";
-                     out.println("null");
-                     out.println("null");
-                     out.println("null");
-                     out.println("true");
-                 }
-                 }catch(IOException e)
-                 {
-                     Log.i(TAG, "IOException Raised during LS Initialization ");
-                     return;
-                 }
-                 finally{
-                     if(this.status == null)
-                         this.status = "true";
-                     if(out != null)
-                         out.close();
-                 }
-             }
-             if(this.status.equals("true"))
-             {
-                 Log.i(TAG, "LS Script execution completed");
-             }
-             else
-             {
-                 Log.i(TAG, "LS Script execution aborted or tear down happened");
-                 Log.i(TAG, "Input script path"+ this.srcIn);
-                 Log.i(TAG, "Output response path"+ this.respOut);
-                 Log.i(TAG, "Application name which invoked LS"+ this.appName);
-                 try{
-                 File fSrc = new File(this.srcIn);
-                 File fRsp = new File(this.respOut);
-                 if((fSrc.isFile() && fRsp.isFile()))
-                 {
-                     byte[] lsAppletStatus = {0x6F,0x00};
-                         /*Perform lsExecuteScript on tear down*/
-                         WatchDogThread watchDog =
-                               new WatchDogThread("Loader service ", INIT_WATCHDOG_LS_MS);
-                         watchDog.start();
-                         try {
-                             mRoutingWakeLock.acquire();
-                              try {
-                                  /*Reset retry counter*/
-                                  while((retry-- > 0))
-                                  {
-                                      Thread.sleep(1000);
-                                      lsAppletStatus = mNfcAla.doLsGetAppletStatus();
-                                      if((lsAppletStatus[0]==0x63) && (lsAppletStatus[1]==0x40))
-                                      {
-                                          Log.i(TAG, "Started LS recovery since previous session failed");
-                                          this.isRecovery = true;
-                                          ret = this.lsExecuteScript(this.srcIn, this.respOut);
-                                      }
-                                      else
-                                      {
-                                          break;
-                                      }
-                                  }
-                                  } finally {
-                                      this.isRecovery = false;
-                                      watchDog.cancel();
-                                      mRoutingWakeLock.release();
-                                }
-                              }
-                         catch(RemoteException ie)
-                         {
-                             Log.i(TAG, "LS recovery Exception: ");
-                         }
-                         lsAppletStatus = mNfcAla.doLsGetAppletStatus();
-                         if((lsAppletStatus[0]==(byte)0x90)&&(lsAppletStatus[1]==(byte)0x00))
-                         {
-                            out = new PrintWriter(LS_BACKUP_PATH);
-                            out.println("null");
-                            out.println("null");
-                            out.println("null");
-                            out.println("true");
-                            out.close();
-                            Log.i(TAG, "Commiting Default Values of Loader Service AS RETRY ENDS: ");
-                         }
-             }
-             else
-             {
-                 Log.i(TAG, "LS recovery not required");
-             }
-            }catch(InterruptedException re)
-            {
-                /*Retry failed todo*/
-                Log.i(TAG, "InterruptedException while LS recovery");
-            }catch(FileNotFoundException re)
-            {
-                /*Retry failed todo*/
-                Log.i(TAG, "FileNotFoundException while LS recovery");
-            }
-           }
-         }
-         private void updateLoaderService() {
-             byte[] ret = {0x4E,0x02,(byte)0x69,(byte)0x87};
-            Log.i(TAG, "Enter: NfcAlaService constructor file open");
-             File f = new File(LS_UPDATE_BACKUP_PATH);
-            /*If the file exists*/
-            if((f.isFile()))
-            {
-                Log.i(TAG, "File Found LS update required");
-                WatchDogThread watchDog =
-                       new WatchDogThread("LS Update Loader service ", (INIT_WATCHDOG_LS_MS+INIT_WATCHDOG_LS_MS));
-               watchDog.start();
-               try {
-                       try {
-                               /*Reset retry counter*/
-                               {
-                                       Log.i(TAG, "Started LS update");
-                                       ret = this.lsExecuteScript(LS_UPDATE_BACKUP_PATH, LS_UPDATE_BACKUP_OUT_PATH);
-                                       if(ret[2] == (byte)(0x90) && ret[3] == (byte)(0x00))
-                                       {
-                                               Log.i(TAG, " LS update successfully completed");
-                                               f.delete();
-                                       } else {
-                                               Log.i(TAG, " LS update failed");
-                                       }
-                               }
-                       } finally {
-                               watchDog.cancel();
-                       }
-               }
-               catch(RemoteException ie)
-               {
-                       Log.i(TAG, "LS update recovery Exception: ");
-               }
-            }
-            /*If the file does not exists*/
-            else
-            {
-                Log.i(TAG, "No LS update");
-            }
-       }
-
-        public byte[] lsExecuteScript( String srcIn, String respOut) throws RemoteException {
-            String pkg_name = getCallingAppPkg(mContext);
-            byte[] sha_data = CreateSHA(pkg_name, 2);
-            byte[] respSW = {0x4e,0x02,0x69,(byte)0x87};
-            InputStream is = null;
-            OutputStream os = null;
-            PrintWriter out = null;
-            FileReader fr = null;
-            byte[] buffer = new byte[1024];
-            int length = 0;
-            String srcBackup = srcIn+"mw";
-            String rspBackup = null;
-            File rspFile = null;
-            if(respOut != null)
-            rspBackup = respOut+"mw";
-            File srcFile = new File(srcBackup);
-            if(respOut != null)
-            rspFile = new File(rspBackup);
-
-
-            /*If Previously Tear down happened before completion of LS execution*/
-            if(this.isRecovery != false)
-            {
-                try{
-                fr =  new FileReader(LS_BACKUP_PATH);
-                if(fr != null)
-                {
-                    BufferedReader br = new BufferedReader(fr);
-                    if(br != null)
-                    {
-                        String appName = br.readLine();
-                        if(appName != null)
-                        {
-                            sha_data = CreateSHA(appName, 2);
-                            pkg_name = appName;
-                        }
-                    }
-                   }
-                }catch(IOException ioe)
-                {
-                    Log.i(TAG, "IOException thrown for opening ");
-                }
-                finally{
-                    try{
-                    if(fr != null)
-                        fr.close();
-                    }
-                    catch(IOException e)
-                    {
-                        Log.i(TAG, "IOException thrown for opening ");
-                    }
-                }
-            }
-            /*Store it in File*/
-            try{
-            out = new PrintWriter(LS_BACKUP_PATH);
-            out.println(pkg_name);
-            out.println(srcIn);
-            out.println(respOut);
-            out.println(false);
-            }catch(IOException fe)
-            {
-                Log.i(TAG, "IOException thrown during clearing ");
-            }
-            finally{
-                if(out != null)
-                out.close();
-            }
-            try{
-                /*To avoid rewriting of backup file*/
-                if(!(this.isRecovery)){
-                is = new FileInputStream(srcIn);
-                os = new FileOutputStream(srcBackup);
-
-                while((length = is.read(buffer))>0)
-                {
-                    os.write(buffer,0,length);
-                }
-                if(is != null)is.close();
-                if(os != null)os.close();}
-                Log.i(TAG, "sha_data len : " + sha_data.length);
-                Log.i(TAG, "Calling package APP Name is "+ pkg_name);
-                if(sha_data != null)
-                {
-                    respSW = mNfcAla.doLsExecuteScript(srcBackup, rspBackup, sha_data);
-                }
-                /*resp file is not null*/
-                if(respOut != null){
-                    is = new FileInputStream(rspBackup);
-                    os = new FileOutputStream(respOut);
-                    length = 0;
-                    while((length = is.read(buffer))>0)
-                    {
-                       os.write(buffer,0,length);
-                    }
-                }
-                if(is != null)is.close();
-                if(os != null)os.close();
-            }catch(IOException ioe)
-            {
-                Log.i(TAG, "LS File not found");
-            }catch(SecurityException se)
-            {
-                Log.i(TAG, "LS File access permission deneied");
-            }
-            finally{
-            byte[] status = mNfcAla.doLsGetStatus();
-            Log.i(TAG, "LS getStatus return SW1 : "+status[0]);
-            Log.i(TAG, "LS getStatus return  SW2: "+status[1]);
-            if((status[0]== (byte)0x90) && (status[1] == 0x00))
-            {
-                try{
-                out = new PrintWriter(LS_BACKUP_PATH);
-                out.println("null");
-                out.println("null");
-                out.println("null");
-                out.println("true");
-                }catch(IOException fe)
-                {
-                    Log.i(TAG, "FileNotFoundException thrown during clearing ");
-                }
-                finally
-                {
-                    if(out != null)
-                    out.close();
-                }
-                Log.i(TAG, "COMMITTING THE DEFAULT VALUES OF LS : ");
-                srcFile.delete();
-                rspFile.delete();
-            }
-            else
-            {
-                Log.i(TAG, "NOT COMMITTING THE DEFAULT VALUES OF LS : ");
-            }
-          }
-            return respSW;
-        }
-        public byte[] lsGetVersion()
-        {
-            byte[] respApdu = {0x4e,0x02,0x69,(byte)0x87};
-
-            respApdu = mNfcAla.doLsGetVersion();
-            return respApdu;
-        }
-        public int appletLoadApplet(String pkg, String choice) throws RemoteException {
-            String pkg_name = getCallingAppPkg(mContext);
-            int state = 0;
-            byte[] sha_data = CreateSHA(pkg_name, 1);
-            Log.i(TAG, "sha_data len : " + sha_data.length);
-
-            if(sha_data != null)
-            {
-                state = mNfcAla.doAppletLoadApplet(choice, sha_data);
-                return state;
-            }
-            else
-                return 0xFF;
-        }
-        public int getListofApplets(String pkg, String[] name) throws RemoteException {
-            int cnt = mNfcAla.GetAppletsList(name);
-            Log.i(TAG, "GetListofApplets count : " + cnt);
-            for(int i=0;i<cnt;i++) {
-                Log.i(TAG, "GetListofApplets " + name[i]);
-            }
-
-            return cnt;
-        }
-
-        //Just Stub for compilation.
-        public byte[] getKeyCertificate() throws RemoteException {
-            return null;
-        }
-
-    };
-
-    final class NxpExtrasService extends INxpExtrasService.Stub {
-        private Bundle writeNoException() {
-            Bundle p = new Bundle();
-            p.putInt("e", 0);
-            return p;
-        }
-
-        private Bundle writeEeException(int exceptionType, String message) {
-            Bundle p = new Bundle();
-            p.putInt("e", exceptionType);
-            p.putString("m", message);
-            return p;
-        }
-
-        @Override
-        public Bundle getCallingAppPkg(String pkg, IBinder b) throws RemoteException {
-            NfcService.this.enforceNfceeAdminPerm(pkg);
-            Bundle result;
-            String packageName;
-            try{
-                packageName = NfcService.this.getCallingAppPkg(mContext);
-                result = writeNoException();
-                result.putString("packageName", packageName);
-            } catch(Exception e){
-                result = writeEeException(EE_ERROR_IO, e.getMessage());
-            }
-            return result;
-        }
-
-        @Override
-        public boolean isEnabled()
-        {
-            try {
-                return (mState == NfcAdapter.STATE_ON);
-            } catch (Exception e) {
-                Log.d(TAG, "Exception " + e.getMessage());
-                return false;
-            }
-        }
-
-        @Override
-        public byte[] getSecureElementUid(String pkg) throws RemoteException {
-            NfcService.this.enforceNfceeAdminPerm(pkg);
-            return mDeviceHost.getSecureElementUid();
-        }
-
-        @Override
-        public Bundle open(String pkg, IBinder b) throws RemoteException {
-            NfcService.this.enforceNfceeAdminPerm(pkg);
-
-            Bundle result;
-            int handle = _open(b);
-            if (handle < 0) {
-                result = writeEeException(handle, "NFCEE open exception.");
-            } else {
-                result = writeNoException();
-            }
-            return result;
-        }
-
-        /**
-         * Opens a connection to the secure element.
-         *
-         * @return A handle with a value >= 0 in case of success, or a
-         *         negative value in case of failure.
-         */
-        private int _open(IBinder b) {
-            synchronized(NfcService.this) {
-                if (!isNfcEnabled()) {
-                    return EE_ERROR_NFC_DISABLED;
-                }
-                if (mInProvisionMode) {
-                    // Deny access to the NFCEE as long as the device is being setup
-                    return EE_ERROR_IO;
-                }
-
-                if (mOpenEe != null) {
-                    return EE_ERROR_ALREADY_OPEN;
-                }
-
-                boolean restorePolling = false;
-                if (mNfcPollingEnabled) {
-                    // Disable polling for tags/P2P when connecting to the SMX
-                    // on PN544-based devices. Whenever nfceeClose is called,
-                    // the polling configuration will be restored.
-                    mDeviceHost.disableDiscovery();
-                    mNfcPollingEnabled = false;
-                    restorePolling = true;
-                }
-                int handle = doOpenSecureElementConnection(0xF3);
-                if (handle < 0) {
-
-                    if (restorePolling) {
-                        mDeviceHost.enableDiscovery(mCurrentDiscoveryParameters, true);
-                        mNfcPollingEnabled = true;
-                    }
-                    return handle;
-                }
-
-                mOpenEe = new OpenSecureElement(getCallingPid(), handle, b);
-                try {
-                    b.linkToDeath(mOpenEe, 0);
-                } catch (RemoteException e) {
-                    mOpenEe.binderDied();
-                }
-
-                // Add the calling package to the list of packages that have accessed
-                // the secure element.
-                for (String packageName : mContext.getPackageManager().getPackagesForUid(getCallingUid())) {
-                    mSePackages.add(packageName);
-                }
-
-                return handle;
-           }
-        }
-
-        @Override
-        public Bundle close(String pkg, IBinder binder) throws RemoteException {
-            NfcService.this.enforceNfceeAdminPerm(pkg);
-
-            Bundle result;
-            try {
-                _nfcEeClose(getCallingPid(), binder);
-                result = writeNoException();
-            } catch (IOException e) {
-                result = writeEeException(EE_ERROR_IO, e.getMessage());
-            }
-            return result;
-        }
-        @Override
-        public Bundle transceive(String pkg, byte[] in) throws RemoteException {
-            NfcService.this.enforceNfceeAdminPerm(pkg);
-
-            Bundle result;
-            byte[] out;
-            try {
-                out = _transceive(in);
-                result = writeNoException();
-                result.putByteArray("out", out);
-            } catch (IOException e) {
-                result = writeEeException(EE_ERROR_IO, e.getMessage());
-            }
-            return result;
-        }
-
-        private byte[] _transceive(byte[] data) throws IOException {
-            synchronized(NfcService.this) {
-                if (!isNfcEnabled()) {
-                    throw new IOException("NFC is not enabled");
-                }
-                if (mOpenEe == null) {
-                    throw new IOException("NFC EE is not open");
-                }
-                if (getCallingPid() != mOpenEe.pid) {
-                    throw new SecurityException("Wrong PID");
-                }
-            }
-
-            return doTransceive(mOpenEe.handle, data);
-        }
-    };
-
-
     final class NfcDtaService extends INfcDta.Stub {
         public void enableDta() throws RemoteException {
             NfcPermissions.enforceAdminPermissions(mContext);
@@ -3736,19 +2950,6 @@ public class NfcService implements DeviceHostListener {
            return mSecureElement.doReset(mOpenEe.handle);
        }
     }
-
-    final class NfcAccessExtrasService extends INxpNfcAccessExtras.Stub {
-            public boolean checkChannelAdminAccess(String pkg) throws RemoteException {
-                boolean result = true;
-                try {
-                NfcService.this.enforceNfcSccAdminPerm(pkg);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    result = false;
-                }
-                return result;
-            }
-        };
 
     final class NfcAdapterExtrasService extends INfcAdapterExtras.Stub {
         ActivityManager activityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
@@ -3935,292 +3136,6 @@ public class NfcService implements DeviceHostListener {
             return mDeviceHost.getName();
         }
 
-    }
-    final class NxpNfcAdapterExtrasService extends INxpNfcAdapterExtras.Stub {
-        private Bundle writeNoException() {
-            Bundle p = new Bundle();
-            p.putInt("e", 0);
-            return p;
-        }
-
-        private Bundle writeEeException(int exceptionType, String message) {
-            Bundle p = new Bundle();
-            p.putInt("e", exceptionType);
-            p.putString("m", message);
-            return p;
-        }
-
-        @Override
-        public boolean eSEChipReset(String pkg) throws RemoteException {
-            NfcService.this.enforceNfceeAdminPerm(pkg);
-            Bundle result;
-            boolean stat = false;
-            try {
-                synchronized (NfcService.this) {
-                    if (!isNfcEnabledOrShuttingDown()) {
-                       throw new IOException("NFC adapter is disabled");
-                    }
-                    if (mOpenEe == null) {
-                       throw new IOException("NFC EE closed");
-                    }
-                    stat =  mSecureElement.doeSEChipReset();
-                }
-                result = writeNoException();
-            } catch (IOException e) {
-                result = writeEeException(EE_ERROR_IO, e.getMessage());
-            }
-            return stat;
-        }
-
-        @Override
-        public boolean reset(String pkg) throws RemoteException {
-            NfcService.this.enforceNfceeAdminPerm(pkg);
-            Bundle result;
-            boolean stat = false;
-            try {
-                stat = _nfcEeReset();
-                result = writeNoException();
-            } catch (IOException e) {
-                result = writeEeException(EE_ERROR_IO, e.getMessage());
-            }
-            Log.d(TAG,"reset" + stat);
-            return stat;
-        }
-
-        boolean _nfcEeReset() throws IOException {
-            synchronized (NfcService.this) {
-                if (!isNfcEnabledOrShuttingDown()) {
-                   throw new IOException("NFC adapter is disabled");
-                }
-                if (mOpenEe == null) {
-                   throw new IOException("NFC EE closed");
-                }
-                return mSecureElement.doReset(mOpenEe.handle);
-            }
-         }
-
-        @Override
-        public int getSecureElementTechList(String pkg) throws RemoteException {
-            NfcService.this.enforceNfceeAdminPerm(pkg);
-            return mDeviceHost.doGetSecureElementTechList();
-        }
-
-        @Override
-        public byte[] getSecureElementUid(String pkg) throws RemoteException {
-            NfcService.this.enforceNfceeAdminPerm(pkg);
-            return mDeviceHost.getSecureElementUid();
-        }
-
-        @Override
-        public void notifyCheckCertResult(String pkg, boolean success)
-                throws RemoteException {
-            if (DBG) Log.d(TAG, "notifyCheckCertResult() " + pkg + ", success=" + success);
-
-            NfcService.this.enforceNfceeAdminPerm(pkg);
-            mNxpNfcController.setResultForX509Certificates(success);
-        }
-
-        @Override
-        public void deliverSeIntent(String pkg, Intent seIntent)
-                throws RemoteException {
-            Log.d(TAG, "deliverSeIntent() " + pkg + " " + seIntent.getAction());
-            NfcService.this.enforceNfceeAdminPerm(pkg);
-            sendMessage(MSG_SE_DELIVER_INTENT, seIntent);
-        }
-
-        @Override
-        public byte[] doGetRouting() throws RemoteException {
-            return mDeviceHost.doGetRouting();
-        }
-
-        @Override
-        public Bundle getAtr(String pkg) throws RemoteException {
-            NfcService.this.enforceNfceeAdminPerm(pkg);
-
-            Bundle result;
-            byte[] out;
-            try {
-                out = _getAtr();
-                result = writeNoException();
-                result.putByteArray("out", out);
-            } catch (IOException e) {
-                result = writeEeException(EE_ERROR_IO, e.getMessage());
-            }
-            Log.d(TAG,"getAtr result " + result);
-            return result;
-        }
-
-        private byte[] _getAtr() throws IOException {
-            synchronized(NfcService.this) {
-                if (!isNfcEnabled()) {
-                    throw new IOException("NFC is not enabled");
-                }
-                if (mOpenEe == null) {
-                    throw new IOException("NFC EE is not open");
-                }
-                if (getCallingPid() != mOpenEe.pid) {
-                    throw new SecurityException("Wrong PID");
-                }
-            }
-            return mSecureElement.doGetAtr(mOpenEe.handle);
-        }
-        @Override
-        public int selectUicc(int uiccSlot) throws RemoteException {
-            synchronized(NfcService.this) {
-                if (!isNfcEnabled()) {
-                    throw new RemoteException("NFC is not enabled");
-                }
-                int status =  mDeviceHost.doselectUicc(uiccSlot);
-                Log.i(TAG, "Update routing table");
-                /*In case of UICC connected and Enabled or Removed ,
-                 *Reconfigure the routing table based on current UICC parameters
-                 **/
-                if((status == 0x00)||(status == 0x01))
-                {
-                    mPrefsEditor.putInt(PREF_CUR_SELECTED_UICC_ID, uiccSlot);
-                    mPrefsEditor.apply();
-                    if((mAidRoutingManager != null) && (mCardEmulationManager != null))
-                    {
-                        Log.i(TAG, "Update routing table");
-                        mAidRoutingManager.onNfccRoutingTableCleared();
-                        mIsRoutingTableDirty = true;
-                        mCardEmulationManager.onNfcEnabled();
-                    }
-                    else
-                    {
-                        Log.i(TAG, "Update only Mifare and Desfire route");
-                        mIsRoutingTableDirty = true;
-                        applyRouting(false);
-                    }
-                }
-                return status;
-            }
-        }
-
-        @Override
-        public int getSelectedUicc() throws RemoteException {
-            if (!isNfcEnabled()) {
-                throw new RemoteException("NFC is not enabled");
-            }
-            return mDeviceHost.doGetSelectedUicc();
-        }
-
-        @Override
-        public Bundle openuicc(String pkg, IBinder b) throws RemoteException {
-            NfcService.this.enforceNfceeAdminPerm(pkg);
-
-        Bundle result;
-        int handle = _openuicc(b);
-        if (handle < 0) {
-            result = writeEeException(handle, "NFCEE UICC open exception.");
-        } else {
-            result = writeNoException();
-        }
-        return result;
-    }
-
-    /**
-     * Opens a connection to the UICC element.
-     *
-     * @return A handle with a value >= 0 in case of success, or a
-     *         negative value in case of failure.
-     */
-    private int _openuicc(IBinder b) {
-        synchronized(NfcService.this) {
-            if (!isNfcEnabled()) {
-                return EE_ERROR_NFC_DISABLED;
-            }
-            if (mInProvisionMode) {
-                // Deny access to the NFCEE as long as the device is being setup
-                return EE_ERROR_IO;
-            }
-            if (mOpenEe != null) {
-                return EE_ERROR_ALREADY_OPEN;
-            }
-
-            boolean restorePolling = false;
-            if (mNfcPollingEnabled) {
-                // Disable polling for tags/P2P when connecting to the SMX
-                // on PN544-based devices. Whenever nfceeClose is called,
-                // the polling configuration will be restored.
-                mDeviceHost.disableDiscovery();
-                mNfcPollingEnabled = false;
-                restorePolling = true;
-            }
-
-            int handle = doOpenSecureElementConnection(0xF4);
-            if (handle < 0) {
-
-                if (restorePolling) {
-                    mDeviceHost.enableDiscovery(mCurrentDiscoveryParameters, true);
-                    mNfcPollingEnabled = true;
-                }
-                return handle;
-            }
-
-            mOpenEe = new OpenSecureElement(getCallingPid(), handle, b);
-            try {
-                b.linkToDeath(mOpenEe, 0);
-            } catch (RemoteException e) {
-                mOpenEe.binderDied();
-            }
-
-            // Add the calling package to the list of packages that have accessed
-            // the secure element.
-            for (String packageName : mContext.getPackageManager().getPackagesForUid(getCallingUid())) {
-                mSePackages.add(packageName);
-            }
-
-            return handle;
-       }
-    }
-
-    @Override
-    public Bundle closeuicc(String pkg, IBinder binder) throws RemoteException {
-        NfcService.this.enforceNfceeAdminPerm(pkg);
-
-        Bundle result;
-        try {
-            Log.w("Nxp", "Close UICC!");
-            _nfcEeClose(getCallingPid(), binder);
-            result = writeNoException();
-        } catch (IOException e) {
-            result = writeEeException(EE_ERROR_IO, e.getMessage());
-        }
-        return result;
-    }
-
-    @Override
-    public Bundle transceiveuicc(String pkg, byte[] in) throws RemoteException {
-        NfcService.this.enforceNfceeAdminPerm(pkg);
-
-        Bundle result;
-        byte[] out;
-        try {
-            out = _transceiveuicc(in);
-            result = writeNoException();
-            result.putByteArray("out", out);
-        } catch (IOException e) {
-            result = writeEeException(EE_ERROR_IO, e.getMessage());
-        }
-        return result;
-    }
-
-    private byte[] _transceiveuicc(byte[] data) throws IOException {
-        synchronized(NfcService.this) {
-            if (!isNfcEnabled()) {
-                throw new IOException("NFC is not enabled");
-            }
-            if (mOpenEe == null) {
-                throw new IOException("NFC EE is not open");
-            }
-            if (getCallingPid() != mOpenEe.pid) {
-                throw new SecurityException("Wrong PID");
-            }
-        }
-
-        return doTransceive(mOpenEe.handle, data);
-    }
     }
 
     final class NfcWiredSe extends ISecureElement.Stub {
@@ -6289,26 +5204,6 @@ public class NfcService implements DeviceHostListener {
                 }
             }
         }
-    };
-
-    final BroadcastReceiver mAlaReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if (NfcAdapter.ACTION_ADAPTER_STATE_CHANGED.equals(intent.getAction())) {
-                int state = intent.getIntExtra(NfcAdapter.EXTRA_ADAPTER_STATE,
-                        NfcAdapter.STATE_OFF);
-                if (state == NfcAdapter.STATE_ON) {
-                    Log.e(TAG, "Loader service update start from NFC_ON Broadcast");
-                    NfcAlaService nas = new NfcAlaService();
-                    int lsVersion = mNfcAla.doGetLSConfigVersion();
-
-                    if(lsVersion >= LOADER_SERVICE_VERSION_LOW_LIMIT &&
-                        lsVersion <= LOADER_SERVICE_VERSION_HIGH_LIMIT)
-                        nas.updateLoaderService();
-            }
-        }
-      }
     };
 
     private final BroadcastReceiver mPolicyReceiver = new BroadcastReceiver() {
