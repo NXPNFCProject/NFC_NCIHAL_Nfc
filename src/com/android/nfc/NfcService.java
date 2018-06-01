@@ -4111,6 +4111,11 @@ public class NfcService implements DeviceHostListener {
         Log.d(TAG, "etsiStopConfig : etsiResetReaderConfig");
         mDeviceHost.etsiResetReaderConfig();
 
+        Log.d(TAG, "etsiStopConfig : enable discovery");
+        NfcDiscoveryParameters params = computeDiscoveryParameters(mScreenState);
+        boolean shouldRestart = mCurrentDiscoveryParameters.shouldEnableDiscovery();
+        mDeviceHost.enableDiscovery(params, shouldRestart);
+
         Log.d(TAG, "etsiStopConfig : notifyEEReaderEvent");
         mDeviceHost.notifyEEReaderEvent(ETSI_READER_STOP);
 

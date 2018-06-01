@@ -37,12 +37,14 @@ HciEventManager& HciEventManager::getInstance() {
 
 void HciEventManager::initialize(nfc_jni_native_data* native) {
   mNativeData = native;
-  if (NfcConfig::hasKey(NAME_OFF_HOST_ESE_PIPE_ID)) {
+  sEsePipe = 0x16;//Static Conn pipe for eSE
+  sSimPipe = 0x0A;//Static Conn pipe for UICC
+  /*if (NfcConfig::hasKey(NAME_OFF_HOST_ESE_PIPE_ID)) {
     sEsePipe = NfcConfig::getUnsigned(NAME_OFF_HOST_ESE_PIPE_ID, 0x16);
   }
   if (NfcConfig::hasKey(NAME_OFF_HOST_SIM_PIPE_ID)) {
     sSimPipe = NfcConfig::getUnsigned(NAME_OFF_HOST_SIM_PIPE_ID, 0x0A);
-  }
+  }*/
 }
 
 void HciEventManager::notifyTransactionListenersOfAid(std::vector<uint8_t> aid,
