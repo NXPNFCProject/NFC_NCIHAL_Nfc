@@ -1870,22 +1870,28 @@ static void nfaConnectionCallback(uint8_t connEvent,
                                           jbyteArray data) {
     size_t bufLen = 0x00;
     uint8_t* buf = NULL;
+    tNFA_STATUS status;
     if (data != NULL) {
       ScopedByteArrayRO bytes(e, data);
       buf = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
       bufLen = bytes.size();
-    }
+
 #if (NXP_EXTNS == TRUE)
-    if (nfcFL.nfccFL._NXP_NFCC_EMPTY_DATA_PACKET) {
-      RoutingManager::getInstance().mNfcFRspTimer.kill();
-      if (bufLen == 0) {
-        gIsEmptyRspSentByHceFApk = true;
+      if (nfcFL.nfccFL._NXP_NFCC_EMPTY_DATA_PACKET) {
+        RoutingManager::getInstance().mNfcFRspTimer.kill();
+        if (bufLen == 0) {
+          gIsEmptyRspSentByHceFApk = true;
+        }
       }
-    }
 #endif
-    DLOG_IF(INFO, nfc_debug_enabled)
-        << StringPrintf("nfcManager_sendRawFrame(): bufLen:%lu", bufLen);
-    tNFA_STATUS status = NFA_SendRawFrame(buf, bufLen, 0);
+      DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("nfcManager_sendRawFrame(): bufLen:%lu", bufLen);
+      status = NFA_SendRawFrame(buf, bufLen, 0);
+    } else {
+      DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("data is NULL ..Returning..");
+      status = NFA_STATUS_FAILED;
+    }
     return (status == NFA_STATUS_OK);
   }
 
