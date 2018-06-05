@@ -314,6 +314,30 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
     SecureElement::getInstance().updateNfceeDiscoverInfo();
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
         "%s:gSeDiscoverycount=0x%d;", __func__, gSeDiscoverycount);
+
+    tNFA_TECHNOLOGY_MASK seTechMask = 0;
+    for (uint8_t i = 0; i < ActualNumEe; i++) {
+      if (mEeInfo[i].ee_handle != SecureElement::EE_HANDLE_0xF3) continue;
+      if (mEeInfo[i].la_protocol != 0)
+        seTechMask |= NFA_TECHNOLOGY_MASK_A;
+      if (mEeInfo[i].lb_protocol != 0)
+        seTechMask |= NFA_TECHNOLOGY_MASK_B;
+      if (mEeInfo[i].lf_protocol != 0)
+        seTechMask |= NFA_TECHNOLOGY_MASK_F;
+      break;
+    }
+
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s:seTechMask=0x%x;", __func__, seTechMask);
+    if (seTechMask) {
+      SyncEventGuard guard(SecureElement::getInstance().mEseListenEvent);
+      nfaStat = NFA_CeConfigureEseListenTech(SecureElement::EE_HANDLE_0xF3,
+                                             seTechMask);
+      if (nfaStat == NFA_STATUS_OK) {
+        SecureElement::getInstance().mEseListenEvent.wait(500);
+      } else
+        LOG(ERROR) << StringPrintf("fail to start ESE listen");
+    }
   }
   printMemberData();
 
