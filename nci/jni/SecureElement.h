@@ -147,7 +147,9 @@ void getEeHandleList(tNFA_HANDLE *list, uint8_t* count);
   uint8_t mNumEePresent;          // actual number of usable EE's
   uint8_t     mCreatedPipe;
   static uint8_t mStaticPipeProp;
-
+  Mutex           mMutex; // protects fields below
+  bool            mRfFieldIsOn; // last known RF field state
+  struct timespec mLastRfFieldToggle; // last time RF field went off
 
 
 struct mNfceeData
@@ -213,6 +215,7 @@ void notifyTransactionListenersOfAid(const uint8_t* aidBuffer,
 static void nfaHciCallback(tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* eventData);
 
 public:
+bool    mActivatedInListenMode; // whether we're activated in listen mode
 /*******************************************************************************
 **
 ** Function:        getInstance
@@ -370,6 +373,16 @@ tNFA_HANDLE getEseHandleFromGenericId(jint eseId);
 bool getEeInfo ();
 /*******************************************************************************
 **
+** Function:        isRfFieldOn
+**
+** Description:     Can be used to determine if the SE is in an RF field
+**
+** Returns:         True if the SE is activated in an RF field
+**
+*******************************************************************************/
+bool isRfFieldOn();
+/*******************************************************************************
+**
 ** Function:        findEeByHandle
 **
 ** Description:     Find information about an execution environment.
@@ -389,6 +402,16 @@ tNFA_EE_INFO *findEeByHandle (tNFA_HANDLE eeHandle);
 **
 *******************************************************************************/
 tNFA_HANDLE getActiveEeHandle (tNFA_HANDLE eeHandle);
+    /*******************************************************************************
+    **
+    ** Function         getLastRfFiledToggleTime
+    **
+    ** Description      Provides the last RF filed toggile timer
+    **
+    ** Returns          timespec
+    **
+    *******************************************************************************/
+    struct timespec getLastRfFiledToggleTime(void);
 /*******************************************************************************
 **
 ** Function         setNfccPwrConfig

@@ -70,6 +70,7 @@ public class NativeNfcManager implements DeviceHost {
 
     private int mIsoDepMaxTransceiveLength;
     private final DeviceHostListener mListener;
+    private final NativeNfcMposManager mMposMgr;
     private final Context mContext;
 
     private final Object mLock = new Object();
@@ -79,6 +80,7 @@ public class NativeNfcManager implements DeviceHost {
         mListener = listener;
         initializeNativeStructure();
         mContext = context;
+        mMposMgr = new NativeNfcMposManager();
     }
 
     public native boolean initializeNativeStructure();
@@ -244,6 +246,58 @@ public class NativeNfcManager implements DeviceHost {
 
     @Override
     public native void disableDiscovery();
+
+   @Override
+    public void setEtsiReaederState(int newState) {
+        mMposMgr.doSetEtsiReaederState(newState);
+    }
+
+    @Override
+    public int getEtsiReaederState() {
+        int state;
+        state = mMposMgr.doGetEtsiReaederState();
+        return state;
+    }
+
+    @Override
+    public void etsiReaderConfig(int eeHandle) {
+        mMposMgr.doEtsiReaderConfig(eeHandle);
+    }
+
+    @Override
+    public void notifyEEReaderEvent(int evt) {
+        mMposMgr.doNotifyEEReaderEvent(evt);
+    }
+
+    @Override
+    public void etsiInitConfig() {
+        mMposMgr.doEtsiInitConfig();
+    }
+
+    @Override
+    public void etsiResetReaderConfig() {
+        mMposMgr.doEtsiResetReaderConfig();
+    }
+
+    @Override
+    public void stopPoll(int mode) {
+        mMposMgr.doStopPoll(mode);
+    }
+
+    @Override
+    public void startPoll() {
+        mMposMgr.doStartPoll();
+    }
+
+    @Override
+    public int mposSetReaderMode(boolean on) {
+        return mMposMgr.doMposSetReaderMode(on);
+    }
+
+    @Override
+    public boolean mposGetReaderMode() {
+        return mMposMgr.doMposGetReaderMode();
+    }
 
     private native NativeLlcpConnectionlessSocket doCreateLlcpConnectionlessSocket(int nSap,
             String sn);
@@ -454,8 +508,33 @@ public class NativeNfcManager implements DeviceHost {
         mListener.onLlcpFirstPacketReceived(device);
     }
 
+    /* Reader over SWP listeners*/
+    private void notifyETSIReaderRequested(boolean istechA, boolean istechB) {
+        mListener.onETSIReaderRequestedEvent(istechA, istechB);
+    }
+
+    private void notifyETSIReaderRequestedFail(int FailureCause) {
+        mListener.onETSIReaderRequestedFail(FailureCause);
+    }
+
+    private void notifyonETSIReaderModeStartConfig(int eeHandle) {
+        mListener.onETSIReaderModeStartConfig(eeHandle);
+    }
+
+    private void notifyonETSIReaderModeStopConfig(int disc_ntf_timeout) {
+        mListener.onETSIReaderModeStopConfig(disc_ntf_timeout);
+    }
+
     private void notifyHostEmuActivated(int technology) {
         mListener.onHostCardEmulationActivated(technology);
+    }
+
+    private void notifyonETSIReaderModeSwpTimeout(int disc_ntf_timeout) {
+        mListener.onETSIReaderModeSwpTimeout(disc_ntf_timeout);
+    }
+
+    private void notifyonETSIReaderModeRestart() {
+        mListener.onETSIReaderModeRestart();
     }
 
     private void notifyHostEmuData(int technology, byte[] data) {

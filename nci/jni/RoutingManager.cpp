@@ -47,6 +47,7 @@
 #include "nfa_ee_api.h"
 #include "nfc_config.h"
 #if (NXP_EXTNS == TRUE)
+#include "MposManager.h"
 #include "SecureElement.h"
 #endif
 
@@ -741,6 +742,11 @@ void RoutingManager::nfaEeCallback(tNFA_EE_EVT event,
              sizeof(routingManager.mEeInfo));
       routingManager.mReceivedEeInfo = true;
       routingManager.mEeInfoEvent.notifyOne();
+#if (NXP_EXTNS == TRUE)
+      if(nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
+          MposManager::getInstance().hanldeEtsiReaderReqEvent(&info);
+      }
+#endif
     } break;
 
     case NFA_EE_NO_CB_ERR_EVT:

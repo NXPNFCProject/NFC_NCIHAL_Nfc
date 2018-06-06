@@ -65,6 +65,20 @@ public interface DeviceHost {
         public void onRemoteFieldActivated();
 
         public void onRemoteFieldDeactivated();
+        /**
+         * Notifies SWP Reader Events.
+         */
+        public void onETSIReaderRequestedEvent(boolean istechA, boolean istechB);
+
+        public void onETSIReaderRequestedFail(int FailCause);
+
+        public void onETSIReaderModeStartConfig(int eeHandle);
+
+        public void onETSIReaderModeStopConfig(int disc_ntf_timeout);
+
+        public void onETSIReaderModeSwpTimeout(int disc_ntf_timeout);
+
+        public void onETSIReaderModeRestart();
     }
 
     public interface TagEndpoint {
@@ -275,6 +289,26 @@ public interface DeviceHost {
     boolean disableScreenOffSuspend();
 
     public void doSetScreenState(int screen_state_mask);
+
+    void setEtsiReaederState(int newState);
+
+    int getEtsiReaederState();
+
+    void etsiReaderConfig(int eeHandle);
+
+    void etsiResetReaderConfig();
+
+    void notifyEEReaderEvent(int evt);
+
+    void etsiInitConfig();
+
+    void stopPoll(int mode);
+
+    void startPoll();
+
+    int mposSetReaderMode(boolean on);
+
+    boolean mposGetReaderMode();
 
     public int getNciVersion();
 

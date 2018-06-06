@@ -83,6 +83,8 @@ jint JNI_OnLoad(JavaVM* jvm, void*) {
 #if (NXP_EXTNS == TRUE)
   if (android::register_com_android_nfc_NativeNfcSecureElement (e) == -1)
     return JNI_ERR;
+  if (android::register_com_android_nfc_NativeNfcMposManager (e) == -1)
+           return JNI_ERR;
 #endif
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
   return JNI_VERSION_1_6;

@@ -32,7 +32,9 @@ using android::base::StringPrintf;
 
 SecureElement SecureElement::sSecElem;
 const char* SecureElement::APP_NAME = "nfc_jni";
+extern bool nfc_debug_enabled;
 
+#include "MposManager.h"
 namespace android
 {
 extern void startRfDiscovery (bool isStart);
@@ -52,11 +54,14 @@ SecureElement::SecureElement() :
     mNativeData(NULL),
     mbNewEE (true),
     mIsInit (false),
-    mNewSourceGate (0)
+    mNewSourceGate (0),
+    mRfFieldIsOn(false),
+    mActivatedInListenMode (false)
 {
     memset (&mEeInfo, 0, nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED *sizeof(tNFA_EE_INFO));
     memset (mAidForEmptySelect, 0, sizeof(mAidForEmptySelect));
     memset (&mHciCfg, 0, sizeof(mHciCfg));
+    memset (&mLastRfFieldToggle, 0, sizeof(mLastRfFieldToggle));
 }
 /*******************************************************************************
 **
@@ -182,7 +187,56 @@ jint SecureElement::getGenericEseId(tNFA_HANDLE handle) {
     LOG(INFO) << StringPrintf("%s: exit; ESE-Generic-ID = 0x%02X", fn, ret);
     return ret;
 }
+/*******************************************************************************
+**
+** Function         TimeDiff
+**
+** Description      Computes time difference in milliseconds.
+**
+** Returns          Time difference in milliseconds
+**
+*******************************************************************************/
+static uint32_t TimeDiff(timespec start, timespec end)
+{
+    end.tv_sec -= start.tv_sec;
+    end.tv_nsec -= start.tv_nsec;
 
+    if (end.tv_nsec < 0) {
+        end.tv_nsec += 10e8;
+        end.tv_sec -=1;
+    }
+
+    return (end.tv_sec * 1000) + (end.tv_nsec / 10e5);
+}
+/*******************************************************************************
+**
+** Function:        isRfFieldOn
+**
+** Description:     Can be used to determine if the SE is in an RF field
+**
+** Returns:         True if the SE is activated in an RF field
+**
+*******************************************************************************/
+bool SecureElement::isRfFieldOn() {
+    AutoMutex mutex(mMutex);
+    if (mRfFieldIsOn) {
+        return true;
+    }
+    struct timespec now;
+    int ret = clock_gettime(CLOCK_MONOTONIC, &now);
+    if (ret == -1) {
+        DLOG_IF(ERROR, nfc_debug_enabled)
+                << StringPrintf("isRfFieldOn(): clock_gettime failed");
+        return false;
+    }
+    if (TimeDiff(mLastRfFieldToggle, now) < 50) {
+        // If it was less than 50ms ago that RF field
+        // was turned off, still return ON.
+        return true;
+    } else {
+        return false;
+    }
+}
 /*******************************************************************************
 **
 ** Function:        notifyTransactionListenersOfAid
@@ -609,7 +663,16 @@ void SecureElement::nfaHciCallback(tNFA_HCI_EVT event,
                         dataStartPosition = 2+aidlen+5;
                     }
                     data  = &eventData->rcvd_evt.p_evt_buf[dataStartPosition];
-                    sSecElem.notifyTransactionListenersOfAid (&eventData->rcvd_evt.p_evt_buf[2],aidlen,data,datalen,evtSrc);
+
+                    if (nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE)
+                    {
+                        if(MposManager::getInstance().validateHCITransactionEventParams(data, datalen) == NFA_STATUS_OK)
+                            sSecElem.notifyTransactionListenersOfAid(&eventData->rcvd_evt.p_evt_buf[2],
+                                                                     aidlen, data, datalen, evtSrc);
+                    }
+                    else
+                        sSecElem.notifyTransactionListenersOfAid(&eventData->rcvd_evt.p_evt_buf[2],
+                                                                 aidlen, data, datalen, evtSrc);
                 }
                 else
                 {
@@ -1358,6 +1421,19 @@ uint8_t SecureElement::getGateAndPipeList()
             }
         }
         return mNewPipeId;
+}
+/*******************************************************************************
+**
+** Function         getLastRfFiledToggleTime
+**
+** Description      Provides the last RF filed toggile timer
+**
+** Returns          timespec
+**
+*******************************************************************************/
+struct timespec SecureElement::getLastRfFiledToggleTime(void)
+{
+  return mLastRfFieldToggle;
 }
 /*******************************************************************************
 **

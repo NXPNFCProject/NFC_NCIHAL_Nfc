@@ -57,5 +57,6 @@ extern const char* gNativeNfcTagClassName;
 extern const char* gNativeNfcManagerClassName;
 #if (NXP_EXTNS == TRUE)
 extern const char* gNativeNfcSecureElementClassName;
+extern const char* gNativeNfcMposManagerClassName;
 #endif
 }  // namespace android
