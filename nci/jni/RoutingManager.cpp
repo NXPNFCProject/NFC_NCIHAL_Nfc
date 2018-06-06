@@ -196,12 +196,6 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
     mFwdFuntnEnable = 0x07;
   }
 
-  if (NfcConfig::hasKey(NAME_NXP_DEFAULT_SE)) {
-    mDefaultEe = NfcConfig::getUnsigned(NAME_NXP_DEFAULT_SE);
-  } else {
-    mDefaultEe = 0x02;
-  }
-
   if (NfcConfig::hasKey(NAME_NXP_ENABLE_ADD_AID)) {
     mAddAid = NfcConfig::getUnsigned(NAME_NXP_ENABLE_ADD_AID);
   } else {
@@ -231,8 +225,8 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
     }
   }
   if (nfcFL.eseFL._ESE_FELICA_CLT) {
-    if (GetNxpNumValue(NAME_DEFAULT_FELICA_CLT_ROUTE, (void*)&num,
-                       sizeof(num))) {
+    if (NfcConfig::hasKey(NAME_DEFAULT_NFCF_ROUTE)) {
+      num = NfcConfig::getUnsigned(NAME_DEFAULT_NFCF_ROUTE);
       if (nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC &&
           nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH) {
         if ((num == 0x02 || num == 0x03) && sCurrentSelectedUICCSlot) {
@@ -1339,8 +1333,8 @@ void RoutingManager::compileTechEntries(void) {
 
   /*Update Tech F Route in case there is switch between uicc's*/
   if (nfcFL.eseFL._ESE_FELICA_CLT) {
-    if (GetNxpNumValue(NAME_DEFAULT_FELICA_CLT_ROUTE, (void*)&num,
-                       sizeof(num))) {
+    if (NfcConfig::hasKey(NAME_DEFAULT_NFCF_ROUTE)) {
+      num = NfcConfig::getUnsigned(NAME_DEFAULT_NFCF_ROUTE);
       if (nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC &&
           nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH) {
         if ((num == 0x02 || num == 0x03) && sCurrentSelectedUICCSlot) {

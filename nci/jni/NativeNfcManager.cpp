@@ -4067,9 +4067,10 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
   static jint nfcManager_getDefaultDesfireRoute(JNIEnv * e, jobject o) {
     unsigned long num = 0;
 #if (NXP_EXTNS == TRUE)
-    GetNxpNumValue(NAME_DEFAULT_DESFIRE_ROUTE, (void*)&num, sizeof(num));
+    if (NfcConfig::hasKey(NAME_DEFAULT_ROUTE))
+      num = NfcConfig::getUnsigned(NAME_DEFAULT_ROUTE);
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-        "%s: enter; NAME_DEFAULT_DESFIRE_ROUTE = %02lx", __func__, num);
+        "%s: enter; NAME_DEFAULT_ROUTE = %02lx", __func__, num);
 #endif
     return num;
   }
@@ -4088,7 +4089,8 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
   static jint nfcManager_getDefaultMifareCLTRoute(JNIEnv * e, jobject o) {
     unsigned long num = 0;
 #if (NXP_EXTNS == TRUE)
-    GetNxpNumValue(NAME_DEFAULT_MIFARE_CLT_ROUTE, &num, sizeof(num));
+    if (NfcConfig::hasKey(NAME_DEFAULT_OFFHOST_ROUTE))
+      num = NfcConfig::getUnsigned(NAME_DEFAULT_OFFHOST_ROUTE);
 #endif
     return num;
   }
@@ -4123,7 +4125,7 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
   *******************************************************************************/
   static jint nfcManager_getDefaultDesfirePowerState(JNIEnv * e, jobject o) {
     unsigned long num = 0;
-    GetNxpNumValue(NAME_DEFAULT_DESFIRE_PWR_STATE, &num, sizeof(num));
+    GetNxpNumValue(NAME_DEFAULT_ROUTE_PWR_STATE, &num, sizeof(num));
     return num;
   }
   /*******************************************************************************
@@ -4139,7 +4141,7 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
   *******************************************************************************/
   static jint nfcManager_getDefaultMifareCLTPowerState(JNIEnv * e, jobject o) {
     unsigned long num = 0;
-    GetNxpNumValue(NAME_DEFAULT_MIFARE_CLT_PWR_STATE, &num, sizeof(num));
+    GetNxpNumValue(NAME_DEFAULT_OFFHOST_PWR_STATE, &num, sizeof(num));
     return num;
   }
   /*******************************************************************************
