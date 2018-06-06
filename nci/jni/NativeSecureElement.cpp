@@ -49,6 +49,10 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection (JNIEnv*, jobje
 {
     LOG(INFO) << StringPrintf("%s: Enter; ", __func__);
     bool stat = false;
+    const int32_t recvBufferMaxSize = 1024;
+    uint8_t recvBuffer [recvBufferMaxSize];
+    int32_t recvBufferActualSize = 0;
+
     jint secElemHandle = EE_ERROR_INIT;
     NFCSTATUS status = NFCSTATUS_FAILED;
     SecureElement &se = SecureElement::getInstance();
@@ -79,6 +83,10 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection (JNIEnv*, jobje
     {
        stat = se.SecEle_Modeset(se.NFCEE_ENABLE);
        se.mIsWiredModeOpen = true;
+       if(stat == true)
+       {
+         stat = se.apduGateReset(secElemHandle, recvBuffer, &recvBufferActualSize);
+       }
     }
 
     /* if code fails to connect to the secure element, and nothing is active, then
@@ -211,7 +219,7 @@ static jbyteArray nativeNfcSecureElement_doGetAtr (JNIEnv* e, jobject, jint hand
     LOG(INFO) << StringPrintf("%s: enter; handle=0x%04x", __func__, handle);
     SecureElement &se = SecureElement::getInstance();
 
-    stat = se.getAtr(handle, recvBuffer, &recvBufferActualSize);
+    stat = se.getAtr(recvBuffer, &recvBufferActualSize);
 
     //copy results back to java
     jbyteArray result = e->NewByteArray(recvBufferActualSize);

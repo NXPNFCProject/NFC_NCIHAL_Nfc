@@ -144,6 +144,8 @@ void getEeHandleList(tNFA_HANDLE *list, uint8_t* count);
   uint8_t mVerInfo [3];
   uint8_t mAtrInfo[40];
   uint8_t mResponseData [MAX_RESPONSE_SIZE];
+  uint8_t mAtrRespData [EVT_ABORT_MAX_RSP_LEN];
+  uint8_t mAtrRespLen;
   uint8_t mNumEePresent;          // actual number of usable EE's
   uint8_t     mCreatedPipe;
   static uint8_t mStaticPipeProp;
@@ -312,7 +314,19 @@ tNFA_STATUS SecElem_EeModeSet(uint16_t handle, uint8_t mode);
 ** Returns:         Returns True if success
 **
 *******************************************************************************/
-bool getAtr(jint seID, uint8_t* recvBuffer, int32_t *recvBufferSize);
+bool apduGateReset(jint seID, uint8_t* recvBuffer, int32_t *recvBufferSize);
+
+/*******************************************************************************
+**
+** Function:        getAtrData
+**
+** Description:     Return stored GetAtr response
+**
+** Returns:         Returns True if success
+**
+*******************************************************************************/
+bool getAtr(uint8_t* recvBuffer, int32_t *recvBufferSize);
+
 /*******************************************************************************
  **
  ** Function:       SecElem_EeModeSet

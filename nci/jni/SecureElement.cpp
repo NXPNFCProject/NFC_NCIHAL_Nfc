@@ -1073,7 +1073,7 @@ void SecureElement::notifyModeSet (tNFA_HANDLE eeHandle, bool success, tNFA_EE_S
 ** Returns:         Returns True if success
 **
 *******************************************************************************/
-bool SecureElement::getAtr(jint seID, uint8_t* recvBuffer, int32_t *recvBufferSize)
+bool SecureElement::apduGateReset(jint seID, uint8_t* recvBuffer, int32_t *recvBufferSize)
 {
     static const char fn[] = "SecureElement::getAtr";
     tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
@@ -1098,12 +1098,41 @@ bool SecureElement::getAtr(jint seID, uint8_t* recvBuffer, int32_t *recvBufferSi
             else
             {
                 *recvBufferSize = mAtrInfolen;
+                mAtrRespLen = mAtrInfolen;
                 memcpy(recvBuffer, mAtrInfo, mAtrInfolen);
+                memset(mAtrRespData, 0, EVT_ABORT_MAX_RSP_LEN);
+                memcpy(mAtrRespData, mAtrInfo, mAtrInfolen);
             }
     }
 
     return (nfaStat == NFA_STATUS_OK)?true:false;
 }
+
+/*******************************************************************************
+**
+** Function:        getAtrData
+**
+** Description:     Stored GetAtr response
+**
+** Returns:         Returns True if success
+**
+*******************************************************************************/
+bool SecureElement::getAtr(uint8_t* recvBuffer, int32_t *recvBufferSize)
+{
+    static const char fn[] = "SecureElement::getAtrData";
+    tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
+
+    LOG(INFO) << StringPrintf("%s: enter;", fn);
+
+    if(nfcFL.nfcNxpEse && mAtrRespLen != 0) {
+      *recvBufferSize = mAtrRespLen;
+      memcpy(recvBuffer, mAtrRespData, mAtrRespLen);
+      nfaStat = NFA_STATUS_OK;
+    }
+
+    return (nfaStat == NFA_STATUS_OK)?true:false;
+}
+
 /*******************************************************************************
 **
 ** Function:        SecEle_Modeset
