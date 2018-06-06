@@ -208,7 +208,9 @@ static void nfaDeviceManagementCallback(uint8_t event,
                                         tNFA_DM_CBACK_DATA* eventData);
 static bool isPeerToPeer(tNFA_ACTIVATED& activated);
 static bool isListenMode(tNFA_ACTIVATED& activated);
+#if (NXP_EXTNS==FALSE)
 static void enableDisableLptd(bool enable);
+#endif
 static tNFA_STATUS stopPolling_rfDiscoveryDisabled();
 static tNFA_STATUS startPolling_rfDiscoveryDisabled(
     tNFA_TECHNOLOGY_MASK tech_mask);
@@ -1386,7 +1388,9 @@ static void nfcManager_enableDiscovery(JNIEnv* e, jobject o,
   // Check polling configuration
   if (tech_mask != 0) {
     stopPolling_rfDiscoveryDisabled();
+#if (NXP_EXTNS==FALSE)
     enableDisableLptd(enable_lptd);
+#endif
     startPolling_rfDiscoveryDisabled(tech_mask);
 
     // Start P2P listening if tag polling was enabled
@@ -1495,7 +1499,7 @@ void nfcManager_disableDiscovery(JNIEnv* e, jobject o) {
 TheEnd:
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
 }
-
+#if (NXP_EXTNS==FALSE)
 void enableDisableLptd(bool enable) {
   // This method is *NOT* thread-safe. Right now
   // it is only called from the same thread so it's
@@ -1541,7 +1545,7 @@ void enableDisableLptd(bool enable) {
                                __func__);
   return;
 }
-
+#endif
 /*******************************************************************************
 **
 ** Function:        nfcManager_doCreateLlcpServiceSocket
@@ -2449,11 +2453,12 @@ bool isDiscoveryStarted() { return sRfEnabled; }
 **
 *******************************************************************************/
 void doStartupConfig() {
-  struct nfc_jni_native_data* nat = getNative(0, 0);
+#if (NXP_EXTNS == FALSE)
+ struct nfc_jni_native_data* nat = getNative(0, 0);
   tNFA_STATUS stat = NFA_STATUS_FAILED;
 
-  // If polling for Active mode, set the ordering so that we choose Active over
-  // Passive mode first.
+   //If polling for Active mode, set the ordering so that we choose Active over
+   //Passive mode first.
   if (nat && (nat->tech_mask &
               (NFA_TECHNOLOGY_MASK_A_ACTIVE | NFA_TECHNOLOGY_MASK_F_ACTIVE))) {
     uint8_t act_mode_order_param[] = {0x01};
@@ -2462,7 +2467,7 @@ void doStartupConfig() {
                          &act_mode_order_param[0]);
     if (stat == NFA_STATUS_OK) sNfaSetConfigEvent.wait();
   }
-
+#endif
   // configure RF polling frequency for each technology
   static tNFA_DM_DISC_FREQ_CFG nfa_dm_disc_freq_cfg;
   // values in the polling_frequency[] map to members of nfa_dm_disc_freq_cfg
