@@ -2189,6 +2189,7 @@ final class NfcWiredSe extends ISecureElement.Stub  implements android.os.IHwBin
     int mNfcWiredSeHandle = 0;
     byte mOpenedchannelCount = 0;
     byte[] atrBuffer = null;
+    boolean[] openedChannelState = {false, false, false, false};
 
     byte nfcWiredSeDeInit()
     {
@@ -2196,6 +2197,9 @@ final class NfcWiredSe extends ISecureElement.Stub  implements android.os.IHwBin
         mNfcWiredSeHandle = 0;
         mIsSecureElementOpened = false;
         mOpenedchannelCount = 0;
+        for (byte xx = 0; xx < MAX_LOGICAL_CHANNELS; xx++) {
+          openedChannelState[xx] = false;
+        }
         return SecureElementStatus.SUCCESS;
     }
 
@@ -2229,7 +2233,11 @@ final class NfcWiredSe extends ISecureElement.Stub  implements android.os.IHwBin
         if ((channelNumber == DEFAULT_BASIC_CHANNEL) ||
                 (status == SecureElementStatus.SUCCESS)) {
             Log.i(TAG, "Mr Robot Inside closeChannel(): Returned SUCCESS Channel count = "+mOpenedchannelCount);
-            mOpenedchannelCount--;
+            if(openedChannelState[channelNumber])
+            {
+              openedChannelState[channelNumber] = false;
+              mOpenedchannelCount--;
+            }
             /*If there are no channels remaining close secureElement*/
             if (mOpenedchannelCount == 0) {
                 Log.e(TAG, "Mr Robot Inside closeChannel: Channel count zero");
@@ -2273,7 +2281,12 @@ final class NfcWiredSe extends ISecureElement.Stub  implements android.os.IHwBin
         byte status = 0;
         if(resp[resp.length - 2] == (byte)0x90 &&
                 resp[resp.length - 1] == (byte)0x00) {
-            mOpenedchannelCount++;
+
+            if(!openedChannelState[0])
+            {
+              openedChannelState[0] = true;
+              mOpenedchannelCount++;
+            }
             status = SecureElementStatus.SUCCESS;
         } else if(resp[resp.length - 2] == (byte)0x6A &&
                 resp[resp.length - 1] == (byte)0x82) {
@@ -2332,6 +2345,7 @@ final class NfcWiredSe extends ISecureElement.Stub  implements android.os.IHwBin
         } else if(respManageChannel[respManageChannel.length - 2] == (byte)0x90 &&
                 respManageChannel[respManageChannel.length - 1] ==(byte) 0x00) {
             logicalChannelResp.channelNumber = respManageChannel[0];
+            openedChannelState[logicalChannelResp.channelNumber] = true;
             //TODO Channel count maintenance (SecureElement.cpp)
             Log.i(TAG, "Mr Robot Inside openLogicalChannel(): Channel Opened");
             mOpenedchannelCount++;
