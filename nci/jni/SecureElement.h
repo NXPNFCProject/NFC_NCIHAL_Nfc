@@ -112,7 +112,7 @@ void getEeHandleList(tNFA_HANDLE *list, uint8_t* count);
   bool    mGetAtrRspwait;
   bool    mAbortEventWaitOk;
   bool    mIsPiping;              //is a pipe connected to the controller?
-
+  uint8_t mTransceiveStatus;      /* type to indicate the status of transceive sent*/
   tNFA_HCI_GET_GATE_PIPE_LIST mHciCfg;
   tNFA_STATUS mCommandStatus;     //completion status of the last command
   tNFA_HANDLE     mNfaHciHandle;          //NFA handle to NFA's HCI component

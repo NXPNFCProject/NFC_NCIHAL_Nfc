@@ -514,6 +514,7 @@ void SecureElement::nfaHciCallback(tNFA_HCI_EVT event,
                     sSecElem.mTransceiveWaitOk = true;
                     sSecElem.mActualResponseSize = (eventData->apdu_rcvd.apdu_len > MAX_RESPONSE_SIZE) ? MAX_RESPONSE_SIZE : eventData->apdu_rcvd.apdu_len;
                 }
+            sSecElem.mTransceiveStatus = eventData->apdu_rcvd.status;
             sSecElem.mTransceiveEvent.notifyOne ();
             break;
         }
@@ -707,6 +708,7 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
     tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
     bool isSuccess = false;
     mTransceiveWaitOk = false;
+    mTransceiveStatus = NFA_STATUS_OK;
     uint8_t newSelectCmd[NCI_MAX_AID_LEN + 10];
     isSuccess                  = false;
 
@@ -766,6 +768,15 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
         {
             LOG(ERROR) << StringPrintf("%s: fail send data; error=0x%X", fn, nfaStat);
             goto TheEnd;
+        }
+    }
+    if(mTransceiveStatus == NFA_STATUS_HCI_WTX_TIMEOUT)
+    {
+        SyncEventGuard guard (mAbortEvent);
+        nfaStat = NFA_HciAbortApdu(mNfaHciHandle,mActiveEeHandle,4000);
+        if (nfaStat == NFA_STATUS_OK)
+        {
+            mAbortEvent.wait();
         }
     }
         if (mActualResponseSize > recvBufferMaxSize)
