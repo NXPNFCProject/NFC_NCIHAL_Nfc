@@ -27,7 +27,8 @@ class HciEventManager {
  private:
   nfc_jni_native_data* mNativeData;
   static uint8_t sEsePipe;
-  static uint8_t sSimPipe;
+  static uint8_t sSim1Pipe;
+  static uint8_t sSim2Pipe;
 
   HciEventManager();
   std::vector<uint8_t> getDataFromBerTlv(std::vector<uint8_t> berTlv);

@@ -182,7 +182,6 @@ SecureElement::SecureElement()
       mIsIntfRstEnabled(false),
 #endif
       mDestinationGate(4),  // loopback gate
-      mNfaHciHandle(NFA_HANDLE_INVALID),
       mNativeData(NULL),
       mIsInit(false),
       mActualNumEe(0),
@@ -362,6 +361,7 @@ bool SecureElement::initialize(nfc_jni_native_data* native) {
       mIsIntfRstEnabled = (retValue == 0x00) ? false : true;
     }
   }
+
 #endif
   mActiveEeHandle = NFA_HANDLE_INVALID;
   mNfaHciHandle = NFA_HANDLE_INVALID;
@@ -4900,4 +4900,24 @@ tNFA_STATUS SecureElement::setNfccPwrConfig(uint8_t value) {
   return mPwrCmdstatus;
 }
 
+/*******************************************************************************
+**
+** Function         getGateAndPipeInfo
+**
+** Description      Retrieves already configured gate and pipe ID
+**
+** Returns          Gate and pipe id list
+**
+*******************************************************************************/
+tNFA_HCI_GET_GATE_PIPE_LIST SecureElement::getGateAndPipeInfo() {
+  tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
+  SyncEventGuard guard(SecureElement::getInstance().mPipeListEvent);
+  SecureElement::getInstance().mNfaHciHandle = NFA_HANDLE_GROUP_HCI;
+  nfaStat =
+      NFA_HciGetGateAndPipeList(SecureElement::getInstance().mNfaHciHandle);
+  if (nfaStat == NFA_STATUS_OK) {
+    SecureElement::getInstance().mPipeListEvent.wait();
+  }
+  return mHciCfg;
+}
 #endif

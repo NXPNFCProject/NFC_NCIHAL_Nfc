@@ -179,6 +179,8 @@ class SecureElement {
   SyncEvent mAbortEvent;
   SyncEvent mPipeStatusCheckEvent;
   bool mAbortEventWaitOk;
+  SyncEvent mPipeListEvent;
+  tNFA_HANDLE mNfaHciHandle;  // NFA handle to NFA's HCI component
   uint8_t pipeStatus;
   bool IsCmdsentOnOpenDwpSession;
   bool enableDwp(void);
@@ -757,6 +759,7 @@ class SecureElement {
       mPwrCmdstatus;  // completion status of the power link control command
   uint8_t mNfccPowerMode;
   tNFA_STATUS setNfccPwrConfig(uint8_t value);
+  tNFA_HCI_GET_GATE_PIPE_LIST getGateAndPipeInfo();
   bool mIsIntfRstEnabled;
   void setCLState(bool mState);
   void setDwpTranseiveState(bool state, tNFCC_EVTS_NTF action);
@@ -798,7 +801,6 @@ class SecureElement {
   static const char* APP_NAME;
 
   uint8_t mDestinationGate;   // destination gate of the UICC
-  tNFA_HANDLE mNfaHciHandle;  // NFA handle to NFA's HCI component
   nfc_jni_native_data* mNativeData;
   bool mIsInit;           // whether EE is initialized
   uint8_t mActualNumEe;   // actual number of EE's reported by the stack
@@ -824,7 +826,6 @@ class SecureElement {
   SyncEvent mHciRegisterEvent;
   SyncEvent mResetEvent;
   SyncEvent mResetOngoingEvent;
-  SyncEvent mPipeListEvent;
 #if (NXP_EXTNS != TRUE)
   SyncEvent mCreatePipeEvent;
   SyncEvent mPipeOpenedEvent;
