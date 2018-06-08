@@ -153,15 +153,15 @@ const char* gNativeNfcManagerClassName =
 #if (NXP_EXTNS == TRUE)
 const char* gNativeNfcSecureElementClassName =
     "com/android/nfc/dhimpl/NativeNfcSecureElement";
-jmethodID  gCachedNfcManagerNotifySeListenActivated;
-jmethodID  gCachedNfcManagerNotifySeListenDeactivated;
-jmethodID  gCachedNfcManagerNotifySeInitialized;
 const char*             gNativeNfcMposManagerClassName       =
     "com/android/nfc/dhimpl/NativeNfcMposManager";
     void                    enableLastRfDiscovery();
     void                    storeLastDiscoveryParams(int technologies_mask, bool enable_lptd,
                                 bool reader_mode,  bool enable_host_routing ,bool enable_p2p, bool restart);
 #endif
+jmethodID  gCachedNfcManagerNotifySeListenActivated;
+jmethodID  gCachedNfcManagerNotifySeListenDeactivated;
+jmethodID  gCachedNfcManagerNotifySeInitialized;
 void doStartupConfig();
 void startStopPolling(bool isStartPolling);
 void startRfDiscovery(bool isStart);

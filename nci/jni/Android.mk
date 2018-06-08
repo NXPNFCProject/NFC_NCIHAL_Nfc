@@ -24,6 +24,8 @@ LOCAL_CFLAGS += -DNXP_EXTNS=FALSE
 SRC_FILES_LIST := $(filter-out $(LOCAL_PATH)/NativeSecureElement.cpp, $(SRC_FILES_LIST))
 SRC_FILES_LIST := $(filter-out $(LOCAL_PATH)/SecureElement.cpp, $(SRC_FILES_LIST))
 SRC_FILES_LIST := $(filter-out $(LOCAL_PATH)/DwpChannel.cpp, $(SRC_FILES_LIST))
+SRC_FILES_LIST := $(filter-out $(LOCAL_PATH)/MposManager.cpp, $(SRC_FILES_LIST))
+SRC_FILES_LIST := $(filter-out $(LOCAL_PATH)/NativeMposManager.cpp, $(SRC_FILES_LIST))
 LOCAL_SRC_FILES := $(SRC_FILES_LIST:$(LOCAL_PATH)/%=%)
 endif
 
