@@ -121,15 +121,6 @@ RoutingManager::RoutingManager()
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:enter", fn);
   mDefaultOffHostRoute =
       NfcConfig::getUnsigned(NAME_DEFAULT_OFFHOST_ROUTE, 0x00);
-  // Get the "default" route
-  mDefaultEe = NfcConfig::getUnsigned(NAME_DEFAULT_ROUTE, 0x00);
-    if (nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH) {
-      if ((mDefaultEe == 0xF4 || mDefaultEe == 0xF8) && sCurrentSelectedUICCSlot) {
-        mDefaultEe = (sCurrentSelectedUICCSlot != 0x02) ? 0xF4 : 0xF8;
-      }
-      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-          "%s: DEFAULT_ISODEP_ROUTE mDefaultEe : %d", fn, mDefaultEe);
-    }
 
   mAidMatchingMode =
       NfcConfig::getUnsigned(NAME_AID_MATCHING_MODE, AID_MATCHING_EXACT_ONLY);
@@ -195,6 +186,13 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
   } else {
     mFwdFuntnEnable = 0x07;
   }
+
+  if (NfcConfig::hasKey(NAME_NXP_DEFAULT_SE)) {
+    mDefaultEe = NfcConfig::getUnsigned(NAME_NXP_DEFAULT_SE);
+  } else {
+    mDefaultEe = 0x02;
+  }
+
 
   if (NfcConfig::hasKey(NAME_NXP_ENABLE_ADD_AID)) {
     mAddAid = NfcConfig::getUnsigned(NAME_NXP_ENABLE_ADD_AID);

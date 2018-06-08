@@ -275,18 +275,7 @@ bool SecureElement::initialize(nfc_jni_native_data* native) {
 
   mStaticPipeProp =
       nfcFL.nfccFL._GEMALTO_SE_SUPPORT ? STATIC_PIPE_0x19 : STATIC_PIPE_0x70;
-  // active SE, if not set active all SEs, use the first one.
-   if (NfcConfig::hasKey(NAME_DEFAULT_OFFHOST_ROUTE)) {
-    mActiveSeOverride = NfcConfig::getUnsigned(NAME_DEFAULT_OFFHOST_ROUTE);
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-        "%s: DEFAULT_OFFHOST_ROUTE override: 0x%X", fn, mActiveSeOverride);
-  }
 
-  if (NfcConfig::hasKey(NAME_DEFAULT_OFFHOST_ROUTE)) {
-    mActiveSeOverride = NfcConfig::getUnsigned(NAME_DEFAULT_OFFHOST_ROUTE);
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-        "%s: DEFAULT_OFFHOST_ROUTE override: 0x%X", fn, mActiveSeOverride);
-  }
 #if (NXP_EXTNS == TRUE)
   if (nfcFL.nfcNxpEse) {
     if (nfcFL.eseFL._NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION) {
