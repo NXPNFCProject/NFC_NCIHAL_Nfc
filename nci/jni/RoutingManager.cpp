@@ -1072,6 +1072,8 @@ void RoutingManager::extractRouteLocationAndPowerStates(const int defaultRoute, 
     LOG(INFO) << StringPrintf("%s:mDefaultIso7816SeID:0x%2X mDefaultIso7816Powerstate:0x%X", fn, mDefaultIso7816SeID, mDefaultIso7816Powerstate);
     mDefaultIsoDepSeID = ((((protoRoute & 0x0300) >> 8) == 0x00) ? ROUTE_LOC_HOST_ID : ((((protoRoute & 0x0300)>>8 )== 0x01 ) ? ROUTE_LOC_ESE_ID : getUiccRouteLocId(protoRoute)));
     mDefaultIsoDepPowerstate = protoRoute & 0x3F;
+    if(mDefaultIsoDepSeID == ROUTE_LOC_HOST_ID)
+      mDefaultIsoDepPowerstate = mDefaultIsoDepPowerstate & HOST_SCREEN_STATE_MASK;
     LOG(INFO) << StringPrintf("%s:mDefaultIsoDepSeID:0x%2X mDefaultIsoDepPowerstate:0x%2X", fn, mDefaultIsoDepSeID,mDefaultIsoDepPowerstate);
     mDefaultTechASeID = ((((techRoute & 0x0300) >> 8) == 0x00) ? ROUTE_LOC_HOST_ID : ((((techRoute & 0x0300)>>8 )== 0x01 ) ? ROUTE_LOC_ESE_ID : getUiccRouteLocId(techRoute)));
     mDefaultTechAPowerstate = techRoute & 0x3F;
