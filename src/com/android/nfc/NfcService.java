@@ -180,6 +180,7 @@ public class NfcService implements DeviceHostListener {
     static final int MSG_ETSI_STOP_CONFIG = 49;
     static final int MSG_ETSI_SWP_TIMEOUT = 50;
     static final int MSG_SWP_READER_RESTART = 58;
+    static final int MSG_SE_INIT = 59;
     // Update stats every 4 hours
     static final long STATS_UPDATE_INTERVAL_MS = 4 * 60 * 60 * 1000;
     static final long MAX_POLLING_PAUSE_TIMEOUT = 40000;
@@ -450,6 +451,11 @@ public class NfcService implements DeviceHostListener {
     @Override
     public void onRemoteFieldDeactivated() {
         sendMessage(NfcService.MSG_RF_FIELD_DEACTIVATED, null);
+    }
+
+    @Override
+    public void onSeInitialized() {
+        sendMessage(NfcService.MSG_SE_INIT, null);
     }
 
     @Override
@@ -866,7 +872,6 @@ public class NfcService implements DeviceHostListener {
                     if((mSecureElementclientCallback != null) &&
                             (mSEClientAccessState != true)) {
                         mSecureElementclientCallback.onStateChange(true);
-                        mSEClientAccessState = true;
                         Log.i(TAG, "mSecureElementclientCallback.onStateChange true ###################");
                     } else {
                         Log.e(TAG, "mSecureElementclientCallback is NULL");
@@ -2259,12 +2264,14 @@ final class NfcWiredSe extends ISecureElement.Stub  implements android.os.IHwBin
             if (mNfcWiredSeHandle < 0) {
                 Log.i(TAG, "open secure element fails.");
                 mNfcWiredSeHandle = 0;
+                mSEClientAccessState = false;
                 _hidl_cb.onValues(null, SecureElementStatus.IOERROR);
                 return;
             }
             else
             {
                 mIsSecureElementOpened = true;
+                mSEClientAccessState = true;
                 Log.i(TAG, "Mr Robot Completed Opening Secure Element");
             }
         }
@@ -2317,12 +2324,14 @@ final class NfcWiredSe extends ISecureElement.Stub  implements android.os.IHwBin
             if (mNfcWiredSeHandle < 0) {
                 Log.i(TAG, "open secure element fails.");
                 mNfcWiredSeHandle = 0;
+                mSEClientAccessState = false;
                 _hidl_cb.onValues(null, SecureElementStatus.IOERROR);
                 return;
             }
             else
             {
                 mIsSecureElementOpened = true;
+                mSEClientAccessState = true;
                 Log.i(TAG, "Mr Robot Completed Opening Secure Element");
             }
         }
@@ -3361,7 +3370,25 @@ final class NfcWiredSe extends ISecureElement.Stub  implements android.os.IHwBin
                     byte[][] data = (byte[][]) msg.obj;
                     sendOffHostTransactionEvent(data[0], data[1], data[2]);
                     break;
+                case MSG_SE_INIT:
+                    Log.e(TAG, "msg se init");
 
+                    try {
+                    if (mIsHceCapable) {
+                        // Generate the initial card emulation routing table
+                        computeRoutingParameters();
+                    }
+                        if((mSecureElementclientCallback != null) &&
+                            (mSEClientAccessState != true)) {
+                        mSecureElementclientCallback.onStateChange(true);
+                        Log.i(TAG, "mSecureElementclientCallback.onStateChange true ###################");
+                    }
+
+                    } catch (Exception e) {
+                        Log.e(TAG, "mSecureElementclientCallback.onStateChange");
+                    }
+
+                    break;
                 default:
                     Log.e(TAG, "Unknown message received");
                     break;

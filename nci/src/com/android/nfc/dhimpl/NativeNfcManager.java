@@ -493,6 +493,10 @@ public class NativeNfcManager implements DeviceHost {
     private void notifySeListenDeactivated() {
         mListener.onSeListenDeactivated();
     }
+
+    private void notifySeInitialized() {
+        mListener.onSeInitialized();
+    }
     /**
      * Notifies P2P Device detected, to activate LLCP link
      */

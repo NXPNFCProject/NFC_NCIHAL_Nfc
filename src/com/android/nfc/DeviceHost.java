@@ -58,6 +58,8 @@ public interface DeviceHost {
          * Notifies that the SE has been deactivated
          */
         public void onSeListenDeactivated();
+
+        public void onSeInitialized();
         /**
          * Notifies P2P Device detected, to activate LLCP link
          */

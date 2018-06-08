@@ -657,6 +657,10 @@ void SecureElement::nfaHciCallback(tNFA_HCI_EVT event,
                 }
             }
         }
+        else if(eventData->rcvd_evt.evt_code == NFA_HCI_EVT_INIT_COMPLETED) {
+            LOG(INFO) << StringPrintf("%s: NFA_HCI_EVT_INIT_COMPLETED; received", fn);
+            SecureElement::getInstance().notifySeInitialized();
+        }
         else if (eventData->rcvd_evt.evt_code == NFA_HCI_EVT_CONNECTIVITY)
         {
             LOG(INFO) << StringPrintf("%s: NFA_HCI_EVENT_RCVD_EVT; NFA_HCI_EVT_CONNECTIVITY", fn);
@@ -684,6 +688,24 @@ void SecureElement::nfaHciCallback(tNFA_HCI_EVT event,
     }
 }
 
+bool SecureElement::notifySeInitialized() {
+    JNIEnv* e = NULL;
+    static const char fn [] = "SecureElement::notifySeInitialized";
+    ScopedAttach attach(mNativeData->vm, &e);
+    if (e == NULL)
+    {
+        DLOG_IF(ERROR, nfc_debug_enabled)
+            << StringPrintf("%s: jni env is null", fn);
+        return false;
+    }
+    if(mNativeData == NULL)
+    {
+        return false;
+    }
+    e->CallVoidMethod (mNativeData->manager, android::gCachedNfcManagerNotifySeInitialized);
+    CHECK(!e->ExceptionCheck());
+    return true;
+}
 /*******************************************************************************
 **
 ** Function:        transceive
@@ -1094,10 +1116,9 @@ bool SecureElement::apduGateReset(jint seID, uint8_t* recvBuffer, int32_t *recvB
     if(nfcFL.nfcNxpEse) {
             /*ETSI 12 Gate Info ATR */
             mAbortEventWaitOk = false;
-            uint8_t mAtrInfo1[EVT_ABORT_MAX_RSP_LEN]={0};
-            uint8_t atr_len = EVT_ABORT_MAX_RSP_LEN;
             SyncEventGuard guard (mAbortEvent);
-            nfaStat = NFA_HciSendEvent(mNfaHciHandle, mNewPipeId, EVT_ABORT, 0, NULL, atr_len, mAtrInfo1, timeoutMillisec);
+            nfaStat = NFA_HciAbortApdu(mNfaHciHandle,mActiveEeHandle,timeoutMillisec);
+            if (nfaStat == NFA_STATUS_OK)
             {
                 mAbortEvent.wait();
             }

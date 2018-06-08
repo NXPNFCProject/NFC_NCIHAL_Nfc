@@ -65,11 +65,6 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection (JNIEnv*, jobje
            then turn on the sec elem */
     stat = se.activate(SecureElement::ESE_ID); // It is to get the current activated handle.
 
-    if (stat)
-    {
-        secElemHandle = se.mActiveEeHandle;
-    }
-
     if((stat) && (nfcFL.eseFL._NCI_NFCEE_PWR_LINK_CMD))
     {
        status = se.setNfccPwrConfig(se.POWER_ALWAYS_ON|se.COMM_LINK_ACTIVE);
@@ -85,7 +80,11 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection (JNIEnv*, jobje
        se.mIsWiredModeOpen = true;
        if(stat == true)
        {
-         stat = se.apduGateReset(secElemHandle, recvBuffer, &recvBufferActualSize);
+         stat = se.apduGateReset(se.mActiveEeHandle, recvBuffer, &recvBufferActualSize);
+        if (stat)
+        {
+            secElemHandle = se.mActiveEeHandle;
+        }
        }
     }
 

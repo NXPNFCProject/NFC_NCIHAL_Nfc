@@ -188,6 +188,10 @@ static int decodeBerTlvLength(uint8_t* data, int index, int data_length);
 
 /*******************************************************************************
 **
+
+bool notifySeInitialized();
+/*******************************************************************************
+**
 ** Function:        nfaHciCallback
 **
 ** Description:     Receive HCI-related events from stack.
