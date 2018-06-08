@@ -154,6 +154,7 @@ public class AidRoutingManager {
         return mRoutingTableChanged;
     }
     void clearNfcRoutingTableLocked() {
+        /*
         for (Map.Entry<String, Integer> aidEntry : mRouteForAid.entrySet())  {
             String aid = aidEntry.getKey();
             if (aid.endsWith("*")) {
@@ -186,7 +187,7 @@ public class AidRoutingManager {
             }
             NfcService.getInstance().unrouteAids(aid);
         }
-
+        */
         NfcService.getInstance().clearRouting();
         mRouteForAid.clear();
         mPowerForAid.clear();
@@ -260,7 +261,6 @@ public class AidRoutingManager {
                 return false;
             }
 
-            mRoutingTableChanged = true;
             // Otherwise, update internal structures and commit new routing
             clearNfcRoutingTableLocked();
             mRouteForAid = routeForAid;
@@ -299,7 +299,7 @@ public class AidRoutingManager {
                                 AidElement elem = aidMap.get(defaultRouteAid);
                                 elem.setRouteLocation(mDefaultRoute);
                                 routeCache.put(defaultRouteAid, elem);
-                                NfcService.getInstance().routeAids(defaultRouteAid, mDefaultRoute, mPowerForAid.get(defaultRouteAid),infoForAid.get(defaultRouteAid));
+                                //NfcService.getInstance().routeAids(defaultRouteAid, mDefaultRoute, mPowerForAid.get(defaultRouteAid),infoForAid.get(defaultRouteAid));
                             }
                         }
                     }
@@ -322,8 +322,8 @@ public class AidRoutingManager {
                                 AidElement elem = aidMap.get(aid);
                                 elem.setAid(aid.substring(0,aid.length() - 1));
                                 routeCache.put(aid, elem);
-                                NfcService.getInstance().routeAids(aid.substring(0,
-                                                aid.length() - 1), route, mPowerForAid.get(aid),infoForAid.get(aid));
+                                //NfcService.getInstance().routeAids(aid.substring(0,
+                                                //aid.length() - 1), route, mPowerForAid.get(aid),infoForAid.get(aid));
                             } else if (mAidMatchingSupport == AID_MATCHING_EXACT_OR_PREFIX
                               || mAidMatchingSupport == AID_MATCHING_EXACT_OR_SUBSET_OR_PREFIX) {
                                 Log.d(TAG, "Routing AID in AID_MATCHING_EXACT_OR_PREFIX");
@@ -331,7 +331,7 @@ public class AidRoutingManager {
                                         + Integer.toString(route));
                                 AidElement elem = aidMap.get(aid);
                                 routeCache.put(aid, elem);
-                                NfcService.getInstance().routeAids(aid, route, (mPowerForAid.get(aid)),infoForAid.get(aid));
+                                //NfcService.getInstance().routeAids(aid, route, (mPowerForAid.get(aid)),infoForAid.get(aid));
                             }
                         } else if (aid.endsWith("#")) {
                             if (mAidMatchingSupport == AID_MATCHING_EXACT_ONLY) {
@@ -346,14 +346,14 @@ public class AidRoutingManager {
                                         + Integer.toString(route));
                                 AidElement elem = aidMap.get(aid);
                                 routeCache.put(aid, elem);
-                                NfcService.getInstance().routeAids(aid, route, (mPowerForAid.get(aid)),infoForAid.get(aid));
+                                //NfcService.getInstance().routeAids(aid, route, (mPowerForAid.get(aid)),infoForAid.get(aid));
                             }
                         } else {
                             if (DBG) Log.d(TAG, "Routing exact AID " + aid + " to route "
                                     + Integer.toString(route));
                             AidElement elem = aidMap.get(aid);
                             routeCache.put(aid, elem);
-                            NfcService.getInstance().routeAids(aid, route, mPowerForAid.get(aid),infoForAid.get(aid));
+                            //NfcService.getInstance().routeAids(aid, route, mPowerForAid.get(aid),infoForAid.get(aid));
                         }
                     }
                 }
@@ -390,6 +390,7 @@ public class AidRoutingManager {
         }
         // And finally commit the routing and update the status of commit for each service
         if(aidRouteResolved == true) {
+            mRoutingTableChanged = true;
             commit(routeCache);
             NfcService.getInstance().updateStatusOfServices(true);
             mLastCommitStatus = true;
