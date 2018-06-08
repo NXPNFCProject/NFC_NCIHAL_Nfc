@@ -578,8 +578,8 @@ void MposManager::hanldeEtsiReaderReqEvent (tNFA_EE_DISCOVER_REQ* aInfo)
       << StringPrintf( "swp_rd_state is %s  evt: NFA_RD_SWP_READER_REQUESTED mSwpRdrReqTimer start",
                 convertRdrStateToString(swp_rdr_req_ntf_info.swp_rd_state));
             mSwpRdrReqTimer.set(rdr_req_handling_timeout, readerReqEventNtf);
-            swp_rdr_req_ntf_info.swp_rd_state = STATE_SE_RDR_MODE_START_CONFIG;
           }
+          swp_rdr_req_ntf_info.swp_rd_state = STATE_SE_RDR_MODE_START_CONFIG;
         }
         /*RestartReadermode procedure special case should not de-activate*/
         else if (swp_rdr_req_ntf_info.swp_rd_state == STATE_SE_RDR_MODE_STOP_CONFIG) {
