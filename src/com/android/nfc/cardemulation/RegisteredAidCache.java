@@ -166,9 +166,9 @@ public class RegisteredAidCache {
     boolean mSupportsPrefixes = false;
     boolean mSupportsSubset = false;
 
-    public RegisteredAidCache(Context context) {
+    public RegisteredAidCache(Context context, AidRoutingManager aidRoutingManager) {
         mContext = context;
-        mRoutingManager = new AidRoutingManager();
+        mRoutingManager = aidRoutingManager;
         mPreferredPaymentService = null;
         mPreferredForegroundService = null;
         mSupportsPrefixes = mRoutingManager.supportsAidPrefixRouting();
