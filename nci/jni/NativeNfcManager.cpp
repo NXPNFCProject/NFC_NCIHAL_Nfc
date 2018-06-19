@@ -3206,22 +3206,35 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
             se.getEseHandleFromGenericId(se.getGenericEseId(ee_handleList[i]));
         DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
             "%s:Registering for active handle id=0x%x;", __func__, handle);
-        {
+
+        if (handle == 0x4C0) {
+          SyncEventGuard guard(SecureElement::getInstance().mEseListenEvent);
+          status = NFA_CeConfigureEseListenTech(handle, 0x00);
+          if (status == NFA_STATUS_OK)
+            SecureElement::getInstance().mEseListenEvent.wait();
+        } else {
           SyncEventGuard guard(SecureElement::getInstance().mUiccListenEvent);
           status = NFA_CeConfigureUiccListenTech(handle, 0x00);
-          if (status == NFA_STATUS_OK) {
+          if (status == NFA_STATUS_OK)
             SecureElement::getInstance().mUiccListenEvent.wait();
-          } else
-            LOG(ERROR) << StringPrintf("fail to start UICC listen");
+        }
+        if (status != NFA_STATUS_OK) {
+          LOG(ERROR) << StringPrintf("fail to reset UICC/eSE listen");
         }
 
-        {
+        if (handle == 0x4C0) {
+          SyncEventGuard guard(SecureElement::getInstance().mEseListenEvent);
+          status = NFA_CeConfigureEseListenTech(handle, (num & 0x07));
+          if (status == NFA_STATUS_OK)
+            SecureElement::getInstance().mEseListenEvent.wait();
+        } else {
           SyncEventGuard guard(SecureElement::getInstance().mUiccListenEvent);
           status = NFA_CeConfigureUiccListenTech(handle, (num & 0x07));
-          if (status == NFA_STATUS_OK) {
+          if (status == NFA_STATUS_OK)
             SecureElement::getInstance().mUiccListenEvent.wait();
-          } else
-            LOG(ERROR) << StringPrintf("fail to start UICC listen");
+        }
+        if (status != NFA_STATUS_OK) {
+          LOG(ERROR) << StringPrintf("fail to start UICC/eSE listen");
         }
       }
 
