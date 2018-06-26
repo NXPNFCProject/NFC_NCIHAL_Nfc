@@ -660,7 +660,7 @@ public class NfcService implements DeviceHostListener {
         try {
             mNfcSeService = new NfcWiredSe();
             mNfcSeService.configureRpcThreadpool(2, false);
-            mNfcSeService.registerAsService("nfc1");
+            mNfcSeService.registerAsService("eSE2");
         } catch (RemoteException e) {
             Log.e(TAG, "Failed to register nfc1 as Service " + e);
         }
