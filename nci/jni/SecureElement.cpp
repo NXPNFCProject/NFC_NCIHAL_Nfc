@@ -859,7 +859,7 @@ jintArray SecureElement::getActiveSecureElementList(JNIEnv* e) {
 
   num_of_nfcee_present = mNfceeData_t.mNfceePresent;
   DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("num_of_nfcee_present = %d", num_of_nfcee_present);
+      << StringPrintf("%s: num_of_nfcee_present:%d", __func__, num_of_nfcee_present);
 
   jintArray list = e->NewIntArray(num_of_nfcee_present);  // allocate array
 
@@ -870,19 +870,19 @@ jintArray SecureElement::getActiveSecureElementList(JNIEnv* e) {
     if (nfcee_handle[i] == EE_HANDLE_0xF3 &&
         nfcee_status[i] == NFC_NFCEE_STATUS_ACTIVE) {
       seId = getGenericEseId(EE_HANDLE_0xF3 & ~NFA_HANDLE_GROUP_EE);
-      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("eSE  Active");
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: eSE Active", __func__);
     }
 
     if (nfcee_handle[i] == EE_HANDLE_0xF4 &&
         nfcee_status[i] == NFC_NFCEE_STATUS_ACTIVE) {
       seId = getGenericEseId(EE_HANDLE_0xF4 & ~NFA_HANDLE_GROUP_EE);
-      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("UICC/SIM/SIM1  Active");
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: UICC/SIM/SIM1 Active", __func__);
     }
 
     if (nfcee_handle[i] == EE_HANDLE_0xF8 &&
         nfcee_status[i] == NFC_NFCEE_STATUS_ACTIVE) {
       seId = getGenericEseId(EE_HANDLE_0xF8 & ~NFA_HANDLE_GROUP_EE);
-      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("UICC2/SIM2  Active");
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: UICC/SIM/SIM1 Active", __func__);
     }
 
     DLOG_IF(INFO, nfc_debug_enabled)
@@ -3018,7 +3018,7 @@ jint SecureElement::getGenericEseId(tNFA_HANDLE handle) {
   jint ret = 0xFF;
   static const char fn[] = "SecureElement::getGenericEseId";
   DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: enter; ESE-Handle = 0x%X", fn, handle);
+      << StringPrintf("%s: enter; SE-Handle = 0x%X", fn, handle);
   // Map the actual handle to generic id
   if (handle == (EE_HANDLE_0xF3 & ~NFA_HANDLE_GROUP_EE))  // ESE - 0xC0
   {
@@ -3035,7 +3035,7 @@ jint SecureElement::getGenericEseId(tNFA_HANDLE handle) {
     ret = UICC2_ID;
   }
   DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: exit; ESE-Generic-ID = 0x%02X", fn, ret);
+      << StringPrintf("%s: exit; SE-Generic-ID = 0x%02X", fn, ret);
   return ret;
 }
 
@@ -3053,7 +3053,7 @@ tNFA_HANDLE SecureElement::getEseHandleFromGenericId(jint eseId) {
   uint16_t handle = NFA_HANDLE_INVALID;
   static const char fn[] = "SecureElement::getEseHandleFromGenericId";
   DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: enter; ESE-ID = 0x%02X", fn, eseId);
+      << StringPrintf("%s: enter; SE-Generic-ID = 0x%02X", fn, eseId);
 
   // Map the generic id to actual handle
   if (eseId == ESE_ID)  // ESE
@@ -3074,7 +3074,7 @@ tNFA_HANDLE SecureElement::getEseHandleFromGenericId(jint eseId) {
     handle = eseId;
   }
   DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: enter; ESE-Handle = 0x%03X", fn, handle);
+      << StringPrintf("%s: exit; SE-Handle = 0x%03X", fn, handle);
   return handle;
 }
 bool SecureElement::SecEle_Modeset(uint8_t type) {
