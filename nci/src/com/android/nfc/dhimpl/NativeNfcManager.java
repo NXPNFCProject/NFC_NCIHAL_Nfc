@@ -316,6 +316,9 @@ public class NativeNfcManager implements DeviceHost {
     public native int   getDefaultAidPowerState();
 
     @Override
+    public native int   doNfcSelfTest(int type);
+
+    @Override
     public native int   getDefaultDesfirePowerState();
 
     @Override

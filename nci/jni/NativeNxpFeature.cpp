@@ -77,6 +77,7 @@ typedef void(tNXP_RSP_CBACK)(uint8_t event, uint16_t param_len,
                              uint8_t* p_param);
 tNFA_STATUS NxpNfc_Write_Cmd(uint8_t retlen, uint8_t* buffer,
                              tNXP_RSP_CBACK* p_cback);
+tNFA_STATUS NxpNfcUpdateEeprom(uint8_t* param, uint8_t len, uint8_t* val);
 #endif
 }  // namespace android
 
@@ -437,7 +438,12 @@ tNFA_STATUS Nxp_SelfTest(uint8_t testcase, uint8_t* param) {
   uint8_t rst_cmd[] = {0x20, 0x00, 0x01, 0x00};     // CORE_RESET_CMD
   uint8_t init_cmd[] = {0x20, 0x01, 0x00};          // CORE_INIT_CMD
   uint8_t prop_ext_act_cmd[] = {0x2F, 0x02, 0x00};  // CORE_INIT_CMD
-
+  uint8_t cmd_nfcc_standby_off[] = {0x2F, 0x00, 0x01, 0x00};
+  uint8_t cmd_rf_on[] = {0x2F, 0x3D, 0x02, 0x20, 0x01};
+  uint8_t cmd_rf_off[] = {0x2F, 0x3D, 0x02, 0x20, 0x00};
+  uint8_t cmd_nfcc_standby_on[] = {0x2F, 0x00, 0x01, 0x01};
+  uint8_t cmd_nfcc_disc_map[] = {0x21, 0x00, 0x04, 0x01, 0x04, 0x01, 0x02};
+  uint8_t cmd_nfcc_deactivate[] = {0x21, 0x06, 0x01, 0x00};
   // Factory Test Code for PRBS STOP --/
   uint8_t cmd_len = 0;
 
@@ -454,7 +460,7 @@ tNFA_STATUS Nxp_SelfTest(uint8_t testcase, uint8_t* param) {
     memset(cmd_buf_stat, 0x00, sizeof(cmd_buf_stat));
   }
   switch (testcase) {
-    case 0:  // SWP Self-Test
+    case NFC_CMD_TYPE_SWP:  // SWP Self-Test
       cmd_len = sizeof(swp_test);
       swp_test[3] = param[0];  // select channel 0x00:UICC(SWP1) 0x01:eSE(SWP2)
       if (nfcFL.chipType != pn547C2) {
@@ -464,7 +470,7 @@ tNFA_STATUS Nxp_SelfTest(uint8_t testcase, uint8_t* param) {
       }
       break;
 
-    case 1:  // PRBS Test start
+    case NFC_CMD_TYPE_PRBS_START:  // PRBS Test start
       if (nfcFL.chipType != pn547C2) {
         cmd_len = sizeof(prbs_test);
         // Technology to stream 0x00:TypeA 0x01:TypeB 0x02:TypeF
@@ -484,12 +490,12 @@ tNFA_STATUS Nxp_SelfTest(uint8_t testcase, uint8_t* param) {
       break;
 
     // Factory Test Code
-    case 2:  // step1. PRBS Test stop : VEN RESET
+    case NFC_CMD_TYPE_PRBS_STOP:  // step1. PRBS Test stop : VEN RESET
       halFuncEntries->power_cycle();
       return NFCSTATUS_SUCCESS;
       break;
 
-    case 3:  // step2. PRBS Test stop : CORE RESET
+    case NFC_CMD_TYPE_CORE_RESET:  // step2. PRBS Test stop : CORE RESET
       cmd_len = sizeof(rst_cmd);
       if (nfcFL.chipType != pn547C2) {
         memcpy(cmd_buf, rst_cmd, 4);
@@ -498,7 +504,7 @@ tNFA_STATUS Nxp_SelfTest(uint8_t testcase, uint8_t* param) {
       }
       break;
 
-    case 4:  // step3. PRBS Test stop : CORE_INIT
+    case NFC_CMD_TYPE_CORE_INIT:  // step3. PRBS Test stop : CORE_INIT
       cmd_len = sizeof(init_cmd);
       if (nfcFL.chipType != pn547C2) {
         memcpy(cmd_buf, init_cmd, cmd_len);
@@ -508,7 +514,7 @@ tNFA_STATUS Nxp_SelfTest(uint8_t testcase, uint8_t* param) {
       break;
     // Factory Test Code
 
-    case 5:  // step5. : NXP_ACT_PROP_EXTN
+    case NFC_CMD_TYPE_ACT_PROP_EXTN:  // step5. : NXP_ACT_PROP_EXTN
       cmd_len = sizeof(prop_ext_act_cmd);
       if (nfcFL.chipType != pn547C2) {
         memcpy(cmd_buf, prop_ext_act_cmd, 3);
@@ -516,6 +522,35 @@ tNFA_STATUS Nxp_SelfTest(uint8_t testcase, uint8_t* param) {
         memcpy(cmd_buf_stat, prop_ext_act_cmd, 3);
       }
       break;
+    case NFC_CMD_TYPE_RF_ON :
+        cmd_len = sizeof(cmd_rf_on);
+        memcpy(cmd_buf, cmd_rf_on, cmd_len);
+        break;
+
+    case NFC_CMD_TYPE_RF_OFF :
+        cmd_len = sizeof(cmd_rf_off);
+        memcpy(cmd_buf, cmd_rf_off, cmd_len);
+        break;
+
+    case NFC_CMD_TYPE_DISC_MAP :
+        cmd_len = sizeof(cmd_nfcc_disc_map);
+        memcpy(cmd_buf, cmd_nfcc_disc_map, cmd_len);
+        break;
+
+    case NFC_CMD_TYPE_DEACTIVATE :
+        cmd_len = sizeof(cmd_nfcc_deactivate);
+        memcpy(cmd_buf, cmd_nfcc_deactivate, cmd_len);
+        break;
+
+    case NFC_CMD_TYPE_NFCC_STANDBY_ON :
+        cmd_len = sizeof(cmd_nfcc_standby_on);
+        memcpy(cmd_buf, cmd_nfcc_standby_on, cmd_len);
+        break;
+
+    case NFC_CMD_TYPE_NFCC_STANDBY_OFF :
+        cmd_len = sizeof(cmd_nfcc_standby_off);
+        memcpy(cmd_buf, cmd_nfcc_standby_off, cmd_len);
+        break;
 
     default:
       DLOG_IF(INFO, nfc_debug_enabled)
@@ -539,6 +574,8 @@ tNFA_STATUS Nxp_SelfTest(uint8_t testcase, uint8_t* param) {
   }
 
   status = GetCbStatus();
+  DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("%s: exit status = 0x%02X", __func__, status);
   return status;
 }
 // Factory Test Code --end

@@ -120,6 +120,7 @@ uint16_t sCurrentSelectedUICCSlot = 1;
 SyncEvent gNfceeDiscCbEvent;
 uint8_t sSelectedUicc = 0;
 static bool sIsLowRamDevice = false;
+int32_t gSelfTestType = TEST_TYPE_NONE;
 bool nfcManager_getTransanctionRequest(int t3thandle, bool registerRequest);
 extern bool createSPIEvtHandlerThread();
 extern void releaseSPIEvtHandlerThread();
@@ -252,6 +253,11 @@ void enableRfDiscovery();
 void disableRfDiscovery();
 void storeLastDiscoveryParams(int technologies_mask, bool enable_lptd,
                               bool reader_mode, bool enable_p2p, bool restart);
+static tNFA_STATUS      configureListening(uint8_t aListenMask);
+static tNFA_STATUS      configurePolling(uint8_t aPollMask);
+static tNFA_STATUS      performRFTest(bool on);
+static tNFA_STATUS      performTransacAB(uint8_t aType);
+static void             activatedNtf_Cb();
 #endif
 }  // namespace android
 
@@ -304,6 +310,7 @@ static uint8_t sAutonomousSet = 0;
 static bool gsNfaPartialEnabled = false;
 static uint16_t sEnableStatus = false;
 SyncEvent sNfaGetRoutingEvent;  // event for Get_Routing....
+static SyncEvent mSelfTestTransacAB; // Event for Get activation
 static bool sProvisionMode = false;
 SyncEvent sNfceeHciCbEnableEvent;
 SyncEvent sNfceeHciCbDisableEvent;
@@ -933,6 +940,10 @@ static void nfaConnectionCallback(uint8_t connEvent,
           "%s: NFA_ACTIVATED_EVT: gIsSelectingRfInterface=%d, sIsDisabling=%d",
           __func__, gIsSelectingRfInterface, sIsDisabling);
 #if (NXP_EXTNS == TRUE)
+      if (gSelfTestType != NFC_CMD_TYPE_TYPE_NONE) {
+          activatedNtf_Cb();
+          break;
+      }
       rfActivation = true;
 
       checkforTranscation(NFA_ACTIVATED_EVT, (void*)eventData);
@@ -2027,6 +2038,52 @@ static void nfaConnectionCallback(uint8_t connEvent,
   }
 
 #if (NXP_EXTNS == TRUE)
+  /*******************************************************************************
+  **
+  ** Function:        nfcManager_nfcSelfTest
+  **
+  ** Description:     Function to perform different types of analog tests
+  **                  i'e RF ON, RF OFF, Transc A, Transc B.
+  **
+  ** Returns:         success/failure
+  **
+  *******************************************************************************/
+
+  static jint nfcManager_nfcSelfTest(JNIEnv* e, jobject o, jint aType)
+  {
+      tNFA_STATUS status = NFA_STATUS_FAILED;
+
+      if (!sIsNfaEnabled) {
+          DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("NFC does not enabled!! returning...");
+          return status;
+      }
+      gSelfTestType = aType;
+      if (sDiscoveryEnabled) {
+          startRfDiscovery(false);
+      }
+
+      switch(aType){
+      case TEST_TYPE_RF_ON :
+          status = performRFTest(true);
+          break;
+      case TEST_TYPE_RF_OFF :
+          status = performRFTest(false);
+          break;
+      case TEST_TYPE_TRANSAC_A :
+          status = performTransacAB(NFC_CMD_TYPE_TRANSAC_A);
+          break;
+      case TEST_TYPE_TRANSAC_B :
+          status = performTransacAB(NFC_CMD_TYPE_TRANSAC_B);
+          break;
+      default:
+          DLOG_IF(INFO, nfc_debug_enabled)
+            << StringPrintf("nfcManager_nfcSelfTest Invalid Parameter!!");
+          break;
+      }
+      gSelfTestType = TEST_TYPE_NONE;
+      return status;
+  }
+
   /*******************************************************************************
   **
   ** Function:        nfcManager_setRoutingEntry
@@ -5133,7 +5190,8 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
     {"doGetSelectedUicc", "()I", (void*)nfcManager_doGetSelectedUicc},
     {"setPreferredSimSlot", "(I)I", (void*)nfcManager_setPreferredSimSlot},
     {"routeApduPattern", "(II[B[B)Z", (void*)nfcManager_routeApduPattern},
-    {"unrouteApduPattern", "([B)Z", (void*)nfcManager_unrouteApduPattern}
+    {"unrouteApduPattern", "([B)Z", (void*)nfcManager_unrouteApduPattern},
+    {"doNfcSelfTest", "(I)I", (void*) nfcManager_nfcSelfTest}
 #endif
   };
 
@@ -7929,7 +7987,7 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
         break;
     }
     // step2. PRBS Test stop : CORE RESET_CMD
-    status = Nxp_SelfTest(3, param);  // CORE_RESET_CMD
+    status = Nxp_SelfTest(NFC_CMD_TYPE_CORE_RESET, param);   //CORE_RESET_CMD
     if (NFA_STATUS_OK != status) {
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: CORE RESET_CMD Fail!", __func__);
@@ -7937,7 +7995,7 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
       goto TheEnd;
     }
     // step3. PRBS Test stop : CORE_INIT_CMD
-    status = Nxp_SelfTest(4, param);  // CORE_INIT_CMD
+    status = Nxp_SelfTest(NFC_CMD_TYPE_CORE_INIT, param);  // CORE_INIT_CMD
     if (NFA_STATUS_OK != status) {
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: CORE_INIT_CMD Fail!", __func__);
@@ -7945,7 +8003,7 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
       goto TheEnd;
     }
     // step4. : NXP_ACT_PROP_EXTN
-    status = Nxp_SelfTest(5, param);  // NXP_ACT_PROP_EXTN
+    status = Nxp_SelfTest(NFC_CMD_TYPE_ACT_PROP_EXTN, param);  // NXP_ACT_PROP_EXTN
     if (NFA_STATUS_OK != status) {
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: NXP_ACT_PROP_EXTN Fail!", __func__);
@@ -7953,7 +8011,7 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
       goto TheEnd;
     }
 
-    status = Nxp_SelfTest(1, param);
+    status = Nxp_SelfTest(NFC_CMD_TYPE_PRBS_START, param);
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: exit; status =0x%X", __func__, status);
 
@@ -7987,7 +8045,7 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
 
     // Factory Test Code
     // step1. PRBS Test stop : VEN RESET
-    status = Nxp_SelfTest(2, &param);  // VEN RESET
+    status = Nxp_SelfTest(NFC_CMD_TYPE_PRBS_STOP, &param);  // VEN RESET
     if (NFA_STATUS_OK != status) {
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("step1. PRBS Test stop : VEN RESET Fail!");
@@ -8030,7 +8088,7 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
     }
 
     // step1.  : CORE RESET_CMD
-    status = Nxp_SelfTest(3, param);  // CORE_RESET_CMD
+    status = Nxp_SelfTest(NFC_CMD_TYPE_CORE_RESET, param);  // CORE_RESET_CMD
     if (NFA_STATUS_OK != status) {
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("step2. PRBS Test stop : CORE RESET_CMD Fail!");
@@ -8039,7 +8097,7 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
     }
 
     // step2. : CORE_INIT_CMD
-    status = Nxp_SelfTest(4, param);  // CORE_INIT_CMD
+    status = Nxp_SelfTest(NFC_CMD_TYPE_CORE_INIT, param);  // CORE_INIT_CMD
     if (NFA_STATUS_OK != status) {
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("step3. PRBS Test stop : CORE_INIT_CMD Fail!");
@@ -8048,7 +8106,7 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
     }
 
     // step3. : NXP_ACT_PROP_EXTN
-    status = Nxp_SelfTest(5, param);  // NXP_ACT_PROP_EXTN
+    status = Nxp_SelfTest(NFC_CMD_TYPE_ACT_PROP_EXTN, param);  // NXP_ACT_PROP_EXTN
     if (NFA_STATUS_OK != status) {
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("step: NXP_ACT_PROP_EXTN Fail!");
@@ -8065,7 +8123,7 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
     }
 
     param[0] = ch;  // SWP channel 0x00 : SWP1(UICC) 0x01:SWP2(eSE)
-    status = Nxp_SelfTest(0, param);
+    status = Nxp_SelfTest(NFC_CMD_TYPE_SWP, param);
     if (NFA_STATUS_OK != status) {
       status = NFA_STATUS_FAILED;
       goto TheEnd;
@@ -8499,6 +8557,211 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
    *******************************************************************************/
   bool isLowRamDevice() { return sIsLowRamDevice; }
 
+  /*
+   * This API mainly used for Self-Test
+   * */
+  /*******************************************************************************
+   **
+   ** Function:        configureListening
+   **
+   ** Description:     Configure listen technologies
+   **
+   ** Returns:         success/failure
+   **
+   *******************************************************************************/
+  tNFA_STATUS configureListening(uint8_t aListenMask)
+  {
+      tNFA_STATUS stat = NFA_STATUS_FAILED;
+      SecureElement& se = SecureElement::getInstance();
+      {
+          SyncEventGuard guard(se.mUiccListenEvent);
+          stat = NFA_CeConfigureUiccListenTech(se.mActiveEeHandle, aListenMask);
+          if (stat == NFA_STATUS_OK) {
+              se.mUiccListenEvent.wait();
+              if(!aListenMask)
+                  stat = NFA_DisableListening();
+          }else {
+              LOG(ERROR) << StringPrintf("fail to start UICC listen");
+          }
+      }
+      return stat;
+  }
+
+  /*******************************************************************************
+   **
+   ** Function:        configurePolling
+   **
+   ** Description:     Configure polling technologies
+   **
+   ** Returns:         success/failure
+   **
+   *******************************************************************************/
+  tNFA_STATUS configurePolling(uint8_t aPollMask)
+  {
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter poll mask=0x%02X", __func__, aPollMask);
+      tNFA_STATUS stat = NFA_STATUS_FAILED;
+
+      if (aPollMask > 0) {
+          SyncEventGuard guard(sNfaEnableDisablePollingEvent);
+          DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("enable polling");
+          stat = NFA_EnablePolling(aPollMask);
+          if (stat == NFA_STATUS_OK) {
+              DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("wait for enable event");
+              sPollingEnabled = true;
+              sNfaEnableDisablePollingEvent.wait(); // Wait for NFA_POLL_ENABLED_EVT.
+          }else {
+              LOG(ERROR) << StringPrintf("NFA_EnablePolling fail, error=0x%X", stat);
+          }
+      }else {
+          SyncEventGuard guard(sNfaEnableDisablePollingEvent);
+          DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("disable polling");
+          stat = NFA_DisablePolling();
+          if (stat == NFA_STATUS_OK) {
+              sPollingEnabled = false;
+              sNfaEnableDisablePollingEvent.wait(); // Wait for NFA_POLL_DISABLED_EVT.
+          }else {
+              LOG(ERROR) << StringPrintf("NFA_DisablePolling fail, error=0x%X", stat);
+          }
+      }
+      if (aPollMask > 0)
+          startRfDiscovery(true);
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
+      return stat;
+  }
+
+  /*******************************************************************************
+   **
+   ** Function:        performRFTest
+   **
+   ** Description:     SelfTest, Analog RF ON/OFF commands
+   **
+   ** Returns:         success/failure
+   **
+   *******************************************************************************/
+  tNFA_STATUS performRFTest(bool on)
+  {
+      tNFA_STATUS status = NFA_STATUS_FAILED;
+      uint8_t aNumOfCmds = 0;
+      uint8_t count = 0;
+      uint8_t NFCInitCmdSeq[5] = {
+          NFC_CMD_TYPE_CORE_RESET,
+          NFC_CMD_TYPE_CORE_INIT,
+          NFC_CMD_TYPE_ACT_PROP_EXTN
+      };
+      aNumOfCmds = sizeof(NFCInitCmdSeq);
+      if(on){
+          NFCInitCmdSeq[3] = NFC_CMD_TYPE_NFCC_STANDBY_OFF;
+          NFCInitCmdSeq[4] = NFC_CMD_TYPE_RF_ON;
+      }else{
+          NFCInitCmdSeq[3] = NFC_CMD_TYPE_RF_OFF;
+          NFCInitCmdSeq[4] = NFC_CMD_TYPE_NFCC_STANDBY_ON;
+      }
+
+      do{
+          status = Nxp_SelfTest(NFCInitCmdSeq[count], 0x00);
+      }while((status == NFA_STATUS_OK) && (++count < aNumOfCmds));
+
+      return status;
+  }
+
+  /*******************************************************************************
+   **
+   ** Function:        performTransacAB
+   **
+   ** Description:     SelfTest SWP, PRBS
+   **
+   ** Returns:         success/failure
+   **
+   *******************************************************************************/
+  tNFA_STATUS performTransacAB(uint8_t aType)
+  {
+      tNFA_STATUS status = NFA_STATUS_FAILED;
+      uint8_t val[][1] = { {0x03},
+                           {0x63} };
+      uint8_t len[] = {0x01, 0x01};
+      uint8_t tech_mask = 0;
+      uint8_t count = 0, addCnt =0;
+      tNFA_PMID addBuf[][2] = {{0xA0, 0x3F}, {0xA0, 0x44}};
+      uint8_t aNumOfCmds = 0;
+      uint8_t NFCInitCmdSeq[3] = {
+          NFC_CMD_TYPE_CORE_RESET,
+          NFC_CMD_TYPE_CORE_INIT,
+          NFC_CMD_TYPE_ACT_PROP_EXTN
+      };
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+
+      configureListening(0x00); // Disable listen phase
+      configurePolling(0x00); //This is remove previous poll config as part of Nfc-ON
+      if(aType == NFC_CMD_TYPE_TRANSAC_A){
+          tech_mask = NFA_TECHNOLOGY_MASK_A;
+      }else{
+          *val[1] = 0x43;
+          tech_mask = NFA_TECHNOLOGY_MASK_A | NFA_TECHNOLOGY_MASK_B;
+      }
+
+      aNumOfCmds = sizeof(NFCInitCmdSeq);
+      do{
+          status = Nxp_SelfTest(NFCInitCmdSeq[count], 0x00);
+      }while((status == NFA_STATUS_OK) && (++count < aNumOfCmds));
+      count = 0;
+      if(status == NFA_STATUS_OK) {
+          addCnt = sizeof(addBuf)/sizeof(addBuf[0]);
+          while((status == NFA_STATUS_OK) && (count < addCnt)){
+              status = NxpNfcUpdateEeprom(addBuf[count], len[count], val[count]);
+              count++;
+          }
+      }else{
+          LOG(ERROR) << StringPrintf("failed in to reset and init NFCC");
+      }
+      if(status == NFA_STATUS_OK) {
+          uint8_t val68[] = {0x00};
+          SyncEventGuard guard(sNfaSetConfigEvent);
+          status = NFA_SetConfig(NXP_NFC_NCI_PACM_BIT_RATE, 1, val68);
+          if(status == NFA_STATUS_OK) {
+              if(sNfaSetConfigEvent.wait(2 * ONE_SECOND_MS)) {
+                  status = Nxp_SelfTest(NFC_CMD_TYPE_DISC_MAP, 0x00);
+              }else{
+                  LOG(ERROR) << StringPrintf("Wait timeout");
+                  status = NFA_STATUS_FAILED;
+              }
+          }else{
+              LOG(ERROR) << StringPrintf("failed to send set config command");
+          }
+      }
+      if(status == NFA_STATUS_OK) {
+          if((status = configurePolling(tech_mask)) == NFA_STATUS_OK) {
+              SyncEventGuard gaurd(mSelfTestTransacAB);
+              if(mSelfTestTransacAB.wait(30*ONE_SECOND_MS)) {
+                  DLOG_IF(INFO, nfc_debug_enabled)
+                    << StringPrintf("Received activated ntf");
+                  status = Nxp_SelfTest(NFC_CMD_TYPE_DEACTIVATE, 0x00);
+              }
+          }else{
+              //Do nothing
+          }
+      }else {
+          //Do nothing, enter in to normal polling mode
+      }
+      startRfDiscovery(true);
+      DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s: exit status = 0X%02X", __func__, status);
+      return status;
+  }
+
+  /*******************************************************************************
+   **
+   ** Function:        activatedNtf_Cb
+   **
+   ** Description:     Receive activation notification from nfaConnectionCallback
+   **
+   ** Returns:         None
+   **
+   *******************************************************************************/
+  void activatedNtf_Cb()
+  {
+    SyncEventGuard gaurd(mSelfTestTransacAB);
+    mSelfTestTransacAB.notifyOne();
+  }
 #endif
 }
 

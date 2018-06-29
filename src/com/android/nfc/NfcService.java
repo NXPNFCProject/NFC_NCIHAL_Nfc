@@ -2424,6 +2424,17 @@ public class NfcService implements DeviceHostListener {
         }
 
         @Override
+        public int nfcSelfTest(String pkg, int type) {
+            int status = 0xFF;
+            NfcService.this.enforceNfceeAdminPerm(pkg);
+
+            synchronized(NfcService.this) {
+                status = mDeviceHost.doNfcSelfTest(type);
+            }
+            return status;
+        }
+
+        @Override
         public int getSelectedUicc() throws RemoteException {
             if (!isNfcEnabled()) {
                 throw new RemoteException("NFC is not enabled");

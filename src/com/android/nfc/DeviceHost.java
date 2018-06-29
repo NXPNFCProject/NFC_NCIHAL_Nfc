@@ -335,6 +335,8 @@ public interface DeviceHost {
 
     public boolean unrouteApduPattern(byte[] apduData);
 
+    public int doNfcSelfTest(int type);
+
     public boolean doCheckLlcp();
 
     public boolean doCheckJcopDlAtBoot();
