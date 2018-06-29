@@ -2291,6 +2291,22 @@ public class NfcService implements DeviceHostListener {
         }
 
         @Override
+        public byte[] readerPassThruMode(byte status, byte modulationTyp)
+            throws RemoteException {
+
+          Log.i(TAG, "Reader pass through mode request: 0x" + status +
+                         " with modulation: 0x" + modulationTyp);
+          return mDeviceHost.readerPassThruMode(status, modulationTyp);
+        }
+
+        @Override
+        public byte[] transceiveAppData(byte[] data) throws RemoteException {
+
+          Log.i(TAG, "Transceive requested on reader pass through mode");
+          return mDeviceHost.transceiveAppData(data);
+        }
+
+        @Override
         public Map<String,Integer> getServicesAidCacheSize(int userId, String category){
             return mCardEmulationManager.getServicesAidCacheSize(userId, category);
         }

@@ -788,6 +788,11 @@ public class NativeNfcManager implements DeviceHost {
     @Override
     public native int setPreferredSimSlot(int uiccSlot);
 
+    @Override
+    public native byte[] readerPassThruMode(byte status, byte modulationTyp);
+
+    @Override public native byte[] transceiveAppData(byte[] data);
+
     /**
      * Notifies Ndef Message (TODO: rename into notifyTargetDiscovered)
      */

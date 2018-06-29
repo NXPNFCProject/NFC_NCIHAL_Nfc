@@ -453,4 +453,8 @@ public interface DeviceHost {
     public int doGetSelectedUicc();
 
     public int setPreferredSimSlot(int uiccSlot);
+
+    public byte[] readerPassThruMode(byte status, byte modulationTyp);
+
+    public byte[] transceiveAppData(byte[] data);
 }
