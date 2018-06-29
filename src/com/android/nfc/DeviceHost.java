@@ -371,6 +371,8 @@ public interface DeviceHost {
 
     int getChipVer();
 
+    boolean isCeAidRouteStrictEnabled();
+
     byte[] getFwFileName();
 
     int getNfcInitTimeout();

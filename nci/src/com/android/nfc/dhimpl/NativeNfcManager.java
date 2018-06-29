@@ -394,6 +394,9 @@ public class NativeNfcManager implements DeviceHost {
     public native int getChipVer();
 
     @Override
+    public native boolean isCeAidRouteStrictEnabled();
+
+    @Override
     public native byte[] getFwFileName();
 
     @Override

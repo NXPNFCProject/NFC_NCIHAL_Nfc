@@ -656,6 +656,11 @@ public class NfcService implements DeviceHostListener {
     public int getChipVer() {
         return mDeviceHost.getChipVer();
     }
+
+    public boolean isCeAidRouteStrictEnabled() {
+        return mDeviceHost.isCeAidRouteStrictEnabled();
+    }
+
     /**
      * Notifies Card emulation deselect
      */

@@ -885,11 +885,16 @@ public class RegisteredAidCache {
 
                 /*If non default off host payment AID ,set screen state*/
                 if (!isOnHost) {
-                    Log.d(TAG," set screen off enable for " + aid);
-                    powerstate |= SCREEN_STATE_OFF_UNLOCKED | SCREEN_STATE_OFF_LOCKED;
+                    if ( !(isPaymentAid && NfcService.getInstance().isCeAidRouteStrictEnabled()) ) {
+                        Log.d(TAG," set screen off enable for " + aid);
+                        powerstate |= SCREEN_STATE_OFF_UNLOCKED | SCREEN_STATE_OFF_LOCKED;
+                    }
                 }
                 Log.d(TAG," AID power state before adding screen state" + powerstate);
-                powerstate |= 0x10;
+                if ( !(isPaymentAid && NfcService.getInstance().isCeAidRouteStrictEnabled()) ) {
+                    Log.d(TAG," set screen on locked enable for " + aid);
+                    powerstate |= SCREEN_STATE_ON_LOCKED;
+                }
                 Log.d(TAG," AID power state after" + powerstate);
                 if (!isOnHost && NfcService.getInstance().isVzwFeatureEnabled()) {
                     String plainAid = "";
