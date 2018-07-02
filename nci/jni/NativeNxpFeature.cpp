@@ -591,35 +591,35 @@ tNFA_STATUS Nxp_SelfTest(uint8_t testcase, uint8_t* param) {
         memcpy(cmd_buf_stat, prop_ext_act_cmd, 3);
       }
       break;
-    case NFC_CMD_TYPE_RF_ON :
-        cmd_len = sizeof(cmd_rf_on);
-        memcpy(cmd_buf, cmd_rf_on, cmd_len);
-        break;
+    case NFC_CMD_TYPE_RF_ON:
+      cmd_len = sizeof(cmd_rf_on);
+      memcpy(cmd_buf, cmd_rf_on, cmd_len);
+      break;
 
-    case NFC_CMD_TYPE_RF_OFF :
-        cmd_len = sizeof(cmd_rf_off);
-        memcpy(cmd_buf, cmd_rf_off, cmd_len);
-        break;
+    case NFC_CMD_TYPE_RF_OFF:
+      cmd_len = sizeof(cmd_rf_off);
+      memcpy(cmd_buf, cmd_rf_off, cmd_len);
+      break;
 
-    case NFC_CMD_TYPE_DISC_MAP :
-        cmd_len = sizeof(cmd_nfcc_disc_map);
-        memcpy(cmd_buf, cmd_nfcc_disc_map, cmd_len);
-        break;
+    case NFC_CMD_TYPE_DISC_MAP:
+      cmd_len = sizeof(cmd_nfcc_disc_map);
+      memcpy(cmd_buf, cmd_nfcc_disc_map, cmd_len);
+      break;
 
-    case NFC_CMD_TYPE_DEACTIVATE :
-        cmd_len = sizeof(cmd_nfcc_deactivate);
-        memcpy(cmd_buf, cmd_nfcc_deactivate, cmd_len);
-        break;
+    case NFC_CMD_TYPE_DEACTIVATE:
+      cmd_len = sizeof(cmd_nfcc_deactivate);
+      memcpy(cmd_buf, cmd_nfcc_deactivate, cmd_len);
+      break;
 
-    case NFC_CMD_TYPE_NFCC_STANDBY_ON :
-        cmd_len = sizeof(cmd_nfcc_standby_on);
-        memcpy(cmd_buf, cmd_nfcc_standby_on, cmd_len);
-        break;
+    case NFC_CMD_TYPE_NFCC_STANDBY_ON:
+      cmd_len = sizeof(cmd_nfcc_standby_on);
+      memcpy(cmd_buf, cmd_nfcc_standby_on, cmd_len);
+      break;
 
-    case NFC_CMD_TYPE_NFCC_STANDBY_OFF :
-        cmd_len = sizeof(cmd_nfcc_standby_off);
-        memcpy(cmd_buf, cmd_nfcc_standby_off, cmd_len);
-        break;
+    case NFC_CMD_TYPE_NFCC_STANDBY_OFF:
+      cmd_len = sizeof(cmd_nfcc_standby_off);
+      memcpy(cmd_buf, cmd_nfcc_standby_off, cmd_len);
+      break;
 
     default:
       DLOG_IF(INFO, nfc_debug_enabled)

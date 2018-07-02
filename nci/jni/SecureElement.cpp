@@ -858,8 +858,8 @@ jintArray SecureElement::getActiveSecureElementList(JNIEnv* e) {
   if (!getEeInfo()) return (NULL);
 
   num_of_nfcee_present = mNfceeData_t.mNfceePresent;
-  DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: num_of_nfcee_present:%d", __func__, num_of_nfcee_present);
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+      "%s: num_of_nfcee_present:%d", __func__, num_of_nfcee_present);
 
   jintArray list = e->NewIntArray(num_of_nfcee_present);  // allocate array
 
@@ -870,19 +870,22 @@ jintArray SecureElement::getActiveSecureElementList(JNIEnv* e) {
     if (nfcee_handle[i] == EE_HANDLE_0xF3 &&
         nfcee_status[i] == NFC_NFCEE_STATUS_ACTIVE) {
       seId = getGenericEseId(EE_HANDLE_0xF3 & ~NFA_HANDLE_GROUP_EE);
-      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: eSE Active", __func__);
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("%s: eSE Active", __func__);
     }
 
     if (nfcee_handle[i] == EE_HANDLE_0xF4 &&
         nfcee_status[i] == NFC_NFCEE_STATUS_ACTIVE) {
       seId = getGenericEseId(EE_HANDLE_0xF4 & ~NFA_HANDLE_GROUP_EE);
-      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: UICC/SIM/SIM1 Active", __func__);
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("%s: UICC/SIM/SIM1 Active", __func__);
     }
 
     if (nfcee_handle[i] == EE_HANDLE_0xF8 &&
         nfcee_status[i] == NFC_NFCEE_STATUS_ACTIVE) {
       seId = getGenericEseId(EE_HANDLE_0xF8 & ~NFA_HANDLE_GROUP_EE);
-      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: UICC/SIM/SIM1 Active", __func__);
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("%s: UICC/SIM/SIM1 Active", __func__);
     }
 
     DLOG_IF(INFO, nfc_debug_enabled)
