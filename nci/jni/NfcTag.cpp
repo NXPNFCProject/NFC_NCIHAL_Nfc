@@ -1707,9 +1707,6 @@ void NfcTag::connectionEventHandler(uint8_t event, tNFA_CONN_EVT_DATA* data) {
     case NFA_READ_CPLT_EVT: {
       SyncEventGuard g(mReadCompleteEvent);
       mReadCompletedStatus = data->status;
-      mNdefDetectionTimedOut = data->status != NFA_STATUS_OK;
-      if (mNdefDetectionTimedOut)
-        LOG(ERROR) << StringPrintf("%s: NDEF detection timed out", fn);
       mReadCompleteEvent.notifyOne();
     } break;
 
