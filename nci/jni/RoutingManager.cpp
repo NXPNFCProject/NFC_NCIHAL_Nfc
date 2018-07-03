@@ -71,8 +71,9 @@ const JNINativeMethod RoutingManager::sMethods[] = {
 static const int MAX_NUM_EE = 5;
 // SCBR from host works only when App is in foreground
 static const uint8_t SYS_CODE_PWR_STATE_HOST = 0x01;
+#if (NXP_EXTNS != TRUE)
 static const uint16_t DEFAULT_SYS_CODE = 0xFEFE;
-
+#endif
 RoutingManager::RoutingManager() {
   static const char fn[] = "RoutingManager::RoutingManager()";
 
@@ -95,8 +96,11 @@ RoutingManager::RoutingManager() {
 
   mDefaultSysCodePowerstate =
       NfcConfig::getUnsigned(NAME_DEFAULT_SYS_CODE_PWR_STATE, 0x19);
-
+#if (NXP_EXTNS != TRUE)
   mDefaultSysCode = DEFAULT_SYS_CODE;
+#else
+  mDefaultSysCode = 0x00;
+#endif
   if (NfcConfig::hasKey(NAME_DEFAULT_SYS_CODE)) {
     std::vector<uint8_t> pSysCode = NfcConfig::getBytes(NAME_DEFAULT_SYS_CODE);
     if (pSysCode.size() == 0x02) {
@@ -152,6 +156,7 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
     else
         mDefaultEe = 0x02;
     mUiccListnTechMask = NfcConfig::getUnsigned("NAME_UICC_LISTEN_TECH_MASK", 0x07);
+
 #endif
   if ((mDefaultOffHostRoute != 0) || (mDefaultFelicaRoute != 0)) {
     DLOG_IF(INFO, nfc_debug_enabled)
@@ -226,20 +231,23 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
     LOG(ERROR) << StringPrintf("Failed to register wildcard AID for DH");
 
   if (NFC_GetNCIVersion() == NCI_VERSION_2_0) {
-    SyncEventGuard guard(mRoutingEvent);
-    // Register System Code for routing
-    nfaStat = NFA_EeAddSystemCodeRouting(mDefaultSysCode, mDefaultSysCodeRoute,
+    if(mDefaultSysCode != 0x00)
+    {
+      SyncEventGuard guard(mRoutingEvent);
+      // Register System Code for routing
+      nfaStat = NFA_EeAddSystemCodeRouting(mDefaultSysCode, mDefaultSysCodeRoute,
                                          mDefaultSysCodePowerstate);
-    if (nfaStat == NFA_STATUS_NOT_SUPPORTED) {
-      mIsScbrSupported = false;
-      LOG(ERROR) << StringPrintf("%s: SCBR not supported", fn);
-    } else if (nfaStat == NFA_STATUS_OK) {
-      mIsScbrSupported = true;
-      mRoutingEvent.wait();
-      DLOG_IF(INFO, nfc_debug_enabled)
+      if (nfaStat == NFA_STATUS_NOT_SUPPORTED) {
+        mIsScbrSupported = false;
+        LOG(ERROR) << StringPrintf("%s: SCBR not supported", fn);
+      } else if (nfaStat == NFA_STATUS_OK) {
+        mIsScbrSupported = true;
+        mRoutingEvent.wait();
+        DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: Succeed to register system code", fn);
-    } else {
-      LOG(ERROR) << StringPrintf("%s: Fail to register system code", fn);
+      }  else {
+        LOG(ERROR) << StringPrintf("%s: Fail to register system code", fn);
+      }
     }
   }
   return true;
