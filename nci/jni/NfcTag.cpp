@@ -426,7 +426,7 @@ void NfcTag::discoverTechnologies(tNFA_ACTIVATED& activationData) {
           fwt = MIN_TRANSCEIVE_TIMEOUT_IN_MILLISEC;
         DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
             "Setting the Xceive timeout = %f, fwi = %0#x", fwt, fwi);
-        setTransceiveTimeout(mTechList[mNumTechList], fwt);
+        setTransceiveTimeout(mTechList[mNumTechList], 3*fwt);
       }
     }
     // type-4 tag uses technology ISO-DEP and technology A or B
