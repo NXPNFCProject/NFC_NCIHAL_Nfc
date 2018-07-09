@@ -317,6 +317,7 @@ class RoutingManager {
   uint16_t mDefaultSysCode;
   uint16_t mDefaultSysCodeRoute;
   uint8_t mDefaultSysCodePowerstate;
+  uint8_t mOffHostAidRoutingPowerState;
   tNFA_EE_CBACK_DATA mCbEventData;
   int mAidMatchingPlatform;
   tNFA_TECHNOLOGY_MASK mSeTechMask;
