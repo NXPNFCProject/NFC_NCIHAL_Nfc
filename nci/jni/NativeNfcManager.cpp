@@ -5341,20 +5341,6 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
   **
   *******************************************************************************/
   void doStartupConfig() {
-    struct nfc_jni_native_data* nat = getNative(0, 0);
-    tNFA_STATUS stat = NFA_STATUS_FAILED;
-
-    // If polling for Active mode, set the ordering so that we choose Active
-    // over Passive mode first.
-    if (nat && (nat->tech_mask & (NFA_TECHNOLOGY_MASK_A_ACTIVE |
-                                  NFA_TECHNOLOGY_MASK_F_ACTIVE))) {
-      uint8_t act_mode_order_param[] = {0x01};
-      SyncEventGuard guard(sNfaSetConfigEvent);
-      stat = NFA_SetConfig(NCI_PARAM_ID_ACT_ORDER, sizeof(act_mode_order_param),
-                           &act_mode_order_param[0]);
-      if (stat == NFA_STATUS_OK) sNfaSetConfigEvent.wait();
-    }
-
     // configure RF polling frequency for each technology
     static tNFA_DM_DISC_FREQ_CFG nfa_dm_disc_freq_cfg;
     // values in the polling_frequency[] map to members of nfa_dm_disc_freq_cfg
