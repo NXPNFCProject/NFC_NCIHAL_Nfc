@@ -3232,11 +3232,11 @@ public class NfcService implements DeviceHostListener {
 
       @Override public ArrayList<Byte> transmit(ArrayList<Byte> data, int wiredSeHandle) {
         Log.d(TAG, "WiredSe: transmit");
-        if (sNfcWiredSeHandle <= 0) {
+        if (wiredSeHandle <= 0) {
           Log.d(TAG, "WiredSe: Secure Element handle NULL");
           return null;
         } else {
-          byte[] resp = doTransceive(sNfcWiredSeHandle, arrayListToByteArray(data));
+          byte[] resp = doTransceive(wiredSeHandle, arrayListToByteArray(data));
           if (resp != null) {
             Log.d(TAG, "WiredSe: response is received");
           }
