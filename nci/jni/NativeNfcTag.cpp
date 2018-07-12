@@ -857,16 +857,15 @@ static jint nativeNfcTag_doConnect(JNIEnv*, jobject, jint targetHandle) {
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: targetHandle = %d", __func__, targetHandle);
   int i = targetHandle;
-  NfcTag& natTag = NfcTag::getInstance();
   int retCode = NFCSTATUS_SUCCESS;
-  sCurrentConnectedTargetType = natTag.mTechList[i];
-  sCurrentConnectedTargetProtocol = natTag.mTechLibNfcTypes[i];
-
   if (i >= NfcTag::MAX_NUM_TECHNOLOGY) {
     LOG(ERROR) << StringPrintf("%s: Handle not found", __func__);
     retCode = NFCSTATUS_FAILED;
     goto TheEnd;
   }
+  NfcTag& natTag = NfcTag::getInstance();
+  sCurrentConnectedTargetType = natTag.mTechList[i];
+  sCurrentConnectedTargetProtocol = natTag.mTechLibNfcTypes[i];
 #if (NXP_EXTNS == TRUE && NFC_NXP_NON_STD_CARD == TRUE)
   sNeedToSwitchRf = false;
 #endif
