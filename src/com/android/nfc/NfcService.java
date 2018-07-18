@@ -77,6 +77,7 @@ import android.nfc.tech.Ndef;
 import android.nfc.tech.TagTechnology;
 import android.os.AsyncTask;
 import android.os.Binder;
+import android.os.HwBinder;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -93,7 +94,6 @@ import android.os.UserManager;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.provider.Settings;
-import android.se.omapi.ISecureElementService;
 import android.service.vr.IVrManager;
 import android.service.vr.IVrStateCallbacks;
 import android.util.Log;
@@ -131,8 +131,11 @@ import com.gsma.nfc.internal.NxpNfcController;
 import com.nxp.nfc.gsma.internal.INxpNfcController;
 import com.android.nfc.cardemulation.AidRoutingManager;
 import com.android.nfc.cardemulation.RegisteredAidCache;
-import android.hardware.secure_element.V1_0.*;
 import com.nxp.nfc.NxpConstants;
+import android.se.omapi.ISecureElementService;
+import vendor.nxp.nxpese.V1_0.INxpWiredSe;
+import vendor.nxp.nxpese.V1_0.INxpWiredSeHalCallback;
+
 public class NfcService implements DeviceHostListener {
     static final boolean DBG = true;
     static final String TAG = "NfcService";
@@ -330,8 +333,6 @@ public class NfcService implements DeviceHostListener {
     SoundPool mSoundPool; // playback synchronized on this
     P2pLinkManager mP2pLinkManager;
     TagService mNfcTagService;
-    NfcWiredSe mNfcSeService;
-    ISecureElementHalCallback mSecureElementclientCallback;
     boolean mIsSecureElementOpened = false;
     boolean mSEClientAccessState = false;
     NfcAdapterService mNfcAdapter;
@@ -353,7 +354,6 @@ public class NfcService implements DeviceHostListener {
     private RegisteredAidCache mAidCache;
     private Vibrator mVibrator;
     private VibrationEffect mVibrationEffect;
-    private ISecureElementService mSEService;
 
     private ScreenStateHelper mScreenStateHelper;
     private ForegroundUtils mForegroundUtils;
@@ -366,6 +366,14 @@ public class NfcService implements DeviceHostListener {
 
     private IVrManager vrManager;
     boolean mIsVrModeEnabled;
+    private ISecureElementService mSEService;
+    /* WiredSe attributes */
+    private static final int MAX_WIRED_SE_HAL_RETRY = 5;
+    private static final int EVENT_GET_HAL = 1;
+    private static final int GET_SERVICE_DELAY_MILLIS = 200;
+    private static int sNfcWiredSeHandle = 0;
+    private static int sWiredSeGetHalRetry = 0;
+    INxpWiredSe mWiredSEHal = null;
 
     public static NfcService getInstance() {
         return sService;
@@ -656,16 +664,7 @@ public class NfcService implements DeviceHostListener {
 
         // Make sure this is only called when object construction is complete.
         ServiceManager.addService(SERVICE_NAME, mNfcAdapter);
-        Log.e(TAG, "Mr Robot Adding NfcService as HWService under the Stub server name:nfc1");
-        try {
-            mNfcSeService = new NfcWiredSe();
-            mNfcSeService.configureRpcThreadpool(2, false);
-            mNfcSeService.registerAsService("eSE2");
-        } catch (RemoteException e) {
-            Log.e(TAG, "Failed to register nfc1 as Service " + e);
-        }
-        Log.e(TAG, "Mr Robot Added service as nfc1 for SMB access ###################");
-        new EnableDisableTask().execute(TASK_BOOT);  // do blocking boot tasks
+          new EnableDisableTask().execute(TASK_BOOT);  // do blocking boot tasks
 
         mHandler.sendEmptyMessageDelayed(MSG_UPDATE_STATS, STATS_UPDATE_INTERVAL_MS);
 
@@ -679,8 +678,6 @@ public class NfcService implements DeviceHostListener {
                 Log.e(TAG, "Failed to register VR mode state listener: " + e);
             }
         }
-        mSEService = ISecureElementService.Stub.asInterface(ServiceManager.getService(
-                Context.SECURE_ELEMENT_SERVICE));
     }
 
     void initSoundPool() {
@@ -866,19 +863,13 @@ public class NfcService implements DeviceHostListener {
                 mObjectMap.clear();
                 mP2pLinkManager.enableDisable(mIsNdefPushEnabled, true);
                 updateState(NfcAdapter.STATE_ON);
-                /* Update the SmartCardClient on the state change to enable for any client request
-                 * Handled only the case when state is changed during NFC OFF */
+                /* WiredSe Init after ESE is discovered and initialised */
                 try {
-                    if((mSecureElementclientCallback != null) &&
-                            (mSEClientAccessState != true)) {
-                        mSecureElementclientCallback.onStateChange(true);
-                        Log.i(TAG, "mSecureElementclientCallback.onStateChange true ###################");
-                    } else {
-                        Log.e(TAG, "mSecureElementclientCallback is NULL");
-                    }
-
-                } catch (Exception e) {
-                    Log.e(TAG, "mSecureElementclientCallback.onStateChange");
+                    wiredSeInitialize();
+                } catch (NoSuchElementException e) {
+                    Log.i(TAG, "No HAL implementation for WiredSe");
+                } catch (RemoteException | RuntimeException e) {
+                    Log.e(TAG, "Error in getService() for WiredSe");
                 }
             }
 
@@ -908,25 +899,14 @@ public class NfcService implements DeviceHostListener {
             }
             Log.i(TAG, "Disabling NFC");
             updateState(NfcAdapter.STATE_TURNING_OFF);
-
-            /* Update the SmartCardClient on the state change to disable any client request
-             * */
-            synchronized (NfcService.this) {
-                try {
-                    if((mSecureElementclientCallback != null) &&
-                            (mSEClientAccessState == true)) {
-                        mSecureElementclientCallback.onStateChange(false);
-                        mSEClientAccessState = false;
-                        mNfcSeService.nfcWiredSeDeInit();
-                        Log.e(TAG, "mSecureElementclientCallback.onStateChange false ################# ");
-                    } else {
-                        Log.e(TAG, "mSecureElementclientCallback is NULL");
-                    }
-                    mIsSecureElementOpened = false;
-                } catch (RemoteException e) {
-                    Log.e(TAG, "mSecureElementclientCallback.onStateChange");
-                }
+            /* Reset WiredSe handle since NFC is turning off */
+            try{
+                mWiredSEHal.setWiredSeCallback(null);
+            } catch(Exception e){
+                Log.e(TAG, "Exception calling setWiredSeCallback");
+            e.printStackTrace();
             }
+
             /* Sometimes mDeviceHost.deinitialize() hangs, use a watch-dog.
              * Implemented with a new thread (instead of a Handler or AsyncTask),
              * because the UI Thread and AsyncTask thread-pools can also get hung
@@ -958,9 +938,7 @@ public class NfcService implements DeviceHostListener {
                 mCurrentDiscoveryParameters = NfcDiscoveryParameters.getNfcOffParameters();
                 updateState(NfcAdapter.STATE_OFF);
             }
-
             releaseSoundPool();
-
             return result;
         }
 
@@ -2187,315 +2165,129 @@ public class NfcService implements DeviceHostListener {
     }
 }
 
-static final int DEFAULT_BASIC_CHANNEL = 0;
-static final int MAX_LOGICAL_CHANNELS = 4;
-final class NfcWiredSe extends ISecureElement.Stub  implements android.os.IHwBinder.DeathRecipient{
-
-    int mNfcWiredSeHandle = 0;
-    byte mOpenedchannelCount = 0;
-    byte[] atrBuffer = null;
-    boolean[] openedChannelState = {false, false, false, false};
-
-    byte nfcWiredSeDeInit()
-    {
-        doDisconnect(mNfcWiredSeHandle);
-        mNfcWiredSeHandle = 0;
-        mIsSecureElementOpened = false;
-        mOpenedchannelCount = 0;
-        for (byte xx = 0; xx < MAX_LOGICAL_CHANNELS; xx++) {
-          openedChannelState[xx] = false;
+ class WiredSeDeathRecipient implements HwBinder.DeathRecipient {
+      @Override
+      public void serviceDied(long cookie) {
+        try{
+          Log.d(TAG, "WiredSe: serviceDied !!");
+          if(sNfcWiredSeHandle > 0) {
+            mWiredSeCallback.closeWiredSe(sNfcWiredSeHandle);
+            sNfcWiredSeHandle = 0;
+          }
+           mWiredSEHal.unlinkToDeath(mWiredSeDeathRecipient);
+           mWiredSEHal = null;
+           mWiredSeHandler.sendMessageDelayed(mWiredSeHandler.obtainMessage(EVENT_GET_HAL, 0),
+                                         GET_SERVICE_DELAY_MILLIS);
+        }catch(Exception e) {
+            e.printStackTrace();
         }
-        return SecureElementStatus.SUCCESS;
-    }
-
-    @Override
-    public byte closeChannel(byte channelNumber) throws android.os.RemoteException {
-        byte status = 0;
-        if(channelNumber < DEFAULT_BASIC_CHANNEL ||
-                channelNumber >= MAX_LOGICAL_CHANNELS) {
-            status = SecureElementStatus.FAILED;
-        } else if(channelNumber > DEFAULT_BASIC_CHANNEL) {
-            byte[] closeCommand = new byte[5];
-            closeCommand[0] = channelNumber;
-            closeCommand[1] = (byte)0x70;
-            closeCommand[2] = (byte)0x80;
-            closeCommand[3] = channelNumber;
-            closeCommand[4] = 0x00;
-            Log.i(TAG, "Mr Robot Inside closeChannel():closeCommand:"+closeCommand);
-            byte[] resp = doTransceive(mNfcWiredSeHandle, closeCommand);
-            if (resp == null || resp.length < 0) {
-                Log.e(TAG, "Mr Robot Inside closeChannel(): IO Error");
-                status = SecureElementStatus.IOERROR;
-            } else if(resp[resp.length - 2] == (byte)0x90 &&
-                    resp[resp.length - 1] == (byte)0x00) {
-                status = SecureElementStatus.SUCCESS;
-            } else {
-                Log.e(TAG, "Mr Robot Inside closeChannel(): Returned error"+Arrays.toString(resp));
-                status = SecureElementStatus.SUCCESS;
-            }
-        }
-
-        if ((channelNumber == DEFAULT_BASIC_CHANNEL) ||
-                (status == SecureElementStatus.SUCCESS)) {
-            Log.i(TAG, "Mr Robot Inside closeChannel(): Returned SUCCESS Channel count = "+mOpenedchannelCount);
-            if(openedChannelState[channelNumber])
-            {
-              openedChannelState[channelNumber] = false;
-              mOpenedchannelCount--;
-            }
-            /*If there are no channels remaining close secureElement*/
-            if (mOpenedchannelCount == 0) {
-                Log.e(TAG, "Mr Robot Inside closeChannel: Channel count zero");
-                status = nfcWiredSeDeInit();
-            } else {
-                status = SecureElementStatus.SUCCESS;
-            }
-                }
-        return status;
-    }
-
-    @Override
-    public void openBasicChannel(java.util.ArrayList<Byte> aid, byte p2, openBasicChannelCallback _hidl_cb)
-    throws android.os.RemoteException {
-        Log.i(TAG, "Mr Robot Inside openBasicChannel(): Sending SelectAPDU");
-        if(!mIsSecureElementOpened) {
-            Log.i(TAG, "Mr Robot Opening SecureElementConnection");
-            mNfcWiredSeHandle = doOpenSecureElementConnection();
-            if (mNfcWiredSeHandle < 0) {
-                Log.i(TAG, "open secure element fails.");
-                mNfcWiredSeHandle = 0;
-                mSEClientAccessState = false;
-                _hidl_cb.onValues(null, SecureElementStatus.IOERROR);
-                return;
-            }
-            else
-            {
-                mIsSecureElementOpened = true;
-                mSEClientAccessState = true;
-                Log.i(TAG, "Mr Robot Completed Opening Secure Element");
-            }
-        }
-        byte[] selectCommand = new byte[5 + aid.size()];
-        selectCommand[0] = 0x00;
-        selectCommand[1] = (byte) 0xA4;
-        selectCommand[2] = 0x04;
-        selectCommand[3] = 0x00; // next occurrence
-        selectCommand[4] = (byte) aid.size();
-        System.arraycopy(arrayListToByteArray(aid), 0, selectCommand, 5, aid.size());
-
-        Log.i(TAG, "Mr Robot Inside openBasicChannel():Select:"+selectCommand);
-        byte[] resp = doTransceive(mNfcWiredSeHandle, selectCommand);
-        byte status = 0;
-        if(resp[resp.length - 2] == (byte)0x90 &&
-                resp[resp.length - 1] == (byte)0x00) {
-
-            if(!openedChannelState[0])
-            {
-              openedChannelState[0] = true;
-              mOpenedchannelCount++;
-            }
-            status = SecureElementStatus.SUCCESS;
-        } else if(resp[resp.length - 2] == (byte)0x6A &&
-                resp[resp.length - 1] == (byte)0x82) {
-            status = SecureElementStatus.NO_SUCH_ELEMENT_ERROR;
-        } else if(resp[resp.length - 2] == (byte)0x6A &&
-                resp[resp.length - 1] == (byte)0x86) {
-            status = SecureElementStatus.UNSUPPORTED_OPERATION;
-        } else {
-            Log.e(TAG, "Mr Robot Inside openBasicChannel(): Failed"+resp);
-            status = SecureElementStatus.FAILED;
-        }
-        if (status != SecureElementStatus.SUCCESS) {
-            closeChannel((byte)DEFAULT_BASIC_CHANNEL);
-        }
-        Log.i(TAG, "Mr Robot Inside openBasicChannel():Response:"+resp);
-        _hidl_cb.onValues(byteArrayToArrayList(resp), (byte)status);
-        return;
-    }
-
-    @Override
-    public void openLogicalChannel(java.util.ArrayList<Byte> aid,
-            byte p1, openLogicalChannelCallback _hidl_cb)
-    throws android.os.RemoteException {
-        Log.i(TAG, "Mr Robot Inside openLogicalChannel()");
-        if(!mIsSecureElementOpened) {
-            Log.e(TAG, "Mr Robot Opening SecureElementConnection");
-            mNfcWiredSeHandle = doOpenSecureElementConnection();
-            if (mNfcWiredSeHandle < 0) {
-                Log.i(TAG, "open secure element fails.");
-                mNfcWiredSeHandle = 0;
-                mSEClientAccessState = false;
-                _hidl_cb.onValues(null, SecureElementStatus.IOERROR);
-                return;
-            }
-            else
-            {
-                mIsSecureElementOpened = true;
-                mSEClientAccessState = true;
-                Log.i(TAG, "Mr Robot Completed Opening Secure Element");
-            }
-        }
-        /* Send Manage channel command */
-        byte[] manageChannelCommand = {0x00, 0x70, 0x00, 0x00, 0x01};
-        byte[] respManageChannel = doTransceive(mNfcWiredSeHandle, manageChannelCommand);
-        byte status = 0;
-        LogicalChannelResponse logicalChannelResp = new LogicalChannelResponse();
-        logicalChannelResp.channelNumber = (byte) 0;/* To be modified after Manage Channel command*/
-        if (respManageChannel == null || respManageChannel.length < 0) {
-            Log.e(TAG, "Mr Robot Inside openLogicalChannel(): IO Error");
-            status = SecureElementStatus.IOERROR;
-            return;
-        } else if(respManageChannel[respManageChannel.length - 2] == (byte)0x6A &&
-                respManageChannel[respManageChannel.length - 1] == (byte)0x81) {
-            Log.e(TAG, "Mr Robot Inside openLogicalChannel(): Channel Not Available");
-            status = SecureElementStatus.CHANNEL_NOT_AVAILABLE;
-            logicalChannelResp.channelNumber = (byte) 0xff;
-            return;
-        } else if(respManageChannel[respManageChannel.length - 2] == (byte)0x90 &&
-                respManageChannel[respManageChannel.length - 1] ==(byte) 0x00) {
-            logicalChannelResp.channelNumber = respManageChannel[0];
-            openedChannelState[logicalChannelResp.channelNumber] = true;
-            //TODO Channel count maintenance (SecureElement.cpp)
-            Log.i(TAG, "Mr Robot Inside openLogicalChannel(): Channel Opened");
-            mOpenedchannelCount++;
-        } else if(((respManageChannel[respManageChannel.length - 2] == (byte)0x6E) ||
-                    (respManageChannel[respManageChannel.length - 2] == (byte)0x6D)) &&
-                respManageChannel[respManageChannel.length - 1] == 0x00) {
-            Log.e(TAG, "Mr Robot Inside openLogicalChannel(): Unsupported operation");
-            status = SecureElementStatus.UNSUPPORTED_OPERATION;
-        }
-
-        Log.i(TAG, "Mr Robot Inside openLogicalChannel(): Manage channel complete");
-        if(status != SecureElementStatus.SUCCESS) {
-            _hidl_cb.onValues(null, status);
-            Log.e(TAG, "Mr Robot Inside openLogicalChannel(): Manage channel failed");
-            return;
-        }
-        Log.i(TAG, "Mr Robot Inside openLogicalChannel(): Sending SelectAPDU");
-        byte[] selectCommand = new byte[5 + aid.size()];
-        logicalChannelResp.channelNumber = respManageChannel[0];
-        selectCommand[0] = respManageChannel[0];
-        selectCommand[1] = (byte) 0xA4;
-        selectCommand[2] = 0x04;
-        selectCommand[3] = 0x00; // next occurrence
-        selectCommand[4] = (byte) aid.size();
-        System.arraycopy(arrayListToByteArray(aid), 0, selectCommand, 5, aid.size());
-        Log.i(TAG, "Mr Robot Inside openLogicalChannel():Select:"+Arrays.toString(selectCommand));
-        byte[] resp = doTransceive(mNfcWiredSeHandle, selectCommand);
-        byte sestatus = 0;
-        if(resp[resp.length - 2] == (byte)0x90 &&
-                resp[resp.length - 1] == (byte)0x00) {
-            sestatus = SecureElementStatus.SUCCESS;
-        } else if(resp[resp.length - 2] == (byte)0x6A &&
-                resp[resp.length - 1] == (byte)0x82) {
-            sestatus = SecureElementStatus.NO_SUCH_ELEMENT_ERROR;
-        } else if(resp[resp.length - 2] == (byte)0x6A &&
-                resp[resp.length - 1] == (byte)0x86) {
-            sestatus = SecureElementStatus.UNSUPPORTED_OPERATION;
-        }
-        if (sestatus != SecureElementStatus.SUCCESS) {
-            closeChannel(logicalChannelResp.channelNumber);
-        }
-        Log.i(TAG, "Mr Robot Inside openLogicalChannel():Response:"+Arrays.toString(resp));
-        //ensureSize(logicalChannelResp.selectResponse, resp.length);
-        for(int i=0; i< resp.length; i++)
-            logicalChannelResp.selectResponse.add(resp[i]);
-        Log.i(TAG, "Mr Robot Inside openLogicalChannel():LogicalChannelResponse:"+logicalChannelResp.selectResponse);
-        _hidl_cb.onValues(logicalChannelResp, sestatus);
-        return;
-    }
-
-    @Override
-    public java.util.ArrayList<Byte> transmit(java.util.ArrayList<Byte> data)
-    throws android.os.RemoteException {
-        if (mNfcWiredSeHandle <= 0) {
-            Log.e(TAG, "Mr Robot Secure Element handle NULL");
-            return null;
-        } else {
-            byte[] resp = doTransceive(mNfcWiredSeHandle, arrayListToByteArray(data));
-            Log.e(TAG, "Mr Robot Inside transmit():Response:"+resp+"\ncommand:"+data);
-            return byteArrayToArrayList(resp);
-        }
-    }
-
-    @Override
-    public boolean isCardPresent()
-    throws android.os.RemoteException {
-        return true;
-    }
-
-    @Override
-    public java.util.ArrayList<Byte> getAtr()
-    throws android.os.RemoteException {
-      Log.i(TAG, "Mr Robot Inside getAtr");
-      if(atrBuffer != null)
-      {
-        return byteArrayToArrayList(atrBuffer);
-      }
-      else
-      {
-        return null;
       }
     }
 
-    @Override
-    public void init(ISecureElementHalCallback clientCallback)
-    throws android.os.RemoteException {
-        synchronized(NfcService.this) {
-            Log.i(TAG, "Mr Robot init triggered inside NFCSERVICE >>>>>>>>>>");
-            if(clientCallback == null) {
-                Log.e(TAG, "Mr Robot clientCallback NULL");
-                return;
-            }
-            else
-            {
-                clientCallback.linkToDeath(this, 0);
-            }
-            mSecureElementclientCallback = clientCallback;
-            mNfcWiredSeHandle = doOpenSecureElementConnection();
-            if (mNfcWiredSeHandle < 0) {
-                Log.i(TAG, "open secure element fails.");
-                clientCallback.onStateChange(false);
-                mSEClientAccessState = false;
-                mNfcWiredSeHandle = 0;
-            }
-            else
-            {
-                atrBuffer = mSecureElement.doGetAtr(mNfcWiredSeHandle);
-                mIsSecureElementOpened = true;
-                clientCallback.onStateChange(true);
-                mSEClientAccessState = true;
-                Log.i(TAG, "Mr Robot Completed Opening Secure Element");
-            }
-        }
-        return;
-    }
-    @Override
-    public void serviceDied(long cookie) {
-        // Deal with service going away
-        Log.i(TAG, "SecureElement service died de-initalize nfc terminal");
-        nfcWiredSeDeInit();
-    }
+    private HwBinder.DeathRecipient mWiredSeDeathRecipient = new WiredSeDeathRecipient();
 
-    private ArrayList<Byte> byteArrayToArrayList(byte[] array) {
+    private
+    INxpWiredSeHalCallback.Stub mWiredSeCallback = new INxpWiredSeHalCallback.Stub() {
+     private
+      ArrayList<Byte> byteArrayToArrayList(byte[] array) {
         ArrayList<Byte> list = new ArrayList<Byte>();
-        int i = 0;
         for (Byte b : array) {
-            list.add(b);
+          list.add(b);
         }
         return list;
-    }
+      }
 
-    private byte[] arrayListToByteArray(ArrayList<Byte> list) {
+     private
+      byte[] arrayListToByteArray(ArrayList<Byte> list) {
         Byte[] byteArray = list.toArray(new Byte[list.size()]);
         int i = 0;
         byte[] result = new byte[list.size()];
         for (Byte b : byteArray) {
-            result[i++] = b.byteValue();
+          result[i++] = b.byteValue();
         }
         return result;
+      }
+
+      @Override public int openWiredSe() {
+        Log.d(TAG, "WiredSe: openWiredSe");
+            sNfcWiredSeHandle = doOpenSecureElementConnection();
+            if (sNfcWiredSeHandle <= 0) {
+              Log.e(TAG, "WiredSe: open secure element failed.");
+              sNfcWiredSeHandle = 0;
+            } else {
+              Log.d(TAG, "WiredSe: open secure element success.");
+            }
+            return sNfcWiredSeHandle;
+      }
+
+      @Override public ArrayList<Byte> transmit(ArrayList<Byte> data, int wiredSeHandle) {
+        Log.d(TAG, "WiredSe: transmit");
+            if (sNfcWiredSeHandle <= 0) {
+              Log.d(TAG, "WiredSe: Secure Element handle NULL");
+              return null;
+            } else {
+              byte[] resp = doTransceive(wiredSeHandle, arrayListToByteArray(data));
+              if (resp != null) {
+                Log.d(TAG, "WiredSe: response is received");
+              }
+              return byteArrayToArrayList(resp);
+            }
+      }
+
+      @Override public ArrayList<Byte> getAtr(int wiredSeHandle)
+          throws android.os.RemoteException {
+        Log.d(TAG, "WiredSe: getAtr");
+        synchronized(NfcService.this) {
+            return byteArrayToArrayList(mSecureElement.doGetAtr(wiredSeHandle));
+        }
+      }
+
+      @Override public int closeWiredSe(int wiredSeHandle) {
+                Log.d(TAG, "WiredSe: closeWiredSe");
+        doDisconnect(wiredSeHandle);
+        sNfcWiredSeHandle = 0;
+        return 0;
+      }
+    };
+
+    private Handler mWiredSeHandler = new Handler() {
+      @Override
+      public void handleMessage(Message message) {
+        switch (message.what) {
+          case EVENT_GET_HAL:
+            try {
+              if(sWiredSeGetHalRetry > MAX_WIRED_SE_HAL_RETRY) {
+                Log.e(TAG, "WiredSe GET_HAL retry failed");
+                sWiredSeGetHalRetry = 0;
+                break;
+              }
+              wiredSeInitialize();
+              sWiredSeGetHalRetry = 0;
+            } catch (Exception e) {
+                Log.e(TAG, " could not get the service. trying again");
+                sWiredSeGetHalRetry++;
+                sendMessageDelayed(obtainMessage(EVENT_GET_HAL, 0),
+                                     GET_SERVICE_DELAY_MILLIS);
+            }
+            break;
+          default:
+            break;
+        }
+      }
+    };
+
+    void wiredSeInitialize() throws NoSuchElementException, RemoteException {
+        Log.e(TAG, "wiredSeInitialize Enter");
+        if (mWiredSEHal == null) {
+          mWiredSEHal = INxpWiredSe.getService();
+        }
+        if (mWiredSEHal == null) {
+          throw new NoSuchElementException("No HAL is provided for WiredSe");
+        }
+        mWiredSEHal.setWiredSeCallback(mWiredSeCallback);
+        mWiredSEHal.linkToDeath(mWiredSeDeathRecipient, 0);
     }
-}
+
     /** resources kept while secure element is open */
     private class OpenSecureElement implements IBinder.DeathRecipient {
         /* pid that opened SE
@@ -3378,11 +3170,8 @@ final class NfcWiredSe extends ISecureElement.Stub  implements android.os.IHwBin
                         // Generate the initial card emulation routing table
                         computeRoutingParameters();
                     }
-                        if((mSecureElementclientCallback != null) &&
-                            (mSEClientAccessState != true)) {
-                        mSecureElementclientCallback.onStateChange(true);
-                        Log.i(TAG, "mSecureElementclientCallback.onStateChange true ###################");
-                    }
+
+                    /* TODO Call WiredSe HAL to notify */
 
                     } catch (Exception e) {
                         Log.e(TAG, "mSecureElementclientCallback.onStateChange");
