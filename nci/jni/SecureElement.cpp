@@ -734,7 +734,6 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
     uint8_t newSelectCmd[NCI_MAX_AID_LEN + 10];
     isSuccess                  = false;
 
-
     // Check if we need to replace an "empty" SELECT command.
     // 1. Has there been a AID configured, and
     // 2. Is that AID a valid length (i.e 16 bytes max), and
@@ -794,11 +793,58 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
     }
     if(mTransceiveStatus == NFA_STATUS_HCI_WTX_TIMEOUT)
     {
+        LOG(ERROR) << StringPrintf("%s:timeout 1 %x",fn ,mTransceiveStatus);
+        mAbortEventWaitOk = false;
         SyncEventGuard guard (mAbortEvent);
-        nfaStat = NFA_HciAbortApdu(mNfaHciHandle,mActiveEeHandle,4000);
+        nfaStat = NFA_HciAbortApdu(mNfaHciHandle,mActiveEeHandle,timeoutMillisec);
         if (nfaStat == NFA_STATUS_OK)
         {
             mAbortEvent.wait();
+        }
+        if(mAbortEventWaitOk == false)
+        {
+            setNfccPwrConfig(NFCC_DECIDES);
+
+            SecEle_Modeset(NFCEE_DISABLE);
+            usleep(1000 * 1000);
+
+            setNfccPwrConfig(POWER_ALWAYS_ON|COMM_LINK_ACTIVE);
+            SecEle_Modeset(NFCEE_ENABLE);
+            usleep(200 * 1000);
+
+            LOG(INFO) << StringPrintf("%s: ABORT no response; power cycle  ", fn);
+        }
+    } else if(mTransceiveStatus == NFA_STATUS_TIMEOUT)
+    {
+        LOG(ERROR) << StringPrintf("%s: timeout 2 %x",fn ,mTransceiveStatus);
+        //Try Mode Set on/off
+        setNfccPwrConfig(POWER_ALWAYS_ON);
+        SecEle_Modeset(NFCEE_DISABLE);
+
+        usleep(1000 * 1000);
+
+        setNfccPwrConfig(POWER_ALWAYS_ON|COMM_LINK_ACTIVE);
+        SecEle_Modeset(NFCEE_ENABLE);
+        {
+            tNFA_EE_INFO *pEE = findEeByHandle (EE_HANDLE_0xF3);
+            uint8_t eeStatus = 0x00;
+            if (pEE)
+            {
+              eeStatus = pEE->ee_status;
+              LOG(INFO) << StringPrintf("%s: NFA_EE_MODE_SET_EVT reset status; (0x%04x)", fn, pEE->ee_status);
+              if(eeStatus != NFA_EE_STATUS_ACTIVE)
+              {
+                  setNfccPwrConfig(NFCC_DECIDES);
+
+                  SecEle_Modeset(NFCEE_DISABLE);
+                  usleep(200 * 1000);
+
+                  setNfccPwrConfig(POWER_ALWAYS_ON|COMM_LINK_ACTIVE);
+                  SecEle_Modeset(NFCEE_ENABLE);
+                  usleep(200 * 1000);
+                  LOG(INFO) << StringPrintf("%s: NFA_EE_MODE_SET_EVT; power cycle complete ", fn);
+              }
+            }
         }
     }
         if (mActualResponseSize > recvBufferMaxSize)
@@ -811,6 +857,7 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
         TheEnd:
      return (isSuccess);
 }
+
 /*******************************************************************************
 **
 ** Function:        getActiveSecureElementList
@@ -1083,17 +1130,15 @@ jint SecureElement::getSETechnology(tNFA_HANDLE eeHandle)
 void SecureElement::notifyModeSet (tNFA_HANDLE eeHandle, bool success, tNFA_EE_STATUS eeStatus)
 {
     static const char* fn = "SecureElement::notifyModeSet";
-    if (success)
+                LOG(INFO) << StringPrintf("NFA_EE_MODE_SET_EVT; (0x%04x)",  eeHandle);
+    tNFA_EE_INFO *pEE = sSecElem.findEeByHandle (eeHandle);
+    if (pEE)
     {
-        tNFA_EE_INFO *pEE = sSecElem.findEeByHandle (eeHandle);
-        if (pEE)
-        {
-            pEE->ee_status = eeStatus;
-            LOG(INFO) << StringPrintf("%s: NFA_EE_MODE_SET_EVT; (0x%04x)", fn, pEE->ee_status);
-        }
-        else
-            LOG(INFO) << StringPrintf("%s: NFA_EE_MODE_SET_EVT; EE: 0x%04x not found.  mActiveEeHandle: 0x%04x", fn, eeHandle, sSecElem.mActiveEeHandle);
+        pEE->ee_status = eeStatus;
+        LOG(INFO) << StringPrintf("%s: NFA_EE_MODE_SET_EVT; (0x%04x)", fn, pEE->ee_status);
     }
+    else
+        LOG(INFO) << StringPrintf("%s: NFA_EE_MODE_SET_EVT; EE: 0x%04x not found.  mActiveEeHandle: 0x%04x", fn, eeHandle, sSecElem.mActiveEeHandle);
     SyncEventGuard guard (sSecElem.mEeSetModeEvent);
     sSecElem.mEeSetModeEvent.notifyOne();
 }
@@ -1110,14 +1155,13 @@ bool SecureElement::apduGateReset(jint seID, uint8_t* recvBuffer, int32_t *recvB
 {
     static const char fn[] = "SecureElement::getAtr";
     tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
-    int timeoutMillisec = 10000;
 
     LOG(INFO) << StringPrintf("%s: enter; seID=0x%X", fn, seID);
     if(nfcFL.nfcNxpEse) {
             /*ETSI 12 Gate Info ATR */
             mAbortEventWaitOk = false;
             SyncEventGuard guard (mAbortEvent);
-            nfaStat = NFA_HciAbortApdu(mNfaHciHandle,mActiveEeHandle,timeoutMillisec);
+            nfaStat = NFA_HciAbortApdu(mNfaHciHandle,mActiveEeHandle,SmbTransceiveTimeOutVal);
             if (nfaStat == NFA_STATUS_OK)
             {
                 mAbortEvent.wait();
@@ -1191,6 +1235,7 @@ bool SecureElement::SecEle_Modeset(uint8_t type)
     }
     return retval;
 }
+
 /*******************************************************************************
 **
 ** Function:        initializeEeHandle
