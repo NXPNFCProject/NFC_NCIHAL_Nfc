@@ -154,8 +154,8 @@ import com.nxp.nfc.NxpConstants;
 import com.vzw.nfc.RouteEntry;
 import com.gsma.nfc.internal.NxpNfcController;
 import com.nxp.nfc.gsma.internal.INxpNfcController;
-import vendor.nxp.nxpese.V1_0.INxpWiredSe;
-import vendor.nxp.nxpese.V1_0.INxpWiredSeHalCallback;
+import vendor.nxp.nxpwiredse.V1_0.INxpWiredSe;
+import vendor.nxp.nxpwiredse.V1_0.INxpWiredSeHalCallback;
 
 public class NfcService implements DeviceHostListener {
     private static final String ACTION_MASTER_CLEAR_NOTIFICATION = "android.intent.action.MASTER_CLEAR_NOTIFICATION";
