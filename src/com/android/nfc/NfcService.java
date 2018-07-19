@@ -133,8 +133,8 @@ import com.android.nfc.cardemulation.AidRoutingManager;
 import com.android.nfc.cardemulation.RegisteredAidCache;
 import com.nxp.nfc.NxpConstants;
 import android.se.omapi.ISecureElementService;
-import vendor.nxp.nxpese.V1_0.INxpWiredSe;
-import vendor.nxp.nxpese.V1_0.INxpWiredSeHalCallback;
+import vendor.nxp.nxpwiredse.V1_0.INxpWiredSe;
+import vendor.nxp.nxpwiredse.V1_0.INxpWiredSeHalCallback;
 
 public class NfcService implements DeviceHostListener {
     static final boolean DBG = true;
