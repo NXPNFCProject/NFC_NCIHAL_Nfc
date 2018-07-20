@@ -1120,14 +1120,14 @@ void RoutingManager::setEmptyAidEntry() {
  * If not connected then set it to HOST by default*/
 void RoutingManager::checkProtoSeID(void)
 {
-    uint8_t           isDefaultIsoDepSeIDPresent    = 0;
+    /*Intentionally set to avoid default protocol update*/
+    uint8_t           isDefaultIsoDepSeIDPresent    = 1;
     uint8_t           isDefaultAidRoutePresent      = 0;
     tNFA_HANDLE       ActDevHandle                  = NFA_HANDLE_INVALID;
     unsigned long     check_default_proto_se_id_req = 0;
     static const char fn []   = "RoutingManager::checkProtoSeID";
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter",__func__);
-//FIX THIS
-    /*
+
     if (GetNxpNumValue(NAME_CHECK_DEFAULT_PROTO_SE_ID, &check_default_proto_se_id_req, sizeof(check_default_proto_se_id_req)))
     {
         DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: CHECK_DEFAULT_PROTO_SE_ID - 0x%2lX ",fn,check_default_proto_se_id_req);
@@ -1136,7 +1136,7 @@ void RoutingManager::checkProtoSeID(void)
     {
         LOG(ERROR) << StringPrintf("%s: CHECK_DEFAULT_PROTO_SE_ID not defined. Taking default value - 0x%2lX",fn,check_default_proto_se_id_req);
     }
-*/
+
     if(check_default_proto_se_id_req == 0x01)
     {
         uint8_t count,seId=0;
