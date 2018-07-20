@@ -131,7 +131,7 @@ import com.gsma.nfc.internal.NxpNfcController;
 import com.nxp.nfc.gsma.internal.INxpNfcController;
 import com.android.nfc.cardemulation.AidRoutingManager;
 import com.android.nfc.cardemulation.RegisteredAidCache;
-import com.nxp.nfc.NxpConstants;
+import com.nxp.nfc.NfcConstants;
 import android.se.omapi.ISecureElementService;
 import vendor.nxp.nxpwiredse.V1_0.INxpWiredSe;
 import vendor.nxp.nxpwiredse.V1_0.INxpWiredSeHalCallback;
@@ -1445,7 +1445,7 @@ public class NfcService implements DeviceHostListener {
         public int mPOSSetReaderMode (String pkg, boolean on) {
             // Check if NFC is enabled
             if (!isNfcEnabled()) {
-                return NxpConstants.MPOS_STATUS_REJECTED;
+                return NfcConstants.MPOS_STATUS_REJECTED;
             }
 
             synchronized(NfcService.this) {
@@ -2765,7 +2765,7 @@ public class NfcService implements DeviceHostListener {
         mDeviceHost.setEtsiReaederState(STATE_SE_RDR_MODE_STARTED);
         //broadcast SWP_READER_ACTIVATED evt
         Intent swpReaderRequestedIntent = new Intent();
-        swpReaderRequestedIntent.setAction(NxpConstants.ACTION_NFC_MPOS_READER_MODE_START_SUCCESS);
+        swpReaderRequestedIntent.setAction(NfcConstants.ACTION_NFC_MPOS_READER_MODE_START_SUCCESS);
         if (DBG) {
             Log.d(TAG, "SWP READER - Requested");
         }
@@ -2793,7 +2793,7 @@ public class NfcService implements DeviceHostListener {
         mTimer.schedule(tagRemoveTask, ETSI_PRESENCE_CHECK_DELAY, ETSI_PRESENCE_CHECK_DELAY);
 
         Log.d(TAG, "etsiStopConfig : disableDiscovery");
-        mDeviceHost.stopPoll(NxpConstants.ULTRA_LOW_POWER);
+        mDeviceHost.stopPoll(NfcConstants.ULTRA_LOW_POWER);
         mTimer.cancel();
 
         if(mDeviceHost.getEtsiReaederState() == STATE_SE_RDR_MODE_STOPPED)
@@ -2812,7 +2812,7 @@ public class NfcService implements DeviceHostListener {
 
       //broadcast SWP_READER_DEACTIVATED evt
         swpReaderDeActivatedIntent
-                .setAction(NxpConstants.ACTION_NFC_MPOS_READER_MODE_STOP_SUCCESS);
+                .setAction(NfcConstants.ACTION_NFC_MPOS_READER_MODE_STOP_SUCCESS);
         if (DBG) {
             Log.d(TAG, "SWP READER - DeActivated");
         }
@@ -3134,7 +3134,7 @@ public class NfcService implements DeviceHostListener {
                     Intent swpReaderTimeoutIntent = new Intent();
 
                     swpReaderTimeoutIntent
-                            .setAction(NxpConstants.ACTION_NFC_MPOS_READER_MODE_TIMEOUT);
+                            .setAction(NfcConstants.ACTION_NFC_MPOS_READER_MODE_TIMEOUT);
                     if (DBG) {
                         Log.d(TAG, "SWP READER - Timeout");
                     }
@@ -3149,7 +3149,7 @@ public class NfcService implements DeviceHostListener {
                     Intent swpReaderRestartIntent = new Intent();
 
                     swpReaderRestartIntent
-                            .setAction(NxpConstants.ACTION_NFC_MPOS_READER_MODE_RESTART);
+                            .setAction(NfcConstants.ACTION_NFC_MPOS_READER_MODE_RESTART);
                     if (DBG) {
                         Log.d(TAG, "SWP READER - RESTART");
                     }
@@ -3425,7 +3425,7 @@ public class NfcService implements DeviceHostListener {
         public void run()
         {
             Intent swpReaderTagRemoveIntent = new Intent();
-            swpReaderTagRemoveIntent.setAction(NxpConstants.ACTION_NFC_MPOS_READER_MODE_REMOVE_CARD);
+            swpReaderTagRemoveIntent.setAction(NfcConstants.ACTION_NFC_MPOS_READER_MODE_REMOVE_CARD);
             if (DBG) {
                 Log.d(TAG, "SWP READER - Tag Remove");
             }

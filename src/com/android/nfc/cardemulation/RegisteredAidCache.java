@@ -37,7 +37,7 @@ package com.android.nfc.cardemulation;
 import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
-import android.nfc.cardemulation.NxpApduServiceInfo;
+import android.nfc.cardemulation.NfcApduServiceInfo;
 import android.nfc.cardemulation.CardEmulation;
 import android.util.Log;
 
@@ -54,7 +54,7 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.PriorityQueue;
 import java.util.TreeMap;
-import android.nfc.cardemulation.NxpAidGroup;
+import android.nfc.cardemulation.NfcAidGroup;
 public class RegisteredAidCache {
     static final String TAG = "RegisteredAidCache";
 
@@ -86,7 +86,7 @@ public class RegisteredAidCache {
     static final int SCREEN_STATE_OFF_LOCKED = 0x20;
     // Represents a single AID registration of a service
     final class ServiceAidInfo {
-        NxpApduServiceInfo service;
+        NfcApduServiceInfo service;
         String aid;
         String category;
 
@@ -125,8 +125,8 @@ public class RegisteredAidCache {
     // Represents a list of services, an optional default and a category that
     // an AID was resolved to.
     final class AidResolveInfo {
-        List<NxpApduServiceInfo> services = new ArrayList<NxpApduServiceInfo>();
-        NxpApduServiceInfo defaultService = null;
+        List<NfcApduServiceInfo> services = new ArrayList<NfcApduServiceInfo>();
+        NfcApduServiceInfo defaultService = null;
         String category = null;
         boolean mustRoute = true; // Whether this AID should be routed at all
         ReslovedPrefixConflictAid prefixInfo = null;
@@ -210,7 +210,7 @@ public class RegisteredAidCache {
                             resolveInfo.defaultService = entryResolveInfo.defaultService;
                             resolveInfo.category = entryResolveInfo.category;
                         }
-                        for (NxpApduServiceInfo serviceInfo : entryResolveInfo.services) {
+                        for (NfcApduServiceInfo serviceInfo : entryResolveInfo.services) {
                             if (!resolveInfo.services.contains(serviceInfo)) {
                                 resolveInfo.services.add(serviceInfo);
                             }
@@ -277,8 +277,8 @@ public class RegisteredAidCache {
         AidResolveInfo resolveInfo = new AidResolveInfo();
         resolveInfo.category = CardEmulation.CATEGORY_OTHER;
 
-        NxpApduServiceInfo matchedForeground = null;
-        NxpApduServiceInfo matchedPayment = null;
+        NfcApduServiceInfo matchedForeground = null;
+        NfcApduServiceInfo matchedPayment = null;
         for (ServiceAidInfo serviceAidInfo : conflictingServices) {
             boolean serviceClaimsPaymentAid =
                     CardEmulation.CATEGORY_PAYMENT.equals(serviceAidInfo.category);
@@ -375,7 +375,7 @@ public class RegisteredAidCache {
             //If the AID is subsetAID check for prefix in same service.
             if(isSubset(aidServices.get(0).aid)) {
                 resolveinfo.prefixInfo = findPrefixConflictForSubsetAid(aidServices.get(0).aid ,
-                        new ArrayList<NxpApduServiceInfo>(){{add(resolveinfo.defaultService);}},true);
+                        new ArrayList<NfcApduServiceInfo>(){{add(resolveinfo.defaultService);}},true);
             }
              return resolveinfo;
         } else if (aidDefaultInfo.paymentDefault != null) {
@@ -394,7 +394,7 @@ public class RegisteredAidCache {
                 //If the AID is subsetAID check for prefix in same service.
                 if(isSubset(aidServices.get(0).aid)) {
                     resolveinfo.prefixInfo = findPrefixConflictForSubsetAid(aidServices.get(0).aid ,
-                            new ArrayList<NxpApduServiceInfo>(){{add(resolveinfo.defaultService);}},true);
+                            new ArrayList<NfcApduServiceInfo>(){{add(resolveinfo.defaultService);}},true);
                 }
                 return resolveinfo;
             }
@@ -412,7 +412,7 @@ public class RegisteredAidCache {
                 //If the AID is subsetAID check for conflicting prefix in all
                 //conflciting services and root services.
                 if (isSubset(aidServices.get(0).aid)) {
-                    ArrayList <NxpApduServiceInfo> apduServiceList = new  ArrayList <NxpApduServiceInfo>();
+                    ArrayList <NfcApduServiceInfo> apduServiceList = new  ArrayList <NfcApduServiceInfo>();
                     for(ServiceAidInfo serviceInfo : conflictingServices)
                         apduServiceList.add(serviceInfo.service);
                     for(ServiceAidInfo serviceInfo : aidServices)
@@ -425,10 +425,10 @@ public class RegisteredAidCache {
         }
     }
 
-    void generateServiceMapLocked(List<NxpApduServiceInfo> services) {
+    void generateServiceMapLocked(List<NfcApduServiceInfo> services) {
         // Easiest is to just build the entire tree again
         mAidServices.clear();
-        for (NxpApduServiceInfo service : services) {
+        for (NfcApduServiceInfo service : services) {
             if (DBG) Log.d(TAG, "generateServiceMap component: " + service.getComponent());
             List<String> prefixAids = service.getPrefixAids();
             List<String> subSetAids = service.getSubsetAids();
@@ -519,7 +519,7 @@ public class RegisteredAidCache {
     }
 
     ReslovedPrefixConflictAid findPrefixConflictForSubsetAid(String subsetAid ,
-            ArrayList<NxpApduServiceInfo> prefixServices, boolean priorityRootAid){
+            ArrayList<NfcApduServiceInfo> prefixServices, boolean priorityRootAid){
         ArrayList<String> prefixAids = new ArrayList<String>();
         String minPrefix = null;
         //This functions checks whether there is a prefix AID matching to subset AID
@@ -529,7 +529,7 @@ public class RegisteredAidCache {
         //3..If the subset AID and prefix AID are same add only one AID with both prefix , subset bits set.
         // Cut off "#"
         String plainSubsetAid = subsetAid.substring(0, subsetAid.length() - 1);
-        for (NxpApduServiceInfo service : prefixServices) {
+        for (NfcApduServiceInfo service : prefixServices) {
             for (String prefixAid : service.getPrefixAids()) {
                 // Cut off "#"
                 String plainPrefix= prefixAid.substring(0, prefixAid.length() - 1);
@@ -838,7 +838,7 @@ public class RegisteredAidCache {
             } else if (resolveInfo.defaultService != null) {
                 // There is a default service set, route to where that service resides
                 // either on the host (HCE) or on an SE.
-                NxpApduServiceInfo.ESeInfo seInfo = resolveInfo.defaultService.getSEInfo();
+                NfcApduServiceInfo.ESeInfo seInfo = resolveInfo.defaultService.getSEInfo();
                 aidType.isOnHost = resolveInfo.defaultService.isOnHost();
                 int powerstate = seInfo.getPowerState() & POWER_STATE_ALL;
                 if(powerstate == 0x00)
@@ -877,7 +877,7 @@ public class RegisteredAidCache {
         mRoutingManager.configureRouting(routingEntries);
     }
 
-    public void onServicesUpdated(int userId, List<NxpApduServiceInfo> services) {
+    public void onServicesUpdated(int userId, List<NfcApduServiceInfo> services) {
         if (DBG) Log.d(TAG, "onServicesUpdated");
         synchronized (mLock) {
             if (ActivityManager.getCurrentUser() == userId) {
@@ -926,12 +926,12 @@ public class RegisteredAidCache {
     String dumpEntry(Map.Entry<String, AidResolveInfo> entry) {
         StringBuilder sb = new StringBuilder();
         String category = entry.getValue().category;
-        NxpApduServiceInfo defaultServiceInfo = entry.getValue().defaultService;
+        NfcApduServiceInfo defaultServiceInfo = entry.getValue().defaultService;
         sb.append("    \"" + entry.getKey() + "\" (category: " + category + ")\n");
         ComponentName defaultComponent = defaultServiceInfo != null ?
                 defaultServiceInfo.getComponent() : null;
 
-        for (NxpApduServiceInfo serviceInfo : entry.getValue().services) {
+        for (NfcApduServiceInfo serviceInfo : entry.getValue().services) {
             sb.append("        ");
             if (serviceInfo.getComponent().equals(defaultComponent)) {
                 sb.append("*DEFAULT* ");

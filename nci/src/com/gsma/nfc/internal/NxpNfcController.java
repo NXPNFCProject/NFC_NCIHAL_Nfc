@@ -33,14 +33,14 @@ import android.util.Log;
 import com.nxp.nfc.gsma.internal.INxpNfcController;
 import com.android.nfc.cardemulation.CardEmulationManager;
 import com.android.nfc.cardemulation.RegisteredAidCache;
-import android.nfc.cardemulation.NxpApduServiceInfo;
+import android.nfc.cardemulation.NfcApduServiceInfo;
 import android.os.Binder;
 import android.content.ComponentName;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import com.android.nfc.NfcPermissions;
 import com.android.nfc.NfcService;
-import com.nxp.nfc.NxpConstants;
+import com.nxp.nfc.NfcConstants;
 
 
 public class NxpNfcController {
@@ -110,10 +110,10 @@ public class NxpNfcController {
     private boolean checkCertificatesFromUICC(String pkg, String seName) {
         Log.d(TAG, "checkCertificatesFromUICC() " + pkg + ", " + seName);
         Intent CertificateIntent = new Intent();
-        CertificateIntent.setAction(NxpConstants.ACTION_CHECK_X509);
-        CertificateIntent.setPackage(NxpConstants.SET_PACKAGE_NAME);
-        CertificateIntent.putExtra(NxpConstants.EXTRA_SE_NAME, seName);
-        CertificateIntent.putExtra(NxpConstants.EXTRA_PKG, pkg);
+        CertificateIntent.setAction(NfcConstants.ACTION_CHECK_X509);
+        CertificateIntent.setPackage(NfcConstants.SET_PACKAGE_NAME);
+        CertificateIntent.putExtra(NfcConstants.EXTRA_SE_NAME, seName);
+        CertificateIntent.putExtra(NfcConstants.EXTRA_PKG, pkg);
         mContext.sendBroadcast(CertificateIntent);
 
         mWaitCheckCert = new Object();
@@ -210,10 +210,10 @@ public class NxpNfcController {
 
     private void getPackageListUnicastMode () {
         unicastPkg = null;
-        List<NxpApduServiceInfo> regServices = mCardEmulationManager.getAllServices();
+        List<NfcApduServiceInfo> regServices = mCardEmulationManager.getAllServices();
         PackageManager pm = mContext.getPackageManager();
         List<ResolveInfo> intentServices = pm.queryIntentActivities(
-                new Intent(NxpConstants.ACTION_MULTI_EVT_TRANSACTION),
+                new Intent(NfcConstants.ACTION_MULTI_EVT_TRANSACTION),
                 PackageManager.GET_INTENT_FILTERS| PackageManager.GET_RESOLVED_FILTER);
         ArrayList<String> apduResolvedServices = new ArrayList<String>();
         String packageName = null;
@@ -222,7 +222,7 @@ public class NxpNfcController {
         long minInstallTime;
         ResolveInfo resolveInfoService = null;
 
-        for(NxpApduServiceInfo service : regServices) {
+        for(NfcApduServiceInfo service : regServices) {
             packageName = service.getComponent().getPackageName();
             for(ResolveInfo resInfo : intentServices){
                 resolveInfoService = null;
@@ -237,8 +237,8 @@ public class NxpNfcController {
                 continue;
             }
             int priority = resolveInfoService.priority;
-            if((pm.checkPermission(NxpConstants.PERMISSIONS_TRANSACTION_EVENT , packageName) == PackageManager.PERMISSION_GRANTED) &&
-                    (pm.checkPermission(NxpConstants.PERMISSIONS_NFC , packageName) == PackageManager.PERMISSION_GRANTED))
+            if((pm.checkPermission(NfcConstants.PERMISSIONS_TRANSACTION_EVENT , packageName) == PackageManager.PERMISSION_GRANTED) &&
+                    (pm.checkPermission(NfcConstants.PERMISSIONS_NFC , packageName) == PackageManager.PERMISSION_GRANTED))
             {
                 if((checkCertificatesFromUICC(packageName, "SIM") == true) ||
                     (checkCertificatesFromUICC(packageName, "SIM1") == true))
@@ -287,18 +287,18 @@ public class NxpNfcController {
     final class NxpNfcControllerInterface extends INxpNfcController.Stub {
 
         @Override
-        public boolean deleteOffHostService(int userId, String packageName, NxpApduServiceInfo service) {
+        public boolean deleteOffHostService(int userId, String packageName, NfcApduServiceInfo service) {
             return mServiceCache.deleteApduService(userId, Binder.getCallingUid(), packageName, service);
         }
 
         @Override
-        public ArrayList<NxpApduServiceInfo> getOffHostServices(int userId, String packageName) {
+        public ArrayList<NfcApduServiceInfo> getOffHostServices(int userId, String packageName) {
             return mServiceCache.getApduServices(userId, Binder.getCallingUid(), packageName);
         }
 
         @Override
-        public NxpApduServiceInfo getDefaultOffHostService(int userId, String packageName) {
-            HashMap<ComponentName, NxpApduServiceInfo> mapServices = mServiceCache.getApduservicesMaps();
+        public NfcApduServiceInfo getDefaultOffHostService(int userId, String packageName) {
+            HashMap<ComponentName, NfcApduServiceInfo> mapServices = mServiceCache.getApduservicesMaps();
             ComponentName preferredPaymentService = mRegisteredAidCache.getPreferredPaymentService();
             if(preferredPaymentService != null) {
                 if(preferredPaymentService.getPackageName() != null &&
@@ -309,7 +309,7 @@ public class NxpNfcController {
                 String defaultservice = preferredPaymentService.getClassName();
 
                 //If Default is Dynamic Service
-                for (Map.Entry<ComponentName, NxpApduServiceInfo> entry : mapServices.entrySet())
+                for (Map.Entry<ComponentName, NfcApduServiceInfo> entry : mapServices.entrySet())
                 {
                     if(defaultservice.equals(entry.getKey().getClassName())) {
                         Log.d(TAG, "getDefaultOffHostService: Dynamic: "+ entry.getValue().getAids().size());
@@ -318,8 +318,8 @@ public class NxpNfcController {
                 }
 
                 //If Default is Static Service
-                HashMap<ComponentName, NxpApduServiceInfo>  staticServices = mServiceCache.getInstalledStaticServices();
-                for (Map.Entry<ComponentName, NxpApduServiceInfo> entry : staticServices.entrySet()) {
+                HashMap<ComponentName, NfcApduServiceInfo>  staticServices = mServiceCache.getInstalledStaticServices();
+                for (Map.Entry<ComponentName, NfcApduServiceInfo> entry : staticServices.entrySet()) {
                     if(defaultservice.equals(entry.getKey().getClassName())) {
                         Log.d(TAG, "getDefaultOffHostService: Static: "+ entry.getValue().getAids().size());
                         return entry.getValue();
@@ -330,7 +330,7 @@ public class NxpNfcController {
         }
 
         @Override
-        public boolean commitOffHostService(int userId, String packageName, String serviceName, NxpApduServiceInfo service) {
+        public boolean commitOffHostService(int userId, String packageName, String serviceName, NfcApduServiceInfo service) {
             int aidLength = 0;
             boolean is_table_size_required = true;
             List<String>  newAidList = new ArrayList<String>();
@@ -341,7 +341,7 @@ public class NxpNfcController {
             }
             Log.d(TAG, "Total commiting aids Length:  "+ aidLength);
 
-            ArrayList<NxpApduServiceInfo> serviceList = mServiceCache.getApduServices(userId, Binder.getCallingUid(), packageName);
+            ArrayList<NfcApduServiceInfo> serviceList = mServiceCache.getApduServices(userId, Binder.getCallingUid(), packageName);
            for(int i=0; i< serviceList.size(); i++) {
                 Log.d(TAG, "All Service Names["+i +"] "+ serviceList.get(i).getComponent().getClassName());
                 if(serviceName.equalsIgnoreCase(serviceList.get(i).getComponent().getClassName())) {
@@ -388,7 +388,7 @@ public class NxpNfcController {
             boolean result = false,resolveStat = false;
             PackageManager pm = mContext.getPackageManager();
             List<ResolveInfo> intentServices = pm.queryIntentActivities(
-                    new Intent(NxpConstants.ACTION_MULTI_EVT_TRANSACTION),
+                    new Intent(NfcConstants.ACTION_MULTI_EVT_TRANSACTION),
                     PackageManager.GET_INTENT_FILTERS| PackageManager.GET_RESOLVED_FILTER);
 
             for(ResolveInfo resInfo : intentServices){
@@ -399,8 +399,8 @@ public class NxpNfcController {
                 }
             }
 
-            if((resolveStat) && (pm.checkPermission(NxpConstants.PERMISSIONS_TRANSACTION_EVENT , packageName) == PackageManager.PERMISSION_GRANTED) &&
-                    (pm.checkPermission(NxpConstants.PERMISSIONS_NFC , packageName) == PackageManager.PERMISSION_GRANTED) &&
+            if((resolveStat) && (pm.checkPermission(NfcConstants.PERMISSIONS_TRANSACTION_EVENT , packageName) == PackageManager.PERMISSION_GRANTED) &&
+                    (pm.checkPermission(NfcConstants.PERMISSIONS_NFC , packageName) == PackageManager.PERMISSION_GRANTED) &&
                     checkCertificatesFromUICC(packageName, seName) == true) {
                 mEnabledMultiEvts.add(packageName);
                 result = true;

@@ -32,8 +32,8 @@ import android.content.pm.ServiceInfo;
 import android.content.pm.PackageItemInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.nfc.cardemulation.NxpAidGroup;
-import android.nfc.cardemulation.NxpApduServiceInfo;
+import android.nfc.cardemulation.NfcAidGroup;
+import android.nfc.cardemulation.NfcApduServiceInfo;
 import android.nfc.cardemulation.CardEmulation;
 import android.nfc.cardemulation.HostApduService;
 import android.nfc.cardemulation.OffHostApduService;
@@ -77,7 +77,7 @@ public class RegisteredNxpServicesCache {
     final Object mLock = new Object();
 
     private RegisteredServicesCache mRegisteredServicesCache;
-    final HashMap<ComponentName, NxpApduServiceInfo> mApduServices = Maps.newHashMap();
+    final HashMap<ComponentName, NfcApduServiceInfo> mApduServices = Maps.newHashMap();
     final HashMap<ComponentName , String> mApduBanner = Maps.newHashMap();
     AtomicFile mDynamicApduServiceFile = null;
     File dataDir = null;
@@ -146,10 +146,10 @@ public class RegisteredNxpServicesCache {
         return deleted;
     }
     // Register APDU Service
-    public boolean registerApduService(int userId, int uid, String packageName, String serviceName, NxpApduServiceInfo apduService) {
+    public boolean registerApduService(int userId, int uid, String packageName, String serviceName, NfcApduServiceInfo apduService) {
         ComponentName componentName = new ComponentName(packageName, serviceName);
         Log.e(TAG,"registerApduService - incoming : " + apduService.toString());
-        NxpApduServiceInfo cur = mApduServices.get(componentName);
+        NfcApduServiceInfo cur = mApduServices.get(componentName);
         if(cur!=null)
             Log.e(TAG,"registerApduService - cur :" + cur.toString());
 
@@ -170,21 +170,21 @@ public class RegisteredNxpServicesCache {
         }
     }
 
-    // To Get the NxpApduServiceInfo List
-    public ArrayList<NxpApduServiceInfo> getApduservicesList() {
-        ArrayList<NxpApduServiceInfo> services = new ArrayList<NxpApduServiceInfo>();
-        for (NxpApduServiceInfo value : mApduServices.values()) {
+    // To Get the NfcApduServiceInfo List
+    public ArrayList<NfcApduServiceInfo> getApduservicesList() {
+        ArrayList<NfcApduServiceInfo> services = new ArrayList<NfcApduServiceInfo>();
+        for (NfcApduServiceInfo value : mApduServices.values()) {
             services.add(value);
         }
         return services;
     }
 
-    // To get the <ComponentName, NxpApduServiceInfo>  HashMap
-    public HashMap<ComponentName, NxpApduServiceInfo> getApduservicesMaps() {
+    // To get the <ComponentName, NfcApduServiceInfo>  HashMap
+    public HashMap<ComponentName, NfcApduServiceInfo> getApduservicesMaps() {
         return mApduServices;
     }
 
-    public HashMap<ComponentName, NxpApduServiceInfo> getInstalledStaticServices() {
+    public HashMap<ComponentName, NfcApduServiceInfo> getInstalledStaticServices() {
         return mRegisteredServicesCache.getAllStaticHashServices();
     }
 
@@ -192,8 +192,8 @@ public class RegisteredNxpServicesCache {
     public void onPackageRemoved(String uninstalledpackageName) {
         if(uninstalledpackageName != null) {
             Log.d(TAG, "uninstall packageName:"+ uninstalledpackageName);
-            for(Iterator<Map.Entry<ComponentName, NxpApduServiceInfo>>it=mApduServices.entrySet().iterator(); it.hasNext();){
-                Map.Entry<ComponentName, NxpApduServiceInfo> entry = it.next();
+            for(Iterator<Map.Entry<ComponentName, NfcApduServiceInfo>>it=mApduServices.entrySet().iterator(); it.hasNext();){
+                Map.Entry<ComponentName, NfcApduServiceInfo> entry = it.next();
                 if(uninstalledpackageName.equals(entry.getKey().getPackageName())){
                     it.remove();
                     Log.d(TAG, "Removed packageName: "+ entry.getKey().getPackageName());
@@ -209,7 +209,7 @@ public class RegisteredNxpServicesCache {
     }
 
     // To Delete Apdu Service
-    public boolean deleteApduService(int userId, int uid, String packageName, NxpApduServiceInfo apduService) {
+    public boolean deleteApduService(int userId, int uid, String packageName, NfcApduServiceInfo apduService) {
          synchronized (mLock) {
              mApduServices.values().remove(apduService);
              writeDynamicApduService();
@@ -222,18 +222,18 @@ public class RegisteredNxpServicesCache {
          return true;
     }
 
-    // To get Array of NxpApduServiceInfo
-    public ArrayList<NxpApduServiceInfo> getApduServices(int userId, int uid, String packageName) {
+    // To get Array of NfcApduServiceInfo
+    public ArrayList<NfcApduServiceInfo> getApduServices(int userId, int uid, String packageName) {
 
-        //ArrayList<NxpApduServiceInfo> apduInfo = new ArrayList<NxpApduServiceInfo>(mApduServices.values());
-        ArrayList<NxpApduServiceInfo> apduInfo = new ArrayList<NxpApduServiceInfo>();
-        for (Map.Entry<ComponentName, NxpApduServiceInfo> entry : mApduServices.entrySet()) {
+        //ArrayList<NfcApduServiceInfo> apduInfo = new ArrayList<NfcApduServiceInfo>(mApduServices.values());
+        ArrayList<NfcApduServiceInfo> apduInfo = new ArrayList<NfcApduServiceInfo>();
+        for (Map.Entry<ComponentName, NfcApduServiceInfo> entry : mApduServices.entrySet()) {
             if(packageName.equals(entry.getKey().getPackageName())) {
                 apduInfo.add(entry.getValue());
             }
         }
-        ArrayList<NxpApduServiceInfo> staticServices = new ArrayList<NxpApduServiceInfo>(mRegisteredServicesCache.getAllServices());
-        for(NxpApduServiceInfo service: staticServices ) {
+        ArrayList<NfcApduServiceInfo> staticServices = new ArrayList<NfcApduServiceInfo>(mRegisteredServicesCache.getAllServices());
+        for(NfcApduServiceInfo service: staticServices ) {
             if(packageName.equals((service.getResolveInfo()).serviceInfo.packageName)) {
                 apduInfo.add(service);
             }
@@ -251,8 +251,8 @@ public class RegisteredNxpServicesCache {
             out.setFeature(XML_INDENT_OUTPUT_FEATURE, true);
             out.startTag(null, "apduservices");
 
-            for(Iterator<Map.Entry<ComponentName, NxpApduServiceInfo>>it=mApduServices.entrySet().iterator(); it.hasNext();){
-                Map.Entry<ComponentName, NxpApduServiceInfo> service = it.next();
+            for(Iterator<Map.Entry<ComponentName, NfcApduServiceInfo>>it=mApduServices.entrySet().iterator(); it.hasNext();){
+                Map.Entry<ComponentName, NfcApduServiceInfo> service = it.next();
                 if( null != service) {
                     out.startTag(null, "service");
                     out.attribute(null, "component", service.getKey().flattenToString());
@@ -306,12 +306,12 @@ public class RegisteredNxpServicesCache {
             int seId = 0;
             int userId = 0;
             int bannerId = 0;
-            NxpAidGroup nxpAidGroup = null;
+            NfcAidGroup nxpAidGroup = null;
             Drawable DrawableResource = null;
-            NxpApduServiceInfo apduService =null;
+            NfcApduServiceInfo apduService =null;
             Bitmap bitmap = null;
             byte[] byteArrayBanner = null;
-            ArrayList<NxpAidGroup> dynamicNxpAidGroup = new ArrayList<NxpAidGroup>();
+            ArrayList<NfcAidGroup> dynamicNfcAidGroup = new ArrayList<NfcAidGroup>();
 
             String tagName = parser.getName();
             if ("apduservices".equals(tagName)) {
@@ -353,9 +353,9 @@ public class RegisteredNxpServicesCache {
                         }
 
                         if ("aid-group".equals(tagName) && parser.getDepth() == 3 && inService) {
-                            NxpAidGroup group = NxpAidGroup.createFromXml(parser);
+                            NfcAidGroup group = NfcAidGroup.createFromXml(parser);
                             if (group != null) {
-                                dynamicNxpAidGroup.add(group);
+                                dynamicNfcAidGroup.add(group);
                             } else {
                                 Log.e(TAG, "Could not parse AID group.");
                             }
@@ -372,13 +372,13 @@ public class RegisteredNxpServicesCache {
                             resolveInfo.serviceInfo.applicationInfo = new ApplicationInfo();
                             resolveInfo.serviceInfo.packageName = currentComponent.getPackageName();
                             resolveInfo.serviceInfo.name = currentComponent.getClassName();
-                            NxpApduServiceInfo.ESeInfo mEseInfo = new NxpApduServiceInfo.ESeInfo(seId,powerstate);
-                            ArrayList<android.nfc.cardemulation.NxpAidGroup> staticNxpAidGroups = null;
-                            apduService = new NxpApduServiceInfo(resolveInfo,onHost,description,staticNxpAidGroups, dynamicNxpAidGroup,
+                            NfcApduServiceInfo.ESeInfo mEseInfo = new NfcApduServiceInfo.ESeInfo(seId,powerstate);
+                            ArrayList<android.nfc.cardemulation.NfcAidGroup> staticNfcAidGroups = null;
+                            apduService = new NfcApduServiceInfo(resolveInfo,onHost,description,staticNfcAidGroups, dynamicNfcAidGroup,
                                                                requiresUnlock,bannerId,userId, "Fixme: NXP:<Activity Name>", mEseInfo, modifiable);
                             mApduServices.put(currentComponent, apduService);
                             Log.d(TAG,"mApduServices size= "+ mApduServices.size());
-                            dynamicNxpAidGroup.clear();
+                            dynamicNfcAidGroup.clear();
                             inService = false;
                             currentComponent = null;
                             drawbalePath = null;
