@@ -72,6 +72,7 @@ public:
   static const uint8_t EE_APP_HANLDE_UICC2 = 0xF8;
   static const uint8_t EE_APP_HANLDE_UICC3 = 0xF9;
   uint8_t muicc2_selected;    /* UICC2 or UICC3 selected from config file*/
+  SyncEvent       mApduPaternAddRemoveEvent;
 /*******************************************************************************
 **
 ** Function:        getGenericEseId

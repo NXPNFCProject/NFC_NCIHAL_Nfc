@@ -45,7 +45,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
+import java.util.List;
 public class AidRoutingManager {
 
     static final String TAG = "AidRoutingManager";
@@ -160,6 +160,17 @@ public class AidRoutingManager {
             NfcService.getInstance().unrouteAids(aid);
         }
     NfcService.getInstance().unrouteAids("FFFFFFFFFFFFFFFF");
+    }
+
+    public boolean configureApduPatternRouting(List<ApduPatternResolveInfo> apduPatternList) {
+        NfcService.getInstance().unrouteApduPattern("FFFFFFFFFFFFFFEF");
+        if(apduPatternList.size() == 0x00 || apduPatternList == null)
+            return false;
+        for(ApduPatternResolveInfo apduPatternInfo : apduPatternList) {
+            NfcService.getInstance().routeApduPattern(apduPatternInfo.referenceData,apduPatternInfo.mask,
+                    apduPatternInfo.route,apduPatternInfo.powerState);
+        }
+        return true;
     }
 
     public boolean configureRouting(HashMap<String, AidEntry> aidMap) {
@@ -306,6 +317,13 @@ public class AidRoutingManager {
     }
     public boolean getLastCommitRoutingStatus() {
         return mLastCommitStatus;
+    }
+
+    final class ApduPatternResolveInfo {
+        public String  mask;
+        public String  referenceData;
+        public int route;
+        public int powerState;
     }
 
     public void dump(FileDescriptor fd, PrintWriter pw, String[] args) {

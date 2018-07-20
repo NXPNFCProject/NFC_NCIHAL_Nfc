@@ -156,6 +156,9 @@ public class NativeNfcManager implements DeviceHost {
     public native boolean unrouteAid(byte[] aid);
 
     @Override
+    public native boolean routeApduPattern(int route, int powerState, byte[] apduData, byte[] apduMask);
+
+    @Override
     public native int getAidTableSize();
 
     @Override
@@ -178,6 +181,9 @@ public class NativeNfcManager implements DeviceHost {
 
     @Override
     public native boolean commitRouting();
+
+    @Override
+    public native boolean unrouteApduPattern(byte[] apduData);
 
     @Override
     public native boolean setDefaultRoute(int defaultRouteEntry, int defaultProtoRouteEntry, int defaultTechRouteEntry);

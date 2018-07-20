@@ -75,7 +75,7 @@ public class RegisteredAidCache {
     // is authoritative for the current set of services and defaults.
     // It is only valid for the current user.
     final TreeMap<String, AidResolveInfo> mAidCache = new TreeMap<String, AidResolveInfo>();
-
+    final TreeMap<String, ServiceApduInfo> mapduPatternList= new TreeMap<String, ServiceApduInfo>();
     //FIXME: directly use the declaration in ApduServerInfo in framework
     static final int POWER_STATE_SWITCH_ON = 1;
     static final int POWER_STATE_SWITCH_OFF = 2;
@@ -122,6 +122,10 @@ public class RegisteredAidCache {
         }
     }
 
+    final class ServiceApduInfo {
+        NfcApduServiceInfo service;
+        NfcAidGroup.ApduPattern apdu;
+    }
     // Represents a list of services, an optional default and a category that
     // an AID was resolved to.
     final class AidResolveInfo {
@@ -428,6 +432,7 @@ public class RegisteredAidCache {
     void generateServiceMapLocked(List<NfcApduServiceInfo> services) {
         // Easiest is to just build the entire tree again
         mAidServices.clear();
+        mapduPatternList.clear();
         for (NfcApduServiceInfo service : services) {
             if (DBG) Log.d(TAG, "generateServiceMap component: " + service.getComponent());
             List<String> prefixAids = service.getPrefixAids();
@@ -490,6 +495,21 @@ public class RegisteredAidCache {
                             new ArrayList<ServiceAidInfo>();
                     serviceAidInfos.add(serviceAidInfo);
                     mAidServices.put(serviceAidInfo.aid, serviceAidInfos);
+                }
+            }
+            for(NfcAidGroup group : service.getNfcAidGroups()) {
+                ArrayList<NfcAidGroup.ApduPattern> apduPattern = group.getApduPatternList();
+                if(apduPattern == null || apduPattern.size() == 0x00)
+                    continue;
+                for(NfcAidGroup.ApduPattern apdu : apduPattern) {
+                    ServiceApduInfo serviceApduInfo = new ServiceApduInfo();
+                    serviceApduInfo.apdu = apdu;
+                    serviceApduInfo.service = service;
+                    if (mapduPatternList.containsKey(apdu.getreferenceData())) {
+                        Log.e(TAG," Ignoring APDU pattern which is already registered");
+                    } else {
+                        mapduPatternList.put(apdu.getreferenceData(), serviceApduInfo);
+                    }
                 }
             }
         }
@@ -874,7 +894,26 @@ public class RegisteredAidCache {
                 routingEntries.put(aid, aidType);
             }
         }
+        addApduPatternEntries();
         mRoutingManager.configureRouting(routingEntries);
+    }
+
+    public void addApduPatternEntries() {
+        List<AidRoutingManager.ApduPatternResolveInfo> apduPatternRouting = new ArrayList<AidRoutingManager.ApduPatternResolveInfo>();
+        for(Map.Entry<String , ServiceApduInfo> entry : mapduPatternList.entrySet()) {
+            AidRoutingManager.ApduPatternResolveInfo apduEntry = mRoutingManager.new ApduPatternResolveInfo();
+            NfcApduServiceInfo service = entry.getValue().service;
+            NfcApduServiceInfo.ESeInfo seInfo = service.getSEInfo();
+
+            apduEntry.referenceData = entry.getValue().apdu.getreferenceData();
+            apduEntry.mask = entry.getValue().apdu.getMask();
+            apduEntry.route = seInfo.getSeId();
+            apduEntry.powerState =  seInfo.getPowerState() & POWER_STATE_ALL;
+            apduEntry.powerState |= SCREEN_STATE_ON_LOCKED | SCREEN_STATE_OFF_UNLOCKED | SCREEN_STATE_OFF_LOCKED;
+
+            apduPatternRouting.add(apduEntry);
+        }
+        mRoutingManager.configureApduPatternRouting(apduPatternRouting);
     }
 
     public void onServicesUpdated(int userId, List<NfcApduServiceInfo> services) {

@@ -116,6 +116,10 @@ class RoutingManager {
     void configureOffHostNfceeTechMask(void);
     void checkProtoSeID(void);
     void dumpTables(int);
+    bool addApduRouting(uint8_t route, uint8_t powerState,const uint8_t* apduData,
+         uint8_t apduDataLen ,const uint8_t* apduMask, uint8_t apduMaskLen);
+
+    bool removeApduRouting(uint8_t apduDataLen, const uint8_t* apduData);
     bool setDefaultRoute(const int defaultRoute, const int protoRoute, const int techRoute);
     uint32_t getUicc2selected();
     bool addAidRouting(const uint8_t* aid, uint8_t aidLen, int route,
