@@ -383,7 +383,6 @@ public class NfcService implements DeviceHostListener {
         "com.android.nfc_extras.action.RF_FIELD_OFF_DETECTED";
     public static final String ACTION_AID_SELECTED =
         "com.android.nfc_extras.action.AID_SELECTED";
-    public static final String EXTRA_AID = "com.android.nfc_extras.extra.AID";
 
     public static final String ACTION_LLCP_UP =
             "com.android.nfc.action.LLCP_UP";
@@ -4657,12 +4656,12 @@ public class NfcService implements DeviceHostListener {
                     return;
                 }
                 ArrayList<String> packages = new ArrayList<String>();
-                Intent intent = new Intent(NxpConstants.ACTION_TRANSACTION_DETECTED);
+                Intent intent = new Intent(NfcAdapter.ACTION_TRANSACTION_DETECTED);
                 intent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                intent.putExtra(NxpConstants.EXTRA_AID, aid);
-                intent.putExtra(NxpConstants.EXTRA_DATA, data);
-                intent.putExtra(NxpConstants.EXTRA_SE_NAME, reader);
+                intent.putExtra(NfcAdapter.EXTRA_AID, aid);
+                intent.putExtra(NfcAdapter.EXTRA_DATA, data);
+                intent.putExtra(NfcAdapter.EXTRA_SE_NAME, reader);
                 StringBuilder aidString = new StringBuilder(aid.length);
                 for (byte b : aid) {
                     aidString.append(String.format("%02X", b));
