@@ -783,7 +783,12 @@ bool CNxpNfcConfig::isModified() {
   }
 
   uint32_t stored_crc32 = 0;
-  fread(&stored_crc32, sizeof(uint32_t), 1, fd);
+  uint32_t status = fread(&stored_crc32, sizeof(uint32_t), 1, fd);
+  if(!status) {
+    LOG(ERROR) << StringPrintf(
+        "%s Unable to read file '%s'", __func__,
+        config_timestamp_path);
+  }
   fclose(fd);
 
   return stored_crc32 != config_crc32_;
@@ -806,8 +811,13 @@ bool CNxpNfcConfig::isModified(const char* pName) {
   }
 
   uint32_t stored_crc32 = 0;
-  fread(&stored_crc32, sizeof(uint32_t), 1, fd);
-  fclose(fd);
+  uint32_t status = fread(&stored_crc32, sizeof(uint32_t), 1, fd);
+  if(!status) {
+    LOG(ERROR) << StringPrintf(
+        "%s Unable to read file '%s'", __func__,
+        config_timestamp_path);
+  }
+ fclose(fd);
 
   if (isRfFile)
     return stored_crc32 != config_crc32_rf_;

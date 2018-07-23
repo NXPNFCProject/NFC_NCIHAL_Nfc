@@ -2485,7 +2485,12 @@ void RoutingManager::nfaEeCallback(tNFA_EE_EVT event,
 
   SecureElement& se = SecureElement::getInstance();
   RoutingManager& routingManager = RoutingManager::getInstance();
-  if (eventData) routingManager.mCbEventData = *eventData;
+  if (!eventData) {
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+          "%s: No eventdata", fn);
+  return;
+  }
+  routingManager.mCbEventData = *eventData;
   tNFA_EE_DISCOVER_REQ info = eventData->discover_req;
 
   switch (event) {

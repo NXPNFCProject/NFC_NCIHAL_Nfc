@@ -1078,7 +1078,6 @@ tNFA_STATUS Set_EERegisterValue(uint16_t RegAddr, uint8_t bitVal) {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: Success NFA_SendRawVsCommand", __func__);
     gnxpfeature_conf.NxpFeatureConfigEvt.wait(); /* wait for callback */
-    status = NFA_STATUS_FAILED;
   } else {
     LOG(ERROR) << StringPrintf("%s: Failed NFA_SendRawVsCommand", __func__);
   }

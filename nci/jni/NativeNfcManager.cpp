@@ -1619,17 +1619,20 @@ static void nfaConnectionCallback(uint8_t connEvent,
     if (nfc_jni_cache_object(e, gNativeNfcTagClassName,
                              &(nat->cached_NfcTag)) == -1) {
       LOG(ERROR) << StringPrintf("%s: fail cache NativeNfcTag", __func__);
+      free(nat);
       return JNI_FALSE;
     }
 
     if (nfc_jni_cache_object(e, gNativeP2pDeviceClassName,
                              &(nat->cached_P2pDevice)) == -1) {
       LOG(ERROR) << StringPrintf("%s: fail cache NativeP2pDevice", __func__);
+      free(nat);
       return JNI_FALSE;
     }
 
     gNativeData = getNative(e, o);
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
+    free(nat);
     return JNI_TRUE;
   }
 
@@ -2348,12 +2351,14 @@ static void nfaConnectionCallback(uint8_t connEvent,
       sIsLowRamDevice = false;
     } else {
       char propBuf[PROPERTY_VALUE_MAX] = {'\0'};
-      property_get(lowRamSysProp, propBuf, "");
-      sIsLowRamDevice = (propBuf[0] != '\0')
-                            ? ((strcmp(propBuf, "true") == 0) ? true : false)
-                            : true;
-      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-          "isLowRamDevice %s", sIsLowRamDevice ? "true" : "false");
+      int len = property_get(lowRamSysProp, propBuf, "");
+      if (len != 0) {
+        sIsLowRamDevice = (propBuf[0] != '\0')
+                              ? ((strcmp(propBuf, "true") == 0) ? true : false)
+                              : true;
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+            "isLowRamDevice %s", sIsLowRamDevice ? "true" : "false");
+      }
     }
     NFA_SetLowRamDevice(sIsLowRamDevice);
 #endif
@@ -5648,7 +5653,6 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
           if (ese_status != NFCSTATUS_SUCCESS) {
             DLOG_IF(INFO, nfc_debug_enabled)
                 << StringPrintf("Denying to set Jcop OS Download state");
-            status = ese_status;
           } else {
             if (!pTransactionController->transactionAttempt(
                     TRANSACTION_REQUESTOR(jcosDownload))) {
@@ -8030,8 +8034,6 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
       case 0x03:
         DLOG_IF(INFO, nfc_debug_enabled)
             << StringPrintf("phNxpNciHal_getPrbsCmd - NFC_BIT_RATE_848");
-        break;
-      default:
         break;
     }
     // step2. PRBS Test stop : CORE RESET_CMD

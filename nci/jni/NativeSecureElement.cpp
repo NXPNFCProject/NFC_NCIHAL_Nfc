@@ -400,31 +400,27 @@ static jboolean nativeNfcSecureElement_doDisconnectSecureElementConnection(
   if (nfcFL.nfcNxpEse) {
     if (handle == (SecureElement::EE_HANDLE_0xF8 || se.EE_HANDLE_0xF4)) {
       stat = SecureElement::getInstance().disconnectEE(handle);
-      if (nfcFL.nfcNxpEse) {
-        se.mIsWiredModeOpen = false;
-        if (nfcFL.eseFL._ESE_EXCLUSIVE_WIRED_MODE) {
-          se.mIsExclusiveWiredMode = false;
-          if (se.mlistenDisabled) {
-            if (isDiscoveryStarted()) {
-              // Stop RF Discovery if we were polling
-              startRfDiscovery(false);
-              status = NFA_EnableListening();
-              startRfDiscovery(true);
-            } else {
-              status = NFA_EnableListening();
-            }
-            se.mlistenDisabled = false;
+      se.mIsWiredModeOpen = false;
+      if (nfcFL.eseFL._ESE_EXCLUSIVE_WIRED_MODE) {
+        se.mIsExclusiveWiredMode = false;
+        if (se.mlistenDisabled) {
+          if (isDiscoveryStarted()) {
+          // Stop RF Discovery if we were polling
+            startRfDiscovery(false);
+            status = NFA_EnableListening();
+            startRfDiscovery(true);
+          } else {
+             status = NFA_EnableListening();
           }
+          se.mlistenDisabled = false;
         }
       }
       goto TheEnd;
     }
 
-    if (nfcFL.nfcNxpEse) {
-      // Send the EVT_END_OF_APDU_TRANSFER event at the end of wired mode
-      // session.
-      se.NfccStandByOperation(STANDBY_MODE_ON);
-    }
+    // Send the EVT_END_OF_APDU_TRANSFER event at the end of wired mode
+    // session.
+    se.NfccStandByOperation(STANDBY_MODE_ON);
   }
 #endif
 
@@ -555,7 +551,11 @@ static jboolean nativeNfcSecureElement_doResetSecureElement(JNIEnv*, jobject,
       }
 
       if (nfcFL.eseFL._WIRED_MODE_STANDBY && (se.mNfccPowerMode == 1))
-        stat = se.setNfccPwrConfig(se.POWER_ALWAYS_ON | se.COMM_LINK_ACTIVE);
+        uint8_t status = se.setNfccPwrConfig(se.POWER_ALWAYS_ON | se.COMM_LINK_ACTIVE);
+        if (status != NFA_STATUS_OK) {
+          DLOG_IF(INFO, nfc_debug_enabled)
+              << StringPrintf("%s: power link command failed", __func__);
+        }
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s Power Mode is Legacy", __func__);
     }
