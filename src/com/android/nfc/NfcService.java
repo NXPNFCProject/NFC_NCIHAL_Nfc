@@ -144,6 +144,10 @@ import java.util.Timer;
 import java.io.IOException;
 import java.io.FileNotFoundException;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.InvocationTargetException;
+
 import android.util.Pair;
 import java.util.HashSet;
 import java.util.concurrent.ExecutionException;
@@ -154,8 +158,6 @@ import com.nxp.nfc.NxpConstants;
 import com.vzw.nfc.RouteEntry;
 import com.gsma.nfc.internal.NxpNfcController;
 import com.nxp.nfc.gsma.internal.INxpNfcController;
-import vendor.nxp.nxpwiredse.V1_0.INxpWiredSe;
-import vendor.nxp.nxpwiredse.V1_0.INxpWiredSeHalCallback;
 
 public class NfcService implements DeviceHostListener {
     private static final String ACTION_MASTER_CLEAR_NOTIFICATION = "android.intent.action.MASTER_CLEAR_NOTIFICATION";
@@ -372,11 +374,6 @@ public class NfcService implements DeviceHostListener {
     public static final int TRANSIT_SETCONFIG_STAT_SUCCESS = 0x00;
     public static final int TRANSIT_SETCONFIG_STAT_FAILED  = 0xFF;
 
-    //for NfcWiredSe service
-    static final byte DEFAULT_BASIC_CHANNEL = 0;
-    static final byte MAX_LOGICAL_CHANNELS = 4;
-    static final byte INVALID_LOGICAL_CHANNEL = (byte)0xff;
-
     public static final String ACTION_RF_FIELD_ON_DETECTED =
         "com.android.nfc_extras.action.RF_FIELD_ON_DETECTED";
     public static final String ACTION_RF_FIELD_OFF_DETECTED =
@@ -468,7 +465,7 @@ public class NfcService implements DeviceHostListener {
     private static int nci_version = NCI_VERSION_1_0;
     // NFC Execution Environment
     // fields below are protected by this
-    private NativeNfcSecureElement mSecureElement;
+    public NativeNfcSecureElement mSecureElement;
     private OpenSecureElement mOpenEe;  // null when EE closed
     private final ReaderModeDeathRecipient mReaderModeDeathRecipient =
             new ReaderModeDeathRecipient();
@@ -586,12 +583,10 @@ public class NfcService implements DeviceHostListener {
     private static final Boolean unicastReceptionMode = Boolean.FALSE;
     boolean mIsSentUnicastReception = false;
 
-    private static final int EVENT_GET_HAL = 1;
-    private static final int MAX_GET_HAL_RETRY = 5;
-    private static final int GET_SERVICE_DELAY_MILLIS = 200;
-    private static int sNfcWiredSeHandle = 0;
-    private static int sWiredSeGetHalRetry = 0;
-    INxpWiredSe mWiredSEHal = null;
+    //WiredSe
+    Class mWiredSeClass;
+    Method mWiredSeInitMethod, mWiredSeDeInitMwthod;
+    Object mWiredSeObj;
 
     public void enforceNfcSeAdminPerm(String pkg) {
         if (pkg == null) {
@@ -919,6 +914,15 @@ public class NfcService implements DeviceHostListener {
         mNxpNfcAdapter = new NxpNfcAdapterService();
         mExtrasService = new NfcAdapterExtrasService();
       //  mCardEmulationService = new CardEmulationService();
+
+        try {
+            mWiredSeClass = Class.forName("com.android.nfc.WiredSeService");
+            mWiredSeObj = mWiredSeClass.newInstance();
+        } catch (ClassNotFoundException | IllegalAccessException e){
+            Log.e(TAG, "WiredSeService Class not found");
+        } catch (InstantiationException e) {
+            Log.e(TAG, "WiredSeService object Instantiation failed");
+        }
 
         Log.i(TAG, "Starting NFC service");
 
@@ -1533,11 +1537,15 @@ public class NfcService implements DeviceHostListener {
             synchronized (NfcService.this) {
               updateState(NfcAdapter.STATE_ON);
               try {
-                wiredSeInitialize();
-              } catch (NoSuchElementException e) {
-                  Log.i(TAG, "No HAL implementation for WiredSe");
-              } catch (RemoteException | RuntimeException e) {
-                  Log.e(TAG, "Error in getService() for WiredSe");
+                mWiredSeInitMethod = mWiredSeClass.getDeclaredMethod("wiredSeInitialize");
+                mWiredSeInitMethod.invoke(mWiredSeObj);
+              } catch (NoSuchElementException | NoSuchMethodException e) {
+                Log.i(TAG, "No such Method WiredSeInitialize");
+              } catch (RuntimeException | IllegalAccessException | InvocationTargetException e) {
+                Log.e(TAG, "Error in invoking wiredSeInitialize invocation");
+              } catch (Exception e) {
+                Log.e(TAG, "caught Exception during wiredSeInitialize");
+                e.printStackTrace();
               }
             }
             /* Start polling loop */
@@ -1577,6 +1585,19 @@ public class NfcService implements DeviceHostListener {
             }
             Log.i(TAG, "Disabling NFC");
             updateState(NfcAdapter.STATE_TURNING_OFF);
+
+            try{
+                mWiredSeDeInitMwthod = mWiredSeClass.getDeclaredMethod("wiredSeDeInitialize");
+                mWiredSeDeInitMwthod.invoke(mWiredSeObj);
+            } catch (NoSuchElementException | NoSuchMethodException e) {
+                Log.i(TAG, "No such Method WiredSeInitialize");
+            } catch (RuntimeException | IllegalAccessException | InvocationTargetException e) {
+                Log.e(TAG, "Error in invoking wiredSeInitialize invocation");
+            } catch (Exception e) {
+                Log.e(TAG, "caught Exception during wiredSeInitialize");
+                e.printStackTrace();
+            }
+
             /*SoundPool clean up before NFC state updated
             releaseSoundPool();*/
 
@@ -1638,14 +1659,6 @@ public class NfcService implements DeviceHostListener {
                 updateState(NfcAdapter.STATE_OFF);
                 mNxpNfcState = NXP_NFC_STATE_OFF;
             }
-
-            try{
-                mWiredSEHal.setWiredSeCallback(null);
-            } catch(Exception e){
-                Log.e(TAG, "Exception calling setWiredSeCallback");
-            e.printStackTrace();
-            }
-
             return result;
         }
 
@@ -3182,128 +3195,6 @@ public class NfcService implements DeviceHostListener {
 
     }
 
-    class WiredSeDeathRecipient implements HwBinder.DeathRecipient {
-      @Override
-      public void serviceDied(long cookie) {
-        try{
-          Log.d(TAG, "WiredSe: serviceDied !!");
-          if(sNfcWiredSeHandle > 0) {
-            mWiredSeCallback.closeWiredSe(sNfcWiredSeHandle);
-            sNfcWiredSeHandle = 0;
-          }
-           mWiredSEHal.unlinkToDeath(mWiredSeDeathRecipient);
-           mWiredSEHal = null;
-           mWiredSeHandler.sendMessageDelayed(mWiredSeHandler.obtainMessage(EVENT_GET_HAL, 0),
-                                         GET_SERVICE_DELAY_MILLIS);
-        }catch(Exception e) {
-            e.printStackTrace();
-        }
-      }
-    }
-
-    private HwBinder.DeathRecipient mWiredSeDeathRecipient = new WiredSeDeathRecipient();
-
-    private
-    INxpWiredSeHalCallback.Stub mWiredSeCallback = new INxpWiredSeHalCallback.Stub() {
-     private
-      ArrayList<Byte> byteArrayToArrayList(byte[] array) {
-        ArrayList<Byte> list = new ArrayList<Byte>();
-        for (Byte b : array) {
-          list.add(b);
-        }
-        return list;
-      }
-
-     private
-      byte[] arrayListToByteArray(ArrayList<Byte> list) {
-        Byte[] byteArray = list.toArray(new Byte[list.size()]);
-        int i = 0;
-        byte[] result = new byte[list.size()];
-        for (Byte b : byteArray) {
-          result[i++] = b.byteValue();
-        }
-        return result;
-      }
-
-      @Override public int openWiredSe() {
-                Log.d(TAG, "WiredSe: openWiredSe");
-        sNfcWiredSeHandle = doOpenSecureElementConnection(0xF3);
-        if (sNfcWiredSeHandle <= 0) {
-          Log.e(TAG, "WiredSe: open secure element failed.");
-          sNfcWiredSeHandle = 0;
-        } else {
-          Log.d(TAG, "WiredSe: open secure element success.");
-        }
-        return sNfcWiredSeHandle;
-      }
-
-      @Override public ArrayList<Byte> transmit(ArrayList<Byte> data, int wiredSeHandle) {
-        Log.d(TAG, "WiredSe: transmit");
-        if (wiredSeHandle <= 0) {
-          Log.d(TAG, "WiredSe: Secure Element handle NULL");
-          return null;
-        } else {
-          byte[] resp = doTransceive(wiredSeHandle, arrayListToByteArray(data));
-          if (resp != null) {
-            Log.d(TAG, "WiredSe: response is received");
-          }
-          return byteArrayToArrayList(resp);
-        }
-      }
-
-      @Override public ArrayList<Byte> getAtr(int wiredSeHandle)
-          throws android.os.RemoteException {
-        Log.d(TAG, "WiredSe: getAtr");
-        synchronized(NfcService.this) {
-            return byteArrayToArrayList(mSecureElement.doGetAtr(wiredSeHandle));
-        }
-      }
-
-      @Override public int closeWiredSe(int wiredSeHandle) {
-                Log.d(TAG, "WiredSe: closeWiredSe");
-        doDisconnect(wiredSeHandle);
-        sNfcWiredSeHandle = 0;
-        return 0;
-      }
-    };
-
-    private Handler mWiredSeHandler = new Handler() {
-      @Override
-      public void handleMessage(Message message) {
-        switch (message.what) {
-          case EVENT_GET_HAL:
-            try {
-              if(sWiredSeGetHalRetry > MAX_GET_HAL_RETRY) {
-                Log.e(TAG, "WiredSe GET_HAL retry failed");
-                sWiredSeGetHalRetry = 0;
-                break;
-              }
-              wiredSeInitialize();
-              sWiredSeGetHalRetry = 0;
-            } catch (Exception e) {
-                Log.e(TAG, " could not get the service. trying again");
-                sWiredSeGetHalRetry++;
-                sendMessageDelayed(obtainMessage(EVENT_GET_HAL, 0),
-                                     GET_SERVICE_DELAY_MILLIS);
-            }
-            break;
-          default:
-            break;
-        }
-      }
-    };
-
-    void wiredSeInitialize() throws NoSuchElementException, RemoteException {
-        Log.e(TAG, "wiredSeInitialize Enter");
-        if (mWiredSEHal == null) {
-          mWiredSEHal = INxpWiredSe.getService();
-        }
-        if (mWiredSEHal == null) {
-          throw new NoSuchElementException("No HAL is provided for WiredSe");
-        }
-        mWiredSEHal.setWiredSeCallback(mWiredSeCallback);
-        mWiredSEHal.linkToDeath(mWiredSeDeathRecipient, 0);
-    }
     /** resources kept while secure element is open */
     private class OpenSecureElement implements IBinder.DeathRecipient {
         public int pid;  // pid that opened SE
