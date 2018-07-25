@@ -550,12 +550,13 @@ static jboolean nativeNfcSecureElement_doResetSecureElement(JNIEnv*, jobject,
           se.NfccStandByOperation(STANDBY_GPIO_HIGH);
       }
 
-      if (nfcFL.eseFL._WIRED_MODE_STANDBY && (se.mNfccPowerMode == 1))
+      if (nfcFL.eseFL._WIRED_MODE_STANDBY && (se.mNfccPowerMode == 1)) {
         uint8_t status = se.setNfccPwrConfig(se.POWER_ALWAYS_ON | se.COMM_LINK_ACTIVE);
         if (status != NFA_STATUS_OK) {
           DLOG_IF(INFO, nfc_debug_enabled)
               << StringPrintf("%s: power link command failed", __func__);
         }
+      }
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s Power Mode is Legacy", __func__);
     }
