@@ -1632,7 +1632,6 @@ static void nfaConnectionCallback(uint8_t connEvent,
 
     gNativeData = getNative(e, o);
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
-    free(nat);
     return JNI_TRUE;
   }
 
