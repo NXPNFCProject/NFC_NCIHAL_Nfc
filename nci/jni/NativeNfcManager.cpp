@@ -3235,13 +3235,19 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
         android::startRfDiscovery(false);
         PeerToPeer::getInstance().enableP2pListening(false);
         {
-          SyncEventGuard guard(SecureElement::getInstance().mUiccListenEvent);
-          status = NFA_CeConfigureUiccListenTech(mSwp_info.swp_rd_req_info.src,
-                                                 0x00);
-          if (status == NFA_STATUS_OK) {
-            SecureElement::getInstance().mUiccListenEvent.wait();
+          if (mSwp_info.swp_rd_req_info.src == 0x4C0) {
+            SyncEventGuard guard(SecureElement::getInstance().mEseListenEvent);
+            status = NFA_CeConfigureEseListenTech(handle, 0x00);
+            if (status == NFA_STATUS_OK)
+              SecureElement::getInstance().mEseListenEvent.wait();
           } else {
-            LOG(ERROR) << StringPrintf("fail to stop listen");
+            SyncEventGuard guard(SecureElement::getInstance().mUiccListenEvent);
+            status = NFA_CeConfigureUiccListenTech(handle, 0x00);
+            if (status == NFA_STATUS_OK)
+              SecureElement::getInstance().mUiccListenEvent.wait();
+          }
+          if (status != NFA_STATUS_OK) {
+            LOG(ERROR) << StringPrintf("fail to reset UICC/eSE listen");
           }
         }
         goto TheEnd;
