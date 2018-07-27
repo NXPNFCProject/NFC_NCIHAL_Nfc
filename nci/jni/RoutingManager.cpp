@@ -1188,7 +1188,8 @@ void RoutingManager::checkProtoSeID(void)
         if(!isDefaultAidRoutePresent)
         {
             mDefaultIso7816SeID = ROUTE_LOC_HOST_ID;
-            mDefaultIso7816Powerstate = PWR_SWTCH_ON_SCRN_UNLCK_MASK | PWR_SWTCH_ON_SCRN_LOCK_MASK;
+            if(NFA_GetNCIVersion() != NCI_VERSION_2_0)
+              mDefaultIso7816Powerstate &= (PWR_SWTCH_ON_SCRN_UNLCK_MASK | PWR_SWTCH_ON_SCRN_LOCK_MASK);
         }
     }
 
