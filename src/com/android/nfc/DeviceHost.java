@@ -371,6 +371,8 @@ public interface DeviceHost {
 
     int getChipVer();
 
+    int setTransitConfig(String configs);
+
     boolean isCeAidRouteStrictEnabled();
 
     byte[] getFwFileName();

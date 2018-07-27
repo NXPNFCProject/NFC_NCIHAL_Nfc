@@ -2373,7 +2373,7 @@ public class NfcService implements DeviceHostListener {
             /*check if format of configs is fine*/
             /*Save configurations to file*/
             try {
-                File newTextFile = new File("/data/vendor/nfc/libnfc-nxpTransit.conf");
+                File newTextFile = new File("/data/nfc/libnfc-nxpTransit.conf");
                 if(configs == null)
                 {
                     if(newTextFile.delete()){
@@ -2389,6 +2389,7 @@ public class NfcService implements DeviceHostListener {
                     fw.close();
                     Log.e(TAG, "File Written to libnfc-nxpTransit.conf successfully" );
                 }
+                mDeviceHost.setTransitConfig(configs);
             } catch (Exception e) {
                 e.printStackTrace();
                 return TRANSIT_SETCONFIG_STAT_FAILED;
@@ -2397,13 +2398,29 @@ public class NfcService implements DeviceHostListener {
             /*restart NFC service*/
             try {
                 mNfcAdapter.disable(true);
+                WaitForAdapterChange(NfcAdapter.STATE_OFF);
                 mNfcAdapter.enable();
+                WaitForAdapterChange(NfcAdapter.STATE_ON);
             } catch (Exception e) {
                 Log.e(TAG, "Unable to restart NFC Service");
                 e.printStackTrace();
                 return TRANSIT_SETCONFIG_STAT_FAILED;
             }
             return TRANSIT_SETCONFIG_STAT_SUCCESS;
+        }
+
+        private void WaitForAdapterChange(int state) {
+            while (true) {
+                if(mState == state) {
+                    break;
+                }
+                try {
+                    Thread.sleep(100);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            return;
         }
 
         @Override

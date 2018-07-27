@@ -289,6 +289,7 @@ static jmethodID sCachedNfcManagerNotifySeEmvCardRemoval;
 static jmethodID sCachedNfcManagerNotifyTargetDeselected;
 static SyncEvent sNfaEnableEvent;         // event for NFA_Enable()
 static SyncEvent sNfaDisableEvent;        // event for NFA_Disable()
+static SyncEvent sNfaTransitConfigEvent;  // event for NFA_SetTransitConfig()
 SyncEvent sNfaEnableDisablePollingEvent;  // event for NFA_EnablePolling(),
                                           // NFA_DisablePolling()
 SyncEvent sNfaSetConfigEvent;             // event for Set_Config....
@@ -342,6 +343,7 @@ typedef enum dual_uicc_error_states {
 } dual_uicc_error_state_t;
 static tNFA_STATUS nfcManagerEnableNfc(NfcAdaptation& theInstance);
 static bool nfcManager_isCeAidRouteStrictEnabled(JNIEnv* e, jobject o);
+static int nfcManager_setTransitConfig(JNIEnv* e, jobject o, jstring config);
 #endif
 
 static int screenstate = NFA_SCREEN_STATE_OFF_LOCKED;
@@ -365,6 +367,7 @@ static tNFA_STATUS startPolling_rfDiscoveryDisabled(
 
 static int nfcManager_getChipVer(JNIEnv* e, jobject o);
 static jbyteArray nfcManager_getFwFileName(JNIEnv* e, jobject o);
+static std::string ConvertJavaStrToStdString(JNIEnv* env, jstring s);
 static int nfcManager_getNfcInitTimeout(JNIEnv* e, jobject o);
 static int nfcManager_doJcosDownload(JNIEnv* e, jobject o);
 static void nfcManager_doCommitRouting(JNIEnv* e, jobject o);
@@ -1866,6 +1869,13 @@ static void nfaConnectionCallback(uint8_t connEvent,
           DLOG_IF(INFO, nfc_debug_enabled)
               << StringPrintf("NFA_DM_EE_HCI_ENABLE wait released");
         }
+        break;
+      }
+      case NFA_DM_SET_TRANSIT_CONFIG_EVT: {
+        DLOG_IF(INFO, nfc_debug_enabled)
+            << StringPrintf("NFA_DM_SET_TRANSIT_CONFIG EVT cback received");
+        SyncEventGuard guard(sNfaTransitConfigEvent);
+        sNfaTransitConfigEvent.notifyOne();
         break;
       }
 #endif
@@ -5085,10 +5095,8 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
 
     {"getDefaultMifareCLTRoute", "()I",
      (void*)nfcManager_getDefaultMifareCLTRoute},
-    {"readerPassThruMode", "(BB)[B",
-            (void*) nfcManager_readerPassThruMode},
-    {"transceiveAppData", "([B)[B",
-      (void*) nfcManager_transceiveAppData},
+    {"readerPassThruMode", "(BB)[B", (void*)nfcManager_readerPassThruMode},
+    {"transceiveAppData", "([B)[B", (void*)nfcManager_transceiveAppData},
 #if (NXP_EXTNS == TRUE)
     {"getDefaultAidPowerState", "()I",
      (void*)nfcManager_getDefaultAidPowerState},
@@ -5178,7 +5186,11 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
     {"doSetNfcMode", "(I)V", (void*)nfcManager_doSetNfcMode},
 
     {"isCeAidRouteStrictEnabled", "()Z",
-      (void *)nfcManager_isCeAidRouteStrictEnabled},
+     (void*)nfcManager_isCeAidRouteStrictEnabled},
+
+    {"setTransitConfig", "(Ljava/lang/String;)I",
+     (void*)nfcManager_setTransitConfig},
+
 #endif
     {"doGetSecureElementTechList", "()I",
      (void*)nfcManager_getSecureElementTechList},
@@ -5547,6 +5559,62 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
     return num;
   }
 
+  /*******************************************************************************
+  **
+  ** Function:        nfcManager_setTransitConfig
+  **
+  ** Description:     Set Transit Configuration
+  **                  e: JVM environment.
+  **                  o: Java object.
+  **                  config: Jstring.
+  **
+  ** Returns:         Success      0x00
+  **                  Failed       0x01
+  **
+  *******************************************************************************/
+  static int nfcManager_setTransitConfig(JNIEnv * e, jobject o,
+                                         jstring config) {
+    (void)e;
+    (void)o;
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+    std::string transitConfig = ConvertJavaStrToStdString(e, config);
+    SyncEventGuard guard(sNfaTransitConfigEvent);
+    int stat = NFA_SetTransitConfig(transitConfig);
+    sNfaTransitConfigEvent.wait(10 * ONE_SECOND_MS);
+    return stat;
+  }
+
+  /*******************************************************************************
+  **
+  ** Function:        ConvertJavaStrToStdString
+  **
+  ** Description:     Convert Jstring to string
+  **                  e: JVM environment.
+  **                  o: Java object.
+  **                  s: Jstring.
+  **
+  ** Returns:         std::string
+  **
+  *******************************************************************************/
+  static std::string ConvertJavaStrToStdString(JNIEnv * env, jstring s) {
+    if (!s) return "";
+
+    const jclass strClass = env->GetObjectClass(s);
+    const jmethodID getBytes =
+        env->GetMethodID(strClass, "getBytes", "(Ljava/lang/String;)[B");
+    const jbyteArray strJbytes = (jbyteArray)env->CallObjectMethod(
+        s, getBytes, env->NewStringUTF("UTF-8"));
+
+    size_t length = (size_t)env->GetArrayLength(strJbytes);
+    jbyte* pBytes = env->GetByteArrayElements(strJbytes, NULL);
+
+    std::string ret = std::string((char*)pBytes, length);
+    env->ReleaseByteArrayElements(strJbytes, pBytes, JNI_ABORT);
+
+    env->DeleteLocalRef(strJbytes);
+    env->DeleteLocalRef(strClass);
+    return ret;
+  }
   /*******************************************************************************
   **
   ** Function:        nfcManager_getFwFileName
