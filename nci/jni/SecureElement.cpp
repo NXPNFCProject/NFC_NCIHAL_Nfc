@@ -386,32 +386,20 @@ bool SecureElement::initialize(nfc_jni_native_data* native) {
     return (false);
   }
 
-  // Get Fresh EE info.
-  if (!getEeInfo()) return (false);
   initializeEeHandle();
-  // If the controller has an HCI Network, register for that
-  // for (size_t xx = 0; xx < mActualNumEe; xx++)
-  for (size_t xx = 0; xx < MAX_NUM_EE; xx++) {
-    if ((!nfcFL.nfccFL._GEMALTO_SE_SUPPORT &&
-         mEeInfo[xx].ee_handle != EE_HANDLE_0xF4) ||
-        (nfcFL.nfccFL._GEMALTO_SE_SUPPORT &&
-         (((mEeInfo[xx].ee_interface[0] == NCI_NFCEE_INTERFACE_HCI_ACCESS) &&
-           (mEeInfo[xx].ee_status == NFC_NFCEE_STATUS_ACTIVE)) ||
-          (NFA_GetNCIVersion() == NCI_VERSION_2_0)))) {
-      DLOG_IF(INFO, nfc_debug_enabled)
-          << StringPrintf("%s: Found HCI network, try hci register", fn);
 
-      SyncEventGuard guard(mHciRegisterEvent);
-
-      nfaStat =
-          NFA_HciRegister(const_cast<char*>(APP_NAME), nfaHciCallback, true);
-      if (nfaStat != NFA_STATUS_OK) {
-        LOG(ERROR) << StringPrintf("%s: fail hci register; error=0x%X", fn,
-                                   nfaStat);
-        return (false);
-      }
+  {
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s: try hci register", fn);
+    SyncEventGuard guard(mHciRegisterEvent);
+    nfaStat =
+        NFA_HciRegister(const_cast<char*>(APP_NAME), nfaHciCallback, true);
+    if (nfaStat != NFA_STATUS_OK) {
+      LOG(ERROR) << StringPrintf("%s: fail hci register; error=0x%X", fn,
+                                 nfaStat);
+      return (false);
+    } else {
       mHciRegisterEvent.wait();
-      break;
     }
   }
 
