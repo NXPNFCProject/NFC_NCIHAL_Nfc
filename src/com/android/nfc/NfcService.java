@@ -1492,6 +1492,43 @@ public class NfcService implements DeviceHostListener {
             }
             return status;
         }
+        @Override
+        public void changeDiscoveryTech(IBinder binder, int pollTech, int listenTech)
+               throws RemoteException {
+
+            synchronized (NfcService.this) {
+            if (!(mState == NfcAdapter.STATE_ON)) {
+               if (DBG) Log.d(TAG, "changeDiscoveryTech. NFC is not enabled");
+                  return;
+            }
+
+            if (DBG) Log.d(TAG, "changeDiscoveryTech. pollTech : 0x" + Integer.toHexString(pollTech) + ", listenTech : 0x" + Integer.toHexString(listenTech));
+
+            //In case both parameters are set to 0xFF, which means that original poll, listen techs are applied.
+            if (pollTech == 0xFF && listenTech == 0xFF) {
+                //Recover to previous state.
+                try {
+                    if (!mIsNdefPushEnabled) {
+                        if (DBG) Log.d(TAG, "changeDiscoveryTech. Android Beam was temporarily enabled, so disable this.");
+                        mP2pLinkManager.enableDisable(false, true);
+                    }
+                    mDeviceHost.doChangeDiscoveryTech(pollTech, listenTech);
+                   } catch(NoSuchElementException e) {
+                    Log.e(TAG, "Change Tech Binder was never registered.");
+                }
+            } else {
+                //Change discovery tech.
+                    if (!mIsNdefPushEnabled) {
+                        if (DBG) Log.d(TAG, "changeDiscoveryTech. Android Beam is disabled, so enable this temporarily.");
+                        mP2pLinkManager.enableDisable(true, true);
+                    }
+                    mDeviceHost.doChangeDiscoveryTech(pollTech, listenTech);
+                  }
+
+            if (DBG) Log.d(TAG, "applyRouting #15");
+               applyRouting(true);
+            }
+        }
 
         @Override
         public void stopPoll(String pkg, int mode) {

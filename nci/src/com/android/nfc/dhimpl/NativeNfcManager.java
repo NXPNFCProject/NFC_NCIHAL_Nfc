@@ -184,10 +184,12 @@ public class NativeNfcManager implements DeviceHost {
 
     @Override
     public native boolean unrouteApduPattern(byte[] apduData);
+     @Override
+    public native void doChangeDiscoveryTech(int pollTech, int listenTech);
 
     @Override
     public native boolean setDefaultRoute(int defaultRouteEntry, int defaultProtoRouteEntry, int defaultTechRouteEntry);
-    
+
     @Override
     public native int[] doGetActiveSecureElementList();
 

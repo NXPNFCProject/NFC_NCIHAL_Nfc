@@ -209,9 +209,12 @@ static void nfaDeviceManagementCallback(uint8_t event,
                                         tNFA_DM_CBACK_DATA* eventData);
 static bool isPeerToPeer(tNFA_ACTIVATED& activated);
 static bool isListenMode(tNFA_ACTIVATED& activated);
-#if (NXP_EXTNS==FALSE)
+#if (NXP_EXTNS==TRUE)
+static void nfcManager_changeDiscoveryTech(JNIEnv* e, jobject o, jint pollTech, jint listenTech);
+#else
 static void enableDisableLptd(bool enable);
 #endif
+
 static tNFA_STATUS stopPolling_rfDiscoveryDisabled();
 static tNFA_STATUS startPolling_rfDiscoveryDisabled(
     tNFA_TECHNOLOGY_MASK tech_mask);
@@ -2441,6 +2444,8 @@ static JNINativeMethod gMethods[] = {
             (void *)nfcManager_doJcosDownload},
      {"doGetActiveSecureElementList", "()[I",
             (void *)nfcManager_getActiveSecureElementList},
+     {"doChangeDiscoveryTech", "(II)V",
+             (void *)nfcManager_changeDiscoveryTech},
 #endif
      {"routeApduPattern", "(II[B[B)Z",
                     (void*) nfcManager_routeApduPattern},
@@ -2636,6 +2641,24 @@ static tNFA_STATUS stopPolling_rfDiscoveryDisabled() {
 }
 
 #if(NXP_EXTNS == TRUE)
+/*******************************************************************************
+**
+** Function:        nfcManager_changeDiscoveryTech
+**
+** Description:     set listen mode
+**                  e: JVM environment.
+**                  o: Java object.
+**
+** Returns:         None.
+**
+*******************************************************************************/
+static void nfcManager_changeDiscoveryTech(JNIEnv* e, jobject o, jint pollTech, jint listenTech)
+{
+    DLOG_IF(INFO, nfc_debug_enabled)<< StringPrintf("Enter :%s  pollTech = 0x%x, listenTech = 0x%x", __func__, pollTech, listenTech);
+
+    NFA_ChangeDiscoveryTech(pollTech, listenTech);
+}
+
 static jboolean nfcManager_doCheckJcopDlAtBoot(JNIEnv* e, jobject o) {
     unsigned int num = 0;
     DLOG_IF(INFO, nfc_debug_enabled)
