@@ -117,8 +117,6 @@ bool sHCEEnabled = true;
   (pEvtData->get_config.param_tlvs[5] == 0xFF || \
    pEvtData->get_config.param_tlvs[43] == 0xFF)
 
-#define NXP_CE_AID_ROUTE_STRICT_INVALID 0xFF
-#define NXP_CE_AID_ROUTE_STRICT_ENABLE 0x01
 
 extern nfcee_disc_state sNfcee_disc_state;
 extern bool recovery;
@@ -135,7 +133,6 @@ SyncEvent gNfceeDiscCbEvent;
 uint8_t sSelectedUicc = 0;
 static bool sIsLowRamDevice = false;
 int32_t gSelfTestType = TEST_TYPE_NONE;
-static uint8_t sIsAidRouteStrictEnabled = NXP_CE_AID_ROUTE_STRICT_INVALID;
 bool nfcManager_getTransanctionRequest(int t3thandle, bool registerRequest);
 extern bool createSPIEvtHandlerThread();
 extern void releaseSPIEvtHandlerThread();
@@ -342,7 +339,6 @@ typedef enum dual_uicc_error_states {
   DUAL_UICC_ERROR_STATUS_UNKNOWN
 } dual_uicc_error_state_t;
 static tNFA_STATUS nfcManagerEnableNfc(NfcAdaptation& theInstance);
-static bool nfcManager_isCeAidRouteStrictEnabled(JNIEnv* e, jobject o);
 static int nfcManager_setTransitConfig(JNIEnv* e, jobject o, jstring config);
 #endif
 
@@ -2351,7 +2347,6 @@ static void nfaConnectionCallback(uint8_t connEvent,
     bool isSuccess = false;
     sNfcee_disc_state = UICC_SESSION_NOT_INTIALIZED;
     IsEseCeDisabled = false;
-    sIsAidRouteStrictEnabled = NXP_CE_AID_ROUTE_STRICT_INVALID;
     /* NFC initialization in progress */
     if (NFC_OFF == sNfcState) sNfcState = NFC_INITIALIZING_IN_PROGRESS;
 
@@ -5185,9 +5180,6 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
 #if (NXP_EXTNS == TRUE)
     {"doSetNfcMode", "(I)V", (void*)nfcManager_doSetNfcMode},
 
-    {"isCeAidRouteStrictEnabled", "()Z",
-     (void*)nfcManager_isCeAidRouteStrictEnabled},
-
     {"setTransitConfig", "(Ljava/lang/String;)I",
      (void*)nfcManager_setTransitConfig},
 
@@ -5425,39 +5417,6 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
     return sNfcState;
   }
 
-  /*******************************************************************************
-  **
-  ** Function:        nfcManager_isCeAidRouteStrictEnabled
-  **
-  ** Description:     Get CE AID route strict enable.
-  **                  e: JVM environment.
-  **                  o: Java object.
-  **
-  ** Returns:         'true' if NAME_NXP_CE_AID_ROUTE_STRICT_ENABLE is set else
-  **                  returns 'false'
-  **
-  *******************************************************************************/
-  static bool nfcManager_isCeAidRouteStrictEnabled(JNIEnv* e, jobject o)
-  {
-      (void)e;
-      (void)o;
-      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
-      // by default set to disable
-      unsigned long num = 0x00;
-      bool mStatus = false;
-
-      if (sIsAidRouteStrictEnabled == NXP_CE_AID_ROUTE_STRICT_INVALID) {
-          GetNxpNumValue(NAME_NXP_CE_AID_ROUTE_STRICT_ENABLE,
-            (void *)&num, sizeof(num));
-          sIsAidRouteStrictEnabled = num;
-      } else {
-          num = sIsAidRouteStrictEnabled;
-      }
-      mStatus = (num == NXP_CE_AID_ROUTE_STRICT_ENABLE)?true:false;
-      DLOG_IF(INFO, nfc_debug_enabled)
-        << StringPrintf("%d: nfcManager_isCeAidRouteStrictEnabled", mStatus);
-      return mStatus;
-  }
 #endif
 
   /*******************************************************************************

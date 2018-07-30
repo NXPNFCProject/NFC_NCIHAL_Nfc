@@ -397,9 +397,6 @@ public class NativeNfcManager implements DeviceHost {
     public native int setTransitConfig(String configs);
 
     @Override
-    public native boolean isCeAidRouteStrictEnabled();
-
-    @Override
     public native byte[] getFwFileName();
 
     @Override

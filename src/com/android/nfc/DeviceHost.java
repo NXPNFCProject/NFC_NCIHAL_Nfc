@@ -373,8 +373,6 @@ public interface DeviceHost {
 
     int setTransitConfig(String configs);
 
-    boolean isCeAidRouteStrictEnabled();
-
     byte[] getFwFileName();
 
     int getNfcInitTimeout();

@@ -76,8 +76,6 @@ public class AidRoutingManager {
     //Behavior as per Android-KitKat by NXP, supporting prefix match for
     //OffHost and prefix and full both for OnHost apps.
     static final int AID_MATCHING_K = 0x02;
-    // represents the mask value of weight associated to a payment AID
-    static final int WEIGHT_PAYMENT = 0x02;
     // This is the default IsoDep protocol route; it means
     // that for any AID that needs to be routed to this
     // destination, we won't need to add a rule to the routing
@@ -219,7 +217,6 @@ public class AidRoutingManager {
         HashMap<String, Integer> routeForAid = new HashMap<String, Integer>(aidMap.size());
         HashMap<String, Integer> powerForAid = new HashMap<String, Integer>(aidMap.size());
         HashMap<String, Integer> infoForAid = new HashMap<String, Integer>(aidMap.size());
-        HashMap<String, Integer> weightForAid = new HashMap<String, Integer>(aidMap.size());
         // Then, populate internal data structures first
         DefaultAidRouteResolveCache defaultRouteCache = new DefaultAidRouteResolveCache();
 
@@ -228,7 +225,6 @@ public class AidRoutingManager {
             int route = elem.getRouteLocation();
             int power = elem.getPowerState();
             int aidType = elem.getAidInfo();
-            int weight = elem.getWeight();
             if (route == -1 ) {
                 route = mDefaultOffHostRoute;
                 elem.setRouteLocation(route);
@@ -240,7 +236,6 @@ public class AidRoutingManager {
             routeForAid.put(aid, route);
             powerForAid.put(aid, power);
             infoForAid.put(aid, aidType);
-            weightForAid.put(aid, weight);
             if (DBG) Log.d(TAG, "#######Routing AID " + aid + " to route "
                         + Integer.toString(route) + " with power "+ power);
         }
@@ -311,16 +306,12 @@ public class AidRoutingManager {
                 }
             }
 
-            // Add AID entries for
-            // 1. all non-default routes
-            // 2. default route but only payment AID
+            // Add AID entries for all non-default routes
             for (int i = 0; i < mAidRoutingTable.size(); i++) {
                 int route = mAidRoutingTable.keyAt(i);
-                Set<String> aidsForRoute = mAidRoutingTable.get(route);
-                for (String aid : aidsForRoute) {
-                    if ((route != mDefaultRoute) || ((route == mDefaultRoute) &&
-                      ((weightForAid.get(aid) & WEIGHT_PAYMENT) == WEIGHT_PAYMENT))) {
-                        Log.d(TAG, " route: " + route + " aid: " + aid + " weight: " + weightForAid.get(aid));
+                if (route != mDefaultRoute) {
+                    Set<String> aidsForRoute = mAidRoutingTable.get(route);
+                    for (String aid : aidsForRoute) {
                         if (aid.endsWith("*")) {
                             if (mAidMatchingSupport == AID_MATCHING_EXACT_ONLY) {
                                 Log.e(TAG, "This device does not support prefix AIDs.");
