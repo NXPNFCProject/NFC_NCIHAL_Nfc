@@ -5906,8 +5906,10 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
     if (!pTransactionController->transactionAttempt(
             TRANSACTION_REQUESTOR(setScreenState))) {
       LOG(ERROR) << StringPrintf("Payment is in progress!!!");
-      set_lastScreenStateRequest((eScreenState_t)state);
-      pendingScreenState = true;
+      if (state != getScreenState()) {
+        set_lastScreenStateRequest((eScreenState_t)state);
+        pendingScreenState = true;
+      }
       return;
     }
 #endif
