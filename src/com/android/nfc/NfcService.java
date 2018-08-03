@@ -133,8 +133,9 @@ import com.android.nfc.cardemulation.AidRoutingManager;
 import com.android.nfc.cardemulation.RegisteredAidCache;
 import com.nxp.nfc.NfcConstants;
 import android.se.omapi.ISecureElementService;
-import vendor.nxp.nxpwiredse.V1_0.INxpWiredSe;
-import vendor.nxp.nxpwiredse.V1_0.INxpWiredSeHalCallback;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.InvocationTargetException;
 
 public class NfcService implements DeviceHostListener {
     static final boolean DBG = true;
@@ -276,7 +277,7 @@ public class NfcService implements DeviceHostListener {
     private static int nci_version = NCI_VERSION_1_0;
     // NFC Execution Environment
     // fields below are protected by this
-    private NativeNfcSecureElement mSecureElement;
+    public NativeNfcSecureElement mSecureElement;
     private OpenSecureElement mOpenEe;  // null when EE closed
     private final ReaderModeDeathRecipient mReaderModeDeathRecipient =
             new ReaderModeDeathRecipient();
@@ -370,12 +371,9 @@ public class NfcService implements DeviceHostListener {
     boolean mIsVrModeEnabled;
     private ISecureElementService mSEService;
     /* WiredSe attributes */
-    private static final int MAX_WIRED_SE_HAL_RETRY = 5;
-    private static final int EVENT_GET_HAL = 1;
-    private static final int GET_SERVICE_DELAY_MILLIS = 200;
-    private static int sNfcWiredSeHandle = 0;
-    private static int sWiredSeGetHalRetry = 0;
-    INxpWiredSe mWiredSEHal = null;
+    Class mWiredSeClass;
+    Method mWiredSeInitMethod, mWiredSeDeInitMethod;
+    Object mWiredSeObj;
 
     public static NfcService getInstance() {
         return sService;
@@ -543,6 +541,14 @@ public class NfcService implements DeviceHostListener {
         mNxpExtrasService = new NxpNfcAdapterExtrasService();
         Log.i(TAG, "Starting NFC service");
 
+        try {
+            mWiredSeClass = Class.forName("com.android.nfc.WiredSeService");
+            mWiredSeObj = mWiredSeClass.newInstance();
+        } catch (ClassNotFoundException | IllegalAccessException e){
+            Log.e(TAG, "WiredSeService Class not found");
+        } catch (InstantiationException e) {
+            Log.e(TAG, "WiredSeService object Instantiation failed");
+        }
         sService = this;
 
         mScreenStateHelper = new ScreenStateHelper(mContext);
@@ -867,11 +873,15 @@ public class NfcService implements DeviceHostListener {
                 updateState(NfcAdapter.STATE_ON);
                 /* WiredSe Init after ESE is discovered and initialised */
                 try {
-                    wiredSeInitialize();
-                } catch (NoSuchElementException e) {
-                    Log.i(TAG, "No HAL implementation for WiredSe");
-                } catch (RemoteException | RuntimeException e) {
-                    Log.e(TAG, "Error in getService() for WiredSe");
+                mWiredSeInitMethod = mWiredSeClass.getDeclaredMethod("wiredSeInitialize");
+                mWiredSeInitMethod.invoke(mWiredSeObj);
+              } catch (NoSuchElementException | NoSuchMethodException e) {
+                Log.i(TAG, "No such Method WiredSeInitialize");
+              } catch (RuntimeException | IllegalAccessException | InvocationTargetException e) {
+                Log.e(TAG, "Error in invoking wiredSeInitialize invocation");
+              } catch (Exception e) {
+                Log.e(TAG, "caught Exception during wiredSeInitialize");
+                e.printStackTrace();
                 }
             }
 
@@ -901,12 +911,17 @@ public class NfcService implements DeviceHostListener {
             }
             Log.i(TAG, "Disabling NFC");
             updateState(NfcAdapter.STATE_TURNING_OFF);
-            /* Reset WiredSe handle since NFC is turning off */
+
             try{
-                mWiredSEHal.setWiredSeCallback(null);
-            } catch(Exception e){
-                Log.e(TAG, "Exception calling setWiredSeCallback");
-            e.printStackTrace();
+                mWiredSeDeInitMethod = mWiredSeClass.getDeclaredMethod("wiredSeDeInitialize");
+                mWiredSeDeInitMethod.invoke(mWiredSeObj);
+            } catch (NoSuchElementException | NoSuchMethodException e) {
+                Log.i(TAG, "No such Method WiredSeInitialize");
+            } catch (RuntimeException | IllegalAccessException | InvocationTargetException e) {
+                Log.e(TAG, "Error in invoking wiredSeInitialize invocation");
+            } catch (Exception e) {
+                Log.e(TAG, "caught Exception during wiredSeInitialize");
+                e.printStackTrace();
             }
 
             /* Sometimes mDeviceHost.deinitialize() hangs, use a watch-dog.
@@ -2166,129 +2181,6 @@ public class NfcService implements DeviceHostListener {
         return status;
     }
 }
-
- class WiredSeDeathRecipient implements HwBinder.DeathRecipient {
-      @Override
-      public void serviceDied(long cookie) {
-        try{
-          Log.d(TAG, "WiredSe: serviceDied !!");
-          if(sNfcWiredSeHandle > 0) {
-            mWiredSeCallback.closeWiredSe(sNfcWiredSeHandle);
-            sNfcWiredSeHandle = 0;
-          }
-           mWiredSEHal.unlinkToDeath(mWiredSeDeathRecipient);
-           mWiredSEHal = null;
-           mWiredSeHandler.sendMessageDelayed(mWiredSeHandler.obtainMessage(EVENT_GET_HAL, 0),
-                                         GET_SERVICE_DELAY_MILLIS);
-        }catch(Exception e) {
-            e.printStackTrace();
-        }
-      }
-    }
-
-    private HwBinder.DeathRecipient mWiredSeDeathRecipient = new WiredSeDeathRecipient();
-
-    private
-    INxpWiredSeHalCallback.Stub mWiredSeCallback = new INxpWiredSeHalCallback.Stub() {
-     private
-      ArrayList<Byte> byteArrayToArrayList(byte[] array) {
-        ArrayList<Byte> list = new ArrayList<Byte>();
-        for (Byte b : array) {
-          list.add(b);
-        }
-        return list;
-      }
-
-     private
-      byte[] arrayListToByteArray(ArrayList<Byte> list) {
-        Byte[] byteArray = list.toArray(new Byte[list.size()]);
-        int i = 0;
-        byte[] result = new byte[list.size()];
-        for (Byte b : byteArray) {
-          result[i++] = b.byteValue();
-        }
-        return result;
-      }
-
-      @Override public int openWiredSe() {
-        Log.d(TAG, "WiredSe: openWiredSe");
-            sNfcWiredSeHandle = doOpenSecureElementConnection();
-            if (sNfcWiredSeHandle <= 0) {
-              Log.e(TAG, "WiredSe: open secure element failed.");
-              sNfcWiredSeHandle = 0;
-            } else {
-              Log.d(TAG, "WiredSe: open secure element success.");
-            }
-            return sNfcWiredSeHandle;
-      }
-
-      @Override public ArrayList<Byte> transmit(ArrayList<Byte> data, int wiredSeHandle) {
-        Log.d(TAG, "WiredSe: transmit");
-            if (sNfcWiredSeHandle <= 0) {
-              Log.d(TAG, "WiredSe: Secure Element handle NULL");
-              return null;
-            } else {
-              byte[] resp = doTransceive(wiredSeHandle, arrayListToByteArray(data));
-              if (resp != null) {
-                Log.d(TAG, "WiredSe: response is received");
-              }
-              return byteArrayToArrayList(resp);
-            }
-      }
-
-      @Override public ArrayList<Byte> getAtr(int wiredSeHandle)
-          throws android.os.RemoteException {
-        Log.d(TAG, "WiredSe: getAtr");
-        synchronized(NfcService.this) {
-            return byteArrayToArrayList(mSecureElement.doGetAtr(wiredSeHandle));
-        }
-      }
-
-      @Override public int closeWiredSe(int wiredSeHandle) {
-                Log.d(TAG, "WiredSe: closeWiredSe");
-        doDisconnect(wiredSeHandle);
-        sNfcWiredSeHandle = 0;
-        return 0;
-      }
-    };
-
-    private Handler mWiredSeHandler = new Handler() {
-      @Override
-      public void handleMessage(Message message) {
-        switch (message.what) {
-          case EVENT_GET_HAL:
-            try {
-              if(sWiredSeGetHalRetry > MAX_WIRED_SE_HAL_RETRY) {
-                Log.e(TAG, "WiredSe GET_HAL retry failed");
-                sWiredSeGetHalRetry = 0;
-                break;
-              }
-              wiredSeInitialize();
-              sWiredSeGetHalRetry = 0;
-            } catch (Exception e) {
-                Log.e(TAG, " could not get the service. trying again");
-                sWiredSeGetHalRetry++;
-                sendMessageDelayed(obtainMessage(EVENT_GET_HAL, 0),
-                                     GET_SERVICE_DELAY_MILLIS);
-            }
-            break;
-          default:
-            break;
-        }
-      }
-    };
-
-    void wiredSeInitialize() throws NoSuchElementException, RemoteException {
-        Log.e(TAG, "wiredSeInitialize Enter");
-        if (mWiredSEHal == null) {
-          mWiredSEHal = INxpWiredSe.getService();
-        }
-        if (mWiredSEHal == null) {
-          throw new NoSuchElementException("No HAL is provided for WiredSe");
-        }
-        mWiredSEHal.setWiredSeCallback(mWiredSeCallback);
-        mWiredSEHal.linkToDeath(mWiredSeDeathRecipient, 0);
-    }
 
     /** resources kept while secure element is open */
     private class OpenSecureElement implements IBinder.DeathRecipient {
