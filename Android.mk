@@ -16,14 +16,14 @@ LOCAL_SRC_FILES += \
 LOCAL_PACKAGE_NAME := NfcNci
 LOCAL_PRIVATE_PLATFORM_APIS := true
 LOCAL_CERTIFICATE := platform
-
 LOCAL_JAVA_LIBRARIES := com.nxp.nfc
 
 LOCAL_JNI_SHARED_LIBRARIES := libnfc_nci_jni
-
 LOCAL_STATIC_JAVA_LIBRARIES := android-support-v4
-LOCAL_STATIC_JAVA_LIBRARIES += vendor.nxp.nxpwiredse-V1.0-java
-LOCAL_STATIC_JAVA_LIBRARIES += android.hardware.secure_element-V1.0-java
+NXP_WIRED_SE:=TRUE
+ifeq ($(NXP_WIRED_SE),TRUE)
+  LOCAL_STATIC_JAVA_LIBRARIES += vendor.nxp.nxpwiredse-V1.0-java
+endif
 
 LOCAL_PROGUARD_ENABLED := disabled
 
