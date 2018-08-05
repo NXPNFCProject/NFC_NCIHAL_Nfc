@@ -29,13 +29,13 @@
 #include "nfc_config.h"
 #include "RoutingManager.h"
 #include "HciEventManager.h"
+#include "MposManager.h"
 using android::base::StringPrintf;
 
 SecureElement SecureElement::sSecElem;
 const char* SecureElement::APP_NAME = "nfc_jni";
 extern bool nfc_debug_enabled;
 
-#include "MposManager.h"
 namespace android
 {
 extern void startRfDiscovery (bool isStart);
@@ -105,6 +105,7 @@ bool SecureElement::initialize(nfc_jni_native_data* native) {
     memset (mEeInfo, 0, sizeof(mEeInfo));
     memset (&mHciCfg, 0, sizeof(mHciCfg));
     memset(mAidForEmptySelect, 0, sizeof(mAidForEmptySelect));
+    mActivatedInListenMode = false;
     if (GetNxpNumValue(NAME_NXP_DEFAULT_UICC2_SELECT, &muicc2_selected, sizeof(muicc2_selected)) == false)
     {
         muicc2_selected = UICC2_ID;
@@ -152,7 +153,17 @@ bool SecureElement::initialize(nfc_jni_native_data* native) {
     LOG(INFO) << StringPrintf("%s: exit", fn);
     return (true);
 }
-
+/*******************************************************************************
+**
+** Function:        isActivatedInListenMode
+**
+** Description:     Can be used to determine if the SE is activated in listen
+*mode
+**
+** Returns:         True if the SE is activated in listen mode
+**
+*******************************************************************************/
+bool SecureElement::isActivatedInListenMode() { return mActivatedInListenMode; }
 /*******************************************************************************
 **
 ** Function:        getGenericEseId
@@ -706,6 +717,7 @@ bool SecureElement::notifySeInitialized() {
     CHECK(!e->ExceptionCheck());
     return true;
 }
+
 /*******************************************************************************
 **
 ** Function:        transceive
@@ -1008,7 +1020,6 @@ bool SecureElement::deactivate (jint seID)
         LOG(ERROR) << StringPrintf("%s: not init", fn);
         goto TheEnd;
     }
-
 
     if (seID == NFA_HANDLE_INVALID)
     {
@@ -1550,4 +1561,80 @@ void SecureElement::releasePendingTransceive()
         mTransceiveEvent.notifyOne();
     }
     LOG(INFO) << StringPrintf("%s: Exit", fn);
+}
+
+/**********************************************************************************
+ **
+ ** Function:        getUiccStatus
+ **
+ ** Description:     get the status of EE
+ **
+ ** Returns:         UICC Status
+ **
+ **********************************************************************************/
+uicc_stat_t SecureElement::getUiccStatus(uint8_t selected_uicc) {
+  uint16_t ee_stat = NFA_EE_STATUS_REMOVED;
+
+  if (!nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC) {
+    if (selected_uicc == 0x01)
+      ee_stat = getEeStatus(EE_HANDLE_0xF4);
+    else if (selected_uicc == 0x02)
+      ee_stat = getEeStatus(EE_HANDLE_0xF8);
+  }
+
+  uicc_stat_t uicc_stat = UICC_STATUS_UNKNOWN;
+
+  if (selected_uicc == 0x01) {
+    switch (ee_stat) {
+      case 0x00:
+        uicc_stat = UICC_01_SELECTED_ENABLED;
+        break;
+      case 0x01:
+        uicc_stat = UICC_01_SELECTED_DISABLED;
+        break;
+      case 0x02:
+        uicc_stat = UICC_01_REMOVED;
+        break;
+    }
+  } else if (selected_uicc == 0x02) {
+    switch (ee_stat) {
+      case 0x00:
+        uicc_stat = UICC_02_SELECTED_ENABLED;
+        break;
+      case 0x01:
+        uicc_stat = UICC_02_SELECTED_DISABLED;
+        break;
+      case 0x02:
+        uicc_stat = UICC_02_REMOVED;
+        break;
+    }
+  }
+  return uicc_stat;
+}
+
+/**********************************************************************************
+ **
+ ** Function:        getEeStatus
+ **
+ ** Description:     get the status of EE
+ **
+ ** Returns:         EE status
+ **
+ **********************************************************************************/
+uint16_t SecureElement::getEeStatus(uint16_t eehandle) {
+  int i;
+  uint16_t ee_status = NFA_EE_STATUS_REMOVED;
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+      "%s  num_nfcee_present = %d", __func__, mNfceeData_t.mNfceePresent);
+
+  for (i = 1; i <= mNfceeData_t.mNfceePresent; i++) {
+    if (mNfceeData_t.mNfceeHandle[i] == eehandle) {
+      ee_status = mNfceeData_t.mNfceeStatus[i];
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("%s  EE is detected 0x%02x  status = 0x%02x",
+                          __func__, eehandle, ee_status);
+      break;
+    }
+  }
+  return ee_status;
 }

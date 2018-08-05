@@ -343,6 +343,18 @@ public interface DeviceHost {
 /* NXP extension are here */
     public boolean doCheckJcopDlAtBoot();
     int JCOSDownload();
+
     public void doChangeDiscoveryTech(int pollTech, int listenTech);
     public int accessControlForCOSU (int mode);
+
+    public int getFWVersion();
+    public byte[] readerPassThruMode(byte status, byte modulationTyp);
+    public byte[] transceiveAppData(byte[] data);
+    boolean isNfccBusy();
+    int setTransitConfig(String configs);
+    public int getRemainingAidTableSize();
+    public int doselectUicc(int uiccSlot);
+    public int doGetSelectedUicc();
+    public int setPreferredSimSlot(int uiccSlot);
+
 }

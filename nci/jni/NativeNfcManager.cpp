@@ -69,7 +69,20 @@
 #include "rw_api.h"
 
 using android::base::StringPrintf;
+#if(NXP_EXTNS == TRUE)
+#define RDR_PASS_THRU_MODE_DISABLE (0x0)
+#define RDR_PASS_THRU_MODE_ENABLE (0x1)
+#define RDR_PASS_THRU_MODE_XCV (0x2)
+#define RDR_PASS_THRU_ENABLE_TIMEOUT (1030)
+#define RDR_PASS_THRU_DISABLE_TIMEOUT (1030)
+#define RDR_PASS_THRU_XCV_TIMEOUT (1100)
 
+#define RDR_PASS_THRU_MOD_TYPE_A (0x0)
+#define RDR_PASS_THRU_MOD_TYPE_B (0x1)
+#define RDR_PASS_THRU_MOD_TYPE_V (0x2)
+#define RDR_PASS_THRU_MOD_TYPE_LIMIT (0x3)
+#define CMD_HDR_SIZE_XCV (0x3)
+#endif
 extern tNFA_DM_DISC_FREQ_CFG* p_nfa_dm_rf_disc_freq_cfg;  // defined in stack
 namespace android {
 extern bool gIsTagDeactivating;
@@ -107,6 +120,12 @@ IChannel_t Dwp;
 static int nfcManager_doPartialInitialize(JNIEnv* e, jobject o);
 static int nfcManager_doPartialDeInitialize(JNIEnv* e, jobject o);
 static jint nfcManager_doaccessControlForCOSU(JNIEnv* e, jobject o, jint mode);
+extern tNFA_STATUS NxpNfc_Write_Cmd_Common(uint8_t retlen, uint8_t* buffer);
+extern void NxpPropCmd_OnResponseCallback(uint8_t event, uint16_t param_len,
+                                            uint8_t * p_param);
+extern tNFA_STATUS NxpPropCmd_send(uint8_t * pData4Tx, uint8_t dataLen,
+                                   uint8_t * rsp_len, uint8_t * rsp_buf,
+                                   uint32_t rspTimeout, tHAL_NFC_ENTRY * halMgr);
 #endif
 }  // namespace android
 
@@ -188,6 +207,9 @@ static SyncEvent sNfaEnableDisablePollingEvent;  // event for
                                                  // NFA_DisablePolling()
 static SyncEvent sNfaSetConfigEvent;             // event for Set_Config....
 static SyncEvent sNfaGetConfigEvent;             // event for Get_Config....
+#if(NXP_EXTNS == TRUE)
+static SyncEvent sNfaTransitConfigEvent;  // event for NFA_SetTransitConfig()
+#endif
 static bool sIsNfaEnabled = false;
 static bool sDiscoveryEnabled = false;  // is polling or listening
 static bool sPollingEnabled = false;    // is polling for tag?
@@ -210,6 +232,19 @@ static jint sLfT3tMax = 0;
 #define DEFAULT_DISCOVERY_DURATION 500
 #define READER_MODE_DISCOVERY_DURATION 200
 
+#if(NXP_EXTNS == TRUE)
+#define DUAL_UICC_FEATURE_NOT_AVAILABLE 0xED;
+#define STATUS_UNKNOWN_ERROR 0xEF;
+enum { UICC_CONFIGURED, UICC_NOT_CONFIGURED };
+typedef enum dual_uicc_error_states {
+  DUAL_UICC_ERROR_NFCC_BUSY = 0x02,
+  DUAL_UICC_ERROR_SELECT_FAILED,
+  DUAL_UICC_ERROR_NFC_TURNING_OFF,
+  DUAL_UICC_ERROR_INVALID_SLOT,
+  DUAL_UICC_ERROR_STATUS_UNKNOWN
+} dual_uicc_error_state_t;
+uint16_t sCurrentSelectedUICCSlot = 1;
+#endif
 static void nfaConnectionCallback(uint8_t event, tNFA_CONN_EVT_DATA* eventData);
 static void nfaDeviceManagementCallback(uint8_t event,
                                         tNFA_DM_CBACK_DATA* eventData);
@@ -227,7 +262,23 @@ static tNFA_STATUS startPolling_rfDiscoveryDisabled(
     tNFA_TECHNOLOGY_MASK tech_mask);
 static void nfcManager_doSetScreenState(JNIEnv* e, jobject o,
                                         jint screen_state_mask);
-
+#if(NXP_EXTNS == TRUE)
+static jint nfcManager_getFwVersion(JNIEnv* e, jobject o);
+static jbyteArray nfcManager_readerPassThruMode(JNIEnv *e, jobject o,
+                                                jbyte rqst,
+                                                jbyte modulationTyp);
+static jbyteArray nfcManager_transceiveAppData(JNIEnv *e, jobject o,
+                                               jbyteArray data);
+static bool nfcManager_isNfccBusy(JNIEnv*, jobject);
+static int nfcManager_setTransitConfig(JNIEnv* e, jobject o, jstring config);
+static std::string ConvertJavaStrToStdString(JNIEnv * env, jstring s);
+static jint nfcManager_getAidTableSize (JNIEnv*, jobject );
+static jint nfcManager_getRemainingAidTableSize (JNIEnv* , jobject );
+static int nfcManager_doSelectUicc(JNIEnv* e, jobject o, jint uiccSlot);
+static int nfcManager_doGetSelectedUicc(JNIEnv* e, jobject o);
+static int nfcManager_staticDualUicc_Precondition(int uiccSlot);
+static int nfcManager_setPreferredSimSlot(JNIEnv* e, jobject o, jint uiccSlot);
+#endif
 static uint16_t sCurrentConfigLen;
 static uint8_t sConfig[256];
 static int prevScreenState = NFA_SCREEN_STATE_OFF_LOCKED;
@@ -922,7 +973,15 @@ if (!sP2pActive && eventData->rf_field.status == NFA_STATUS_OK) {
     case NFA_DM_PWR_MODE_CHANGE_EVT:
       PowerSwitch::getInstance().deviceManagementCallback(dmEvent, eventData);
       break;
-
+#if(NXP_EXTNS == TRUE)
+      case NFA_DM_SET_TRANSIT_CONFIG_EVT: {
+        DLOG_IF(INFO, nfc_debug_enabled)
+            << StringPrintf("NFA_DM_SET_TRANSIT_CONFIG EVT cback received");
+        SyncEventGuard guard(sNfaTransitConfigEvent);
+        sNfaTransitConfigEvent.notifyOne();
+        break;
+      }
+#endif
     case NFA_DM_SET_POWER_SUB_STATE_EVT: {
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: NFA_DM_SET_POWER_SUB_STATE_EVT; status=0x%X",
@@ -1156,14 +1215,6 @@ static jboolean nfcManager_routeApduPattern (JNIEnv* e, jobject, jint route, jin
     ScopedByteArrayRO bytes2(e, apduMask);
     uint8_t* mask = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes2[0]));
     size_t maskLen = bytes2.size();
-/*
-    if(nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH) {
-        if(route == 2 || route == 4) { //UICC or UICC2 HANDLE
-            ALOGV("sCurrentSelectedUICCSlot:  %d", sCurrentSelectedUICCSlot);
-            route = (sCurrentSelectedUICCSlot != 0x02) ? 0x02 : 0x04;
-        }
-    }
-    */
     stat = RoutingManager::getInstance().addApduRouting(route, powerState, apdu, apduLen, mask , maskLen);
 #endif
     return stat;
@@ -2610,7 +2661,23 @@ static JNINativeMethod gMethods[] = {
      {"routeApduPattern", "(II[B[B)Z",
                     (void*) nfcManager_routeApduPattern},
      {"unrouteApduPattern", "([B)Z",
-                    (void*) nfcManager_unrouteApduPattern}
+                    (void*) nfcManager_unrouteApduPattern},
+#if(NXP_EXTNS == TRUE)
+    // check firmware version
+    {"getFWVersion", "()I", (void*)nfcManager_getFwVersion},
+    {"readerPassThruMode", "(BB)[B", (void*)nfcManager_readerPassThruMode},
+    {"transceiveAppData", "([B)[B", (void*)nfcManager_transceiveAppData},
+    {"isNfccBusy", "()Z", (void*)nfcManager_isNfccBusy},
+    {"setTransitConfig", "(Ljava/lang/String;)I",
+                  (void*)nfcManager_setTransitConfig},
+    {"getAidTableSize", "()I",
+            (void*) nfcManager_getAidTableSize},
+    {"getRemainingAidTableSize", "()I",
+            (void*) nfcManager_getRemainingAidTableSize},
+    {"doselectUicc", "(I)I", (void*)nfcManager_doSelectUicc},
+    {"doGetSelectedUicc", "()I", (void*)nfcManager_doGetSelectedUicc},
+    {"setPreferredSimSlot", "(I)I", (void*)nfcManager_setPreferredSimSlot}
+#endif
 };
 
 /*******************************************************************************
@@ -2955,7 +3022,652 @@ void storeLastDiscoveryParams(int technologies_mask, bool enable_lptd,
     mDiscParams.enable_host_routing = enable_host_routing;
     mDiscParams.restart = restart;
 }
+#if(NXP_EXTNS == TRUE)
+/**********************************************************************************
+**
+** Function:        nfcManager_getFwVersion
+**
+** Description:     To get the FW Version
+**
+** Returns:         int fw version as below four byte format
+**                  [0x00  0xROM_CODE_V  0xFW_MAJOR_NO  0xFW_MINOR_NO]
+**
+**********************************************************************************/
+static jint nfcManager_getFwVersion(JNIEnv * e, jobject o) {
+    (void)e;
+    (void)o;
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+    tNFA_STATUS status = NFA_STATUS_FAILED;
+    //    bool stat = false;                        /*commented to eliminate
+    //    unused variable warning*/
+    jint version = 0, temp = 0;
+    tNFC_FW_VERSION nfc_native_fw_version;
 
+    if (!sIsNfaEnabled) {
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("NFC does not enabled!!");
+      return status;
+    }
+    memset(&nfc_native_fw_version, 0, sizeof(nfc_native_fw_version));
+
+    nfc_native_fw_version = nfc_ncif_getFWVersion();
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+        "FW Version: %x.%x.%x", nfc_native_fw_version.rom_code_version,
+        nfc_native_fw_version.major_version,
+        nfc_native_fw_version.minor_version);
+
+    temp = nfc_native_fw_version.rom_code_version;
+    version = temp << 16;
+    temp = nfc_native_fw_version.major_version;
+    version |= temp << 8;
+    version |= nfc_native_fw_version.minor_version;
+
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s: exit; version =0x%X", __func__, version);
+    return version;
+}
+
+  /*******************************************************************************
+   **
+   ** Class:       Command
+   **
+   ** Description: This class serves as base class for all propreitary
+   **              commands for special FW mode of operation.
+   **              It also holds reference to the HAL entry point functions.
+   **              This class provides template for methods which can operate on
+   **              command frames.It has default implementation for send() API
+   **              which can be shared by all subclasses.
+   **              This class shall not be instantiated.
+   **              It should be treated as an abstracted class.
+  *******************************************************************************/
+  class Command {
+  public:
+    /*Response wait time*/
+    uint32_t rspTimeout;
+    /*Retrial count limit to handle failure rsp*/
+    int32_t retryCount;
+    /*Name of the command*/
+    char *name;
+    /*Reference to NFC adapter instance*/
+    NfcAdaptation &nfcAdapter;
+    /*Reference to HAL manager*/
+    tHAL_NFC_ENTRY *halMgr;
+
+    /*Constructor*/
+    Command() : nfcAdapter(NfcAdaptation::GetInstance()) {
+      /*Retreive reference to HAL function manager*/
+      halMgr = nfcAdapter.GetHalEntryFuncs();
+    }
+    /*Overidable method list*/
+    virtual tNFA_STATUS preProcessor()
+    { return 0;}
+    virtual tNFA_STATUS send(uint8_t *rsp_len, uint8_t *rsp_buf) {
+      return NFA_STATUS_OK;
+    }
+    virtual tNFA_STATUS send(uint8_t *pData4Tx, uint8_t dataLen, uint8_t *rsp_len,
+                             uint8_t *rsp_buf) {
+      return NxpPropCmd_send(pData4Tx, dataLen, rsp_len, rsp_buf, rspTimeout,
+                             halMgr);
+    }
+    virtual tNFA_STATUS postProcessor(uint8_t rsp_len, uint8_t *rsp_buf) {
+      return NFA_STATUS_OK;
+    }
+    virtual ~Command() {}
+  };
+  /*******************************************************************************
+   **
+   ** Class:        cmdEnablePassThru
+   **
+   ** Description: This child class provides command frame. It also provides the
+   **              API for validity check(preprocessor), sending command and
+   **              post processing the response.
+   **
+  *******************************************************************************/
+  class cmdEnablePassThru : public Command {
+  private:
+    uint8_t cmd_buf[5];
+
+  public:
+    /*Constructor*/
+    cmdEnablePassThru(uint8_t modulationTyp, uint32_t timeoutVal,
+                      uint32_t retryCnt) {
+      /*Set the command specific parameters*/
+      name = (char *)"RDR_PASS_THRU_MODE_ENABLE";
+      retryCount = retryCnt;
+      rspTimeout = timeoutVal;
+
+      /*Create the command frame*/
+      cmd_buf[0] = 0x2F;
+      cmd_buf[1] = 0x1C;
+      cmd_buf[2] = 0x02;
+      cmd_buf[3] = modulationTyp;
+      cmd_buf[4] = 0x00;
+    }
+    tNFA_STATUS send(uint8_t *rsp_len, uint8_t *rsp_buf) {
+      return Command::send(cmd_buf, sizeof(cmd_buf), rsp_len, rsp_buf);
+    }
+    tNFA_STATUS preProcessor() {
+      tNFA_STATUS status = NFA_STATUS_OK;
+      SecureElement &se = SecureElement::getInstance();
+
+      /*Reject request if secure element is listening*/
+      if (se.isActivatedInListenMode()) {
+        LOG(ERROR) << StringPrintf("%s: Denying access due to SE listen mode active", __func__);
+        status = NFA_STATUS_REJECTED;
+      }
+      /*Reject request if wired mode is ongoing*/
+      if (se.mIsWiredModeOpen == true) {
+        LOG(ERROR) << StringPrintf("%s: Denying access due to Wired session is ongoing", __func__);
+        status = NFA_STATUS_REJECTED;
+      }
+      if (android::sRfEnabled) {
+        /* Call the NFA_StopRfDiscovery to synchronize JNI, stack and FW*/
+        android::startRfDiscovery(false);
+        /*Stop RF discovery to reconfigure*/
+        /* [START]poll*/
+        {
+          uint8_t enable_discover[] = {0x21, 0x03, 0x03, 0x01, 0x00, 0x01};
+          uint8_t disable_discover[] = {0x21, 0x06, 0x01, 0x00};
+          status = android::NxpNfc_Write_Cmd_Common(sizeof(enable_discover),
+                                                    enable_discover);
+          if (status == NFA_STATUS_OK)
+            status = android::NxpNfc_Write_Cmd_Common(sizeof(disable_discover),
+                                                      disable_discover);
+        }
+        /*[END]poll*/
+      }
+      return status;
+    }
+  };
+  /*******************************************************************************
+   **
+   ** Class:       cmdDisablePassThru
+   **
+   ** Description: This child class provides command frame. It also provides the
+   **              API for validity check(preprocessor), sending command and
+   **              post processing the response.
+   **
+  *******************************************************************************/
+  class cmdDisablePassThru : public Command {
+  private:
+    uint8_t cmd_buf[3];
+
+  public:
+    /*Constructor*/
+    cmdDisablePassThru(uint32_t timeoutVal, uint32_t retryCnt) {
+      /*Set the command specific parameters*/
+      name = (char *)"RDR_PASS_THRU_MODE_DISABLE";
+      retryCount = retryCnt;
+      rspTimeout = timeoutVal;
+
+      /*Create the command frame*/
+      cmd_buf[0] = 0x2F;
+      cmd_buf[1] = 0x1A;
+      cmd_buf[2] = 0x00;
+    }
+
+    tNFA_STATUS send(uint8_t *rsp_len, uint8_t *rsp_buf) {
+      return Command::send(cmd_buf, sizeof(cmd_buf), rsp_len, rsp_buf);
+    }
+
+    tNFA_STATUS preProcessor() {
+      /*Reject request if NFA layer is not enabled*/
+      if (!android::sIsNfaEnabled
+          ) {
+        LOG(ERROR) << StringPrintf("%s: Denying request due to disabled NFA layer", __func__);
+        return NFA_STATUS_REJECTED;
+      }
+      /*Stop RF discovery in case RF is enabled*/
+      if (android::sRfEnabled && android::sIsNfaEnabled) {
+        // Stop RF discovery to reconfigure
+        android::startRfDiscovery(false);
+      }
+      return NFA_STATUS_OK;
+    }
+
+    tNFA_STATUS postProcessor(uint8_t rsp_len, uint8_t *rsp_buf) {
+
+      /*Start RF discovery in case RF is enabled*/
+      if (!android::sRfEnabled && android::sIsNfaEnabled)
+        android::startRfDiscovery(true);
+      return NFA_STATUS_OK;
+    }
+  };
+  /*******************************************************************************
+   **
+   ** Class:        cmdTransceive
+   **
+   ** Description:  Sends the iCode proprietary transcieve app command.
+   **               This child class provides command frame. It also provides the
+   **               API for validity check(preprocessor), sending command and
+   **               post processing the response.
+   **
+   **
+  *******************************************************************************/
+  class cmdTransceive : public Command {
+  private:
+    uint8_t cmd_buf[258];
+
+  public:
+    /*Constructor*/
+    cmdTransceive(uint32_t timeoutVal, uint32_t retryCnt) {
+      /*Set the command specific parameters*/
+      name = (char *)"RDR_PASS_THRU_MODE_XCV";
+      retryCount = retryCnt;
+      rspTimeout = timeoutVal;
+
+      /*Create the command frame*/
+      cmd_buf[0] = 0x2F;
+      cmd_buf[1] = 0x1B;
+    }
+
+    tNFA_STATUS send(uint8_t *pData4Tx, uint8_t dataLen, uint8_t *rsp_len,
+                     uint8_t *rsp_buf) {
+      cmd_buf[2] = dataLen;
+      memcpy(&cmd_buf[3], pData4Tx, dataLen);
+      return Command::send(cmd_buf, (dataLen + CMD_HDR_SIZE_XCV), rsp_len,
+                           rsp_buf);
+    }
+
+    tNFA_STATUS preProcessor() {
+      tNFA_STATUS status = NFA_STATUS_OK;
+      SecureElement &se = SecureElement::getInstance();
+
+      if (!android::sIsNfaEnabled
+          ) {
+        LOG(ERROR) << StringPrintf("%s: Denying access due to SE listen mode active", __func__);
+        return NFA_STATUS_REJECTED;
+      }
+      /*Reject request if wired mode is ongoing*/
+      if (se.mIsWiredModeOpen == true) {
+        LOG(ERROR) << StringPrintf("%s: Denying access due to Wired session is ongoing", __func__);
+        status = NFA_STATUS_REJECTED;
+      }
+      return status;
+    }
+  };
+  /*******************************************************************************
+   **
+   ** Class:        rdrPassThru
+   **
+   ** Description: This is a factory class which creates command instances
+   **              It creates transceive commands only when it is in busy mode.
+   **
+   ** Returns:         byte[]
+   **
+  *******************************************************************************/
+  class rdrPassThru {
+  private:
+    uint32_t state;
+    typedef enum { IDLE, BUSY } STATE_e;
+
+  public:
+    rdrPassThru() { state = IDLE; }
+
+    Command *createCommand(uint32_t rqst, uint32_t modulationType) {
+
+      switch (rqst) {
+      case RDR_PASS_THRU_MODE_ENABLE:
+        state = BUSY;
+        return new cmdEnablePassThru(modulationType, RDR_PASS_THRU_ENABLE_TIMEOUT, 3);
+      case RDR_PASS_THRU_MODE_DISABLE:
+        state = BUSY;
+        return new cmdDisablePassThru(RDR_PASS_THRU_DISABLE_TIMEOUT, 3);
+      case RDR_PASS_THRU_MODE_XCV:
+        state = BUSY;
+        return new cmdTransceive(RDR_PASS_THRU_DISABLE_TIMEOUT, 0);
+      default:
+        return NULL;
+      }
+      return NULL;
+    }
+
+tNFA_STATUS condOfUseSatisfied(uint32_t rqst, uint32_t modulationTyp) {
+    if (rqst > RDR_PASS_THRU_MODE_XCV ||
+        modulationTyp > RDR_PASS_THRU_MOD_TYPE_LIMIT) {
+        LOG(ERROR) << StringPrintf("%s: Denying access due to Incorrect parameters", __func__);
+        return NFA_STATUS_REJECTED;
+    }
+    if (rqst == RDR_PASS_THRU_MODE_XCV && state == IDLE) {
+        LOG(ERROR) << StringPrintf("%s: Denying access due to Incorrect parameters", __func__);
+        return NFA_STATUS_REJECTED;
+    }
+    return NFA_STATUS_OK;
+}
+void destroy(Command *pCmdInstance) { delete pCmdInstance; }
+void destroy(uint32_t rqst, Command *pCmdInstance) {
+    if (rqst == RDR_PASS_THRU_MODE_DISABLE)
+        state = IDLE;
+     delete pCmdInstance;
+    }
+};
+rdrPassThru rdrPassThruMgr;
+/*******************************************************************************
+**
+** Function:        nfcManager_readerPassThruMode()
+**
+** Description:     Sends  proprietary command to NFC controller to manage
+**                  special FW mode
+**
+** Returns:         byte[]
+**
+*******************************************************************************/
+static jbyteArray nfcManager_readerPassThruMode(
+    JNIEnv * e, jobject o, jbyte rqst, jbyte modulationTyp) {
+    tNFA_STATUS ret_stat = NFA_STATUS_OK;
+    uint8_t rsp_buf[255];
+    uint8_t rsp_len = 0;
+    jbyteArray buf = NULL;
+    static const char fn[] = "nfcManager_readerPassThruMode";
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:enter", fn);
+
+    /*1. Check if the criteria for sending the command is satisfied*/
+    if ((ret_stat = rdrPassThruMgr.condOfUseSatisfied(rqst, modulationTyp)) ==
+        NFA_STATUS_OK) {
+
+      /*1.1.  Retreive the requested command instance from reader pass through
+       * manager (command factory)*/
+      Command *pCommand = rdrPassThruMgr.createCommand(rqst, modulationTyp);
+
+      /*1.2. Check valid command instance and command specific criteria for use */
+      if (pCommand != NULL && pCommand->preProcessor() == NFA_STATUS_OK) {
+        do {
+          /*1.2.1. Send the command to NFC controller*/
+          ret_stat = pCommand->send(&rsp_len, rsp_buf);
+
+          DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:Invoked", pCommand->name);
+
+          /*1.2.2. Incase of failure retry till the retrial limit is met*/
+        } while (ret_stat != NFA_STATUS_OK && pCommand->retryCount-- > 0);
+
+        /*1.2.3. Invoke command post processor*/
+        if (ret_stat == NFA_STATUS_OK)
+          ret_stat = pCommand->postProcessor(rsp_len, rsp_buf);
+
+        /*1.2.4. Delete the command instance*/
+        rdrPassThruMgr.destroy(rqst, pCommand);
+      }
+    } else {
+      /*2. If the criteria for sending the command is not satisfied; frame error
+       * rsp*/
+      rsp_len = sizeof(tNFA_STATUS);
+      rsp_buf[0] = NFA_STATUS_FAILED;
+    }
+    /*3. Set JNI variables for sending response to application*/
+    buf = e->NewByteArray(rsp_len);
+    e->SetByteArrayRegion(buf, 0, rsp_len, (jbyte *)rsp_buf);
+    return buf;
+}
+
+/*******************************************************************************
+**
+** Function:        nfcManager_transceiveAppData()
+**
+** Description:     Sends the proprietary transcieve app command
+**
+** Returns:         byte[]
+**
+*******************************************************************************/
+static jbyteArray nfcManager_transceiveAppData(JNIEnv * e, jobject o,
+                                                 jbyteArray data) {
+    tNFA_STATUS ret_stat = NFA_STATUS_OK;
+    uint8_t rsp_buf[255];
+    uint8_t rsp_len = 0;
+    uint8_t *dataBuf = NULL;
+    uint16_t dataLen = 0;
+    jbyteArray buf = NULL;
+    static const char fn[] = "nfcManager_transceiveAppData";
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:enter", fn);
+
+    /*1. Check if the criteria for sending the command is satisfied*/
+    if ((ret_stat = rdrPassThruMgr.condOfUseSatisfied(RDR_PASS_THRU_MODE_XCV,
+                                                      0)) == NFA_STATUS_OK) {
+
+      /*1.1.  Retreive the requested command instance from reader pass through
+       * manager (command factory)*/
+      Command *pCommand = rdrPassThruMgr.createCommand(RDR_PASS_THRU_MODE_XCV, 0);
+
+      /*1.2. Check valid command instance and command specific criteria for use */
+      if (pCommand != NULL && pCommand->preProcessor() == NFA_STATUS_OK) {
+
+        /*1.2.1.  Determine application data length */
+        ScopedByteArrayRW bytes(e, data);
+        dataBuf = const_cast<uint8_t *>(reinterpret_cast<uint8_t *>(&bytes[0]));
+        dataLen = bytes.size();
+
+        do {
+          /*1.2.2. Send the command to NFC controller*/
+          ret_stat = pCommand->send(dataBuf, dataLen, &rsp_len, rsp_buf);
+
+          DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:Invoked", pCommand->name);
+
+          /*1.2.3. Incase of failure retry till the retrial limit is met*/
+        } while (ret_stat != NFA_STATUS_OK && pCommand->retryCount-- > 0);
+
+        /*1.2.4. Invoke command post processor*/
+        if (ret_stat == NFA_STATUS_OK)
+          ret_stat = pCommand->postProcessor(rsp_len, rsp_buf);
+
+        /*1.2.5. Delete the command instance*/
+        rdrPassThruMgr.destroy(pCommand);
+      }
+    } else {
+      /*2. If the criteria for sending the command is not satisfied; frame error
+       * rsp*/
+      rsp_len = sizeof(tNFA_STATUS);
+      rsp_buf[0] = NFA_STATUS_FAILED;
+    }
+    /*3. Set JNI variables for sending response to application*/
+
+    buf = e->NewByteArray(rsp_len);
+    e->SetByteArrayRegion(buf, 0, rsp_len, (jbyte *)rsp_buf);
+
+    return buf;
+}
+
+/*******************************************************************************
+**
+** Function:        nfcManager_isNfccBusy
+**
+** Description:     Check If NFCC is busy
+**
+** Returns:         True if NFCC is busy.
+**
+*******************************************************************************/
+static bool nfcManager_isNfccBusy(JNIEnv*, jobject) {
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: ENTER", __func__);
+    bool statBusy = false;
+   if (sSeRfActive || gActivated ) {
+      LOG(ERROR) << StringPrintf("%s:FAIL  RF session ongoing", __func__);
+      statBusy = true;
+    }
+    return statBusy;
+}
+static int nfcManager_setTransitConfig(JNIEnv * e, jobject o,
+                                         jstring config) {
+    (void)e;
+    (void)o;
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+    std::string transitConfig = ConvertJavaStrToStdString(e, config);
+    SyncEventGuard guard(sNfaTransitConfigEvent);
+    int stat = NFA_SetTransitConfig(transitConfig);
+    sNfaTransitConfigEvent.wait(10 * ONE_SECOND_MS);
+    return stat;
+}
+
+/*******************************************************************************
+**
+** Function:        ConvertJavaStrToStdString
+**
+** Description:     Convert Jstring to string
+**                  e: JVM environment.
+**                  o: Java object.
+**                  s: Jstring.
+**
+** Returns:         std::string
+**
+*******************************************************************************/
+static std::string ConvertJavaStrToStdString(JNIEnv * env, jstring s) {
+    if (!s) return "";
+
+    const jclass strClass = env->GetObjectClass(s);
+    const jmethodID getBytes =
+        env->GetMethodID(strClass, "getBytes", "(Ljava/lang/String;)[B");
+    const jbyteArray strJbytes = (jbyteArray)env->CallObjectMethod(
+        s, getBytes, env->NewStringUTF("UTF-8"));
+
+    size_t length = (size_t)env->GetArrayLength(strJbytes);
+    jbyte* pBytes = env->GetByteArrayElements(strJbytes, NULL);
+
+    std::string ret = std::string((char*)pBytes, length);
+    env->ReleaseByteArrayElements(strJbytes, pBytes, JNI_ABORT);
+
+    env->DeleteLocalRef(strJbytes);
+    env->DeleteLocalRef(strClass);
+    return ret;
+}
+
+/*******************************************************************************
+**
+** Function:        nfcManager_getAidTableSize
+** Description:     Get the maximum supported size for AID routing table.
+**
+**                  e: JVM environment.
+**                  o: Java object.
+**
+*******************************************************************************/
+static jint nfcManager_getAidTableSize (JNIEnv*, jobject )
+{
+    return NFA_GetAidTableSize();
+}
+
+/*******************************************************************************
+**
+** Function:        nfcManager_getRemainingAidTableSize
+** Description:     Get the remaining size of AID routing table.
+**
+**                  e: JVM environment.
+**                  o: Java object.
+**
+*******************************************************************************/
+static jint nfcManager_getRemainingAidTableSize (JNIEnv* , jobject )
+{
+    return NFA_GetRemainingAidTableSize();
+}
+
+/*******************************************************************************
+   **
+   ** Function:        nfcManager_doSelectUicc()
+   **
+   ** Description:     Issue any single TLV set config command as per input
+   ** register values and bit values
+   **
+   ** Returns:         success/failure
+   **
+   *******************************************************************************/
+  static int nfcManager_doSelectUicc(JNIEnv * e, jobject o, jint uiccSlot) {
+    (void)e;
+    (void)o;
+    uint8_t retStat = STATUS_UNKNOWN_ERROR;
+
+     if (!nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC) {
+      retStat = nfcManager_staticDualUicc_Precondition(uiccSlot);
+
+      if (retStat != UICC_NOT_CONFIGURED) {
+        DLOG_IF(INFO, nfc_debug_enabled)
+            << StringPrintf("staticDualUicc_Precondition failed.");
+        return retStat;
+      }
+
+      nfcManager_setPreferredSimSlot(NULL, NULL, uiccSlot);
+      retStat = UICC_CONFIGURED;
+      // TODO when
+      //RoutingManager::getInstance().cleanRouting();
+    } else {
+      retStat = DUAL_UICC_FEATURE_NOT_AVAILABLE;
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+          "%s: Dual uicc not supported retStat = %d", __func__, retStat);
+    }
+    return retStat;
+  }
+
+  /*******************************************************************************
+   **
+   ** Function:        nfcManager_doGetSelectedUicc()
+   **
+   ** Description:     get the current selected active UICC
+   **
+   ** Returns:         UICC id
+   **
+   *******************************************************************************/
+  static int nfcManager_doGetSelectedUicc(JNIEnv * e, jobject o) {
+    uint8_t uicc_stat = STATUS_UNKNOWN_ERROR;
+    if (!nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC) {
+      uicc_stat =
+          SecureElement::getInstance().getUiccStatus(sCurrentSelectedUICCSlot);
+    } else {
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("%s: dual uicc not supported ", __func__);
+      uicc_stat = DUAL_UICC_FEATURE_NOT_AVAILABLE;
+    }
+    return uicc_stat;
+  }
+
+  static int nfcManager_staticDualUicc_Precondition(int uiccSlot) {
+    if (nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC) {
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+          "%s:Dual UICC feature not available . Returning", __func__);
+      return DUAL_UICC_FEATURE_NOT_AVAILABLE;
+    }
+
+    uint8_t retStat = UICC_NOT_CONFIGURED;
+
+    if (sIsDisabling) {
+      LOG(ERROR) << StringPrintf(
+          "%s:FAIL Nfc is Disabling : Switch UICC not allowed", __func__);
+      retStat = DUAL_UICC_ERROR_NFC_TURNING_OFF;
+    } else if (sSeRfActive) {
+      LOG(ERROR) << StringPrintf("%s:FAIL  RF session ongoing", __func__);
+      retStat = DUAL_UICC_ERROR_NFCC_BUSY;
+    } else if ((uiccSlot != 0x01) && (uiccSlot != 0x02)) {
+      LOG(ERROR) << StringPrintf("%s: Invalid slot id", __func__);
+      retStat = DUAL_UICC_ERROR_INVALID_SLOT;
+    } else if (SecureElement::getInstance().isRfFieldOn()) {
+      LOG(ERROR) << StringPrintf("%s:FAIL  RF field on", __func__);
+      retStat = DUAL_UICC_ERROR_NFCC_BUSY;
+    } else if (sDiscoveryEnabled || sRfEnabled) {
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Transaction state enabled", __func__);
+    }
+    return retStat;
+  }
+
+  /*******************************************************************************
+   **
+   ** Function:        nfcManager_setPreferredSimSlot()
+   **
+   ** Description:     This api is used to select a particular UICC slot.
+   **
+   **
+   ** Returns:         success/failure
+   **
+   *******************************************************************************/
+  static int nfcManager_setPreferredSimSlot(JNIEnv * e, jobject o,
+                                            jint uiccSlot) {
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s : uiccslot : %d : enter", __func__, uiccSlot);
+
+    tNFA_STATUS status = NFA_STATUS_OK;
+    if (!nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC) {
+      sCurrentSelectedUICCSlot = uiccSlot;
+      NFA_SetPreferredUiccId(
+          (uiccSlot == 2) ? (SecureElement::getInstance().EE_HANDLE_0xF8 &
+                             ~NFA_HANDLE_GROUP_EE)
+                          : (SecureElement::getInstance().EE_HANDLE_0xF4 &
+                             ~NFA_HANDLE_GROUP_EE));
+    }
+    return status;
+  }
+#endif
 } /* namespace android */
 /* namespace android */
 /*******************************************************************************

@@ -112,6 +112,15 @@ import com.android.nfc.dhimpl.NativeNfcSecureElement;
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileNotFoundException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.Arrays;
@@ -144,6 +153,7 @@ public class NfcService implements DeviceHostListener {
     public static final String SERVICE_NAME = "nfc";
     public static final String NXP_PREF = "NfcServiceNxpPrefs";
     public static final String PREF = "NfcServicePrefs";
+    private static final String PREF_CUR_SELECTED_UICC_ID = "current_selected_uicc_id";
 
     static final String PREF_NFC_ON = "nfc_on";
     static final boolean NFC_ON_DEFAULT = true;
@@ -284,6 +294,11 @@ public class NfcService implements DeviceHostListener {
     public static final int STATE_SE_RDR_MODE_STOP_CONFIG = 0x05;
     public static final int STATE_SE_RDR_MODE_STOP_IN_PROGRESS = 0x06;
     public static final int STATE_SE_RDR_MODE_STOPPED = 0x07;
+
+    //Transit setconfig status
+    public static final int TRANSIT_SETCONFIG_STAT_SUCCESS = 0x00;
+    public static final int TRANSIT_SETCONFIG_STAT_FAILED  = 0xFF;
+
     // Timeout to re-apply routing if a tag was present and we postponed it
     private static final int APPLY_ROUTING_RETRY_TIMEOUT_MS = 5000;
 
@@ -362,6 +377,7 @@ public class NfcService implements DeviceHostListener {
     boolean mIsDebugBuild;
     boolean mIsHceCapable;
     boolean mIsHceFCapable;
+    public boolean mIsRoutingTableDirty;
 
     private NfcDispatcher mNfcDispatcher;
     private PowerManager mPowerManager;
@@ -1575,7 +1591,141 @@ public class NfcService implements DeviceHostListener {
                 mDeviceHost.startPoll();
             }
         }
-    }
+
+        @Override
+        public byte[] getFWVersion()
+        {
+            byte[] buf = new byte[3];
+            Log.i(TAG, "Starting getFwVersion");
+            int fwver = mDeviceHost.getFWVersion();
+            buf[0] = (byte)((fwver&0xFF00)>>8);
+            buf[1] = (byte)((fwver&0xFF));
+            buf[2] = (byte)((fwver&0xFF0000)>>16);
+            Log.i(TAG, "Firmware version is 0x"+ buf[0]+" 0x"+buf[1]);
+            return buf;
+        }
+
+        private void WaitForAdapterChange(int state) {
+            while (true) {
+                if(mState == state) {
+                    break;
+                }
+                try {
+                    Thread.sleep(100);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            return;
+        }
+
+        @Override
+        public byte[] readerPassThruMode(byte status, byte modulationTyp)
+            throws RemoteException {
+
+          Log.i(TAG, "Reader pass through mode request: 0x" + status +
+                         " with modulation: 0x" + modulationTyp);
+          return mDeviceHost.readerPassThruMode(status, modulationTyp);
+        }
+
+        @Override
+        public byte[] transceiveAppData(byte[] data) throws RemoteException {
+
+          Log.i(TAG, "Transceive requested on reader pass through mode");
+          return mDeviceHost.transceiveAppData(data);
+        }
+        @Override
+        public int setConfig(String configs , String pkg) {
+            Log.e(TAG, "Setting configs for Transit" );
+            /*Check permissions*/
+            NfcPermissions.enforceAdminPermissions(mContext);
+            /*Check if any NFC transactions are ongoing*/
+            if(mDeviceHost.isNfccBusy())
+            {
+                Log.e(TAG, "NFCC is busy.." );
+                return TRANSIT_SETCONFIG_STAT_FAILED;
+            }
+            /*check if format of configs is fine*/
+            /*Save configurations to file*/
+            try {
+                File newTextFile = new File("/data/nfc/libnfc-nxpTransit.conf");
+                if(configs == null)
+                {
+                    if(newTextFile.delete()){
+                        Log.e(TAG, "Removing transit config file. Taking default Value" );
+                    }else{
+                        System.out.println("Error taking defualt value");
+                    }
+                }
+                else
+                {
+                    FileWriter fw = new FileWriter(newTextFile);
+                    fw.write(configs);
+                    fw.close();
+                    Log.e(TAG, "File Written to libnfc-nxpTransit.conf successfully" );
+                }
+                mDeviceHost.setTransitConfig(configs);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return TRANSIT_SETCONFIG_STAT_FAILED;
+            }
+
+            /*restart NFC service*/
+            try {
+                mNfcAdapter.disable(true);
+                WaitForAdapterChange(NfcAdapter.STATE_OFF);
+                mNfcAdapter.enable();
+                WaitForAdapterChange(NfcAdapter.STATE_ON);
+            } catch (Exception e) {
+                Log.e(TAG, "Unable to restart NFC Service");
+                e.printStackTrace();
+                return TRANSIT_SETCONFIG_STAT_FAILED;
+            }
+            return TRANSIT_SETCONFIG_STAT_SUCCESS;
+        }
+
+        @Override
+        public int selectUicc(int uiccSlot) throws RemoteException {
+            synchronized(NfcService.this) {
+                if (!isNfcEnabled()) {
+                    throw new RemoteException("NFC is not enabled");
+                }
+                int status =  mDeviceHost.doselectUicc(uiccSlot);
+                Log.i(TAG, "Update routing table");
+                /*In case of UICC connected and Enabled or Removed ,
+                 *Reconfigure the routing table based on current UICC parameters
+                 **/
+                if((status == 0x00)||(status == 0x01))
+                {
+                    mPrefsEditor.putInt(PREF_CUR_SELECTED_UICC_ID, uiccSlot);
+                    mPrefsEditor.apply();
+                    if((mAidRoutingManager != null) && (mCardEmulationManager != null))
+                    {
+                        Log.i(TAG, "Update routing table");
+                        mAidRoutingManager.onNfccRoutingTableCleared();
+                        mIsRoutingTableDirty = true;
+                        mCardEmulationManager.onNfcEnabled();
+                        computeRoutingParameters();
+                    }
+                    else
+                    {
+                        Log.i(TAG, "Update only Mifare and Desfire route");
+                        mIsRoutingTableDirty = true;
+                        applyRouting(false);
+                    }
+                }
+                return status;
+            }
+        }
+
+        @Override
+        public int getSelectedUicc() throws RemoteException {
+            if (!isNfcEnabled()) {
+                throw new RemoteException("NFC is not enabled");
+            }
+            return mDeviceHost.doGetSelectedUicc();
+        }
+}
 
     final class ReaderModeDeathRecipient implements IBinder.DeathRecipient {
         @Override

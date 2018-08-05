@@ -1174,7 +1174,6 @@ void RoutingManager::configureOffHostNfceeTechMask(void)
         preferredHandle = SecureElement::getInstance().EE_HANDLE_0xF4;
     }
     else if (nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC &&
-            nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH &&
             (mDefaultEe & SecureElement::UICC2_ID)) //UICC
     {
         preferredHandle = getUicc2selected();
@@ -1228,7 +1227,7 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
     unsigned long max_tech_mask = 0x03;
     unsigned long uiccListenTech = 0;
 
-    if (nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH == TRUE) {
+    if (!nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC) {
        if(nfcManager_getUiccRoute(sCurrentSelectedUICCSlot)!=0xFF) {
            max_tech_mask = SecureElement::getInstance().getSETechnology(nfcManager_getUiccRoute(sCurrentSelectedUICCSlot));
        } else {
@@ -1250,7 +1249,7 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
     uint8_t screen_off_lock_mask = 0x00;
     uint8_t protocol_mask = 0x00;
 
-    if (nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH == TRUE) {
+    if (!nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC) {
        if(nfcManager_getUiccRoute(sCurrentSelectedUICCSlot)!=0xFF) {
            ee_handle = (( route == 0x01)? 0x4C0 : (( route == 0x02)? nfcManager_getUiccRoute(sCurrentSelectedUICCSlot) : NFA_HANDLE_INVALID));
        } else {
@@ -1517,6 +1516,7 @@ bool RoutingManager::clearRoutingEntry(int type)
 
     memset(&gRouteInfo, 0x00, sizeof(RouteInfo_t));
 
+
     if(NFA_SET_TECHNOLOGY_ROUTING & type)
     {
       {
@@ -1555,7 +1555,6 @@ bool RoutingManager::clearRoutingEntry(int type)
         }
       }
 
-      if(nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH == TRUE || nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC == TRUE)
       {
         SyncEventGuard guard (mRoutingEvent);
         nfaStat = NFA_EeSetDefaultTechRouting (0x481, 0x00, 0x00, 0x00, 0x00, 0x00,0x00);
@@ -1606,7 +1605,6 @@ bool RoutingManager::clearRoutingEntry(int type)
         }
       }
 
-      if(nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH == TRUE || nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC == TRUE)
       {
         SyncEventGuard guard (mRoutingEvent);
         nfaStat = NFA_EeSetDefaultProtoRouting (0x481, 0x00, 0x00, 0x00, 0x00, 0x00,0x00);
@@ -1662,11 +1660,11 @@ void RoutingManager::processTechEntriesForFwdfunctionality(void)
 {
     //static const char fn []    = "RoutingManager::processTechEntriesForFwdfunctionality";
     uint32_t techSupportedByUICC = mTechSupportedByUicc1;
-    if(nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC && nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH) {
+    if(!nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC) {
         techSupportedByUICC = (getUiccRoute(sCurrentSelectedUICCSlot) == SecureElement::getInstance().EE_HANDLE_0xF4)?
                 mTechSupportedByUicc1 : mTechSupportedByUicc2;
     }
-    else if (nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC) {
+    else {
         techSupportedByUICC = (mDefaultTechASeID == SecureElement::getInstance().EE_HANDLE_0xF4)?
                 mTechSupportedByUicc1:mTechSupportedByUicc2;
     }
@@ -1835,7 +1833,7 @@ uint16_t RoutingManager::getUiccRouteLocId(const int route)
 {
 	LOG(ERROR) << StringPrintf(" getUiccRouteLocId route %X",
                    route);
-    if(nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC && nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH)
+    if(!nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC)
         return getUiccRoute(sCurrentSelectedUICCSlot);
     else if(nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC)
         return ((((route & 0x0300)>>8 )== 0x02 ) ? SecureElement::getInstance().EE_HANDLE_0xF4 : getUicc2selected());
