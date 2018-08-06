@@ -214,7 +214,8 @@ static bool isPeerToPeer(tNFA_ACTIVATED& activated);
 static bool isListenMode(tNFA_ACTIVATED& activated);
 #if (NXP_EXTNS==TRUE)
 static void nfcManager_changeDiscoveryTech(JNIEnv* e, jobject o, jint pollTech, jint listenTech);
-#else
+#endif
+#if (NXP_EXTNS==FALSE)
 static void enableDisableLptd(bool enable);
 #endif
 
