@@ -279,6 +279,7 @@ public class NfcService implements DeviceHostListener {
     // fields below are protected by this
     public NativeNfcSecureElement mSecureElement;
     private OpenSecureElement mOpenEe;  // null when EE closed
+    public boolean isWiredOpen = false;
     private final ReaderModeDeathRecipient mReaderModeDeathRecipient =
             new ReaderModeDeathRecipient();
     private final NfcUnlockManager mNfcUnlockManager;
@@ -1984,6 +1985,7 @@ public class NfcService implements DeviceHostListener {
             binder.unlinkToDeath(mOpenEe, 0);
             mDeviceHost.resetTimeouts();
             doDisconnect(mOpenEe.handle);
+            isWiredOpen = false;
             mOpenEe = null;
         }
     }
@@ -2031,8 +2033,7 @@ public class NfcService implements DeviceHostListener {
                      * the device is being setup*/
                     return EE_ERROR_IO;
                 }
-                mOpenEe = null; // null when EE closed
-                if (mOpenEe != null) {
+                if (mOpenEe != null || isWiredOpen) {
                     Log.i(TAG, "SE is Busy. returning..");
                     return EE_ERROR_ALREADY_OPEN;
                 }
@@ -2040,6 +2041,8 @@ public class NfcService implements DeviceHostListener {
                 if (handle < 0) {
                     Log.i(TAG, "open secure element fails.");
                     return handle;
+                } else {
+                    isWiredOpen = true;
                 }
                 mOpenEe = new OpenSecureElement(getCallingPid(), handle, b);
                 try {
@@ -2243,6 +2246,7 @@ public class NfcService implements DeviceHostListener {
                 pid = -1;
                 try {
                     _close(-1, binder);
+                  isWiredOpen =false;
                 } catch (IOException e) { /* already closed */ }
             }
         }
