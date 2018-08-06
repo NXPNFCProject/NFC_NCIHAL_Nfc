@@ -114,6 +114,7 @@ class RoutingManager {
     void setTechRouting(void);
     void processTechEntriesForFwdfunctionality(void);
     void configureOffHostNfceeTechMask(void);
+    void configureEeRegister(bool eeReg);
     void checkProtoSeID(void);
     void dumpTables(int);
     bool addApduRouting(uint8_t route, uint8_t powerState,const uint8_t* apduData,

@@ -1195,6 +1195,33 @@ void RoutingManager::checkProtoSeID(void)
 
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", fn);
 }
+/*******************************************************************************
+ **
+ ** Function:        configureEeRegister
+ **
+ ** Description:     EE register & de-register can be done.
+ **
+ ** Returns:         None
+ **
+ *******************************************************************************/
+void RoutingManager::configureEeRegister(bool eeReg)
+{
+    static const char fn [] = "RoutingManager::configureEeRegister";
+    tNFA_STATUS nfaStat;
+    if(eeReg)
+    {
+        SyncEventGuard guard (mEeRegisterEvent);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: try ee register", fn);
+        nfaStat = NFA_EeRegister (nfaEeCallback);
+        if (nfaStat != NFA_STATUS_OK)
+        {
+            DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf("%s: fail ee register; error=0x%X", fn, nfaStat);
+        }
+        mEeRegisterEvent.wait ();
+    } else {
+         NFA_EeDeregister (nfaEeCallback);
+    }
+}
 
 void RoutingManager::configureOffHostNfceeTechMask(void)
 {

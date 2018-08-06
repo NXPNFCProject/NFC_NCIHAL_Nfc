@@ -93,6 +93,12 @@ public class NativeNfcManager implements DeviceHost {
     public void checkFirmware() {
         doDownload();
     }
+    public native int doaccessControlForCOSU (int mode);
+
+    @Override
+    public int accessControlForCOSU (int mode) {
+        return doaccessControlForCOSU (mode);
+    }
 
     private native boolean doInitialize();
 

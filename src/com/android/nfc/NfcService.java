@@ -2138,6 +2138,16 @@ public class NfcService implements DeviceHostListener {
         p.putString("m", message);
         return p;
     }
+     /*
+     * Enable or disable eSE COS patch dedicated mode
+     * @param mode 1:dedicated mode 0:normal mode
+     * @return 0:success 1:SWP is already in use -1:error
+     */
+    @Override
+    public int accessControlForCOSU (int mode)
+    {
+        return mDeviceHost.accessControlForCOSU(mode);
+    }
 
     @Override
     public boolean reset(String pkg) throws RemoteException {

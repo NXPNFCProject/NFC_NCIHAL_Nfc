@@ -104,6 +104,9 @@ static jboolean nfcManager_doCheckJcopDlAtBoot(JNIEnv* e, jobject o);
 static int nfcManager_doJcosDownload(JNIEnv* e, jobject o);
 void DWPChannel_init(IChannel_t *DWP);
 IChannel_t Dwp;
+static int nfcManager_doPartialInitialize(JNIEnv* e, jobject o);
+static int nfcManager_doPartialDeInitialize(JNIEnv* e, jobject o);
+static jint nfcManager_doaccessControlForCOSU(JNIEnv* e, jobject o, jint mode);
 #endif
 }  // namespace android
 
@@ -226,6 +229,11 @@ static uint8_t sConfig[256];
 static int prevScreenState = NFA_SCREEN_STATE_OFF_LOCKED;
 static int NFA_SCREEN_POLLING_TAG_MASK = 0x10;
 static bool gIsDtaEnabled = false;
+#if (NXP_EXTNS==TRUE)
+static bool gsNfaPartialEnabled = false;
+static int MODE_DEDICATED = 1;
+static int MODE_NORMAL = 0;
+#endif
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
@@ -2062,7 +2070,119 @@ static void nfcManager_doAbort(JNIEnv* e, jobject, jstring msg) {
   e->FatalError(message.c_str());
   abort();  // <-- Unreachable
 }
+#if(NXP_EXTNS == TRUE)
+/*******************************************************************************
+**
+** Function:        nfcManager_doaccessControlForCOSU
+**
+** Description:     Access control for card OS update
+**
+** Returns:         NFA_STATUS_OK
+**
+*******************************************************************************/
+static jint nfcManager_doaccessControlForCOSU(JNIEnv* e, jobject o, jint mode)
+{
+        tNFA_STATUS stat = NFA_STATUS_OK;
 
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+        if (mode == MODE_DEDICATED) {
+            stat = nfcManager_doPartialInitialize(e,o);
+        } else if(mode == MODE_NORMAL){
+            stat = nfcManager_doPartialDeInitialize(e,o);
+        } else {
+            stat = NFA_STATUS_FAILED;
+        }
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Exit", __func__);
+        return stat;
+}
+/*******************************************************************************
+**
+** Function:        nfcManager_doPartialInitialize
+**
+** Description:     Partial Initalize of NFC
+**
+** Returns:         True if ok.
+**
+*******************************************************************************/
+static int nfcManager_doPartialInitialize(JNIEnv* e, jobject o) {
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+    tNFA_STATUS stat = NFA_STATUS_OK;
+    NfcAdaptation& theInstance = NfcAdaptation::GetInstance();
+
+    theInstance.Initialize();
+    tHAL_NFC_ENTRY* halFuncEntries = theInstance.GetHalEntryFuncs ();
+
+    if(NULL == halFuncEntries)
+    {
+        theInstance.Finalize();
+        gsNfaPartialEnabled = false;
+        return NFA_STATUS_FAILED;
+    }
+    NFA_Init (halFuncEntries);
+    DLOG_IF(INFO, nfc_debug_enabled)<< StringPrintf("%s: calling enable", __func__);
+    stat = NFA_Enable (nfaDeviceManagementCallback, nfaConnectionCallback);
+    if (stat == NFA_STATUS_OK)
+    {
+        SyncEventGuard guard (sNfaEnableEvent);
+        sNfaEnableEvent.wait(); //wait for NFA command to finish
+    }
+
+    if (sIsNfaEnabled)
+    {
+        RoutingManager::getInstance().configureEeRegister(true);
+        SecureElement::getInstance().initialize (getNative(e, o));
+        gsNfaPartialEnabled = true;
+        sIsNfaEnabled = false;
+    }
+    else
+    {
+        NFA_Disable (false /* ungraceful */);
+        theInstance.Finalize();
+        gsNfaPartialEnabled = false;
+    }
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
+  return NFA_STATUS_OK;
+}
+/*******************************************************************************
+**
+** Function:        nfcManager_doPartialDeInitialize
+**
+** Description:     Partial De-Initalize of NFC
+**
+** Returns:         True if ok.
+**
+*******************************************************************************/
+static int nfcManager_doPartialDeInitialize(JNIEnv*, jobject) {
+
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+    tNFA_STATUS stat = NFA_STATUS_OK;
+    NfcAdaptation& theInstance = NfcAdaptation::GetInstance();
+
+    if(!gsNfaPartialEnabled)
+    {
+        DLOG_IF(INFO, nfc_debug_enabled)<< StringPrintf("%s: cannot deinitialize NFC , not partially initilaized", __func__);
+        return NFA_STATUS_FAILED;
+    }
+    DLOG_IF(INFO, nfc_debug_enabled)<< StringPrintf("%s:enter", __func__);
+    stat = NFA_Disable (true /* graceful */);
+    if (stat == NFA_STATUS_OK)
+    {
+        DLOG_IF(INFO, nfc_debug_enabled)<< StringPrintf("%s: wait for completion", __func__);
+        SyncEventGuard guard (sNfaDisableEvent);
+        sNfaDisableEvent.wait (); //wait for NFA command to finish
+        RoutingManager::getInstance().configureEeRegister(false);
+        SecureElement::getInstance().finalize ();
+    }
+    else
+    {
+        DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf("%s: fail disable; error=0x%X", __func__, stat);
+    }
+    theInstance.Finalize();
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
+
+  return NFA_STATUS_OK;
+}
+#endif
 /*******************************************************************************
 **
 ** Function:        nfcManager_doDownload
@@ -2446,6 +2566,7 @@ static JNINativeMethod gMethods[] = {
             (void *)nfcManager_getActiveSecureElementList},
      {"doChangeDiscoveryTech", "(II)V",
              (void *)nfcManager_changeDiscoveryTech},
+     {"doaccessControlForCOSU", "(I)I",(void*)nfcManager_doaccessControlForCOSU},
 #endif
      {"routeApduPattern", "(II[B[B)Z",
                     (void*) nfcManager_routeApduPattern},
