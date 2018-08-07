@@ -936,6 +936,7 @@ public class NfcService implements DeviceHostListener {
 
             /* Start polling loop */
             applyRouting(true);
+            commitRouting();
             return true;
         }
 
