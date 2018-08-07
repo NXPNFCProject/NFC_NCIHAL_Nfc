@@ -2,7 +2,6 @@ package com.android.nfc;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.AppOpsManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -12,7 +11,6 @@ import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Process;
 import android.view.View;
 import android.widget.Toast;
 
@@ -62,9 +60,7 @@ public class ConfirmConnectToWifiNetworkActivity extends Activity
     public void onClick(View v) {
         WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 
-        if (!isChangeWifiStateGranted()) {
-            showFailToast();
-        } else if (!wifiManager.isWifiEnabled()) {
+        if (!wifiManager.isWifiEnabled()) {
             wifiManager.setWifiEnabled(true);
             mEnableWifiInProgress = true;
 
@@ -83,13 +79,6 @@ public class ConfirmConnectToWifiNetworkActivity extends Activity
         }
 
         mAlertDialog.dismiss();
-    }
-
-    private boolean isChangeWifiStateGranted() {
-        AppOpsManager appOps = (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
-        int modeChangeWifiState = appOps.checkOpNoThrow(AppOpsManager.OP_CHANGE_WIFI_STATE,
-                                                        Process.NFC_UID, getPackageName());
-        return modeChangeWifiState == AppOpsManager.MODE_ALLOWED;
     }
 
     private void doConnect(WifiManager wifiManager) {
