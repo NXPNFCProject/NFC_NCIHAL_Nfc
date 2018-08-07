@@ -198,6 +198,7 @@ public class NfcService implements DeviceHostListener {
     static final int MSG_ROUTE_APDU = 60;
     static final int MSG_UNROUTE_APDU = 61;
     static final int MSG_CLEAR_ROUTING = 62;
+    static final int MSG_INIT_WIREDSE = 63;
     // Update stats every 4 hours
     static final long STATS_UPDATE_INTERVAL_MS = 4 * 60 * 60 * 1000;
     static final long MAX_POLLING_PAUSE_TIMEOUT = 40000;
@@ -909,18 +910,6 @@ public class NfcService implements DeviceHostListener {
                 mObjectMap.clear();
                 mP2pLinkManager.enableDisable(mIsNdefPushEnabled, true);
                 updateState(NfcAdapter.STATE_ON);
-                /* WiredSe Init after ESE is discovered and initialised */
-                try {
-                mWiredSeInitMethod = mWiredSeClass.getDeclaredMethod("wiredSeInitialize");
-                mWiredSeInitMethod.invoke(mWiredSeObj);
-              } catch (NoSuchElementException | NoSuchMethodException e) {
-                Log.i(TAG, "No such Method WiredSeInitialize");
-              } catch (RuntimeException | IllegalAccessException | InvocationTargetException e) {
-                Log.e(TAG, "Error in invoking wiredSeInitialize invocation");
-              } catch (Exception e) {
-                Log.e(TAG, "caught Exception during wiredSeInitialize");
-                e.printStackTrace();
-                }
             }
 
             initSoundPool();
@@ -937,6 +926,8 @@ public class NfcService implements DeviceHostListener {
             /* Start polling loop */
             applyRouting(true);
             commitRouting();
+            /* WiredSe Init after ESE is discovered and initialised */
+            initWiredSe();
             return true;
         }
 
@@ -2809,6 +2800,10 @@ public class NfcService implements DeviceHostListener {
         Log.d(TAG, "commitRouting >>>");
         mHandler.sendEmptyMessage(MSG_COMMIT_ROUTING);
     }
+    public void initWiredSe() {
+        Log.d(TAG, "Init wired Se");
+        mHandler.sendEmptyMessage(MSG_INIT_WIREDSE);
+    }
 
     /**
      * get default MifareDesfireRoute route entry in case application does not configure this route entry
@@ -3337,6 +3332,20 @@ public class NfcService implements DeviceHostListener {
                 case MSG_UNROUTE_APDU: {
                     String apdu = (String) msg.obj;
                     mDeviceHost.unrouteApduPattern(hexStringToBytes(apdu));
+                    break;
+                }
+                case MSG_INIT_WIREDSE: {
+                     try {
+                       mWiredSeInitMethod = mWiredSeClass.getDeclaredMethod("wiredSeInitialize");
+                       mWiredSeInitMethod.invoke(mWiredSeObj);
+                     } catch (NoSuchElementException | NoSuchMethodException e) {
+                       Log.i(TAG, "No such Method WiredSeInitialize");
+                     } catch (RuntimeException | IllegalAccessException | InvocationTargetException e) {
+                       Log.e(TAG, "Error in invoking wiredSeInitialize invocation");
+                     } catch (Exception e) {
+                       Log.e(TAG, "caught Exception during wiredSeInitialize");
+                       e.printStackTrace();
+                     }
                     break;
                 }
                 default:
