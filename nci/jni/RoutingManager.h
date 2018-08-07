@@ -84,6 +84,21 @@ typedef struct
     tNFA_PROTOCOL_MASK      proto_screen_off_lock;  /* default routing - protocols screen_off_lock  */
 
 } LmrtEntry_t;
+
+typedef struct protoroutInfo {
+    uint16_t ee_handle;
+    tNFA_PROTOCOL_MASK  protocols_switch_on;
+    tNFA_PROTOCOL_MASK  protocols_switch_off;
+    tNFA_PROTOCOL_MASK  protocols_battery_off;
+    tNFA_PROTOCOL_MASK  protocols_screen_lock;
+    tNFA_PROTOCOL_MASK  protocols_screen_off;
+    tNFA_PROTOCOL_MASK  protocols_screen_off_lock;
+}ProtoRoutInfo_t;
+
+typedef struct routeInfo {
+    uint8_t num_entries;
+    ProtoRoutInfo_t protoInfo[4];
+}RouteInfo_t;
 #endif
 class RoutingManager {
  public:
@@ -102,29 +117,34 @@ class RoutingManager {
   void onNfccShutdown();
   int registerJniFunctions(JNIEnv* e);
 #if(NXP_EXTNS == TRUE)
-    void extractRouteLocationAndPowerStates(const int defaultRoute, const int protoRoute, const int techRoute);
     uint16_t getUiccRouteLocId(const int route);
-    void initialiseTableEntries(void);
-    void compileProtoEntries(void);
-    void compileTechEntries(void);
-    void consolidateProtoEntries(void);
-    void consolidateTechEntries(void);
-    void setProtoRouting(void);
+    static const int NFA_SET_AID_ROUTING = 4;
+    static const int NFA_SET_TECHNOLOGY_ROUTING = 1;
+    static const int NFA_SET_PROTOCOL_ROUTING = 2;
+    void registerProtoRouteEnrty(tNFA_HANDLE ee_handle,
+                                 tNFA_PROTOCOL_MASK  protocols_switch_on,
+                                 tNFA_PROTOCOL_MASK  protocols_switch_off,
+                                 tNFA_PROTOCOL_MASK  protocols_battery_off,
+                                 tNFA_PROTOCOL_MASK  protocols_screen_lock,
+                                 tNFA_PROTOCOL_MASK  protocols_screen_off,
+                                 tNFA_PROTOCOL_MASK  protocols_screen_off_lock
+                                 );
+    bool setRoutingEntry(int type, int value, int route, int power);
+    bool clearRoutingEntry(int type);
+    bool clearAidTable ();
     void setEmptyAidEntry(void);
-    void setTechRouting(void);
     void processTechEntriesForFwdfunctionality(void);
     void configureOffHostNfceeTechMask(void);
     void configureEeRegister(bool eeReg);
-    void checkProtoSeID(void);
     void dumpTables(int);
     bool addApduRouting(uint8_t route, uint8_t powerState,const uint8_t* apduData,
          uint8_t apduDataLen ,const uint8_t* apduMask, uint8_t apduMaskLen);
 
     bool removeApduRouting(uint8_t apduDataLen, const uint8_t* apduData);
-    bool setDefaultRoute(const int defaultRoute, const int protoRoute, const int techRoute);
     uint32_t getUicc2selected();
-    bool addAidRouting(const uint8_t* aid, uint8_t aidLen, int route,
-                     int aidInfo, int power);
+    bool addAidRouting(const uint8_t* aid, uint8_t aidLen,
+                                   int route, int aidInfo, int power);
+
     uint8_t sCurrentSelectedUICCSlot;
     SyncEvent       mAidAddRemoveEvent;
 #endif
@@ -223,6 +243,7 @@ class RoutingManager {
     int mHostListnTechMask;
     int mUiccListnTechMask;
     int mFwdFuntnEnable;
+    int mHostListnEnable;
     uint32_t mDefaultIso7816SeID;
     uint32_t mDefaultIso7816Powerstate;
     uint32_t mDefaultIsoDepSeID;

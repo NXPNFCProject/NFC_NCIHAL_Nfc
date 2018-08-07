@@ -235,7 +235,9 @@ public interface DeviceHost {
 
     public int getAidTableSize();
 
-    public boolean setDefaultRoute(int defaultRouteEntry, int defaultProtoRouteEntry, int defaultTechRouteEntry);
+    public boolean setRoutingEntry(int type, int value, int route, int power);
+
+    public boolean clearRoutingEntry(int type);
 
     public int getDefaultAidRoute();
 
@@ -250,6 +252,8 @@ public interface DeviceHost {
     public int getDefaultMifareCLTPowerState();
     
     public boolean commitRouting();
+
+    public void setEmptyAidRoute();
 
     public void registerT3tIdentifier(byte[] t3tIdentifier);
 

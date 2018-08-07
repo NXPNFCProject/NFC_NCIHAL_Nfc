@@ -187,6 +187,7 @@ public class NfcService implements DeviceHostListener {
     static final int MSG_SE_INIT = 59;
     static final int MSG_ROUTE_APDU = 60;
     static final int MSG_UNROUTE_APDU = 61;
+    static final int MSG_CLEAR_ROUTING = 62;
     // Update stats every 4 hours
     static final long STATS_UPDATE_INTERVAL_MS = 4 * 60 * 60 * 1000;
     static final long MAX_POLLING_PAUSE_TIMEOUT = 40000;
@@ -194,6 +195,16 @@ public class NfcService implements DeviceHostListener {
     static final int TASK_ENABLE = 1;
     static final int TASK_DISABLE = 2;
     static final int TASK_BOOT = 3;
+
+    // Listen Protocol
+    public static final int NFC_LISTEN_PROTO_ISO_DEP = 0x01;    // This values is need to move from this to CardEmulationManager
+    public static final int NFC_LISTEN_PROTO_NFC_DEP = 0x02;    // This values is need to move from this to CardEmulationManager
+    public static final int NFC_LISTEN_PROTO_T3T = 0x04;
+
+    public static final int NFC_LISTEN_TECH_A = 0x01;   // This values is need to move from this to CardEmulationManager
+    public static final int NFC_LISTEN_TECH_B = 0x02;   // This values is need to move from this to CardEmulationManager
+    public static final int NFC_LISTEN_TECH_F = 0x04;   // This values is need to move from this to CardEmulationManager
+
 
     // Polling technology masks
     static final int NFC_POLL_A = 0x01;
@@ -211,6 +222,10 @@ public class NfcService implements DeviceHostListener {
     static final int EE_ERROR_LISTEN_MODE = -4;
     static final int EE_ERROR_EXT_FIELD = -5;
     static final int EE_ERROR_NFC_DISABLED = -6;
+
+    static final public int TECH_ENTRY = 1;
+    static final public int PROTOCOL_ENTRY = 2;
+    static final public int AID_ENTRY = 4;          // it is dummy values;
 
     // minimum screen state that enables NFC polling
     static final int NFC_POLLING_MODE = ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED;
@@ -375,6 +390,12 @@ public class NfcService implements DeviceHostListener {
     Class mWiredSeClass;
     Method mWiredSeInitMethod, mWiredSeDeInitMethod;
     Object mWiredSeObj;
+
+    private int ROUTE_ID_HOST  = 0x00;
+    private int ROUTE_ID_SMX   = 0x01;
+    private int ROUTE_ID_UICC  = 0x02;
+    private int ROUTE_ID_UICC2 = 0x04;
+    private int DEFAULT_ROUTE_ID_DEFAULT = 0x00;
 
     public static NfcService getInstance() {
         return sService;
@@ -2433,8 +2454,17 @@ public class NfcService implements DeviceHostListener {
         int protoRoute = mNxpPrefs.getInt("PREF_MIFARE_DESFIRE_PROTO_ROUTE_ID", GetDefaultMifareDesfireRouteEntry());
         int defaultRoute=mNxpPrefs.getInt("PREF_SET_DEFAULT_ROUTE_ID", GetDefaultRouteEntry());
         int techRoute=mNxpPrefs.getInt("PREF_MIFARE_CLT_ROUTE_ID", GetDefaultMifateCLTRouteEntry());
-        if (DBG) Log.d(TAG, "Set default Route Entry");
-        setDefaultRoute(defaultRoute, protoRoute, techRoute);
+        int TechSeId;
+        int TechRoute = 0x00;
+        if (DBG) Log.d(TAG, "Set Routing Entry");
+        /* Routing for Protocol */
+        mDeviceHost.setRoutingEntry(PROTOCOL_ENTRY, NFC_LISTEN_PROTO_ISO_DEP, ((protoRoute >> ROUTE_LOC_MASK) & 0x07), protoRoute & 0x3F);
+
+        /* Routing for Technology */
+        TechSeId = (techRoute >> ROUTE_LOC_MASK);
+        /* Technology types are masked internally depending on the capability of SE */
+        TechRoute = 0x07;
+        mDeviceHost.setRoutingEntry(TECH_ENTRY,TechRoute, TechSeId, techRoute & 0x3F);
     }
     private boolean isTagPresent() {
         for (Object object : mObjectMap.values()) {
@@ -2625,6 +2655,7 @@ public class NfcService implements DeviceHostListener {
     }
 
     public void commitRouting() {
+        Log.d(TAG, "commitRouting >>>");
         mHandler.sendEmptyMessage(MSG_COMMIT_ROUTING);
     }
 
@@ -2674,16 +2705,11 @@ public class NfcService implements DeviceHostListener {
     public int GetDefaultMifateCLTRouteEntry()
     {
         int routeLoc = mDeviceHost.getDefaultMifareCLTRoute();
-        int defaultMifateCLTRoute = ((mDeviceHost.getDefaultMifareCLTPowerState() & 0x3F) | (routeLoc << ROUTE_LOC_MASK) | (TECH_TYPE_A << TECH_TYPE_MASK));
-
+        int defaultMifateCLTRoute = ((mDeviceHost.getDefaultMifareCLTPowerState() & 0x3F) | (mDeviceHost.getDefaultMifareCLTRoute() << ROUTE_LOC_MASK)) ;
         if (DBG) Log.d(TAG, "defaultMifateCLTRoute : " + defaultMifateCLTRoute);
         return defaultMifateCLTRoute;
     }
 
-    public boolean setDefaultRoute(int defaultRouteEntry, int defaultProtoRouteEntry, int defaultTechRouteEntry) {
-        boolean ret = mDeviceHost.setDefaultRoute(defaultRouteEntry, defaultProtoRouteEntry, defaultTechRouteEntry);
-        return ret;
-    }
     public int getAidRoutingTableStatus() {
         int aidTableStatus = 0x00;
         aidTableStatus = mNxpPrefs.getInt("PREF_SET_AID_ROUTING_TABLE_FULL",0x00);
@@ -2839,7 +2865,9 @@ public class NfcService implements DeviceHostListener {
                 }
                 case MSG_COMMIT_ROUTING: {
                     boolean commit = false;
+                    Log.d(TAG, "commitRouting >>>");
                     synchronized (NfcService.this) {
+                        mDeviceHost.setEmptyAidRoute();
                         if (mCurrentDiscoveryParameters.shouldEnableDiscovery()) {
                             commit = true;
                         } else {

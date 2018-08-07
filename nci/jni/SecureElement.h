@@ -42,7 +42,7 @@
 class SecureElement {
 public:
   tNFA_HANDLE  mActiveEeHandle;
-
+  static const int MAX_NUM_EE = NFA_EE_MAX_EE_SUPPORTED;    /*max number of EE's*/
   static const uint8_t UICC_ID = 0x02;
   static const uint8_t UICC2_ID = 0x04;
   static const uint8_t UICC3_ID = 0x08;
@@ -73,6 +73,7 @@ public:
   static const uint8_t EE_APP_HANLDE_UICC3 = 0xF9;
   uint8_t muicc2_selected;    /* UICC2 or UICC3 selected from config file*/
   SyncEvent       mApduPaternAddRemoveEvent;
+  SyncEvent   mAidAddRemoveEvent;
 /*******************************************************************************
 **
 ** Function:        getGenericEseId
@@ -96,7 +97,7 @@ void getEeHandleList(tNFA_HANDLE *list, uint8_t* count);
   static const tNFA_HANDLE EE_HANDLE_UICC = 0x480;
   static const uint8_t NFCEE_ID_ESE = 0x01;
   static const uint8_t NFCEE_ID_UICC = 0x02;
-  static const int MAX_NUM_EE = NFA_EE_MAX_EE_SUPPORTED;    /*max number of EE's*/
+
   static const unsigned int MAX_RESPONSE_SIZE = 0x8800;//1024; //34K
   static const uint8_t STATIC_PIPE_0x71 = 0x71; //Broadcom's proprietary static pipe
   static const uint8_t EVT_ABORT_MAX_RSP_LEN = 40;

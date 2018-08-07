@@ -130,6 +130,9 @@ typedef struct discovery_Parameters
     bool restart;
 }discovery_Parameters_t;
 discovery_Parameters_t mDiscParams;
+jint nfcManager_getUiccId(jint uicc_slot);
+jint nfcManager_getUiccRoute(jint uicc_slot);
+
 #endif
 namespace android {
 jmethodID gCachedNfcManagerNotifyNdefMessageListeners;
@@ -962,6 +965,70 @@ static jboolean nfcManager_sendRawFrame(JNIEnv* e, jobject, jbyteArray data) {
   return (status == NFA_STATUS_OK);
 }
 
+#if(NXP_EXTNS == TRUE)
+/*******************************************************************************
+**
+** Function:        nfcManager_setRoutingEntry
+**
+** Description:     Set the routing entry in routing table
+**                  e: JVM environment.
+**                  o: Java object.
+**                  type: technology or protocol routing
+**                       0x01 - Technology
+**                       0x02 - Protocol
+**                  value: technology /protocol value
+**                  route: routing destination
+**                       0x00 : Device Host
+**                       0x01 : ESE
+**                       0x02 : UICC
+**                  power: power state for the routing entry
+*******************************************************************************/
+
+static jboolean nfcManager_setRoutingEntry (JNIEnv*, jobject, jint type, jint value, jint route, jint power)
+{
+    jboolean result = false;
+
+    result = RoutingManager::getInstance().setRoutingEntry(type, value, route, power);
+    return result;
+}
+
+/*******************************************************************************
+**
+** Function:        nfcManager_clearRoutingEntry
+**
+** Description:     Set the routing entry in routing table
+**                  e: JVM environment.
+**                  o: Java object.
+**                  type:technology/protocol/aid clear routing
+**
+*******************************************************************************/
+
+static jboolean nfcManager_clearRoutingEntry (JNIEnv*, jobject, jint type)
+{
+    jboolean result = false;
+    //checkRecreatePipe(); TODO
+    result = RoutingManager::getInstance().clearRoutingEntry(type);
+    return result;
+}
+
+/*******************************************************************************
+**
+** Function:        nfcManager_clearRoutingEntry
+**
+** Description:     Set the routing entry in routing table
+**                  e: JVM environment.
+**                  o: Java object.
+**                  type:technology/protocol/aid clear routing
+**
+*******************************************************************************/
+
+static void nfcManager_setEmptyAidRoute (JNIEnv*, jobject)
+{
+    RoutingManager::getInstance().setEmptyAidEntry();
+    return;
+}
+#endif
+
 /*******************************************************************************
 **
 ** Function:        nfcManager_routeAid
@@ -1100,41 +1167,6 @@ static jboolean nfcManager_routeApduPattern (JNIEnv* e, jobject, jint route, jin
     stat = RoutingManager::getInstance().addApduRouting(route, powerState, apdu, apduLen, mask , maskLen);
 #endif
     return stat;
-}
-/*******************************************************************************
-**
-** Function:        nfcManager_setDefaultRoute
-**
-** Description:     Set the default route in routing table
-**                  e: JVM environment.
-**                  o: Java object.
-**
-*******************************************************************************/
-
-static jboolean nfcManager_setDefaultRoute (JNIEnv*, jobject, jint defaultRouteEntry, jint defaultProtoRouteEntry, jint defaultTechRouteEntry)
-{
-    jboolean result = false;
-#if (NXP_EXTNS == TRUE)
-    DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: enter", __func__);
-    if (sRfEnabled)
-    {
-        // Stop RF discovery to reconfigure
-        startRfDiscovery(false);
-    }
-
-    result = RoutingManager::getInstance().setDefaultRoute(defaultRouteEntry, defaultProtoRouteEntry, defaultTechRouteEntry);
-    if(result)
-        result = RoutingManager::getInstance().commitRouting();
-    else
-    DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: commit routing failed", __func__);
-
-    startRfDiscovery(true);
-    DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: exit", __func__);
-#endif
-    return result;
 }
 
 /*******************************************************************************
@@ -2475,7 +2507,15 @@ static JNINativeMethod gMethods[] = {
 
     {"unrouteAid", "([B)Z", (void*)nfcManager_unrouteAid},
 
+    {"doSetRoutingEntry", "(IIII)Z",
+            (void*)nfcManager_setRoutingEntry},
+
+    {"doClearRoutingEntry", "(I)Z",
+            (void*)nfcManager_clearRoutingEntry},
+
     {"commitRouting", "()Z", (void*)nfcManager_commitRouting},
+
+    {"setEmptyAidRoute", "()V", (void*)nfcManager_setEmptyAidRoute},
 
     {"doRegisterT3tIdentifier", "([B)I",
      (void*)nfcManager_doRegisterT3tIdentifier},
@@ -2555,9 +2595,7 @@ static JNINativeMethod gMethods[] = {
             (void*) nfcManager_getDefaultDesfirePowerState},
 
     {"getDefaultMifareCLTPowerState", "()I",
-            (void*) nfcManager_getDefaultMifareCLTPowerState},
-    {"setDefaultRoute", "(III)Z",
-            (void*) nfcManager_setDefaultRoute}
+            (void*) nfcManager_getDefaultMifareCLTPowerState}
 #if(NXP_EXTNS == TRUE)
     ,{"doCheckJcopDlAtBoot", "()Z",
             (void *)nfcManager_doCheckJcopDlAtBoot},
@@ -2917,6 +2955,49 @@ void storeLastDiscoveryParams(int technologies_mask, bool enable_lptd,
     mDiscParams.enable_host_routing = enable_host_routing;
     mDiscParams.restart = restart;
 }
-#endif
 
 } /* namespace android */
+/* namespace android */
+/*******************************************************************************
+ **
+ ** Function:        nfcManager_getUiccId()
+ **
+ ** Description:
+ **
+ ** Returns:         success/failure
+ **
+ *******************************************************************************/
+jint nfcManager_getUiccId(jint uicc_slot)
+{
+
+    if((uicc_slot == 0x00) || (uicc_slot == 0x01))
+    {
+        return 0x02;
+    }
+    else if(uicc_slot == 0x02)
+    {
+        return 0x04;
+    }
+    else
+    {
+        return 0xFF;
+    }
+}
+
+jint nfcManager_getUiccRoute(jint uicc_slot)
+{
+
+    if(uicc_slot == 0x01)
+    {
+        return 0x402;
+    }
+    else if(uicc_slot == 0x02)
+    {
+        return 0x481;
+    }
+    else
+    {
+        return 0xFF;
+    }
+}
+#endif
