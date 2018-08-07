@@ -4070,7 +4070,7 @@ public class NfcService implements DeviceHostListener {
                     if (action.equals("com.gsma.services.nfc.action.TRANSACTION_EVENT")) {
                         byte[] byteAid = seIntent.getByteArrayExtra("com.android.nfc_extras.extra.AID");
                         byte[] data = seIntent.getByteArrayExtra("com.android.nfc_extras.extra.DATA");
-                        String seName = seIntent.getStringExtra("com.android.nfc_extras.extra.SE_NAME");
+                        String seName = seIntent.getStringExtra("com.android.nfc_extras.extra.SECURE_ELEMENT_NAME");
                         StringBuffer strAid = new StringBuffer();
                         for (int i = 0; i < byteAid.length; i++) {
                             String hex = Integer.toHexString(0xFF & byteAid[i]);
@@ -4565,7 +4565,7 @@ public class NfcService implements DeviceHostListener {
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 intent.putExtra(NfcAdapter.EXTRA_AID, aid);
                 intent.putExtra(NfcAdapter.EXTRA_DATA, data);
-                intent.putExtra(NfcAdapter.EXTRA_SE_NAME, reader);
+                intent.putExtra(NfcAdapter.EXTRA_SECURE_ELEMENT_NAME, reader);
                 StringBuilder aidString = new StringBuilder(aid.length);
                 for (byte b : aid) {
                     aidString.append(String.format("%02X", b));

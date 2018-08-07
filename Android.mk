@@ -22,7 +22,6 @@ LOCAL_JNI_SHARED_LIBRARIES := libnfc_nci_jni
 LOCAL_JAVA_LIBRARIES := com.nxp.nfc
 
 LOCAL_STATIC_JAVA_LIBRARIES := android-support-core-utils
-LOCAL_STATIC_JAVA_LIBRARIES += android.hidl.base-V1.0-java-static
 LOCAL_STATIC_JAVA_LIBRARIES +=android.hardware.secure_element-V1.0-java
 LOCAL_STATIC_JAVA_LIBRARIES +=vendor.nxp.nxpwiredse-V1.0-java
 

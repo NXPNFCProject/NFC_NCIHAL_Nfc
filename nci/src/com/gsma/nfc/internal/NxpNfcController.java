@@ -109,7 +109,7 @@ public class NxpNfcController {
         Intent CertificateIntent = new Intent();
         CertificateIntent.setAction(NxpConstants.ACTION_CHECK_X509);
         CertificateIntent.setPackage(NxpConstants.SET_PACKAGE_NAME);
-        CertificateIntent.putExtra(NfcAdapter.EXTRA_SE_NAME, seName);
+        CertificateIntent.putExtra(NfcAdapter.EXTRA_SECURE_ELEMENT_NAME, seName);
         CertificateIntent.putExtra(NxpConstants.EXTRA_PKG, pkg);
         mContext.sendBroadcast(CertificateIntent);
 
