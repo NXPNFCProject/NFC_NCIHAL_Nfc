@@ -50,6 +50,7 @@
 | Android Version        | NXP Release          | NXP Tag  |
 | :-------------: |:-------------:| :-----:|
 | android-p-preview 2               |  9.0.D (PN553) |  NFC_NCIHALx_AR00C0.9.0.D_OpnSrc |
+| android-9.0.0_r3              |  9.1.0 (PN557) |  NFC_NCIHALx_AR0800.9.1.0_OpnSrc |
 
 ####Supported Android Versions on "br_android_ncihalx_p" Branch
 
