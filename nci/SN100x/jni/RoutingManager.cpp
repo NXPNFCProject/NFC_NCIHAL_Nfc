@@ -462,15 +462,15 @@ bool RoutingManager::addAidRouting(const uint8_t* aid, uint8_t aidLen,
 bool RoutingManager::removeAidRouting(const uint8_t* aid, uint8_t aidLen) {
   static const char fn[] = "RoutingManager::removeAidRouting";
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", fn);
-#if(NXP_EXTNS == TRUE) 
+#if(NXP_EXTNS == TRUE)
   SyncEventGuard guard(mAidAddRemoveEvent);
 #endif
   tNFA_STATUS nfaStat = NFA_EeRemoveAidRouting(aidLen, (uint8_t*)aid);
   if (nfaStat == NFA_STATUS_OK) {
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: removed AID", fn);
-#if(NXP_EXTNS == TRUE)    
-    mAidAddRemoveEvent.wait(); 
-#endif   
+#if(NXP_EXTNS == TRUE)
+    mAidAddRemoveEvent.wait();
+#endif
     return true;
   } else {
     LOG(ERROR) << StringPrintf("%s: failed to remove AID", fn);

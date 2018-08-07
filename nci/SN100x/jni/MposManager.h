@@ -28,7 +28,7 @@
 
 
 #define ONE_SECOND_MS 1000
-  
+
 typedef struct {
     tNFA_HANDLE src;
     tNFA_TECHNOLOGY_MASK tech_mask;

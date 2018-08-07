@@ -1,4 +1,4 @@
-VOB_COMPONENTS := system/nfc/src
+VOB_COMPONENTS := system/nfc/SN100x/src
 NFA := $(VOB_COMPONENTS)/nfa
 NFC := $(VOB_COMPONENTS)/nfc
 
@@ -47,7 +47,7 @@ LOCAL_C_INCLUDES += \
     $(VOB_COMPONENTS)/gki/ulinux \
     $(VOB_COMPONENTS)/gki/common \
     $(VOB_COMPONENTS) \
-    system/nfc/utils/include \
+    system/nfc/SN100x/utils/include \
     hardware/nxp/nfc/extns/impl\
 
 ifeq ($(NFC_NXP_ESE),TRUE)
