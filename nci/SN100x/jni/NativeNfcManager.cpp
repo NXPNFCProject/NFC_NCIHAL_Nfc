@@ -2011,6 +2011,46 @@ static jint nfcManager_getDefaultMifareCLTRoute (JNIEnv* e, jobject o)
 #endif
     return num;
 }
+#if(NXP_EXTNS == TRUE)
+/*******************************************************************************
+**
+** Function:        nfcManager_getDefaultFelicaCLTPowerState
+**
+** Description:     Get the default mifare CLT Power States.
+**                  e: JVM environment.
+**                  o: Java object.
+**
+** Returns:         Power State
+**
+*******************************************************************************/
+static jint nfcManager_getDefaultFelicaCLTPowerState (JNIEnv* e, jobject o)
+{
+    unsigned long num = 0;
+
+    GetNxpNumValue(NAME_DEFAULT_FELICA_CLT_PWR_STATE, &num, sizeof(num));
+    return num;
+}
+/*******************************************************************************
+**
+** Function:        nfcManager_getDefaultFelicaCLTRoute
+**
+** Description:     Get the default mifare CLT Route Entry.
+**                  e: JVM environment.
+**                  o: Java object.
+**                  mode: Not used.
+**
+** Returns:         None
+**
+*******************************************************************************/
+static jint nfcManager_getDefaultFelicaCLTRoute (JNIEnv* e, jobject o)
+{
+    unsigned long num = 0;
+
+    GetNxpNumValue(NAME_DEFAULT_FELICA_CLT_ROUTE, &num, sizeof(num));
+
+    return num;
+}
+#endif
 
 /*******************************************************************************
 **
@@ -2648,7 +2688,11 @@ static JNINativeMethod gMethods[] = {
     {"getDefaultMifareCLTPowerState", "()I",
             (void*) nfcManager_getDefaultMifareCLTPowerState}
 #if(NXP_EXTNS == TRUE)
-    ,{"doCheckJcopDlAtBoot", "()Z",
+     ,{"getDefaultFelicaCLTPowerState", "()I",
+            (void*) nfcManager_getDefaultFelicaCLTPowerState},
+      {"getDefaultFelicaCLTRoute", "()I",
+            (void*) nfcManager_getDefaultFelicaCLTRoute},
+     {"doCheckJcopDlAtBoot", "()Z",
             (void *)nfcManager_doCheckJcopDlAtBoot},
      {"JCOSDownload", "()I",
             (void *)nfcManager_doJcosDownload},

@@ -191,6 +191,9 @@ public class NativeNfcManager implements DeviceHost {
     public native int   getDefaultMifareCLTRoute();
 
     @Override
+    public native int   getDefaultFelicaCLTRoute();
+
+    @Override
     public native int   getDefaultAidPowerState();
 
     @Override
@@ -198,6 +201,9 @@ public class NativeNfcManager implements DeviceHost {
 
     @Override
     public native int   getDefaultMifareCLTPowerState();
+
+    @Override
+    public native int   getDefaultFelicaCLTPowerState();
 
     @Override
     public native boolean commitRouting();

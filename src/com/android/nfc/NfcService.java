@@ -2596,7 +2596,8 @@ public class NfcService implements DeviceHostListener {
         int protoRoute = mNxpPrefs.getInt("PREF_MIFARE_DESFIRE_PROTO_ROUTE_ID", GetDefaultMifareDesfireRouteEntry());
         int defaultRoute=mNxpPrefs.getInt("PREF_SET_DEFAULT_ROUTE_ID", GetDefaultRouteEntry());
         int techRoute=mNxpPrefs.getInt("PREF_MIFARE_CLT_ROUTE_ID", GetDefaultMifateCLTRouteEntry());
-        int TechSeId;
+        int techfRoute=mNxpPrefs.getInt("PREF_MIFARE_CLT_ROUTE_ID", GetDefaultFelicaCLTRouteEntry());
+        int TechSeId,TechFSeId;
         int TechRoute = 0x00;
         if (DBG) Log.d(TAG, "Set Routing Entry");
         /* Routing for Protocol */
@@ -2604,9 +2605,20 @@ public class NfcService implements DeviceHostListener {
 
         /* Routing for Technology */
         TechSeId = (techRoute >> ROUTE_LOC_MASK);
+        TechFSeId = (techfRoute >> ROUTE_LOC_MASK);
         /* Technology types are masked internally depending on the capability of SE */
-        TechRoute = 0x07;
-        mDeviceHost.setRoutingEntry(TECH_ENTRY,TechRoute, TechSeId, techRoute & 0x3F);
+        if(TechSeId == TechFSeId)
+        {
+           TechRoute = 0x07;
+           mDeviceHost.setRoutingEntry(TECH_ENTRY,TechRoute, TechSeId, techRoute & 0x3F);
+        }
+        else {
+          TechRoute = 0x03;
+          mDeviceHost.setRoutingEntry(TECH_ENTRY,0x07, TechSeId, techRoute & 0x3F);
+          TechRoute = 0x04;
+          Log.d(TAG, "Set Routing Entry" + TechRoute +  "" + TechFSeId + "" + techfRoute);
+          mDeviceHost.setRoutingEntry(TECH_ENTRY,TechRoute, TechFSeId, techfRoute & 0x3F);
+        }
     }
     private boolean isTagPresent() {
         for (Object object : mObjectMap.values()) {
@@ -2854,6 +2866,16 @@ public class NfcService implements DeviceHostListener {
         int defaultMifateCLTRoute = ((mDeviceHost.getDefaultMifareCLTPowerState() & 0x3F) | (mDeviceHost.getDefaultMifareCLTRoute() << ROUTE_LOC_MASK)) ;
         if (DBG) Log.d(TAG, "defaultMifateCLTRoute : " + defaultMifateCLTRoute);
         return defaultMifateCLTRoute;
+    }
+    /**
+     * get default FelicaCLT route entry in case application does not configure this route entry
+     */
+    public int GetDefaultFelicaCLTRouteEntry()
+    {
+        int routeLoc = mDeviceHost.getDefaultFelicaCLTRoute();
+        int defaultFelicaCLTRoute = ((mDeviceHost.getDefaultFelicaCLTPowerState() & 0x3F) | (mDeviceHost.getDefaultFelicaCLTRoute() << ROUTE_LOC_MASK)) ;
+        if (DBG) Log.d(TAG, "defaultFelicaCLTRoute : " + defaultFelicaCLTRoute);
+        return defaultFelicaCLTRoute;
     }
 
     public int getAidRoutingTableStatus() {

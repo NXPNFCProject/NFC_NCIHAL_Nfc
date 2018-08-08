@@ -245,12 +245,16 @@ public interface DeviceHost {
 
     public int getDefaultMifareCLTRoute();
 
+    public int getDefaultFelicaCLTRoute();
+
     public int getDefaultAidPowerState();
 
     public int getDefaultDesfirePowerState();
 
     public int getDefaultMifareCLTPowerState();
-    
+
+    public int getDefaultFelicaCLTPowerState();
+
     public boolean commitRouting();
 
     public void setEmptyAidRoute();
