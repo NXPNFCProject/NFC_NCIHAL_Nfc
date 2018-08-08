@@ -171,7 +171,7 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
     if (GetNxpNumValue (NAME_DEFAULT_AID_ROUTE, (void*)&num, sizeof(num)))
         mDefaultIso7816SeID = num;
     else
-        mDefaultIso7816SeID = 0xFF;
+        mDefaultIso7816SeID = NFA_HANDLE_INVALID;
     if (GetNxpNumValue (NAME_DEFAULT_AID_PWR_STATE, (void*)&num, sizeof(num)))
         mDefaultIso7816Powerstate = num;
     else
@@ -1249,20 +1249,7 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
     uint8_t screen_off_lock_mask = 0x00;
     uint8_t protocol_mask = 0x00;
 
-    if (!nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC) {
-       if(nfcManager_getUiccRoute(sCurrentSelectedUICCSlot)!=0xFF) {
-           ee_handle = (( route == 0x01)? 0x4C0 : (( route == 0x02)? nfcManager_getUiccRoute(sCurrentSelectedUICCSlot) : NFA_HANDLE_INVALID));
-       } else {
-           ee_handle = (( route == 0x01)? 0x4C0 : (( route == 0x02)? SecureElement::getInstance().EE_HANDLE_0xF4 : NFA_HANDLE_INVALID));
-       }
-    } else {
-        ee_handle = (( route == 0x01)? 0x4C0 : (( route == 0x02)? SecureElement::getInstance().EE_HANDLE_0xF4 : NFA_HANDLE_INVALID));
-    }
-
-    if(0x00 == route)
-    {
-        ee_handle = 0x400;
-    }
+    ee_handle = ((route == 0x00) ? ROUTE_LOC_HOST_ID : ((route == 0x01) ? ROUTE_LOC_ESE_ID : getUiccRouteLocId(route)));
     if(ee_handle == NFA_HANDLE_INVALID )
     {
         DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter, handle:%x invalid", fn, ee_handle);
@@ -1635,20 +1622,18 @@ bool RoutingManager::clearRoutingEntry(int type)
 void RoutingManager::setEmptyAidEntry() {
 
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter",__func__);
-    uint16_t routeLoc;
+    uint16_t routeLoc = NFA_HANDLE_INVALID;
     uint8_t power;
-
-    routeLoc = mDefaultIso7816SeID;
-
-    power    = mCeRouteStrictDisable ? mDefaultIso7816Powerstate : (mDefaultIso7816Powerstate & POWER_STATE_MASK);
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: route %x",__func__,routeLoc);
-    if(routeLoc == 0x400) power &= 0x11;
-    if (routeLoc  == NFA_HANDLE_INVALID)
+    if (mDefaultIso7816SeID  == NFA_HANDLE_INVALID)
     {
         LOG(ERROR) << StringPrintf("%s: Invalid routeLoc. Return.", __func__);
         return;
     }
-
+    routeLoc = ((mDefaultIso7816SeID == 0x00) ? ROUTE_LOC_HOST_ID : ((mDefaultIso7816SeID == 0x01 ) ? ROUTE_LOC_ESE_ID : getUiccRouteLocId(mDefaultIso7816SeID)));
+    power    = mCeRouteStrictDisable ? mDefaultIso7816Powerstate : (mDefaultIso7816Powerstate & POWER_STATE_MASK);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: route %x",__func__,routeLoc);
+    if(routeLoc == ROUTE_LOC_HOST_ID) power &= 0x11;
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: power %x",__func__,power);
     tNFA_STATUS nfaStat = NFA_EeAddAidRouting(routeLoc, 0, NULL, power, 0x10);
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Status :0x%2x", __func__, nfaStat);
 }
@@ -1833,10 +1818,13 @@ uint16_t RoutingManager::getUiccRouteLocId(const int route)
 {
 	LOG(ERROR) << StringPrintf(" getUiccRouteLocId route %X",
                    route);
+    if((route != 0x02 ) &&(route != 0x03))
+      return NFA_HANDLE_INVALID;
+
     if(!nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC)
         return getUiccRoute(sCurrentSelectedUICCSlot);
     else if(nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC)
-        return ((((route & 0x0300)>>8 )== 0x02 ) ? SecureElement::getInstance().EE_HANDLE_0xF4 : getUicc2selected());
+        return ((route == 0x02 ) ? SecureElement::getInstance().EE_HANDLE_0xF4 : getUicc2selected());
     else /*#if (NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH == true)*/
         return SecureElement::getInstance().EE_HANDLE_0xF4;
 }

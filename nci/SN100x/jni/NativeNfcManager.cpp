@@ -3701,7 +3701,7 @@ jint nfcManager_getUiccRoute(jint uicc_slot)
 
     if(uicc_slot == 0x01)
     {
-        return 0x402;
+        return 0x480;
     }
     else if(uicc_slot == 0x02)
     {
