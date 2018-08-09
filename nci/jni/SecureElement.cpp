@@ -4192,6 +4192,13 @@ bool SecureElement::enableDwp(void) {
 void spi_prio_signal_handler(int signum, siginfo_t* info, void* unused) {
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: Inside the Signal Handler %d\n", __func__, SIG_NFC);
+  if (nfcFL.chipType == pn557) {
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+        "%s: for pn557/pn81T, signal_handler not supported. Returning\n",
+        __func__);
+    return;
+  }
+
   uint16_t usEvent = 0;
   if (signum == SIG_NFC) {
     DLOG_IF(INFO, nfc_debug_enabled)
