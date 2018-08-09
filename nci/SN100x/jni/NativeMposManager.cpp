@@ -378,3 +378,4 @@ int register_com_android_nfc_NativeNfcMposManager(JNIEnv *e)
 }
 
 } // namespace android
+

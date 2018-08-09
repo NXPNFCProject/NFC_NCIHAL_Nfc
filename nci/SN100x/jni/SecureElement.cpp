@@ -1638,3 +1638,4 @@ uint16_t SecureElement::getEeStatus(uint16_t eehandle) {
   }
   return ee_status;
 }
+

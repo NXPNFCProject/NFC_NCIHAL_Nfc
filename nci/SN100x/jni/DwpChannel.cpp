@@ -136,7 +136,7 @@ int16_t open()
             LOG(ERROR) << StringPrintf("%s: power link command failed", __func__);
         }
         se.SecEle_Modeset(se.NFCEE_ENABLE);
-        dwpHandle = se.mActiveEeHandle;
+        dwpHandle = se.mActiveEeHandle; 
     }
     LOG(INFO) << StringPrintf("%s: Exit. dwpHandle = 0x%02x", fn,dwpHandle);
     return dwpHandle;

@@ -806,13 +806,13 @@ static jboolean nfcManager_initNativeStruc(JNIEnv* e, jobject o) {
   gCachedNfcManagerNotifyRfFieldDeactivated =
       e->GetMethodID(cls.get(), "notifyRfFieldDeactivated", "()V");
 
-  gCachedNfcManagerNotifySeListenActivated =
+  gCachedNfcManagerNotifySeListenActivated = 
       e->GetMethodID(cls.get(),"notifySeListenActivated", "()V");
-  gCachedNfcManagerNotifySeListenDeactivated =
+  gCachedNfcManagerNotifySeListenDeactivated = 
       e->GetMethodID(cls.get(),"notifySeListenDeactivated", "()V");
   gCachedNfcManagerNotifyTransactionListeners = e->GetMethodID(
       cls.get(), "notifyTransactionListeners", "([B[BLjava/lang/String;)V");
-  gCachedNfcManagerNotifySeInitialized =
+  gCachedNfcManagerNotifySeInitialized = 
       e->GetMethodID(cls.get(),"notifySeInitialized", "()V");
   if (nfc_jni_cache_object(e, gNativeNfcTagClassName, &(nat->cached_NfcTag)) ==
       -1) {
@@ -901,7 +901,7 @@ void nfaDeviceManagementCallback(uint8_t dmEvent,
 #if(NXP_EXTNS == TRUE)
       SecureElement::getInstance().notifyRfFieldEvent (
                     eventData->rf_field.rf_field_status == NFA_DM_RF_FIELD_ON);
-#endif
+#endif      
 if (!sP2pActive && eventData->rf_field.status == NFA_STATUS_OK) {
         struct nfc_jni_native_data* nat = getNative(NULL, NULL);
         JNIEnv* e = NULL;
@@ -2791,7 +2791,7 @@ bool isDiscoveryStarted() { return sRfEnabled; }
 **
 *******************************************************************************/
 void doStartupConfig() {
-#if (NXP_EXTNS == FALSE)
+#if (NXP_EXTNS == FALSE) 
  struct nfc_jni_native_data* nat = getNative(0, 0);
   tNFA_STATUS stat = NFA_STATUS_FAILED;
 
@@ -3625,7 +3625,7 @@ static jint nfcManager_getRemainingAidTableSize (JNIEnv* , jobject )
 
       nfcManager_setPreferredSimSlot(NULL, NULL, uiccSlot);
       retStat = UICC_CONFIGURED;
-      // TODO when
+      // TODO when 
       //RoutingManager::getInstance().cleanRouting();
     } else {
       retStat = DUAL_UICC_FEATURE_NOT_AVAILABLE;
@@ -3757,3 +3757,4 @@ jint nfcManager_getUiccRoute(jint uicc_slot)
     }
 }
 #endif
+

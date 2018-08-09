@@ -367,7 +367,7 @@ public class NfcService implements DeviceHostListener {
     int mErrorSound;
     SoundPool mSoundPool; // playback synchronized on this
     P2pLinkManager mP2pLinkManager;
-    TagService mNfcTagService;
+    TagService mNfcTagService; 
     boolean mIsSecureElementOpened = false;
     boolean mSEClientAccessState = false;
     NfcAdapterService mNfcAdapter;
@@ -953,7 +953,7 @@ public class NfcService implements DeviceHostListener {
                 Log.e(TAG, "caught Exception during wiredSeInitialize");
                 e.printStackTrace();
             }
-
+ 
             /* Sometimes mDeviceHost.deinitialize() hangs, use a watch-dog.
              * Implemented with a new thread (instead of a Handler or AsyncTask),
              * because the UI Thread and AsyncTask thread-pools can also get hung
@@ -985,7 +985,7 @@ public class NfcService implements DeviceHostListener {
                 mCurrentDiscoveryParameters = NfcDiscoveryParameters.getNfcOffParameters();
                 updateState(NfcAdapter.STATE_OFF);
             }
-            releaseSoundPool();
+            releaseSoundPool(); 
             return result;
         }
 
