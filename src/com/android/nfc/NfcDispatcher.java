@@ -222,6 +222,8 @@ class NfcDispatcher {
         }
 
         public boolean isWebIntent() {
+            if(ndefUri.normalizeScheme().getScheme() == null)
+                return false;
             return ndefUri != null && ndefUri.normalizeScheme().getScheme().startsWith("http");
         }
 
