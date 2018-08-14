@@ -1293,13 +1293,16 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
         }
     }
 
-    if((ee_handle!=0x400) && ((NFA_SET_PROTOCOL_ROUTING == type) && (isSeIDPresent != 1)))
+    if((ee_handle!=ROUTE_LOC_HOST_ID) && ((NFA_SET_PROTOCOL_ROUTING == type) && (isSeIDPresent != 1)))
     {
         DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf ("%s: changing the destination to DH",fn);
         ee_handle = 0x400;
         power &= 0x31;
     }
-
+    if((ee_handle == ROUTE_LOC_HOST_ID) && (NFA_SET_PROTOCOL_ROUTING == type))
+    {
+      power &= (PWR_SWTCH_ON_SCRN_LOCK_MASK | PWR_SWTCH_ON_SCRN_UNLCK_MASK);
+    }
     max_tech_mask = SecureElement::getInstance().getSETechnology(ee_handle);
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter,max_tech_mask :%lx", fn, max_tech_mask);
     if(NFA_SET_TECHNOLOGY_ROUTING == type)
@@ -1624,6 +1627,14 @@ void RoutingManager::setEmptyAidEntry() {
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter",__func__);
     uint16_t routeLoc = NFA_HANDLE_INVALID;
     uint8_t power;
+    uint8_t count,seId=0;
+    uint8_t isDefaultAidRoutePresent = 0;
+    unsigned long     check_default_proto_se_id_req = 0;
+    tNFA_HANDLE ActDevHandle = NFA_HANDLE_INVALID;
+    static const char fn []   = "RoutingManager::checkProtoSeID";
+
+    tNFA_HANDLE ee_handleList[nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED];
+
     if (mDefaultIso7816SeID  == NFA_HANDLE_INVALID)
     {
         LOG(ERROR) << StringPrintf("%s: Invalid routeLoc. Return.", __func__);
@@ -1631,8 +1642,51 @@ void RoutingManager::setEmptyAidEntry() {
     }
     routeLoc = ((mDefaultIso7816SeID == 0x00) ? ROUTE_LOC_HOST_ID : ((mDefaultIso7816SeID == 0x01 ) ? ROUTE_LOC_ESE_ID : getUiccRouteLocId(mDefaultIso7816SeID)));
     power    = mCeRouteStrictDisable ? mDefaultIso7816Powerstate : (mDefaultIso7816Powerstate & POWER_STATE_MASK);
+    if (GetNxpNumValue(NAME_CHECK_DEFAULT_PROTO_SE_ID, &check_default_proto_se_id_req, sizeof(check_default_proto_se_id_req)))
+    {
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: CHECK_DEFAULT_PROTO_SE_ID - 0x%2lX  routeLoc = 0x%x",fn,check_default_proto_se_id_req, routeLoc);
+    }
+    else
+    {
+      LOG(ERROR) << StringPrintf("%s: CHECK_DEFAULT_PROTO_SE_ID not defined. Taking default value - 0x%2lX",fn,check_default_proto_se_id_req);
+    }
+    if(check_default_proto_se_id_req == 0x01)
+    {
+      SecureElement::getInstance().getEeHandleList(ee_handleList, &count);
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: count : %d", fn, count);
+      for (int  i = 0; ((count != 0 ) && (i < count)); i++)
+      {
+        seId = SecureElement::getInstance().getGenericEseId(ee_handleList[i]);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: seId : %d", fn, seId);
+        ActDevHandle = SecureElement::getInstance().getEseHandleFromGenericId(seId);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: ActDevHandle : 0x%X", fn, ActDevHandle);
+        if (routeLoc == ActDevHandle)
+        {
+          isDefaultAidRoutePresent = 1;
+          DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Default AID route handle active");
+        }
+        if(isDefaultAidRoutePresent)
+        {
+          break;
+        }
+      }
+      if(!isDefaultAidRoutePresent)
+      {
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Default AidRoute not present");
+        mDefaultIso7816SeID = ROUTE_LOC_HOST_ID;
+        routeLoc = mDefaultIso7816SeID;
+        if(NFA_GetNCIVersion() != NCI_VERSION_2_0)
+        {
+          mDefaultIso7816Powerstate &= (PWR_SWTCH_ON_SCRN_UNLCK_MASK | PWR_SWTCH_ON_SCRN_LOCK_MASK);
+          power = mDefaultIso7816Powerstate;
+        }
+      }
+    }
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: route %x",__func__,routeLoc);
-    if(routeLoc == ROUTE_LOC_HOST_ID) power &= 0x11;
+    if(routeLoc == ROUTE_LOC_HOST_ID) {
+      if(NFA_GetNCIVersion() == NCI_VERSION_2_0)
+        power &= 0x11;
+    }
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: power %x",__func__,power);
     tNFA_STATUS nfaStat = NFA_EeAddAidRouting(routeLoc, 0, NULL, power, 0x10);
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Status :0x%2x", __func__, nfaStat);
