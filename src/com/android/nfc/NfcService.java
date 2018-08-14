@@ -978,7 +978,7 @@ public class NfcService implements DeviceHostListener {
 
             boolean result = mDeviceHost.deinitialize();
             if (DBG) Log.d(TAG, "mDeviceHost.deinitialize() = " + result);
-
+            isWiredOpen = false;
             watchDog.cancel();
 
             synchronized (NfcService.this) {
