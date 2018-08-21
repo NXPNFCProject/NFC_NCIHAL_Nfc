@@ -254,10 +254,29 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
   if (NFC_GetNCIVersion() == NCI_VERSION_2_0) {
     if(mDefaultSysCode != 0x00)
     {
+#if (NXP_EXTNS == TRUE)
+      uint16_t routeLoc = NFA_HANDLE_INVALID;
+#endif
       SyncEventGuard guard(mRoutingEvent);
+
+#if (NXP_EXTNS == TRUE)
+      routeLoc = ((mDefaultSysCodeRoute == 0x00) ? ROUTE_LOC_HOST_ID :
+        ((mDefaultSysCodeRoute == 0x01 ) ? ROUTE_LOC_ESE_ID : getUiccRouteLocId(mDefaultSysCodeRoute)));
+      if(mDefaultSysCodeRoute == 0)
+      {
+        mDefaultSysCodePowerstate &= 0x11;
+      }
+#endif
+
+      LOG(ERROR) << StringPrintf("mDefaultSysCodeRoute routeLoc = 0x%x", routeLoc);
       // Register System Code for routing
+#if (NXP_EXTNS == TRUE)
+      nfaStat = NFA_EeAddSystemCodeRouting(mDefaultSysCode, routeLoc,
+                                         mDefaultSysCodePowerstate);
+#else
       nfaStat = NFA_EeAddSystemCodeRouting(mDefaultSysCode, mDefaultSysCodeRoute,
                                          mDefaultSysCodePowerstate);
+#endif
       if (nfaStat == NFA_STATUS_NOT_SUPPORTED) {
         mIsScbrSupported = false;
         LOG(ERROR) << StringPrintf("%s: SCBR not supported", fn);
