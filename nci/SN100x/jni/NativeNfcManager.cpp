@@ -1620,9 +1620,6 @@ void nfcManager_disableDiscovery(JNIEnv* e, jobject o) {
             Rdr_req_ntf_info_t mSwp_info = MposManager::getInstance().getSwpRrdReqInfo();
             //        if(android::isDiscoveryStarted() == true)
             android::startRfDiscovery(false);
-            {
-                status = NFA_CeConfigureUiccListenTech (mSwp_info.swp_rd_req_info.src, 0x00);
-            }
             goto TheEnd;
         }
         else if(MposManager::getInstance().getEtsiReaederState() == STATE_SE_RDR_MODE_STOP_IN_PROGRESS)
