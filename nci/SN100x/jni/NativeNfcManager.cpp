@@ -1081,9 +1081,9 @@ static jboolean nfcManager_clearRoutingEntry (JNIEnv*, jobject, jint type)
 **
 *******************************************************************************/
 
-static void nfcManager_setEmptyAidRoute (JNIEnv*, jobject)
+static void nfcManager_setEmptyAidRoute (JNIEnv*, jobject, jint route)
 {
-    RoutingManager::getInstance().setEmptyAidEntry();
+    RoutingManager::getInstance().setEmptyAidEntry(route);
     return;
 }
 #endif
@@ -2603,7 +2603,7 @@ static JNINativeMethod gMethods[] = {
 
     {"commitRouting", "()Z", (void*)nfcManager_commitRouting},
 
-    {"setEmptyAidRoute", "()V", (void*)nfcManager_setEmptyAidRoute},
+    {"setEmptyAidRoute", "(I)V", (void*)nfcManager_setEmptyAidRoute},
 
     {"doRegisterT3tIdentifier", "([B)I",
      (void*)nfcManager_doRegisterT3tIdentifier},

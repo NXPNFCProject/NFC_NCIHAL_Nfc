@@ -2736,6 +2736,26 @@ public class NfcService implements DeviceHostListener {
         sendMessage(MSG_MOCK_NDEF, msg);
     }
 
+    public void notifyRoutingTableFull()
+    {
+        if(!mNxpNfcController.isGsmaCommitOffhostService()) {
+            ComponentName prevPaymentComponent = mAidCache.getPreviousPreferredPaymentService();
+
+            mNxpPrefsEditor = mNxpPrefs.edit();
+            mNxpPrefsEditor.putInt("PREF_SET_AID_ROUTING_TABLE_FULL",0x01);
+            mNxpPrefsEditor.commit();
+            //broadcast Aid Routing Table Full intent to the user
+            Intent aidTableFull = new Intent();
+            aidTableFull.putExtra(NfcConstants.EXTRA_GSMA_PREV_PAYMENT_COMPONENT,prevPaymentComponent);
+            aidTableFull.setAction(NfcConstants.ACTION_ROUTING_TABLE_FULL);
+            if (DBG) {
+                Log.d(TAG, "notify aid routing table full to the user");
+            }
+            mContext.sendBroadcastAsUser(aidTableFull, UserHandle.CURRENT);
+            mAidCache.setPreviousPreferredPaymentService(null);
+        }
+    }
+
     public void routeAids(String aid, int route, int aidInfo, int power) {
         Message msg = mHandler.obtainMessage();
         msg.what = MSG_ROUTE_AID;
@@ -2746,6 +2766,28 @@ public class NfcService implements DeviceHostListener {
         aidbundle.putInt("power",power);
         msg.setData(aidbundle);
         mHandler.sendMessage(msg);
+    }
+
+    public int getAidRoutingTableSize ()
+    {
+        //return 18;
+        return mDeviceHost.getAidTableSize();
+    }
+
+    /**
+     * set default  Aid route entry in case application does not configure this route entry
+     */
+    public void setDefaultAidRouteLoc( int routeLoc)
+    {
+        mNxpPrefsEditor = mNxpPrefs.edit();
+        Log.d(TAG, "writing to preferences setDefaultAidRouteLoc  :" + routeLoc);
+
+        int defaultAidRoute = ((mDeviceHost.getDefaultAidPowerState() & 0x3F) | (routeLoc << ROUTE_LOC_MASK));
+
+        mNxpPrefsEditor.putInt("PREF_SET_DEFAULT_ROUTE_ID", defaultAidRoute);
+        mNxpPrefsEditor.commit();
+        int defaultRoute=mNxpPrefs.getInt("PREF_SET_DEFAULT_ROUTE_ID",0xFF);
+        Log.d(TAG, "reading preferences from user  :" + defaultRoute);
     }
 
     public void unrouteAids(String aid) {
@@ -2816,7 +2858,15 @@ public class NfcService implements DeviceHostListener {
         Log.d(TAG, "Init wired Se");
         mHandler.sendEmptyMessage(MSG_INIT_WIREDSE);
     }
-
+    /**
+     * get default Aid route entry in case application does not configure this route entry
+     */
+    public int GetDefaultRouteLoc()
+    {
+        int defaultRouteLoc = mNxpPrefs.getInt("PREF_SET_DEFAULT_ROUTE_ID", GetDefaultRouteEntry()) >> ROUTE_LOC_MASK;
+        Log.d(TAG, "GetDefaultRouteLoc  :" + defaultRouteLoc);
+        return defaultRouteLoc ;
+    }
     /**
      * get default MifareDesfireRoute route entry in case application does not configure this route entry
      */
@@ -3035,7 +3085,8 @@ public class NfcService implements DeviceHostListener {
                     boolean commit = false;
                     Log.d(TAG, "commitRouting >>>");
                     synchronized (NfcService.this) {
-                        mDeviceHost.setEmptyAidRoute();
+                        int defaultRoute=mNxpPrefs.getInt("PREF_SET_DEFAULT_ROUTE_ID", GetDefaultRouteEntry());
+                        mDeviceHost.setEmptyAidRoute(defaultRoute >> ROUTE_LOC_MASK);
                         if (mCurrentDiscoveryParameters.shouldEnableDiscovery()) {
                             commit = true;
                         } else {

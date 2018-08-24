@@ -502,10 +502,6 @@ bool RoutingManager::commitRouting() {
   tNFA_STATUS nfaStat = 0;
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s", fn);
   {
-#if(NXP_EXTNS == TRUE)
-    if(NFA_GetNCIVersion() == NCI_VERSION_2_0)
-      setEmptyAidEntry();
-#endif
     SyncEventGuard guard(mEeUpdateEvent);
     nfaStat = NFA_EeUpdateNow();
     if (nfaStat == NFA_STATUS_OK) {
@@ -1641,7 +1637,7 @@ bool RoutingManager::clearRoutingEntry(int type)
  *  Length = 2 [0x02]
  *  Value  = [Route_loc, Power_state]
  * */
-void RoutingManager::setEmptyAidEntry() {
+void RoutingManager::setEmptyAidEntry(int route) {
 
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter",__func__);
     uint16_t routeLoc = NFA_HANDLE_INVALID;
@@ -1653,7 +1649,7 @@ void RoutingManager::setEmptyAidEntry() {
     static const char fn []   = "RoutingManager::checkProtoSeID";
 
     tNFA_HANDLE ee_handleList[nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED];
-
+    mDefaultIso7816SeID = route;
     if (mDefaultIso7816SeID  == NFA_HANDLE_INVALID)
     {
         LOG(ERROR) << StringPrintf("%s: Invalid routeLoc. Return.", __func__);

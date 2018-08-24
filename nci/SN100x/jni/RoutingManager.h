@@ -132,7 +132,7 @@ class RoutingManager {
     bool setRoutingEntry(int type, int value, int route, int power);
     bool clearRoutingEntry(int type);
     bool clearAidTable ();
-    void setEmptyAidEntry(void);
+    void setEmptyAidEntry(int route);
     void processTechEntriesForFwdfunctionality(void);
     void configureOffHostNfceeTechMask(void);
     void configureEeRegister(bool eeReg);

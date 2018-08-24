@@ -257,7 +257,7 @@ public interface DeviceHost {
 
     public boolean commitRouting();
 
-    public void setEmptyAidRoute();
+    public void setEmptyAidRoute(int defaultAidRoute);
 
     public void registerT3tIdentifier(byte[] t3tIdentifier);
 

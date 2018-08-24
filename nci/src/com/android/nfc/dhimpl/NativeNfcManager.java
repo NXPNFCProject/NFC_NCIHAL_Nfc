@@ -212,7 +212,7 @@ public class NativeNfcManager implements DeviceHost {
     public native void doChangeDiscoveryTech(int pollTech, int listenTech);
 
     @Override
-    public native void setEmptyAidRoute();
+    public native void setEmptyAidRoute(int deafultAidroute);
 
     @Override
     public native boolean unrouteApduPattern(byte[] apduData);
