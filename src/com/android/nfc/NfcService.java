@@ -2807,8 +2807,10 @@ public class NfcService implements DeviceHostListener {
    }
 
     public void unrouteApduPattern(String apdu) {
-        //sendMessage(MSG_UNROUTE_APDU, apdu);
-        mDeviceHost.unrouteApduPattern(hexStringToBytes(apdu));
+        Message msg = mHandler.obtainMessage();
+        msg.what = MSG_UNROUTE_APDU;
+        msg.obj = apdu;
+        mHandler.sendMessage(msg);
     }
 
     public int getNciVersion() {
