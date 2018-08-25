@@ -1813,6 +1813,15 @@ static jint nfcManager_doGetLastError(JNIEnv*, jobject) {
 static jboolean nfcManager_doDeinitialize(JNIEnv*, jobject) {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
 
+#if (NXP_EXTNS == TRUE)
+  SecureElement &se = SecureElement::getInstance();
+  if(se.mIsWiredModeOpen) {
+     const int32_t recvBufferMaxSize = 1024;
+     uint8_t recvBuffer [recvBufferMaxSize];
+     int32_t recvBufferActualSize = 0;
+     se.apduGateReset(se.mActiveEeHandle, recvBuffer, &recvBufferActualSize);
+  }
+#endif
   sIsDisabling = true;
 
   pn544InteropAbortNow();
