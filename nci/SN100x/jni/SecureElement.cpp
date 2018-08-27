@@ -119,6 +119,10 @@ bool SecureElement::initialize(nfc_jni_native_data* native) {
         SmbTransceiveTimeOutVal = WIRED_MODE_TRANSCEIVE_TIMEOUT;
     }
     LOG(INFO) << StringPrintf("%s: SMB transceive timeout %d", fn, SmbTransceiveTimeOutVal);
+    if(SmbTransceiveTimeOutVal < WIRED_MODE_TRANSCEIVE_TIMEOUT)
+    {
+        SmbTransceiveTimeOutVal = WIRED_MODE_TRANSCEIVE_TIMEOUT;
+    }
     initializeEeHandle();
 
     // Get Fresh EE info.
