@@ -167,7 +167,7 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
         mDefaultEe = num;
     else
         mDefaultEe = 0x02;
-    mUiccListnTechMask = NfcConfig::getUnsigned("NAME_UICC_LISTEN_TECH_MASK", 0x07);
+    mUiccListnTechMask = NfcConfig::getUnsigned(NAME_UICC_LISTEN_TECH_MASK, 0x07);
     if (GetNxpNumValue (NAME_DEFAULT_AID_ROUTE, (void*)&num, sizeof(num)))
         mDefaultIso7816SeID = num;
     else
@@ -242,7 +242,11 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
   }
 
   // Tell the host-routing to only listen on Nfc-A
+#if (NXP_EXTNS == TRUE)
+  nfaStat = NFA_CeSetIsoDepListenTech(NFA_TECHNOLOGY_MASK_A & mHostListnTechMask);
+#else
   nfaStat = NFA_CeSetIsoDepListenTech(NFA_TECHNOLOGY_MASK_A);
+#endif
   if (nfaStat != NFA_STATUS_OK)
     LOG(ERROR) << StringPrintf("Failed to configure CE IsoDep technologies");
 
@@ -1467,7 +1471,7 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
         }
     }
 
-    uiccListenTech = NfcConfig::getUnsigned("NAME_UICC_LISTEN_TECH_MASK", 0x07);
+    uiccListenTech = NfcConfig::getUnsigned(NAME_UICC_LISTEN_TECH_MASK, 0x07);
     if((ActDevHandle != NFA_HANDLE_INVALID)  &&  (0 != uiccListenTech))
     {
          {

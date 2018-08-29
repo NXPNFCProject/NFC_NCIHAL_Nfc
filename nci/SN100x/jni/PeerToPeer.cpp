@@ -1098,8 +1098,13 @@ void PeerToPeer::resetP2pListenMask() {
   mP2pListenTechMask = NFA_TECHNOLOGY_MASK_A | NFA_TECHNOLOGY_MASK_F |
                        NFA_TECHNOLOGY_MASK_A_ACTIVE |
                        NFA_TECHNOLOGY_MASK_F_ACTIVE;
+#if (NXP_EXTNS == TRUE)
+  if (NfcConfig::hasKey(NAME_P2P_LISTEN_TECH_MASK))
+    mP2pListenTechMask = NfcConfig::getUnsigned(NAME_P2P_LISTEN_TECH_MASK);
+#else
   if (NfcConfig::hasKey("P2P_LISTEN_TECH_MASK"))
     mP2pListenTechMask = NfcConfig::getUnsigned("P2P_LISTEN_TECH_MASK");
+#endif
 }
 
 /*******************************************************************************
