@@ -292,12 +292,14 @@ public class AidRoutingManager {
                                 /*
                                 NfcService.getInstance().routeAids(aid.substring(0,
                                                 aid.length() - 1), route, infoForAid.get(aid),powerForAid.get(aid)); */
-                                routeCache.put(aid, aidMap.get(aid));
+                                routeCache.put(aid.substring(0,
+                                                aid.length() - 1), aidMap.get(aid));
                             } else if (mAidMatchingSupport == AID_MATCHING_EXACT_OR_PREFIX ||
                               mAidMatchingSupport == AID_MATCHING_EXACT_OR_SUBSET_OR_PREFIX) {
                                 if (DBG) Log.d(TAG, "Routing prefix AID " + aid + " to route "
                                         + Integer.toString(route));
-                                 routeCache.put(aid, aidMap.get(aid));
+                                 routeCache.put(aid.substring(0,
+                                                aid.length() - 1), aidMap.get(aid));
                                 /*
                                 NfcService.getInstance().routeAids(aid.substring(0,aid.length() - 1),
                                         route, infoForAid.get(aid),powerForAid.get(aid));
@@ -314,7 +316,8 @@ public class AidRoutingManager {
                             } else if (mAidMatchingSupport == AID_MATCHING_EXACT_OR_SUBSET_OR_PREFIX) {
                                 if (DBG) Log.d(TAG, "Routing subset AID " + aid + " to route "
                                         + Integer.toString(route));
-                                  routeCache.put(aid, aidMap.get(aid));
+                                  routeCache.put(aid.substring(0,
+                                                aid.length() - 1), aidMap.get(aid));
                                   /*
                                   NfcService.getInstance().routeAids(aid.substring(0,aid.length() - 1),
                                           route, infoForAid.get(aid),powerForAid.get(aid));
