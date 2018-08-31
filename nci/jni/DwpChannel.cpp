@@ -21,7 +21,7 @@
 #include "SecureElement.h"
 #include "config.h"
 #include "phNxpConfig.h"
-
+#include "nfc_config.h"
 using android::base::StringPrintf;
 static const int EE_ERROR_OPEN_FAIL = -1;
 
@@ -357,8 +357,8 @@ void doeSE_JcopDownLoadReset(void) {
   rm.mResetHandlerMutex.lock();
   if (nfcFL.eseFL._ESE_RESET_METHOD && nfcFL.eseFL._ESE_POWER_MODE) {
     unsigned long int num = 0;
-    if (GetNxpNumValue(NAME_NXP_ESE_POWER_DH_CONTROL, (void*)&num,
-                       sizeof(num)) == true) {
+    if (NfcConfig::hasKey(NAME_NXP_ESE_POWER_DH_CONTROL)) {
+      num = NfcConfig::getUnsigned(NAME_NXP_ESE_POWER_DH_CONTROL);
       if (num == 1) {
         if (NFA_GetNCIVersion() == NCI_VERSION_2_0) {
           se.setNfccPwrConfig(se.NFCC_DECIDES);

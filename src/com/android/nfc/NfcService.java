@@ -188,13 +188,10 @@ public class NfcService implements DeviceHostListener {
     private static final String PREF_MIFARE_DESFIRE_PROTO_ROUTE_ID = "mifare_desfire_proto_route";
     private static final String PREF_SET_DEFAULT_ROUTE_ID ="set_default_route";
     private static final String PREF_MIFARE_CLT_ROUTE_ID= "mifare_clt_route";
-    private static final String LS_BACKUP_PATH = "/data/vendor/nfc/ls_backup.txt";
-    private static final String LS_UPDATE_BACKUP_PATH = "/data/vendor/nfc/loaderservice_updater.txt";
-    private static final String LS_UPDATE_BACKUP_OUT_PATH = "/data/vendor/nfc/loaderservice_updater_out.txt";
 
-    private static final String[] path = {"/data/vendor/nfc/JcopOs_Update1.apdu",
-                                          "/data/vendor/nfc/JcopOs_Update2.apdu",
-                                          "/data/vendor/nfc/JcopOs_Update3.apdu"};
+    private static final String[] path = {"/data/nfc/JcopOs_Update1.apdu",
+                                          "/data/nfc/JcopOs_Update2.apdu",
+                                          "/data/nfc/JcopOs_Update3.apdu"};
 
     private static final String[] PREF_JCOP_MODTIME = {"jcop file1 modtime",
                                                        "jcop file2 modtime",

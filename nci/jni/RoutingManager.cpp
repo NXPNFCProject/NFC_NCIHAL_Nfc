@@ -50,6 +50,7 @@
 #include "nfa_api.h"
 #include "nfc_api.h"
 #include "phNxpConfig.h"
+#include "nfc_config.h"
 
 using android::base::StringPrintf;
 
@@ -251,23 +252,26 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
       mDefaultTechFSeID = getUiccRoute(sCurrentSelectedUICCSlot);
     }
 
-    if (GetNxpNumValue(NAME_DEFAULT_FELICA_CLT_PWR_STATE, (void*)&num,
-                       sizeof(num)))
+    if (NfcConfig::hasKey(NAME_DEFAULT_FELICA_CLT_PWR_STATE)) {
+      num = NfcConfig::getUnsigned(NAME_DEFAULT_FELICA_CLT_PWR_STATE);
       mDefaultTechFPowerstate = num;
-    else
+    } else {
       mDefaultTechFPowerstate = 0x3F;
+    }
   } else {
     mDefaultTechFSeID = SecureElement::getInstance().EE_HANDLE_0xF4;
     mDefaultTechFPowerstate = 0x3F;
   }
-  if (GetNxpNumValue(NAME_NXP_HCEF_CMD_RSP_TIMEOUT_VALUE, (void*)&num,
-                     sizeof(num))) {
+
+  if (NfcConfig::hasKey(NAME_NXP_HCEF_CMD_RSP_TIMEOUT_VALUE)) {
+    num = NfcConfig::getUnsigned(NAME_NXP_HCEF_CMD_RSP_TIMEOUT_VALUE);
     if (num > 0) {
       mDefaultHCEFRspTimeout = num;
     }
   }
 #endif
-  if ((GetNxpNumValue(NAME_NXP_NFC_CHIP, &num, sizeof(num)))) {
+  if (NfcConfig::hasKey(NAME_NXP_NFC_CHIP)) {
+    num = NfcConfig::getUnsigned(NAME_NXP_NFC_CHIP);
     mChipId = num;
   }
 
@@ -929,9 +933,9 @@ void RoutingManager::checkProtoSeID(void) {
 
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", fn);
 
-  if (GetNxpNumValue(NAME_CHECK_DEFAULT_PROTO_SE_ID,
-                     &check_default_proto_se_id_req,
-                     sizeof(check_default_proto_se_id_req))) {
+  if (NfcConfig::hasKey(NAME_CHECK_DEFAULT_PROTO_SE_ID)) {
+    check_default_proto_se_id_req =
+        NfcConfig::getUnsigned(NAME_CHECK_DEFAULT_PROTO_SE_ID);
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: CHECK_DEFAULT_PROTO_SE_ID - 0x%2lX ", fn,
                         check_default_proto_se_id_req);
@@ -1027,7 +1031,7 @@ void RoutingManager::configureOffHostNfceeTechMask(void) {
       SyncEventGuard guard(SecureElement::getInstance().mUiccListenEvent);
       nfaStat = NFA_CeConfigureUiccListenTech(defaultHandle, 0x00);
       if (nfaStat == NFA_STATUS_OK) {
-        SecureElement::getInstance().mUiccListenEvent.wait();
+        SecureElement::getInstance().mUiccListenEvent.wait(50);
       } else
         LOG(ERROR) << StringPrintf("fail to start UICC listen");
     }
@@ -1036,7 +1040,7 @@ void RoutingManager::configureOffHostNfceeTechMask(void) {
       nfaStat = NFA_CeConfigureUiccListenTech(defaultHandle,
                                               (mUiccListnTechMask & 0x07));
       if (nfaStat == NFA_STATUS_OK) {
-        SecureElement::getInstance().mUiccListenEvent.wait();
+        SecureElement::getInstance().mUiccListenEvent.wait(50);
       } else
         LOG(ERROR) << StringPrintf("fail to start UICC listen");
     }

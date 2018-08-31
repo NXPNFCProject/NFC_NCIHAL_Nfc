@@ -279,9 +279,10 @@ bool SecureElement::initialize(nfc_jni_native_data* native) {
 #if (NXP_EXTNS == TRUE)
   if (nfcFL.nfcNxpEse) {
     if (nfcFL.eseFL._NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION) {
-      if (GetNxpNumValue(NAME_NXP_NFCC_PASSIVE_LISTEN_TIMEOUT,
-                         &mPassiveListenTimeout,
-                         sizeof(mPassiveListenTimeout)) == false) {
+      if (NfcConfig::hasKey(NAME_NXP_NFCC_PASSIVE_LISTEN_TIMEOUT)) {
+        mPassiveListenTimeout =
+            NfcConfig::getUnsigned(NAME_NXP_NFCC_PASSIVE_LISTEN_TIMEOUT);
+      } else {
         mPassiveListenTimeout = 2500;
         DLOG_IF(INFO, nfc_debug_enabled)
             << StringPrintf("%s: NFCC Passive Listen Disable timeout =%u", fn,
@@ -291,8 +292,10 @@ bool SecureElement::initialize(nfc_jni_native_data* native) {
           << StringPrintf("%s: NFCC Passive Listen Disable timeout =%u", fn,
                           mPassiveListenTimeout);
     }
-    if (GetNxpNumValue(NAME_NXP_NFCC_STANDBY_TIMEOUT, &nfccStandbytimeout,
-                       sizeof(nfccStandbytimeout)) == false) {
+    if (NfcConfig::hasKey(NAME_NXP_NFCC_STANDBY_TIMEOUT)) {
+      nfccStandbytimeout =
+          NfcConfig::getUnsigned(NAME_NXP_NFCC_STANDBY_TIMEOUT);
+    } else {
       nfccStandbytimeout = 20000;
     }
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
@@ -307,9 +310,10 @@ bool SecureElement::initialize(nfc_jni_native_data* native) {
         nfcFL.eseFL._ESE_DWP_SPI_SYNC_ENABLE) {
       spiDwpSyncState = STATE_IDLE;
     }
-    if (GetNxpNumValue(NAME_NXP_WM_MAX_WTX_COUNT, &mWmMaxWtxCount,
-                       sizeof(mWmMaxWtxCount)) == false ||
-        (mWmMaxWtxCount == 0))
+
+    if (NfcConfig::hasKey(NAME_NXP_WM_MAX_WTX_COUNT) && (mWmMaxWtxCount != 0)) {
+      mWmMaxWtxCount = NfcConfig::getUnsigned(NAME_NXP_WM_MAX_WTX_COUNT);
+    } else
       mWmMaxWtxCount = 9000;
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
         "%s: NFCC Wired Mode Max WTX Count =%hu", fn, mWmMaxWtxCount);
@@ -320,33 +324,35 @@ bool SecureElement::initialize(nfc_jni_native_data* native) {
     mlistenDisabled = false;
     mIsExclusiveWiredMode = false;
 
-    if (GetNxpNumValue(NAME_NXP_NFCC_RF_FIELD_EVENT_TIMEOUT,
-                       &mRfFieldEventTimeout,
-                       sizeof(mRfFieldEventTimeout)) == false) {
+    if (NfcConfig::hasKey(NAME_NXP_NFCC_RF_FIELD_EVENT_TIMEOUT)) {
+      mRfFieldEventTimeout =
+          NfcConfig::getUnsigned(NAME_NXP_NFCC_RF_FIELD_EVENT_TIMEOUT);
+    } else {
       mRfFieldEventTimeout = 2000;
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
           "%s: RF Field Off event timeout =%u", fn, mRfFieldEventTimeout);
     }
 
-    if (GetNxpNumValue(NAME_NXP_ALLOW_WIRED_IN_MIFARE_DESFIRE_CLT, &retValue,
-                       sizeof(retValue)) == false) {
-      mIsAllowWiredInDesfireMifareCE = false;
-    } else {
+    if (NfcConfig::hasKey(NAME_NXP_ALLOW_WIRED_IN_MIFARE_DESFIRE_CLT)) {
+      retValue =
+          NfcConfig::getUnsigned(NAME_NXP_ALLOW_WIRED_IN_MIFARE_DESFIRE_CLT);
       mIsAllowWiredInDesfireMifareCE = (retValue == 0x00) ? false : true;
+    } else {
+      mIsAllowWiredInDesfireMifareCE = false;
     }
 
     if (nfcFL.eseFL._WIRED_MODE_STANDBY) {
-      if (GetNxpNumValue(NAME_NXP_ESE_POWER_DH_CONTROL, (void*)&num,
-                         sizeof(num)) == false) {
-        mNfccPowerMode = 0;
-      } else {
+      if (NfcConfig::hasKey(NAME_NXP_ESE_POWER_DH_CONTROL)) {
+        num = NfcConfig::getUnsigned(NAME_NXP_ESE_POWER_DH_CONTROL);
         mNfccPowerMode = (uint8_t)num;
+      } else {
+        mNfccPowerMode = 0;
       }
     }
 
     retValue = 0;
-    if (GetNxpNumValue(NAME_NXP_DWP_INTF_RESET_ENABLE, &retValue,
-                       sizeof(retValue))) {
+    if (NfcConfig::hasKey(NAME_NXP_DWP_INTF_RESET_ENABLE)) {
+      retValue = NfcConfig::getUnsigned(NAME_NXP_DWP_INTF_RESET_ENABLE);
       mIsIntfRstEnabled = (retValue == 0x00) ? false : true;
     }
   }
@@ -4210,90 +4216,6 @@ void spi_prio_signal_handler(int signum, siginfo_t* info, void* unused) {
       gSPIEvtQueue.enqueue((uint8_t*)&usEvent, (uint16_t)SIGNAL_EVENT_SIZE);
       SyncEventGuard guard(sSPISignalHandlerEvent);
       sSPISignalHandlerEvent.notifyOne();
-    }
-  }
-}
-
-/*******************************************************************************
-**
-** Function:        setCPTimeout
-**
-** Description:     sets the CP timeout for SE -P61 if its present.
-**
-**
-** Returns:         void.
-**
-*******************************************************************************/
-void SecureElement::setCPTimeout() {
-  tNFA_HANDLE handle;
-  tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
-  uint8_t received_getatr[32];
-  uint8_t selectISD[] = {0x00, 0xa4, 0x04, 0x00, 0x08, 0xA0, 0x00,
-                         0x00, 0x01, 0x51, 0x00, 0x00, 0x00, 0x00};
-  uint8_t received_selectISD[64];
-  uint8_t setCPTimeoutcmdbuff[] = {0x80, 0xDC, 0x00, 0x00, 0x08, 0xEF, 0x06,
-                                   0xA0, 0x04, 0x84, 0x02, 0x00, 0x00};
-  uint8_t CPTimeoutvalue[2] = {0x00, 0x00};
-  uint8_t received_setCPTimeout[32];
-  int i;
-  bool found = false;
-  long retlen = 0;
-  int32_t timeout = 12000;
-  int32_t recvBufferActualSize = 0;
-  static const char fn[] = "SecureElement::setCPTimeout";
-  for (i = 0; i < mActualNumEe; i++) {
-    if (mEeInfo[i].ee_handle == EE_HANDLE_0xF3) {
-      nfaStat = NFA_STATUS_OK;
-      handle = mEeInfo[i].ee_handle & ~NFA_HANDLE_GROUP_EE;
-      DLOG_IF(INFO, nfc_debug_enabled)
-          << StringPrintf("%s: %u = 0x%X", fn, i, mEeInfo[i].ee_handle);
-      break;
-    }
-  }
-  if (nfaStat == NFA_STATUS_OK) {
-    if (GetNxpByteArrayValue(NAME_NXP_CP_TIMEOUT, (char*)CPTimeoutvalue,
-                             sizeof(CPTimeoutvalue), &retlen)) {
-      DLOG_IF(INFO, nfc_debug_enabled)
-          << StringPrintf("%s: READ NAME_CP_TIMEOUT Value", __func__);
-      memcpy((setCPTimeoutcmdbuff + (sizeof(setCPTimeoutcmdbuff) - 2)),
-             CPTimeoutvalue, 2);
-      found = true;
-    } else {
-      DLOG_IF(INFO, nfc_debug_enabled)
-          << StringPrintf("%s:CP_TIMEOUT Value not found!!!", __func__);
-    }
-    if (found) {
-      bool stat = false;
-      stat = SecEle_Modeset(0x01);
-      if (stat == true) {
-        mActiveEeHandle = getDefaultEeHandle();
-        if (mActiveEeHandle == EE_HANDLE_0xF3 &&
-            (getApduGateInfo() != NO_APDU_GATE)) {
-          stat = connectEE();
-          if (stat == true) {
-            stat = getAtr(ESE_ID, received_getatr, &recvBufferActualSize);
-            if (stat == true) {
-              /*select card manager*/
-              stat = transceive(selectISD, (int32_t)sizeof(selectISD),
-                                received_selectISD,
-                                (int)sizeof(received_selectISD),
-                                recvBufferActualSize, timeout);
-              if (stat == true) {
-                /*set timeout value in CP registry*/
-                transceive(
-                    setCPTimeoutcmdbuff, (int32_t)sizeof(setCPTimeoutcmdbuff),
-                    received_setCPTimeout, (int)sizeof(received_setCPTimeout),
-                    recvBufferActualSize, timeout);
-              }
-            }
-            NfccStandByOperation(STANDBY_MODE_ON);
-            disconnectEE(ESE_ID);
-          }
-        }
-      }
-      sendEvent(SecureElement::EVT_END_OF_APDU_TRANSFER);
-      NfccStandByOperation(STANDBY_TIMER_STOP);
-      disconnectEE(ESE_ID);
     }
   }
 }

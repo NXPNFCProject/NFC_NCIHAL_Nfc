@@ -697,7 +697,6 @@ class SecureElement {
 #if (NXP_EXTNS == TRUE)
 
   bool meSESessionIdOk;
-  void setCPTimeout();
   SyncEvent mRfFieldOffEvent;
   void NfccStandByOperation(nfcc_standby_operation_t value);
   NFCSTATUS eSE_Chip_Reset(void);

@@ -850,7 +850,7 @@ tNFA_STATUS SetHfoConfigValue(void) {
   if (NFA_STATUS_OK == status) {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: HFO Settinng Success", __func__);
-    // TBD write value in temp file in /data/vendor/nfc
+    // TBD write value in temp file in /data/nfc
     // At next boot hal will read this file and re-apply the
     // Default Clock setting
   }

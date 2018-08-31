@@ -373,8 +373,6 @@ public interface DeviceHost {
 
     int setTransitConfig(String configs);
 
-    byte[] getFwFileName();
-
     int getNfcInitTimeout();
 
     int JCOSDownload();

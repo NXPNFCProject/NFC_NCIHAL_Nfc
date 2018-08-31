@@ -41,6 +41,7 @@
 #include "RoutingManager.h"
 #include "SecureElement.h"
 #include "phNxpConfig.h"
+#include "nfc_config.h"
 
 using android::base::StringPrintf;
 
@@ -587,7 +588,8 @@ static jboolean nativeNfcSecureElement_doeSEChipResetSecureElement(JNIEnv*,
 #if (NXP_EXTNS == TRUE)
   SecureElement& se = SecureElement::getInstance();
   if (nfcFL.nfcNxpEse) {
-    if (GetNxpNumValue("NXP_ESE_POWER_DH_CONTROL", &num, sizeof(num))) {
+    if (NfcConfig::hasKey("NXP_ESE_POWER_DH_CONTROL")) {
+      num = NfcConfig::getUnsigned("NXP_ESE_POWER_DH_CONTROL");
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("Power schemes enabled in config file is %ld", num);
     }

@@ -104,12 +104,13 @@ bool sHCEEnabled = true;
 /* Delay to wait for SE intialization */
 #define SE_INIT_DELAY 50 * 1000
 #define NFCEE_DISC_TIMEOUT_SEC 2
-#define JCOP_INFO_PATH "/data/vendor/nfc/jcop_info.txt"
+#define JCOP_INFO_PATH "/data/nfc/jcop_info.txt"
 #define OSU_NOT_STARTED 00
 #define OSU_COMPLETE 03
 #define NFC_PIPE_STATUS_OFFSET 4
 #define MAX_JCOP_TIMEOUT_VALUE 60000 /*Maximum Jcop OSU timeout value*/
 #define MAX_WAIT_TIME_FOR_RETRY 8    /*Maximum wait for retry in usec*/
+#define ESE_PWR_MGMT_PROP "ro.config.low_ram"
 #define IS_ESE_RF_CE_PARAM_FETCHED()             \
   (pEvtData->get_config.param_tlvs[1] == 0xA0 && \
    pEvtData->get_config.param_tlvs[2] == 0xF0)
@@ -362,7 +363,6 @@ static tNFA_STATUS startPolling_rfDiscoveryDisabled(
     tNFA_TECHNOLOGY_MASK tech_mask);
 
 static int nfcManager_getChipVer(JNIEnv* e, jobject o);
-static jbyteArray nfcManager_getFwFileName(JNIEnv* e, jobject o);
 static std::string ConvertJavaStrToStdString(JNIEnv* env, jstring s);
 static int nfcManager_getNfcInitTimeout(JNIEnv* e, jobject o);
 static int nfcManager_doJcosDownload(JNIEnv* e, jobject o);
@@ -2343,26 +2343,20 @@ static void nfaConnectionCallback(uint8_t connEvent,
     tNFA_PMID ven_config_addr[] = {0xA0, 0x07};
     tNFA_PMID pollProfileAddr[] = {0xA0, 0x44};
     uint8_t pollProfileVal[] = {NFC_FORUM_POLL};
-    char lowRamSysProp[50] = {'\0'};
     bool isSuccess = false;
     sNfcee_disc_state = UICC_SESSION_NOT_INTIALIZED;
     IsEseCeDisabled = false;
     /* NFC initialization in progress */
     if (NFC_OFF == sNfcState) sNfcState = NFC_INITIALIZING_IN_PROGRESS;
 
-    if (!GetNxpStrValue(NAME_NXP_ESE_PWR_MGMT_PROP, (char*)lowRamSysProp,
-                        sizeof(lowRamSysProp))) {
-      sIsLowRamDevice = false;
-    } else {
-      char propBuf[PROPERTY_VALUE_MAX] = {'\0'};
-      int len = property_get(lowRamSysProp, propBuf, "");
-      if (len != 0) {
-        sIsLowRamDevice = (propBuf[0] != '\0')
-                              ? ((strcmp(propBuf, "true") == 0) ? true : false)
-                              : true;
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-            "isLowRamDevice %s", sIsLowRamDevice ? "true" : "false");
-      }
+    char propBuf[PROPERTY_VALUE_MAX] = {'\0'};
+    int len = property_get(ESE_PWR_MGMT_PROP, propBuf, "");
+    if (len != 0) {
+      sIsLowRamDevice = (propBuf[0] != '\0')
+                            ? ((strcmp(propBuf, "true") == 0) ? true : false)
+                            : true;
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+          "isLowRamDevice %s", sIsLowRamDevice ? "true" : "false");
     }
     NFA_SetLowRamDevice(sIsLowRamDevice);
 #endif
@@ -2428,9 +2422,10 @@ static void nfaConnectionCallback(uint8_t connEvent,
           PeerToPeer::getInstance().handleNfcOnOff(true);
           HciEventManager::getInstance().initialize(getNative(e, o));
 #if (NXP_EXTNS == TRUE)
-          if (GetNxpNumValue(NAME_NXP_DEFAULT_NFCEE_DISC_TIMEOUT,
-                             (void*)&gdisc_timeout,
-                             sizeof(gdisc_timeout)) == false) {
+          if (NfcConfig::hasKey(NAME_NXP_DEFAULT_NFCEE_DISC_TIMEOUT)) {
+            gdisc_timeout =
+                NfcConfig::getUnsigned(NAME_NXP_DEFAULT_NFCEE_DISC_TIMEOUT);
+          } else {
             DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
                 "NAME_NXP_DEFAULT_NFCEE_DISC_TIMEOUT not found");
             gdisc_timeout =
@@ -2462,9 +2457,11 @@ static void nfaConnectionCallback(uint8_t connEvent,
           (void)transactionController::controller();
           if (nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH) {
             checkforESERemoval();
-            GetNxpNumValue(NAME_NXP_DUAL_UICC_ENABLE,
-                           (void*)&dualUiccInfo.dualUiccEnable,
-                           sizeof(dualUiccInfo.dualUiccEnable));
+
+            if (NfcConfig::hasKey(NAME_NXP_DUAL_UICC_ENABLE)) {
+              dualUiccInfo.dualUiccEnable =
+                  NfcConfig::getUnsigned(NAME_NXP_DUAL_UICC_ENABLE);
+            }
             if (dualUiccInfo.dualUiccEnable == 0x01) {
               checkforNfceeConfig(UICC1 | UICC2 | ESE);
               dualUiccInfo.uiccActivStat = 0x00;
@@ -2508,16 +2505,6 @@ static void nfaConnectionCallback(uint8_t connEvent,
           }
           sNfcee_disc_state = UICC_SESSION_INTIALIZATION_DONE;
 #endif
-          if (nfcFL.eseFL._GP_CONTINOUS_PROCESSING) {
-            if (isNxpConfigModified()) {
-              DLOG_IF(INFO, nfc_debug_enabled)
-                  << StringPrintf("Set JCOP CP Timeout");
-              SecureElement::getInstance().setCPTimeout();
-            } else {
-              DLOG_IF(INFO, nfc_debug_enabled)
-                  << StringPrintf("No Need to set JCOP CP Timeout");
-            }
-          }
 /////////////////////////////////////////////////////////////////////////////////
 // Add extra configuration here (work-arounds, etc.)
 #if (NXP_EXTNS == TRUE)
@@ -2607,10 +2594,12 @@ static void nfaConnectionCallback(uint8_t connEvent,
             }
           }
           unsigned long num = 0;
-          if (GetNxpNumValue(NAME_NXP_CE_ROUTE_STRICT_DISABLE, (void*)&num,
-                             sizeof(num)) == false) {
-            num = 0x01;  // default value
+          if (NfcConfig::hasKey(NAME_NXP_CE_ROUTE_STRICT_DISABLE)) {
+            num = NfcConfig::getUnsigned(NAME_NXP_CE_ROUTE_STRICT_DISABLE);
+          } else {
+            num = 0x01;
           }
+
           // TODO: Check this in L_OSP_EXT[PN547C2]
           //                NFA_SetCEStrictDisable(num);
           RoutingManager::getInstance().setCeRouteStrictDisable(num);
@@ -2642,11 +2631,6 @@ static void nfaConnectionCallback(uint8_t connEvent,
     if (sIsNfaEnabled)
       PowerSwitch::getInstance().setLevel(PowerSwitch::LOW_POWER);
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
-#if (NXP_EXTNS == TRUE)
-    if (isNxpConfigModified() || isNxpRFConfigModified()) {
-      updateNxpConfigTimestamp();
-    }
-#endif
     return sIsNfaEnabled ? JNI_TRUE : JNI_FALSE;
   }
 
@@ -3576,12 +3560,14 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
       if (e != NULL) {
         unsigned long maxTimeout = 0;
         unsigned long elapsedTimeout = 0;
-        if (!GetNxpNumValue(NAME_OS_DOWNLOAD_TIMEOUT_VALUE, &maxTimeout,
-                            sizeof(maxTimeout))) {
+        if (NfcConfig::hasKey(NAME_OS_DOWNLOAD_TIMEOUT_VALUE)) {
+          maxTimeout = NfcConfig::getUnsigned(NAME_OS_DOWNLOAD_TIMEOUT_VALUE);
+        } else {
           maxTimeout = MAX_JCOP_TIMEOUT_VALUE;
           LOG(ERROR) << StringPrintf("%s: Failed to get timeout value = %ld",
                                      __func__, maxTimeout);
         }
+
         while (SecureElement::getInstance().mDownloadMode == JCOP_DOWNLOAD) {
           DLOG_IF(INFO, nfc_debug_enabled)
               << StringPrintf("%s: timeout waiting for Os Dowload", __func__);
@@ -3928,8 +3914,10 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
   static jint nfcManager_GetDefaultSE(JNIEnv * e, jobject o) {
     (void)e;
     (void)o;
-    unsigned long num;
-    GetNxpNumValue(NAME_NXP_DEFAULT_SE, (void*)&num, sizeof(num));
+    unsigned long num = 0;
+    if (NfcConfig::hasKey(NAME_NXP_DEFAULT_SE)) {
+      num = NfcConfig::getUnsigned(NAME_NXP_DEFAULT_SE);
+    }
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%lu: nfcManager_GetDefaultSE", num);
     return num;
@@ -4154,7 +4142,9 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
   static jint nfcManager_getDefaultAidRoute(JNIEnv * e, jobject o) {
     unsigned long num = 0;
 #if (NXP_EXTNS == TRUE)
-    GetNxpNumValue(NAME_DEFAULT_AID_ROUTE, &num, sizeof(num));
+    if (NfcConfig::hasKey(NAME_DEFAULT_AID_ROUTE)) {
+      num = NfcConfig::getUnsigned(NAME_DEFAULT_AID_ROUTE);
+    }
 #endif
     return num;
   }
@@ -4214,7 +4204,9 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
   *******************************************************************************/
   static jint nfcManager_getDefaultAidPowerState(JNIEnv * e, jobject o) {
     unsigned long num = 0;
-    GetNxpNumValue(NAME_DEFAULT_AID_PWR_STATE, &num, sizeof(num));
+    if (NfcConfig::hasKey(NAME_DEFAULT_AID_PWR_STATE)) {
+      num = NfcConfig::getUnsigned(NAME_DEFAULT_AID_PWR_STATE);
+    }
     return num;
   }
 
@@ -4231,7 +4223,9 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
   *******************************************************************************/
   static jint nfcManager_getDefaultDesfirePowerState(JNIEnv * e, jobject o) {
     unsigned long num = 0;
-    GetNxpNumValue(NAME_DEFAULT_ROUTE_PWR_STATE, &num, sizeof(num));
+    if (NfcConfig::hasKey(NAME_DEFAULT_ROUTE_PWR_STATE)) {
+      num = NfcConfig::getUnsigned(NAME_DEFAULT_ROUTE_PWR_STATE);
+    }
     return num;
   }
   /*******************************************************************************
@@ -4247,7 +4241,9 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
   *******************************************************************************/
   static jint nfcManager_getDefaultMifareCLTPowerState(JNIEnv * e, jobject o) {
     unsigned long num = 0;
-    GetNxpNumValue(NAME_DEFAULT_OFFHOST_PWR_STATE, &num, sizeof(num));
+    if (NfcConfig::hasKey(NAME_DEFAULT_OFFHOST_PWR_STATE)) {
+      num = NfcConfig::getUnsigned(NAME_DEFAULT_OFFHOST_PWR_STATE);
+    }
     return num;
   }
   /*******************************************************************************
@@ -4356,7 +4352,8 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
     unsigned int num = 0;
     bool mStat = false;
 
-    if (GetNxpNumValue("VZW_FEATURE_ENABLE", &num, sizeof(num))) {
+    if (NfcConfig::hasKey("VZW_FEATURE_ENABLE")) {
+      mStat = NfcConfig::getUnsigned("VZW_FEATURE_ENABLE");
       if (num == 0x01) {
         mStat = true;
       } else {
@@ -4456,8 +4453,8 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
   static jboolean nfcManager_doCheckJcopDlAtBoot(JNIEnv * e, jobject o) {
     unsigned int num = 0;
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s", __func__);
-    if (GetNxpNumValue(NAME_NXP_JCOPDL_AT_BOOT_ENABLE, (void*)&num,
-                       sizeof(num))) {
+    if (NfcConfig::hasKey(NAME_NXP_JCOPDL_AT_BOOT_ENABLE)) {
+      num = NfcConfig::getUnsigned(NAME_NXP_JCOPDL_AT_BOOT_ENABLE);
       if (num == 0x01) {
         return JNI_TRUE;
       } else {
@@ -4680,15 +4677,19 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
     gNfcInitTimeout = 0;
     gdisc_timeout = 0;
 
-    if (GetNxpNumValue(NAME_NXP_DEFAULT_NFCEE_DISC_TIMEOUT,
-                       (void*)&disc_timeout, sizeof(disc_timeout)) == false) {
+    if (NfcConfig::hasKey(NAME_NXP_DEFAULT_NFCEE_DISC_TIMEOUT)) {
+      disc_timeout =
+          NfcConfig::getUnsigned(NAME_NXP_DEFAULT_NFCEE_DISC_TIMEOUT);
+    } else {
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("NAME_NXP_DEFAULT_NFCEE_DISC_TIMEOUT not found");
       disc_timeout = 0;
     }
-    if (GetNxpNumValue(NAME_NXP_DEFAULT_NFCEE_TIMEOUT,
-                       (void*)&session_id_timeout,
-                       sizeof(session_id_timeout)) == false) {
+
+    if (NfcConfig::hasKey(NAME_NXP_DEFAULT_NFCEE_TIMEOUT)) {
+      session_id_timeout =
+          NfcConfig::getUnsigned(NAME_NXP_DEFAULT_NFCEE_TIMEOUT);
+    } else {
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("NAME_NXP_DEFAULT_NFCEE_TIMEOUT not found");
       session_id_timeout = 0;
@@ -5173,8 +5174,6 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
 
     {"getChipVer", "()I", (void*)nfcManager_getChipVer},
 
-    {"getFwFileName", "()[B", (void*)nfcManager_getFwFileName},
-
     {"JCOSDownload", "()I", (void*)nfcManager_doJcosDownload},
     {"doCommitRouting", "()V", (void*)nfcManager_doCommitRouting},
 #if (NXP_EXTNS == TRUE)
@@ -5512,7 +5511,9 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
     unsigned long num = 0;
 
-    GetNxpNumValue(NAME_NXP_NFC_CHIP, (void*)&num, sizeof(num));
+    if (NfcConfig::hasKey(NAME_NXP_NFC_CHIP)) {
+      num = NfcConfig::getUnsigned(NAME_NXP_NFC_CHIP);
+    }
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%ld: nfcManager_getChipVer", num);
     return num;
@@ -5573,39 +5574,6 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
     env->DeleteLocalRef(strJbytes);
     env->DeleteLocalRef(strClass);
     return ret;
-  }
-  /*******************************************************************************
-  **
-  ** Function:        nfcManager_getFwFileName
-  **
-  ** Description:     Read Fw file name from config file.
-  **                  e: JVM environment.
-  **                  o: Java object.
-  **
-  ** Returns:         jbyteArray: File name read from config file
-  **                  NULL in case file name not found
-  **
-  *******************************************************************************/
-  static jbyteArray nfcManager_getFwFileName(JNIEnv * e, jobject o) {
-    (void)o;
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
-    char fwFileName[256];
-    int fileLen = 0;
-    jbyteArray jbuff = NULL;
-
-    if (GetNxpStrValue(NAME_NXP_FW_NAME, (char*)fwFileName,
-                       sizeof(fwFileName)) == true) {
-      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-          "%s: FW_NAME read success = %s", __func__, fwFileName);
-      fileLen = strlen(fwFileName);
-      jbuff = e->NewByteArray(fileLen);
-      e->SetByteArrayRegion(jbuff, 0, fileLen, (jbyte*)fwFileName);
-    } else {
-      DLOG_IF(INFO, nfc_debug_enabled)
-          << StringPrintf("%s: FW_NAME not found", __func__);
-    }
-
-    return jbuff;
   }
 
   /*******************************************************************************
@@ -5886,11 +5854,6 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
                                           jint screen_state_mask) {
     tNFA_STATUS status = NFA_STATUS_OK;
     unsigned long auto_num = 0;
-    uint8_t standby_num = 0x00;
-    uint8_t* buffer = NULL;
-    long bufflen = 260;
-    long retlen = 0;
-    int isfound;
     uint8_t discovry_param =
         NCI_LISTEN_DH_NFCEE_ENABLE_MASK | NCI_POLLING_DH_ENABLE_MASK;
     uint8_t state = (screen_state_mask & NFA_SCREEN_STATE_MASK);
@@ -6020,8 +5983,9 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
               "%s: Failed to disable polling; error=0x%X", __func__, status);
       }
 
-      if (GetNxpNumValue(NAME_NXP_CORE_SCRN_OFF_AUTONOMOUS_ENABLE, &auto_num,
-                         sizeof(auto_num))) {
+      if (NfcConfig::hasKey(NAME_NXP_CORE_SCRN_OFF_AUTONOMOUS_ENABLE)) {
+        auto_num =
+            NfcConfig::getUnsigned(NAME_NXP_CORE_SCRN_OFF_AUTONOMOUS_ENABLE);
         DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
             "%s: enter; NAME_NXP_CORE_SCRN_OFF_AUTONOMOUS_ENABLE = %02lx",
             __func__, auto_num);
@@ -6059,22 +6023,11 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
           "%s: auto_num : %lu  sAutonomousSet : %d  sRfFieldOff : %d", __func__,
           auto_num, sAutonomousSet, sRfFieldOff);
       if ((auto_num == 0x01) && (sAutonomousSet != 1) &&
-          (sRfFieldOff == true) &&
-          (state == NFA_SCREEN_STATE_OFF_LOCKED ||
-           state == NFA_SCREEN_STATE_OFF_UNLOCKED)) {
-        buffer = (uint8_t*)malloc(bufflen * sizeof(uint8_t));
-        if (buffer == NULL) {
-          DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-              "%s: enter; NAME_NXP_CORE_STANDBY buffer is NULL", __func__);
-        } else {
-          isfound = GetNxpByteArrayValue(NAME_NXP_CORE_STANDBY, (char*)buffer,
-                                         bufflen, &retlen);
-          if (retlen > 0) {
-            standby_num = buffer[3];
-          }
-          status = SendAutonomousMode(state, standby_num);
-          sAutonomousSet = 1;
-        }
+          (sRfFieldOff == true) && (state == NFA_SCREEN_STATE_OFF_LOCKED ||
+                                    state == NFA_SCREEN_STATE_OFF_UNLOCKED)) {
+
+        status = SendAutonomousMode(state, 0x01);
+        sAutonomousSet = 1;
       } else {
         sAutonomousSet = 0;
         DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
@@ -6083,9 +6036,6 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
           // Start RF discovery if not
           startRfDiscovery(true);
         }
-      }
-      if (buffer) {
-        free(buffer);
       }
     }
 #if (NXP_EXTNS == TRUE)
@@ -6708,24 +6658,28 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
     unsigned long num = 0;
     switch (type) {
       case LDR_SRVCE:
-        if (GetNxpNumValue(NAME_NXP_P61_LS_DEFAULT_INTERFACE, (void*)&num,
-                           sizeof(num)) == false) {
+
+        if (NfcConfig::hasKey(NAME_NXP_P61_LS_DEFAULT_INTERFACE)) {
+          num = NfcConfig::getUnsigned(NAME_NXP_P61_LS_DEFAULT_INTERFACE);
+        } else {
           DLOG_IF(INFO, nfc_debug_enabled)
               << StringPrintf("NAME_NXP_P61_LS_DEFAULT_INTERFACE not found");
           num = 1;
         }
         break;
       case JCOP_SRVCE:
-        if (GetNxpNumValue(NAME_NXP_P61_JCOP_DEFAULT_INTERFACE, (void*)&num,
-                           sizeof(num)) == false) {
+        if (NfcConfig::hasKey(NAME_NXP_P61_JCOP_DEFAULT_INTERFACE)) {
+          num = NfcConfig::getUnsigned(NAME_NXP_P61_JCOP_DEFAULT_INTERFACE);
+        } else {
           DLOG_IF(INFO, nfc_debug_enabled)
               << StringPrintf("NAME_NXP_P61_JCOP_DEFAULT_INTERFACE not found");
           num = 1;
         }
         break;
       case LTSM_SRVCE:
-        if (GetNxpNumValue(NAME_NXP_P61_LTSM_DEFAULT_INTERFACE, (void*)&num,
-                           sizeof(num)) == false) {
+        if (NfcConfig::hasKey(NAME_NXP_P61_LTSM_DEFAULT_INTERFACE)) {
+          num = NfcConfig::getUnsigned(NAME_NXP_P61_LTSM_DEFAULT_INTERFACE);
+        } else {
           DLOG_IF(INFO, nfc_debug_enabled)
               << StringPrintf("NAME_NXP_P61_LTSM_DEFAULT_INTERFACE not found");
           num = 1;
@@ -6997,10 +6951,8 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
     bool configureuicc1 = false;
     bool configureuicc2 = false;
 
-    status = GetNxpNumValue(NAME_NXP_DEFAULT_NFCEE_TIMEOUT,
-                            (void*)&timeout_buff_val, sizeof(timeout_buff_val));
-
-    if (status == true) {
+    if (NfcConfig::hasKey(NAME_NXP_DEFAULT_NFCEE_TIMEOUT)) {
+      timeout_buff_val = NfcConfig::getUnsigned(NAME_NXP_DEFAULT_NFCEE_TIMEOUT);
       check_cnt = timeout_buff_val * RETRY_COUNT;
     } else {
       check_cnt = DEFAULT_COUNT * RETRY_COUNT;
@@ -7529,7 +7481,7 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
 
     memset(filename, 0, sizeof(filename));
     memset(filename2, 0, sizeof(filename2));
-    strcpy(filename2, "/data/vendor/nfc");
+    strcpy(filename2, "/data/nfc");
     strncat(filename2, "/nxpStorage.bin",
             sizeof(filename2) - strlen(filename2) - 1);
 
@@ -7617,7 +7569,7 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
 
     memset(filename, 0, sizeof(filename));
     memset(filename2, 0, sizeof(filename2));
-    strcpy(filename2, "/data/vendor/nfc");
+    strcpy(filename2, "/data/nfc");
     strncat(filename2, "/nxpStorage.bin",
             sizeof(filename2) - strlen(filename2) - 1);
     if (strlen(filename2) > 200) {
@@ -7894,8 +7846,8 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
 
     uint8_t retStat = UICC_NOT_CONFIGURED;
     if (nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH) {
-      if (GetNxpNumValue(NAME_NXP_DUAL_UICC_ENABLE, (void*)&uicc_active_state,
-                         sizeof(uicc_active_state))) {
+      if (NfcConfig::hasKey(NAME_NXP_DUAL_UICC_ENABLE)) {
+        uicc_active_state = NfcConfig::getUnsigned(NAME_NXP_DUAL_UICC_ENABLE);
         DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
             "NXP_DUAL_UICC_ENABLE  : 0x%02lx", uicc_active_state);
       } else {
@@ -8395,8 +8347,10 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
     }
     unsigned long enableAGCDebug = 0;
     int retvalue = 0xFF;
-    GetNxpNumValue(NAME_NXP_AGC_DEBUG_ENABLE, (void*)&enableAGCDebug,
-                   sizeof(enableAGCDebug));
+
+    if (NfcConfig::hasKey(NAME_NXP_AGC_DEBUG_ENABLE)) {
+      enableAGCDebug = NfcConfig::getUnsigned(NAME_NXP_AGC_DEBUG_ENABLE);
+    }
     menableAGC_debug_t.enableAGC = enableAGCDebug;
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s ,%lu:", __func__, enableAGCDebug);

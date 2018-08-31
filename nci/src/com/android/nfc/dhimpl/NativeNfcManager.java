@@ -61,7 +61,6 @@ import java.util.HashMap;
  */
 public class NativeNfcManager implements DeviceHost {
     private static final String TAG = "NativeNfcManager";
-    private static final String PREF_FIRMWARE_MODTIME = "firmware_modtime";
     private static final long FIRMWARE_MODTIME_DEFAULT = -1;
     static final String PREF = "NciDeviceHost";
 
@@ -117,66 +116,8 @@ public class NativeNfcManager implements DeviceHost {
 
     @Override
     public void checkFirmware() {
-        // Check that the NFC controller firmware is up to date.  This
-        // ensures that firmware updates are applied in a timely fashion,
-        // and makes it much less likely that the user will have to wait
-        // for a firmware download when they enable NFC in the settings
-        // app.  Firmware download can take some time, so this should be
-        // run in a separate thread.
-
-        // check the timestamp of the firmware file
-        File firmwareFile;
-        int nbRetry = 0;
-        try {
-        byte[] fwFileName;
-        String filePath="/system/vendor/firmware/";
-
-        //Read firmware file name from config file
-        fwFileName=getFwFileName();
-        if(fwFileName == null)
-        {
-            Log.d(TAG,"FileName not found");
-            int Ver = getChipVer();
-            if( Ver == PN547C2_ID || Ver == PN65T_ID )
-                filePath=filePath.concat("libpn547_fw.so");
-            else if( Ver == PN548C2_ID || Ver == PN66T_ID )
-                filePath=filePath.concat("libpn548c2_fw.so");
-            else if( Ver == PN551_ID || Ver == PN67T_ID )
-                filePath=filePath.concat("libpn551_fw.so");
-            else if( Ver == PN553_ID || Ver == PN80T_ID )
-                filePath=filePath.concat("libpn553_fw.so");
-            else
-                filePath=null;
-        }
-        else
-        {
-            Log.d(TAG,"Firmware fileName found");
-            String fileName = new String(fwFileName);
-            filePath=filePath.concat(fileName);
-        }
-        Log.d(TAG,"Firmware file path=" + filePath);
-        firmwareFile = new File(filePath);
-        } catch(NullPointerException npe) {
-            Log.e(TAG,"path to firmware file was null");
-            return;
-        }
-
-        long modtime = firmwareFile.lastModified();
-
-        SharedPreferences prefs = mContext.getSharedPreferences(PREF, Context.MODE_PRIVATE);
-        long prev_fw_modtime = prefs.getLong(PREF_FIRMWARE_MODTIME, FIRMWARE_MODTIME_DEFAULT);
-        Log.d(TAG,"prev modtime: " + prev_fw_modtime);
-        Log.d(TAG,"new modtime: " + modtime);
-        if (prev_fw_modtime == modtime) {
-            return;
-        }
-
-        // FW download.
-        Log.d(TAG,"Perform FW Download Procedure");
         if(doDownload()) {
             Log.d(TAG,"FW Download Success");
-            // Now that we've finished updating the firmware, save the new modtime.
-            prefs.edit().putLong(PREF_FIRMWARE_MODTIME, modtime).apply();
         }
     else {
             Log.d(TAG,"FW Download Failed");
@@ -396,8 +337,6 @@ public class NativeNfcManager implements DeviceHost {
     @Override
     public native int setTransitConfig(String configs);
 
-    @Override
-    public native byte[] getFwFileName();
 
     @Override
     public native int getNfcInitTimeout();

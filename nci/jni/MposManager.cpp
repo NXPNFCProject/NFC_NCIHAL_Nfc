@@ -100,8 +100,9 @@ bool MposManager::initialize(nfc_jni_native_data* native) {
   mNativeData = native;
   initializeReaderInfo();
   mDiscNtfTimeout = NfcConfig::getUnsigned(NAME_NFA_DM_DISC_NTF_TIMEOUT);
-  GetNxpNumValue(NAME_NXP_SWP_RD_TAG_OP_TIMEOUT, (void*)&mRdrTagOpTimeout,
-                 sizeof(mRdrTagOpTimeout));
+  if (NfcConfig::hasKey(NAME_NXP_SWP_RD_TAG_OP_TIMEOUT)) {
+    mRdrTagOpTimeout = NfcConfig::getUnsigned(NAME_NXP_SWP_RD_TAG_OP_TIMEOUT);
+  }
   return true;
 }
 
