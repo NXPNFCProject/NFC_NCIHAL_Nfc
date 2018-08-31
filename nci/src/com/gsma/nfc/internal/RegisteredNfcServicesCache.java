@@ -70,8 +70,8 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import com.android.nfc.cardemulation.RegisteredServicesCache;
 
-public class RegisteredNxpServicesCache {
-    static final String TAG = "RegisteredNxpServicesCache";
+public class RegisteredNfcServicesCache {
+    static final String TAG = "RegisteredNfcServicesCache";
     static final String XML_INDENT_OUTPUT_FEATURE = "http://xmlpull.org/v1/doc/features.html#indent-output";
     final Context mContext;
     final Object mLock = new Object();
@@ -82,12 +82,12 @@ public class RegisteredNxpServicesCache {
     AtomicFile mDynamicApduServiceFile = null;
     File dataDir = null;
 
-    public RegisteredNxpServicesCache(Context context) {
+    public RegisteredNfcServicesCache(Context context) {
         mContext = context;
         //mDynamicApduServiceFile = new AtomicFile(new File(dataDir, "dynamic_apduservice.xml"));
     }
 
-    public RegisteredNxpServicesCache(Context context, RegisteredServicesCache registeredServicesCache) {
+    public RegisteredNfcServicesCache(Context context, RegisteredServicesCache registeredServicesCache) {
         mContext = context;
         mRegisteredServicesCache = registeredServicesCache;
 

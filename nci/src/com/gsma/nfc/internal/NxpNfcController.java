@@ -52,7 +52,7 @@ public class NxpNfcController {
 
     private Context mContext;
     final NxpNfcControllerInterface mNxpNfcControllerInterface;
-    final RegisteredNxpServicesCache mServiceCache;
+    final RegisteredNfcServicesCache mServiceCache;
     private RegisteredAidCache mRegisteredAidCache;
     private CardEmulationManager mCardEmulationManager;
     private boolean mGsmaCommitOffhostService = false;
@@ -71,7 +71,7 @@ public class NxpNfcController {
     public NxpNfcController(Context context, CardEmulationManager cardEmulationManager) {
         mContext = context;
         mCardEmulationManager = cardEmulationManager;
-        mServiceCache = cardEmulationManager.getRegisteredNxpServicesCache();
+        mServiceCache = cardEmulationManager.getRegisteredNfcServicesCache();
         mRegisteredAidCache = cardEmulationManager.getRegisteredAidCache();
         mNxpNfcControllerInterface = new NxpNfcControllerInterface();
     }

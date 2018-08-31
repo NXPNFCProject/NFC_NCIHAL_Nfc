@@ -63,7 +63,7 @@ import com.android.nfc.NfcPermissions;
 import com.android.nfc.NfcService;
 import com.android.nfc.cardemulation.RegisteredServicesCache;
 import com.android.nfc.cardemulation.RegisteredNfcFServicesCache;
-import com.gsma.nfc.internal.RegisteredNxpServicesCache;
+import com.gsma.nfc.internal.RegisteredNfcServicesCache;
 
 /**
  * CardEmulationManager is the central entity
@@ -101,7 +101,7 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
     final CardEmulationInterface mCardEmulationInterface;
     final NfcFCardEmulationInterface mNfcFCardEmulationInterface;
     final PowerManager mPowerManager;
-    final RegisteredNxpServicesCache mRegisteredNxpServicesCache;
+    final RegisteredNfcServicesCache mRegisteredNfcServicesCache;
 
     public CardEmulationManager(Context context) {
         mContext = context;
@@ -116,8 +116,8 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         mPreferredServices = new PreferredServices(context, mServiceCache, mAidCache, this);
         mEnabledNfcFServices = new EnabledNfcFServices(
                 context, mNfcFServicesCache, mT3tIdentifiersCache, this);
-        mRegisteredNxpServicesCache = new RegisteredNxpServicesCache(context, mServiceCache);
-        mServiceCache.initialize(mRegisteredNxpServicesCache);
+        mRegisteredNfcServicesCache = new RegisteredNfcServicesCache(context, mServiceCache);
+        mServiceCache.initialize(mRegisteredNfcServicesCache);
         mNfcFServicesCache.initialize();
         mPowerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
     }
@@ -134,8 +134,8 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         return mAidCache;
     }
 
-    public RegisteredNxpServicesCache getRegisteredNxpServicesCache() {
-        return mRegisteredNxpServicesCache;
+    public RegisteredNfcServicesCache getRegisteredNfcServicesCache() {
+        return mRegisteredNfcServicesCache;
     }
 
     public void onHostCardEmulationActivated(int technology) {
@@ -436,10 +436,10 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
                 throws RemoteException {
             NfcPermissions.validateUserId(userId);
             NfcPermissions.enforceAdminPermissions(mContext);
-            List<NfcApduServiceInfo> nxpApduServices = mServiceCache.getServicesForCategory(userId, category);
+            List<NfcApduServiceInfo> nfcApduServices = mServiceCache.getServicesForCategory(userId, category);
             ArrayList<ApduServiceInfo> apduServices = new ArrayList<ApduServiceInfo>();
-            for(NfcApduServiceInfo nxpApdu : nxpApduServices) {
-                ApduServiceInfo apduService = nxpApdu.createApduServiceInfo();
+            for(NfcApduServiceInfo nfcApdu : nfcApduServices) {
+                ApduServiceInfo apduService = nfcApdu.createApduServiceInfo();
                 apduServices.add(apduService);
             }
             if(DBG) Log.d(TAG, "getServices() size: " + apduServices.size());
