@@ -2368,31 +2368,7 @@ public class NfcService implements DeviceHostListener {
         }
         return mSecureElement.doGetAtr(mOpenEe.handle);
     }
-    private int _jcopOsDownload() throws IOException{
-        synchronized(NfcService.this){
-            int status = ErrorCodes.SUCCESS;
-            boolean mode;
-            mode = mDeviceHost.doCheckJcopDlAtBoot();
-            if(mode == false) {
-                Log.i(TAG, "Starting OSU download");
-                status = mDeviceHost.JCOSDownload();
-            } else {
-                status = ErrorCodes.ERROR_NOT_SUPPORTED;
-            }
-            return status;
-        }
-    }
-    @Override
-    public int jcopOsDownload(String pkg) throws RemoteException {
-        Bundle result;
-        int status = -1;
-        try{
-            status = _jcopOsDownload();
-        }catch (IOException e) {
-            result = writeEeException(EE_ERROR_IO, e.getMessage());
-        }
-        return status;
-    }
+
 }
 
     /** resources kept while secure element is open */

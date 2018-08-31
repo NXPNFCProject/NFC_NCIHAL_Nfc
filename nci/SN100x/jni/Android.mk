@@ -50,10 +50,6 @@ LOCAL_C_INCLUDES += \
     system/nfc/SN100x/utils/include \
     hardware/nxp/nfc/extns/impl\
 
-ifeq ($(NFC_NXP_ESE),TRUE)
-LOCAL_C_INCLUDES +=external/p61-jcop-kit/include
-endif
-
 LOCAL_SHARED_LIBRARIES := \
     libicuuc \
     libnativehelper \
@@ -63,10 +59,6 @@ LOCAL_SHARED_LIBRARIES := \
     libnfc-nci \
     libchrome \
     libbase \
-
-ifeq ($(NFC_NXP_ESE),TRUE)
-LOCAL_SHARED_LIBRARIES += libp61-jcop-kit
-endif
 
 LOCAL_STATIC_LIBRARIES := libxml2
 

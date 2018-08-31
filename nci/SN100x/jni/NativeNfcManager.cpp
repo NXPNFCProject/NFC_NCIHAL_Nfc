@@ -56,8 +56,6 @@
 #include "nfca_version.h"
 #include "SecureElement.h"
 #include "DwpChannel.h"
-#include "JcDnld.h"
-#include "IChannel.h"
 #endif
 
 #include "ce_api.h"
@@ -114,9 +112,6 @@ extern void nativeLlcpConnectionlessSocket_receiveData(uint8_t* data,
                                                        uint32_t remote_sap);
 #if(NXP_EXTNS == TRUE)
 static jboolean nfcManager_doCheckJcopDlAtBoot(JNIEnv* e, jobject o);
-static int nfcManager_doJcosDownload(JNIEnv* e, jobject o);
-void DWPChannel_init(IChannel_t *DWP);
-IChannel_t Dwp;
 static int nfcManager_doPartialInitialize(JNIEnv* e, jobject o);
 static int nfcManager_doPartialDeInitialize(JNIEnv* e, jobject o);
 static jint nfcManager_doaccessControlForCOSU(JNIEnv* e, jobject o, jint mode);
@@ -2700,8 +2695,6 @@ static JNINativeMethod gMethods[] = {
             (void*) nfcManager_getDefaultFelicaCLTRoute},
      {"doCheckJcopDlAtBoot", "()Z",
             (void *)nfcManager_doCheckJcopDlAtBoot},
-     {"JCOSDownload", "()I",
-            (void *)nfcManager_doJcosDownload},
      {"doGetActiveSecureElementList", "()[I",
             (void *)nfcManager_getActiveSecureElementList},
      {"doChangeDiscoveryTech", "(II)V",
@@ -2969,81 +2962,6 @@ bool nfcManager_checkNfcStateBusy()
         status = true;
 
     return status;
-}
-/*******************************************************************************
-**
-** Function:        DWPChannel_init
-**
-** Description:     Initializes the DWP channel functions.
-**
-** Returns:         True if ok.
-**
-*******************************************************************************/
-void DWPChannel_init(IChannel_t *DWP)
-{
-    LOG(INFO) << StringPrintf("%s: enter", __func__);
-    if(nfcFL.nfcNxpEse) {
-        DWP->open = open;
-        DWP->close = close;
-        DWP->transceive = transceive;
-        DWP->doeSE_Reset = doeSE_Reset;
-        DWP->doeSE_JcopDownLoadReset = doeSE_JcopDownLoadReset;
-    }
-}
-/*******************************************************************************
-**
-** Function:        nfcManager_doJcosDownload
-**
-** Description:     start jcos download.
-**                  e: JVM environment.
-**                  o: Java object.
-**
-** Returns:         True if ok.
-**
-*******************************************************************************/
-static int nfcManager_doJcosDownload(JNIEnv* e, jobject o)
-{
-    (void)e;
-    (void)o;
-    tNFA_STATUS status = NFA_STATUS_FAILED;
-    if(nfcFL.nfcNxpEse)
-    {
-        LOG(INFO) << StringPrintf("%s: enter", __func__);
-        bool stat = false;
-        if (sIsDisabling || !sIsNfaEnabled || nfcManager_checkNfcStateBusy())
-        {
-            LOG(INFO) << StringPrintf("%s: STATUS FAILED", __func__);
-            return NFA_STATUS_FAILED;
-        }
-        if (sRfEnabled) {
-            /*Stop RF Discovery if we were polling*/
-            startRfDiscovery (false);
-        }
-        DWPChannel_init(&Dwp);
-        status = JCDNLD_Init(&Dwp);
-        if(status != NFA_STATUS_OK)
-        {
-            LOG(ERROR) << StringPrintf("%s: JCDND initialization failed", __func__);
-        }
-        else
-        {
-              LOG(INFO) << StringPrintf("%s: start JcopOs_Download", __func__);
-              status = JCDNLD_StartDownload();
-              if(status != NFA_STATUS_OK)
-              {
-                DLOG_IF(INFO, nfc_debug_enabled)<< StringPrintf(
-                  "%s:JCDNLD_StartDownload failed =0x%X", __func__,status);
-              }
-              stat = JCDNLD_DeInit();
-              if(stat != TRUE)
-              {
-                DLOG_IF(INFO, nfc_debug_enabled)<< StringPrintf(
-                  "%s: exit; JCDNLD_DeInit failed =0x%X", __func__,stat);
-              }
-        }
-        startRfDiscovery (true);
-    }
-      return status;
 }
 
 void enableLastRfDiscovery()
