@@ -1273,16 +1273,18 @@ static jint nativeNfcTag_doReconnect(JNIEnv*, jobject) {
         goto TheEnd;
       }
 
-      SyncEventGuard guard(sNfaVSCResponseEvent);
-      stat = NFA_SendVsCommand(0x11, 0x00, NULL, nfaVSCCallback);
-      if (NFA_STATUS_OK == stat) {
-        sIsReconnecting = true;
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-            "%s: reconnect for TypeB - wait for NFA VS command to finish",
-            __func__);
-        sNfaVSCResponseEvent.wait();  // wait for NFA VS command to finish
-        DLOG_IF(INFO, nfc_debug_enabled)
-            << StringPrintf("%s: reconnect for TypeB - Got RSP", __func__);
+      {
+        SyncEventGuard guard(sNfaVSCResponseEvent);
+        stat = NFA_SendVsCommand(0x11, 0x00, NULL, nfaVSCCallback);
+        if (NFA_STATUS_OK == stat) {
+          sIsReconnecting = true;
+          DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+              "%s: reconnect for TypeB - wait for NFA VS command to finish",
+              __func__);
+          sNfaVSCResponseEvent.wait();  // wait for NFA VS command to finish
+          DLOG_IF(INFO, nfc_debug_enabled)
+              << StringPrintf("%s: reconnect for TypeB - Got RSP", __func__);
+        }
       }
 
       if (false == sVSCRsp) {
