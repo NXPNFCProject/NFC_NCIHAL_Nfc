@@ -2491,6 +2491,7 @@ void RoutingManager::nfaEeCallback(tNFA_EE_EVT event,
   return;
   }
   routingManager.mCbEventData = *eventData;
+  tNFA_EE_DISCOVER_REQ info = eventData->discover_req;
 
   switch (event) {
     case NFA_EE_REGISTER_EVT: {
@@ -2694,7 +2695,6 @@ void RoutingManager::nfaEeCallback(tNFA_EE_EVT event,
     } break;
 
     case NFA_EE_DISCOVER_REQ_EVT:
-      tNFA_EE_DISCOVER_REQ info = eventData->discover_req;
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
           "%s: NFA_EE_DISCOVER_REQ_EVT; status=0x%X; num ee=%u", __func__,
           eventData->discover_req.status, eventData->discover_req.num_ee);
