@@ -1777,7 +1777,7 @@ public class NfcService implements DeviceHostListener {
     final class NfcAdapterService extends INfcAdapter.Stub {
         @Override
         public boolean enable() throws RemoteException {
-
+            NfcPermissions.enforceAdminPermissions(mContext);
             if (mNxpNfcState != NXP_NFC_STATE_OFF) {
                 return true;
             } else {
@@ -1788,7 +1788,6 @@ public class NfcService implements DeviceHostListener {
                 mNxpNfcState = NXP_NFC_STATE_TURNING_ON;
             }
 
-            NfcPermissions.enforceAdminPermissions(mContext);
             int val =  mDeviceHost.GetDefaultSE();
             Log.i(TAG, "getDefaultSE " + val);
 
@@ -1801,7 +1800,7 @@ public class NfcService implements DeviceHostListener {
 
         @Override
         public boolean disable(boolean saveState) throws RemoteException {
-
+            NfcPermissions.enforceAdminPermissions(mContext);
             if (mNxpNfcState != NXP_NFC_STATE_ON) {
                 return true;
             } else {
@@ -1812,7 +1811,6 @@ public class NfcService implements DeviceHostListener {
                 mNxpNfcState = NXP_NFC_STATE_TURNING_OFF;
             }
 
-            NfcPermissions.enforceAdminPermissions(mContext);
             Log.d(TAG,"Disabling Nfc.");
 
             //Check if this a device shutdown or Nfc only Nfc disable.
