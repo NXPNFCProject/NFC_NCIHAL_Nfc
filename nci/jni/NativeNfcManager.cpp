@@ -292,7 +292,9 @@ SyncEvent sNfaEnableDisablePollingEvent;  // event for NFA_EnablePolling(),
                                           // NFA_DisablePolling()
 SyncEvent sNfaSetConfigEvent;             // event for Set_Config....
 SyncEvent sNfaGetConfigEvent;             // event for Get_Config....
+SyncEvent sExecPendingRegEvent;
 
+static bool sIsExecPendingReq = false;
 static bool sIsNfaEnabled = false;
 static bool sDiscoveryEnabled = false;  // is polling or listening
 static bool sPollingEnabled = false;    // is polling for tag?
@@ -3541,7 +3543,14 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
   *******************************************************************************/
   static jboolean nfcManager_doDeinitialize(JNIEnv * e, jobject obj) {
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
-    sIsDisabling = true;
+    {
+      SyncEventGuard guard (sExecPendingRegEvent);
+      sIsDisabling = true;
+      if(sIsExecPendingReq) {
+        //waiting for enableThread exit
+        sExecPendingRegEvent.wait();
+      }
+    }
 
 #if (NXP_EXTNS == TRUE)
     if (nfcFL.nfcNxpEse &&
@@ -6520,7 +6529,12 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
     bool screen_lock_flag = false;
     bool disable_discovery = false;
 
-    if (sIsNfaEnabled != true || sIsDisabling == true) goto TheEnd;
+    {
+      SyncEventGuard guard (sExecPendingRegEvent);
+      if(sIsNfaEnabled != true || sIsDisabling == true) goto TheEnd;
+
+      sIsExecPendingReq = true;
+    }
 
     if (last_screen_state_request != NFA_SCREEN_STATE_UNKNOWN) {
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
@@ -6601,6 +6615,12 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
 
     if (nfcFL.chipType != pn547C2) {
       memset(&menableAGC_debug_t, 0x00, sizeof(enableAGC_debug_t));
+    }
+
+    {
+      SyncEventGuard guard (sExecPendingRegEvent);
+      sExecPendingRegEvent.notifyOne();
+      sIsExecPendingReq = false;
     }
   TheEnd:
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
