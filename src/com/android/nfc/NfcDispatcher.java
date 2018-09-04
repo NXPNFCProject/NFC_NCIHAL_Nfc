@@ -222,9 +222,9 @@ class NfcDispatcher {
         }
 
         public boolean isWebIntent() {
-            if (ndefUri != null) return false;
-            if (ndefUri.normalizeScheme().getScheme() == null) return false;
-            return ndefUri.normalizeScheme().getScheme().startsWith("http");
+            if(ndefUri.normalizeScheme().getScheme() == null)
+                return false;
+            return ndefUri != null && ndefUri.normalizeScheme().getScheme().startsWith("http");
         }
 
         public String getUri() {
