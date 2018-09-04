@@ -1027,22 +1027,42 @@ void RoutingManager::configureOffHostNfceeTechMask(void) {
   }
 
   if ((defaultHandle != NFA_HANDLE_INVALID) && (0 != mUiccListnTechMask)) {
-    {
-      SyncEventGuard guard(SecureElement::getInstance().mUiccListenEvent);
-      nfaStat = NFA_CeConfigureUiccListenTech(defaultHandle, 0x00);
-      if (nfaStat == NFA_STATUS_OK) {
-        SecureElement::getInstance().mUiccListenEvent.wait(50);
-      } else
-        LOG(ERROR) << StringPrintf("fail to start UICC listen");
-    }
-    {
-      SyncEventGuard guard(SecureElement::getInstance().mUiccListenEvent);
-      nfaStat = NFA_CeConfigureUiccListenTech(defaultHandle,
-                                              (mUiccListnTechMask & 0x07));
-      if (nfaStat == NFA_STATUS_OK) {
-        SecureElement::getInstance().mUiccListenEvent.wait(50);
-      } else
-        LOG(ERROR) << StringPrintf("fail to start UICC listen");
+    if(defaultHandle == SecureElement::EE_HANDLE_0xF3) {
+      {
+        SyncEventGuard guard(SecureElement::getInstance().mEseListenEvent);
+        nfaStat = NFA_CeConfigureEseListenTech(defaultHandle, 0x00);
+        if (nfaStat == NFA_STATUS_OK) {
+          SecureElement::getInstance().mEseListenEvent.wait();
+        } else
+          LOG(ERROR) << StringPrintf("fail to start eSE listen");
+      }
+      {
+        SyncEventGuard guard(SecureElement::getInstance().mEseListenEvent);
+        nfaStat = NFA_CeConfigureEseListenTech(defaultHandle,
+                                                (mUiccListnTechMask & 0x07));
+        if (nfaStat == NFA_STATUS_OK) {
+          SecureElement::getInstance().mEseListenEvent.wait();
+        } else
+          LOG(ERROR) << StringPrintf("fail to start eSE listen");
+      }
+    } else {
+      {
+        SyncEventGuard guard(SecureElement::getInstance().mUiccListenEvent);
+        nfaStat = NFA_CeConfigureUiccListenTech(defaultHandle, 0x00);
+        if (nfaStat == NFA_STATUS_OK) {
+          SecureElement::getInstance().mUiccListenEvent.wait();
+        } else
+          LOG(ERROR) << StringPrintf("fail to start UICC listen");
+      }
+      {
+        SyncEventGuard guard(SecureElement::getInstance().mUiccListenEvent);
+        nfaStat = NFA_CeConfigureUiccListenTech(defaultHandle,
+                                                (mUiccListnTechMask & 0x07));
+        if (nfaStat == NFA_STATUS_OK) {
+          SecureElement::getInstance().mUiccListenEvent.wait();
+        } else
+          LOG(ERROR) << StringPrintf("fail to start UICC listen");
+      }
     }
   }
 
