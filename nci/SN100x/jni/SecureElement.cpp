@@ -900,7 +900,7 @@ jintArray SecureElement::getActiveSecureElementList (JNIEnv* e)
 
     jintArray list = e->NewIntArray (num_of_nfcee_present); //allocate array
 
-    for(i = 1; i<= num_of_nfcee_present ; i++)
+    for(i = 0; i< num_of_nfcee_present ; i++)
     {
         nfcee_handle[i] = mNfceeData_t.mNfceeHandle[i];
         nfcee_status[i] = mNfceeData_t.mNfceeStatus[i];
