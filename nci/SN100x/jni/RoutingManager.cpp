@@ -485,15 +485,15 @@ bool RoutingManager::addAidRouting(const uint8_t* aid, uint8_t aidLen,
 bool RoutingManager::removeAidRouting(const uint8_t* aid, uint8_t aidLen) {
   static const char fn[] = "RoutingManager::removeAidRouting";
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", fn);
-#if(NXP_EXTNS == TRUE) 
+#if(NXP_EXTNS == TRUE)
   SyncEventGuard guard(mAidAddRemoveEvent);
 #endif
   tNFA_STATUS nfaStat = NFA_EeRemoveAidRouting(aidLen, (uint8_t*)aid);
   if (nfaStat == NFA_STATUS_OK) {
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: removed AID", fn);
-#if(NXP_EXTNS == TRUE)    
-    mAidAddRemoveEvent.wait(); 
-#endif   
+#if(NXP_EXTNS == TRUE)
+    mAidAddRemoveEvent.wait();
+#endif
     return true;
   } else {
     LOG(ERROR) << StringPrintf("%s: failed to remove AID", fn);
@@ -1295,33 +1295,12 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
         }
     }
 
-    if(((ee_handle == SecureElement::getInstance().EE_HANDLE_0xF4) || (ee_handle == 0x481)) && (isSeIDPresent != 1))
-    {
-        //check if eSE is exist
-        for (int  i = 0; ((count != 0 ) && (i < count)); i++)
-        {
-            seId = SecureElement::getInstance().getGenericEseId(ee_handleList[i]);
-            ActDevHandle = SecureElement::getInstance().getEseHandleFromGenericId(seId);
-            if (ActDevHandle == 0x4C0)
-            {
-                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf ("%s: enter, UICC is not activated, so Routing is changed UICC to eSE",fn);
-                isSeIDPresent =1;
-                ee_handle = ActDevHandle;
-                break;
-            }
-        }
-    }
-
-    if((ee_handle!=ROUTE_LOC_HOST_ID) && ((NFA_SET_PROTOCOL_ROUTING == type) && (isSeIDPresent != 1)))
-    {
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf ("%s: changing the destination to DH",fn);
-        ee_handle = 0x400;
-        power &= 0x31;
-    }
     if((ee_handle == ROUTE_LOC_HOST_ID) && (NFA_SET_PROTOCOL_ROUTING == type))
     {
       power &= (PWR_SWTCH_ON_SCRN_LOCK_MASK | PWR_SWTCH_ON_SCRN_UNLCK_MASK);
+      isSeIDPresent = 1;
     }
+
     max_tech_mask = SecureElement::getInstance().getSETechnology(ee_handle);
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter,max_tech_mask :%lx", fn, max_tech_mask);
     if(NFA_SET_TECHNOLOGY_ROUTING == type)
@@ -1422,7 +1401,7 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
                 DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf("Fail to set default tech routing");
             }
         }
-    }else if(NFA_SET_PROTOCOL_ROUTING == type)
+    }else if(NFA_SET_PROTOCOL_ROUTING == type && isSeIDPresent == 1)
     {
         value &= ~(0xF0);
         while(value)
@@ -1453,8 +1432,8 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
                 switch_on_mask     = (power & 0x01) ? protocol_mask : 0;
                 switch_off_mask    = (power & 0x02) ? protocol_mask : 0;
                 battery_off_mask   = (power & 0x04) ? protocol_mask : 0;
-                screen_lock_mask   = (power & 0x08) ? protocol_mask : 0;
-                screen_off_mask    = (power & 0x10) ? protocol_mask : 0;
+                screen_lock_mask   = (power & 0x10) ? protocol_mask : 0;
+                screen_off_mask    = (power & 0x08) ? protocol_mask : 0;
                 screen_off_lock_mask = (power & 0x20) ? protocol_mask : 0;
                 DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter >>>> ee_handle:%x %x %x %x %x %x %x", fn, ee_handle,
                                                                     switch_on_mask,
@@ -1893,7 +1872,7 @@ uint16_t RoutingManager::getUiccRouteLocId(const int route)
                    route);
     if((route != 0x02 ) &&(route != 0x03))
       return NFA_HANDLE_INVALID;
-    
+
     if(!nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC)
         return getUiccRoute(sCurrentSelectedUICCSlot);
     else if(nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC)
