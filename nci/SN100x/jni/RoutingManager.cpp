@@ -1686,8 +1686,12 @@ void RoutingManager::setEmptyAidEntry(int route) {
         power &= 0x11;
     }
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: power %x",__func__,power);
-    tNFA_STATUS nfaStat = NFA_EeAddAidRouting(routeLoc, 0, NULL, power, 0x10);
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Status :0x%2x", __func__, nfaStat);
+    if(power){
+        tNFA_STATUS nfaStat = NFA_EeAddAidRouting(routeLoc, 0, NULL, power, 0x10);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Status :0x%2x", __func__, nfaStat);
+    }else{
+        LOG(ERROR) << StringPrintf("%s:Invalid Power State" ,__func__);
+    }
 }
 
 /* Forward Functionality is to handle either technology which is supported by UICC
