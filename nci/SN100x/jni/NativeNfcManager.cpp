@@ -2488,7 +2488,15 @@ static void nfcManager_doSetScreenState(JNIEnv* e, jobject o,
        state == NFA_SCREEN_STATE_OFF_UNLOCKED) &&
       prevScreenState == NFA_SCREEN_STATE_ON_UNLOCKED) {
     // screen turns off, disconnect tag if connected
+#if (NXP_EXTNS == TRUE)
+    if(sReaderModeEnabled || sP2pActive){
+        nativeNfcTag_doDisconnect(NULL, NULL);
+    }else{
+      //CardEmulation: Shouldn't take an action.
+    }
+#else
     nativeNfcTag_doDisconnect(NULL, NULL);
+#endif
   }
 
   prevScreenState = state;
