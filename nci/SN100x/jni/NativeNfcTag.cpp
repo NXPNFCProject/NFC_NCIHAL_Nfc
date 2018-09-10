@@ -61,6 +61,10 @@ bool gIsTagDeactivating = false;  // flag for nfa callback indicating we are
 bool gIsSelectingRfInterface =
     false;  // flag for nfa callback indicating we are
             // selecting for RF interface switch
+#if (NXP_EXTNS == TRUE)
+bool gIsWaiting4Deact2SleepNtf = false;
+bool gGotDeact2IdleNtf = false;
+#endif
 }  // namespace android
 
 /*****************************************************************************
@@ -119,6 +123,9 @@ static tNFA_STATUS sMakeReadonlyStatus = NFA_STATUS_FAILED;
 static jboolean sMakeReadonlyWaitingForComplete = JNI_FALSE;
 static int sCurrentConnectedTargetType = TARGET_TYPE_UNKNOWN;
 static int sCurrentConnectedTargetProtocol = NFC_PROTOCOL_UNKNOWN;
+#if (NXP_EXTNS == TRUE)
+static int sCurrentConnectedHandle = 0;
+#endif
 static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded);
 static bool switchRfInterface(tNFA_INTF_TYPE rfInterface);
 
@@ -545,6 +552,9 @@ static jint nativeNfcTag_doConnect(JNIEnv*, jobject, jint targetHandle) {
   sCurrentConnectedTargetType = natTag.mTechList[i];
   sCurrentConnectedTargetProtocol = natTag.mTechLibNfcTypes[i];
 
+#if (NXP_EXTNS == TRUE)
+  sCurrentConnectedHandle = targetHandle;
+#endif
   if (sCurrentConnectedTargetProtocol != NFC_PROTOCOL_ISO_DEP) {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s() Nfc type = %d, do nothing for non ISO_DEP",
@@ -583,6 +593,9 @@ TheEnd:
 **
 *******************************************************************************/
 static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
+#if (NXP_EXTNS == TRUE)
+  int handle = sCurrentConnectedHandle;
+#endif
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: enter; rf intf = %d, current intf = %d", __func__,
                       rfInterface, sCurrentRfInterface);
@@ -622,6 +635,11 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
                                    __func__, status);
         break;
       }
+#if (NXP_EXTNS == TRUE)
+      else if(natTag.mIsMultiProtocolTag) {
+        gIsWaiting4Deact2SleepNtf = true;
+      }
+#endif
 
       if (sReconnectEvent.wait(1000) == false)  // if timeout occurred
       {
@@ -629,6 +647,17 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
                                    __func__);
       }
     }
+#if (NXP_EXTNS == TRUE)
+    if(gIsWaiting4Deact2SleepNtf) {
+      if (gGotDeact2IdleNtf) {
+        LOG(ERROR) << StringPrintf("%s: wrong deactivate ntf; break", __func__);
+        gIsWaiting4Deact2SleepNtf = false;
+        gGotDeact2IdleNtf = false;
+        rVal = STATUS_CODE_TARGET_LOST;
+        break;
+      }
+    }
+#endif
 
     if (!sGotDeactivate) {
       rVal = STATUS_CODE_TARGET_LOST;
@@ -645,19 +674,23 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
 
     {
       SyncEventGuard g2(sReconnectEvent);
-
       sConnectWaitingForComplete = JNI_TRUE;
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: select interface %u", __func__, rfInterface);
+#if (NXP_EXTNS == TRUE)
       gIsSelectingRfInterface = true;
+      if (NFA_STATUS_OK !=
+          (status = NFA_Select(natTag.mTechHandles[handle],
+                               natTag.mTechLibNfcTypes[handle], rfInterface))) {
+#else
       if (NFA_STATUS_OK !=
           (status = NFA_Select(natTag.mTechHandles[0],
                                natTag.mTechLibNfcTypes[0], rfInterface))) {
+#endif
         LOG(ERROR) << StringPrintf("%s: NFA_Select failed, status = %d",
                                    __func__, status);
         break;
       }
-
       sConnectOk = false;
       if (sReconnectEvent.wait(1000) == false)  // if timeout occured
       {
@@ -1139,6 +1172,9 @@ void nativeNfcTag_doCheckNdefResult(tNFA_STATUS status, uint32_t maxSize,
 static jint nativeNfcTag_doCheckNdef(JNIEnv* e, jobject o, jintArray ndefInfo) {
   tNFA_STATUS status = NFA_STATUS_FAILED;
   jint* ndef = NULL;
+#if (NXP_EXTNS == TRUE)
+  int handle = sCurrentConnectedHandle;
+#endif
 
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
 
@@ -1171,6 +1207,12 @@ static jint nativeNfcTag_doCheckNdef(JNIEnv* e, jobject o, jintArray ndefInfo) {
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: try NFA_RwDetectNDef", __func__);
   sCheckNdefWaitingForComplete = JNI_TRUE;
+
+#if (NXP_EXTNS == TRUE)
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+          "%s: NfcTag::getInstance ().mTechLibNfcTypes[%d]=%d", __func__,
+          handle, NfcTag::getInstance ().mTechLibNfcTypes[handle]);
+#endif
 
   if (sCurrentConnectedTargetProtocol == NFC_PROTOCOL_MIFARE) {
     status = EXTNS_MfcCheckNDef();
@@ -1330,6 +1372,8 @@ static jboolean nativeNfcTag_doPresenceCheck(JNIEnv*, jobject) {
         << StringPrintf("%s: tag already deactivated", __func__);
     return JNI_FALSE;
   }
+#if (NXP_EXTNS == FALSE)
+  //change MFC presencecheck to default
   if (sCurrentConnectedTargetProtocol == NFC_PROTOCOL_MIFARE) {
     status = EXTNS_MfcPresenceCheck();
     if (status == NFCSTATUS_SUCCESS) {
@@ -1337,6 +1381,7 @@ static jboolean nativeNfcTag_doPresenceCheck(JNIEnv*, jobject) {
                                                                    : JNI_FALSE;
     }
   }
+#endif
 
   {
     SyncEventGuard guard(sPresenceCheckEvent);

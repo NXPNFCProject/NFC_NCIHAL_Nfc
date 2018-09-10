@@ -25,11 +25,21 @@
 
 #include "nfa_rw_api.h"
 
+#if (NXP_EXTNS == TRUE)
+typedef struct activationParams {
+  int mTechParams;
+  int mTechLibNfcTypes;
+} activationParams_t;
+#endif
+
 class NfcTag {
  public:
   enum ActivationState { Idle, Sleep, Active };
   static const int MAX_NUM_TECHNOLOGY =
       11;  // max number of technologies supported by one or more tags
+#if (NXP_EXTNS == TRUE)
+  activationParams_t mActivationParams_t;
+#endif
   int mTechList[MAX_NUM_TECHNOLOGY];  // array of NFC technologies according to
                                       // NFC service
   int mTechHandles[MAX_NUM_TECHNOLOGY];  // array of tag handles according to
@@ -37,6 +47,14 @@ class NfcTag {
   int mTechLibNfcTypes[MAX_NUM_TECHNOLOGY];  // array of detailed tag types
                                              // according to NFC service
   int mNumTechList;  // current number of NFC technologies in the list
+#if (NXP_EXTNS == TRUE)
+  int mNumDiscNtf;
+  int mNumDiscTechList;
+  int mTechListIndex;
+  int mPrevNumTechList;
+  int mPrevTechLibNfcTypes [MAX_NUM_TECHNOLOGY]; //array of detailed tag types according to NFC service
+  bool mIsMultiProtocolTag;
+#endif
 
   /*******************************************************************************
   **
@@ -184,6 +202,31 @@ class NfcTag {
   **
   *******************************************************************************/
   void selectFirstTag();
+
+#if (NXP_EXTNS == TRUE)
+  /*******************************************************************************
+  **
+  ** Function:        selectNextTag
+  **
+  ** Description:     When multiple tags are discovered, selects the Nex one to
+  **                  activate.
+  **
+  ** Returns:         None
+  **
+  *******************************************************************************/
+  void selectNextTag ();
+
+  /*******************************************************************************
+  **
+  ** Function:        checkNextValidProtocol
+  **
+  ** Description:     When multiple tags are discovered, check next valid protocol
+  **
+  ** Returns:         id
+  **
+  *******************************************************************************/
+  int checkNextValidProtocol(void );
+#endif
 
   /*******************************************************************************
   **
@@ -406,8 +449,7 @@ class NfcTag {
   ** Function:        discoverTechnologies
   **
   ** Description:     Discover the technologies that NFC service needs by
-  *interpreting
-  **                  the data strucutures from the stack.
+  **                  interpreting the data strucutures from the stack.
   **                  activationData: data from activation.
   **
   ** Returns:         None
@@ -420,8 +462,7 @@ class NfcTag {
   ** Function:        discoverTechnologies
   **
   ** Description:     Discover the technologies that NFC service needs by
-  *interpreting
-  **                  the data strucutures from the stack.
+  **                  interpreting the data strucutures from the stack.
   **                  discoveryData: data from discovery events(s).
   **
   ** Returns:         None
@@ -443,12 +484,25 @@ class NfcTag {
   *******************************************************************************/
   void createNativeNfcTag(tNFA_ACTIVATED& activationData);
 
+#if (NXP_EXTNS == TRUE)
+  /*******************************************************************************
+  **
+  ** Function:        storeActivationParams
+  **
+  ** Description:     stores tag activation parameters for backup
+  **
+  ** Returns:         None
+  **
+  *******************************************************************************/
+  void storeActivationParams();
+#endif
+
   /*******************************************************************************
   **
   ** Function:        fillNativeNfcTagMembers1
   **
   ** Description:     Fill NativeNfcTag's members: mProtocols, mTechList,
-  *mTechHandles, mTechLibNfcTypes.
+  **                  mTechHandles, mTechLibNfcTypes.
   **                  e: JVM environment.
   **                  tag_cls: Java NativeNfcTag class.
   **                  tag: Java NativeNfcTag object.
