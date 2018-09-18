@@ -4092,8 +4092,18 @@ static void nfaVSC_ForceDwpOnOff(bool type) {
   uint8_t xmitBuffer[] = {0x00, 0x00, 0x00, 0x00};
   uint8_t EVT_SEND_DATA = 0x10;
   uint8_t EVT_END_OF_APDU_TRANSFER = 0x21;
+  p61_access_state_t p61_current_state = P61_STATE_INVALID;
+  long ret_val = -1;
+  ret_val = NFC_GetP61Status((void*)&p61_current_state);
+  if (ret_val < 0) {
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("NFC_GetP61Status failed");
+  }
 
-  if (standby_state == STANDBY_MODE_OFF) {
+  /*Do not set powerLink and modeSet if wiredMode is open, except in case of
+   * standby timeout. In case of wiredMode standby timeout, and SPI open/close,
+   * send necessary powerLink and modeSet commands for SPI communications*/
+  if (!(spiDwpSyncState & STATE_TIME_OUT) &&
+      (p61_current_state & P61_STATE_WIRED)) {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: DWP wired mode is On", __func__);
     return;
@@ -4800,6 +4810,11 @@ tNFA_STATUS SecureElement::setNfccPwrConfig(uint8_t value) {
     LOG(ERROR) << StringPrintf("%s: NFC is no longer active.", __func__);
     return NFA_STATUS_OK;
   } else {
+    if ((dual_mode_current_state & SPI_ON) && (value == NFCC_DECIDES)) {
+      DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf(
+          "%s: SPI session is open. Host controls power-link configuration to eSE", __func__);
+      return NFA_STATUS_FAILED;
+    }
     cur_value = value;
     SyncEventGuard guard(mPwrLinkCtrlEvent);
     nfaStat = NFA_SendPowerLinkCommand((uint8_t)EE_HANDLE_0xF3, value);
