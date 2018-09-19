@@ -199,6 +199,7 @@ public class NfcService implements DeviceHostListener {
     static final int MSG_UNROUTE_APDU = 61;
     static final int MSG_CLEAR_ROUTING = 62;
     static final int MSG_INIT_WIREDSE = 63;
+    static final int MSG_COMPUTE_ROUTING_PARAMS = 64;
     // Update stats every 4 hours
     static final long STATS_UPDATE_INTERVAL_MS = 4 * 60 * 60 * 1000;
     static final long MAX_POLLING_PAUSE_TIMEOUT = 40000;
@@ -2581,7 +2582,8 @@ public class NfcService implements DeviceHostListener {
         return paramsBuilder.build();
     }
 
-    public void computeRoutingParameters() {
+    private void computeAndSetRoutingParameters()
+    {
         int protoRoute = mNxpPrefs.getInt("PREF_MIFARE_DESFIRE_PROTO_ROUTE_ID", GetDefaultMifareDesfireRouteEntry());
         int defaultRoute=mNxpPrefs.getInt("PREF_SET_DEFAULT_ROUTE_ID", GetDefaultRouteEntry());
         int techRoute=mNxpPrefs.getInt("PREF_MIFARE_CLT_ROUTE_ID", GetDefaultMifateCLTRouteEntry());
@@ -2608,6 +2610,10 @@ public class NfcService implements DeviceHostListener {
           Log.d(TAG, "Set Routing Entry" + TechRoute +  "" + TechFSeId + "" + techfRoute);
           mDeviceHost.setRoutingEntry(TECH_ENTRY,TechRoute, TechFSeId, techfRoute & 0x3F);
         }
+    }
+    public void computeRoutingParameters() {
+        Log.d(TAG, "computeRoutingParameters >>>");
+        mHandler.sendEmptyMessage(MSG_COMPUTE_ROUTING_PARAMS);
     }
     private boolean isTagPresent() {
         for (Object object : mObjectMap.values()) {
@@ -3089,6 +3095,12 @@ public class NfcService implements DeviceHostListener {
                     }
                     break;
                 }
+
+                case MSG_COMPUTE_ROUTING_PARAMS:
+                    Log.d(TAG, "computeRoutingParameters >>>");
+                    synchronized (NfcService.this) {
+                    computeAndSetRoutingParameters();
+                    }
                 case MSG_MOCK_NDEF: {
                     NdefMessage ndefMsg = (NdefMessage) msg.obj;
                     Bundle extras = new Bundle();
