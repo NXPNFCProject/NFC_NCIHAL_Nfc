@@ -2587,7 +2587,7 @@ public class NfcService implements DeviceHostListener {
         int protoRoute = mNxpPrefs.getInt("PREF_MIFARE_DESFIRE_PROTO_ROUTE_ID", GetDefaultMifareDesfireRouteEntry());
         int defaultRoute=mNxpPrefs.getInt("PREF_SET_DEFAULT_ROUTE_ID", GetDefaultRouteEntry());
         int techRoute=mNxpPrefs.getInt("PREF_MIFARE_CLT_ROUTE_ID", GetDefaultMifateCLTRouteEntry());
-        int techfRoute=mNxpPrefs.getInt("PREF_MIFARE_CLT_ROUTE_ID", GetDefaultFelicaCLTRouteEntry());
+        int techfRoute=mNxpPrefs.getInt("PREF_FELICA_CLT_ROUTE_ID", GetDefaultFelicaCLTRouteEntry());
         int TechSeId,TechFSeId;
         int TechRoute = 0x00;
         if (DBG) Log.d(TAG, "Set Routing Entry");
