@@ -1809,6 +1809,7 @@ bool SecureElement::transceive(uint8_t* xmitBuffer, int32_t xmitBufferSize,
             SyncEventGuard guard(mResetOngoingEvent);
             mResetOngoingEvent.wait();
           }
+
           if (!(active_ese_reset_control & TRANS_CL_ONGOING) &&
               (active_ese_reset_control & RESET_BLOCKED)) {
             active_ese_reset_control ^= RESET_BLOCKED;
@@ -4092,18 +4093,12 @@ static void nfaVSC_ForceDwpOnOff(bool type) {
   uint8_t xmitBuffer[] = {0x00, 0x00, 0x00, 0x00};
   uint8_t EVT_SEND_DATA = 0x10;
   uint8_t EVT_END_OF_APDU_TRANSFER = 0x21;
-  p61_access_state_t p61_current_state = P61_STATE_INVALID;
-  long ret_val = -1;
-  ret_val = NFC_GetP61Status((void*)&p61_current_state);
-  if (ret_val < 0) {
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("NFC_GetP61Status failed");
-  }
+  SecureElement& se = SecureElement::getInstance();
 
   /*Do not set powerLink and modeSet if wiredMode is open, except in case of
    * standby timeout. In case of wiredMode standby timeout, and SPI open/close,
    * send necessary powerLink and modeSet commands for SPI communications*/
-  if (!(spiDwpSyncState & STATE_TIME_OUT) &&
-      (p61_current_state & P61_STATE_WIRED)) {
+  if (!(spiDwpSyncState & STATE_TIME_OUT) && (se.mIsWiredModeOpen)) {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: DWP wired mode is On", __func__);
     return;
