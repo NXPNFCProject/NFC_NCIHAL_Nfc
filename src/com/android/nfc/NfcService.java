@@ -1139,7 +1139,11 @@ public class NfcService implements DeviceHostListener {
         synchronized (this) {
             mNfcEventInstalledPackages.clear();
             for (int i = 0; i < packagesNfcEvents.size(); i++) {
-                mNfcEventInstalledPackages.add(packagesNfcEvents.get(i).packageName);
+                int hasPerm = pm.checkPermission(android.Manifest.permission.NFC,
+                                                 packagesNfcEvents.get(i).packageName);
+                if (hasPerm == PackageManager.PERMISSION_GRANTED){
+                      mNfcEventInstalledPackages.add(packagesNfcEvents.get(i).packageName);
+                }
             }
         }
     }
