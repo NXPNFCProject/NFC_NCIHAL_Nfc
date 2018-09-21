@@ -603,9 +603,6 @@ public class NativeNfcManager implements DeviceHost {
     }
 /* NXP extension are here */
     @Override
-    public native boolean doCheckJcopDlAtBoot();
-
-    @Override
     public native int getFWVersion();
     @Override
     public native byte[] readerPassThruMode(byte status, byte modulationTyp);

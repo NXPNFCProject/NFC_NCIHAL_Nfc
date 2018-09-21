@@ -111,7 +111,6 @@ extern void nativeLlcpConnectionlessSocket_receiveData(uint8_t* data,
                                                        uint32_t len,
                                                        uint32_t remote_sap);
 #if(NXP_EXTNS == TRUE)
-static jboolean nfcManager_doCheckJcopDlAtBoot(JNIEnv* e, jobject o);
 static int nfcManager_doPartialInitialize(JNIEnv* e, jobject o);
 static int nfcManager_doPartialDeInitialize(JNIEnv* e, jobject o);
 static jint nfcManager_doaccessControlForCOSU(JNIEnv* e, jobject o, jint mode);
@@ -2901,8 +2900,6 @@ static JNINativeMethod gMethods[] = {
             (void*) nfcManager_getDefaultFelicaCLTPowerState},
       {"getDefaultFelicaCLTRoute", "()I",
             (void*) nfcManager_getDefaultFelicaCLTRoute},
-     {"doCheckJcopDlAtBoot", "()Z",
-            (void *)nfcManager_doCheckJcopDlAtBoot},
      {"doGetActiveSecureElementList", "()[I",
             (void *)nfcManager_getActiveSecureElementList},
      {"doChangeDiscoveryTech", "(II)V",
@@ -3135,23 +3132,6 @@ static void nfcManager_changeDiscoveryTech(JNIEnv* e, jobject o, jint pollTech, 
     DLOG_IF(INFO, nfc_debug_enabled)<< StringPrintf("Enter :%s  pollTech = 0x%x, listenTech = 0x%x", __func__, pollTech, listenTech);
 
     NFA_ChangeDiscoveryTech(pollTech, listenTech);
-}
-
-static jboolean nfcManager_doCheckJcopDlAtBoot(JNIEnv* e, jobject o) {
-    unsigned int num = 0;
-    DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s", __func__);
-    if(GetNxpNumValue(NAME_NXP_JCOPDL_AT_BOOT_ENABLE,(void*)&num,sizeof(num))) {
-        if(num == 0x01) {
-            return JNI_TRUE;
-        }
-        else {
-            return JNI_FALSE;
-        }
-    }
-    else {
-        return JNI_FALSE;
-    }
 }
 
 /*******************************************************************************

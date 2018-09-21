@@ -345,8 +345,6 @@ public interface DeviceHost {
     public void shutdown();
 
 /* NXP extension are here */
-    public boolean doCheckJcopDlAtBoot();
-
     public void doChangeDiscoveryTech(int pollTech, int listenTech);
     public int accessControlForCOSU (int mode);
 
