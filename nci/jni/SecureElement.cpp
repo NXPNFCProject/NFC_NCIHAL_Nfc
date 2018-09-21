@@ -108,6 +108,7 @@ extern long stop_timer_getdifference_msec(struct timeval* start_tv,
                                           struct timeval* stop_tv);
 extern bool nfcManager_isNfcActive();
 extern bool nfcManager_isNfcDisabling();
+extern Mutex mSPIDwpSyncMutex;
 #if (NXP_EXTNS == TRUE)
 extern int gMaxEERecoveryTimeout;
 extern uint8_t nfcManager_getNfcState();
@@ -4048,6 +4049,7 @@ static void nfaVSC_SVDDSyncOnOff(bool type) {
         "%s: nfcNxpEse or ESE_SVDD_SYNC not available. Returning", __func__);
     return;
   }
+  AutoMutex mutex(android::mSPIDwpSyncMutex);
   tNFC_STATUS stat;
   uint8_t param = 0x00;
   if (type == true) {
@@ -4089,6 +4091,7 @@ static void nfaVSC_ForceDwpOnOff(bool type) {
         __func__);
     return;
   }
+  AutoMutex mutex(android::mSPIDwpSyncMutex);
   tNFC_STATUS stat = NFA_STATUS_FAILED;
   uint8_t xmitBuffer[] = {0x00, 0x00, 0x00, 0x00};
   uint8_t EVT_SEND_DATA = 0x10;

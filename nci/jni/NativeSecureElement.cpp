@@ -61,6 +61,7 @@ extern void com_android_nfc_NfcManager_enableDiscovery(JNIEnv* e, jobject o,
 extern bool isLowRamDevice();
 extern int gMaxEERecoveryTimeout;
 #endif
+Mutex mSPIDwpSyncMutex;
 static SyncEvent sNfaVSCResponseEvent;
 // static bool sRfEnabled;           /*commented to eliminate warning defined
 // but not used*/
@@ -96,6 +97,7 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection(JNIEnv*,
   p61_access_state_t p61_current_state = P61_STATE_INVALID;
   se_apdu_gate_info gateInfo = NO_APDU_GATE;
   SecureElement& se = SecureElement::getInstance();
+  AutoMutex mutex(android::mSPIDwpSyncMutex);
 #if (NXP_EXTNS == TRUE)
   if ((!nfcFL.nfcNxpEse) ||
       (!nfcFL.eseFL._ESE_WIRED_MODE_PRIO && se.isBusy())) {
@@ -280,6 +282,7 @@ static jboolean nativeNfcSecureElement_doDisconnectSecureElementConnection(
   bool stat = false;
   long ret_val = -1;
   p61_access_state_t p61_current_state = P61_STATE_INVALID;
+  AutoMutex mutex(android::mSPIDwpSyncMutex);
   ret_val = NFC_GetP61Status((void*)&p61_current_state);
   if (ret_val < 0) {
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("NFC_GetP61Status failed");
