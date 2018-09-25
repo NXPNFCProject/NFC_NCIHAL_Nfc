@@ -580,7 +580,6 @@ TheEnd:
       << StringPrintf("%s: exit 0x%X", __func__, retCode);
   return retCode;
 }
-
 /*******************************************************************************
 **
 ** Function:        reSelect
@@ -626,18 +625,30 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
       SyncEventGuard g(sReconnectEvent);
       gIsTagDeactivating = true;
       sGotDeactivate = false;
-      DLOG_IF(INFO, nfc_debug_enabled)
-          << StringPrintf("%s: deactivate to sleep", __func__);
-      if (NFA_STATUS_OK !=
-          (status = NFA_Deactivate(TRUE)))  // deactivate to sleep state
-      {
-        LOG(ERROR) << StringPrintf("%s: deactivate failed, status = %d",
-                                   __func__, status);
-        break;
-      }
+
 #if (NXP_EXTNS == TRUE)
-      else if(natTag.mIsMultiProtocolTag) {
-        gIsWaiting4Deact2SleepNtf = true;
+      if (natTag.isCashBeeActivated() == true) {
+        DLOG_IF(INFO, nfc_debug_enabled)
+            << StringPrintf("%s: Deactivate to IDLE", __func__);
+        if (NFA_STATUS_OK != (status = NFA_StopRfDiscovery())) {
+          LOG(ERROR) << StringPrintf("%s: Deactivate failed, status = 0x%0X",
+                                     __func__, status);
+          break;
+        }
+      } else {
+#endif
+        DLOG_IF(INFO, nfc_debug_enabled)
+            << StringPrintf("%s: deactivate to sleep", __func__);
+        if (NFA_STATUS_OK !=
+            (status = NFA_Deactivate(TRUE))) { // deactivate to sleep state
+          LOG(ERROR) << StringPrintf("%s: deactivate failed, status = %d",
+                                   __func__, status);
+          break;
+        }
+#if (NXP_EXTNS == TRUE)
+        else if(natTag.mIsMultiProtocolTag) {
+          gIsWaiting4Deact2SleepNtf = true;
+        }
       }
 #endif
 
@@ -657,44 +668,74 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
         break;
       }
     }
+    if (natTag.getActivationState() == NfcTag::Idle) {
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("%s: Tag is in IDLE state", __func__);
+
+      if (natTag.mActivationParams_t.mTechLibNfcTypes == NFC_PROTOCOL_ISO_DEP) {
+        if (natTag.mActivationParams_t.mTechParams ==
+              NFC_DISCOVERY_TYPE_POLL_A) {
+          natTag.mCashbeeDetected = true;
+        }
+      }
+    }
+
+    if (!(natTag.isCashBeeActivated() == true)) {
 #endif
-
-    if (!sGotDeactivate) {
-      rVal = STATUS_CODE_TARGET_LOST;
-      break;
+      if (NfcTag::getInstance().getActivationState() != NfcTag::Sleep) {
+        LOG(ERROR) << StringPrintf("%s: tag is not in sleep", __func__);
+        rVal = STATUS_CODE_TARGET_LOST;
+          break;
+      }
+#if (NXP_EXTNS == TRUE)
     }
-
-    if (NfcTag::getInstance().getActivationState() != NfcTag::Sleep) {
-      LOG(ERROR) << StringPrintf("%s: tag is not in sleep", __func__);
-      rVal = STATUS_CODE_TARGET_LOST;
-      break;
-    }
+#endif
 
     gIsTagDeactivating = false;
 
     {
       SyncEventGuard g2(sReconnectEvent);
       sConnectWaitingForComplete = JNI_TRUE;
-      DLOG_IF(INFO, nfc_debug_enabled)
-          << StringPrintf("%s: select interface %u", __func__, rfInterface);
 #if (NXP_EXTNS == TRUE)
       gIsSelectingRfInterface = true;
-      if (NFA_STATUS_OK !=
-          (status = NFA_Select(natTag.mTechHandles[handle],
+      if (natTag.isCashBeeActivated() == true) {
+        DLOG_IF(INFO, nfc_debug_enabled)
+            << StringPrintf("%s: Start RF discovery", __func__);
+        if (NFA_STATUS_OK != (status = NFA_StartRfDiscovery())) {
+          LOG(ERROR) << StringPrintf("%s: deactivate failed, status = 0x%0X",
+                                     __func__, status);
+          break;
+        }
+      } else {
+#endif
+        DLOG_IF(INFO, nfc_debug_enabled)
+            << StringPrintf("%s: select interface %u", __func__, rfInterface);
+#if (NXP_EXTNS == TRUE)
+        if (NFA_STATUS_OK !=
+            (status = NFA_Select(natTag.mTechHandles[handle],
                                natTag.mTechLibNfcTypes[handle], rfInterface))) {
 #else
       if (NFA_STATUS_OK !=
           (status = NFA_Select(natTag.mTechHandles[0],
-                               natTag.mTechLibNfcTypes[0], rfInterface))) {
+                               natTag.mTechLibNfcTypes[0], rfInterface))) //{
 #endif
         LOG(ERROR) << StringPrintf("%s: NFA_Select failed, status = %d",
                                    __func__, status);
         break;
+        }
       }
       sConnectOk = false;
       if (sReconnectEvent.wait(1000) == false)  // if timeout occured
       {
         LOG(ERROR) << StringPrintf("%s: timeout waiting for select", __func__);
+#if (NXP_EXTNS == TRUE)
+        if (!(natTag.isCashBeeActivated() == true)) {
+          status = NFA_Deactivate(false);
+          if (status != NFA_STATUS_OK)
+            LOG(ERROR) << StringPrintf(
+                "%s: deactivate failed; error status = 0x%X", __func__, status);
+        }
+#endif
         break;
       }
     }
@@ -706,6 +747,12 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
       rVal = STATUS_CODE_TARGET_LOST;
       break;
     }
+#if (NXP_EXTNS == TRUE)
+    if (natTag.isCashBeeActivated() == true) {
+      natTag.mCashbeeDetected = false;
+    }
+#endif
+
     if (sConnectOk) {
       rVal = 0;  // success
       sCurrentRfInterface = rfInterface;

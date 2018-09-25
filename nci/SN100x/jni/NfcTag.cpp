@@ -57,6 +57,7 @@ NfcTag::NfcTag()
       mNumDiscTechList (0),
       mTechListIndex (0),
       mIsMultiProtocolTag(false),
+      mCashbeeDetected(false),
 #endif
       mTechnologyTimeoutsTable(MAX_NUM_TECHNOLOGY),
       mNativeData(NULL),
@@ -636,6 +637,17 @@ void NfcTag::createNativeNfcTag(tNFA_ACTIVATED& activationData) {
 }
 
 #if (NXP_EXTNS == TRUE)
+/*******************************************************************************
+**
+** Function:        isCashBeeActivated
+**
+** Description:     checks if cashbee tag is detected
+**
+** Returns:         True if tag is activated.
+**
+*******************************************************************************/
+bool NfcTag::isCashBeeActivated() { return mCashbeeDetected; }
+
 /*******************************************************************************
 **
 ** Function:        deleteglobaldata
