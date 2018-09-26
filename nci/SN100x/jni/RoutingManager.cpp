@@ -77,6 +77,8 @@ static const uint16_t DEFAULT_SYS_CODE = 0xFEFE;
 static RouteInfo_t gRouteInfo;
 extern jint nfcManager_getUiccRoute(jint uicc_slot);
 extern jint nfcManager_getUiccId(jint uicc_slot);
+extern uint16_t sCurrentSelectedUICCSlot;
+extern bool isDynamicUiccEnabled;
 #endif
 RoutingManager::RoutingManager() {
   static const char fn[] = "RoutingManager::RoutingManager()";
@@ -1192,7 +1194,7 @@ void RoutingManager::configureOffHostNfceeTechMask(void)
     {
         preferredHandle = SecureElement::getInstance().EE_HANDLE_0xF4;
     }
-    else if (nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC &&
+    else if (isDynamicUiccEnabled &&
             (mDefaultEe & SecureElement::UICC2_ID)) //UICC
     {
         preferredHandle = getUicc2selected();
@@ -1246,7 +1248,7 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
     unsigned long max_tech_mask = 0x03;
     unsigned long uiccListenTech = 0;
 
-    if (!nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC) {
+    if (!isDynamicUiccEnabled) {
        if(nfcManager_getUiccRoute(sCurrentSelectedUICCSlot)!=0xFF) {
            max_tech_mask = SecureElement::getInstance().getSETechnology(nfcManager_getUiccRoute(sCurrentSelectedUICCSlot));
        } else {
@@ -1481,11 +1483,11 @@ bool RoutingManager::clearAidTable ()
 {
     static const char fn [] = "RoutingManager::clearAidTable";
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", fn);
-    SyncEventGuard guard(SecureElement::getInstance().mAidAddRemoveEvent);
+    SyncEventGuard guard(RoutingManager::getInstance().mAidAddRemoveEvent);
     tNFA_STATUS nfaStat = NFA_EeRemoveAidRouting(NFA_REMOVE_ALL_AID_LEN, (uint8_t*) NFA_REMOVE_ALL_AID);
     if (nfaStat == NFA_STATUS_OK)
     {
-        SecureElement::getInstance().mAidAddRemoveEvent.wait();
+        RoutingManager::getInstance().mAidAddRemoveEvent.wait();
         DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: removed AID", fn);
         return true;
     } else
@@ -1701,7 +1703,7 @@ void RoutingManager::processTechEntriesForFwdfunctionality(void)
 {
     //static const char fn []    = "RoutingManager::processTechEntriesForFwdfunctionality";
     uint32_t techSupportedByUICC = mTechSupportedByUicc1;
-    if(!nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC) {
+    if(!isDynamicUiccEnabled) {
         techSupportedByUICC = (getUiccRoute(sCurrentSelectedUICCSlot) == SecureElement::getInstance().EE_HANDLE_0xF4)?
                 mTechSupportedByUicc1 : mTechSupportedByUicc2;
     }
@@ -1877,9 +1879,9 @@ uint16_t RoutingManager::getUiccRouteLocId(const int route)
     if((route != 0x02 ) &&(route != 0x03))
       return NFA_HANDLE_INVALID;
 
-    if(!nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC)
+    if(!isDynamicUiccEnabled)
         return getUiccRoute(sCurrentSelectedUICCSlot);
-    else if(nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC)
+    else if(isDynamicUiccEnabled)
         return ((route == 0x02 ) ? SecureElement::getInstance().EE_HANDLE_0xF4 : getUicc2selected());
     else /*#if (NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH == true)*/
         return SecureElement::getInstance().EE_HANDLE_0xF4;

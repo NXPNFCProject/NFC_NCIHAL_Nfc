@@ -35,6 +35,7 @@ using android::base::StringPrintf;
 SecureElement SecureElement::sSecElem;
 const char* SecureElement::APP_NAME = "nfc_jni";
 extern bool nfc_debug_enabled;
+extern bool isDynamicUiccEnabled;
 
 namespace android
 {
@@ -1579,7 +1580,7 @@ void SecureElement::releasePendingTransceive()
 uicc_stat_t SecureElement::getUiccStatus(uint8_t selected_uicc) {
   uint16_t ee_stat = NFA_EE_STATUS_REMOVED;
 
-  if (!nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC) {
+  if(!isDynamicUiccEnabled) {
     if (selected_uicc == 0x01)
       ee_stat = getEeStatus(EE_HANDLE_0xF4);
     else if (selected_uicc == 0x02)

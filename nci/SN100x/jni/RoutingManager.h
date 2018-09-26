@@ -145,7 +145,6 @@ class RoutingManager {
     bool addAidRouting(const uint8_t* aid, uint8_t aidLen,
                                    int route, int aidInfo, int power);
 
-    uint8_t sCurrentSelectedUICCSlot;
     SyncEvent       mAidAddRemoveEvent;
 #endif
  private:

@@ -80,6 +80,8 @@ using android::base::StringPrintf;
 #define RDR_PASS_THRU_MOD_TYPE_V (0x2)
 #define RDR_PASS_THRU_MOD_TYPE_LIMIT (0x3)
 #define CMD_HDR_SIZE_XCV (0x3)
+#define SECURE_ELEMENT_UICC_SLOT_DEFAULT (0x01)
+bool isDynamicUiccEnabled;
 #endif
 extern tNFA_DM_DISC_FREQ_CFG* p_nfa_dm_rf_disc_freq_cfg;  // defined in stack
 namespace android {
@@ -156,6 +158,7 @@ typedef struct discovery_Parameters
 discovery_Parameters_t mDiscParams;
 jint nfcManager_getUiccId(jint uicc_slot);
 jint nfcManager_getUiccRoute(jint uicc_slot);
+uint16_t sCurrentSelectedUICCSlot = SECURE_ELEMENT_UICC_SLOT_DEFAULT;
 #endif
 namespace android {
 jmethodID gCachedNfcManagerNotifyNdefMessageListeners;
@@ -247,7 +250,6 @@ typedef enum dual_uicc_error_states {
   DUAL_UICC_ERROR_INVALID_SLOT,
   DUAL_UICC_ERROR_STATUS_UNKNOWN
 } dual_uicc_error_state_t;
-uint16_t sCurrentSelectedUICCSlot = 1;
 #endif
 
 static void nfaConnectionCallback(uint8_t event, tNFA_CONN_EVT_DATA* eventData);
@@ -1517,6 +1519,12 @@ static jboolean nfcManager_doInitialize(JNIEnv* e, jobject o) {
     LOG(ERROR) << StringPrintf("%s:  MW Version: NFC_NCIHALx_AR%X.%x.%x.%x_RC%x",
             __func__, mwVer.validation, mwVer.android_version,
             mwVer.major_version,mwVer.minor_version,mwVer.rc_version);
+
+    if(GetNxpNumValue(NAME_NXP_DUAL_UICC_ENABLE, &isDynamicUiccEnabled, sizeof(isDynamicUiccEnabled))) {
+        isDynamicUiccEnabled = (isDynamicUiccEnabled == 0x01 ? true:false);
+    } else {
+        isDynamicUiccEnabled = true;
+    }
 #endif
   powerSwitch.initialize(PowerSwitch::FULL_POWER);
 
@@ -3727,7 +3735,7 @@ static jint nfcManager_getRemainingAidTableSize (JNIEnv* , jobject )
     (void)o;
     uint8_t retStat = STATUS_UNKNOWN_ERROR;
 
-     if (!nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC) {
+     if (!isDynamicUiccEnabled) {
       retStat = nfcManager_staticDualUicc_Precondition(uiccSlot);
 
       if (retStat != UICC_NOT_CONFIGURED) {
@@ -3738,7 +3746,7 @@ static jint nfcManager_getRemainingAidTableSize (JNIEnv* , jobject )
 
       nfcManager_setPreferredSimSlot(NULL, NULL, uiccSlot);
       retStat = UICC_CONFIGURED;
-      // TODO when 
+      // TODO when
       //RoutingManager::getInstance().cleanRouting();
     } else {
       retStat = DUAL_UICC_FEATURE_NOT_AVAILABLE;
@@ -3759,7 +3767,7 @@ static jint nfcManager_getRemainingAidTableSize (JNIEnv* , jobject )
    *******************************************************************************/
   static int nfcManager_doGetSelectedUicc(JNIEnv * e, jobject o) {
     uint8_t uicc_stat = STATUS_UNKNOWN_ERROR;
-    if (!nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC) {
+    if (!isDynamicUiccEnabled) {
       uicc_stat =
           SecureElement::getInstance().getUiccStatus(sCurrentSelectedUICCSlot);
     } else {
@@ -3771,7 +3779,7 @@ static jint nfcManager_getRemainingAidTableSize (JNIEnv* , jobject )
   }
 
   static int nfcManager_staticDualUicc_Precondition(int uiccSlot) {
-    if (nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC) {
+    if (isDynamicUiccEnabled) {
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
           "%s:Dual UICC feature not available . Returning", __func__);
       return DUAL_UICC_FEATURE_NOT_AVAILABLE;
@@ -3814,7 +3822,7 @@ static jint nfcManager_getRemainingAidTableSize (JNIEnv* , jobject )
         << StringPrintf("%s : uiccslot : %d : enter", __func__, uiccSlot);
 
     tNFA_STATUS status = NFA_STATUS_OK;
-    if (!nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC) {
+    if (!isDynamicUiccEnabled) {
       sCurrentSelectedUICCSlot = uiccSlot;
       NFA_SetPreferredUiccId(
           (uiccSlot == 2) ? (SecureElement::getInstance().EE_HANDLE_0xF8 &

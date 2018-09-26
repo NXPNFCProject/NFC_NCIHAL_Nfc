@@ -154,7 +154,9 @@ public class NfcService implements DeviceHostListener {
     public static final String NXP_PREF = "NfcServiceNxpPrefs";
     public static final String PREF = "NfcServicePrefs";
     private static final String PREF_CUR_SELECTED_UICC_ID = "current_selected_uicc_id";
-
+    private int SECURE_ELEMENT_UICC_SLOT_DEFAULT = 1;
+    static final int UICC_CONFIGURED = 0x00;
+    static final int UICC_NOT_CONFIGURED = 0x01;
     static final String PREF_NFC_ON = "nfc_on";
     static final boolean NFC_ON_DEFAULT = true;
     static final String PREF_NDEF_PUSH_ON = "ndef_push_on";
@@ -368,7 +370,7 @@ public class NfcService implements DeviceHostListener {
     int mErrorSound;
     SoundPool mSoundPool; // playback synchronized on this
     P2pLinkManager mP2pLinkManager;
-    TagService mNfcTagService; 
+    TagService mNfcTagService;
     boolean mIsSecureElementOpened = false;
     boolean mSEClientAccessState = false;
     NfcAdapterService mNfcAdapter;
@@ -379,7 +381,6 @@ public class NfcService implements DeviceHostListener {
     boolean mIsDebugBuild;
     boolean mIsHceCapable;
     boolean mIsHceFCapable;
-    public boolean mIsRoutingTableDirty;
 
     private NfcDispatcher mNfcDispatcher;
     private PowerManager mPowerManager;
@@ -910,7 +911,9 @@ public class NfcService implements DeviceHostListener {
             } finally {
                 watchDog.cancel();
             }
-
+            int uiccSlot = 0;
+            uiccSlot = mPrefs.getInt(PREF_CUR_SELECTED_UICC_ID, SECURE_ELEMENT_UICC_SLOT_DEFAULT);
+            mDeviceHost.setPreferredSimSlot(uiccSlot);
             if (mIsHceCapable) {
                 // Generate the initial card emulation routing table
                 mCardEmulationManager.onNfcEnabled();
@@ -1701,7 +1704,7 @@ public class NfcService implements DeviceHostListener {
                 /*In case of UICC connected and Enabled or Removed ,
                  *Reconfigure the routing table based on current UICC parameters
                  **/
-                if((status == 0x00)||(status == 0x01))
+                if((status == UICC_CONFIGURED)||(status == UICC_NOT_CONFIGURED))
                 {
                     mPrefsEditor.putInt(PREF_CUR_SELECTED_UICC_ID, uiccSlot);
                     mPrefsEditor.apply();
@@ -1709,14 +1712,15 @@ public class NfcService implements DeviceHostListener {
                     {
                         Log.i(TAG, "Update routing table");
                         mAidRoutingManager.onNfccRoutingTableCleared();
-                        mIsRoutingTableDirty = true;
+                        mDeviceHost.clearRoutingEntry(AID_ENTRY);
+                        mDeviceHost.clearRoutingEntry(TECH_ENTRY);
+                        mDeviceHost.clearRoutingEntry(PROTOCOL_ENTRY);
                         mCardEmulationManager.onNfcEnabled();
                         computeRoutingParameters();
                     }
                     else
                     {
                         Log.i(TAG, "Update only Mifare and Desfire route");
-                        mIsRoutingTableDirty = true;
                         applyRouting(false);
                     }
                 }
