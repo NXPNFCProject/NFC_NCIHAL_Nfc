@@ -1619,6 +1619,13 @@ static jboolean nfcManager_doInitialize(JNIEnv* e, jobject o) {
 TheEnd:
   if (sIsNfaEnabled)
     PowerSwitch::getInstance().setLevel(PowerSwitch::LOW_POWER);
+#if(NXP_EXTNS == TRUE)
+  {
+    uint8_t send_ram_to_flash[] = {0x2F, 0x21, 0x00};
+    stat = android::NxpNfc_Write_Cmd_Common(sizeof(send_ram_to_flash),
+      send_ram_to_flash);
+  }
+#endif
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
   return sIsNfaEnabled ? JNI_TRUE : JNI_FALSE;
 }
