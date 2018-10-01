@@ -55,6 +55,7 @@
 #define CONNECTIVITY_PIPE_ID_UICC2 0x23
 
 #define SIG_NFC 44
+#define SIG_SPI_EVENT_HANDLER 45
 #endif
 #define SIGNAL_EVENT_SIZE 0x02
 typedef enum {

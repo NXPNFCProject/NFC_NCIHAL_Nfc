@@ -97,7 +97,7 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection(JNIEnv*,
   p61_access_state_t p61_current_state = P61_STATE_INVALID;
   se_apdu_gate_info gateInfo = NO_APDU_GATE;
   SecureElement& se = SecureElement::getInstance();
-  AutoMutex mutex(android::mSPIDwpSyncMutex);
+  android::mSPIDwpSyncMutex.lock();
 #if (NXP_EXTNS == TRUE)
   if ((!nfcFL.nfcNxpEse) ||
       (!nfcFL.eseFL._ESE_WIRED_MODE_PRIO && se.isBusy())) {
@@ -110,7 +110,7 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection(JNIEnv*,
     goto TheEnd;
   }
   DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("P61 Status is: %x", p61_current_state);
+      << StringPrintf("%s P61 Status is: %x", __func__, p61_current_state);
 
   if (((nfcFL.eseFL._NXP_ESE_VER == JCOP_VER_3_1) &&
           (!(p61_current_state & P61_STATE_SPI) &&
@@ -260,6 +260,7 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection(JNIEnv*,
 TheEnd:
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: exit; return handle=0x%X", __func__, secElemHandle);
+  android::mSPIDwpSyncMutex.unlock();
   return secElemHandle;
 }  // namespace android
 
@@ -282,12 +283,13 @@ static jboolean nativeNfcSecureElement_doDisconnectSecureElementConnection(
   bool stat = false;
   long ret_val = -1;
   p61_access_state_t p61_current_state = P61_STATE_INVALID;
-  AutoMutex mutex(android::mSPIDwpSyncMutex);
+  android::mSPIDwpSyncMutex.lock();
   ret_val = NFC_GetP61Status((void*)&p61_current_state);
   if (ret_val < 0) {
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("NFC_GetP61Status failed");
   }
-
+  DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("%s P61 Status is: %x", __func__, p61_current_state);
   if (p61_current_state & (P61_STATE_SPI) ||
       (p61_current_state & (P61_STATE_SPI_PRIO))) {
     dual_mode_current_state |= SPI_ON;
@@ -386,7 +388,7 @@ TheEnd:
 #else
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
 #endif
-
+  android::mSPIDwpSyncMutex.unlock();
   return stat ? JNI_TRUE : JNI_FALSE;
 }
 #if (NXP_EXTNS == TRUE)

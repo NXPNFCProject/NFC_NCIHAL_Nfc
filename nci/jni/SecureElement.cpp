@@ -3789,6 +3789,43 @@ TheEnd:
 }
 #if (NXP_EXTNS == TRUE)
 void cleanupStack(void* p) { return; }
+
+/*******************************************************************************
+**
+** Function:       spiEventHandlerThread_cleanup_handler
+**
+** Description:    Handler to cleanup before the spiEventHandler Thread exits
+**
+**
+** Returns:        None .
+**
+*******************************************************************************/
+static void spiEventHandlerThread_cleanup_handler(void* arg) {
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Inside", __func__);
+  /* Releasing if DWP/SPI mutex is in locked state */
+  if (!android::mSPIDwpSyncMutex.tryLock()) {
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s: SE access is ongoing", __func__);
+  }
+  android::mSPIDwpSyncMutex.unlock();
+}
+
+/*******************************************************************************
+**
+** Function:       spiEventHandlerThread_exit_handler
+**
+** Description:    Handler to receive the signal
+**                    (signal:SIG_SPI_EVENT_HANDLER=45 ) to exit
+**
+** Returns:        None .
+**
+*******************************************************************************/
+void spiEventHandlerThread_exit_handler(int sig) {
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+      "%s: spiEventHandlerThread exit handler %d", __func__, sig);
+  pthread_exit(0);
+}
+
 /*******************************************************************************
 **
 ** Function:       spiEventHandlerThread
@@ -3799,8 +3836,6 @@ void cleanupStack(void* p) { return; }
 **
 *******************************************************************************/
 void* spiEventHandlerThread(void* arg) {
-  void (*pCleanupRoutine)(void* ptr) = cleanupStack;
-  __pthread_cleanup_t __cleanup;
   SecureElement& se = SecureElement::getInstance();
 
   if (!nfcFL.nfcNxpEse) {
@@ -3820,6 +3855,20 @@ void* spiEventHandlerThread(void* arg) {
   tNFC_STATUS stat;
 
   NFCSTATUS ese_status = NFA_STATUS_FAILED;
+
+  struct sigaction actions;
+  static sigset_t mask;
+  memset(&actions, 0, sizeof(actions));
+  sigemptyset(&actions.sa_mask);
+  sigaddset(&mask, SIG_SPI_EVENT_HANDLER);
+  actions.sa_flags = 0;
+  actions.sa_handler = spiEventHandlerThread_exit_handler;
+  sigaction(SIG_SPI_EVENT_HANDLER, &actions, NULL);
+  if (pthread_sigmask(SIG_UNBLOCK, &mask, NULL) != 0) {
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+        "%s: spiEventHandlerThread pthread_sigmask %d", __func__, errno);
+  }
+  pthread_cleanup_push(spiEventHandlerThread_cleanup_handler, NULL);
 
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
   while (android::nfcManager_isNfcActive() &&
@@ -3875,6 +3924,9 @@ void* spiEventHandlerThread(void* arg) {
           }
         } else if ((usEvent & P61_STATE_SPI_PRIO_END) ||
                    (usEvent & P61_STATE_SPI_END)) {
+          /* Locking the eSE(DWP/SPI) access, will be released after SVDD SYNC
+           * OFF command callback ioctl returns */
+          android::mSPIDwpSyncMutex.lock();
           nfaVSC_ForceDwpOnOff(false);
         }
       }
@@ -3890,11 +3942,16 @@ void* spiEventHandlerThread(void* arg) {
 
     else if (nfcFL.eseFL._ESE_DWP_SPI_SYNC_ENABLE &&
              ((usEvent & P61_STATE_SPI_PRIO) || (usEvent & P61_STATE_SPI))) {
+      /* Locking the eSE(DWP/SPI) access, will be released after Force DWP
+       * ON/OFF callback ioctl returns */
+      android::mSPIDwpSyncMutex.lock();
       nfaVSC_ForceDwpOnOff(true);
       if (nfcFL.eseFL._WIRED_MODE_STANDBY) {
         if (android::nfcManager_getNfcState() != NFC_OFF)
           NFC_RelForceDwpOnOffWait((void*)&stat);
       }
+      /* Releasing the eSE access lock */
+      android::mSPIDwpSyncMutex.unlock();
     } else if (nfcFL.eseFL._ESE_DWP_SPI_SYNC_ENABLE &&
                ((usEvent & P61_STATE_SPI_PRIO_END) ||
                 (usEvent & P61_STATE_SPI_END))) {
@@ -3927,13 +3984,14 @@ void* spiEventHandlerThread(void* arg) {
         android::requestFwDownload();
       }
     }
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+        "%s: Event handled EXIT %x %d %d %d", __func__, usEvent,
+        android::nfcManager_isNfcActive(), android::nfcManager_isNfcDisabling(),
+        android::nfcManager_getNfcState());
+    usEvent = 0x00;
   }
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
-  /*Explicit cleanup to avoid any issue due to pthread datastructure
-   * corruption*/
-  __pthread_cleanup_push(&__cleanup, pCleanupRoutine, NULL);
-  __pthread_cleanup_pop(&__cleanup, 0);
-  pthread_exit(NULL);
+  pthread_cleanup_pop(1);
   return NULL;
 }
 
@@ -3954,7 +4012,7 @@ bool createSPIEvtHandlerThread() {
   bool stat = true;
   pthread_attr_t attr;
   pthread_attr_init(&attr);
-  pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+  pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
   if (pthread_create(&spiEvtHandler_thread, &attr, spiEventHandlerThread,
                      NULL) != 0) {
     DLOG_IF(INFO, nfc_debug_enabled)
@@ -3991,14 +4049,19 @@ void releaseSPIEvtHandlerThread() {
                          usEvtLen);
     LOG(ERROR) << StringPrintf("%s: Clearing queue ", __func__);
   } /* scope of the guard end */
-
-  /* Notifying the signal handler thread to exit if it is waiting */
-  SyncEventGuard guard(sSPISignalHandlerEvent);
-  sSPISignalHandlerEvent.notifyOne();
   {
     SyncEventGuard guard(SecureElement::getInstance().mModeSetNtf);
     SecureElement::getInstance().mModeSetNtf.notifyOne();
   }
+  /* Notifying/Signalling the signal handler thread to exit */
+  if (pthread_kill(spiEvtHandler_thread, SIG_SPI_EVENT_HANDLER) != 0) {
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("Killed spiEvtHandler_thread error status:%d", errno);
+  } else {
+    pthread_join(spiEvtHandler_thread, NULL);
+  }
+  DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("Exit releaseSPIEvtHandlerThread");
 }
 /*******************************************************************************
 **
@@ -4033,6 +4096,7 @@ static void nfaVSC_SVDDSyncOnOffCallback(uint8_t event, uint16_t param_len,
                                nfaStat);
   }
 }
+
 /*******************************************************************************
 **
 ** Function:        nfaVSC_SVDDSyncOnOff
@@ -4049,17 +4113,27 @@ static void nfaVSC_SVDDSyncOnOff(bool type) {
         "%s: nfcNxpEse or ESE_SVDD_SYNC not available. Returning", __func__);
     return;
   }
-  AutoMutex mutex(android::mSPIDwpSyncMutex);
-  tNFC_STATUS stat;
-  uint8_t param = 0x00;
-  if (type == true) {
-    param = 0x01;  // SVDD protection on
+
+  SecureElement& se = SecureElement::getInstance();
+  if (se.mIsWiredModeOpen) {
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("nfaVSC_SVDDSyncOnOff wiredModeOpen");
+    if (type == false) android::mSPIDwpSyncMutex.unlock();
+    return;
   }
+
   if (!android::nfcManager_isNfcActive() ||
       android::nfcManager_isNfcDisabling() ||
       (android::nfcManager_getNfcState() == NFC_OFF)) {
     LOG(ERROR) << StringPrintf("%s: NFC is no longer active.", __func__);
+    android::mSPIDwpSyncMutex.unlock();
     return;
+  }
+
+  tNFC_STATUS stat;
+  uint8_t param = 0x00;
+  if (type == true) {
+    param = 0x01;  // SVDD protection on
   }
   stat = NFA_SendVsCommand(0x31, 0x01, &param, nfaVSC_SVDDSyncOnOffCallback);
   if (NFA_STATUS_OK == stat) {
@@ -4071,6 +4145,7 @@ static void nfaVSC_SVDDSyncOnOff(bool type) {
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
         "%s: NFA_SendVsCommand failed stat = %d", __func__, stat);
   }
+  if (type == false) android::mSPIDwpSyncMutex.unlock();
 }
 
 /*******************************************************************************
@@ -4091,7 +4166,7 @@ static void nfaVSC_ForceDwpOnOff(bool type) {
         __func__);
     return;
   }
-  AutoMutex mutex(android::mSPIDwpSyncMutex);
+
   tNFC_STATUS stat = NFA_STATUS_FAILED;
   uint8_t xmitBuffer[] = {0x00, 0x00, 0x00, 0x00};
   uint8_t EVT_SEND_DATA = 0x10;
@@ -4214,7 +4289,9 @@ void spi_prio_signal_handler(int signum, siginfo_t* info, void* unused) {
   }
 
   uint16_t usEvent = 0;
-  if (signum == SIG_NFC) {
+  if (signum == SIG_NFC && (android::nfcManager_isNfcActive() != false &&
+                            !(android::nfcManager_isNfcDisabling()) &&
+                            (android::nfcManager_getNfcState() != NFC_OFF))) {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: Signal is SIG_NFC\n", __func__);
     if (nfcFL.eseFL._ESE_SVDD_SYNC || nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION ||
