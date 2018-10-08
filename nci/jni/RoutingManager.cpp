@@ -1002,14 +1002,9 @@ void RoutingManager::configureOffHostNfceeTechMask(void) {
   if (mDefaultEe & SecureElement::ESE_ID)  // eSE
   {
     preferredHandle = ROUTE_LOC_ESE_ID;
-  } else if (mDefaultEe & SecureElement::UICC_ID)  // UICC
+  } else if ((mDefaultEe & SecureElement::UICC_ID) || (mDefaultEe & SecureElement::UICC2_ID)) //UICC
   {
-    preferredHandle = SecureElement::getInstance().EE_HANDLE_0xF4;
-  } else if (nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC &&
-             nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH &&
-             (mDefaultEe & SecureElement::UICC2_ID))  // UICC
-  {
-    preferredHandle = ROUTE_LOC_UICC2_ID;
+    preferredHandle = ((sCurrentSelectedUICCSlot == 2) ? ROUTE_LOC_UICC2_ID : SecureElement::getInstance().EE_HANDLE_0xF4);
   }
 
   SecureElement::getInstance().getEeHandleList(ee_handleList, &count);
