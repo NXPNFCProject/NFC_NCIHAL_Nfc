@@ -164,16 +164,8 @@ static jboolean nativeNfcSecureElement_doResetSecureElement (JNIEnv*, jobject, j
     bool stat = false;
     NFCSTATUS status = NFCSTATUS_FAILED;
     SecureElement &se = SecureElement::getInstance();
-    if(!se.mIsWiredModeOpen)
-         return false;
-
     if( nfcFL.nfcNxpEse) {
         LOG(INFO) << StringPrintf("%s: enter; handle=0x%04x", __func__, handle);
-        if(!se.mIsWiredModeOpen)
-        {
-            LOG(ERROR) << StringPrintf("wired mode is not open");
-            return stat;
-        }
         status = se.setNfccPwrConfig(se.NFCC_DECIDES);
         if(status != NFA_STATUS_OK)
         {

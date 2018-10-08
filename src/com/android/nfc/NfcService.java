@@ -134,7 +134,6 @@ import java.util.Timer;
 import java.io.IOException;
 import com.nxp.nfc.INxpNfcAdapter;
 import com.nxp.nfc.INxpNfcAdapterExtras;
-import java.io.IOException;
 import java.util.HashSet;
 import com.gsma.nfc.internal.NxpNfcController;
 import com.nxp.nfc.gsma.internal.INxpNfcController;
@@ -145,6 +144,7 @@ import android.se.omapi.ISecureElementService;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Constructor;
 
 public class NfcService implements DeviceHostListener {
     static final boolean DBG = true;
@@ -306,13 +306,15 @@ public class NfcService implements DeviceHostListener {
     // Timeout to re-apply routing if a tag was present and we postponed it
     private static final int APPLY_ROUTING_RETRY_TIMEOUT_MS = 5000;
 
+    // eSE handle
+    public static final int EE_HANDLE_0xF3 = 0x4C0;
+
     private final UserManager mUserManager;
 
     private static int nci_version = NCI_VERSION_1_0;
     // NFC Execution Environment
     // fields below are protected by this
     public NativeNfcSecureElement mSecureElement;
-    private OpenSecureElement mOpenEe;  // null when EE closed
     public boolean isWiredOpen = false;
     private final ReaderModeDeathRecipient mReaderModeDeathRecipient =
             new ReaderModeDeathRecipient();
@@ -375,7 +377,6 @@ public class NfcService implements DeviceHostListener {
     boolean mSEClientAccessState = false;
     NfcAdapterService mNfcAdapter;
     NfcDtaService mNfcDtaService;
-    NfcAdapterExtrasService mExtrasService;
     NxpNfcAdapterExtrasService mNxpExtrasService;
     NxpNfcAdapterService mNxpNfcAdapter;
     boolean mIsDebugBuild;
@@ -409,6 +410,9 @@ public class NfcService implements DeviceHostListener {
     Class mWiredSeClass;
     Method mWiredSeInitMethod, mWiredSeDeInitMethod;
     Object mWiredSeObj;
+
+    Class mNfcExtraClass;
+    Object mNfcExtraObj;
 
     private int ROUTE_ID_HOST  = 0x00;
     private int ROUTE_ID_SMX   = 0x01;
@@ -577,7 +581,7 @@ public class NfcService implements DeviceHostListener {
 
         mNfcTagService = new TagService();
         mNfcAdapter = new NfcAdapterService();
-        mExtrasService = new NfcAdapterExtrasService();
+
         mNxpNfcAdapter = new NxpNfcAdapterService();
         mNxpExtrasService = new NxpNfcAdapterExtrasService();
         Log.i(TAG, "Starting NFC service");
@@ -595,6 +599,25 @@ public class NfcService implements DeviceHostListener {
         mScreenStateHelper = new ScreenStateHelper(mContext);
         mContentResolver = mContext.getContentResolver();
         mDeviceHost = new NativeNfcManager(mContext, this);
+
+        Object[] args = new Object[] {mDeviceHost, mContext};
+        try {
+          mNfcExtraClass = Class.forName("com.android.nfc.NfcAdapterExtrasService");
+          Constructor mNfcExtraConstr = mNfcExtraClass.getDeclaredConstructor(DeviceHost.class, Context.class);
+          mNfcExtraObj = mNfcExtraConstr.newInstance(args);
+        } catch (NoSuchMethodException e ) {
+          Log.e(TAG, "NfcAdapterExtrasService NoSuchMethodException");
+          e.printStackTrace();
+        } catch (InvocationTargetException e) {
+          Log.e(TAG, "NfcAdapterExtrasService InvocationTargetException");
+          e.printStackTrace();
+        } catch (ClassNotFoundException | IllegalAccessException e){
+          Log.e(TAG, "NfcAdapterExtrasService Class not found");
+          e.printStackTrace();
+        } catch (InstantiationException e) {
+          Log.e(TAG, "NfcAdapterExtrasService object Instantiation failed");
+          e.printStackTrace();
+        }
 
         mNfcUnlockManager = NfcUnlockManager.getInstance();
 
@@ -805,6 +828,7 @@ public class NfcService implements DeviceHostListener {
     byte[] doTransceiveNoLock(int handle, byte[] cmd) {
         return mSecureElement.doTransceive(handle, cmd);
     }
+
     /**
      * Manages tasks that involve turning on/off the NFC controller.
      * <p/>
@@ -1417,7 +1441,7 @@ public class NfcService implements DeviceHostListener {
 
         @Override
         public INfcAdapterExtras getNfcAdapterExtrasInterface(String pkg) throws RemoteException {
-            return mExtrasService;
+            return (INfcAdapterExtras) mNfcExtraObj;
         }
 
         @Override
@@ -2144,167 +2168,6 @@ public class NfcService implements DeviceHostListener {
         }
 
     };
- void _close(int callingPid, IBinder binder) throws IOException {
-        // Blocks until a pending open() or transceive() times out.
-        //TODO: This is incorrect behavior - the close should interrupt pending
-        // operations. However this is not supported by current hardware.
-
-        synchronized (NfcService.this) {
-            if (!isNfcEnabledOrShuttingDown()) {
-                throw new IOException("NFC adapter is disabled");
-            }
-            if (mOpenEe == null) {
-                throw new IOException("NFC EE closed");
-            }
-            if (callingPid != -1 && callingPid != mOpenEe.pid) {
-                throw new SecurityException("Wrong PID");
-            }
-            if (mOpenEe.binder != binder) {
-                throw new SecurityException("Wrong binder handle");
-            }
-
-            binder.unlinkToDeath(mOpenEe, 0);
-            mDeviceHost.resetTimeouts();
-            doDisconnect(mOpenEe.handle);
-            isWiredOpen = false;
-            mOpenEe = null;
-        }
-    }
-
-    final class NfcAdapterExtrasService extends INfcAdapterExtras.Stub {
-        private Bundle writeNoException() {
-            Bundle p = new Bundle();
-            p.putInt("e", 0);
-            return p;
-        }
-
-        private Bundle writeEeException(int exceptionType, String message) {
-            Bundle p = new Bundle();
-            p.putInt("e", exceptionType);
-            p.putString("m", message);
-            return p;
-        }
-
-        @Override
-        public Bundle open(String pkg, IBinder b) throws RemoteException {
-            NfcPermissions.enforceAdminPermissions(mContext);
-            Bundle result;
-            int handle = _open(b);
-            if (handle < 0) {
-                result = writeEeException(handle, "NFCEE open exception.");
-            } else {
-                result = writeNoException();
-            }
-            return result;
-        }
-
-        /**
-         * Opens a connection to the secure element.
-         *
-         * @return A handle with a value >= 0 in case of success, or a
-         *         negative value in case of failure.
-         */
-        private int _open(IBinder b) {
-            synchronized(NfcService.this) {
-                if (!isNfcEnabled()) {
-                    return EE_ERROR_NFC_DISABLED;
-                }
-                if (mInProvisionMode) {
-                    /* Deny access to the NFCEE as long as
-                     * the device is being setup*/
-                    return EE_ERROR_IO;
-                }
-                if (mOpenEe != null || isWiredOpen) {
-                    Log.i(TAG, "SE is Busy. returning..");
-                    return EE_ERROR_ALREADY_OPEN;
-                }
-                int handle = doOpenSecureElementConnection();
-                if (handle < 0) {
-                    Log.i(TAG, "open secure element fails.");
-                    return handle;
-                } else {
-                    isWiredOpen = true;
-                }
-                mOpenEe = new OpenSecureElement(getCallingPid(), handle, b);
-                try {
-                    b.linkToDeath(mOpenEe, 0);
-                } catch (RemoteException e) {
-                    mOpenEe.binderDied();
-                }
-
-                /* Add the calling package to the list of packages
-                 * that have accessed the secure element.
-                 */
-                for (String packageName : mContext.getPackageManager().getPackagesForUid(getCallingUid())) {
-                    mSePackages.add(packageName);
-                }
-
-                return handle;
-           }
-        }
-
-        @Override
-        public Bundle close(String pkg, IBinder binder) throws RemoteException {
-            NfcPermissions.enforceAdminPermissions(mContext);
-            Bundle result;
-            try {
-                _close(getCallingPid(), binder);
-                result = writeNoException();
-            } catch (IOException e) {
-                result = writeEeException(EE_ERROR_IO, e.getMessage());
-            }
-            return result;
-        }
-
-
-        @Override
-        public Bundle transceive(String pkg, byte[] in) throws RemoteException {
-            NfcPermissions.enforceAdminPermissions(mContext);
-            Bundle result;
-            byte[] out;
-            try {
-                out = _transceive(in);
-                result = writeNoException();
-                result.putByteArray("out", out);
-            } catch (IOException e) {
-                result = writeEeException(EE_ERROR_IO, e.getMessage());
-            }
-            return result;
-        }
-
-        private byte[] _transceive(byte[] data) throws IOException {
-            synchronized(NfcService.this) {
-                if (!isNfcEnabled()) {
-                    throw new IOException("NFC is not enabled");
-                }
-                if (mOpenEe == null) {
-                    throw new IOException("NFC EE is not open");
-                }
-                if (getCallingPid() != mOpenEe.pid) {
-                    throw new SecurityException("Wrong PID");
-                }
-            }
-            return doTransceive(mOpenEe.handle, data);
-        }
-        @Override
-        public String getDriverName(String pkg) throws RemoteException {
-            return null;
-        }
-                @Override
-        public int getCardEmulationRoute(String pkg) throws RemoteException {
-            return 0;
-        }
-
-        @Override
-        public void setCardEmulationRoute(String pkg, int route) throws RemoteException {
-           return;
-        }
-
-        @Override
-        public void authenticate(String pkg, byte[] token) throws RemoteException {
-            return;
-        }
-    }
 
     final class NxpNfcAdapterExtrasService extends INxpNfcAdapterExtras.Stub {
     private Bundle writeNoException() {
@@ -2349,10 +2212,7 @@ public class NfcService implements DeviceHostListener {
             if (!isNfcEnabledOrShuttingDown()) {
                throw new IOException("NFC adapter is disabled");
             }
-            if (mOpenEe == null) {
-               throw new IOException("NFC EE closed");
-            }
-            return mSecureElement.doReset(mOpenEe.handle);
+            return mSecureElement.doReset(EE_HANDLE_0xF3);
         }
      }
 
@@ -2377,52 +2237,12 @@ public class NfcService implements DeviceHostListener {
             if (!isNfcEnabled()) {
                 throw new IOException("NFC is not enabled");
             }
-            if (mOpenEe == null) {
-                throw new IOException("NFC EE is not open");
-            }
-            if (getCallingPid() != mOpenEe.pid) {
-                throw new SecurityException("Wrong PID");
-            }
         }
-        return mSecureElement.doGetAtr(mOpenEe.handle);
+        return mSecureElement.doGetAtr(EE_HANDLE_0xF3);
     }
 
 }
 
-    /** resources kept while secure element is open */
-    private class OpenSecureElement implements IBinder.DeathRecipient {
-        /* pid that opened SE
-        * binder handle used for DeathReceipient. Must keep
-        * a reference to this, otherwise it can get GC'd and
-        * the binder stub code might create a different BinderProxy
-        * for the same remote IBinder, causing mismatched
-        * link()/unlink()
-        */
-        public int pid;
-        public IBinder binder;
-        public int handle; // low-level handle
-        public OpenSecureElement(int pid, int handle, IBinder binder) {
-            this.pid = pid;
-            this.handle = handle;
-            this.binder = binder;
-        }
-        @Override
-        public void binderDied() {
-            synchronized (NfcService.this) {
-                Log.i(TAG, "Tracked app " + pid + " died");
-                pid = -1;
-                try {
-                    _close(-1, binder);
-                  isWiredOpen =false;
-                } catch (IOException e) { /* already closed */ }
-            }
-        }
-        @Override
-        public String toString() {
-            return new StringBuilder('@').append(Integer.toHexString(hashCode())).append("[pid=")
-                    .append(pid).append(" handle=").append(handle).append("]").toString();
-        }
-    }
     boolean isNfcEnabledOrShuttingDown() {
         synchronized (this) {
             return (mState == NfcAdapter.STATE_ON || mState == NfcAdapter.STATE_TURNING_OFF);
