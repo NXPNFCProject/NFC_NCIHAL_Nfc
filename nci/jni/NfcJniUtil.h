@@ -133,6 +133,7 @@ typedef enum {
 #define NFC_CMD_TIMEOUT \
   2000 /* 2 sec timeout to wait on the semaphore for the command sent */
 #define ONE_SECOND_MS 1000
+#define DWP_LINK_ACTV_TIMEOUT 4000
 #endif
 
 struct nfc_jni_native_data {

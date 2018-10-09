@@ -4515,7 +4515,9 @@ tNFA_STATUS SecureElement::SecElem_EeModeSet(uint16_t handle, uint8_t mode) {
           (android::nfcManager_getNfcState() != NFC_OFF)) {
         DLOG_IF(INFO, nfc_debug_enabled)
             << StringPrintf("Waiting for Mode Set Ntf");
-        if (mModeSetNtf.wait(500) == false) {
+        /*ModeSetNtf wait timeout is increased for the synchronization with dual
+         * mode involving with RF and triple mode*/
+        if (mModeSetNtf.wait(DWP_LINK_ACTV_TIMEOUT) == false) {
           LOG(ERROR) << StringPrintf("%s: timeout waiting for setModeNtf",
                                      __func__);
         } else {
@@ -4529,7 +4531,9 @@ tNFA_STATUS SecureElement::SecElem_EeModeSet(uint16_t handle, uint8_t mode) {
       stat = NFA_EeModeSet(handle, mode);
       if (stat == NFA_STATUS_OK && !android::nfcManager_isNfcDisabling() &&
           (android::nfcManager_getNfcState() != NFC_OFF)) {
-        mEeSetModeEvent.wait();
+        /*EeSetModeEvent wait timeout is increased for the synchronization with
+         * dual mode involving with RF and triple mode*/
+        mEeSetModeEvent.wait(DWP_LINK_ACTV_TIMEOUT);
       } else {
         // do nothing
       }
@@ -4894,7 +4898,7 @@ tNFA_STATUS SecureElement::setNfccPwrConfig(uint8_t value) {
     SyncEventGuard guard(mPwrLinkCtrlEvent);
     nfaStat = NFA_SendPowerLinkCommand((uint8_t)EE_HANDLE_0xF3, value);
     if (nfaStat == NFA_STATUS_OK && !android::nfcManager_isNfcDisabling())
-      mPwrLinkCtrlEvent.wait(NFC_CMD_TIMEOUT);
+      mPwrLinkCtrlEvent.wait(DWP_LINK_ACTV_TIMEOUT);
   }
   return mPwrCmdstatus;
 }
