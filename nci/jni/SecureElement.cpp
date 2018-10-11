@@ -4119,6 +4119,11 @@ static void nfaVSC_SVDDSyncOnOff(bool type) {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("nfaVSC_SVDDSyncOnOff wiredModeOpen");
     if (type == false) android::mSPIDwpSyncMutex.unlock();
+    tNFC_STATUS nfaStat;
+    if (NFC_RelSvddWait((void*)&nfaStat) != 0) {
+      LOG(ERROR) << StringPrintf("%s: NFC_RelSvddWait failed ret = %d",
+                                 __func__, nfaStat);
+    }
     return;
   }
 
@@ -4127,6 +4132,11 @@ static void nfaVSC_SVDDSyncOnOff(bool type) {
       (android::nfcManager_getNfcState() == NFC_OFF)) {
     LOG(ERROR) << StringPrintf("%s: NFC is no longer active.", __func__);
     android::mSPIDwpSyncMutex.unlock();
+    tNFC_STATUS nfaStat;
+    if (NFC_RelSvddWait((void*)&nfaStat) != 0) {
+      LOG(ERROR) << StringPrintf("%s: NFC_RelSvddWait failed ret = %d",
+                                 __func__, nfaStat);
+    }
     return;
   }
 
