@@ -226,7 +226,6 @@ public class AidRoutingManager {
                 already resolved by previously installed services, service state of newly installed app needs to be updated*/
                     NfcService.getInstance().updateStatusOfServices(true);
                 }
-                NfcService.getInstance().commitRouting();
                 return false;
             }
 
