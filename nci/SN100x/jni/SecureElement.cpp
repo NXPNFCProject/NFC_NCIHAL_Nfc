@@ -1632,7 +1632,7 @@ uint16_t SecureElement::getEeStatus(uint16_t eehandle) {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
       "%s  num_nfcee_present = %d", __func__, mNfceeData_t.mNfceePresent);
 
-  for (i = 1; i <= mNfceeData_t.mNfceePresent; i++) {
+  for (i = 0; i <= mNfceeData_t.mNfceePresent; i++) {
     if (mNfceeData_t.mNfceeHandle[i] == eehandle) {
       ee_status = mNfceeData_t.mNfceeStatus[i];
       DLOG_IF(INFO, nfc_debug_enabled)
