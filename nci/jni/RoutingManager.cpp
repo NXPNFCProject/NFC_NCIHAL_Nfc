@@ -1378,7 +1378,8 @@ void RoutingManager::compileTechEntries(void) {
       mDefaultTechFSeID = getUiccRoute(sCurrentSelectedUICCSlot);
     }
   } else {
-    mDefaultTechFSeID = SecureElement::getInstance().EE_HANDLE_0xF4;
+    mDefaultTechFSeID = (sCurrentSelectedUICCSlot==0x2)?SecureElement::getInstance().EE_HANDLE_0xF8:
+                          SecureElement::getInstance().EE_HANDLE_0xF4;
   }
 
   /*Check technologies supported by EE selected in conf file - For TypeF*/
