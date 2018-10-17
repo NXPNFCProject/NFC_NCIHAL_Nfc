@@ -465,6 +465,7 @@ static void nfcManager_setProvisionMode(JNIEnv* e, jobject o,
                                         jboolean provisionMode);
 static bool nfcManager_doPartialDeInitialize();
 static int nfcManager_doSelectUicc(JNIEnv* e, jobject o, jint uiccSlot);
+static void restartUiccListen(jint uiccSlot);
 static int nfcManager_doGetSelectedUicc(JNIEnv* e, jobject o);
 static void getUiccContext(int uiccSlot);
 static void update_uicc_context_info();
@@ -3091,8 +3092,9 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
           {
             DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
                 "%s: restart UICC listen mode (%02lX)", __func__, (num & 0xC7));
-            handle = SecureElement::getInstance().getEseHandleFromGenericId(
-                SecureElement::UICC_ID);
+            handle = (sCurrentSelectedUICCSlot!=0x02)?
+                SecureElement::getInstance().getEseHandleFromGenericId(SecureElement::UICC_ID):
+                SecureElement::getInstance().getEseHandleFromGenericId(SecureElement::UICC2_ID);
             SyncEventGuard guard(SecureElement::getInstance().mUiccListenEvent);
             stat = NFA_CeConfigureUiccListenTech(handle, 0x00);
             if (stat == NFA_STATUS_OK) {
@@ -4780,7 +4782,55 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
       }
     }
   }
-
+/*******************************************************************************
+ **
+ ** Function:        restartUiccListen()
+ **
+ ** Description:     ConfigureUICC Listen techmask according to uiccslot.
+ **
+ **
+ ** Returns:         null
+ **
+ *******************************************************************************/
+static void restartUiccListen(jint uiccSlot) {
+  tNFA_HANDLE handle = NFA_HANDLE_INVALID;
+  unsigned long int num = 0;
+  if (NfcConfig::hasKey(NAME_UICC_LISTEN_TECH_MASK)) {
+  num = NfcConfig::getUnsigned(NAME_UICC_LISTEN_TECH_MASK);
+  DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("%s:UICC_LISTEN_MASK=0x0%lu;", __func__, num);
+  }
+  {
+    SyncEventGuard guard(sNfaEnableDisablePollingEvent);
+    tNFA_STATUS status = NFA_StopRfDiscovery();
+    if (status == NFA_STATUS_OK) {
+      sNfaEnableDisablePollingEvent.wait();
+    } else
+      LOG(ERROR) << StringPrintf("%s: Failed to disable polling; error=0x%X",
+                                 __FUNCTION__, status);
+  }
+  {
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+        "%s: restart UICC listen mode (%02lX)", __func__, (num & 0xC7));
+    handle = (uiccSlot!=0x02)?
+        SecureElement::getInstance().getEseHandleFromGenericId(SecureElement::UICC_ID):
+        SecureElement::getInstance().getEseHandleFromGenericId(SecureElement::UICC2_ID);
+    SyncEventGuard guard(SecureElement::getInstance().mUiccListenEvent);
+    tNFA_STATUS stat = NFA_CeConfigureUiccListenTech(handle, 0x00);
+    if (stat == NFA_STATUS_OK) {
+      SecureElement::getInstance().mUiccListenEvent.wait();
+    } else
+      LOG(ERROR) << StringPrintf("fail to stop UICC listen");
+  }
+  {
+    SyncEventGuard guard(SecureElement::getInstance().mUiccListenEvent);
+    tNFA_STATUS stat = NFA_CeConfigureUiccListenTech(handle, (num & 0xC7));
+    if (stat == NFA_STATUS_OK) {
+      SecureElement::getInstance().mUiccListenEvent.wait();
+    } else
+      LOG(ERROR) << StringPrintf("fail to start UICC listen");
+  }
+}
   /*******************************************************************************
    **
    ** Function:        nfcManager_doSelectUicc()
@@ -4795,9 +4845,9 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
     (void)e;
     (void)o;
     uint8_t retStat = STATUS_UNKNOWN_ERROR;
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
     if (nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH) {
       tNFA_STATUS status = NFC_STATUS_FAILED;
-      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
           "%s: sUicc1CntxLen : 0x%02x  sUicc2CntxLen : 0x%02x", __func__,
           dualUiccInfo.sUicc1CntxLen, dualUiccInfo.sUicc2CntxLen);
@@ -4818,6 +4868,7 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
       if (sRfEnabled) {
         startRfDiscovery(false);
       }
+      restartUiccListen(uiccSlot);
 
       bitVal = ((0x10) | uiccSlot);
 
@@ -4992,8 +5043,6 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
         startRfDiscovery(true);
       }
 
-      DLOG_IF(INFO, nfc_debug_enabled)
-          << StringPrintf("%s: exit retStat = %d", __func__, retStat);
     } else if (nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH) {
       retStat = nfcManager_staticDualUicc_Precondition(uiccSlot);
 
@@ -5003,6 +5052,7 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
         return retStat;
       }
 
+      restartUiccListen(uiccSlot);
       nfcManager_setPreferredSimSlot(NULL, NULL, uiccSlot);
       retStat = UICC_CONFIGURED;
       RoutingManager::getInstance().cleanRouting();
@@ -5013,6 +5063,8 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
           "%s: Dual uicc not supported retStat = %d", __func__, retStat);
     }
+    DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("%s: exit retStat = %d", __func__, retStat);
     return retStat;
   }
 
