@@ -41,6 +41,7 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import com.android.nfc.NfcPermissions;
 import com.android.nfc.NfcService;
 import com.nxp.nfc.NfcConstants;
+import android.nfc.NfcAdapter;
 
 
 public class NxpNfcController {
@@ -112,7 +113,7 @@ public class NxpNfcController {
         Intent CertificateIntent = new Intent();
         CertificateIntent.setAction(NfcConstants.ACTION_CHECK_X509);
         CertificateIntent.setPackage(NfcConstants.SET_PACKAGE_NAME);
-        CertificateIntent.putExtra(NfcConstants.EXTRA_SE_NAME, seName);
+        CertificateIntent.putExtra(NfcAdapter.EXTRA_SECURE_ELEMENT_NAME, seName);
         CertificateIntent.putExtra(NfcConstants.EXTRA_PKG, pkg);
         mContext.sendBroadcast(CertificateIntent);
 
