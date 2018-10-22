@@ -36,6 +36,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.PixelFormat;
+import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.os.AsyncTask;
 import android.os.Binder;
@@ -597,14 +598,8 @@ public class SendUi implements Animator.AnimatorListener, View.OnTouchListener,
      * Returns a screenshot of the current display contents.
      */
     Bitmap createScreenshot() {
-        // We need to orient the screenshot correctly (and the Surface api seems to
-        // take screenshots only in the natural orientation of the device :!)
-        mDisplay.getRealMetrics(mDisplayMetrics);
         boolean hasNavBar =  mContext.getResources().getBoolean(
                 com.android.internal.R.bool.config_showNavigationBar);
-
-        float[] dims = {mDisplayMetrics.widthPixels, mDisplayMetrics.heightPixels};
-        float degrees = getDegreesForRotation(mDisplay.getRotation());
         final int statusBarHeight = mContext.getResources().getDimensionPixelSize(
                                         com.android.internal.R.dimen.status_bar_height);
 
@@ -617,61 +612,46 @@ public class SendUi implements Animator.AnimatorListener, View.OnTouchListener,
         final int navBarWidth = hasNavBar ? mContext.getResources().getDimensionPixelSize(
                                         com.android.internal.R.dimen.navigation_bar_width) : 0;
 
-        boolean requiresRotation = (degrees > 0);
-        if (requiresRotation) {
-            // Get the dimensions of the device in its native orientation
-            mDisplayMatrix.reset();
-            mDisplayMatrix.preRotate(-degrees);
-            mDisplayMatrix.mapPoints(dims);
-            dims[0] = Math.abs(dims[0]);
-            dims[1] = Math.abs(dims[1]);
+        mDisplay.getRealMetrics(mDisplayMetrics);
+        float smallestWidth = (float)Math.min(mDisplayMetrics.widthPixels,
+                mDisplayMetrics.heightPixels);
+        float smallestWidthDp = smallestWidth / (mDisplayMetrics.densityDpi / 160f);
+
+        int rot = mDisplay.getRotation();
+
+        // TODO this is somewhat device-specific; need generic solution.
+        // The starting crop for the screenshot is the fullscreen without the status bar, which
+        // is always on top. The conditional check will determine how to crop the navbar,
+        // depending on orienation and screen size.
+        Rect crop = new Rect(0, statusBarHeight, mDisplayMetrics.widthPixels,
+                mDisplayMetrics.heightPixels);
+        if (mDisplayMetrics.widthPixels < mDisplayMetrics.heightPixels) {
+            // Portrait mode: crop the navbar out from the bottom, width unchanged
+            crop.bottom -= navBarHeight;
+        } else {
+            // Landscape mode:
+            if (smallestWidthDp > 599) {
+                // Navbar on bottom on >599dp width devices, so crop navbar out from the bottom.
+                crop.bottom -= navBarHeightLandscape;
+            } else {
+                // Navbar on right, so crop navbar out from right of screen.
+                crop.right -= navBarWidth;
+            }
         }
 
-        Bitmap bitmap = SurfaceControl.screenshot((int) dims[0], (int) dims[1]);
+        int width = crop.width();
+        int height = crop.height();
+        // Take the screenshot. SurfaceControl will generate a hardware bitmap in the correct
+        // orientation and size.
+        Bitmap bitmap = SurfaceControl.screenshot(crop, width, height, rot);
         // Bail if we couldn't take the screenshot
         if (bitmap == null) {
             return null;
         }
 
-        if (requiresRotation) {
-            // Rotate the screenshot to the current orientation
-            Bitmap ss = Bitmap.createBitmap(mDisplayMetrics.widthPixels,
-                    mDisplayMetrics.heightPixels, Bitmap.Config.ARGB_8888);
-            Canvas c = new Canvas(ss);
-            c.translate(ss.getWidth() / 2, ss.getHeight() / 2);
-            c.rotate(360f - degrees);
-            c.translate(-dims[0] / 2, -dims[1] / 2);
-            c.drawBitmap(bitmap, 0, 0, null);
-
-            bitmap = ss;
-        }
-
-        // TODO this is somewhat device-specific; need generic solution.
-        // Crop off the status bar and the nav bar
-        // Portrait: 0, statusBarHeight, width, height - status - nav
-        // Landscape: 0, statusBarHeight, width - navBar, height - status
-        int newLeft = 0;
-        int newTop = statusBarHeight;
-        int newWidth = bitmap.getWidth();
-        int newHeight = bitmap.getHeight();
-        float smallestWidth = (float)Math.min(newWidth, newHeight);
-        float smallestWidthDp = smallestWidth / (mDisplayMetrics.densityDpi / 160f);
-        if (bitmap.getWidth() < bitmap.getHeight()) {
-            // Portrait mode: status bar is at the top, navbar bottom, width unchanged
-            newHeight = bitmap.getHeight() - statusBarHeight - navBarHeight;
-        } else {
-            // Landscape mode: status bar is at the top
-            // Navbar: bottom on >599dp width devices, otherwise to the side
-            if (smallestWidthDp > 599) {
-                newHeight = bitmap.getHeight() - statusBarHeight - navBarHeightLandscape;
-            } else {
-                newHeight = bitmap.getHeight() - statusBarHeight;
-                newWidth = bitmap.getWidth() - navBarWidth;
-            }
-        }
-        bitmap = Bitmap.createBitmap(bitmap, newLeft, newTop, newWidth, newHeight);
-
-        return bitmap;
+        // Convert to a software bitmap so it can be set in an ImageView.
+        Bitmap swBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+        return swBitmap;
     }
 
     @Override
