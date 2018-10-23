@@ -4252,7 +4252,8 @@ static tNFA_STATUS nfaVSC_ForceDwpOnOff(bool type) {
           return stat;
         }
         standby_state = STANDBY_MODE_SUSPEND;
-        spiDwpSyncState = STATE_IDLE;
+        /* DWP is still in standby timeout state */
+        spiDwpSyncState = STATE_IDLE | STATE_TIME_OUT;
         return NFA_STATUS_OK;
       }
       /*If DWP session is closed*/
