@@ -3400,7 +3400,7 @@ void SecureElement::NfccStandByOperation(nfcc_standby_operation_t value) {
     case STANDBY_MODE_OFF: {
       if (nfcFL.eseFL._WIRED_MODE_STANDBY) {
         if (standby_state == STANDBY_MODE_SUSPEND) {
-          if (mNfccPowerMode == 1) {
+          if ((mNfccPowerMode == 1) && !(dual_mode_current_state & SPI_ON)) {
             nfaStat = setNfccPwrConfig(POWER_ALWAYS_ON | COMM_LINK_ACTIVE);
             if (nfaStat != NFA_STATUS_OK) {
               DLOG_IF(INFO, nfc_debug_enabled)
