@@ -40,6 +40,7 @@ extern bool isDynamicUiccEnabled;
 namespace android
 {
 extern void startRfDiscovery (bool isStart);
+extern tNFA_STATUS NxpNfc_Write_Cmd_Common(uint8_t retlen, uint8_t* buffer);
 }
 uint8_t  SecureElement::mStaticPipeProp;
 /*******************************************************************************
@@ -539,18 +540,21 @@ void SecureElement::nfaHciCallback(tNFA_HCI_EVT event,
             if(eventData->apdu_aborted.atr_len > 0)
             {
                 sSecElem.mAbortEventWaitOk = true;
-                SyncEventGuard guard(sSecElem.mAbortEvent);
                 memcpy(sSecElem.mAtrInfo, eventData->apdu_aborted.p_atr, eventData->apdu_aborted.atr_len);
                 sSecElem.mAtrInfolen = eventData->apdu_aborted.atr_len;
-                sSecElem.mAtrStatus = eventData->rcvd_evt.status;
-                sSecElem.mAbortEvent.notifyOne();
+                sSecElem.mAtrStatus = eventData->apdu_aborted.status;
+            }
+            else if(eventData->apdu_aborted.status == NFA_STATUS_TIMEOUT)
+            {
+                sSecElem.mAbortEventWaitOk = false;
+                sSecElem.mAtrStatus = NFA_STATUS_TIMEOUT;
             }
             else
             {
                 sSecElem.mAbortEventWaitOk = false;
-                SyncEventGuard guard(sSecElem.mAbortEvent);
-                sSecElem.mAbortEvent.notifyOne();
             }
+            SyncEventGuard guard(sSecElem.mAbortEvent);
+            sSecElem.mAbortEvent.notifyOne();
             break;
         }
     case NFA_HCI_GET_REG_RSP_EVT :
@@ -1172,33 +1176,112 @@ bool SecureElement::apduGateReset(jint seID, uint8_t* recvBuffer, int32_t *recvB
 {
     static const char fn[] = "SecureElement::getAtr";
     tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
+    uint8_t retry = 0;
 
     LOG(INFO) << StringPrintf("%s: enter; seID=0x%X", fn, seID);
     if(nfcFL.nfcNxpEse) {
-            /*ETSI 12 Gate Info ATR */
-            mAbortEventWaitOk = false;
-            SyncEventGuard guard (mAbortEvent);
-            nfaStat = NFA_HciAbortApdu(mNfaHciHandle,mActiveEeHandle,SmbTransceiveTimeOutVal);
-            if (nfaStat == NFA_STATUS_OK)
+      /*ETSI 12 Gate Info ATR */
+
+      do {
+        mAbortEventWaitOk = false;
+        mAtrStatus = NFA_STATUS_FAILED;
+        SyncEventGuard guard (mAbortEvent);
+        nfaStat = NFA_HciAbortApdu(mNfaHciHandle,mActiveEeHandle,SmbTransceiveTimeOutVal);
+        if (nfaStat == NFA_STATUS_OK)
+        {
+          mAbortEvent.wait();
+        }
+        if(mAbortEventWaitOk == false)
+        {
+          LOG(INFO) << StringPrintf("%s (EVT_ABORT)Wait reposne timeout", fn);
+          if(mAtrStatus == NFA_STATUS_TIMEOUT)
+          {
+            LOG(INFO) << StringPrintf("%s Perform NFCEE recovery", fn);
+            if(!doNfcee_Session_Reset())
             {
-                mAbortEvent.wait();
-            }
-            if(mAbortEventWaitOk == false)
-            {
-                LOG(INFO) << StringPrintf("%s (EVT_ABORT)Wait reposne timeout", fn);
-                nfaStat = NFA_STATUS_FAILED;
+              nfaStat = NFA_STATUS_FAILED;
+              LOG(INFO) << StringPrintf("%s recovery failed", fn);
             }
             else
             {
-                *recvBufferSize = mAtrInfolen;
-                mAtrRespLen = mAtrInfolen;
-                memcpy(recvBuffer, mAtrInfo, mAtrInfolen);
-                memset(mAtrRespData, 0, EVT_ABORT_MAX_RSP_LEN);
-                memcpy(mAtrRespData, mAtrInfo, mAtrInfolen);
+              LOG(INFO) << StringPrintf("%s recovery success", fn);
+              nfaStat = NFA_STATUS_OK;
+              nfaStat = NFA_HciAbortApdu(mNfaHciHandle,mActiveEeHandle,SmbTransceiveTimeOutVal);
+              if (nfaStat == NFA_STATUS_OK)
+              {
+                mAbortEvent.wait();
+                 usleep(100 * 1000);
+              }
             }
-    }
+          }
+        }
+      retry++;
+    } while((retry < 3) && (mAtrStatus == NFA_STATUS_INVALID_PARAM));
 
-    return (nfaStat == NFA_STATUS_OK)?true:false;
+    if(mAbortEventWaitOk)
+    {
+      *recvBufferSize = mAtrInfolen;
+      mAtrRespLen = mAtrInfolen;
+      memcpy(recvBuffer, mAtrInfo, mAtrInfolen);
+      memset(mAtrRespData, 0, EVT_ABORT_MAX_RSP_LEN);
+      memcpy(mAtrRespData, mAtrInfo, mAtrInfolen);
+    }
+  }
+  return (nfaStat == NFA_STATUS_OK)?true:false;
+}
+
+/*******************************************************************************
+**
+** Function:        doNfcee_Session_Reset
+**
+** Description:     Perform NFcee session reset & recovery
+**
+** Returns:         Returns True if success
+**
+*******************************************************************************/
+bool SecureElement::doNfcee_Session_Reset()
+{
+  tNFA_STATUS status = NFA_STATUS_FAILED;
+  static const char fn[] = " SecureElement::doNfcee_Session_Reset";
+  uint8_t reset_nfcee_session[] = { 0x20, 0x02, 0x0C, 0x01, 0xA0, 0xEB, 0x08,
+  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+
+  android::startRfDiscovery(false);
+
+  if(android::NxpNfc_Write_Cmd_Common(sizeof(reset_nfcee_session),
+  reset_nfcee_session) == NFA_STATUS_OK)
+  {
+    LOG(INFO) << StringPrintf("%s Nfcee session reset success", fn);
+    android::startRfDiscovery(true);
+
+    if(setNfccPwrConfig(POWER_ALWAYS_ON) == NFA_STATUS_OK)
+    {
+      LOG(INFO) << StringPrintf("%s Nfcee session PWRLNK 01", fn);
+      if(SecEle_Modeset(NFCEE_DISABLE))
+      {
+        LOG(INFO) << StringPrintf("%s Nfcee session mode set off", fn);
+        usleep(100 * 1000);
+        if(setNfccPwrConfig(POWER_ALWAYS_ON|COMM_LINK_ACTIVE) == NFA_STATUS_OK)
+        {
+          LOG(INFO) << StringPrintf("%s Nfcee session PWRLNK 03", fn);
+          if(SecEle_Modeset(NFCEE_ENABLE))
+          {
+            usleep(100 * 1000);
+            LOG(INFO) << StringPrintf("%s Nfcee session mode set on", fn);
+            status = NFA_STATUS_OK;
+          }
+        }
+      }
+      else
+        status = NFA_STATUS_FAILED;
+    }
+    else
+      status = NFA_STATUS_FAILED;
+  }
+  else
+    status = NFA_STATUS_FAILED;
+
+  return (status == NFA_STATUS_OK) ? true: false;
 }
 
 /*******************************************************************************

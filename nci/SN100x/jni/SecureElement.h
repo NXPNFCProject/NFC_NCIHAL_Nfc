@@ -321,6 +321,17 @@ bool apduGateReset(jint seID, uint8_t* recvBuffer, int32_t *recvBufferSize);
 
 /*******************************************************************************
 **
+** Function:        doNfcee_Session_Reset
+**
+** Description:     GetAtr response from the connected eSE
+**
+** Returns:         Returns True if success
+**
+*******************************************************************************/
+bool doNfcee_Session_Reset();
+
+/*******************************************************************************
+**
 ** Function:        getAtrData
 **
 ** Description:     Return stored GetAtr response
