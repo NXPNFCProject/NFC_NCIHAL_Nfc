@@ -842,6 +842,7 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
 
         setNfccPwrConfig(POWER_ALWAYS_ON|COMM_LINK_ACTIVE);
         SecEle_Modeset(NFCEE_ENABLE);
+        sendEvent(SecureElement::EVT_END_OF_APDU_TRANSFER);
         {
             tNFA_EE_INFO *pEE = findEeByHandle (EE_HANDLE_0xF3);
             uint8_t eeStatus = 0x00;
