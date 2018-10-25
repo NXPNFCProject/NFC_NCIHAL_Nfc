@@ -4259,7 +4259,10 @@ static tNFA_STATUS nfaVSC_ForceDwpOnOff(bool type) {
       /*If DWP session is closed*/
       stat = SecureElement::getInstance().setNfccPwrConfig(
           SecureElement::getInstance().NFCC_DECIDES);
-      if (stat != NFA_STATUS_OK) return stat;
+      if (stat != NFA_STATUS_OK) {
+        spiDwpSyncState = STATE_IDLE;
+        return stat;
+      }
     }
 
     if (spiDwpSyncState & STATE_DWP_CLOSE) {
