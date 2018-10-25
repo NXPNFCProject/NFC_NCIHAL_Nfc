@@ -2665,6 +2665,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
   static tNFA_STATUS nfcManagerEnableNfc(NfcAdaptation & theInstance) {
     uint8_t retryCount = 0;
     tNFA_STATUS stat = NFA_STATUS_OK;
+    sEnableStatus = NFA_STATUS_FAILED;
     do {
       SyncEventGuard guard(sNfaEnableEvent);
       tHAL_NFC_ENTRY* halFuncEntries = theInstance.GetHalEntryFuncs();
@@ -2678,7 +2679,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
           << StringPrintf("%s: sEnableStatus =0x%X", __func__, sEnableStatus);
     } while ((sEnableStatus == NFA_STATUS_NOT_INITIALIZED) && (retryCount < 3));
 
-    return stat;
+    return sEnableStatus;
   }
   /*******************************************************************************
    **

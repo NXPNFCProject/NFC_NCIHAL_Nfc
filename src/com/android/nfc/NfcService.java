@@ -1503,6 +1503,7 @@ public class NfcService implements DeviceHostListener {
                     if (!mDeviceHost.initialize()) {
                         Log.w(TAG, "Error enabling NFC");
                         updateState(NfcAdapter.STATE_OFF);
+                        watchDog.cancel();
                         return false;
                     }
                 } finally {
