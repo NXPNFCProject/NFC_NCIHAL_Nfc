@@ -13,6 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/******************************************************************************
+*
+*  The original Work has been changed by NXP.
+*
+*  Licensed under the Apache License, Version 2.0 (the "License");
+*  you may not use this file except in compliance with the License.
+*  You may obtain a copy of the License at
+*
+*  http://www.apache.org/licenses/LICENSE-2.0
+*
+*  Unless required by applicable law or agreed to in writing, software
+*  distributed under the License is distributed on an "AS IS" BASIS,
+*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*  See the License for the specific language governing permissions and
+*  limitations under the License.
+*
+*  Copyright 2018 NXP
+*
+******************************************************************************/
 
 package com.android.nfc.cardemulation;
 
@@ -303,14 +322,17 @@ public class HostNfcFEmulationManager {
                     return;
                 }
                 byte[] data = dataBundle.getByteArray("data");
-                if (data == null) {
+                /* this piece of code is commented to allow the application to send an empty
+                   data packet */
+                /*if (data == null) {
+                    Log.e(TAG, "Data is null");
                     return;
                 }
                 if (data.length == 0) {
                     Log.e(TAG, "Invalid response packet");
                     return;
-                }
-                if (data.length != (data[0] & 0xff)) {
+                }*/
+                if (data != null && (data.length != (data[0] & 0xff))) {
                     Log.e(TAG, "Invalid response packet");
                     return;
                 }
