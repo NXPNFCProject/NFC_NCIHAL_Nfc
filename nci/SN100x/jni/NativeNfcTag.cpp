@@ -13,6 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/******************************************************************************
+*
+*  The original Work has been changed by NXP.
+*
+*  Licensed under the Apache License, Version 2.0 (the "License");
+*  you may not use this file except in compliance with the License.
+*  You may obtain a copy of the License at
+*
+*  http://www.apache.org/licenses/LICENSE-2.0
+*
+*  Unless required by applicable law or agreed to in writing, software
+*  distributed under the License is distributed on an "AS IS" BASIS,
+*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*  See the License for the specific language governing permissions and
+*  limitations under the License.
+*
+*  Copyright 2018 NXP
+*
+******************************************************************************/
 
 #include <android-base/stringprintf.h>
 #include <base/logging.h>
@@ -82,7 +101,6 @@ namespace android {
 #define NDEF_TYPE3_TAG 3
 #define NDEF_TYPE4_TAG 4
 #define NDEF_MIFARE_CLASSIC_TAG 101
-
 #define STATUS_CODE_TARGET_LOST 146  // this error code comes from the service
 
 static uint32_t sCheckNdefCurrentSize = 0;
@@ -554,6 +572,9 @@ static jint nativeNfcTag_doConnect(JNIEnv*, jobject, jint targetHandle) {
 
 #if (NXP_EXTNS == TRUE)
   sCurrentConnectedHandle = targetHandle;
+  if(sCurrentConnectedTargetProtocol == NFC_PROTOCOL_T3BT) {
+    goto TheEnd;
+  }
 #endif
   if (sCurrentConnectedTargetProtocol != NFC_PROTOCOL_ISO_DEP) {
     DLOG_IF(INFO, nfc_debug_enabled)
@@ -1225,6 +1246,16 @@ static jint nativeNfcTag_doCheckNdef(JNIEnv* e, jobject o, jintArray ndefInfo) {
 
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
 
+#if (NXP_EXTNS == TRUE)
+  if (sCurrentConnectedTargetProtocol == NFA_PROTOCOL_T3BT) {
+    ndef = e->GetIntArrayElements (ndefInfo, 0);
+    ndef[0] = 0;
+    ndef[1] = NDEF_MODE_READ_ONLY;
+    e->ReleaseIntArrayElements (ndefInfo, ndef, 0);
+    return NFA_STATUS_FAILED;
+  }
+#endif
+
   // special case for Kovio
   if (sCurrentConnectedTargetProtocol == TARGET_TYPE_KOVIO_BARCODE) {
     DLOG_IF(INFO, nfc_debug_enabled)
@@ -1426,6 +1457,29 @@ static jboolean nativeNfcTag_doPresenceCheck(JNIEnv*, jobject) {
     if (status == NFCSTATUS_SUCCESS) {
       return (NFCSTATUS_SUCCESS == EXTNS_GetPresenceCheckStatus()) ? JNI_TRUE
                                                                    : JNI_FALSE;
+    }
+  }
+#endif
+
+#if (NXP_EXTNS == TRUE)
+  if(NfcTag::getInstance ().mTechLibNfcTypes[0] == NFA_PROTOCOL_T3BT) {
+    uint8_t T3btPresenceCheckCmd[] = {0xB2};
+    uint8_t bufLen = 0x00;
+    bool waitOk = false;
+
+    SyncEventGuard g (sTransceiveEvent);
+    sTransceiveRfTimeout = false;
+    sWaitingForTransceive = true;
+    bufLen = (uint8_t) sizeof(T3btPresenceCheckCmd);
+    status = NFA_SendRawFrame (T3btPresenceCheckCmd, bufLen, NFA_DM_DEFAULT_PRESENCE_CHECK_START_DELAY);
+    if (status != NFA_STATUS_OK) {
+      DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf("%s: fail send; error=%d", __func__, status);
+    } else
+      waitOk = sTransceiveEvent.wait (NfcTag::getInstance().getTransceiveTimeout(TARGET_TYPE_ISO14443_3B));
+    if (waitOk == false || sTransceiveRfTimeout) { //if timeout occurred
+      return JNI_FALSE;;
+    } else {
+      return JNI_TRUE;
     }
   }
 #endif
