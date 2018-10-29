@@ -1185,11 +1185,13 @@ bool SecureElement::apduGateReset(jint seID, uint8_t* recvBuffer, int32_t *recvB
       do {
         mAbortEventWaitOk = false;
         mAtrStatus = NFA_STATUS_FAILED;
-        SyncEventGuard guard (mAbortEvent);
-        nfaStat = NFA_HciAbortApdu(mNfaHciHandle,mActiveEeHandle,SmbTransceiveTimeOutVal);
-        if (nfaStat == NFA_STATUS_OK)
         {
-          mAbortEvent.wait();
+          SyncEventGuard guard (mAbortEvent);
+          nfaStat = NFA_HciAbortApdu(mNfaHciHandle,mActiveEeHandle,SmbTransceiveTimeOutVal);
+          if (nfaStat == NFA_STATUS_OK)
+          {
+            mAbortEvent.wait();
+          }
         }
         if(mAbortEventWaitOk == false)
         {
@@ -1206,11 +1208,14 @@ bool SecureElement::apduGateReset(jint seID, uint8_t* recvBuffer, int32_t *recvB
             {
               LOG(INFO) << StringPrintf("%s recovery success", fn);
               nfaStat = NFA_STATUS_OK;
-              nfaStat = NFA_HciAbortApdu(mNfaHciHandle,mActiveEeHandle,SmbTransceiveTimeOutVal);
-              if (nfaStat == NFA_STATUS_OK)
               {
-                mAbortEvent.wait();
-                 usleep(100 * 1000);
+                SyncEventGuard guard (mAbortEvent);
+                nfaStat = NFA_HciAbortApdu(mNfaHciHandle,mActiveEeHandle,SmbTransceiveTimeOutVal);
+                if (nfaStat == NFA_STATUS_OK)
+                {
+                  mAbortEvent.wait();
+                  usleep(100 * 1000);
+                }
               }
             }
           }
