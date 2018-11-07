@@ -120,11 +120,20 @@ bool SecureElement::initialize(nfc_jni_native_data* native) {
     {
         SmbTransceiveTimeOutVal = WIRED_MODE_TRANSCEIVE_TIMEOUT;
     }
-    LOG(INFO) << StringPrintf("%s: SMB transceive timeout %d", fn, SmbTransceiveTimeOutVal);
     if(SmbTransceiveTimeOutVal < WIRED_MODE_TRANSCEIVE_TIMEOUT)
     {
         SmbTransceiveTimeOutVal = WIRED_MODE_TRANSCEIVE_TIMEOUT;
     }
+    if (GetNxpNumValue(NAME_NXP_SMB_ERROR_RETRY, &val, sizeof(val)) == true)
+    {
+      mErrorRecovery = val;
+    }
+    else
+    {
+      mErrorRecovery = false;
+    }
+    LOG(INFO) << StringPrintf("%s: SMB transceive timeout %d SMB Error recovery %d", fn, SmbTransceiveTimeOutVal, mErrorRecovery);
+
     initializeEeHandle();
 
     // Get Fresh EE info.
@@ -544,14 +553,10 @@ void SecureElement::nfaHciCallback(tNFA_HCI_EVT event,
                 sSecElem.mAtrInfolen = eventData->apdu_aborted.atr_len;
                 sSecElem.mAtrStatus = eventData->apdu_aborted.status;
             }
-            else if(eventData->apdu_aborted.status == NFA_STATUS_TIMEOUT)
-            {
-                sSecElem.mAbortEventWaitOk = false;
-                sSecElem.mAtrStatus = NFA_STATUS_TIMEOUT;
-            }
             else
             {
                 sSecElem.mAbortEventWaitOk = false;
+                sSecElem.mAtrStatus = eventData->apdu_aborted.status;
             }
             SyncEventGuard guard(sSecElem.mAbortEvent);
             sSecElem.mAbortEvent.notifyOne();
@@ -701,6 +706,13 @@ void SecureElement::nfaHciCallback(tNFA_HCI_EVT event,
             SyncEventGuard guard (sSecElem.mRegistryEvent);
             sSecElem.mRegistryEvent.notifyOne ();
             break;
+        }
+    case NFA_HCI_INIT_COMPLETED:
+        {
+          LOG(INFO) << StringPrintf("%s: NFA_HCI_INIT_COMPLETED; received", fn);
+          SyncEventGuard guard (sSecElem.mEERecoveryComplete);
+          sSecElem.mEERecoveryComplete.notifyOne();
+          break;
         }
     default:
         LOG(ERROR) << StringPrintf("%s: unknown event code=0x%X ????", fn, event);
@@ -1093,7 +1105,7 @@ tNFA_STATUS SecureElement::SecElem_EeModeSet(uint16_t handle, uint8_t mode)
     stat =  NFA_EeModeSet(handle, mode);
     if(stat == NFA_STATUS_OK)
     {
-        sSecElem.mEeSetModeEvent.wait ();
+      sSecElem.mEeSetModeEvent.wait ();
     }
 
     return stat;
@@ -1180,48 +1192,72 @@ bool SecureElement::apduGateReset(jint seID, uint8_t* recvBuffer, int32_t *recvB
 
     LOG(INFO) << StringPrintf("%s: enter; seID=0x%X", fn, seID);
     if(nfcFL.nfcNxpEse) {
-      /*ETSI 12 Gate Info ATR */
 
-      do {
-        mAbortEventWaitOk = false;
-        mAtrStatus = NFA_STATUS_FAILED;
+    /*ETSI 12 Gate Info ATR */
+    do {
+      mAbortEventWaitOk = false;
+      mAtrStatus = NFA_STATUS_FAILED;
+      {
+        SyncEventGuard guard (mAbortEvent);
+        nfaStat = NFA_HciAbortApdu(mNfaHciHandle,mActiveEeHandle,SmbTransceiveTimeOutVal);
+        if (nfaStat == NFA_STATUS_OK)
         {
-          SyncEventGuard guard (mAbortEvent);
-          nfaStat = NFA_HciAbortApdu(mNfaHciHandle,mActiveEeHandle,SmbTransceiveTimeOutVal);
-          if (nfaStat == NFA_STATUS_OK)
-          {
-            mAbortEvent.wait();
-          }
+          mAbortEvent.wait();
         }
-        if(mAbortEventWaitOk == false)
-        {
-          LOG(INFO) << StringPrintf("%s (EVT_ABORT)Wait reposne timeout", fn);
-          if(mAtrStatus == NFA_STATUS_TIMEOUT)
-          {
-            LOG(INFO) << StringPrintf("%s Perform NFCEE recovery", fn);
-            if(!doNfcee_Session_Reset())
-            {
-              nfaStat = NFA_STATUS_FAILED;
-              LOG(INFO) << StringPrintf("%s recovery failed", fn);
-            }
-            else
-            {
-              LOG(INFO) << StringPrintf("%s recovery success", fn);
-              nfaStat = NFA_STATUS_OK;
-              {
-                SyncEventGuard guard (mAbortEvent);
-                nfaStat = NFA_HciAbortApdu(mNfaHciHandle,mActiveEeHandle,SmbTransceiveTimeOutVal);
-                if (nfaStat == NFA_STATUS_OK)
-                {
-                  mAbortEvent.wait();
-                  usleep(100 * 1000);
-                }
-              }
-            }
-          }
-        }
+      }
       retry++;
     } while((retry < 3) && (mAtrStatus == NFA_STATUS_INVALID_PARAM));
+
+    if(mAbortEventWaitOk == false)
+    {
+      LOG(INFO) << StringPrintf("%s (EVT_ABORT) failed to receive EVT_ATR", fn);
+      if(mAtrStatus == NFA_STATUS_TIMEOUT)
+      {
+        LOG(INFO) << StringPrintf("%s (EVT_ABORT) response timeout", fn);
+        LOG(INFO) << StringPrintf("%s Perform NFCEE recovery", fn);
+        if(!doNfcee_Session_Reset())
+        {
+          nfaStat = NFA_STATUS_FAILED;
+          LOG(INFO) << StringPrintf("%s recovery failed", fn);
+        }
+        else
+        {
+          LOG(INFO) << StringPrintf("%s recovery success", fn);
+          nfaStat = NFA_STATUS_OK;
+        }
+      }
+      else if(mAtrStatus == NFA_STATUS_HCI_UNRECOVERABLE_ERROR)
+      {
+        LOG(INFO) << StringPrintf("%s EE discovery in progress", fn);
+        SyncEventGuard guard (mEERecoveryComplete);
+        mEERecoveryComplete.wait();
+        nfaStat = NFA_STATUS_OK;
+      }
+      else if(mAtrStatus == NFA_STATUS_HCI_WTX_TIMEOUT)
+      {
+        LOG(INFO) << StringPrintf("%s MAX_WTX limit reached, eSE power recycle", fn);
+        setNfccPwrConfig(NFCC_DECIDES);
+        SecEle_Modeset(NFCEE_DISABLE);
+        usleep(50 * 1000);
+        setNfccPwrConfig(POWER_ALWAYS_ON|COMM_LINK_ACTIVE);
+        SecEle_Modeset(NFCEE_ENABLE);
+        nfaStat = NFA_STATUS_OK;
+      }
+      if((nfaStat == NFA_STATUS_OK) && (mErrorRecovery == true))
+      {
+        SyncEventGuard guard (mAbortEvent);
+        nfaStat = NFA_HciAbortApdu(mNfaHciHandle,mActiveEeHandle,SmbTransceiveTimeOutVal);
+        if (nfaStat == NFA_STATUS_OK)
+        {
+          mAbortEvent.wait();
+        }
+      }
+      else
+      {
+        LOG(INFO) << StringPrintf("%s SMB Recovery disabled, application shall retry", fn);
+        mAbortEventWaitOk = false;
+      }
+    }
 
     if(mAbortEventWaitOk)
     {
@@ -1232,7 +1268,7 @@ bool SecureElement::apduGateReset(jint seID, uint8_t* recvBuffer, int32_t *recvB
       memcpy(mAtrRespData, mAtrInfo, mAtrInfolen);
     }
   }
-  return (nfaStat == NFA_STATUS_OK)?true:false;
+  return mAbortEventWaitOk;
 }
 
 /*******************************************************************************

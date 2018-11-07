@@ -65,13 +65,15 @@ public:
   static const uint8_t NFCEE_DISABLE = 0x00;
   static const uint8_t NFCEE_ENABLE = 0x01;
   tNFA_STATUS  mPwrCmdstatus;     //completion status of the power link control command
+  tNFA_STATUS  mModeSetNtfstatus;     //completion status of the power link control command
   uint8_t      mNfccPowerMode;
   uint8_t mNewPipeId;
 
   bool mIsWiredModeOpen;
   uint32_t SmbTransceiveTimeOutVal;/* maximum time to wait for APDU response */
-
+  bool mErrorRecovery;
   SyncEvent   mPwrLinkCtrlEvent;
+  SyncEvent   mEERecoveryComplete;
   tNFA_HANDLE EE_HANDLE_0xF4;   //handle to secure element in slot 1
   static const tNFA_HANDLE EE_HANDLE_0xF3 = 0x4C0;//0x401; //handle to secure element in slot 0
   static const tNFA_HANDLE EE_HANDLE_0xF8 = 0x481; //handle to secure element in slot 2
