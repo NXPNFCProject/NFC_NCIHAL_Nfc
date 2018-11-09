@@ -247,6 +247,8 @@ public interface DeviceHost {
 
     public int getDefaultFelicaCLTRoute();
 
+    public int getPrefTechPwrCfgForSameRouteLoc();
+
     public int getDefaultAidPowerState();
 
     public int getDefaultDesfirePowerState();

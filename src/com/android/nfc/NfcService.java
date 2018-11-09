@@ -309,6 +309,9 @@ public class NfcService implements DeviceHostListener {
     // eSE handle
     public static final int EE_HANDLE_0xF3 = 0x4C0;
 
+    // preference of pwr state when multiple technology entries to same route location
+    public static final int PREF_FELICA_CLT = 0x01;
+
     private final UserManager mUserManager;
 
     private static int nci_version = NCI_VERSION_1_0;
@@ -2426,7 +2429,11 @@ public class NfcService implements DeviceHostListener {
         if(TechSeId == TechFSeId)
         {
            TechRoute = 0x07;
-           mDeviceHost.setRoutingEntry(TECH_ENTRY,TechRoute, TechSeId, techRoute & 0x3F);
+           if (mDeviceHost.getPrefTechPwrCfgForSameRouteLoc() == PREF_FELICA_CLT) {
+             mDeviceHost.setRoutingEntry(TECH_ENTRY,TechRoute, TechFSeId, techfRoute & 0x3F);
+           } else {
+             mDeviceHost.setRoutingEntry(TECH_ENTRY,TechRoute, TechSeId, techRoute & 0x3F);
+           }
         }
         else {
           TechRoute = 0x03;
