@@ -158,6 +158,7 @@ import com.nxp.nfc.NxpConstants;
 import com.vzw.nfc.RouteEntry;
 import com.gsma.nfc.internal.NxpNfcController;
 import com.nxp.nfc.gsma.internal.INxpNfcController;
+import com.nxp.nfc.NxpAidServiceInfo;
 
 public class NfcService implements DeviceHostListener {
     private static final String ACTION_MASTER_CLEAR_NOTIFICATION = "android.intent.action.MASTER_CLEAR_NOTIFICATION";
@@ -2333,8 +2334,8 @@ public class NfcService implements DeviceHostListener {
         }
 
         @Override
-        public Map<String,Integer> getServicesAidCacheSize(int userId, String category){
-            return mCardEmulationManager.getServicesAidCacheSize(userId, category);
+        public List<NxpAidServiceInfo> getServicesAidInfo(int userId, String category){
+            return mCardEmulationManager.getServicesAidInfo(userId, category);
         }
 
         @Override
@@ -3617,6 +3618,8 @@ public class NfcService implements DeviceHostListener {
             }
             mContext.sendBroadcastAsUser(aidTableFull, UserHandle.CURRENT);
             mAidCache.setPreviousPreferredPaymentService(null);
+            mToastHandler.showToast("Last installed NFC Service is not enabled due to limited resources. To enable this service, " +
+                "please disable other servives in Settings Menu", 20);
         }
     }
     /**

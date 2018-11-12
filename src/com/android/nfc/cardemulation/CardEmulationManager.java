@@ -50,6 +50,7 @@ import android.nfc.cardemulation.AidGroup;
 import android.nfc.cardemulation.NxpAidGroup;
 import android.nfc.cardemulation.ApduServiceInfo;
 import android.nfc.cardemulation.NxpApduServiceInfo;
+import com.nxp.nfc.NxpAidServiceInfo;
 import android.nfc.cardemulation.NfcFServiceInfo;
 import android.nfc.cardemulation.CardEmulation;
 import android.nfc.cardemulation.NfcFCardEmulation;
@@ -456,6 +457,7 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
             NfcPermissions.validateUserId(userId);
             NfcPermissions.enforceAdminPermissions(mContext);
             List<NxpApduServiceInfo> nxpApduServices = mServiceCache.getServicesForCategory(userId, category);
+
             ArrayList<ApduServiceInfo> apduServices = new ArrayList<ApduServiceInfo>();
             for(NxpApduServiceInfo nxpApdu : nxpApduServices) {
                 ApduServiceInfo apduService = nxpApdu.createApduServiceInfo();
@@ -616,12 +618,12 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         mAidCache.onRoutingTableChanged();
     }
 
-    public Map<String,Integer> getServicesAidCacheSize(int userId, String category) {
+    public List<NxpAidServiceInfo> getServicesAidInfo(int userId, String category) {
         if(category == CardEmulation.CATEGORY_PAYMENT) {
             return null;
         }
         List<NxpApduServiceInfo> nonPaymentServices = new ArrayList<NxpApduServiceInfo>();
-        Map<String , Integer> nonPaymentServiceAidCacheSize= new HashMap<String , Integer>();
+        List<NxpAidServiceInfo> nxpAidServiceInfoList = new ArrayList<NxpAidServiceInfo>();
         Integer serviceAidCacheSize = 0x00;
         String serviceComponent = null;
         NfcPermissions.validateUserId(userId);
@@ -633,17 +635,19 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
             if(serviceinfo != null) {
                 for(String aid : serviceinfo.getAids()) {
                     if(aid.endsWith("*")) {
-                        serviceAidCacheSize += aid.length() - 0x01;
+                        serviceAidCacheSize += (aid.length() - 0x01)/2 + 4;
                     } else {
-                        serviceAidCacheSize += aid.length();
+                        serviceAidCacheSize += aid.length()/2 + 4;
                     }
                 }
                 serviceComponent = serviceinfo.getComponent().flattenToString();
-                nonPaymentServiceAidCacheSize.put(serviceComponent ,serviceAidCacheSize);
+                NxpAidServiceInfo aidServiceInfo = new NxpAidServiceInfo(serviceComponent, serviceAidCacheSize, serviceinfo.isServiceEnabled(CardEmulation.CATEGORY_OTHER));
+                nxpAidServiceInfoList.add(aidServiceInfo);
             }
         }
-        //Add dynamic non-payment services
-        return nonPaymentServiceAidCacheSize;
+
+
+        return nxpAidServiceInfoList;
     }
 
     public List<NxpApduServiceInfo> getAllServices() {

@@ -818,10 +818,11 @@ public class RegisteredServicesCache {
     public boolean removeAidGroupForService(int userId, int uid, ComponentName componentName,
             String category) {
         boolean success = false;
+        NxpApduServiceInfo serviceInfo = null;
         ArrayList<NxpApduServiceInfo> newServices = null;
         synchronized (mLock) {
             UserServices services = findOrCreateUserLocked(userId);
-            NxpApduServiceInfo serviceInfo = getService(userId, componentName);
+            serviceInfo = getService(userId, componentName);
             if (serviceInfo != null) {
                 if (serviceInfo.getUid() != uid) {
                     // Calling from different uid
@@ -853,6 +854,9 @@ public class RegisteredServicesCache {
         }
         if (success) {
             mCallback.onServicesUpdated(userId, newServices);
+        }
+        if ((serviceInfo != null) && (category.equals(CardEmulation.CATEGORY_OTHER))) {
+            int status = serviceInfo.setServiceState(category, NxpConstants.SERVICE_STATE_ENABLING);
         }
         return success;
     }
