@@ -4929,11 +4929,11 @@ tNFA_STATUS SecureElement::setNfccPwrConfig(uint8_t value) {
     }
     cur_value = value;
     SyncEventGuard guard(mPwrLinkCtrlEvent);
-    bool isSpiOnReq = false;
+    tNFC_INTF_REQ_SRC reqSrc = NFC_INTF_REQ_SRC_DWP;
     if ((value == 0x03) && dual_mode_current_state & SPI_ON) {
-      isSpiOnReq = true;
+      reqSrc = NFC_INTF_REQ_SRC_SPI;
     }
-    nfaStat = NFA_SendPowerLinkCommand((uint8_t)EE_HANDLE_0xF3, value, isSpiOnReq);
+    nfaStat = NFA_SendPowerLinkCommand((uint8_t)EE_HANDLE_0xF3, value, reqSrc);
     if (nfaStat == NFA_STATUS_OK && !android::nfcManager_isNfcDisabling())
       if (mPwrLinkCtrlEvent.wait(DWP_LINK_ACTV_TIMEOUT) == false) {
         DLOG_IF(ERROR, nfc_debug_enabled)
