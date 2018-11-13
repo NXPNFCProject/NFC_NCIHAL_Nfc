@@ -82,19 +82,17 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection (JNIEnv*, jobje
        {
          stat = false;
          LOG(INFO) << StringPrintf("%s: Mode set ntf STATUS_FAILED", __func__);
-#if 0
-        SyncEventGuard guard (se.mEERecoveryComplete);
-        {
-          se.mEERecoveryComplete.wait();
-          LOG(INFO) << StringPrintf("%s: Recovery complete", __func__);
-        }
-        if(se.mErrorRecovery)
-        {
-          stat = true;
-        }
-#endif
-       }
 
+         SyncEventGuard guard (se.mEERecoveryComplete);
+         {
+           se.mEERecoveryComplete.wait();
+           LOG(INFO) << StringPrintf("%s: Recovery complete", __func__);
+         }
+         if(se.mErrorRecovery)
+         {
+           stat = true;
+         }
+       }
        if(stat == true)
        {
          se.mIsWiredModeOpen = true;
