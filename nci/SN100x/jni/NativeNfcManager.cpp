@@ -2258,26 +2258,6 @@ static jint nfcManager_getDefaultFelicaCLTRoute (JNIEnv* e, jobject o)
 
     return num;
 }
-
-/*******************************************************************************
-**
-** Function:        nfcManager_getPrefTechPwrCfgForSameRouteLoc
-**
-** Description:     Get the preferred Power States for a technology when route
-**                  location is same.
-**                  e: JVM environment.
-**                  o: Java object.
-**
-** Returns:         preferenced pwr state
-**
-*******************************************************************************/
-static jint nfcManager_getPrefTechPwrCfgForSameRouteLoc (JNIEnv* e, jobject o)
-{
-    unsigned long num = 0;
-    GetNxpNumValue(NAME_NXP_PREF_TECH_PWR_STATE, &num, sizeof(num));
-    return num;
-}
-
 #endif
 
 /*******************************************************************************
@@ -2338,7 +2318,6 @@ static jint nfcManager_getDefaultMifareCLTPowerState (JNIEnv* e, jobject o)
     #endif
     return num;
 }
-
 /*******************************************************************************
 **
 ** Function:        isPeerToPeer
@@ -2929,8 +2908,6 @@ static JNINativeMethod gMethods[] = {
             (void*) nfcManager_getDefaultFelicaCLTPowerState},
       {"getDefaultFelicaCLTRoute", "()I",
             (void*) nfcManager_getDefaultFelicaCLTRoute},
-      {"getPrefTechPwrCfgForSameRouteLoc", "()I",
-            (void*) nfcManager_getPrefTechPwrCfgForSameRouteLoc},
      {"doGetActiveSecureElementList", "()[I",
             (void *)nfcManager_getActiveSecureElementList},
      {"doChangeDiscoveryTech", "(II)V",

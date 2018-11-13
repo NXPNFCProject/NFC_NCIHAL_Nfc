@@ -194,9 +194,6 @@ public class NativeNfcManager implements DeviceHost {
     public native int   getDefaultFelicaCLTRoute();
 
     @Override
-    public native int   getPrefTechPwrCfgForSameRouteLoc();
-
-    @Override
     public native int   getDefaultAidPowerState();
 
     @Override
