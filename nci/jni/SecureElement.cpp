@@ -312,7 +312,7 @@ bool SecureElement::initialize(nfc_jni_native_data* native) {
       spiDwpSyncState = STATE_IDLE;
     }
 
-    if (NfcConfig::hasKey(NAME_NXP_WM_MAX_WTX_COUNT) && (mWmMaxWtxCount != 0)) {
+    if (NfcConfig::hasKey(NAME_NXP_WM_MAX_WTX_COUNT)) {
       mWmMaxWtxCount = NfcConfig::getUnsigned(NAME_NXP_WM_MAX_WTX_COUNT);
     } else
       mWmMaxWtxCount = 9000;
