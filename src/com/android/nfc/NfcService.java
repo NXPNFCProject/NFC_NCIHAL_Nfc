@@ -2926,6 +2926,7 @@ public class NfcService implements DeviceHostListener {
                     synchronized (NfcService.this) {
                     computeAndSetRoutingParameters();
                     }
+                    break;
                 case MSG_MOCK_NDEF: {
                     NdefMessage ndefMsg = (NdefMessage) msg.obj;
                     Bundle extras = new Bundle();
