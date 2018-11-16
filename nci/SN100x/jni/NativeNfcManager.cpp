@@ -125,6 +125,7 @@ extern tNFA_STATUS NxpPropCmd_send(uint8_t * pData4Tx, uint8_t dataLen,
 /***P2P-Prio Logic for Multiprotocol***/
 static uint8_t multiprotocol_flag = 1;
 static uint8_t multiprotocol_detected = 0;
+static Mutex sP2pPrioMultiProtoMutex;
 void *p2p_prio_logic_multiprotocol(void *arg);
 static IntervalTimer multiprotocol_timer;
 pthread_t multiprotocol_thread;
@@ -405,7 +406,11 @@ void *p2p_prio_logic_multiprotocol(void *arg) {
   tNFA_STATUS status             = NFA_STATUS_FAILED;
   tNFA_TECHNOLOGY_MASK tech_mask = 0x00;
 
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __FUNCTION__);
+  DLOG_IF(INFO, nfc_debug_enabled)
+    << StringPrintf("%s: enter Try to acquire lock", __FUNCTION__);
+  sP2pPrioMultiProtoMutex.lock();
+  DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("%s: Acquired sP2pPrioMultiProtoMutex lock", __FUNCTION__);
   /* Do not need if it is already in screen off state */
   if ((prevScreenState != (NFA_SCREEN_STATE_OFF_LOCKED || NFA_SCREEN_STATE_OFF_UNLOCKED))) {
     /* Stop polling */
@@ -450,7 +455,9 @@ void *p2p_prio_logic_multiprotocol(void *arg) {
       startRfDiscovery(true);
     }
   }
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __FUNCTION__);
+  sP2pPrioMultiProtoMutex.unlock();
+  DLOG_IF(INFO, nfc_debug_enabled)
+    << StringPrintf("%s: Released sP2pPrioMultiProtoMutex, exit", __FUNCTION__);
   return NULL;
 }
 
