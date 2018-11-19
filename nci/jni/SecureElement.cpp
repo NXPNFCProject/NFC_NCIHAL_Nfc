@@ -3823,8 +3823,6 @@ static void spiEventHandlerThread_cleanup_handler(void* arg) {
 **
 *******************************************************************************/
 void spiEventHandlerThread_exit_handler(int sig) {
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-      "%s: spiEventHandlerThread exit handler %d", __func__, sig);
   pthread_exit(0);
 }
 
