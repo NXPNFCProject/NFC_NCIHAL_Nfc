@@ -641,7 +641,9 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
                     }
                 }
                 serviceComponent = serviceinfo.getComponent().flattenToString();
-                NxpAidServiceInfo aidServiceInfo = new NxpAidServiceInfo(serviceComponent, serviceAidCacheSize, serviceinfo.isServiceEnabled(CardEmulation.CATEGORY_OTHER));
+                NxpAidServiceInfo aidServiceInfo = new NxpAidServiceInfo(serviceComponent, serviceAidCacheSize,
+                    serviceinfo.isServiceEnabled(CardEmulation.CATEGORY_OTHER),
+                    serviceinfo.getDescription(),serviceinfo.getOtherAidGroupDescription());
                 nxpAidServiceInfoList.add(aidServiceInfo);
             }
         }

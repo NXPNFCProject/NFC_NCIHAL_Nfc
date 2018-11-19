@@ -3603,6 +3603,9 @@ public class NfcService implements DeviceHostListener {
 
     public void notifyRoutingTableFull()
     {
+        mToastHandler.showToast("Last installed NFC Service is not enabled due to limited resources. To enable this service, " +
+          "please disable other servives in Settings Menu", 20);
+
         if(!mNxpNfcController.isGsmaCommitOffhostService()) {
             ComponentName prevPaymentComponent = mAidCache.getPreviousPreferredPaymentService();
 
@@ -3618,9 +3621,8 @@ public class NfcService implements DeviceHostListener {
             }
             mContext.sendBroadcastAsUser(aidTableFull, UserHandle.CURRENT);
             mAidCache.setPreviousPreferredPaymentService(null);
-            mToastHandler.showToast("Last installed NFC Service is not enabled due to limited resources. To enable this service, " +
-                "please disable other servives in Settings Menu", 20);
         }
+
     }
     /**
      * set default  Aid route entry in case application does not configure this route entry
