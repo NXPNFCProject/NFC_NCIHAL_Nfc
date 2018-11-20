@@ -24,8 +24,12 @@
 #include "SyncEvent.h"
 
 #include "nfa_rw_api.h"
-
 #if (NXP_EXTNS == TRUE)
+#define RETRY_COUNT 5
+#define MIN_FWI (1)
+#define MAX_FWI (14)
+#define MIN_TRANSCEIVE_TIMEOUT_IN_MILLISEC (500.0)
+
 typedef struct activationParams {
   int mTechParams;
   int mTechLibNfcTypes;
