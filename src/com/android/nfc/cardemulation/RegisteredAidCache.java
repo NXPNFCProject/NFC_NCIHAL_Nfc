@@ -55,6 +55,8 @@ import java.util.NavigableMap;
 import java.util.PriorityQueue;
 import java.util.TreeMap;
 import android.nfc.cardemulation.NfcAidGroup;
+import com.android.nfc.NfcService;
+import com.nxp.nfc.NfcConstants;
 public class RegisteredAidCache {
     static final String TAG = "RegisteredAidCache";
 
@@ -161,7 +163,7 @@ public class RegisteredAidCache {
 
     public RegisteredAidCache(Context context) {
         mContext = context;
-        mRoutingManager = new AidRoutingManager();
+        mRoutingManager = NfcService.getInstance().getAidRoutingCache();
         mPreferredPaymentService = null;
         mPreferredForegroundService = null;
         mSupportsPrefixes = mRoutingManager.supportsAidPrefixRouting();
@@ -485,7 +487,14 @@ public class RegisteredAidCache {
                 serviceAidInfo.aid = aid.toUpperCase();
                 serviceAidInfo.service = service;
                 serviceAidInfo.category = service.getCategoryForAid(aid);
-
+                if( (serviceAidInfo.category.equals(CardEmulation.CATEGORY_OTHER)) &&
+                    ((service.getServiceState(CardEmulation.CATEGORY_OTHER) == NfcConstants.SERVICE_STATE_DISABLED) ||
+                     (service.getServiceState(CardEmulation.CATEGORY_OTHER) == NfcConstants.SERVICE_STATE_DISABLING))){
+                    /*Do not include the services which are already disabled Or services which are disabled by user recently
+                     * for the current commit to routing table*/
+                    Log.e(TAG, "ignoring other category aid because service category is disabled");
+                    continue;
+                }
                 if (mAidServices.containsKey(serviceAidInfo.aid)) {
                     final ArrayList<ServiceAidInfo> serviceAidInfos =
                             mAidServices.get(serviceAidInfo.aid);

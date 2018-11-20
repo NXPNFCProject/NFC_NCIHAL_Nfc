@@ -132,6 +132,7 @@ import java.util.NoSuchElementException;
 import java.util.TimerTask;
 import java.util.Timer;
 import java.io.IOException;
+import android.widget.Toast;
 import com.nxp.nfc.INxpNfcAdapter;
 import com.nxp.nfc.INxpNfcAdapterExtras;
 import java.util.HashSet;
@@ -145,6 +146,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Constructor;
+import com.nxp.nfc.NfcAidServiceInfo;
 
 public class NfcService implements DeviceHostListener {
     static final boolean DBG = true;
@@ -353,7 +355,7 @@ public class NfcService implements DeviceHostListener {
     AtomicInteger mNumTagsDetected;
     AtomicInteger mNumP2pDetected;
     AtomicInteger mNumHceDetected;
-
+    ToastHandler mToastHandler;
     // mState is protected by this, however it is only modified in onCreate()
     // and the default AsyncTask thread so it is read unprotected from that
     // thread
@@ -424,8 +426,17 @@ public class NfcService implements DeviceHostListener {
         return sService;
     }
 
+    public int getRemainingAidTableSize() {
+        return mDeviceHost.getRemainingAidTableSize();
+    }
+
+
     public boolean getLastCommitRoutingStatus() {
         return mAidRoutingManager.getLastCommitRoutingStatus();
+    }
+
+    public AidRoutingManager getAidRoutingCache() {
+        return mAidRoutingManager;
     }
 
     @Override
@@ -667,6 +678,7 @@ public class NfcService implements DeviceHostListener {
                 mDeviceHost.getDefaultLlcpMiu(), mDeviceHost.getDefaultLlcpRwSize());
 
         mSecureElement = new NativeNfcSecureElement(mContext);
+        mToastHandler = new ToastHandler(mContext);
         mPrefs = mContext.getSharedPreferences(PREF, Context.MODE_PRIVATE);
         mPrefsEditor = mPrefs.edit();
         mNxpPrefs = mContext.getSharedPreferences(NXP_PREF, Context.MODE_PRIVATE);
@@ -1754,6 +1766,28 @@ public class NfcService implements DeviceHostListener {
         }
 
         @Override
+        public List<NfcAidServiceInfo> getServicesAidInfo(int userId, String category){
+            return mCardEmulationManager.getServicesAidInfo(userId, category);
+        }
+
+        @Override
+        public int updateServiceState(int userId , Map serviceState) {
+            return mCardEmulationManager.updateServiceState(userId ,serviceState);
+        }
+
+        @Override
+        public int getMaxAidRoutingTableSize() throws RemoteException {
+            NfcPermissions.enforceUserPermissions(mContext);
+            return getAidRoutingTableSize();
+        }
+
+        @Override
+        public int getCommittedAidRoutingTableSize() throws RemoteException {
+            NfcPermissions.enforceUserPermissions(mContext);
+            return (getAidRoutingTableSize() - getRemainingAidTableSize());
+        }
+
+        @Override
         public int getSelectedUicc() throws RemoteException {
             if (!isNfcEnabled()) {
                 throw new RemoteException("NFC is not enabled");
@@ -2558,9 +2592,11 @@ public class NfcService implements DeviceHostListener {
 
     public void notifyRoutingTableFull()
     {
+        mToastHandler.showToast("Last installed NFC Service is not enabled due to limited resources. To enable this service, " +
+                "please disable other servives in Settings Menu", 20);
+        Log.d(TAG, "notify aid routing table full to the user here");
         if(!mNxpNfcController.isGsmaCommitOffhostService()) {
             ComponentName prevPaymentComponent = mAidCache.getPreviousPreferredPaymentService();
-
             mNxpPrefsEditor = mNxpPrefs.edit();
             mNxpPrefsEditor.putInt("PREF_SET_AID_ROUTING_TABLE_FULL",0x01);
             mNxpPrefsEditor.commit();
@@ -3466,6 +3502,56 @@ public class NfcService implements DeviceHostListener {
                 mVibrator.vibrate(mVibrationEffect);
                 playSound(SOUND_END);
             }
+        }
+    }
+
+    /* For Toast from background process*/
+
+    public class ToastHandler
+    {
+        // General attributes
+        private Context mContext;
+        private Handler mHandler;
+
+        public ToastHandler(Context _context)
+        {
+        this.mContext = _context;
+        this.mHandler = new Handler();
+        }
+
+        /**
+         * Runs the <code>Runnable</code> in a separate <code>Thread</code>.
+         *
+         * @param _runnable
+         *            The <code>Runnable</code> containing the <code>Toast</code>
+         */
+        private void runRunnable(final Runnable _runnable)
+        {
+        Thread thread = new Thread()
+        {
+            public void run()
+            {
+            mHandler.post(_runnable);
+            }
+        };
+
+        thread.start();
+        thread.interrupt();
+        thread = null;
+        }
+
+        public void showToast(final CharSequence _text, final int _duration)
+        {
+        final Runnable runnable = new Runnable()
+        {
+            @Override
+            public void run()
+            {
+            Toast.makeText(mContext, _text, _duration).show();
+            }
+        };
+
+        runRunnable(runnable);
         }
     }
 
