@@ -1243,15 +1243,9 @@ void RoutingManager::setProtoRouting() {
 
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", fn);
   SyncEventGuard guard(mRoutingEvent);
+
   for (int xx = 0; xx < MAX_ROUTE_LOC_ENTRIES; xx++) {
-    DLOG_IF(INFO, nfc_debug_enabled)
-        << StringPrintf("%s: nfceeID:0x%X", fn, mLmrtEntries[xx].nfceeID);
-    if (mLmrtEntries[xx].nfceeID && (mLmrtEntries[xx].proto_switch_on ||
-                                     mLmrtEntries[xx].proto_switch_off ||
-                                     mLmrtEntries[xx].proto_battery_off ||
-                                     mLmrtEntries[xx].proto_screen_lock ||
-                                     mLmrtEntries[xx].proto_screen_off ||
-                                     mLmrtEntries[xx].proto_screen_off_lock)) {
+    if (mLmrtEntries[xx].nfceeID) {
       /*Clear protocols for NFCEE ID control block */
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: Clear Proto Routing Entries for nfceeID:0x%X",
@@ -1264,6 +1258,19 @@ void RoutingManager::setProtoRouting() {
         LOG(ERROR) << StringPrintf("Fail to clear proto routing to 0x%X",
                                    mLmrtEntries[xx].nfceeID);
       }
+    }
+  }
+
+  for (int xx = 0; xx < MAX_ROUTE_LOC_ENTRIES; xx++) {
+    if (mLmrtEntries[xx].nfceeID && (mLmrtEntries[xx].proto_switch_on ||
+                                     mLmrtEntries[xx].proto_switch_off ||
+                                     mLmrtEntries[xx].proto_battery_off ||
+                                     mLmrtEntries[xx].proto_screen_lock ||
+                                     mLmrtEntries[xx].proto_screen_off ||
+                                     mLmrtEntries[xx].proto_screen_off_lock)) {
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("%s: Set Proto Routing Entries for nfceeID:0x%X", fn,
+                          mLmrtEntries[xx].nfceeID);
       /*Set Required protocols for NFCEE ID control block in libnfc-nci*/
       nfaStat = NFA_EeSetDefaultProtoRouting(
           mLmrtEntries[xx].nfceeID, mLmrtEntries[xx].proto_switch_on,
@@ -1627,12 +1634,6 @@ void RoutingManager::setTechRouting(void) {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", fn);
   SyncEventGuard guard(mRoutingEvent);
   for (int xx = 0; xx < MAX_ROUTE_LOC_ENTRIES; xx++) {
-    if (mLmrtEntries[xx].nfceeID &&
-        (mLmrtEntries[xx].tech_switch_on || mLmrtEntries[xx].tech_switch_off ||
-         mLmrtEntries[xx].tech_battery_off ||
-         mLmrtEntries[xx].tech_screen_lock ||
-         mLmrtEntries[xx].tech_screen_off ||
-         mLmrtEntries[xx].tech_screen_off_lock)) {
       /*Clear technologies for NFCEE ID control block */
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: Clear Routing Entries for nfceeID:0x%X", fn,
@@ -1645,8 +1646,18 @@ void RoutingManager::setTechRouting(void) {
         LOG(ERROR) << StringPrintf("Fail to clear tech routing to 0x%x",
                                    mLmrtEntries[xx].nfceeID);
       }
-
+  }
+  for (int xx = 0; xx < MAX_ROUTE_LOC_ENTRIES; xx++) {
+    if (mLmrtEntries[xx].nfceeID &&
+        (mLmrtEntries[xx].tech_switch_on || mLmrtEntries[xx].tech_switch_off ||
+         mLmrtEntries[xx].tech_battery_off ||
+         mLmrtEntries[xx].tech_screen_lock ||
+         mLmrtEntries[xx].tech_screen_off ||
+         mLmrtEntries[xx].tech_screen_off_lock)) {
       /*Set Required technologies for NFCEE ID control block */
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("%s: Set Routing Entries for nfceeID:0x%X", fn,
+                          mLmrtEntries[xx].nfceeID);
       nfaStat = NFA_EeSetDefaultTechRouting(
           mLmrtEntries[xx].nfceeID, mLmrtEntries[xx].tech_switch_on,
           mLmrtEntries[xx].tech_switch_off, mLmrtEntries[xx].tech_battery_off,
