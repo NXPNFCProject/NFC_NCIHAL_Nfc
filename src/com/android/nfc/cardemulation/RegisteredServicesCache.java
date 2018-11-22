@@ -715,7 +715,7 @@ public class RegisteredServicesCache {
 
     public int updateServiceState(int userId , int uid,
             Map<String , Boolean> serviceState) {
-        boolean success = false;
+        boolean isWriteSuccess = false;
         HashMap<ComponentName ,NxpApduServiceInfo> nxpOffHostServiceMap = mRegisteredNxpServicesCache.getApduservicesMaps();
         if(NfcService.getInstance().getAidRoutingTableStatus() == 0x00) {
             Log.e(TAG, " Aid Routing Table still  availble , No need to disable services");
@@ -729,8 +729,8 @@ public class RegisteredServicesCache {
                         (Map.Entry<String , Boolean>) it.next();
                 ComponentName componentName = ComponentName.unflattenFromString(entry.getKey());
                 NxpApduServiceInfo serviceInfo = getService(userId, componentName);
-                Log.e(TAG, "updateServiceState " + entry.getKey());
-                Log.e(TAG, "updateServiceState  " + entry.getValue());
+                Log.d(TAG, "updateServiceState " + entry.getKey());
+                Log.d(TAG, "updateServiceState  " + entry.getValue());
                 if (serviceInfo != null) {
                     serviceInfo.enableService(CardEmulation.CATEGORY_OTHER, entry.getValue());
                 } else if ((serviceInfo = nxpOffHostServiceMap.get(componentName)) != null) {
@@ -742,10 +742,12 @@ public class RegisteredServicesCache {
                 }
             }
             Log.e(TAG,"2"+Thread.currentThread().getStackTrace()[2].getMethodName()+":WriteServiceStateToFile");
-            success = writeServiceStateToFile(userId);
+            isWriteSuccess = writeServiceStateToFile(userId);
         }
         invalidateCache(ActivityManager.getCurrentUser());
-        return (success?0x00:0xFF);
+        boolean isCommitSuccessful = NfcService.getInstance().getLastCommitRoutingStatus();
+        Log.d(TAG, "WriteState:" + isWriteSuccess + "LastCommitStatus:" + isCommitSuccessful);
+        return ((isWriteSuccess && isCommitSuccessful)?0x00:0xFF);
     }
 
     public boolean registerAidGroupForService(int userId, int uid,
