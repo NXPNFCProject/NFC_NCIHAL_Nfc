@@ -465,12 +465,22 @@ void reconfigure_poll_cb(union sigval) {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Prio_Logic_multiprotocol timer expire");
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("CallBack Reconfiguring the POLL to Default");
   clear_multiprotocol();
-  multiprotocol_timer.set (300, multiprotocol_clear_flag);
+  /* 60ms is a guard time to acquire the
+   * sP2pPrioMultiProtoMutex by p2p_prio_logic_multiprotocol*/
+  multiprotocol_timer.set (60, multiprotocol_clear_flag);
 }
 
 void multiprotocol_clear_flag(union sigval) {
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("multiprotocol_clear_flag");
+  DLOG_IF(INFO, nfc_debug_enabled)
+    << StringPrintf("%s: enter Try to acquire lock", __FUNCTION__);
+  sP2pPrioMultiProtoMutex.lock();
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("multiprotocol_clear_flag: Acquired sP2pPrioMultiProtoMutex");
+  /* As soon as p2p_prio_logic_multiprotocol is completed set the
+   * multiprotocol_flag to clear the mNumDiscNtf i.e. avoid tag detection error */
   multiprotocol_flag = 1;
+  sP2pPrioMultiProtoMutex.unlock();
+  DLOG_IF(INFO, nfc_debug_enabled)
+    << StringPrintf("%s: Released sP2pPrioMultiProtoMutex, exit", __FUNCTION__);
 }
 
 void clear_multiprotocol() {
