@@ -1786,7 +1786,7 @@ bool SecureElement::transceive(uint8_t* xmitBuffer, int32_t xmitBufferSize,
 #endif
     if (nfaStat == NFA_STATUS_OK) {
       //          waitOk = mTransceiveEvent.wait (timeoutMillisec);
-      mTransceiveEvent.wait();
+      mTransceiveEvent.wait(timeoutMillisec);
 #if (NXP_EXTNS == TRUE)
       if (nfcFL.nfcNxpEse && (gWtxCount > mWmMaxWtxCount)) {
         tranStatus = TRANSCEIVE_STATUS_MAX_WTX_REACHED;
@@ -2341,6 +2341,9 @@ void SecureElement::nfaHciCallback(tNFA_HCI_EVT event,
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: NFA_HCI_EVENT_SENT_EVT; status=0x%X", fn,
                           eventData->evt_sent.status);
+      if (eventData->evt_sent.status != NFA_STATUS_OK) {
+        sSecElem.mTransceiveEvent.notifyOne();
+      }
       break;
 
     case NFA_HCI_RSP_RCVD_EVT:  // response received from secure element
