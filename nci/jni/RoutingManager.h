@@ -184,6 +184,7 @@ class RoutingManager {
                        int optparamlen);
   void handleSERemovedNtf();
   bool is_ee_recovery_ongoing();
+  void getDefaultTechFRouteAndPowerState();
 #if (NXP_NFCC_HCE_F == TRUE)
   void notifyT3tConfigure();
 #endif

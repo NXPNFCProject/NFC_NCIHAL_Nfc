@@ -226,42 +226,8 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
       gWiredModeRfFieldEnable = 0x00;
     }
   }
-  if (nfcFL.eseFL._ESE_FELICA_CLT) {
-    if (NfcConfig::hasKey(NAME_DEFAULT_NFCF_ROUTE)) {
-      num = NfcConfig::getUnsigned(NAME_DEFAULT_NFCF_ROUTE);
-      if (nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC &&
-          nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH) {
-        if ((num == 0x02 || num == 0x03) && sCurrentSelectedUICCSlot) {
-          mDefaultTechFSeID = getUiccRoute(sCurrentSelectedUICCSlot);
-        } else {
-          mDefaultTechFSeID =
-              ((num == 0x01)
-                   ? ROUTE_LOC_ESE_ID
-                   : ((num == 0x02)
-                          ? SecureElement::getInstance().EE_HANDLE_0xF4
-                          : ROUTE_LOC_UICC2_ID));
-        }
-      } else {
-        mDefaultTechFSeID =
-            ((num == 0x01)
-                 ? ROUTE_LOC_ESE_ID
-                 : ((num == 0x02) ? SecureElement::getInstance().EE_HANDLE_0xF4
-                                  : ROUTE_LOC_UICC2_ID));
-      }
-    } else {
-      mDefaultTechFSeID = getUiccRoute(sCurrentSelectedUICCSlot);
-    }
 
-    if (NfcConfig::hasKey(NAME_DEFAULT_FELICA_CLT_PWR_STATE)) {
-      num = NfcConfig::getUnsigned(NAME_DEFAULT_FELICA_CLT_PWR_STATE);
-      mDefaultTechFPowerstate = num;
-    } else {
-      mDefaultTechFPowerstate = 0x3F;
-    }
-  } else {
-    mDefaultTechFSeID = SecureElement::getInstance().EE_HANDLE_0xF4;
-    mDefaultTechFPowerstate = 0x3F;
-  }
+  getDefaultTechFRouteAndPowerState();
 
   if (NfcConfig::hasKey(NAME_NXP_HCEF_CMD_RSP_TIMEOUT_VALUE)) {
     num = NfcConfig::getUnsigned(NAME_NXP_HCEF_CMD_RSP_TIMEOUT_VALUE);
@@ -1327,7 +1293,6 @@ void RoutingManager::setEmptyAidEntry() {
 void RoutingManager::compileTechEntries(void) {
   static const char fn[] = "RoutingManager::compileTechEntries";
   uint32_t techSupportedBySelectedEE = 0;
-  unsigned long num = 0;
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", fn);
 
   /*Check technologies supported by EE selected in conf file*/
@@ -1358,36 +1323,7 @@ void RoutingManager::compileTechEntries(void) {
   mTechTableEntries[TECH_B_IDX].enable =
       (techSupportedBySelectedEE & NFA_TECHNOLOGY_MASK_B) ? true : false;
 
-  /*Update Tech F Route in case there is switch between uicc's*/
-  if (nfcFL.eseFL._ESE_FELICA_CLT) {
-    if (NfcConfig::hasKey(NAME_DEFAULT_NFCF_ROUTE)) {
-      num = NfcConfig::getUnsigned(NAME_DEFAULT_NFCF_ROUTE);
-      if (nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC &&
-          nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH) {
-        if ((num == 0x02 || num == 0x03) && sCurrentSelectedUICCSlot) {
-          mDefaultTechFSeID = getUiccRoute(sCurrentSelectedUICCSlot);
-        } else {
-          mDefaultTechFSeID =
-              ((num == 0x01)
-                   ? ROUTE_LOC_ESE_ID
-                   : ((num == 0x02)
-                          ? SecureElement::getInstance().EE_HANDLE_0xF4
-                          : ROUTE_LOC_UICC2_ID));
-        }
-      } else {
-        mDefaultTechFSeID =
-            ((num == 0x01)
-                 ? ROUTE_LOC_ESE_ID
-                 : ((num == 0x02) ? SecureElement::getInstance().EE_HANDLE_0xF4
-                                  : ROUTE_LOC_UICC2_ID));
-      }
-    } else {
-      mDefaultTechFSeID = getUiccRoute(sCurrentSelectedUICCSlot);
-    }
-  } else {
-    mDefaultTechFSeID = (sCurrentSelectedUICCSlot==0x2)?SecureElement::getInstance().EE_HANDLE_0xF8:
-                          SecureElement::getInstance().EE_HANDLE_0xF4;
-  }
+  getDefaultTechFRouteAndPowerState();
 
   /*Check technologies supported by EE selected in conf file - For TypeF*/
   if (mDefaultTechFSeID == SecureElement::getInstance().EE_HANDLE_0xF4)
@@ -3349,4 +3285,50 @@ static jint getUiccRoute(jint uicc_slot) {
     return 0xFF;
   }
 }
+
+/*******************************************************************************
+**
+** Function:        getDefaultTechFRouteAndPowerState
+**
+** Description:     Retrieve default TechF Route location and correponding
+**                  Power state from config file. Assign default value incase
+**                  there are no entries
+**
+*******************************************************************************/
+void RoutingManager::getDefaultTechFRouteAndPowerState() {
+  unsigned long num = 0;
+
+  if (nfcFL.eseFL._ESE_FELICA_CLT) {
+    if (NfcConfig::hasKey(NAME_DEFAULT_NFCF_ROUTE)) {
+      num = NfcConfig::getUnsigned(NAME_DEFAULT_NFCF_ROUTE);
+      switch (num) {
+        case 0x00:
+          mDefaultTechFSeID = ROUTE_LOC_HOST_ID;
+          break;
+        case 0x01:
+          mDefaultTechFSeID = ROUTE_LOC_ESE_ID;
+          break;
+        case 0x02:
+        case 0x03:
+          if (nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC &&
+              nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH) {
+            mDefaultTechFSeID = getUiccRoute(sCurrentSelectedUICCSlot);
+          } else {
+            mDefaultTechFSeID = SecureElement::getInstance().EE_HANDLE_0xF4;
+          }
+      }
+    }
+
+    if (NfcConfig::hasKey(NAME_DEFAULT_FELICA_CLT_PWR_STATE)) {
+      num = NfcConfig::getUnsigned(NAME_DEFAULT_FELICA_CLT_PWR_STATE);
+      mDefaultTechFPowerstate = num;
+    } else {
+      mDefaultTechFPowerstate = 0x3F;
+    }
+  } else {
+    mDefaultTechFSeID = SecureElement::getInstance().EE_HANDLE_0xF4;
+    mDefaultTechFPowerstate = 0x3F;
+  }
+}
+
 #endif
