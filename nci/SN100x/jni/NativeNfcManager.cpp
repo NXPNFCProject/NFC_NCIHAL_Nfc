@@ -851,13 +851,6 @@ static void nfaConnectionCallback(uint8_t connEvent,
           << StringPrintf("%s: NFC_RW_INTF_ERROR_EVT", __func__);
       nativeNfcTag_notifyRfTimeout();
       nativeNfcTag_doReadCompleted(NFA_STATUS_TIMEOUT);
-#if (NXP_EXTNS == TRUE)
-      if(NFA_STATUS_TIMEOUT == eventData->status){
-        nativeNfcTag_abortWaits();
-        /*RFDEACTIVATE_DISCOVERY*/
-        NFA_Deactivate(FALSE);
-      }
-#endif
       break;
     case NFA_SELECT_CPLT_EVT:  // Select completed
       status = eventData->status;
