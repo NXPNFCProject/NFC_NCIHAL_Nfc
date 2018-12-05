@@ -206,6 +206,9 @@ public class NativeNfcManager implements DeviceHost {
     public native int   getDefaultFelicaCLTPowerState();
 
     @Override
+    public native int getGsmaPwrState();
+
+    @Override
     public native boolean commitRouting();
 
     @Override

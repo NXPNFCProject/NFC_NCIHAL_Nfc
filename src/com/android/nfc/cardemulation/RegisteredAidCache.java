@@ -64,7 +64,6 @@ public class RegisteredAidCache {
 
     static final int AID_ROUTE_QUAL_SUBSET = 0x20;
     static final int AID_ROUTE_QUAL_PREFIX = 0x10;
-
     // mAidServices maps AIDs to services that have registered them.
     // It's a TreeMap in order to be able to quickly select subsets
     // of AIDs that conflict with each other.
@@ -845,6 +844,7 @@ public class RegisteredAidCache {
             return;
         }
         final HashMap<String, AidRoutingManager.AidEntry> routingEntries = Maps.newHashMap();
+        int mGsmaPwrState = NfcService.getInstance().getGsmaPwrState();
         // For each AID, find interested services
         for (Map.Entry<String, AidResolveInfo> aidEntry:
                 mAidCache.entrySet()) {
@@ -870,9 +870,22 @@ public class RegisteredAidCache {
                 NfcApduServiceInfo.ESeInfo seInfo = resolveInfo.defaultService.getSEInfo();
                 aidType.isOnHost = resolveInfo.defaultService.isOnHost();
                 int powerstate = seInfo.getPowerState() & POWER_STATE_ALL;
-                if(powerstate == 0x00)
-                    powerstate =  POWER_STATE_SWITCH_ON;
                 int screenstate= 0;
+                if(powerstate == 0x00) {
+                    powerstate = POWER_STATE_SWITCH_ON;
+                    if(mGsmaPwrState > 0)
+                    {
+                        if(aidType.isOnHost)
+                        {
+                            powerstate = (mGsmaPwrState & 0x39);
+                        } else
+                        {
+                            powerstate = mGsmaPwrState;
+                        }
+                        Log.d(TAG," Setting GSMA power state"+ aid  + powerstate);
+                    }
+                }
+
                 boolean isOnHost = resolveInfo.defaultService.isOnHost();
                 if ((powerstate & POWER_STATE_SWITCH_ON) == POWER_STATE_SWITCH_ON )
                 {
@@ -881,8 +894,10 @@ public class RegisteredAidCache {
                     Log.d(TAG," set screen off enable for " + aid);
                     screenstate |= SCREEN_STATE_OFF_UNLOCKED | SCREEN_STATE_OFF_LOCKED;
                   }
+                  if(mGsmaPwrState == 0x00)
+                    powerstate |= screenstate;
                 }
-                powerstate |= screenstate;
+
                int route = isOnHost ? 0 : seInfo.getSeId();
                Log.d(TAG," AID power state"+ aid  + powerstate  +"route"+route);
                aidType.route = route;
@@ -892,13 +907,23 @@ public class RegisteredAidCache {
                 // Only one service, but not the default, must route to host
                 // to ask the user to choose one.
                 aidType.isOnHost = true;
-                aidType.powerstate = POWER_STATE_SWITCH_ON|SCREEN_STATE_ON_LOCKED;
-                               Log.d(TAG," AID power state 2"+ aid  + aidType.powerstate);
+                aidType.powerstate = POWER_STATE_SWITCH_ON | SCREEN_STATE_ON_LOCKED;
+                Log.d(TAG," AID power state 2"+ aid  +" "+aidType.powerstate);
+                if(mGsmaPwrState > 0)
+                {
+                    aidType.powerstate = (mGsmaPwrState & 0x39);
+                    Log.d(TAG," Setting GSMA power state"+ aid  + " " +aidType.powerstate);
+                }
                 routingEntries.put(aid, aidType);
             } else if (resolveInfo.services.size() > 1) {
                 // Multiple services, need to route to host to ask
                 aidType.isOnHost = true;
-                aidType.powerstate = POWER_STATE_SWITCH_ON|SCREEN_STATE_ON_LOCKED;
+                aidType.powerstate = POWER_STATE_SWITCH_ON | SCREEN_STATE_ON_LOCKED;
+                if(mGsmaPwrState > 0)
+                {
+                    aidType.powerstate = (mGsmaPwrState & 0x39);
+                    Log.d(TAG," Setting GSMA power state"+ aid  + " " +aidType.powerstate);
+                }
                 Log.d(TAG," AID power state 3"+ aid  + aidType.powerstate);
                 routingEntries.put(aid, aidType);
             }

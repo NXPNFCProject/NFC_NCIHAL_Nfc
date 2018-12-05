@@ -2331,6 +2331,11 @@ static jint nfcManager_getDefaultDesfirePowerState (JNIEnv* e, jobject o)
     #endif
     return num;
 }
+
+static int nfcManager_getDefaulGsmaPowerState(JNIEnv* e, jobject o)
+{
+  return RoutingManager::getInstance().mDefaultGsmaPowerState;
+}
 /*******************************************************************************
 **
 ** Function:        nfcManager_getDefaultMifareCLTPowerState
@@ -2934,8 +2939,10 @@ static JNINativeMethod gMethods[] = {
             (void*) nfcManager_getDefaultDesfirePowerState},
 
     {"getDefaultMifareCLTPowerState", "()I",
-            (void*) nfcManager_getDefaultMifareCLTPowerState}
+            (void*) nfcManager_getDefaultMifareCLTPowerState},
 #if(NXP_EXTNS == TRUE)
+    {"getGsmaPwrState", "()I",
+            (void*) nfcManager_getDefaulGsmaPowerState}
      ,{"getDefaultFelicaCLTPowerState", "()I",
             (void*) nfcManager_getDefaultFelicaCLTPowerState},
       {"getDefaultFelicaCLTRoute", "()I",
@@ -2945,6 +2952,7 @@ static JNINativeMethod gMethods[] = {
      {"doChangeDiscoveryTech", "(II)V",
              (void *)nfcManager_changeDiscoveryTech},
      {"doaccessControlForCOSU", "(I)I",(void*)nfcManager_doaccessControlForCOSU},
+
 #endif
      {"routeApduPattern", "(II[B[B)Z",
                     (void*) nfcManager_routeApduPattern},

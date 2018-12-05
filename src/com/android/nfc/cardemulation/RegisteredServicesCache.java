@@ -167,6 +167,7 @@ public class RegisteredServicesCache {
                         invalidateCache(UserHandle.getUserId(uid));
                         } else {
                             // Cache will automatically be updated on user switch
+                            if (DEBUG) Log.d(TAG, " Not removing service here " + replaced);
                         }
                     } else {
                         if (DEBUG) Log.d(TAG, "Ignoring package intent due to package being replaced.");

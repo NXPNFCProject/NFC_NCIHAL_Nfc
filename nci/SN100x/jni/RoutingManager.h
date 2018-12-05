@@ -102,6 +102,9 @@ typedef struct routeInfo {
 #endif
 class RoutingManager {
  public:
+#if(NXP_EXTNS == TRUE)
+  uint32_t mDefaultGsmaPowerState;
+#endif
   static RoutingManager& getInstance();
   bool initialize(nfc_jni_native_data* native);
   void enableRoutingToHost();

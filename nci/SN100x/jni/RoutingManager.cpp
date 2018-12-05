@@ -178,6 +178,12 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
         mDefaultIso7816Powerstate = num;
     else
         mDefaultIso7816Powerstate = 0xFF;
+    if(GetNxpNumValue (NAME_DEFUALT_GSMA_PWR_STATE, (void*)&num, sizeof(num)))
+        mDefaultGsmaPowerState = num;
+    else
+        mDefaultGsmaPowerState = 0x00;
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s: mDefaultGsmaPowerState %02x)", fn, mDefaultGsmaPowerState);
     LOG(ERROR) << StringPrintf("%s: >>>> mDefaultIso7816SeID=0x%X", fn, mDefaultIso7816SeID);
     LOG(ERROR) << StringPrintf("%s: >>>> mDefaultIso7816Powerstate=0x%X", fn, mDefaultIso7816Powerstate);
 #endif
@@ -1686,9 +1692,16 @@ void RoutingManager::setEmptyAidEntry(int route) {
     }
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: route %x",__func__,routeLoc);
     if(routeLoc == ROUTE_LOC_HOST_ID) {
-      if(NFA_GetNCIVersion() == NCI_VERSION_2_0)
-        power &= 0x11;
+      power &= 0x11;
     }
+    if(mDefaultGsmaPowerState) {
+      if(routeLoc == ROUTE_LOC_HOST_ID)
+        power = (mDefaultGsmaPowerState & 0x39);
+      else
+        power = mDefaultGsmaPowerState;
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: gsma  %x",__func__,power);
+    }
+
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: power %x",__func__,power);
     if(power){
         tNFA_STATUS nfaStat = NFA_EeAddAidRouting(routeLoc, 0, NULL, power, 0x10);

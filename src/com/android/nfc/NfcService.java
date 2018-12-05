@@ -2786,6 +2786,11 @@ public class NfcService implements DeviceHostListener {
         return defaultFelicaCLTRoute;
     }
 
+    public int getGsmaPwrState()
+    {
+        return mDeviceHost.getGsmaPwrState();
+    }
+
     public int getAidRoutingTableStatus() {
         int aidTableStatus = 0x00;
         aidTableStatus = mNxpPrefs.getInt("PREF_SET_AID_ROUTING_TABLE_FULL",0x00);

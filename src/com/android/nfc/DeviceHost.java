@@ -255,6 +255,8 @@ public interface DeviceHost {
 
     public int getDefaultFelicaCLTPowerState();
 
+    public int getGsmaPwrState();
+
     public boolean commitRouting();
 
     public void setEmptyAidRoute(int defaultAidRoute);
