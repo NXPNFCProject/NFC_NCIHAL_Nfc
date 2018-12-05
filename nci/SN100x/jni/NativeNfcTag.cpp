@@ -281,6 +281,13 @@ static jbyteArray nativeNfcTag_doRead(JNIEnv* e, jobject) {
   tNFA_STATUS status = NFA_STATUS_FAILED;
   jbyteArray buf = NULL;
 
+#if (NXP_EXTNS == TRUE)
+  if (NfcTag::getInstance().isActivated() == false) {
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s:tag already deactivated", __func__);
+    return buf;
+  }
+#endif
   sReadDataLen = 0;
   if (sReadData != NULL) {
     free(sReadData);
