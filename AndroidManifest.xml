@@ -64,6 +64,7 @@
     <protected-broadcast android:name="com.nxp.nfc_extras.action.NFC_MPOS_READER_MODE_STOP_SUCCESS" />
     <protected-broadcast android:name="com.nxp.nfc_extras.action.NFC_MPOS_READER_MODE_START_FAIL" />
     <protected-broadcast android:name="com.nxp.nfc_extras.action.NFC_MPOS_READER_MODE_START_SUCCESS" />
+    <protected-broadcast android:name="nfc.intent.action.AID_ROUTING_TABLE_FULL" />
     <application android:name=".NfcApplication"
                  android:icon="@drawable/icon"
                  android:label="@string/app_name"
