@@ -7341,7 +7341,7 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
     tNFA_EE_INFO mEeInfo[mActualNumEe];
     uint8_t eseDetected = 0;
 
-    for (int i = 1; i <= numNfceePresent; i++) {
+    for (int i = 0; i < numNfceePresent; i++) {
       nfceeHandle[i] =
           SecureElement::getInstance().mNfceeData_t.mNfceeHandle[i];
       nfceeStatus[i] =
