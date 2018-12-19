@@ -804,7 +804,6 @@ class SecureElement {
   nfc_jni_native_data* mNativeData;
   bool mIsInit;           // whether EE is initialized
   uint8_t mActualNumEe;   // actual number of EE's reported by the stack
-  uint8_t mNumEePresent;  // actual number of usable EE's
   bool mbNewEE;
   uint8_t mNewPipeId;
   uint8_t mNewSourceGate;

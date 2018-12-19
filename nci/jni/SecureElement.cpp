@@ -186,7 +186,6 @@ SecureElement::SecureElement()
       mNativeData(NULL),
       mIsInit(false),
       mActualNumEe(0),
-      mNumEePresent(0),
       mbNewEE(true),  // by default we start w/thinking there are new EE
       mNewPipeId(0),
       mNewSourceGate(0),
@@ -538,7 +537,6 @@ void SecureElement::finalize() {
   mNativeData = NULL;
   mIsInit = false;
   mActualNumEe = 0;
-  mNumEePresent = 0;
   mNewPipeId = 0;
   mNewSourceGate = 0;
   mIsPiping = false;
@@ -567,7 +565,7 @@ bool SecureElement::getEeInfo() {
 /*Reading latest eEinfo  incase it is updated*/
 #if (NXP_EXTNS == TRUE)
   mbNewEE = true;
-  mNumEePresent = 0;
+  uint8_t eeIndex = 0;
 #endif
   // If mbNewEE is true then there is new EE info.
   if (mbNewEE) {
@@ -576,8 +574,9 @@ bool SecureElement::getEeInfo() {
 #endif
 
     mActualNumEe = nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED;
-
-    if ((nfaStat = NFA_EeGetInfo(&mActualNumEe, mEeInfo)) != NFA_STATUS_OK) {
+    tNFA_EE_INFO eeInfo[MAX_NUM_EE];
+    memset(&eeInfo, 0, nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED * sizeof(tNFA_EE_INFO));
+    if ((nfaStat = NFA_EeGetInfo(&mActualNumEe, eeInfo)) != NFA_STATUS_OK) {
       LOG(ERROR) << StringPrintf("%s: fail get info; error=0x%X", fn, nfaStat);
       mActualNumEe = 0;
     } else {
@@ -587,42 +586,42 @@ bool SecureElement::getEeInfo() {
           << StringPrintf("%s: num EEs discovered: %u", fn, mActualNumEe);
       if (mActualNumEe != 0) {
         for (uint8_t xx = 0; xx < mActualNumEe; xx++) {
-          if (mEeInfo[xx].ee_interface[0] != NCI_NFCEE_INTERFACE_HCI_ACCESS)
-            mNumEePresent++;
-
-          DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-              "%s: EE[%u] Handle: 0x%04x  Status: %s  Num I/f: %u: (0x%02x, "
-              "0x%02x)  Num TLVs: %u, Tech : (LA:0x%02x, LB:0x%02x, "
-              "LF:0x%02x, LBP:0x%02x)",
-              fn, xx, mEeInfo[xx].ee_handle,
-              eeStatusToString(mEeInfo[xx].ee_status),
-              mEeInfo[xx].num_interface, mEeInfo[xx].ee_interface[0],
-              mEeInfo[xx].ee_interface[1], mEeInfo[xx].num_tlvs,
-              mEeInfo[xx].la_protocol, mEeInfo[xx].lb_protocol,
-              mEeInfo[xx].lf_protocol, mEeInfo[xx].lbp_protocol);
-
-#if (NXP_EXTNS == TRUE)
-          mNfceeData_t.mNfceeHandle[xx] = mEeInfo[xx].ee_handle;
-          mNfceeData_t.mNfceeStatus[xx] = mEeInfo[xx].ee_status;
-#endif
-          for (size_t yy = 0; yy < mEeInfo[xx].num_tlvs; yy++) {
+          if (eeInfo[xx].ee_interface[0] != NCI_NFCEE_INTERFACE_HCI_ACCESS) {
+            mEeInfo[eeIndex]=eeInfo[xx];
             DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-                "%s: EE[%u] TLV[%lu]  Tag: 0x%02x  Len: %u  Values[]: 0x%02x  "
-                "0x%02x  0x%02x ...",
-                fn, xx, yy, mEeInfo[xx].ee_tlv[yy].tag,
-                mEeInfo[xx].ee_tlv[yy].len, mEeInfo[xx].ee_tlv[yy].info[0],
-                mEeInfo[xx].ee_tlv[yy].info[1], mEeInfo[xx].ee_tlv[yy].info[2]);
+                "%s: EE[%u] Handle: 0x%04x  Status: %s  Num I/f: %u: (0x%02x, "
+                "0x%02x)  Num TLVs: %u, Tech : (LA:0x%02x, LB:0x%02x, "
+                "LF:0x%02x, LBP:0x%02x)",
+                fn, eeIndex, mEeInfo[eeIndex].ee_handle,
+                eeStatusToString(mEeInfo[eeIndex].ee_status),
+                mEeInfo[eeIndex].num_interface, mEeInfo[eeIndex].ee_interface[0],
+                mEeInfo[eeIndex].ee_interface[1], mEeInfo[eeIndex].num_tlvs,
+                mEeInfo[eeIndex].la_protocol, mEeInfo[eeIndex].lb_protocol,
+                mEeInfo[eeIndex].lf_protocol, mEeInfo[eeIndex].lbp_protocol);
+#if (NXP_EXTNS == TRUE)
+            mNfceeData_t.mNfceeHandle[eeIndex] = mEeInfo[eeIndex].ee_handle;
+            mNfceeData_t.mNfceeStatus[eeIndex] = mEeInfo[eeIndex].ee_status;
+#endif
+            for (size_t yy = 0; yy < mEeInfo[eeIndex].num_tlvs; yy++) {
+              DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+                  "%s: EE[%u] TLV[%lu]  Tag: 0x%02x  Len: %u  Values[]: 0x%02x  "
+                  "0x%02x  0x%02x ...",
+                  fn, eeIndex, yy, mEeInfo[eeIndex].ee_tlv[yy].tag,
+                  mEeInfo[eeIndex].ee_tlv[yy].len, mEeInfo[eeIndex].ee_tlv[yy].info[0],
+                  mEeInfo[eeIndex].ee_tlv[yy].info[1], mEeInfo[eeIndex].ee_tlv[yy].info[2]);
+              }
+            eeIndex++;
           }
         }
       }
     }
   }
   DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: exit; mActualNumEe=%d, mNumEePresent=%d", fn,
-                      mActualNumEe, mNumEePresent);
+      << StringPrintf("%s: exit; mActualNumEe=%d, NumEePresent=%d", fn,
+                      mActualNumEe, eeIndex);
 
 #if (NXP_EXTNS == TRUE)
-  mNfceeData_t.mNfceePresent = mNumEePresent;
+  mNfceeData_t.mNfceePresent = eeIndex;
 #endif
 
   return (mActualNumEe != 0);
@@ -796,7 +795,7 @@ bool SecureElement::isActivatedInListenMode() { return mActivatedInListenMode; }
 jintArray SecureElement::getListOfEeHandles(JNIEnv* e) {
   static const char fn[] = "SecureElement::getListOfEeHandles";
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", fn);
-  if (mNumEePresent == 0) return NULL;
+  if (mNfceeData_t.mNfceePresent == 0) return NULL;
 
   if (!mIsInit) {
     LOG(ERROR) << StringPrintf("%s: not init", fn);
@@ -806,10 +805,10 @@ jintArray SecureElement::getListOfEeHandles(JNIEnv* e) {
   // Get Fresh EE info.
   if (!getEeInfo()) return (NULL);
 
-  jintArray list = e->NewIntArray(mNumEePresent);  // allocate array
+  jintArray list = e->NewIntArray(mNfceeData_t.mNfceePresent);  // allocate array
   jint jj = 0;
   int cnt = 0;
-  for (int ii = 0; ii < mActualNumEe && cnt < mNumEePresent; ii++) {
+  for (int ii = 0; ii < mActualNumEe && cnt < mNfceeData_t.mNfceePresent; ii++) {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: %u = 0x%X", fn, ii, mEeInfo[ii].ee_handle);
     if (mEeInfo[ii].ee_interface[0] == NCI_NFCEE_INTERFACE_HCI_ACCESS) {
