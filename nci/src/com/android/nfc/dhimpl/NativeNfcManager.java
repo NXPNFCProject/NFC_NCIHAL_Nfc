@@ -616,6 +616,10 @@ public class NativeNfcManager implements DeviceHost {
     @Override
     public native int setTransitConfig(String configs);
     @Override
+    public native void semsGetOutputData();
+    @Override
+    public native boolean semsGetExecutionStatus();
+    @Override
     public native int getRemainingAidTableSize();
     @Override
     public native int doselectUicc(int uiccSlot);

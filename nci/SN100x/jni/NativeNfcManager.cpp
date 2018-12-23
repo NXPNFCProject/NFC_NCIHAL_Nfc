@@ -217,6 +217,8 @@ static SyncEvent sNfaSetConfigEvent;             // event for Set_Config....
 static SyncEvent sNfaGetConfigEvent;             // event for Get_Config....
 #if(NXP_EXTNS == TRUE)
 static SyncEvent sNfaTransitConfigEvent;  // event for NFA_SetTransitConfig()
+static SyncEvent sNfaGetSemsOutputConfigEvent;  // event for NFA_SetTransitConfig()
+static bool sSemsStatus = false;
 #endif
 static bool sIsNfaEnabled = false;
 static bool sDiscoveryEnabled = false;  // is polling or listening
@@ -278,7 +280,9 @@ static jbyteArray nfcManager_readerPassThruMode(JNIEnv *e, jobject o,
 static jbyteArray nfcManager_transceiveAppData(JNIEnv *e, jobject o,
                                                jbyteArray data);
 static bool nfcManager_isNfccBusy(JNIEnv*, jobject);
+static bool nfcManager_getSemsStatus(JNIEnv* e, jobject o);
 static int nfcManager_setTransitConfig(JNIEnv* e, jobject o, jstring config);
+static void nfcManager_getSemsOutput(JNIEnv* e, jobject o);
 static std::string ConvertJavaStrToStdString(JNIEnv * env, jstring s);
 static jint nfcManager_getAidTableSize (JNIEnv*, jobject );
 static jint nfcManager_getRemainingAidTableSize (JNIEnv* , jobject );
@@ -1192,6 +1196,18 @@ if (!sP2pActive && eventData->rf_field.status == NFA_STATUS_OK) {
             << StringPrintf("NFA_DM_SET_TRANSIT_CONFIG EVT cback received");
         SyncEventGuard guard(sNfaTransitConfigEvent);
         sNfaTransitConfigEvent.notifyOne();
+        break;
+      }
+      case NFA_DM_GET_SEMS_OUTPUT_EVT: {
+        DLOG_IF(INFO, nfc_debug_enabled)
+            << StringPrintf("NFA_DM_GET_SEMS_OUTPUT_EVT EVT cback received");
+        if (eventData->status == NFA_STATUS_OK) {
+          sSemsStatus = true;
+        } else {
+          sSemsStatus = false;
+        }
+        SyncEventGuard guard(sNfaGetSemsOutputConfigEvent);
+        sNfaGetSemsOutputConfigEvent.notifyOne();
         break;
       }
 #endif
@@ -2966,6 +2982,10 @@ static JNINativeMethod gMethods[] = {
     {"isNfccBusy", "()Z", (void*)nfcManager_isNfccBusy},
     {"setTransitConfig", "(Ljava/lang/String;)I",
                   (void*)nfcManager_setTransitConfig},
+    {"semsGetOutputData", "()V",
+                  (void*)nfcManager_getSemsOutput},
+    {"semsGetExecutionStatus", "()Z",
+                  (void*)nfcManager_getSemsStatus},
     {"getAidTableSize", "()I",
             (void*) nfcManager_getAidTableSize},
     {"getRemainingAidTableSize", "()I",
@@ -3698,6 +3718,48 @@ static int nfcManager_setTransitConfig(JNIEnv * e, jobject o,
     int stat = NFA_SetTransitConfig(transitConfig);
     sNfaTransitConfigEvent.wait(10 * ONE_SECOND_MS);
     return stat;
+}
+
+/*******************************************************************************
+**
+** Function:        nfcManager_getSemsOutput
+**
+** Description:     Get SEMS response output data
+**
+** Returns:         Copies SEMS response data from SE HAL to nfc.
+**
+*******************************************************************************/
+static void nfcManager_getSemsOutput(JNIEnv * e, jobject o) {
+    (void)e;
+    (void)o;
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+    SyncEventGuard guard(sNfaGetSemsOutputConfigEvent);
+    if(NFA_GetSemsOutputResponse(SEMS_RESP_OUTPUT) == NFA_STATUS_OK) {
+      sNfaGetSemsOutputConfigEvent.wait(5 * ONE_SECOND_MS);
+    }
+    return;
+}
+
+/*******************************************************************************
+**
+** Function:        nfcManager_getSemsStatus
+**
+** Description:     Get previously executed SEMS status SUCCESS/FAILED
+**
+** Returns:         Status: SUCCESS/FAILED
+**
+*******************************************************************************/
+static bool nfcManager_getSemsStatus(JNIEnv * e, jobject o) {
+    (void)e;
+    (void)o;
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+    sSemsStatus = false;
+    SyncEventGuard guard(sNfaGetSemsOutputConfigEvent);
+    if(NFA_GetSemsOutputResponse(SEMS_GET_STATUS) == NFA_STATUS_OK) {
+      if(!sNfaGetSemsOutputConfigEvent.wait(5 * ONE_SECOND_MS))
+        sSemsStatus = false;
+    }
+    return sSemsStatus;
 }
 
 /*******************************************************************************
