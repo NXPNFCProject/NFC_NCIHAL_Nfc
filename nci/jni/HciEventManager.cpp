@@ -75,9 +75,7 @@ void HciEventManager::initialize(nfc_jni_native_data* native) {
           (gatePipeInfo.uicc_created_pipe[xx].dest_host ==
            (SecureElement::EE_HANDLE_0xF3 & ~NFA_HANDLE_GROUP_EE))) {
         sEsePipe = gatePipeInfo.uicc_created_pipe[xx].pipe_id;
-      } else if (gatePipeInfo.uicc_created_pipe[xx].dest_host ==
-                 (SecureElement::getInstance().EE_HANDLE_0xF4 &
-                  ~NFA_HANDLE_GROUP_EE)) {
+      } else if (gatePipeInfo.uicc_created_pipe[xx].dest_host == 0x02) {
         if (isUicc1Avaialble &&
             gatePipeInfo.uicc_created_pipe[xx].pipe_id == 0x0A) {
           sSim1Pipe = gatePipeInfo.uicc_created_pipe[xx].pipe_id;
