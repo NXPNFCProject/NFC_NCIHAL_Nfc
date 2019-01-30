@@ -43,6 +43,7 @@ NFCSTATUS phFriNfc_MifareStd_StartTimer(phFriNfc_MifareStdTimer_t* TimerInfo) {
   NFCSTATUS status = NFCSTATUS_SUCCESS;
   int stat = 0;
   struct itimerspec ts;
+  AutoMutex mutex(TimerInfo->timerSyncMutex);
   if (TimerInfo->mTimerId == 0) {
     if (TimerInfo->mCb == 0) {
       return NFCSTATUS_FAILED;
@@ -86,7 +87,7 @@ NFCSTATUS phFriNfc_MifareStd_StopTimer(phFriNfc_MifareStdTimer_t* TimerInfo) {
     status = NFCSTATUS_FAILED;
     return status;
   }
-
+  AutoMutex mutex(TimerInfo->timerSyncMutex);
   timer_delete(TimerInfo->mTimerId);
   TimerInfo->mTimerId = 0;
   TimerInfo->mCb = NULL;
