@@ -1106,8 +1106,13 @@ void RoutingManager::compileProtoEntries(void) {
                           // routing
   mProtoTableEntries[PROTO_T3T_IDX].power =
       PWR_SWTCH_ON_SCRN_UNLCK_MASK;  // Only Screen ON UNLOCK allowed
+  /*Enable T3T only in case of NCI_VERSION_1_0 and is set in
+   * HOST_LISTEN_TECH_MASK*/
   mProtoTableEntries[PROTO_T3T_IDX].enable =
-      ((mHostListnTechMask & 0x04) != 0x00) ? true : false;
+      ((NFA_GetNCIVersion() == NCI_VERSION_1_0) &&
+       ((mHostListnTechMask & 0x04) != 0x00))
+          ? true
+          : false;
 
   mProtoTableEntries[PROTO_ISODEP_IDX].routeLoc = mDefaultIsoDepSeID;
   mProtoTableEntries[PROTO_ISODEP_IDX].power =
