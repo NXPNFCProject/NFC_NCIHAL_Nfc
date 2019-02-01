@@ -3780,7 +3780,11 @@ public class NfcService implements DeviceHostListener {
     }
 
     public void commitRouting() {
-        mHandler.sendEmptyMessage(MSG_COMMIT_ROUTING);
+      if (mNxpNfcState != NXP_NFC_STATE_ON) {
+        Log.d(TAG, "Nfc is not completely initialized. Returning..");
+        return;
+      }
+      mHandler.sendEmptyMessage(MSG_COMMIT_ROUTING);
     }
     /**
      * get default Aid route entry in case application does not configure this route entry
