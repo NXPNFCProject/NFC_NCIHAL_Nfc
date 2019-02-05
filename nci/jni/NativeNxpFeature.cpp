@@ -689,7 +689,7 @@ tNFA_STATUS SetVenConfigValue(jint nfcMode) {
   return status;
 }
 
-static void NxpResponse_GetNumNFCEEValueCb(uint8_t event, uint16_t param_len,
+static void NxpResponse_GetNumNFCEEValueCb(__attribute__((unused))uint8_t event, uint16_t param_len,
                                            uint8_t* p_param) {
   uint8_t cfg_param_offset = 0x05;
   swp_getconfig_status = SWP_DEFAULT;

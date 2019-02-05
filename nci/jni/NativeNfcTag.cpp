@@ -190,7 +190,6 @@ void nativeNfcTag_handleNonNciCardDetection(tNFA_CONN_EVT_DATA* eventData);
 void nativeNfcTag_handleNonNciMultiCardDetection(uint8_t connEvent,
                                                  tNFA_CONN_EVT_DATA* eventData);
 static void nonNciCardTimerProc(union sigval);
-static void nonNciMultiCardTimerProc(union sigval);
 uint8_t checkTagNtf = 0;
 uint8_t checkCmdSent = 0;
 #endif
@@ -471,23 +470,6 @@ void nonNciCardTimerProc(union sigval) {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter ", __func__);
   memset(&sNonNciCard_t, 0, sizeof(sNonNciCard));
   scoreGenericNtf = false;
-}
-
-/*******************************************************************************
-**
-** Function:        nonNciMultiCardTimerProc
-**
-** Description:     CallBack timer for Non nci Multi card detection.
-**
-**
-**
-** Returns:         None
-**
-*******************************************************************************/
-void nonNciMultiCardTimerProc(union sigval) {
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter ", __func__);
-  checkTagNtf = 0;
-  checkCmdSent = 0;
 }
 
 /*******************************************************************************
