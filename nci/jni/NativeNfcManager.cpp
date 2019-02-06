@@ -5916,6 +5916,7 @@ static void restartUiccListen(jint uiccSlot) {
                                           jint screen_state_mask) {
     tNFA_STATUS status = NFA_STATUS_OK;
     unsigned long auto_num = 0;
+    bool isAutonomousEnabledInConfFile = false;
     uint8_t discovry_param =
         NCI_LISTEN_DH_NFCEE_ENABLE_MASK | NCI_POLLING_DH_ENABLE_MASK;
     uint8_t state = (screen_state_mask & NFA_SCREEN_STATE_MASK);
@@ -5926,6 +5927,15 @@ static void restartUiccListen(jint uiccSlot) {
     if (sIsDisabling || !sIsNfaEnabled) {
       return;
     }
+
+    if (NfcConfig::hasKey(NAME_NXP_CORE_SCRN_OFF_AUTONOMOUS_ENABLE)) {
+        auto_num =
+            NfcConfig::getUnsigned(NAME_NXP_CORE_SCRN_OFF_AUTONOMOUS_ENABLE);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+            "%s: enter; NAME_NXP_CORE_SCRN_OFF_AUTONOMOUS_ENABLE = %02lx",
+            __func__, auto_num);
+        isAutonomousEnabledInConfFile = (auto_num == 1);
+      }
 
 #if (NXP_EXTNS == TRUE)
     if (!pTransactionController->transactionAttempt(
@@ -5954,6 +5964,12 @@ static void restartUiccListen(jint uiccSlot) {
       if (prevScreenState == NFA_SCREEN_STATE_OFF_LOCKED ||
           prevScreenState == NFA_SCREEN_STATE_OFF_UNLOCKED ||
           prevScreenState == NFA_SCREEN_STATE_ON_LOCKED) {
+        if (sAutonomousSet == 1) {
+          DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Send Core reset");
+          NxpNfc_Send_CoreResetInit_Cmd();
+          sAutonomousSet = 0;
+        }
+
         SyncEventGuard guard(sNfaSetPowerSubState);
         status = NFA_SetPowerSubStateForScreenState(state);
         if (status != NFA_STATUS_OK) {
@@ -6020,6 +6036,16 @@ static void restartUiccListen(jint uiccSlot) {
       }
 
       StoreScreenState(state);
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+          "%s: auto_num : %lu  sAutonomousSet : %d  sRfFieldOff : %d", __func__,
+          auto_num, sAutonomousSet, sRfFieldOff);
+      if (isAutonomousEnabledInConfFile && (sAutonomousSet != 1) &&
+          (sRfFieldOff == true) && (state == NFA_SCREEN_STATE_OFF_LOCKED ||
+                                    state == NFA_SCREEN_STATE_OFF_UNLOCKED)) {
+
+        status = SendAutonomousMode(state, 0x01);
+        sAutonomousSet = 1;
+      }
 #if (NXP_EXTNS == TRUE)
       pTransactionController->transactionEnd(
           TRANSACTION_REQUESTOR(setScreenState));
@@ -6045,14 +6071,6 @@ static void restartUiccListen(jint uiccSlot) {
               "%s: Failed to disable polling; error=0x%X", __func__, status);
       }
 
-      if (NfcConfig::hasKey(NAME_NXP_CORE_SCRN_OFF_AUTONOMOUS_ENABLE)) {
-        auto_num =
-            NfcConfig::getUnsigned(NAME_NXP_CORE_SCRN_OFF_AUTONOMOUS_ENABLE);
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-            "%s: enter; NAME_NXP_CORE_SCRN_OFF_AUTONOMOUS_ENABLE = %02lx",
-            __func__, auto_num);
-      }
-
       status = SetScreenState(state);
       if (status != NFA_STATUS_OK) {
         LOG(ERROR) << StringPrintf("%s: fail enable SetScreenState; error=0x%X",
@@ -6069,7 +6087,7 @@ static void restartUiccListen(jint uiccSlot) {
              (state == NFA_SCREEN_STATE_OFF_LOCKED ||
               state == NFA_SCREEN_STATE_OFF_UNLOCKED) &&
              sIsSecElemSelected)) {
-          if (auto_num != 0x01) {
+          if (!isAutonomousEnabledInConfFile) {
             DLOG_IF(INFO, nfc_debug_enabled)
                 << StringPrintf("Start RF discovery");
             startRfDiscovery(true);
@@ -6084,7 +6102,7 @@ static void restartUiccListen(jint uiccSlot) {
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
           "%s: auto_num : %lu  sAutonomousSet : %d  sRfFieldOff : %d", __func__,
           auto_num, sAutonomousSet, sRfFieldOff);
-      if ((auto_num == 0x01) && (sAutonomousSet != 1) &&
+      if ((isAutonomousEnabledInConfFile) && (sAutonomousSet != 1) &&
           (sRfFieldOff == true) && (state == NFA_SCREEN_STATE_OFF_LOCKED ||
                                     state == NFA_SCREEN_STATE_OFF_UNLOCKED)) {
 
