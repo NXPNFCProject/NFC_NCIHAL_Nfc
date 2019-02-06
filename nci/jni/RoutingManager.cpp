@@ -120,33 +120,13 @@ RoutingManager::RoutingManager()
       mDefaultHCEFRspTimeout(5000) {
   static const char fn[] = "RoutingManager::RoutingManager()";
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:enter", fn);
-  mDefaultOffHostRoute =
-      NfcConfig::getUnsigned(NAME_DEFAULT_OFFHOST_ROUTE, 0x00);
-
-  mAidMatchingMode =
-      NfcConfig::getUnsigned(NAME_AID_MATCHING_MODE, AID_MATCHING_EXACT_ONLY);
-
-  mAidMatchingPlatform =
-      NfcConfig::getUnsigned("AID_MATCHING_PLATFORM", AID_MATCHING_L);
-
-  mDefaultSysCodeRoute =
-      NfcConfig::getUnsigned(NAME_DEFAULT_SYS_CODE_ROUTE, 0xC0);
-
-  mDefaultSysCodePowerstate =
-      NfcConfig::getUnsigned(NAME_DEFAULT_SYS_CODE_PWR_STATE, 0x19);
-
-  mOffHostAidRoutingPowerState =
-      NfcConfig::getUnsigned(NAME_OFFHOST_AID_ROUTE_PWR_STATE, 0x01);
-
+  mDefaultOffHostRoute = 0x00;
+  mAidMatchingMode = AID_MATCHING_EXACT_ONLY;
+  mAidMatchingPlatform = AID_MATCHING_L;
+  mDefaultSysCodeRoute = 0xC0;
+  mDefaultSysCodePowerstate = 0X19;
+  mOffHostAidRoutingPowerState = 0x01;
   mDefaultSysCode = DEFAULT_SYS_CODE;
-  if (NfcConfig::hasKey(NAME_DEFAULT_SYS_CODE)) {
-    std::vector<uint8_t> pSysCode = NfcConfig::getBytes(NAME_DEFAULT_SYS_CODE);
-    if (pSysCode.size() == 0x02) {
-      mDefaultSysCode = ((pSysCode[0] << 8) | ((int)pSysCode[1] << 0));
-      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-          "%s: DEFAULT_SYS_CODE: 0x%02X", __func__, mDefaultSysCode);
-    }
-  }
 
   mSeTechMask = 0x00;  // unused
   mNfcFOnDhHandle = NFA_HANDLE_INVALID;
@@ -169,6 +149,34 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
   tNFA_EE_INFO mEeInfo[ActualNumEe];
 
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", fn);
+
+  mDefaultOffHostRoute =
+      NfcConfig::getUnsigned(NAME_DEFAULT_OFFHOST_ROUTE, 0x00);
+
+  mAidMatchingMode =
+      NfcConfig::getUnsigned(NAME_AID_MATCHING_MODE, AID_MATCHING_EXACT_ONLY);
+
+  mAidMatchingPlatform =
+      NfcConfig::getUnsigned("AID_MATCHING_PLATFORM", AID_MATCHING_L);
+
+  mDefaultSysCodeRoute =
+      NfcConfig::getUnsigned(NAME_DEFAULT_SYS_CODE_ROUTE, 0xC0);
+
+  mDefaultSysCodePowerstate =
+      NfcConfig::getUnsigned(NAME_DEFAULT_SYS_CODE_PWR_STATE, 0x19);
+
+  mOffHostAidRoutingPowerState =
+      NfcConfig::getUnsigned(NAME_OFFHOST_AID_ROUTE_PWR_STATE, 0x01);
+
+  if (NfcConfig::hasKey(NAME_DEFAULT_SYS_CODE)) {
+    std::vector<uint8_t> pSysCode = NfcConfig::getBytes(NAME_DEFAULT_SYS_CODE);
+    if (pSysCode.size() == 0x02) {
+      mDefaultSysCode = ((pSysCode[0] << 8) | ((int)pSysCode[1] << 0));
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+          "%s: DEFAULT_SYS_CODE: 0x%02X", __func__, mDefaultSysCode);
+    }
+  }
+
 #if (NXP_EXTNS == TRUE)
   memset(&gRouteInfo, 0x00, sizeof(RouteInfo_t));
   nfcee_swp_discovery_status = SWP_DEFAULT;
