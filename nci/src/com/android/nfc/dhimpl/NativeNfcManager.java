@@ -716,9 +716,6 @@ public class NativeNfcManager implements DeviceHost {
     public native byte[] doGetRouting();
 
     @Override
-    public native int doGetSeInterface(int type);
-
-    @Override
     public native int doselectUicc(int uiccSlot);
 
     @Override

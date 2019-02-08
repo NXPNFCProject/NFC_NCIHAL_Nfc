@@ -475,8 +475,6 @@ void checkforESERemoval();
 bool nfcManager_sendEmptyDataMsg();
 bool gIsEmptyRspSentByHceFApk = false;
 
-static int nfcManager_doGetSeInterface(JNIEnv* e, jobject o, jint type);
-
 extern bool scoreGenericNtf;
 tNFC_FW_VERSION get_fw_version();
 bool isNfcInitializationDone();
@@ -513,13 +511,6 @@ typedef enum transcation_events {
   NFA_TRANS_CE_ACTIVATED = 0x18,
   NFA_TRANS_CE_DEACTIVATED = 0x19,
 } eTranscation_events_t;
-
-typedef enum se_client {
-  DEFAULT = 0x00,
-  LDR_SRVCE,
-  JCOP_SRVCE,
-  LTSM_SRVCE
-} seClient_t;
 
 /*Structure to store  discovery parameters*/
 typedef struct discovery_Parameters {
@@ -5268,7 +5259,6 @@ static void restartUiccListen(jint uiccSlot) {
     {"isNfccBusy", "()Z", (void*)nfcManager_isNfccBusy},
 #endif
     {"doSetEEPROM", "([B)V", (void*)nfcManager_doSetEEPROM},
-    {"doGetSeInterface", "(I)I", (void*)nfcManager_doGetSeInterface},
     // Factory Test Code
     {"doCheckJcopDlAtBoot", "()Z", (void*)nfcManager_doCheckJcopDlAtBoot},
     {"doEnableDtaMode", "()V", (void*)nfcManager_doEnableDtaMode},
@@ -6724,54 +6714,6 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
         LOG(ERROR) << StringPrintf("received SIGHUP\n");
         break;
     }
-  }
-
-  /*******************************************************************************
-  **
-  ** Function         nfcManager_doGetSeInterface
-  **
-  ** Description      This function is used to get the eSE Client interfaces.
-  **
-  ** Returns          integer - Physical medium
-  **
-  *******************************************************************************/
-  static int nfcManager_doGetSeInterface(JNIEnv * e, jobject o, jint type) {
-    unsigned long num = 0;
-    switch (type) {
-      case LDR_SRVCE:
-
-        if (NfcConfig::hasKey(NAME_NXP_P61_LS_DEFAULT_INTERFACE)) {
-          num = NfcConfig::getUnsigned(NAME_NXP_P61_LS_DEFAULT_INTERFACE);
-        } else {
-          DLOG_IF(INFO, nfc_debug_enabled)
-              << StringPrintf("NAME_NXP_P61_LS_DEFAULT_INTERFACE not found");
-          num = 1;
-        }
-        break;
-      case JCOP_SRVCE:
-        if (NfcConfig::hasKey(NAME_NXP_P61_JCOP_DEFAULT_INTERFACE)) {
-          num = NfcConfig::getUnsigned(NAME_NXP_P61_JCOP_DEFAULT_INTERFACE);
-        } else {
-          DLOG_IF(INFO, nfc_debug_enabled)
-              << StringPrintf("NAME_NXP_P61_JCOP_DEFAULT_INTERFACE not found");
-          num = 1;
-        }
-        break;
-      case LTSM_SRVCE:
-        if (NfcConfig::hasKey(NAME_NXP_P61_LTSM_DEFAULT_INTERFACE)) {
-          num = NfcConfig::getUnsigned(NAME_NXP_P61_LTSM_DEFAULT_INTERFACE);
-        } else {
-          DLOG_IF(INFO, nfc_debug_enabled)
-              << StringPrintf("NAME_NXP_P61_LTSM_DEFAULT_INTERFACE not found");
-          num = 1;
-        }
-        break;
-      default:
-        break;
-    }
-    DLOG_IF(INFO, nfc_debug_enabled)
-        << StringPrintf("%ld: nfcManager_doGetSeInterface", num);
-    return num;
   }
 
 #if (NXP_EXTNS == TRUE)

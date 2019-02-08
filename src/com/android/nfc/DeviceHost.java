@@ -438,8 +438,6 @@ public interface DeviceHost {
     public void doSetEEPROM(byte[] val);
     //Factory Test --end
 
-    public int doGetSeInterface(int type);
-
     public void enableDtaMode();
 
     public void disableDtaMode();
