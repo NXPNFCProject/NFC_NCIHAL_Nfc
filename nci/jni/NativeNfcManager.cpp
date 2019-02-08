@@ -111,13 +111,6 @@ bool sHCEEnabled = true;
 #define MAX_JCOP_TIMEOUT_VALUE 60000 /*Maximum Jcop OSU timeout value*/
 #define MAX_WAIT_TIME_FOR_RETRY 8    /*Maximum wait for retry in usec*/
 #define ESE_PWR_MGMT_PROP "ro.config.low_ram"
-#define IS_ESE_RF_CE_PARAM_FETCHED()             \
-  (pEvtData->get_config.param_tlvs[1] == 0xA0 && \
-   pEvtData->get_config.param_tlvs[2] == 0xF0)
-#define IS_ESE_CE_MODE_DISABLED()                \
-  (pEvtData->get_config.param_tlvs[5] == 0xFF || \
-   pEvtData->get_config.param_tlvs[43] == 0xFF)
-
 
 extern nfcee_disc_state sNfcee_disc_state;
 extern bool recovery;
@@ -438,7 +431,6 @@ static uint8_t sRoutingBuff[MAX_GET_ROUTING_BUFFER_SIZE];
 static uint8_t sNfceeConfigured;
 static uint8_t sCheckNfceeFlag;
 void checkforNfceeBuffer();
-static uint32_t eSEPhyIntfInResponsive(tNFA_DM_CBACK_DATA* pEvtData);
 static void recoverEseConnectivity();
 void checkforNfceeConfig(uint8_t type);
 static void performHCIInitialization(JNIEnv* e, jobject o);
@@ -1700,8 +1692,6 @@ static void nfaConnectionCallback(uint8_t connEvent,
 
 #if (NXP_EXTNS == TRUE)
             if (sCheckNfceeFlag) checkforNfceeBuffer();
-
-            if (eSEPhyIntfInResponsive(eventData)) recoverEseConnectivity();
 #endif
           } else {
             LOG(ERROR) << StringPrintf("%s: NFA_DM_GET_CONFIG failed",
@@ -6925,25 +6915,6 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
              activated.activate_ntf.rf_tech_param.mode) ||
             (NFC_DISCOVERY_TYPE_LISTEN_F_ACTIVE ==
              activated.activate_ntf.rf_tech_param.mode));
-  }
-  /**********************************************************************************
-   **
-   ** Function:        eSEPhyIntfInResponsive
-   **
-   ** Description:    checking inactivity of eSE physical interface
-   **
-   ** Returns:         1(if true)/0 (if false) .
-   **
-   **********************************************************************************/
-  static uint32_t eSEPhyIntfInResponsive(tNFA_DM_CBACK_DATA * pEvtData) {
-    LOG(ERROR) << StringPrintf("%s: param_tlvs %x", __func__,
-                               pEvtData->get_config.param_tlvs[5]);
-    if (nfcFL.chipType != pn553)
-      return (IS_ESE_RF_CE_PARAM_FETCHED() && IS_ESE_CE_MODE_DISABLED() &&
-              SecureElement::getInstance().getEeStatus(ESE_HANDLE) ==
-                  NFA_EE_STATUS_ACTIVE);
-    else
-      return 0;
   }
   /**********************************************************************************
   **
