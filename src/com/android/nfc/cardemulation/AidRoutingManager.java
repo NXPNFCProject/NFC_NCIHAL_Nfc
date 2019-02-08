@@ -87,12 +87,12 @@ public class AidRoutingManager {
     // For Nexus devices, just a static route to the eSE
     // OEMs/Carriers could manually map off-host AIDs
     // to the correct eSE/UICC based on state they keep.
-    final int mDefaultOffHostRoute;
+    int mDefaultOffHostRoute;
 
     // How the NFC controller can match AIDs in the routing table;
     // see AID_MATCHING constants
-    final int mAidMatchingSupport;
-    final int mAidMatchingPlatform;
+    int mAidMatchingSupport;
+    int mAidMatchingPlatform;
     //Changed from final to private int to update RoutingtableSize later in configureRouting.
     private int mAidRoutingTableSize;
     // Maximum AID routing table size
@@ -132,7 +132,7 @@ public class AidRoutingManager {
         mAidMatchingSupport = doGetAidMatchingMode();
         if (DBG) Log.d(TAG, "mAidMatchingSupport=0x" + Integer.toHexString(mAidMatchingSupport));
         mAidMatchingPlatform = doGetAidMatchingPlatform();
-        if (DBG) Log.d(TAG, "mAidTableSize=0x" + Integer.toHexString(mAidRoutingTableSize));
+        if (DBG) Log.d(TAG, "mAidMatchingPlatform=0x" + Integer.toHexString(mAidMatchingPlatform));
         mVzwRoutingCache = new VzwRoutingCache();
         mLastCommitStatus = true;
 
@@ -205,8 +205,23 @@ public class AidRoutingManager {
         return true;
     }
 
+    public void refreshConfigParameters() {
+      mDefaultRoute = doGetDefaultRouteDestination();
+      if (DBG)
+        Log.d(TAG, "mDefaultRoute=0x" + Integer.toHexString(mDefaultRoute));
+      mDefaultOffHostRoute = doGetDefaultOffHostRouteDestination();
+      if (DBG)
+        Log.d(TAG, "mDefaultOffHostRoute=0x" + Integer.toHexString(mDefaultOffHostRoute));
+      mAidMatchingSupport = doGetAidMatchingMode();
+      if (DBG)
+        Log.d(TAG, "mAidMatchingSupport=0x" + Integer.toHexString(mAidMatchingSupport));
+      mAidMatchingPlatform = doGetAidMatchingPlatform();
+    }
+
     public boolean configureRouting(HashMap<String, AidElement> aidMap) {
         mRoutingTableChanged = false;
+        //To handle Dynamic change in config files.
+        refreshConfigParameters();
         mDefaultRoute = NfcService.getInstance().GetDefaultRouteLoc();
         boolean aidRouteResolved = false;
         if (DBG) Log.d(TAG, "mAidMatchingPlatform=0x" + Integer.toHexString(mAidMatchingPlatform));
