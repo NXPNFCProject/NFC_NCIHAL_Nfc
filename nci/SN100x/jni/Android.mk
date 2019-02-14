@@ -51,7 +51,7 @@ LOCAL_C_INCLUDES += \
     hardware/nxp/nfc/SN100x/extns/impl\
 
 LOCAL_SHARED_LIBRARIES := \
-    libicuuc \
+    libandroidicu \
     libnativehelper \
     libcutils \
     libutils \

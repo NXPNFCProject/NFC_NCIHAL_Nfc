@@ -412,7 +412,8 @@ void *p2p_prio_logic_multiprotocol(void *arg) {
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: Acquired sP2pPrioMultiProtoMutex lock", __FUNCTION__);
   /* Do not need if it is already in screen off state */
-  if ((prevScreenState != (NFA_SCREEN_STATE_OFF_LOCKED || NFA_SCREEN_STATE_OFF_UNLOCKED))) {
+  if (!(prevScreenState &
+        (NFA_SCREEN_STATE_OFF_LOCKED | NFA_SCREEN_STATE_OFF_UNLOCKED))) {
     /* Stop polling */
     if (sRfEnabled) {
       startRfDiscovery(false);
@@ -1019,13 +1020,13 @@ static jboolean nfcManager_initNativeStruc(JNIEnv* e, jobject o) {
   gCachedNfcManagerNotifyRfFieldDeactivated =
       e->GetMethodID(cls.get(), "notifyRfFieldDeactivated", "()V");
 
-  gCachedNfcManagerNotifySeListenActivated = 
+  gCachedNfcManagerNotifySeListenActivated =
       e->GetMethodID(cls.get(),"notifySeListenActivated", "()V");
-  gCachedNfcManagerNotifySeListenDeactivated = 
+  gCachedNfcManagerNotifySeListenDeactivated =
       e->GetMethodID(cls.get(),"notifySeListenDeactivated", "()V");
   gCachedNfcManagerNotifyTransactionListeners = e->GetMethodID(
       cls.get(), "notifyTransactionListeners", "([B[BLjava/lang/String;)V");
-  gCachedNfcManagerNotifySeInitialized = 
+  gCachedNfcManagerNotifySeInitialized =
       e->GetMethodID(cls.get(),"notifySeInitialized", "()V");
   if (nfc_jni_cache_object(e, gNativeNfcTagClassName, &(nat->cached_NfcTag)) ==
       -1) {
@@ -1114,7 +1115,7 @@ void nfaDeviceManagementCallback(uint8_t dmEvent,
 #if(NXP_EXTNS == TRUE)
       SecureElement::getInstance().notifyRfFieldEvent (
                     eventData->rf_field.rf_field_status == NFA_DM_RF_FIELD_ON);
-#endif      
+#endif
 if (!sP2pActive && eventData->rf_field.status == NFA_STATUS_OK) {
         struct nfc_jni_native_data* nat = getNative(NULL, NULL);
         JNIEnv* e = NULL;
@@ -3043,7 +3044,7 @@ bool isDiscoveryStarted() { return sRfEnabled; }
 **
 *******************************************************************************/
 void doStartupConfig() {
-#if (NXP_EXTNS == FALSE) 
+#if (NXP_EXTNS == FALSE)
  struct nfc_jni_native_data* nat = getNative(0, 0);
   tNFA_STATUS stat = NFA_STATUS_FAILED;
 

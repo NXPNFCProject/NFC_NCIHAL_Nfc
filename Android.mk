@@ -20,11 +20,10 @@ LOCAL_JAVA_LIBRARIES := com.nxp.nfc
 
 LOCAL_JNI_SHARED_LIBRARIES := libnfc_nci_jni
 LOCAL_STATIC_JAVA_LIBRARIES := android-support-v4
-NXP_WIRED_SE:=FALSE
+NXP_WIRED_SE:=TRUE
 ifeq ($(NXP_WIRED_SE),TRUE)
   LOCAL_STATIC_JAVA_LIBRARIES += vendor.nxp.nxpwiredse-V1.0-java
 endif
-
 LOCAL_PROGUARD_ENABLED := disabled
 
 include $(BUILD_PACKAGE)
