@@ -1549,9 +1549,10 @@ static jboolean nfcManager_doInitialize(JNIEnv* e, jobject o) {
   }
 #if (NXP_EXTNS == TRUE)
     mwVer=  NFA_GetMwVersion();
-    LOG(ERROR) << StringPrintf("%s:  MW Version: NFC_NCIHALx_AR%X.%x.%x.%x_RC%x",
-            __func__, mwVer.validation, mwVer.android_version,
-            mwVer.major_version,mwVer.minor_version,mwVer.rc_version);
+    LOG(ERROR) << StringPrintf(
+        "%s:  MW Version: NFC_AR_%02X_%04X_%02x.%02x.%02x", __func__,
+        mwVer.cust_id, mwVer.validation, mwVer.android_version,
+        mwVer.major_version, mwVer.minor_version);
 
     if(GetNxpNumValue(NAME_NXP_DUAL_UICC_ENABLE, &isDynamicUiccEnabled, sizeof(isDynamicUiccEnabled))) {
         isDynamicUiccEnabled = (isDynamicUiccEnabled == 0x01 ? true:false);
