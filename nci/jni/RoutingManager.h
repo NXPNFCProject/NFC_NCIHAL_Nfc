@@ -232,6 +232,7 @@ class RoutingManager {
                                           const int protoRoute,
                                           const int techRoute);
   uint16_t getUiccRouteLocId(const int route);
+  bool isDefaultIsoDepSupported();
   void initialiseTableEntries(void);
   void compileProtoEntries(void);
   void compileTechEntries(void);
@@ -326,6 +327,7 @@ class RoutingManager {
   int mDefaultEe;  // since this variable is used in both cases moved out of
                    // compiler switch
   int mHostListnTechMask;
+  int mEseListnTechMask;
   int mUiccListnTechMask;
   int mFwdFuntnEnable;
   static int mChipId;

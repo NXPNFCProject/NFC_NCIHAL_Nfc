@@ -114,6 +114,7 @@ RoutingManager::RoutingManager()
     : mNativeData(NULL),
       mDefaultEe(NFA_HANDLE_INVALID),
       mHostListnTechMask(0),
+      mEseListnTechMask(0),
       mUiccListnTechMask(0),
       mFwdFuntnEnable(true),
       mAddAid(0),
@@ -205,6 +206,12 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
     mHostListnTechMask = NfcConfig::getUnsigned(NAME_HOST_LISTEN_TECH_MASK);
   } else {
     mHostListnTechMask = 0x07;
+  }
+
+  if (NfcConfig::hasKey(NAME_NXP_ESE_LISTEN_TECH_MASK)) {
+    mEseListnTechMask = NfcConfig::getUnsigned(NAME_NXP_ESE_LISTEN_TECH_MASK);
+  } else {
+    mEseListnTechMask = 0x07;
   }
 
   if (NfcConfig::hasKey(NAME_UICC_LISTEN_TECH_MASK)) {
@@ -1119,6 +1126,26 @@ void RoutingManager::initialiseTableEntries(void) {
       fn, mTechSupportedByEse, mTechSupportedByUicc1, mTechSupportedByUicc2);
 }
 
+bool RoutingManager::isDefaultIsoDepSupported() {
+  unsigned long num = 0;
+  bool status = false;
+
+  if (NfcConfig::hasKey(NAME_DEFAULT_ROUTE))
+    num = NfcConfig::getUnsigned(NAME_DEFAULT_ROUTE);
+
+  switch (num) {
+    case ROUTE_LOC_HOST_ID_IDX:
+      status = ((mHostListnTechMask & 0x03) != 0x00) ? true : false;
+      break;
+    case ROUTE_LOC_ESE_ID_IDX:
+      status = ((mEseListnTechMask & 0x03) != 0x00) ? true : false;
+      break;
+    case ROUTE_LOC_UICC1_ID_IDX:
+      status = ((mUiccListnTechMask & 0x03) != 0x00) ? true : false;
+      break;
+  }
+  return status;
+}
 /* Compilation of Proto Table entries strictly based on config file parameters
  * Each entry in proto table consistes of route location, protocol and power
  * state
@@ -1146,8 +1173,9 @@ void RoutingManager::compileProtoEntries(void) {
   mProtoTableEntries[PROTO_ISODEP_IDX].power =
       mCeRouteStrictDisable ? mDefaultIsoDepPowerstate
                             : (mDefaultIsoDepPowerstate & POWER_STATE_MASK);
+
   mProtoTableEntries[PROTO_ISODEP_IDX].enable =
-      ((mHostListnTechMask & 0x03) != 0x00) ? true : false;
+      (isDefaultIsoDepSupported() == true) ? true : false;
 
   if (NFA_GetNCIVersion() == NCI_VERSION_1_0) {
     mProtoTableEntries[PROTO_ISO7816_IDX].routeLoc = mDefaultIso7816SeID;
