@@ -674,6 +674,11 @@ static void nfaConnectionCallback(uint8_t connEvent,
       }
 
       nativeNfcTag_resetPresenceCheck();
+      if (!isListenMode(eventData->activated) &&
+          (prevScreenState == NFA_SCREEN_STATE_OFF_LOCKED ||
+           prevScreenState == NFA_SCREEN_STATE_OFF_UNLOCKED)) {
+        NFA_Deactivate(FALSE);
+      }
       if (isPeerToPeer(eventData->activated)) {
         if (sReaderModeEnabled) {
           DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
@@ -2667,8 +2672,10 @@ static void nfcManager_doSetScreenState(JNIEnv* e, jobject o,
                       __FUNCTION__, state, prevScreenState, discovry_param);
 
   if (sIsDisabling || !sIsNfaEnabled ||
-      (NFC_GetNCIVersion() != NCI_VERSION_2_0))
+      (NFC_GetNCIVersion() != NCI_VERSION_2_0))  {
+    prevScreenState = state;
     return;
+  }
   if (prevScreenState == NFA_SCREEN_STATE_OFF_LOCKED ||
       prevScreenState == NFA_SCREEN_STATE_OFF_UNLOCKED ||
       prevScreenState == NFA_SCREEN_STATE_ON_LOCKED) {
