@@ -2685,14 +2685,9 @@ static void nfcManager_doSetScreenState(JNIEnv* e, jobject o,
 
   if (state == NFA_SCREEN_STATE_OFF_LOCKED ||
       state == NFA_SCREEN_STATE_OFF_UNLOCKED) {
-    // disable both poll and listen on DH 0x02
+    // disable poll, and DH-NFCEE considered as enabled 0x00
     discovry_param =
-        NCI_POLLING_DH_DISABLE_MASK
-#if (NXP_EXTNS == TRUE)
-    | NCI_LISTEN_DH_NFCEE_ENABLE_MASK;
-#else
-    | NCI_LISTEN_DH_NFCEE_DISABLE_MASK;
-#endif
+        NCI_POLLING_DH_DISABLE_MASK | NCI_LISTEN_DH_NFCEE_ENABLE_MASK;
   }
 
   if (state == NFA_SCREEN_STATE_ON_LOCKED) {
