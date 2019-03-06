@@ -773,11 +773,11 @@ public class RegisteredServicesCache {
 
     public boolean setOffHostSecureElement(int userId, int uid, ComponentName componentName,
             String offHostSE) {
-        ArrayList<ApduServiceInfo> newServices = null;
+        ArrayList<NfcApduServiceInfo> newServices = null;
         synchronized (mLock) {
             UserServices services = findOrCreateUserLocked(userId);
             // Check if we can find this service
-            ApduServiceInfo serviceInfo = getService(userId, componentName);
+            NfcApduServiceInfo serviceInfo = getService(userId, componentName);
             if (serviceInfo == null) {
                 Log.e(TAG, "Service " + componentName + " does not exist.");
                 return false;
@@ -808,7 +808,7 @@ public class RegisteredServicesCache {
             }
 
             serviceInfo.setOffHostSecureElement(offHostSE);
-            newServices = new ArrayList<ApduServiceInfo>(services.services.values());
+            newServices = new ArrayList<NfcApduServiceInfo>(services.services.values());
         }
         // Make callback without the lock held
         mCallback.onServicesUpdated(userId, newServices);
@@ -816,11 +816,11 @@ public class RegisteredServicesCache {
     }
 
     public boolean unsetOffHostSecureElement(int userId, int uid, ComponentName componentName) {
-        ArrayList<ApduServiceInfo> newServices = null;
+        ArrayList<NfcApduServiceInfo> newServices = null;
         synchronized (mLock) {
             UserServices services = findOrCreateUserLocked(userId);
             // Check if we can find this service
-            ApduServiceInfo serviceInfo = getService(userId, componentName);
+            NfcApduServiceInfo serviceInfo = getService(userId, componentName);
             if (serviceInfo == null) {
                 Log.e(TAG, "Service " + componentName + " does not exist.");
                 return false;
@@ -837,19 +837,20 @@ public class RegisteredServicesCache {
                 Log.e(TAG, "OffHostSE is not set");
                 return false;
             }
-
+            serviceInfo.unsetOffHostSecureElement();
             DynamicSettings dynSettings = services.dynamicSettings.get(componentName);
-            String offHostSE = dynSettings.offHostSE;
-            dynSettings.offHostSE = null;
-            boolean success = writeDynamicSettingsLocked();
-            if (!success) {
+            if (dynSettings != null) {
+              String offHostSE = dynSettings.offHostSE;
+              dynSettings.offHostSE = serviceInfo.getOffHostSecureElement();
+              boolean success = writeDynamicSettingsLocked();
+              if (!success) {
                 Log.e(TAG, "Failed to persist AID group.");
                 dynSettings.offHostSE = offHostSE;
                 return false;
+              }
             }
 
-            serviceInfo.unsetOffHostSecureElement();
-            newServices = new ArrayList<ApduServiceInfo>(services.services.values());
+            newServices = new ArrayList<NfcApduServiceInfo>(services.services.values());
         }
         // Make callback without the lock held
         mCallback.onServicesUpdated(userId, newServices);
@@ -889,7 +890,7 @@ public class RegisteredServicesCache {
             DynamicSettings dynSettings = services.dynamicSettings.get(componentName);
             if (dynSettings == null) {
                 dynSettings = new DynamicSettings(uid);
-                dynSettings.offHostSE = null;
+                dynSettings.offHostSE = serviceInfo.getOffHostSecureElement();
                 services.dynamicSettings.put(componentName, dynSettings);
             }
             dynSettings.aidGroups.put(nfcAidGroup.getCategory(), nfcAidGroup);

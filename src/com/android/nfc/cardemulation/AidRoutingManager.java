@@ -240,6 +240,7 @@ public class AidRoutingManager {
                     }
                 }
             }
+            aidEntry.getValue().route = route;
             int aidType = aidEntry.getValue().aidInfo;
             int power = aidEntry.getValue().powerstate;
             String aid = aidEntry.getKey();

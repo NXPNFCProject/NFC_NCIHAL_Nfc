@@ -933,7 +933,7 @@ public class RegisteredAidCache {
                 // offhost then the service should be routed to off host.
                 boolean onHost = false;
                 String offHostSE = null;
-                for (ApduServiceInfo service : resolveInfo.services) {
+                for (NfcApduServiceInfo service : resolveInfo.services) {
                     // In case there is at least one service which routes to host
                     // Route it to host for user to select which service to use
                     onHost |= service.isOnHost();
