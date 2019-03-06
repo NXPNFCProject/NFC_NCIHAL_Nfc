@@ -606,6 +606,10 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         mHostEmulationManager.onPreferredForegroundServiceChanged(service);
     }
 
+    public void onRoutingTableChanged() {
+        mAidCache.onRoutingTableChanged();
+    }
+
     public List<NfcAidServiceInfo> getServicesAidInfo(int userId, String category) {
         if(category == CardEmulation.CATEGORY_PAYMENT) {
             return null;

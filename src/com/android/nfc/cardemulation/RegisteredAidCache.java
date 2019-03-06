@@ -1016,6 +1016,14 @@ public class RegisteredAidCache {
         }
     }
 
+    public void onRoutingTableChanged() {
+      if (DBG)
+        Log.d(TAG, "onRoutingTableChanged");
+      synchronized (mLock) {
+        generateAidCacheLocked();
+      }
+    }
+
     public void onNfcDisabled() {
         synchronized (mLock) {
             mNfcEnabled = false;
