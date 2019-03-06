@@ -64,6 +64,12 @@ const JNINativeMethod RoutingManager::sMethods[] = {
     {"doGetDefaultOffHostRouteDestination", "()I",
      (void*)RoutingManager::
          com_android_nfc_cardemulation_doGetDefaultOffHostRouteDestination},
+    {"doGetOffHostUiccDestination", "()[B",
+     (void*)RoutingManager::
+         com_android_nfc_cardemulation_doGetOffHostUiccDestination},
+    {"doGetOffHostEseDestination", "()[B",
+     (void*)RoutingManager::
+         com_android_nfc_cardemulation_doGetOffHostEseDestination},
     {"doGetAidMatchingMode", "()I",
      (void*)
          RoutingManager::com_android_nfc_cardemulation_doGetAidMatchingMode}};
@@ -85,6 +91,14 @@ RoutingManager::RoutingManager() {
 
   mDefaultOffHostRoute =
       NfcConfig::getUnsigned(NAME_DEFAULT_OFFHOST_ROUTE, 0x00);
+
+  if (NfcConfig::hasKey(NAME_OFFHOST_ROUTE_UICC)) {
+    mOffHostRouteUicc = NfcConfig::getBytes(NAME_OFFHOST_ROUTE_UICC);
+  }
+
+  if (NfcConfig::hasKey(NAME_OFFHOST_ROUTE_ESE)) {
+    mOffHostRouteEse = NfcConfig::getBytes(NAME_OFFHOST_ROUTE_ESE);
+  }
 
   mDefaultFelicaRoute = NfcConfig::getUnsigned(NAME_DEFAULT_NFCF_ROUTE, 0x00);
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
@@ -188,9 +202,9 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
     LOG(ERROR) << StringPrintf("%s: >>>> mDefaultIso7816Powerstate=0x%X", fn, mDefaultIso7816Powerstate);
 #endif
   if ((mDefaultOffHostRoute != 0) || (mDefaultFelicaRoute != 0)) {
-    DLOG_IF(INFO, nfc_debug_enabled)
-        << StringPrintf("%s: Technology Routing (NfcASe:0x%02x, NfcFSe:0x%02x)",
-                        fn, mDefaultOffHostRoute, mDefaultFelicaRoute);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+        "%s: Technology Routing (NfcASe:0x%02x, NfcFSe:0x%02x) ", fn,
+        mDefaultOffHostRoute, mDefaultFelicaRoute);
     {
       // Wait for EE info if needed
       SyncEventGuard guard(mEeInfoEvent);
@@ -1022,6 +1036,34 @@ int RoutingManager::registerJniFunctions(JNIEnv* e) {
   return jniRegisterNativeMethods(
       e, "com/android/nfc/cardemulation/AidRoutingManager", sMethods,
       NELEM(sMethods));
+}
+
+jbyteArray
+RoutingManager::com_android_nfc_cardemulation_doGetOffHostUiccDestination(
+    JNIEnv* e) {
+  std::vector<uint8_t> uicc = getInstance().mOffHostRouteUicc;
+  if (uicc.size() == 0) {
+    return NULL;
+  }
+  CHECK(e);
+  jbyteArray uiccJavaArray = e->NewByteArray(uicc.size());
+  CHECK(uiccJavaArray);
+  e->SetByteArrayRegion(uiccJavaArray, 0, uicc.size(), (jbyte*)&uicc[0]);
+  return uiccJavaArray;
+}
+
+jbyteArray
+RoutingManager::com_android_nfc_cardemulation_doGetOffHostEseDestination(
+    JNIEnv* e) {
+  std::vector<uint8_t> ese = getInstance().mOffHostRouteEse;
+  if (ese.size() == 0) {
+    return NULL;
+  }
+  CHECK(e);
+  jbyteArray eseJavaArray = e->NewByteArray(ese.size());
+  CHECK(eseJavaArray);
+  e->SetByteArrayRegion(eseJavaArray, 0, ese.size(), (jbyte*)&ese[0]);
+  return eseJavaArray;
 }
 
 int RoutingManager::com_android_nfc_cardemulation_doGetDefaultRouteDestination(

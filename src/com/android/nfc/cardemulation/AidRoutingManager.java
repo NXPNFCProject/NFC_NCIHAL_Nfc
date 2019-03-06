@@ -45,6 +45,7 @@ import android.util.SparseArray;
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -71,17 +72,12 @@ public class AidRoutingManager {
     static final int AID_MATCHING_PREFIX_ONLY = 0x02;
     // Every routing table entry can be matched either exact or prefix or subset only
     static final int AID_MATCHING_EXACT_OR_SUBSET_OR_PREFIX = 0x03;
-    // This is the default IsoDep protocol route; it means
-    // that for any AID that needs to be routed to this
-    // destination, we won't need to add a rule to the routing
-    // table, because this destination is already the default route.
-    //
-    // For Nexus devices, the default route is always 0x00.
     int mDefaultRoute;
     int mDefaultAidRoute;
-    // For Nexus devices, just a static route to the eSE
-    // OEMs/Carriers could manually map off-host AIDs
-    // to the correct eSE/UICC based on state they keep.
+    final byte[] mOffHostRouteUicc;
+    final byte[] mOffHostRouteEse;
+    // Used for backward compatibility in case application doesn't specify the
+    // SE
     final int mDefaultOffHostRoute;
 
     // How the NFC controller can match AIDs in the routing table;
@@ -105,10 +101,13 @@ public class AidRoutingManager {
 
     private native int doGetDefaultRouteDestination();
     private native int doGetDefaultOffHostRouteDestination();
+    private native byte[] doGetOffHostUiccDestination();
+    private native byte[] doGetOffHostEseDestination();
     private native int doGetAidMatchingMode();
     final ActivityManager mActivityManager;
     final class AidEntry {
         boolean isOnHost;
+        String offHostSE;
         int aidInfo;
         int powerstate;
         int route;
@@ -116,9 +115,17 @@ public class AidRoutingManager {
 
     public AidRoutingManager() {
         mDefaultRoute = doGetDefaultRouteDestination();
-        if (DBG) Log.d(TAG, "mDefaultRoute=0x" + Integer.toHexString(mDefaultRoute));
+        if (DBG)
+          Log.d(TAG, "mDefaultRoute=0x" + Integer.toHexString(mDefaultRoute));
         mDefaultOffHostRoute = doGetDefaultOffHostRouteDestination();
-        if (DBG) Log.d(TAG, "mDefaultOffHostRoute=0x" + Integer.toHexString(mDefaultOffHostRoute));
+        if (DBG)
+          Log.d(TAG, "mDefaultOffHostRoute=0x" + Integer.toHexString(mDefaultOffHostRoute));
+        mOffHostRouteUicc = doGetOffHostUiccDestination();
+        if (DBG)
+            Log.d(TAG, "mOffHostRouteUicc=" + Arrays.toString(mOffHostRouteUicc));
+        mOffHostRouteEse = doGetOffHostEseDestination();
+        if (DBG)
+          Log.d(TAG, "mOffHostRouteEse=" + Arrays.toString(mOffHostRouteEse));
         mAidMatchingSupport = doGetAidMatchingMode();
         if (DBG) Log.d(TAG, "mAidMatchingSupport=0x" + Integer.toHexString(mAidMatchingSupport));
         mDefaultAidRoute =   NfcService.getInstance().GetDefaultRouteEntry() >> 0x08;
@@ -186,6 +193,27 @@ public class AidRoutingManager {
         return true;
     }
 
+    private int getRouteForSecureElement(String se) {
+      if (se == null || se.length() <= 3) {
+        return 0;
+      }
+      try {
+        if (se.startsWith("eSE") && mOffHostRouteEse != null) {
+          int index = Integer.parseInt(se.substring(3));
+          if (mOffHostRouteEse.length >= index && index > 0) {
+            return mOffHostRouteEse[index - 1] & 0xFF;
+          }
+        } else if (se.startsWith("SIM") && mOffHostRouteUicc != null) {
+          int index = Integer.parseInt(se.substring(3));
+          if (mOffHostRouteUicc.length >= index && index > 0) {
+            return mOffHostRouteUicc[index - 1] & 0xFF;
+          }
+        }
+      } catch (NumberFormatException e) {
+      }
+      return 0;
+    }
+
     public boolean configureRouting(HashMap<String, AidEntry> aidMap) {
         SparseArray<Set<String>> aidRoutingTable = new SparseArray<Set<String>>(aidMap.size());
         HashMap<String, Integer> routeForAid = new HashMap<String, Integer>(aidMap.size());
@@ -199,9 +227,19 @@ public class AidRoutingManager {
         Log.e(TAG, "Size of routing table"+mAidRoutingTableSize);
         // Then, populate internal data structures first
         for (Map.Entry<String, AidEntry> aidEntry : aidMap.entrySet())  {
-            int route = aidEntry.getValue().isOnHost ? ROUTE_HOST : aidEntry.getValue().route;
-            if(route == -1)
-                route = mDefaultOffHostRoute;
+            int route = ROUTE_HOST;
+            if (!aidEntry.getValue().isOnHost) {
+                String offHostSE = aidEntry.getValue().offHostSE;
+                if (offHostSE == null) {
+                    route = mDefaultOffHostRoute;
+                } else {
+                    route = getRouteForSecureElement(offHostSE);
+                    if (route == 0) {
+                        Log.e(TAG, "Invalid Off host Aid Entry " + offHostSE);
+                        continue;
+                    }
+                }
+            }
             int aidType = aidEntry.getValue().aidInfo;
             int power = aidEntry.getValue().powerstate;
             String aid = aidEntry.getKey();

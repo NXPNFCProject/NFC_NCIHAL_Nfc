@@ -410,6 +410,27 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         }
 
         @Override
+        public boolean setOffHostForService(int userId, ComponentName service, String offHostSE) {
+            NfcPermissions.validateUserId(userId);
+            NfcPermissions.enforceUserPermissions(mContext);
+            if (!isServiceRegistered(userId, service)) {
+                return false;
+            }
+            return mServiceCache.setOffHostSecureElement(userId, Binder.getCallingUid(), service,
+                    offHostSE);
+        }
+
+        @Override
+        public boolean unsetOffHostForService(int userId, ComponentName service) {
+            NfcPermissions.validateUserId(userId);
+            NfcPermissions.enforceUserPermissions(mContext);
+            if (!isServiceRegistered(userId, service)) {
+                return false;
+            }
+            return mServiceCache.unsetOffHostSecureElement(userId, Binder.getCallingUid(), service);
+        }
+
+        @Override
         public AidGroup getAidGroupForService(int userId,
                 ComponentName service, String category) throws RemoteException {
             NfcPermissions.validateUserId(userId);

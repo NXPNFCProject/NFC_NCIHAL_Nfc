@@ -869,6 +869,10 @@ public class RegisteredAidCache {
                 // either on the host (HCE) or on an SE.
                 NfcApduServiceInfo.ESeInfo seInfo = resolveInfo.defaultService.getSEInfo();
                 aidType.isOnHost = resolveInfo.defaultService.isOnHost();
+                if (!aidType.isOnHost) {
+                    aidType.offHostSE =
+                            resolveInfo.defaultService.getOffHostSecureElement();
+                }
                 int powerstate = seInfo.getPowerState() & POWER_STATE_ALL;
                 int screenstate= 0;
                 if(powerstate == 0x00) {
@@ -906,7 +910,16 @@ public class RegisteredAidCache {
             } else if (resolveInfo.services.size() == 1) {
                 // Only one service, but not the default, must route to host
                 // to ask the user to choose one.
-                aidType.isOnHost = true;
+                if (resolveInfo.category.equals(
+                        CardEmulation.CATEGORY_PAYMENT)) {
+                    aidType.isOnHost = true;
+                } else {
+                    aidType.isOnHost = resolveInfo.defaultService.isOnHost();
+                    if (!aidType.isOnHost) {
+                        aidType.offHostSE =
+                                resolveInfo.defaultService.getOffHostSecureElement();
+                  }
+                }
                 aidType.powerstate = POWER_STATE_SWITCH_ON | SCREEN_STATE_ON_LOCKED;
                 Log.d(TAG," AID power state 2"+ aid  +" "+aidType.powerstate);
                 if(mGsmaPwrState > 0)
@@ -916,8 +929,29 @@ public class RegisteredAidCache {
                 }
                 routingEntries.put(aid, aidType);
             } else if (resolveInfo.services.size() > 1) {
-                // Multiple services, need to route to host to ask
-                aidType.isOnHost = true;
+                // Multiple services if all the services are routing to same
+                // offhost then the service should be routed to off host.
+                boolean onHost = false;
+                String offHostSE = null;
+                for (ApduServiceInfo service : resolveInfo.services) {
+                    // In case there is at least one service which routes to host
+                    // Route it to host for user to select which service to use
+                    onHost |= service.isOnHost();
+                    if (!onHost) {
+                        if (offHostSE == null) {
+                            offHostSE = service.getOffHostSecureElement();
+                        } else if (!offHostSE.equals(
+                                service.getOffHostSecureElement())) {
+                            // There are registerations to different SEs, route this
+                            // to host and have user choose a service for this AID
+                            offHostSE = null;
+                            onHost = true;
+                            break;
+                        }
+                    }
+                }
+                aidType.isOnHost = onHost;
+                aidType.offHostSE = onHost ? null : offHostSE;
                 aidType.powerstate = POWER_STATE_SWITCH_ON | SCREEN_STATE_ON_LOCKED;
                 if(mGsmaPwrState > 0)
                 {
