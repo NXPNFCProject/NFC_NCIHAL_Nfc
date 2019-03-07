@@ -914,10 +914,10 @@ public class RegisteredAidCache {
                         CardEmulation.CATEGORY_PAYMENT)) {
                     aidType.isOnHost = true;
                 } else {
-                    aidType.isOnHost = resolveInfo.defaultService.isOnHost();
+                    aidType.isOnHost = resolveInfo.services.get(0).isOnHost();
                     if (!aidType.isOnHost) {
                         aidType.offHostSE =
-                                resolveInfo.defaultService.getOffHostSecureElement();
+                                resolveInfo.services.get(0).getOffHostSecureElement();
                   }
                 }
                 aidType.powerstate = POWER_STATE_SWITCH_ON | SCREEN_STATE_ON_LOCKED;
