@@ -2388,7 +2388,9 @@ static bool isPeerToPeer(tNFA_ACTIVATED& activated) {
 **
 *******************************************************************************/
 static bool isListenMode(tNFA_ACTIVATED& activated) {
-  return ((NFC_DISCOVERY_TYPE_LISTEN_A ==
+  return ((NFC_INTERFACE_EE_DIRECT_RF ==
+          activated.activate_ntf.intf_param.type) ||
+          (NFC_DISCOVERY_TYPE_LISTEN_A ==
            activated.activate_ntf.rf_tech_param.mode) ||
           (NFC_DISCOVERY_TYPE_LISTEN_B ==
            activated.activate_ntf.rf_tech_param.mode) ||
