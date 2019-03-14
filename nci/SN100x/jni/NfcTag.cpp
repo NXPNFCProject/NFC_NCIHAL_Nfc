@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018 NXP
+*  Copyright 2018-2019 NXP
 *
 ******************************************************************************/
 
@@ -205,7 +205,23 @@ void NfcTag::setActivationState() {
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: state=%u", fn, mActivationState);
 }
-
+#if (NXP_EXTNS == TRUE)
+/*******************************************************************************
+**
+** Function:        resetActivationState
+**
+** Description:     Set the state to InActive due tag lost.
+**
+** Returns:         None.
+**
+*******************************************************************************/
+void NfcTag::resetActivationState() {
+  static const char fn[] = "NfcTag::setActivationState";
+  mActivationState = InActive;
+  DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("%s: state=%u", fn, mActivationState);
+}
+#endif
 /*******************************************************************************
 **
 ** Function:        isActivated
