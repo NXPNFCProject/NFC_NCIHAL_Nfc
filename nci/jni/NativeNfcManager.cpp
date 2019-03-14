@@ -5921,7 +5921,9 @@ static void restartUiccListen(jint uiccSlot) {
     if (!pTransactionController->transactionAttempt(
             TRANSACTION_REQUESTOR(setScreenState))) {
       LOG(ERROR) << StringPrintf("Payment is in progress!!!");
-      if (state != getScreenState()) {
+      if (pendingScreenState && state != get_lastScreenStateRequest()) {
+        set_lastScreenStateRequest((eScreenState_t)state);
+      } else if (!pendingScreenState && state != getScreenState()) {
         set_lastScreenStateRequest((eScreenState_t)state);
         pendingScreenState = true;
       }
