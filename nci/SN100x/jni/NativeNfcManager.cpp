@@ -493,6 +493,13 @@ static void nfaConnectionCallback(uint8_t connEvent,
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
           "%s: NFA_ACTIVATED_EVT: gIsSelectingRfInterface=%d, sIsDisabling=%d",
           __func__, gIsSelectingRfInterface, sIsDisabling);
+#if (NXP_EXTNS == TRUE)
+        if(NFC_PROTOCOL_T5T == NfcTag::getInstance ().mTechLibNfcTypes[0x00]
+                && NfcTag::getInstance ().mNumDiscNtf){
+          /* T5T doesn't support multiproto detection logic */
+          NfcTag::getInstance ().mNumDiscNtf = 0x00;
+        }
+#endif
       if ((eventData->activated.activate_ntf.protocol !=
            NFA_PROTOCOL_NFC_DEP) &&
           (!isListenMode(eventData->activated))) {
