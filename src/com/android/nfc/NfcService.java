@@ -2270,16 +2270,17 @@ public class NfcService implements DeviceHostListener {
                             ((routeLoc & 0x07) == 0x02) ? (0x02 << ROUTE_LOC_MASK) : /*UICC1*/
                             ((routeLoc & 0x07) == 0x01) ? (0x01 << ROUTE_LOC_MASK) : /*eSE*/
                             0x00;
-            protoRouteEntry |= ((fullPower ? (mDeviceHost.getDefaultDesfirePowerState() & 0x1F) | 0x01 : 0) | (lowPower ? 0x01 << 1 :0 ) | (noPower ? 0x01 << 2 :0));
+            protoRouteEntry |= ((fullPower ? (mDeviceHost.getDefaultDesfirePowerState() & 0x3F) | 0x01 : 0) | (lowPower ? 0x01 << 1 :0 ) | (noPower ? 0x01 << 2 :0));
 
             if(routeLoc == 0x00)
             {
                 /*
                 bit pos 1 = Power Off
                 bit pos 2 = Battery Off
-                bit pos 4 = Screen Off
+                bit pos 3 = Screen Off and Unlocked
+                bit pos 5 = Screen Off and locked
                 Set these bits to 0 because in case routeLoc = HOST it can not work on POWER_OFF, BATTERY_OFF and SCREEN_OFF*/
-                protoRouteEntry &= 0xE9;
+                protoRouteEntry &= (getNciVersion() == NCI_VERSION_2_0) ? 0x11 : 0xE9;
             }
 
             Log.i(TAG,"MifareDesfireRouteSet : " + protoRouteEntry);
@@ -2303,16 +2304,18 @@ public class NfcService implements DeviceHostListener {
                                 ((routeLoc & 0x07) == 0x02) ? (0x02 << ROUTE_LOC_MASK) : /*UICC1*/
                                 ((routeLoc & 0x07) == 0x01) ? (0x01 << ROUTE_LOC_MASK) : /*eSE*/
                                 0x00;
-                protoRouteEntry |= ((fullPower ? (mDeviceHost.getDefaultAidPowerState() & 0x1F) | 0x01 : 0) | (lowPower ? 0x01 << 1 :0 ) | (noPower ? 0x01 << 2 :0));
+                protoRouteEntry |= ((fullPower ? (mDeviceHost.getDefaultAidPowerState() & 0x3F) | 0x01 : 0) | (lowPower ? 0x01 << 1 :0 ) | (noPower ? 0x01 << 2 :0));
 
                 if(routeLoc == 0x00)
                 {
                     /*
                     bit pos 1 = Power Off
                     bit pos 2 = Battery Off
-                    bit pos 4 = Screen Off
+                    bit pos 3 = Screen Off and Unlocked
+                    bit pos 5 = Screen Off and locked
                     Set these bits to 0 because in case routeLoc = HOST it can not work on POWER_OFF, BATTERY_OFF and SCREEN_OFF*/
-                    protoRouteEntry &= 0xE9;
+
+                    protoRouteEntry &= (getNciVersion() == NCI_VERSION_2_0) ? 0x11 : 0xE9;
                 }
                 Log.i(TAG,"DefaultRouteSet : " + protoRouteEntry);
                 if(GetDefaultRouteLoc() != routeLoc)
@@ -3684,15 +3687,17 @@ public class NfcService implements DeviceHostListener {
         mNxpPrefsEditor = mNxpPrefs.edit();
         Log.d(TAG, "writing to preferences setDefaultAidRouteLoc  :" + routeLoc);
 
-        int defaultAidRoute = ((mDeviceHost.getDefaultAidPowerState() & 0x1F) | (routeLoc << ROUTE_LOC_MASK));
+        int defaultAidRoute = ((mDeviceHost.getDefaultAidPowerState() & 0x3F) | (routeLoc << ROUTE_LOC_MASK));
         if(routeLoc == 0x00)
         {
             /*
             bit pos 1 = Power Off
             bit pos 2 = Battery Off
-            bit pos 4 = Screen Off
+            bit pos 3 = Screen Off and Unlocked
+            bit pos 5 = Screen Off and locked
             Set these bits to 0 because in case routeLoc = HOST it can not work on POWER_OFF, BATTERY_OFF and SCREEN_OFF*/
-            defaultAidRoute &= 0xE9;
+
+            defaultAidRoute &= (getNciVersion() == NCI_VERSION_2_0) ? 0x11 : 0xE9;
         }
 
         mNxpPrefsEditor.putInt("PREF_SET_DEFAULT_ROUTE_ID", defaultAidRoute);
@@ -3808,9 +3813,10 @@ public class NfcService implements DeviceHostListener {
             /*
             bit pos 1 = Power Off
             bit pos 2 = Battery Off
-            bit pos 4 = Screen Off
+            bit pos 3 = Screen Off and Unlocked
+            bit pos 5 = Screen Off and locked
             Set these bits to 0 because in case routeLoc = HOST it can not work on POWER_OFF, BATTERY_OFF and SCREEN_OFF*/
-            defaultMifareDesfireRoute &= 0xF9;
+            defaultMifareDesfireRoute &= (getNciVersion() == NCI_VERSION_2_0) ? 0x11 : 0xE9;
         }
         if (DBG) Log.d(TAG, "defaultMifareDesfireRoute : " + defaultMifareDesfireRoute);
         return defaultMifareDesfireRoute;
@@ -3828,9 +3834,10 @@ public class NfcService implements DeviceHostListener {
             /*
             bit pos 1 = Power Off
             bit pos 2 = Battery Off
-            bit pos 4 = Screen Off
+            bit pos 3 = Screen Off and Unlocked
+            bit pos 5 = Screen Off and locked
             Set these bits to 0 because in case routeLoc = HOST it can not work on POWER_OFF, BATTERY_OFF and SCREEN_OFF*/
-            defaultAidRoute &= 0xF9;
+            defaultAidRoute &= (getNciVersion() == NCI_VERSION_2_0) ? 0x11 : 0xE9;
         }
         if (DBG) Log.d(TAG, "defaultAidRoute : " + defaultAidRoute);
         return defaultAidRoute;
