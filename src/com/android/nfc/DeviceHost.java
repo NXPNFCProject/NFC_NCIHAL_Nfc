@@ -346,6 +346,8 @@ public interface DeviceHost {
 
     public void shutdown();
 
+    public boolean setNfcSecure(boolean enable);
+
 /* NXP extension are here */
     public void doChangeDiscoveryTech(int pollTech, int listenTech);
     public int accessControlForCOSU (int mode);

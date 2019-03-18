@@ -107,6 +107,7 @@ class RoutingManager {
 #endif
   static RoutingManager& getInstance();
   bool initialize(nfc_jni_native_data* native);
+  void deinitialize();
   void enableRoutingToHost();
   void disableRoutingToHost();
 #if(NXP_EXTNS != TRUE)
@@ -119,6 +120,8 @@ class RoutingManager {
   void deregisterT3tIdentifier(int handle);
   void onNfccShutdown();
   int registerJniFunctions(JNIEnv* e);
+  bool setNfcSecure(bool enable);
+  void updateRoutingTable();
 #if(NXP_EXTNS == TRUE)
     uint16_t getUiccRouteLocId(const int route);
     static const int NFA_SET_AID_ROUTING = 4;
@@ -160,6 +163,9 @@ class RoutingManager {
                   tNFA_STATUS status);
   void notifyActivated(uint8_t technology);
   void notifyDeactivated(uint8_t technology);
+  tNFA_TECHNOLOGY_MASK updateEeTechRouteSetting();
+  void updateDefaultProtocolRoute();
+  void updateDefaultRoute();
 
   // See AidRoutingManager.java for corresponding
   // AID_MATCHING_ constants
@@ -187,6 +193,7 @@ class RoutingManager {
 
   std::vector<uint8_t> mRxDataBuffer;
   map<int, uint16_t> mMapScbrHandle;
+  bool mSecureNfcEnabled;
 
   // Fields below are final after initialize()
   nfc_jni_native_data* mNativeData;
@@ -195,6 +202,7 @@ class RoutingManager {
   vector<uint8_t> mOffHostRouteEse;
   int mDefaultFelicaRoute;
   int mDefaultEe;
+  int mDefaultIsoDepRoute;
   int mAidMatchingMode;
   int mNfcFOnDhHandle;
   bool mIsScbrSupported;
@@ -272,5 +280,7 @@ class RoutingManager {
     uint32_t mTechSupportedByEse;
     uint32_t mTechSupportedByUicc1;
     uint32_t mTechSupportedByUicc2;
+    uint8_t mOffHostAidRoutingPowerState;
+
 #endif
 };

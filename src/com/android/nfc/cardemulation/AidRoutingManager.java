@@ -145,7 +145,7 @@ public class AidRoutingManager {
         return mAidMatchingSupport == AID_MATCHING_EXACT_OR_SUBSET_OR_PREFIX;
     }
 
-    void clearNfcRoutingTableLocked() {
+    private void clearNfcRoutingTableLocked() {
         for (Map.Entry<String, Integer> aidEntry : mRouteForAid.entrySet())  {
             String aid = aidEntry.getKey();
             if (aid.endsWith("*")) {
@@ -214,7 +214,7 @@ public class AidRoutingManager {
       return 0;
     }
 
-    public boolean configureRouting(HashMap<String, AidEntry> aidMap) {
+    public boolean configureRouting(HashMap<String, AidEntry> aidMap, boolean force) {
         SparseArray<Set<String>> aidRoutingTable = new SparseArray<Set<String>>(aidMap.size());
         HashMap<String, Integer> routeForAid = new HashMap<String, Integer>(aidMap.size());
         HashMap<String, Integer> infoForAid = new HashMap<String, Integer>(aidMap.size());
@@ -255,7 +255,7 @@ public class AidRoutingManager {
         }
 
         synchronized (mLock) {
-            if (routeForAid.equals(mRouteForAid)) {
+            if (routeForAid.equals(mRouteForAid) && !force) {
                 if (DBG) Log.d(TAG, "Routing table unchanged, but commit the routing");
                 if(mLastCommitStatus == false){
                     NfcService.getInstance().updateStatusOfServices(false);

@@ -209,6 +209,11 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         mEnabledNfcFServices.onNfcDisabled();
     }
 
+    public void onSecureNfcToggled() {
+        mAidCache.onSecureNfcToggled();
+        mT3tIdentifiersCache.onSecureNfcToggled();
+    }
+
     public void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
         mServiceCache.dump(fd, pw, args);
         mNfcFServicesCache.dump(fd, pw ,args);

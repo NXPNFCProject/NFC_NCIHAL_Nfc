@@ -123,16 +123,21 @@ public class RegisteredT3tIdentifiersCache {
             }
         }
 
-        updateRoutingLocked();
+        updateRoutingLocked(false);
     }
 
-    void updateRoutingLocked() {
+    void updateRoutingLocked(boolean force) {
         if (DBG) Log.d(TAG, "updateRoutingLocked");
         if (!mNfcEnabled) {
             Log.d(TAG, "Not updating routing table because NFC is off.");
             return;
         }
         List<T3tIdentifier> t3tIdentifiers = new ArrayList<T3tIdentifier>();
+
+        // Sending an empty table will de-register all entries
+        if (force) {
+            mRoutingManager.configureRouting(t3tIdentifiers);
+        }
         Iterator<Map.Entry<String, NfcFServiceInfo>> it;
         // Register foreground service
         it = mForegroundT3tIdentifiersCache.entrySet().iterator();
@@ -143,6 +148,12 @@ public class RegisteredT3tIdentifiersCache {
                     entry.getValue().getSystemCode(), entry.getValue().getNfcid2(), entry.getValue().getT3tPmm()));
         }
         mRoutingManager.configureRouting(t3tIdentifiers);
+    }
+
+    public void onSecureNfcToggled() {
+        synchronized(mLock) {
+            updateRoutingLocked(true);
+      }
     }
 
     public void onServicesUpdated(int userId, List<NfcFServiceInfo> services) {
@@ -193,7 +204,7 @@ public class RegisteredT3tIdentifiersCache {
     public void onUserSwitched() {
         synchronized (mLock) {
             mForegroundT3tIdentifiersCache.clear();
-            updateRoutingLocked();
+            updateRoutingLocked(false);
             mEnabledForegroundService = null;
         }
     }

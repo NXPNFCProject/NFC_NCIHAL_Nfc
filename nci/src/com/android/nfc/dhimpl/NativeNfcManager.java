@@ -518,6 +518,12 @@ public class NativeNfcManager implements DeviceHost {
         return true;
     }
 
+    private native boolean doSetNfcSecure(boolean enable);
+    @Override
+    public boolean setNfcSecure(boolean enable) {
+        return doSetNfcSecure(enable);
+    }
+
     /**
      * Notifies Ndef Message (TODO: rename into notifyTargetDiscovered)
      */

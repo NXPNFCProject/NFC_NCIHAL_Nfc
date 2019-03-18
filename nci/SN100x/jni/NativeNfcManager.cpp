@@ -230,6 +230,7 @@ static bool sP2pEnabled = false;
 static bool sP2pActive = false;  // whether p2p was last active
 static bool sAbortConnlessWait = false;
 static jint sLfT3tMax = 0;
+static bool sRoutingInitialized = false;
 
 #define CONFIG_UPDATE_TECH_MASK (1 << 1)
 #define DEFAULT_TECH_MASK                                                  \
@@ -1591,7 +1592,8 @@ static jboolean nfcManager_doInitialize(JNIEnv* e, jobject o) {
 #if (NXP_EXTNS == TRUE)
         SecureElement::getInstance().initialize (getNative(e, o));
 #endif
-        RoutingManager::getInstance().initialize(getNative(e, o));
+        sRoutingInitialized =
+            RoutingManager::getInstance().initialize(getNative(e, o));
         nativeNfcTag_registerNdefTypeHandler();
         NfcTag::getInstance().initialize(getNative(e, o));
         PeerToPeer::getInstance().initialize();
@@ -2837,6 +2839,22 @@ static jint nfcManager_getIsoDepMaxTransceiveLength(JNIEnv*, jobject) {
   return NfcConfig::getUnsigned(NAME_ISO_DEP_MAX_TRANSCEIVE, 261);
 }
 
+static jboolean nfcManager_doSetNfcSecure(JNIEnv* e, jobject o,
+                                          jboolean enable) {
+  RoutingManager& routingManager = RoutingManager::getInstance();
+  routingManager.setNfcSecure(enable);
+  bool rfEnabled = sRfEnabled;
+  if (sRoutingInitialized) {
+    routingManager.disableRoutingToHost();
+    if (rfEnabled) startRfDiscovery(false);
+    routingManager.updateRoutingTable();
+    routingManager.enableRoutingToHost();
+    routingManager.commitRouting();
+    if (rfEnabled) startRfDiscovery(true);
+  }
+  return true;
+}
+
 /*****************************************************************************
 **
 ** JNI functions for android-4.0.1_r1
@@ -2978,8 +2996,9 @@ static JNINativeMethod gMethods[] = {
             (void*) nfcManager_getRemainingAidTableSize},
     {"doselectUicc", "(I)I", (void*)nfcManager_doSelectUicc},
     {"doGetSelectedUicc", "()I", (void*)nfcManager_doGetSelectedUicc},
-    {"setPreferredSimSlot", "(I)I", (void*)nfcManager_setPreferredSimSlot}
+    {"setPreferredSimSlot", "(I)I", (void*)nfcManager_setPreferredSimSlot},
 #endif
+    {"doSetNfcSecure", "(Z)Z", (void*)nfcManager_doSetNfcSecure},
 };
 
 /*******************************************************************************
