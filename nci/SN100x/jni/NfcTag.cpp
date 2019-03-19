@@ -216,7 +216,7 @@ void NfcTag::setActivationState() {
 **
 *******************************************************************************/
 void NfcTag::resetActivationState() {
-  static const char fn[] = "NfcTag::setActivationState";
+  static const char fn[] = "NfcTag::resetActivationState";
   mActivationState = InActive;
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: state=%u", fn, mActivationState);

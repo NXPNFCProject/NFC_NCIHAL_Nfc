@@ -1083,7 +1083,9 @@ static jbyteArray nativeNfcTag_doTransceive(JNIEnv* e, jobject o,
       if (targetLost)
         *targetLost = 1;  // causes NFC service to throw TagLostException
 #if (NXP_EXTNS == TRUE)
-      NfcTag::getInstance().resetActivationState();
+      if(TARGET_TYPE_ISO14443_4  == sCurrentConnectedTargetType){
+        NfcTag::getInstance().resetActivationState();
+      }
 #endif
       break;
     }
