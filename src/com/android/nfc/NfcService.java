@@ -2246,15 +2246,15 @@ public class NfcService implements DeviceHostListener {
 
         @Override
         public int[] getActiveSecureElementList(String pkg) throws RemoteException {
+          int[] list = null;
+          if (isNfcEnabled()) {
+            list = mDeviceHost.doGetActiveSecureElementList();
 
-            int[] list = null;
-            if (isNfcEnabled()) {
-                list = mDeviceHost.doGetActiveSecureElementList();
+            for (int i = 0; i < list.length; i++) {
+              Log.d(TAG, "Active element = " + list[i]);
             }
-            for(int i=0; i< list.length; i++) {
-                Log.d(TAG, "Active element = "+ list[i]);
-            }
-            return list;
+          }
+          return list;
         }
 
         @Override
@@ -4140,16 +4140,17 @@ public class NfcService implements DeviceHostListener {
                         byte[] data = seIntent.getByteArrayExtra("com.android.nfc_extras.extra.DATA");
                         String seName = seIntent.getStringExtra("com.android.nfc_extras.extra.SECURE_ELEMENT_NAME");
                         StringBuffer strAid = new StringBuffer();
-                        for (int i = 0; i < byteAid.length; i++) {
-                            String hex = Integer.toHexString(0xFF & byteAid[i]);
-                            if (hex.length() == 1)
-                                strAid.append('0');
-                            strAid.append(hex);
-                        }
                         Intent gsmaIntent = new Intent();
                         gsmaIntent.setAction("com.gsma.services.nfc.action.TRANSACTION_EVENT");
-                        if (byteAid != null)
-                            gsmaIntent.putExtra("com.gsma.services.nfc.extra.AID", byteAid);
+                        if (byteAid != null) {
+                          for (int i = 0; i < byteAid.length; i++) {
+                            String hex = Integer.toHexString(0xFF & byteAid[i]);
+                            if (hex.length() == 1)
+                              strAid.append('0');
+                            strAid.append(hex);
+                          }
+                          gsmaIntent.putExtra("com.gsma.services.nfc.extra.AID", byteAid);
+                        }
                         if (data != null)
                             gsmaIntent.putExtra("com.gsma.services.nfc.extra.DATA", data);
 

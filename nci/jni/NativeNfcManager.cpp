@@ -4342,16 +4342,10 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
   **
   *******************************************************************************/
   static bool nfcManager_isVzwFeatureEnabled(JNIEnv * e, jobject o) {
-    unsigned int num = 0;
     bool mStat = false;
 
     if (NfcConfig::hasKey("VZW_FEATURE_ENABLE")) {
       mStat = NfcConfig::getUnsigned("VZW_FEATURE_ENABLE");
-      if (num == 0x01) {
-        mStat = true;
-      } else {
-        mStat = false;
-      }
     } else {
       mStat = false;
     }
@@ -7365,7 +7359,7 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
       for (i = 0; i < dualUiccInfo.sUicc2CntxLen; i++) {
         if (sConfig[i] != dualUiccInfo.sUicc2Cntx[i]) break;
       }
-      if (i != dualUiccInfo.sUicc1CntxLen) {
+      if (i != dualUiccInfo.sUicc2CntxLen) {
         DLOG_IF(INFO, nfc_debug_enabled)
             << StringPrintf("%s: copying UICC2 info", __func__);
         update_uicc_context_info();
@@ -7570,7 +7564,7 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
     uint8_t* readCrc = NULL;
     uint8_t* frameByte = NULL;
     uint16_t crcVal;
-    uint8_t cmpStat;
+    int cmpStat = 0;
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s : enter", __func__);
 
     memset(filename, 0, sizeof(filename));
@@ -8006,8 +8000,6 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
       case 0x02:
         DLOG_IF(INFO, nfc_debug_enabled)
             << StringPrintf("phNxpNciHal_getPrbsCmd - NFC_RF_TECHNOLOGY_F");
-        break;
-      default:
         break;
     }
     switch (rate) {

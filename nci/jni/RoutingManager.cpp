@@ -521,12 +521,7 @@ void RoutingManager::setRouting(bool isHCEEnabled) {
     defaultHandle = NFA_EE_HANDLE_DH;
   } else {
     SecureElement::getInstance().getEeHandleList(ee_handleList, &count);
-    for (; i < count; i++) {
-      if (defaultHandle == NFA_HANDLE_INVALID) {
-        defaultHandle = ee_handleList[i];
-        break;
-      }
-    }
+    defaultHandle = ee_handleList[0];
   }
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: defaultHandle %u = 0x%X", fn, i, defaultHandle);

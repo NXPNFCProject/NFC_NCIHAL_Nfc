@@ -301,7 +301,6 @@ if(NFA_STATUS_OK == status)
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: exit; status =0x%X", __func__, wStatus);
   } else {
-    if (destpath != NULL) e->ReleaseStringUTFChars(dest, destpath);
 
     result = e->NewByteArray(0);
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: No p61", __func__);

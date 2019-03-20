@@ -44,11 +44,13 @@ public class DtaServiceConnector {
     }
 
     public void bindService() {
-        if (!isBound) {
-            Intent intent = new Intent(sMessageService);
-            mContext.bindService(createExplicitFromImplicitIntent(mContext,intent),
-                                   myConnection,Context.BIND_AUTO_CREATE);
+      if (!isBound) {
+        Intent intent = new Intent(sMessageService);
+        Intent explicitIntent = createExplicitFromImplicitIntent(mContext, intent);
+        if (null != explicitIntent) {
+          mContext.bindService(explicitIntent, myConnection, Context.BIND_AUTO_CREATE);
         }
+      }
     }
 
     private ServiceConnection myConnection = new ServiceConnection() {

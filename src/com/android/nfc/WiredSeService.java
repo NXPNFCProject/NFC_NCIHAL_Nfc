@@ -59,6 +59,9 @@ public class WiredSeService {
      private
       ArrayList<Byte> byteArrayToArrayList(byte[] array) {
         ArrayList<Byte> list = new ArrayList<Byte>();
+        if (array == null) {
+            return list;
+        }
         for (Byte b : array) {
           list.add(b);
         }

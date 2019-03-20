@@ -488,7 +488,7 @@ public class RegisteredAidCache {
                 serviceAidInfo.aid = aid.toUpperCase();
                 serviceAidInfo.service = service;
                 serviceAidInfo.category = service.getCategoryForAid(aid);
-                if( (serviceAidInfo.category.equals(CardEmulation.CATEGORY_OTHER)) &&
+                if ((serviceAidInfo.category != null && serviceAidInfo.category.equals(CardEmulation.CATEGORY_OTHER)) &&
                     ((service.getServiceState(CardEmulation.CATEGORY_OTHER) == NxpConstants.SERVICE_STATE_DISABLED) ||
                      (service.getServiceState(CardEmulation.CATEGORY_OTHER) == NxpConstants.SERVICE_STATE_DISABLING))){
                     /*Do not include the services which are already disabled Or services which are disabled by user recently

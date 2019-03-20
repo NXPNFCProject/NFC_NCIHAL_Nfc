@@ -409,7 +409,7 @@ NFCSTATUS EXTNS_MfcTransceive(uint8_t* p_data, uint32_t len) {
 ** Returns          NFCSTATUS_SUCCESS
 **
 *******************************************************************************/
-NFCSTATUS EXTNS_MfcInit(tNFA_ACTIVATED activationData) {
+NFCSTATUS EXTNS_MfcInit(tNFA_ACTIVATED& activationData) {
   tNFC_ACTIVATE_DEVT rfDetail = activationData.activate_ntf;
 
   NdefMap->psRemoteDevInfo->RemoteDevInfo.Iso14443A_Info.Sak =

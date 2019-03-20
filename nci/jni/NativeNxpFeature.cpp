@@ -158,17 +158,17 @@ tNFA_STATUS NxpPropCmd_send(uint8_t *pData4Tx, uint8_t dataLen,
 static void NxpResponse_Cb(uint8_t event, uint16_t param_len,
                            uint8_t* p_param) {
   (void)event;
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-      "NxpResponse_Cb Received length data = 0x%x status = 0x%x", param_len,
-      p_param[3]);
-
-  if (p_param[3] == 0x00) {
-    SetCbStatus(NFA_STATUS_OK);
-  } else {
-    SetCbStatus(NFA_STATUS_FAILED);
-  }
   gnxpfeature_conf.rsp_len = (uint8_t)param_len;
   if (param_len > 0 && p_param != NULL) {
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+        "NxpResponse_Cb Received length data = 0x%x status = 0x%x", param_len,
+        p_param[3]);
+
+    if (p_param[3] == 0x00) {
+      SetCbStatus(NFA_STATUS_OK);
+    } else {
+      SetCbStatus(NFA_STATUS_FAILED);
+    }
     memcpy(gnxpfeature_conf.rsp_data, p_param, param_len);
   }
   SyncEventGuard guard(gnxpfeature_conf.NxpFeatureConfigEvt);

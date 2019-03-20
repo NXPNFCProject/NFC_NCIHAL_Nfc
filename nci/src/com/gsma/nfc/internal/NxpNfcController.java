@@ -90,18 +90,18 @@ public class NxpNfcController {
     }
 
     public void setResultForCertificates(boolean result) {
-        Log.d(TAG, "setResultForCertificates() Start");
+      Log.d(TAG, "setResultForCertificates() Start");
+      if (mWaitCheckCert != null) {
         synchronized (mWaitCheckCert) {
-            if (mWaitCheckCert != null) {
-                if (result) {
-                    mHasCert = true;
-                } else {
-                    mHasCert = false;
-                }
-                mWaitCheckCert.notify();
-            }
+          if (result) {
+            mHasCert = true;
+          } else {
+            mHasCert = false;
+          }
+          mWaitCheckCert.notify();
         }
-        Log.d(TAG, "setResultForCertificates() End");
+      }
+      Log.d(TAG, "setResultForCertificates() End");
     }
 
     private boolean checkCertificatesFromUICC(String pkg, String seName) {
@@ -160,23 +160,23 @@ public class NxpNfcController {
         }
    }
 
-    public void setResultForX509Certificates(boolean result) {
-        Log.d(TAG, "setResultForX509Certificates() Start");
-        synchronized (mWaitOMACheckCert) {
-            if (mWaitOMACheckCert != null) {
-                if (result) {
-                    mHasOMACert = true;
-                } else {
-                    mHasOMACert = false;
-                }
-                mWaitOMACheckCert.notify();
-            }
-        }
-        Log.d(TAG, "setResultForX509Certificates() End");
-    }
+   public void setResultForX509Certificates(boolean result) {
+     Log.d(TAG, "setResultForX509Certificates() Start");
+     if (mWaitOMACheckCert != null) {
+       synchronized (mWaitOMACheckCert) {
+         if (result) {
+           mHasOMACert = true;
+         } else {
+           mHasOMACert = false;
+         }
+         mWaitOMACheckCert.notify();
+       }
+     }
+     Log.d(TAG, "setResultForX509Certificates() End");
+   }
 
-    public boolean isGsmaCommitOffhostService() {
-        return mGsmaCommitOffhostService;
+   public boolean isGsmaCommitOffhostService() {
+     return mGsmaCommitOffhostService;
     }
 
     static byte[] hexStringToBytes(String s) {

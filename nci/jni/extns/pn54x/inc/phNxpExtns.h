@@ -24,7 +24,7 @@
 
 NFCSTATUS EXTNS_Init(tNFA_DM_CBACK* p_dm_cback, tNFA_CONN_CBACK* p_conn_cback);
 void EXTNS_Close(void);
-NFCSTATUS EXTNS_MfcInit(tNFA_ACTIVATED activationData);
+NFCSTATUS EXTNS_MfcInit(tNFA_ACTIVATED& activationData);
 NFCSTATUS EXTNS_MfcCheckNDef(void);
 NFCSTATUS EXTNS_MfcReadNDef(void);
 NFCSTATUS EXTNS_MfcPresenceCheck(void);
