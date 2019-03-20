@@ -61,7 +61,7 @@ import android.nfc.cardemulation.NxpAidGroup;
 public class RegisteredAidCache {
     static final String TAG = "RegisteredAidCache";
 
-    static final boolean DBG = false;
+    static final boolean DBG = ("1" == (System.getProperty("persist.nfc.ce_debug")) ? true : false);
 
     static final int AID_ROUTE_QUAL_SUBSET = 0x20;
     static final int AID_ROUTE_QUAL_PREFIX = 0x10;
@@ -885,7 +885,7 @@ public class RegisteredAidCache {
 
                 /*If non default off host payment AID ,set screen state*/
                 if (!isOnHost) {
-                    Log.d(TAG," set screen off enable for " + aid);
+                    if (DBG) Log.d(TAG," set screen off enable for " + aid);
                     powerstate |= SCREEN_STATE_OFF_UNLOCKED | SCREEN_STATE_OFF_LOCKED;
                 }
                 Log.d(TAG," AID power state before adding screen state" + powerstate);

@@ -60,7 +60,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class RegisteredNfcFServicesCache {
     static final String XML_INDENT_OUTPUT_FEATURE = "http://xmlpull.org/v1/doc/features.html#indent-output";
     static final String TAG = "RegisteredNfcFServicesCache";
-    static final boolean DBG = false;
+    static final boolean DBG = ("1" == (System.getProperty("persist.nfc.ce_debug")) ? true : false);
 
     final Context mContext;
     final AtomicReference<BroadcastReceiver> mReceiver;

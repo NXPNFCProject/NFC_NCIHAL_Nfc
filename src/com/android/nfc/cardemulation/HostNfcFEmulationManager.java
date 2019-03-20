@@ -38,7 +38,7 @@ import java.io.PrintWriter;
 
 public class HostNfcFEmulationManager {
     static final String TAG = "HostNfcFEmulationManager";
-    static final boolean DBG = false;
+    static final boolean DBG = ("1" == (System.getProperty("persist.nfc.ce_debug")) ? true : false);
 
     static final int STATE_IDLE = 0;
     static final int STATE_W4_SERVICE = 1;

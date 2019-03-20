@@ -29,28 +29,25 @@ import com.vzw.nfc.RouteEntry;
 import java.util.HashMap;
 
 public class VzwRoutingCache {
-    private static final boolean DBG = false;
-    private static final String TAG = "VzwRoutingCache";
+  private static final boolean DBG =
+      ("1" == (System.getProperty("persist.nfc.ce_debug")) ? true : false);
+  private static final String TAG = "VzwRoutingCache";
 
-    // Cached routing table
-    // final private static Hashtable<String, RouteEntry> mVzwCache = new
-    // Hashtable<String, RouteEntry>(CAPACITY);
-    final HashMap<String, RouteEntry> mVzwCache = new HashMap<String, RouteEntry>();
+  // Cached routing table
+  // final private static Hashtable<String, RouteEntry> mVzwCache = new
+  // Hashtable<String, RouteEntry>(CAPACITY);
+  final HashMap<String, RouteEntry> mVzwCache = new HashMap<String, RouteEntry>();
 
-    VzwRoutingCache() {
-    }
+  VzwRoutingCache() {}
 
-    boolean addAid(byte[] aid, int route, int power, boolean isAllowed) {
-        RouteEntry elem = new RouteEntry(aid, power, route, isAllowed);
-        Log.d(TAG, "aid"
-                + toHexString(elem.getAid(), 0, elem.getAid().length)
-                .toUpperCase());
-        Log.d(TAG, "power " + power);
-        Log.d(TAG, "power state" + elem.getPowerState());
-        Log.d(TAG, "is allowed" + elem.isAllowed());
-        mVzwCache.put(toHexString(elem.getAid(), 0, elem.getAid().length)
-                .toUpperCase(), elem);
-        return true;
+  boolean addAid(byte[] aid, int route, int power, boolean isAllowed) {
+    RouteEntry elem = new RouteEntry(aid, power, route, isAllowed);
+    Log.d(TAG, "aid" + toHexString(elem.getAid(), 0, elem.getAid().length).toUpperCase());
+    Log.d(TAG, "power " + power);
+    Log.d(TAG, "power state" + elem.getPowerState());
+    Log.d(TAG, "is allowed" + elem.isAllowed());
+    mVzwCache.put(toHexString(elem.getAid(), 0, elem.getAid().length).toUpperCase(), elem);
+    return true;
     }
 
     boolean IsAidAllowed(String aid) {
