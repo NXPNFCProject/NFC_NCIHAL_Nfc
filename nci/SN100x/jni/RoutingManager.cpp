@@ -87,7 +87,9 @@ extern uint16_t sCurrentSelectedUICCSlot;
 extern bool isDynamicUiccEnabled;
 #endif
 
+#if (NXP_EXTNS != TRUE)
 static const uint8_t AID_ROUTE_QUAL_PREFIX = 0x10;
+#endif
 
 RoutingManager::RoutingManager() {
   static const char fn[] = "RoutingManager::RoutingManager()";
@@ -226,15 +228,18 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
       mEeInfoEvent.wait();
     }
   }
+#if (NXP_EXTNS != TRUE)
   mSeTechMask = updateEeTechRouteSetting();
-
+#endif
   // Register a wild-card for AIDs routed to the host
   nfaStat = NFA_CeRegisterAidOnDH(NULL, 0, stackCallback);
   if (nfaStat != NFA_STATUS_OK)
     LOG(ERROR) << fn << "Failed to register wildcard AID for DH";
 
   updateDefaultRoute();
+#if (NXP_EXTNS != TRUE)
   updateDefaultProtocolRoute();
+#endif
   return true;
 
 }
@@ -584,8 +589,10 @@ void RoutingManager::stackCallback(uint8_t event,
 }
 
 void RoutingManager::updateRoutingTable() {
+#if(NXP_EXTNS != TRUE)
   updateEeTechRouteSetting();
   updateDefaultProtocolRoute();
+#endif
   updateDefaultRoute();
 }
 
@@ -636,19 +643,27 @@ void RoutingManager::updateDefaultRoute() {
   static const char fn[] = "RoutingManager::updateDefaultRoute";
   if (NFC_GetNCIVersion() != NCI_VERSION_2_0) return;
 
-  #if (NXP_EXTNS == TRUE)
-      mDefaultSysCodeRoute = ((mDefaultSysCodeRoute == 0x00) ? ROUTE_LOC_HOST_ID :
+#if (NXP_EXTNS == TRUE)
+  uint16_t routeLoc = ((mDefaultSysCodeRoute == 0x00) ? ROUTE_LOC_HOST_ID :
         ((mDefaultSysCodeRoute == 0x01 ) ? ROUTE_LOC_ESE_ID : getUiccRouteLocId(mDefaultSysCodeRoute)));
       if(mDefaultSysCodeRoute == 0)
       {
         mDefaultSysCodePowerstate &= 0x11;
       }
 #endif
+
   // Register System Code for routing
   SyncEventGuard guard(mRoutingEvent);
+#if (NXP_EXTNS == TRUE)
+  tNFA_STATUS nfaStat = NFA_EeAddSystemCodeRouting(
+      mDefaultSysCode, routeLoc,
+      mSecureNfcEnabled ? 0x01 : mDefaultSysCodePowerstate);
+#else
   tNFA_STATUS nfaStat = NFA_EeAddSystemCodeRouting(
       mDefaultSysCode, mDefaultSysCodeRoute,
       mSecureNfcEnabled ? 0x01 : mDefaultSysCodePowerstate);
+#endif
+
   if (nfaStat == NFA_STATUS_NOT_SUPPORTED) {
     mIsScbrSupported = false;
     LOG(ERROR) << fn << ": SCBR not supported";
@@ -660,7 +675,7 @@ void RoutingManager::updateDefaultRoute() {
   } else {
     LOG(ERROR) << fn << ": Fail to register system code";
   }
-
+#if (NXP_EXTNS != TRUE)
   // Register zero lengthy Aid for default Aid Routing
   if (mDefaultEe != mDefaultIsoDepRoute) {
     uint8_t powerState = 0x01;
@@ -674,6 +689,7 @@ void RoutingManager::updateDefaultRoute() {
     else
       LOG(ERROR) << fn << ": failed to register zero length AID";
   }
+#endif
 }
 
 tNFA_TECHNOLOGY_MASK RoutingManager::updateEeTechRouteSetting() {
@@ -1254,11 +1270,11 @@ void RoutingManager::registerProtoRouteEnrty(tNFA_HANDLE     ee_handle,
 
             nfaStat = NFA_EeSetDefaultProtoRouting (gRouteInfo.protoInfo[i].ee_handle,
                                                     gRouteInfo.protoInfo[i].protocols_switch_on,
-                                                    gRouteInfo.protoInfo[i].protocols_switch_off,
-                                                    gRouteInfo.protoInfo[i].protocols_battery_off,
-                                                    gRouteInfo.protoInfo[i].protocols_screen_lock,
-                                                    gRouteInfo.protoInfo[i].protocols_screen_off,
-                                                    gRouteInfo.protoInfo[i].protocols_screen_off_lock);
+                                                    mSecureNfcEnabled ? 0 : gRouteInfo.protoInfo[i].protocols_switch_off,
+                                                    mSecureNfcEnabled ? 0 : gRouteInfo.protoInfo[i].protocols_battery_off,
+                                                    mSecureNfcEnabled ? 0 : gRouteInfo.protoInfo[i].protocols_screen_lock,
+                                                    mSecureNfcEnabled ? 0 : gRouteInfo.protoInfo[i].protocols_screen_off,
+                                                    mSecureNfcEnabled ? 0 : gRouteInfo.protoInfo[i].protocols_screen_off_lock);
             if(nfaStat == NFA_STATUS_OK){
                 mRoutingEvent.wait ();
                 DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("tech routing SUCCESS");
@@ -1471,7 +1487,7 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
                                                                 NFA_TECHNOLOGY_MASK_A,
                                                                 0,
                                                                 0,
-                                                                NFA_TECHNOLOGY_MASK_A,
+                                                                mSecureNfcEnabled ? 0 : NFA_TECHNOLOGY_MASK_A,
                                                                 0,
                                                                 0 );
                     }else{
@@ -1497,7 +1513,7 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
                                                                NFA_TECHNOLOGY_MASK_B,
                                                                0,
                                                                0,
-                                                               NFA_TECHNOLOGY_MASK_B,
+                                                               mSecureNfcEnabled ? 0 : NFA_TECHNOLOGY_MASK_B,
                                                                0,
                                                                0);
                     }else{
@@ -1516,8 +1532,12 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
         }
         {
             SyncEventGuard guard (mRoutingEvent);
-            nfaStat = NFA_EeSetDefaultTechRouting (ee_handle, switch_on_mask, switch_off_mask, battery_off_mask, screen_lock_mask,
-                screen_off_mask, screen_off_lock_mask);
+            nfaStat = NFA_EeSetDefaultTechRouting (ee_handle, switch_on_mask,
+                                                   mSecureNfcEnabled ? 0 : switch_off_mask,
+                                                   mSecureNfcEnabled ? 0 : battery_off_mask,
+                                                   mSecureNfcEnabled ? 0 : screen_lock_mask,
+                                                   mSecureNfcEnabled ? 0 : screen_off_mask,
+                                                   mSecureNfcEnabled ? 0 : screen_off_lock_mask);
             if(nfaStat == NFA_STATUS_OK){
                 mRoutingEvent.wait ();
                 DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("tech routing SUCCESS");
@@ -1819,7 +1839,7 @@ void RoutingManager::setEmptyAidEntry(int route) {
 
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: power %x",__func__,power);
     if(power){
-        tNFA_STATUS nfaStat = NFA_EeAddAidRouting(routeLoc, 0, NULL, power, 0x10);
+        tNFA_STATUS nfaStat = NFA_EeAddAidRouting(routeLoc, 0, NULL, mSecureNfcEnabled ? 0x01 : power, 0x10);
         DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Status :0x%2x", __func__, nfaStat);
     }else{
         LOG(ERROR) << StringPrintf("%s:Invalid Power State" ,__func__);

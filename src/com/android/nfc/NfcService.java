@@ -771,8 +771,10 @@ public class NfcService implements DeviceHostListener {
 
         mIsSecureNfcCapable = mNfcAdapter.deviceSupportsNfcSecure();
         mIsSecureNfcEnabled =
-            mPrefs.getBoolean(PREF_SECURE_NFC_ON, SECURE_NFC_ON_DEFAULT) &&
-            mIsSecureNfcCapable;
+            // To be reverted once device support added for secure NFC.
+            //mPrefs.getBoolean(PREF_SECURE_NFC_ON, SECURE_NFC_ON_DEFAULT) &&
+            //mIsSecureNfcCapable;
+            mPrefs.getBoolean(PREF_SECURE_NFC_ON, SECURE_NFC_ON_DEFAULT);
         mDeviceHost.setNfcSecure(mIsSecureNfcEnabled);
 
         // Make sure this is only called when object construction is complete.
@@ -1258,6 +1260,7 @@ public class NfcService implements DeviceHostListener {
                 mIsSecureNfcEnabled = enable;
                 mBackupManager.dataChanged();
                 mDeviceHost.setNfcSecure(enable);
+                computeAndSetRoutingParameters();
             }
             if (mIsHceCapable) {
                 mCardEmulationManager.onSecureNfcToggled();

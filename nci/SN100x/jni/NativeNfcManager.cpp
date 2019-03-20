@@ -2843,14 +2843,20 @@ static jboolean nfcManager_doSetNfcSecure(JNIEnv* e, jobject o,
                                           jboolean enable) {
   RoutingManager& routingManager = RoutingManager::getInstance();
   routingManager.setNfcSecure(enable);
+#if(NXP_EXTNS != TRUE)
   bool rfEnabled = sRfEnabled;
+#endif
   if (sRoutingInitialized) {
-    routingManager.disableRoutingToHost();
-    if (rfEnabled) startRfDiscovery(false);
-    routingManager.updateRoutingTable();
-    routingManager.enableRoutingToHost();
-    routingManager.commitRouting();
-    if (rfEnabled) startRfDiscovery(true);
+#if(NXP_EXTNS != TRUE)
+      routingManager.disableRoutingToHost();
+      if (rfEnabled) startRfDiscovery(false);
+      routingManager.updateRoutingTable();
+      routingManager.enableRoutingToHost();
+      routingManager.commitRouting();
+      if (rfEnabled) startRfDiscovery(true);
+#else
+      routingManager.updateRoutingTable();
+#endif
   }
   return true;
 }
