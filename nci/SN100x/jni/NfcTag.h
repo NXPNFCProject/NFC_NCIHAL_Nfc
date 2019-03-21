@@ -17,7 +17,25 @@
 /*
  *  Tag-reading, tag-writing operations.
  */
-
+/******************************************************************************
+*
+*  The original Work has been changed by NXP.
+*
+*  Licensed under the Apache License, Version 2.0 (the "License");
+*  you may not use this file except in compliance with the License.
+*  You may obtain a copy of the License at
+*
+*  http://www.apache.org/licenses/LICENSE-2.0
+*
+*  Unless required by applicable law or agreed to in writing, software
+*  distributed under the License is distributed on an "AS IS" BASIS,
+*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*  See the License for the specific language governing permissions and
+*  limitations under the License.
+*
+*  Copyright 2019 NXP
+*
+******************************************************************************/
 #pragma once
 #include <vector>
 #include "NfcJniUtil.h"
@@ -38,7 +56,11 @@ typedef struct activationParams {
 
 class NfcTag {
  public:
+#if (NXP_EXTNS == TRUE)
+  enum ActivationState { Idle, Sleep, Active, InActive };
+#else
   enum ActivationState { Idle, Sleep, Active };
+#endif
   static const int MAX_NUM_TECHNOLOGY =
       11;  // max number of technologies supported by one or more tags
 #if (NXP_EXTNS == TRUE)
@@ -162,7 +184,18 @@ class NfcTag {
   **
   *******************************************************************************/
   void setActivationState();
-
+#if (NXP_EXTNS == TRUE)
+/*******************************************************************************
+**
+** Function:        resetActivationState
+**
+** Description:     Set the state to InActive due tag lost.
+**
+** Returns:         None.
+**
+*******************************************************************************/
+  void resetActivationState();
+#endif
   /*******************************************************************************
   **
   ** Function:        getProtocol

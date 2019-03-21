@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018 NXP
+*  Copyright 2018-2019 NXP
 *
 ******************************************************************************/
 
@@ -1064,6 +1064,9 @@ static jbyteArray nativeNfcTag_doTransceive(JNIEnv* e, jobject o,
       LOG(ERROR) << StringPrintf("%s: wait response timeout", __func__);
       if (targetLost)
         *targetLost = 1;  // causes NFC service to throw TagLostException
+#if (NXP_EXTNS == TRUE)
+      NfcTag::getInstance().resetActivationState();
+#endif
       break;
     }
 
