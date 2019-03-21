@@ -245,7 +245,6 @@ const char* gNativeNfcManagerClassName =
     "com/android/nfc/dhimpl/NativeNfcManager";
 const char* gNativeNfcSecureElementClassName =
     "com/android/nfc/dhimpl/NativeNfcSecureElement";
-const char* gNativeNfcAlaClassName = "com/android/nfc/dhimpl/NativeNfcAla";
 const char* gNativeNfcMposManagerClassName =
     "com/android/nfc/dhimpl/NativeNfcMposManager";
 void doStartupConfig();

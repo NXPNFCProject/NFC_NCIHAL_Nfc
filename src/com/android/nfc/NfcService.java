@@ -109,7 +109,6 @@ import com.android.nfc.DeviceHost.NfcDepEndpoint;
 import com.android.nfc.DeviceHost.TagEndpoint;
 
 import com.android.nfc.dhimpl.NativeNfcSecureElement;
-import com.android.nfc.dhimpl.NativeNfcAla;
 import java.security.MessageDigest;
 
 import android.widget.Toast;
@@ -473,7 +472,6 @@ public class NfcService implements DeviceHostListener {
     private int mLockscreenPollMask;
     // cached version of installed packages requesting Android.permission.NFC_TRANSACTION_EVENTS
     List<String> mNfcEventInstalledPackages = new ArrayList<String>();
-    private NativeNfcAla mNfcAla;
 
     private final BackupManager mBackupManager;
 
@@ -985,7 +983,6 @@ public class NfcService implements DeviceHostListener {
 
         mNfcSccAccessControl = new NfcSccAccessControl(mContext);
         mNfcSeAccessControl  = new NfcSeAccessControl(mContext);
-        mNfcAla = new NativeNfcAla();
 
         mPrefs = mContext.getSharedPreferences(PREF, Context.MODE_PRIVATE);
         mPrefsEditor = mPrefs.edit();
