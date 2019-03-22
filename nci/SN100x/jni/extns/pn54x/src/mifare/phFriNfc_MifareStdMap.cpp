@@ -2676,19 +2676,11 @@ static NFCSTATUS phFriNfc_MifStd_H_GetNxtTLV(phFriNfc_NdefMap_t* NdefMap,
 
   if (*TL4bytesFlag == PH_FRINFC_MIFARESTD_FLAG0) {
     (*TempLength) += (NdefMap->SendRecvBuf[TempLen] + PH_FRINFC_MIFARESTD_VAL1);
-
-    if (NdefMap->TLVStruct.NdefTLVFoundFlag == PH_FRINFC_MIFARESTD_FLAG0) {
       LengthRemaining =
           (((*TempLength) < PH_FRINFC_MIFARESTD_BYTES_READ)
                ? PH_FRINFC_MIFARESTD_VAL0
                : (NdefMap->SendRecvBuf[TempLen] - LengthRemaining));
     } else {
-      LengthRemaining =
-          (((*TempLength) < PH_FRINFC_MIFARESTD_BYTES_READ)
-               ? PH_FRINFC_MIFARESTD_VAL0
-               : (NdefMap->SendRecvBuf[TempLen] - LengthRemaining));
-    }
-  } else {
     *TL4bytesFlag = PH_FRINFC_MIFARESTD_FLAG0;
     if (NdefMap->TLVStruct.NoLbytesinTLV == PH_FRINFC_MIFARESTD_VAL1) {
       ShiftLength = NdefMap->TLVStruct.prevLenByteValue;
