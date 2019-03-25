@@ -30,7 +30,7 @@ import android.util.Log;
 
 public class EnabledNfcFServices implements com.android.nfc.ForegroundUtils.Callback {
     static final String TAG = "EnabledNfcFCardEmulationServices";
-    static final boolean DBG = false;
+    static final boolean DBG = ("1" == (System.getProperty("persist.nfc.ce_debug")) ? true : false);
 
     final Context mContext;
     final RegisteredNfcFServicesCache mNfcFServiceCache;
