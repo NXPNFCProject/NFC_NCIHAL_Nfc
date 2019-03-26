@@ -72,7 +72,10 @@ const JNINativeMethod RoutingManager::sMethods[] = {
          com_android_nfc_cardemulation_doGetOffHostEseDestination},
     {"doGetAidMatchingMode", "()I",
      (void*)
-         RoutingManager::com_android_nfc_cardemulation_doGetAidMatchingMode}};
+         RoutingManager::com_android_nfc_cardemulation_doGetAidMatchingMode},
+    {"doGetDefaultIsoDepRouteDestination", "()I",
+     (void*)RoutingManager::
+         com_android_nfc_cardemulation_doGetDefaultIsoDepRouteDestination}};
 
 static const int MAX_NUM_EE = 5;
 // SCBR from host works only when App is in foreground
@@ -87,9 +90,7 @@ extern uint16_t sCurrentSelectedUICCSlot;
 extern bool isDynamicUiccEnabled;
 #endif
 
-#if (NXP_EXTNS != TRUE)
 static const uint8_t AID_ROUTE_QUAL_PREFIX = 0x10;
-#endif
 
 RoutingManager::RoutingManager() {
   static const char fn[] = "RoutingManager::RoutingManager()";
@@ -1168,6 +1169,11 @@ int RoutingManager::
 int RoutingManager::com_android_nfc_cardemulation_doGetAidMatchingMode(
     JNIEnv*) {
   return getInstance().mAidMatchingMode;
+}
+
+int RoutingManager::
+    com_android_nfc_cardemulation_doGetDefaultIsoDepRouteDestination(JNIEnv*) {
+    return getInstance().mDefaultIsoDepRoute;
 }
 
 #if(NXP_EXTNS == TRUE)

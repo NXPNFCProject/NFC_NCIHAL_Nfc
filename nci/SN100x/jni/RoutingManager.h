@@ -190,7 +190,8 @@ class RoutingManager {
   static jbyteArray com_android_nfc_cardemulation_doGetOffHostEseDestination(
       JNIEnv* e);
   static int com_android_nfc_cardemulation_doGetAidMatchingMode(JNIEnv* e);
-
+  static int com_android_nfc_cardemulation_doGetDefaultIsoDepRouteDestination(
+      JNIEnv* e);
   std::vector<uint8_t> mRxDataBuffer;
   map<int, uint16_t> mMapScbrHandle;
   bool mSecureNfcEnabled;
