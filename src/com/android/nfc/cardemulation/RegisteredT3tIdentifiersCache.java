@@ -33,7 +33,7 @@ import java.util.HashMap;
 public class RegisteredT3tIdentifiersCache {
     static final String TAG = "RegisteredT3tIdentifiersCache";
 
-    static final boolean DBG = false;
+    static final boolean DBG = ("1" == (System.getProperty("persist.nfc.ce_debug")) ? true : false);
 
     // All NFC-F services that have registered
     List<NfcFServiceInfo> mServices = new ArrayList<NfcFServiceInfo>();

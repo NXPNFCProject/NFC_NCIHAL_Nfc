@@ -60,7 +60,7 @@ import com.nxp.nfc.NfcConstants;
 public class RegisteredAidCache {
     static final String TAG = "RegisteredAidCache";
 
-    static final boolean DBG = true;
+    static final boolean DBG = ("1" == (System.getProperty("persist.nfc.ce_debug")) ? true : false);
 
     static final int AID_ROUTE_QUAL_SUBSET = 0x20;
     static final int AID_ROUTE_QUAL_PREFIX = 0x10;
@@ -895,7 +895,7 @@ public class RegisteredAidCache {
                 {
                   screenstate |= SCREEN_STATE_ON_LOCKED;
                   if (!isOnHost) {
-                    Log.d(TAG," set screen off enable for " + aid);
+                    if (DBG) Log.d(TAG," set screen off enable for " + aid);
                     screenstate |= SCREEN_STATE_OFF_UNLOCKED | SCREEN_STATE_OFF_LOCKED;
                   }
                   if(mGsmaPwrState == 0x00)

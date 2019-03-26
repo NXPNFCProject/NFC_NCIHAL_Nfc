@@ -61,7 +61,7 @@ import java.util.ArrayList;
 
 public class HostEmulationManager {
     static final String TAG = "HostEmulationManager";
-    static final boolean DBG = true;
+    static final boolean DBG = ("1" == (System.getProperty("persist.nfc.ce_debug")) ? true : false);
 
     static final int STATE_IDLE = 0;
     static final int STATE_W4_SELECT = 1;
