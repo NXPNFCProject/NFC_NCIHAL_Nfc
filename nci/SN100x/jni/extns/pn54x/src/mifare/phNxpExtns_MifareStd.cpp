@@ -641,9 +641,7 @@ NFCSTATUS Mfc_ReadNdef(void) {
     /* Set Completion Routine for ReadNdef */
     NdefMap->CompletionRoutine[1].CompletionRoutine =
         Mfc_ReadNdef_Completion_Routine;
-    NdefInfo.NdefContinueRead = (uint8_t)((phLibNfc_Ndef_EBegin == Offset)
-                                              ? PH_FRINFC_NDEFMAP_SEEK_BEGIN
-                                              : PH_FRINFC_NDEFMAP_SEEK_CUR);
+    NdefInfo.NdefContinueRead = (uint8_t)(PH_FRINFC_NDEFMAP_SEEK_BEGIN);
   }
 
   PacketData = NdefInfo.psUpperNdefMsg->buffer;

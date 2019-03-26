@@ -1413,8 +1413,6 @@ static NFCSTATUS phFriNfc_MifStd_H_BlkChk(phFriNfc_NdefMap_t* NdefMap) {
         } else {
           phFriNfc_MifStd1k_H_BlkChk(NdefMap, SectorID, &callbreak);
         }
-      } else {
-        phFriNfc_MifStd1k_H_BlkChk(NdefMap, SectorID, &callbreak);
       }
     } /* End of if*/ /* End of Mifare 2k check*/
     else             /* Mifare 4k check starts here */
