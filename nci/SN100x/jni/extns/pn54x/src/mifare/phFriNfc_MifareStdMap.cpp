@@ -1379,8 +1379,6 @@ static NFCSTATUS phFriNfc_MifStd_H_BlkChk(phFriNfc_NdefMap_t* NdefMap) {
     if (NdefMap->CardType == PH_FRINFC_NDEFMAP_MIFARE_STD_1K_CARD) {
       /* if Sector Id > 15 No Sectors to write */
       if (SectorID > 15) {
-        SectorID =
-            phFriNfc_MifStd_H_GetSect(NdefMap->StdMifareContainer.currentBlock);
         /*Error: No Ndef Compliant Sectors present */
         Result = PHNFCSTVAL(CID_FRI_NFC_NDEF_MAP, NFCSTATUS_INVALID_PARAMETER);
         callbreak = 1;
