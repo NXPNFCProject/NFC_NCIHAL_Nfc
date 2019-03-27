@@ -145,7 +145,10 @@ RoutingManager::RoutingManager() {
 #if (NXP_EXTNS != TRUE)
   mDefaultIsoDepRoute = NfcConfig::getUnsigned(NAME_DEFAULT_ISODEP_ROUTE, 0x0);
 #else
-  mDefaultIsoDepRoute = ROUTE_LOC_ESE_ID;
+  unsigned long num = 0;
+  GetNxpNumValue(NAME_DEFAULT_ISODEP_ROUTE, (void*)&num, sizeof(num));
+  mDefaultIsoDepRoute =
+      SecureElement::getInstance().getEseHandleFromGenericId(num);
 #endif
   mOffHostAidRoutingPowerState =
       NfcConfig::getUnsigned(NAME_OFFHOST_AID_ROUTE_PWR_STATE, 0x01);
@@ -1173,7 +1176,11 @@ int RoutingManager::com_android_nfc_cardemulation_doGetAidMatchingMode(
 
 int RoutingManager::
     com_android_nfc_cardemulation_doGetDefaultIsoDepRouteDestination(JNIEnv*) {
-    return getInstance().mDefaultIsoDepRoute;
+  unsigned long num = 0;
+  GetNxpNumValue(NAME_DEFAULT_ISODEP_ROUTE, (void*)&num, sizeof(num));
+  RoutingManager::getInstance().mDefaultIsoDepRoute =
+      SecureElement::getInstance().getEseHandleFromGenericId(num);
+  return num;
 }
 
 #if(NXP_EXTNS == TRUE)
@@ -1845,7 +1852,7 @@ void RoutingManager::setEmptyAidEntry(int route) {
 
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: power %x",__func__,power);
     if(power){
-        tNFA_STATUS nfaStat = NFA_EeAddAidRouting(routeLoc, 0, NULL, mSecureNfcEnabled ? 0x01 : power, 0x10);
+        tNFA_STATUS nfaStat = NFA_EeAddAidRouting(routeLoc, 0, NULL, mSecureNfcEnabled ? 0x01 : power, AID_ROUTE_QUAL_PREFIX);
         DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Status :0x%2x", __func__, nfaStat);
     }else{
         LOG(ERROR) << StringPrintf("%s:Invalid Power State" ,__func__);

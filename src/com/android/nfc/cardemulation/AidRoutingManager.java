@@ -307,7 +307,7 @@ public class AidRoutingManager {
             mMaxAidRoutingTableSize = NfcService.getInstance().getAidRoutingTableSize();
             if (DBG) Log.d(TAG, "mMaxAidRoutingTableSize: " + mMaxAidRoutingTableSize);
 
-          for(int index=0; index < 0x03; index++) {
+          for(int index=0; index < seList.size(); index++) {
             mDefaultRoute = seList.get(index);
             if(index != 0)
               if (DBG) Log.d(TAG, "AidRoutingTable is full, try to switch mDefaultRoute to 0x" + Integer.toHexString(mDefaultRoute));
@@ -412,12 +412,16 @@ public class AidRoutingManager {
             }
             if(aidRouteResolved == true) {
               commit(aidRoutingTableCache);
+              NfcService.getInstance().updateStatusOfServices(true);
+              mLastCommitStatus = true;
           } else {
               Log.e(TAG, "RoutingTable unchanged because it's full, not updating");
+              NfcService.getInstance().notifyRoutingTableFull();
+              NfcService.getInstance().updateStatusOfServices(false);
+              mLastCommitStatus = false;
           }
         }
         NfcService.getInstance().commitRouting();
-
         return true;
     }
 
@@ -427,6 +431,8 @@ public class AidRoutingManager {
          return;
        }
         for (Map.Entry<String, AidEntry> aidEntry : routeCache.entrySet())  {
+            if(aidEntry.getKey().isEmpty())
+                continue;
             AidEntry element = aidEntry.getValue();
             if (DBG) Log.d (TAG, element.toString());
             NfcService.getInstance().routeAids(
@@ -435,6 +441,10 @@ public class AidRoutingManager {
                  element.aidInfo,
                  element.powerstate);
         }
+        AidEntry emptyAidEntry = routeCache.get("");
+        if (emptyAidEntry != null)
+          NfcService.getInstance().routeAids(
+              "", emptyAidEntry.route, emptyAidEntry.aidInfo, emptyAidEntry.powerstate);
     }
     /**
      * This notifies that the AID routing table in the controller
