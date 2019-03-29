@@ -78,7 +78,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
-import com.gsma.nfc.internal.RegisteredNfcServicesCache;
 import com.android.nfc.NfcService;
 
 /**
@@ -107,7 +106,6 @@ public class RegisteredServicesCache {
     final AtomicFile mServiceStateFile;
     final HashMap<ComponentName, NfcApduServiceInfo> mAllServices = Maps.newHashMap();
     HashMap<String, HashMap<ComponentName, Integer>> installedServices = new HashMap<>();
-    private RegisteredNfcServicesCache mRegisteredNfcServicesCache;
 
     public interface Callback {
         void onServicesUpdated(int userId, final List<NfcApduServiceInfo> services);
@@ -158,8 +156,6 @@ public class RegisteredServicesCache {
                         if(Intent.ACTION_PACKAGE_REMOVED.equals(action)) {
                             Uri uri = intent.getData();
                             String pkg = uri != null ? uri.getSchemeSpecificPart() : null;
-                            mRegisteredNfcServicesCache.onPackageRemoved(pkg); //GSMA changes
-                            mRegisteredNfcServicesCache.writeDynamicApduService();
                         }
                         boolean replaced = intent.getBooleanExtra(Intent.EXTRA_REPLACING, false) &&
                                 (Intent.ACTION_PACKAGE_ADDED.equals(action) ||
@@ -197,15 +193,6 @@ public class RegisteredServicesCache {
         File dataDir = mContext.getFilesDir();
         mDynamicSettingsFile = new AtomicFile(new File(dataDir, "dynamic_aids.xml"));
         mServiceStateFile = new AtomicFile(new File(dataDir, "service_state.xml"));
-    }
-
-    void initialize(RegisteredNfcServicesCache registeredNfcServicesCache) {
-        mRegisteredNfcServicesCache = registeredNfcServicesCache;
-        synchronized (mLock) {
-            readDynamicSettingsLocked();
-            mRegisteredNfcServicesCache.readDynamicApduService();
-        }
-        invalidateCache(ActivityManager.getCurrentUser());
     }
 
     void dump(ArrayList<NfcApduServiceInfo> services) {
@@ -306,7 +293,6 @@ public class RegisteredServicesCache {
                 Log.w(TAG, "Unable to load component info " + resolvedService.toString(), e);
             }
         }
-        AddGsmaServices(validServices);
         return validServices;
     }
 
@@ -317,11 +303,6 @@ public class RegisteredServicesCache {
     public HashMap<ComponentName, NfcApduServiceInfo> getAllStaticHashServices() {
         return mAllServices;
     }
-
-//Adding the GSMA Services to the Service List
- private void AddGsmaServices(ArrayList<NfcApduServiceInfo> validServices){
-    validServices.addAll(mRegisteredNfcServicesCache.getApduservicesList());
- }
 
     public void invalidateCache(int userId) {
         final ArrayList<NfcApduServiceInfo> validServices = getInstalledServices(userId);
@@ -527,7 +508,7 @@ public class RegisteredServicesCache {
              int eventType = parser.getEventType();
              int currUid = -1;
              ComponentName currComponent = null;
-             HashMap<ComponentName ,NfcApduServiceInfo> nfcOffHostServiceMap = mRegisteredNfcServicesCache.getApduservicesMaps();
+             //HashMap<ComponentName ,NfcApduServiceInfo> nfcOffHostServiceMap = mRegisteredNfcServicesCache.getApduservicesMaps();
              int state = NfcConstants.SERVICE_STATE_ENABLED;
 
              while (eventType != XmlPullParser.START_TAG &&
@@ -611,13 +592,9 @@ public class RegisteredServicesCache {
                                  UserServices serviceCache = findOrCreateUserLocked(userId);
                                  NfcApduServiceInfo serviceInfo = serviceCache.services.get(currComponent);
 
-                                 if(serviceInfo == null) {
-                                 // CHECK for GSMA related services also.
-                                     serviceInfo = nfcOffHostServiceMap.get(currComponent);
-                                     if(serviceInfo == null) {
-                                         Log.e(TAG, "could not find the required serviceInfo");
-                                     } else serviceInfo.setServiceState(CardEmulation.CATEGORY_OTHER ,state);
-                                 } else   serviceInfo.setServiceState(CardEmulation.CATEGORY_OTHER ,state);
+                                 if(serviceInfo != null) {
+                                    serviceInfo.setServiceState(CardEmulation.CATEGORY_OTHER ,state);
+                                 }
                          }
                          currUid       = -1;
                          currComponent = null;
@@ -642,7 +619,7 @@ public class RegisteredServicesCache {
 
     private boolean writeServiceStateToFile(int currUserId) {
         FileOutputStream fos = null;
-        ArrayList<NfcApduServiceInfo> nfcOffHostServiceCache = mRegisteredNfcServicesCache.getApduservicesList();
+        //ArrayList<NfcApduServiceInfo> nfcOffHostServiceCache = mRegisteredNfcServicesCache.getApduservicesList();
         /*if(NfcService.getInstance().getAidRoutingTableStatus() == 0x00) {
             Log.e(TAG, " Aid Routing Table still  availble , No need to disable services");
             return false;
@@ -693,35 +670,6 @@ public class RegisteredServicesCache {
                     out.endTag(null, "service");
                 }
             }
-            dump(nfcOffHostServiceCache);
-            //ADD GSMA services Cache
-            for(NfcApduServiceInfo serviceInfo : nfcOffHostServiceCache) {
-                out.startTag(null ,"service");
-                out.attribute(null, "component", serviceInfo.getComponent().flattenToString());
-                Log.d(TAG,"component name"+ serviceInfo.getComponent().flattenToString());
-                out.attribute(null, "uid", Integer.toString(serviceInfo.getUid()));
-                Log.d(TAG,"uid name"+ Integer.toString(serviceInfo.getUid()));
-
-                boolean isServiceInstalled = false;
-                if(installedServices.containsKey(Integer.toString(serviceInfo.getUid()))){
-                    HashMap<ComponentName, Integer> componentStates = installedServices.get(Integer.toString(serviceInfo.getUid()));
-                    if (componentStates.containsKey(serviceInfo.getComponent())) {
-                        state = componentStates.get(serviceInfo.getComponent());
-                        componentStates.remove(serviceInfo.getComponent());
-                        if(componentStates.isEmpty())
-                        {
-                            installedServices.remove(Integer.toString(serviceInfo.getUid()));
-                        }
-                        isServiceInstalled = true;
-                    }
-                }
-                if (!isServiceInstalled) {
-                    state = serviceInfo.getServiceState(CardEmulation.CATEGORY_OTHER);
-                }
-                out.attribute(null, "serviceState", Integer.toString(state));
-                Log.d(TAG,"service State:"+ Integer.toString(state));
-                out.endTag(null, "service");
-            }
             out.endTag(null ,"services");
             out.endDocument();
             mServiceStateFile.finishWrite(fos);
@@ -739,7 +687,7 @@ public class RegisteredServicesCache {
     public int updateServiceState(int userId , int uid,
             Map<String , Boolean> serviceState) {
         boolean success = false;
-        HashMap<ComponentName ,NfcApduServiceInfo> nfcOffHostServiceMap = mRegisteredNfcServicesCache.getApduservicesMaps();
+        //HashMap<ComponentName ,NfcApduServiceInfo> nfcOffHostServiceMap = mRegisteredNfcServicesCache.getApduservicesMaps();
         if(NfcService.getInstance().getAidRoutingTableStatus() == 0x00) {
             Log.e(TAG, " Aid Routing Table still  availble , No need to disable services");
             return 0xFF;
@@ -756,9 +704,6 @@ public class RegisteredServicesCache {
                 Log.e(TAG, "updateServiceState  " + entry.getValue());
                 if (serviceInfo != null) {
                     serviceInfo.enableService(CardEmulation.CATEGORY_OTHER, entry.getValue());
-                } else if ((serviceInfo = nfcOffHostServiceMap.get(componentName)) != null) {
-                      // CHECK for GSMA cache
-                      serviceInfo.enableService(CardEmulation.CATEGORY_OTHER, entry.getValue());
                 } else {
                       Log.e(TAG, "Could not find service " + componentName);
                       return 0xFF;
@@ -978,14 +923,20 @@ public class RegisteredServicesCache {
     }
 
     public void updateStatusOfServices(boolean commitStatus) {
-            final UserServices userServices = mUserServices.get(ActivityManager.getCurrentUser());
-            for (NfcApduServiceInfo serviceInfo : userServices.services.values()) {
-                if(!serviceInfo.hasCategory(CardEmulation.CATEGORY_OTHER)) {
-                    continue;
-                }
-                serviceInfo.updateServiceCommitStatus(CardEmulation.CATEGORY_OTHER,commitStatus);
-            }
-            Log.e(TAG,"3"+Thread.currentThread().getStackTrace()[2].getMethodName()+":WriteServiceStateToFile");
-            writeServiceStateToFile(ActivityManager.getCurrentUser());
+      final UserServices userServices = mUserServices.get(ActivityManager.getCurrentUser());
+      if (userServices != null && userServices.services != null) {
+        for (NfcApduServiceInfo serviceInfo : userServices.services.values()) {
+          if (!serviceInfo.hasCategory(CardEmulation.CATEGORY_OTHER)) {
+            continue;
+          }
+          serviceInfo.updateServiceCommitStatus(CardEmulation.CATEGORY_OTHER, commitStatus);
+        }
+        Log.e(TAG,
+            "3" + Thread.currentThread().getStackTrace()[2].getMethodName()
+                + ":WriteServiceStateToFile");
+        writeServiceStateToFile(ActivityManager.getCurrentUser());
+      } else {
+        Log.e(TAG, "updateStatusOfServices failed... ");
+      }
     }
 }

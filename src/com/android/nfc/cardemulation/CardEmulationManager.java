@@ -65,7 +65,6 @@ import com.android.nfc.NfcPermissions;
 import com.android.nfc.NfcService;
 import com.android.nfc.cardemulation.RegisteredServicesCache;
 import com.android.nfc.cardemulation.RegisteredNfcFServicesCache;
-import com.gsma.nfc.internal.RegisteredNfcServicesCache;
 import com.nxp.nfc.NfcAidServiceInfo;
 /**
  * CardEmulationManager is the central entity
@@ -103,7 +102,6 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
     final CardEmulationInterface mCardEmulationInterface;
     final NfcFCardEmulationInterface mNfcFCardEmulationInterface;
     final PowerManager mPowerManager;
-    final RegisteredNfcServicesCache mRegisteredNfcServicesCache;
 
     public CardEmulationManager(Context context) {
         mContext = context;
@@ -118,8 +116,6 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         mPreferredServices = new PreferredServices(context, mServiceCache, mAidCache, this);
         mEnabledNfcFServices = new EnabledNfcFServices(
                 context, mNfcFServicesCache, mT3tIdentifiersCache, this);
-        mRegisteredNfcServicesCache = new RegisteredNfcServicesCache(context, mServiceCache);
-        mServiceCache.initialize(mRegisteredNfcServicesCache);
         mNfcFServicesCache.initialize();
         mPowerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
     }
@@ -134,10 +130,6 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         // To get Object of RegisteredAidCache to get the Default Offhost service.
     public RegisteredAidCache getRegisteredAidCache() {
         return mAidCache;
-    }
-
-    public RegisteredNfcServicesCache getRegisteredNfcServicesCache() {
-        return mRegisteredNfcServicesCache;
     }
 
     public void onHostCardEmulationActivated(int technology) {

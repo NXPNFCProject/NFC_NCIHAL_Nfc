@@ -138,8 +138,6 @@ import android.widget.Toast;
 import com.nxp.nfc.INxpNfcAdapter;
 import com.nxp.nfc.INxpNfcAdapterExtras;
 import java.util.HashSet;
-import com.gsma.nfc.internal.NxpNfcController;
-import com.nxp.nfc.gsma.internal.INxpNfcController;
 import com.android.nfc.cardemulation.AidRoutingManager;
 import com.android.nfc.cardemulation.RegisteredAidCache;
 import com.nxp.nfc.NfcConstants;
@@ -345,7 +343,6 @@ public class NfcService implements DeviceHostListener {
 
 
     private final BackupManager mBackupManager;
-    private NxpNfcController mNxpNfcController;
     // cached version of installed packages requesting Android.permission.NFC_TRANSACTION_EVENTS
     List<String> mNfcEventInstalledPackages = new ArrayList<String>();
 
@@ -765,7 +762,6 @@ public class NfcService implements DeviceHostListener {
             mAidRoutingManager = new AidRoutingManager();
             mCardEmulationManager = new CardEmulationManager(mContext);
             mAidCache = mCardEmulationManager.getRegisteredAidCache();
-            mNxpNfcController = new NxpNfcController(mContext, mCardEmulationManager);
         }
         mForegroundUtils = ForegroundUtils.getInstance();
 
@@ -1659,11 +1655,7 @@ public class NfcService implements DeviceHostListener {
           }
           return list;
         }
-        //GSMA Changes
-        @Override
-        public INxpNfcController getNxpNfcControllerInterface() {
-            return mNxpNfcController.getNxpNfcControllerInterface();
-        }
+
         @Override
         public int mPOSSetReaderMode (String pkg, boolean on) {
             // Check if NFC is enabled
@@ -2764,21 +2756,19 @@ public class NfcService implements DeviceHostListener {
         mToastHandler.showToast("Last installed NFC Service is not enabled due to limited resources. To enable this service, " +
                 "please disable other servives in Settings Menu", 20);
         Log.d(TAG, "notify aid routing table full to the user here");
-        if(!mNxpNfcController.isGsmaCommitOffhostService()) {
-            ComponentName prevPaymentComponent = mAidCache.getPreviousPreferredPaymentService();
-            mNxpPrefsEditor = mNxpPrefs.edit();
-            mNxpPrefsEditor.putInt("PREF_SET_AID_ROUTING_TABLE_FULL",0x01);
-            mNxpPrefsEditor.commit();
-            //broadcast Aid Routing Table Full intent to the user
-            Intent aidTableFull = new Intent();
-            aidTableFull.putExtra(NfcConstants.EXTRA_GSMA_PREV_PAYMENT_COMPONENT,prevPaymentComponent);
-            aidTableFull.setAction(NfcConstants.ACTION_ROUTING_TABLE_FULL);
-            if (DBG) {
-                Log.d(TAG, "notify aid routing table full to the user");
-            }
-            mContext.sendBroadcastAsUser(aidTableFull, UserHandle.CURRENT);
-            mAidCache.setPreviousPreferredPaymentService(null);
+
+        ComponentName prevPaymentComponent = mAidCache.getPreviousPreferredPaymentService();
+        mNxpPrefsEditor = mNxpPrefs.edit();
+        mNxpPrefsEditor.putInt("PREF_SET_AID_ROUTING_TABLE_FULL",0x01);
+        mNxpPrefsEditor.commit();
+        //broadcast Aid Routing Table Full intent to the user
+        Intent aidTableFull = new Intent();
+        aidTableFull.setAction(NfcConstants.ACTION_ROUTING_TABLE_FULL);
+        if (DBG) {
+            Log.d(TAG, "notify aid routing table full to the user");
         }
+        mContext.sendBroadcastAsUser(aidTableFull, UserHandle.CURRENT);
+        mAidCache.setPreviousPreferredPaymentService(null);
     }
 
     public void routeAids(String aid, int route, int aidInfo, int power) {
