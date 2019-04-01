@@ -142,17 +142,9 @@ RoutingManager::RoutingManager() {
   mIsScbrSupported = false;
 
   mNfcFOnDhHandle = NFA_HANDLE_INVALID;
-#if (NXP_EXTNS != TRUE)
   mDefaultIsoDepRoute = NfcConfig::getUnsigned(NAME_DEFAULT_ISODEP_ROUTE, 0x0);
-#else
-  unsigned long num = 0;
-  GetNxpNumValue(NAME_DEFAULT_ISODEP_ROUTE, (void*)&num, sizeof(num));
-  mDefaultIsoDepRoute =
-      SecureElement::getInstance().getEseHandleFromGenericId(num);
-#endif
   mOffHostAidRoutingPowerState =
       NfcConfig::getUnsigned(NAME_OFFHOST_AID_ROUTE_PWR_STATE, 0x01);
-
 }
 
 RoutingManager::~RoutingManager() {}
@@ -176,50 +168,34 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
 
 #if (NXP_EXTNS == TRUE)
     memset(&gRouteInfo, 0x00, sizeof(RouteInfo_t));
-    unsigned long tech = 0;
-    unsigned long num = 0;
-    bool fwdFunctionality = false;
-    if ((GetNxpNumValue(NAME_HOST_LISTEN_TECH_MASK, &tech, sizeof(tech))))
-        mHostListnTechMask = tech;
-    else
-        mHostListnTechMask = 0x03;
-    LOG(ERROR) << StringPrintf("%s: mHostListnTechMask=0x%X", fn,mHostListnTechMask);
 
-    if ((GetNxpNumValue(NAME_FORWARD_FUNCTIONALITY_ENABLE, &fwdFunctionality, sizeof(fwdFunctionality))))
-        mFwdFuntnEnable = fwdFunctionality;
-    else
-        mFwdFuntnEnable = false;
-    LOG(ERROR) << StringPrintf("%s: mFwdFuntnEnable=0x%X", fn,mFwdFuntnEnable);
+    mHostListnTechMask = NfcConfig::getUnsigned(NAME_HOST_LISTEN_TECH_MASK, 0x03);
 
-    if (GetNxpNumValue (NAME_DEFAULT_FELICA_CLT_PWR_STATE, (void*)&num, sizeof(num)))
-       mDefaultTechFPowerstate = num;
-    else
-       mDefaultTechFPowerstate = 0x3F;
-    if (GetNxpNumValue (NAME_NXP_DEFAULT_SE, (void*)&num, sizeof(num)))
-        mDefaultEe = num;
-    else
-        mDefaultEe = 0x01;
+    LOG(INFO) << StringPrintf("%s: mHostListnTechMask=0x%X", fn,mHostListnTechMask);
+
+    mFwdFuntnEnable = NfcConfig::getUnsigned(NAME_FORWARD_FUNCTIONALITY_ENABLE, 0x00);
+    LOG(INFO) << StringPrintf("%s: mFwdFuntnEnable=0x%X", fn,mFwdFuntnEnable);
+
+    mDefaultTechFPowerstate = NfcConfig::getUnsigned(NAME_DEFAULT_FELICA_CLT_PWR_STATE, 0x3F);
+
+    mDefaultEe = NfcConfig::getUnsigned(NAME_NXP_DEFAULT_SE, 0x01);
+
     mUiccListnTechMask = NfcConfig::getUnsigned(NAME_UICC_LISTEN_TECH_MASK, 0x07);
-    if (GetNxpNumValue (NAME_DEFAULT_AID_ROUTE, (void*)&num, sizeof(num)))
-        mDefaultIso7816SeID = num;
-    else
-        mDefaultIso7816SeID = NFA_HANDLE_INVALID;
-    if (GetNxpNumValue (NAME_DEFAULT_AID_PWR_STATE, (void*)&num, sizeof(num)))
-        mDefaultIso7816Powerstate = num;
-    else
-        mDefaultIso7816Powerstate = 0xFF;
-    if(GetNxpNumValue (NAME_DEFUALT_GSMA_PWR_STATE, (void*)&num, sizeof(num)))
-        mDefaultGsmaPowerState = num;
-    else
-        mDefaultGsmaPowerState = 0x00;
-    if(GetNxpNumValue (NAME_DEFAULT_FELICA_CLT_ROUTE, (void*)&num, sizeof(num)))
-        mDefaultFelicaRoute = num;
-    if(GetNxpNumValue (NAME_DEFAULT_OFFHOST_ROUTE, (void*)&num, sizeof(num)))
-        mDefaultOffHostRoute = num;
+
+    mDefaultIso7816SeID = NfcConfig::getUnsigned(NAME_DEFAULT_AID_ROUTE, NFA_HANDLE_INVALID);
+
+    mDefaultIso7816Powerstate = NfcConfig::getUnsigned(NAME_DEFAULT_AID_PWR_STATE, 0xFF);
+
+    mDefaultGsmaPowerState = NfcConfig::getUnsigned(NAME_DEFUALT_GSMA_PWR_STATE, 0x00);
+
+    mDefaultFelicaRoute = NfcConfig::getUnsigned(NAME_DEFAULT_FELICA_CLT_ROUTE, 0x00);
+
+    mDefaultOffHostRoute = NfcConfig::getUnsigned(NAME_DEFAULT_OFFHOST_ROUTE, 0x00);
+
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: mDefaultGsmaPowerState %02x)", fn, mDefaultGsmaPowerState);
-    LOG(ERROR) << StringPrintf("%s: >>>> mDefaultIso7816SeID=0x%X", fn, mDefaultIso7816SeID);
-    LOG(ERROR) << StringPrintf("%s: >>>> mDefaultIso7816Powerstate=0x%X", fn, mDefaultIso7816Powerstate);
+    LOG(INFO) << StringPrintf("%s: >>>> mDefaultIso7816SeID=0x%X", fn, mDefaultIso7816SeID);
+    LOG(INFO) << StringPrintf("%s: >>>> mDefaultIso7816Powerstate=0x%X", fn, mDefaultIso7816Powerstate);
     LOG(INFO) << StringPrintf("%s: >>>> mDefaultFelicaRoute=0x%X", fn, mDefaultFelicaRoute);
     LOG(INFO) << StringPrintf("%s: >>>> mDefaultEe=0x%X", fn, mDefaultEe);
     LOG(INFO) << StringPrintf("%s: >>>> mDefaultOffHostRoute=0x%X", fn, mDefaultOffHostRoute);
@@ -1176,11 +1152,7 @@ int RoutingManager::com_android_nfc_cardemulation_doGetAidMatchingMode(
 
 int RoutingManager::
     com_android_nfc_cardemulation_doGetDefaultIsoDepRouteDestination(JNIEnv*) {
-  unsigned long num = 0;
-  GetNxpNumValue(NAME_DEFAULT_ISODEP_ROUTE, (void*)&num, sizeof(num));
-  RoutingManager::getInstance().mDefaultIsoDepRoute =
-      SecureElement::getInstance().getEseHandleFromGenericId(num);
-  return num;
+  return RoutingManager::getInstance().mDefaultIsoDepRoute;
 }
 
 #if(NXP_EXTNS == TRUE)
@@ -1798,13 +1770,17 @@ void RoutingManager::setEmptyAidEntry(int route) {
     }
     routeLoc = ((mDefaultIso7816SeID == 0x00) ? ROUTE_LOC_HOST_ID : ((mDefaultIso7816SeID == 0x01 ) ? ROUTE_LOC_ESE_ID : getUiccRouteLocId(mDefaultIso7816SeID)));
     power    = mCeRouteStrictDisable ? mDefaultIso7816Powerstate : (mDefaultIso7816Powerstate & POWER_STATE_MASK);
-    if (GetNxpNumValue(NAME_CHECK_DEFAULT_PROTO_SE_ID, &check_default_proto_se_id_req, sizeof(check_default_proto_se_id_req)))
-    {
-      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: CHECK_DEFAULT_PROTO_SE_ID - 0x%2lX  routeLoc = 0x%x",fn,check_default_proto_se_id_req, routeLoc);
-    }
-    else
-    {
-      LOG(ERROR) << StringPrintf("%s: CHECK_DEFAULT_PROTO_SE_ID not defined. Taking default value - 0x%2lX",fn,check_default_proto_se_id_req);
+    if (NfcConfig::hasKey(NAME_CHECK_DEFAULT_PROTO_SE_ID)) {
+      check_default_proto_se_id_req =
+          NfcConfig::getUnsigned(NAME_CHECK_DEFAULT_PROTO_SE_ID);
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+          "%s: CHECK_DEFAULT_PROTO_SE_ID - 0x%2lX  routeLoc = 0x%x", fn,
+          check_default_proto_se_id_req, routeLoc);
+    } else {
+      LOG(ERROR) << StringPrintf(
+          "%s: CHECK_DEFAULT_PROTO_SE_ID not defined. Taking default value - "
+          "0x%2lX",
+          fn, check_default_proto_se_id_req);
     }
     if(check_default_proto_se_id_req == 0x01)
     {

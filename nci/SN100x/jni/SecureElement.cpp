@@ -25,7 +25,6 @@
 #include <semaphore.h>
 #include <errno.h>
 #include "config.h"
-#include "phNxpConfig.h"
 #include "nfc_config.h"
 #include "RoutingManager.h"
 #include "HciEventManager.h"
@@ -103,35 +102,21 @@ bool SecureElement::initialize(nfc_jni_native_data* native) {
     mbNewEE         = true;
     mNewPipeId      = 0;
     mNewSourceGate  = 0;
-    unsigned long val = 0;
     memset (mEeInfo, 0, sizeof(mEeInfo));
     memset (&mHciCfg, 0, sizeof(mHciCfg));
     memset(mAidForEmptySelect, 0, sizeof(mAidForEmptySelect));
     mActivatedInListenMode = false;
-    if (GetNxpNumValue(NAME_NXP_DEFAULT_UICC2_SELECT, &muicc2_selected, sizeof(muicc2_selected)) == false)
-    {
-        muicc2_selected = UICC2_ID;
-    }
-    if (GetNxpNumValue(NAME_NXP_SMB_TRANSCEIVE_TIMEOUT, &val, sizeof(val)) == true)
-    {
-        SmbTransceiveTimeOutVal = val;
-    }
-    else
-    {
-        SmbTransceiveTimeOutVal = WIRED_MODE_TRANSCEIVE_TIMEOUT;
-    }
+    muicc2_selected = NfcConfig::getUnsigned(NAME_NXP_DEFAULT_UICC2_SELECT, UICC2_ID);
+
+    SmbTransceiveTimeOutVal = NfcConfig::getUnsigned(NAME_NXP_SMB_TRANSCEIVE_TIMEOUT, WIRED_MODE_TRANSCEIVE_TIMEOUT);
+
     if(SmbTransceiveTimeOutVal < WIRED_MODE_TRANSCEIVE_TIMEOUT)
     {
         SmbTransceiveTimeOutVal = WIRED_MODE_TRANSCEIVE_TIMEOUT;
     }
-    if (GetNxpNumValue(NAME_NXP_SMB_ERROR_RETRY, &val, sizeof(val)) == true)
-    {
-      mErrorRecovery = val;
-    }
-    else
-    {
-      mErrorRecovery = false;
-    }
+
+    mErrorRecovery = NfcConfig::getUnsigned(NAME_NXP_SMB_ERROR_RETRY, 0x00);
+
     LOG(INFO) << StringPrintf("%s: SMB transceive timeout %d SMB Error recovery %d", fn, SmbTransceiveTimeOutVal, mErrorRecovery);
 
     initializeEeHandle();

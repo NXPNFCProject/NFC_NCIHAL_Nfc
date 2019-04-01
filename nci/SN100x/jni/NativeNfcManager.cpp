@@ -1426,11 +1426,12 @@ static jboolean nfcManager_doInitialize(JNIEnv* e, jobject o) {
         mwVer.cust_id, mwVer.validation, mwVer.android_version,
         mwVer.major_version, mwVer.minor_version);
 
-    if(GetNxpNumValue(NAME_NXP_DUAL_UICC_ENABLE, &isDynamicUiccEnabled, sizeof(isDynamicUiccEnabled))) {
-        isDynamicUiccEnabled = (isDynamicUiccEnabled == 0x01 ? true:false);
-    } else {
-        isDynamicUiccEnabled = true;
-    }
+    if (NfcConfig::hasKey(NAME_NXP_DUAL_UICC_ENABLE)) {
+      isDynamicUiccEnabled = NfcConfig::getUnsigned(NAME_NXP_DUAL_UICC_ENABLE);
+      isDynamicUiccEnabled = (isDynamicUiccEnabled == 0x01 ? true : false);
+    } else
+      isDynamicUiccEnabled = true;
+
 #endif
   powerSwitch.initialize(PowerSwitch::FULL_POWER);
 
@@ -2078,14 +2079,13 @@ static jobject nfcManager_doCreateLlcpConnectionlessSocket(JNIEnv*, jobject,
 ** Returns:         None
 **
 *******************************************************************************/
-static jint nfcManager_getDefaultAidRoute (JNIEnv* e, jobject o)
-{
-    unsigned long num = 0;
-#if(NXP_EXTNS == TRUE)
-    GetNxpNumValue(NAME_DEFAULT_AID_ROUTE, &num, sizeof(num));
-#endif
+static jint nfcManager_getDefaultAidRoute(JNIEnv* e, jobject o) {
+  unsigned long num = 0;
+  if (NfcConfig::hasKey(NAME_DEFAULT_AID_ROUTE))
+    num = NfcConfig::getUnsigned(NAME_DEFAULT_AID_ROUTE);
     return num;
-}
+  }
+
 /*******************************************************************************
 **
 ** Function:        nfcManager_getDefaultDesfireRoute
@@ -2098,14 +2098,13 @@ static jint nfcManager_getDefaultAidRoute (JNIEnv* e, jobject o)
 ** Returns:         None
 **
 *******************************************************************************/
-static jint nfcManager_getDefaultDesfireRoute (JNIEnv* e, jobject o)
-{
+  static jint nfcManager_getDefaultDesfireRoute(JNIEnv* e, jobject o) {
     unsigned long num = 0;
-#if(NXP_EXTNS == TRUE)
-    GetNxpNumValue(NAME_DEFAULT_ISODEP_ROUTE, (void*)&num, sizeof(num));
-#endif
+    if (NfcConfig::hasKey(NAME_DEFAULT_ISODEP_ROUTE))
+      num = NfcConfig::getUnsigned(NAME_DEFAULT_ISODEP_ROUTE);
     return num;
-}
+  }
+
 /*******************************************************************************
 **
 ** Function:        nfcManager_getDefaultMifareCLTRoute
@@ -2118,14 +2117,12 @@ static jint nfcManager_getDefaultDesfireRoute (JNIEnv* e, jobject o)
 ** Returns:         None
 **
 *******************************************************************************/
-static jint nfcManager_getDefaultMifareCLTRoute (JNIEnv* e, jobject o)
-{
+  static jint nfcManager_getDefaultMifareCLTRoute(JNIEnv* e, jobject o) {
     unsigned long num = 0;
-#if(NXP_EXTNS == TRUE)
-    GetNxpNumValue(NAME_DEFAULT_MIFARE_CLT_ROUTE, &num, sizeof(num));
-#endif
+    if (NfcConfig::hasKey(NAME_DEFAULT_MIFARE_CLT_ROUTE))
+      num = NfcConfig::getUnsigned(NAME_DEFAULT_MIFARE_CLT_ROUTE);
     return num;
-}
+  }
 #if(NXP_EXTNS == TRUE)
 /*******************************************************************************
 **
@@ -2138,13 +2135,12 @@ static jint nfcManager_getDefaultMifareCLTRoute (JNIEnv* e, jobject o)
 ** Returns:         Power State
 **
 *******************************************************************************/
-static jint nfcManager_getDefaultFelicaCLTPowerState (JNIEnv* e, jobject o)
-{
+  static jint nfcManager_getDefaultFelicaCLTPowerState(JNIEnv* e, jobject o) {
     unsigned long num = 0;
-
-    GetNxpNumValue(NAME_DEFAULT_FELICA_CLT_PWR_STATE, &num, sizeof(num));
+    if (NfcConfig::hasKey(NAME_DEFAULT_FELICA_CLT_PWR_STATE))
+      num = NfcConfig::getUnsigned(NAME_DEFAULT_FELICA_CLT_PWR_STATE);
     return num;
-}
+  }
 /*******************************************************************************
 **
 ** Function:        nfcManager_getDefaultFelicaCLTRoute
@@ -2157,14 +2153,12 @@ static jint nfcManager_getDefaultFelicaCLTPowerState (JNIEnv* e, jobject o)
 ** Returns:         None
 **
 *******************************************************************************/
-static jint nfcManager_getDefaultFelicaCLTRoute (JNIEnv* e, jobject o)
-{
+  static jint nfcManager_getDefaultFelicaCLTRoute(JNIEnv* e, jobject o) {
     unsigned long num = 0;
-
-    GetNxpNumValue(NAME_DEFAULT_FELICA_CLT_ROUTE, &num, sizeof(num));
-
+    if (NfcConfig::hasKey(NAME_DEFAULT_FELICA_CLT_ROUTE))
+      num = NfcConfig::getUnsigned(NAME_DEFAULT_FELICA_CLT_ROUTE);
     return num;
-}
+  }
 #endif
 
 /*******************************************************************************
@@ -2178,14 +2172,14 @@ static jint nfcManager_getDefaultFelicaCLTRoute (JNIEnv* e, jobject o)
 ** Returns:         Power State
 **
 *******************************************************************************/
-static jint nfcManager_getDefaultAidPowerState (JNIEnv* e, jobject o)
-{
+  static jint nfcManager_getDefaultAidPowerState(JNIEnv* e, jobject o) {
     unsigned long num = 0;
-    #if(NXP_EXTNS == TRUE)
-    GetNxpNumValue(NAME_DEFAULT_AID_PWR_STATE, &num, sizeof(num));
-    #endif
+#if (NXP_EXTNS == TRUE)
+    if (NfcConfig::hasKey(NAME_DEFAULT_AID_PWR_STATE))
+      num = NfcConfig::getUnsigned(NAME_DEFAULT_AID_PWR_STATE);
+#endif
     return num;
-}
+  }
 
 /*******************************************************************************
 **
@@ -2198,14 +2192,14 @@ static jint nfcManager_getDefaultAidPowerState (JNIEnv* e, jobject o)
 ** Returns:         Power State
 **
 *******************************************************************************/
-static jint nfcManager_getDefaultDesfirePowerState (JNIEnv* e, jobject o)
-{
+  static jint nfcManager_getDefaultDesfirePowerState(JNIEnv* e, jobject o) {
     unsigned long num = 0;
-    #if(NXP_EXTNS == TRUE)
-    GetNxpNumValue(NAME_DEFAULT_DESFIRE_PWR_STATE, &num, sizeof(num));
-    #endif
+#if (NXP_EXTNS == TRUE)
+    if (NfcConfig::hasKey(NAME_DEFAULT_DESFIRE_PWR_STATE))
+      num = NfcConfig::getUnsigned(NAME_DEFAULT_DESFIRE_PWR_STATE);
+#endif
     return num;
-}
+  }
 
 static int nfcManager_getDefaulGsmaPowerState(JNIEnv* e, jobject o)
 {
@@ -2222,13 +2216,13 @@ static int nfcManager_getDefaulGsmaPowerState(JNIEnv* e, jobject o)
 ** Returns:         Power State
 **
 *******************************************************************************/
-static jint nfcManager_getDefaultMifareCLTPowerState (JNIEnv* e, jobject o)
-{
-    unsigned long num = 0;
-    #if(NXP_EXTNS == TRUE)
-    GetNxpNumValue(NAME_DEFAULT_MIFARE_CLT_PWR_STATE, &num, sizeof(num));
-    #endif
-    return num;
+static jint nfcManager_getDefaultMifareCLTPowerState(JNIEnv* e, jobject o) {
+  unsigned long num = 0;
+#if (NXP_EXTNS == TRUE)
+  if (NfcConfig::hasKey(NAME_DEFAULT_MIFARE_CLT_PWR_STATE))
+    num = NfcConfig::getUnsigned(NAME_DEFAULT_MIFARE_CLT_PWR_STATE);
+#endif
+  return num;
 }
 /*******************************************************************************
 **

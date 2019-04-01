@@ -26,7 +26,6 @@
 #include "JavaClassConstants.h"
 #include "NfcJniUtil.h"
 #include "config.h"
-#include "phNxpConfig.h"
 #include "SecureElement.h"
 
 using android::base::StringPrintf;

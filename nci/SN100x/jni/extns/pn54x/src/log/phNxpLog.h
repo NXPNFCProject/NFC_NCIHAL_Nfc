@@ -45,7 +45,7 @@ extern nci_log_level_t gLog_level;
 /* ####################### Set the log module name in .conf file
  * ########################## */
 #define NAME_NXPLOG_EXTNS_LOGLEVEL "NXPLOG_EXTNS_LOGLEVEL"
-#define NAME_NXPLOG_HAL_LOGLEVEL "NXPLOG_NCIHAL_LOGLEVEL"
+#define NAME_NXPLOG_NCIHAL_LOGLEVEL "NXPLOG_NCIHAL_LOGLEVEL"
 #define NAME_NXPLOG_NCIX_LOGLEVEL "NXPLOG_NCIX_LOGLEVEL"
 #define NAME_NXPLOG_NCIR_LOGLEVEL "NXPLOG_NCIR_LOGLEVEL"
 #define NAME_NXPLOG_FWDNLD_LOGLEVEL "NXPLOG_FWDNLD_LOGLEVEL"
@@ -55,7 +55,7 @@ extern nci_log_level_t gLog_level;
  * ########################## */
 #define PROP_NAME_NXPLOG_GLOBAL_LOGLEVEL "nfc.nxp_log_level_global"
 #define PROP_NAME_NXPLOG_EXTNS_LOGLEVEL "nfc.nxp_log_level_extns"
-#define PROP_NAME_NXPLOG_HAL_LOGLEVEL "nfc.nxp_log_level_hal"
+#define PROP_NAME_NXPLOG_NCIHAL_LOGLEVEL "nfc.nxp_log_level_hal"
 #define PROP_NAME_NXPLOG_NCI_LOGLEVEL "nfc.nxp_log_level_nci"
 #define PROP_NAME_NXPLOG_FWDNLD_LOGLEVEL "nfc.nxp_log_level_dnld"
 #define PROP_NAME_NXPLOG_TML_LOGLEVEL "nfc.nxp_log_level_tml"
