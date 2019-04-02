@@ -344,7 +344,12 @@ bool RoutingManager::addAidRouting(const uint8_t* aid, uint8_t aidLen,
   }
   SyncEventGuard guard(mAidAddRemoveEvent);
   if (!mSecureNfcEnabled) {
-    powerState = power;
+    if ((aid == nullptr) && (aidLen == 0x00)) {
+      powerState = mCeRouteStrictDisable
+                       ? mDefaultIso7816Powerstate
+                       : (mDefaultIso7816Powerstate & POWER_STATE_MASK);
+    } else
+      powerState = power;
   }
   tNFA_STATUS nfaStat =
       NFA_EeAddAidRouting(seId, aidLen, (uint8_t*)aid, powerState, aidInfo);

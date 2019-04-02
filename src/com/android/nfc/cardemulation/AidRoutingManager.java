@@ -136,6 +136,8 @@ public class AidRoutingManager {
         mAidMatchingSupport = doGetAidMatchingMode();
         if (DBG) Log.d(TAG, "mAidMatchingSupport=0x" + Integer.toHexString(mAidMatchingSupport));
         mDefaultAidRoute =   NfcService.getInstance().GetDefaultRouteEntry() >> 0x08;
+        if (DBG)
+          Log.d(TAG, "mDefaultAidRoute=0x" + Integer.toHexString(mDefaultAidRoute));
         mDefaultIsoDepRoute = doGetDefaultIsoDepRouteDestination();
         if (DBG) Log.d(TAG, "mDefaultIsoDepRoute=0x" + Integer.toHexString(mDefaultIsoDepRoute));
         mLastCommitStatus = true;
@@ -247,7 +249,6 @@ public class AidRoutingManager {
         boolean aidRouteResolved = false;
         HashMap<String, AidEntry> aidRoutingTableCache = new HashMap<String, AidEntry>(aidMap.size());
         ArrayList<Integer> seList = new ArrayList<Integer>();
-        seList.add(ROUTE_HOST);
         SparseArray<Set<String>> aidRoutingTable = new SparseArray<Set<String>>(aidMap.size());
         HashMap<String, Integer> routeForAid = new HashMap<String, Integer>(aidMap.size());
         HashMap<String, Integer> infoForAid = new HashMap<String, Integer>(aidMap.size());
@@ -256,6 +257,7 @@ public class AidRoutingManager {
         mAidRoutingTableSize = NfcService.getInstance().getAidRoutingTableSize();
         mDefaultAidRoute =   NfcService.getInstance().GetDefaultRouteEntry() >> 0x08;
         Log.e(TAG, "Size of routing table"+mAidRoutingTableSize);
+        seList.add(mDefaultAidRoute);
         // Then, populate internal data structures first
         for (Map.Entry<String, AidEntry> aidEntry : aidMap.entrySet())  {
             int route = ROUTE_HOST;
@@ -286,6 +288,8 @@ public class AidRoutingManager {
             if (DBG) Log.d(TAG, "#######Routing AID " + aid + " to route "
                         + Integer.toString(route) + " with power "+ power);
         }
+        if (!seList.contains(ROUTE_HOST))
+          seList.add(ROUTE_HOST);
 
         synchronized (mLock) {
             if (routeForAid.equals(mRouteForAid) && !force) {
