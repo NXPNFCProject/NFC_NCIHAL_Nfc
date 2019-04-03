@@ -3658,7 +3658,7 @@ public class NfcService implements DeviceHostListener {
                 }
             }
             int dispatchResult = mNfcDispatcher.dispatchTag(tag);
-            if (dispatchResult == NfcDispatcher.DISPATCH_FAIL) {
+            if (dispatchResult == NfcDispatcher.DISPATCH_FAIL && !mInProvisionMode) {
                 unregisterObject(tagEndpoint.getHandle());
                 playSound(SOUND_ERROR);
             } else if (dispatchResult == NfcDispatcher.DISPATCH_SUCCESS) {
