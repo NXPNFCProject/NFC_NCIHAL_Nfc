@@ -423,9 +423,6 @@ public class NfcService implements DeviceHostListener {
     private static NfcService sService;
     public  static boolean sIsDtaMode = false;
 
-    boolean mIsLiveCaseEnabled; // whether live cases are enabled
-    int mLiveCaseTechnology; // Technology mask of accepted NFC tags
-
     private IVrManager vrManager;
     boolean mIsVrModeEnabled;
     private ISecureElementService mSEService;
@@ -664,31 +661,6 @@ public class NfcService implements DeviceHostListener {
         } catch (NotFoundException e) {
         }
 
-        try {
-            mIsLiveCaseEnabled = mContext.getResources().getBoolean(R.bool.enable_live_cases);
-        } catch (NotFoundException e) {
-            mIsLiveCaseEnabled = false;
-        }
-
-        mLiveCaseTechnology = 0;
-        String[] liveCaseTechList;
-        try {
-            liveCaseTechList = mContext.getResources().getStringArray(R.array.live_case_tag_types);
-            for (int i=0; i < liveCaseTechList.length; i++) {
-                if (liveCaseTechList[i].equals("TypeA")) {
-                    mLiveCaseTechnology |= NFC_POLL_A;
-                } else if (liveCaseTechList[i].equals("TypeB")) {
-                    mLiveCaseTechnology |= NFC_POLL_B;
-                } else if (liveCaseTechList[i].equals("TypeF")) {
-                    mLiveCaseTechnology |= NFC_POLL_F;
-                } else if (liveCaseTechList[i].equals("TypeV")) {
-                    mLiveCaseTechnology |= NFC_POLL_V;
-                }
-            }
-        } catch (NotFoundException e) {
-            mLiveCaseTechnology = 0;
-        }
-
         if (isNfcProvisioningEnabled) {
             mInProvisionMode = Settings.Secure.getInt(mContentResolver,
                     Settings.Global.DEVICE_PROVISIONED, 0) == 0;
@@ -696,8 +668,7 @@ public class NfcService implements DeviceHostListener {
             mInProvisionMode = false;
         }
 
-        mNfcDispatcher = new NfcDispatcher(mContext, mHandoverDataParser, mInProvisionMode,
-                mIsLiveCaseEnabled);
+        mNfcDispatcher = new NfcDispatcher(mContext, mHandoverDataParser, mInProvisionMode);
 
         mSecureElement = new NativeNfcSecureElement(mContext);
         mToastHandler = new ToastHandler(mContext);
@@ -2605,11 +2576,8 @@ public class NfcService implements DeviceHostListener {
             // enable P2P for MFM/EDU/Corp provisioning
             paramsBuilder.setEnableP2p(mIsBeamCapable);
         } else if (screenState == ScreenStateHelper.SCREEN_STATE_ON_LOCKED &&
-                (mIsLiveCaseEnabled || mNfcUnlockManager.isLockscreenPollingEnabled())) {
+            mNfcUnlockManager.isLockscreenPollingEnabled()) {
             int techMask = 0;
-            // enable polling for Live Case technologies
-            if (mIsLiveCaseEnabled)
-                techMask |= mLiveCaseTechnology;
             if (mNfcUnlockManager.isLockscreenPollingEnabled())
                 techMask |= mNfcUnlockManager.getLockscreenPollMask();
             paramsBuilder.setTechMask(techMask);
