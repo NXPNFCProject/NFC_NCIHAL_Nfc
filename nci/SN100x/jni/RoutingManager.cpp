@@ -795,6 +795,12 @@ void RoutingManager::nfaEeCallback(tNFA_EE_EVT event,
       routingManager.mEeRegisterEvent.notifyOne();
     } break;
 
+    case NFA_EE_DEREGISTER_EVT: {
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+          "%s: NFA_EE_DEREGISTER_EVT; status=0x%X", fn, eventData->status);
+      routingManager.mReceivedEeInfo = false;
+    } break;
+
     case NFA_EE_MODE_SET_EVT: {
       SyncEventGuard guard(routingManager.mEeSetModeEvent);
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
@@ -824,9 +830,23 @@ void RoutingManager::nfaEeCallback(tNFA_EE_EVT event,
       routingManager.mRoutingEvent.notifyOne();
     } break;
 
+    case NFA_EE_CLEAR_TECH_CFG_EVT: {
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+          "%s: NFA_EE_CLEAR_TECH_CFG_EVT; status=0x%X", fn, eventData->status);
+      SyncEventGuard guard(routingManager.mRoutingEvent);
+      routingManager.mRoutingEvent.notifyOne();
+    } break;
+
     case NFA_EE_SET_PROTO_CFG_EVT: {
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
           "%s: NFA_EE_SET_PROTO_CFG_EVT; status=0x%X", fn, eventData->status);
+      SyncEventGuard guard(routingManager.mRoutingEvent);
+      routingManager.mRoutingEvent.notifyOne();
+    } break;
+
+    case NFA_EE_CLEAR_PROTO_CFG_EVT: {
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+          "%s: NFA_EE_CLEAR_PROTO_CFG_EVT; status=0x%X", fn, eventData->status);
       SyncEventGuard guard(routingManager.mRoutingEvent);
       routingManager.mRoutingEvent.notifyOne();
     } break;
