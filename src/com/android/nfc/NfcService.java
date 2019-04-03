@@ -2612,10 +2612,9 @@ public class NfcService implements DeviceHostListener {
             paramsBuilder.setTechMask(techMask);
             paramsBuilder.setEnableLowPowerDiscovery(false);
             paramsBuilder.setEnableP2p(false);
-        } else {
         }
 
-        if (mIsHceCapable && mReaderModeParams == null) {
+        if (mIsHceCapable && mScreenState >= ScreenStateHelper.SCREEN_STATE_ON_LOCKED && mReaderModeParams == null) {
             // Host routing is always enabled at lock screen or later, provided we aren't in reader mode
             paramsBuilder.setEnableHostRouting(true);
         }
