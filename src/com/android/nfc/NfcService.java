@@ -933,6 +933,7 @@ public class NfcService implements DeviceHostListener {
                     disableInternal();
                     break;
                 case TASK_BOOT:
+                    boolean initialized;
                     if (mPrefs.getBoolean(PREF_FIRST_BOOT, true)) {
                         Log.i(TAG, "First Boot");
                         mPrefsEditor.putBoolean(PREF_FIRST_BOOT, false);
@@ -942,12 +943,14 @@ public class NfcService implements DeviceHostListener {
                     Log.d(TAG, "checking on firmware download");
                     if (mPrefs.getBoolean(PREF_NFC_ON, NFC_ON_DEFAULT)) {
                         Log.d(TAG, "NFC is on. Doing normal stuff");
-                        enableInternal();
+                        initialized = enableInternal();
                     } else {
                         Log.d(TAG, "NFC is off.  Checking firmware version");
-                        mDeviceHost.checkFirmware();
+                        initialized = mDeviceHost.checkFirmware();
                     }
-                    SystemProperties.set("nfc.initialized", "true");
+                    if (initialized) {
+                        SystemProperties.set("nfc.initialized", "true");
+                    }
                     break;
             }
 
