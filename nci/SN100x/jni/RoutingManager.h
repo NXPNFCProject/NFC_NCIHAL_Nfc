@@ -163,6 +163,7 @@ class RoutingManager {
                   tNFA_STATUS status);
   void notifyActivated(uint8_t technology);
   void notifyDeactivated(uint8_t technology);
+  void notifyEeUpdated();
   tNFA_TECHNOLOGY_MASK updateEeTechRouteSetting();
   void updateDefaultProtocolRoute();
   void updateDefaultRoute();
@@ -210,6 +211,8 @@ class RoutingManager {
   uint16_t mDefaultSysCode;
   uint16_t mDefaultSysCodeRoute;
   uint8_t mDefaultSysCodePowerstate;
+  bool mDeinitializing;
+  bool mEeInfoChanged;
   bool mReceivedEeInfo;
   tNFA_EE_CBACK_DATA mCbEventData;
   tNFA_EE_DISCOVER_REQ mEeInfo;
