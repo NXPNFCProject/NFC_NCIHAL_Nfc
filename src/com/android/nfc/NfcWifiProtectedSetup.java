@@ -54,6 +54,7 @@ public final class NfcWifiProtectedSetup {
     private static final short AUTH_TYPE_WPA_EAP =  0x0008;
     private static final short AUTH_TYPE_WPA2_EAP = 0x0010;
     private static final short AUTH_TYPE_WPA2_PSK = 0x0020;
+    private static final short AUTH_TYPE_WPA_AND_WPA2_PSK = 0x0022;
 
     private static final int MAX_NETWORK_KEY_SIZE_BYTES = 64;
 
@@ -173,7 +174,8 @@ public final class NfcWifiProtectedSetup {
     }
 
     private static void populateAllowedKeyManagement(BitSet allowedKeyManagement, short authType) {
-        if (authType == AUTH_TYPE_WPA_PSK || authType == AUTH_TYPE_WPA2_PSK) {
+        if (authType == AUTH_TYPE_WPA_PSK || authType == AUTH_TYPE_WPA2_PSK
+                || authType == AUTH_TYPE_WPA_AND_WPA2_PSK) {
             allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
         } else if (authType == AUTH_TYPE_WPA_EAP || authType == AUTH_TYPE_WPA2_EAP) {
             allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_EAP);
