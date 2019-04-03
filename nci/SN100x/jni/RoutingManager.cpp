@@ -805,7 +805,11 @@ void RoutingManager::nfaEeCallback(tNFA_EE_EVT event,
   static const char fn[] = "RoutingManager::nfaEeCallback";
 
   RoutingManager& routingManager = RoutingManager::getInstance();
-  if (eventData) routingManager.mCbEventData = *eventData;
+  if (!eventData) {
+    LOG(ERROR) << "eventData is null";
+    return;
+  }
+  routingManager.mCbEventData = *eventData;
 #if (NXP_EXTNS == TRUE)
   SecureElement& se = SecureElement::getInstance();
   tNFA_EE_DISCOVER_REQ info = eventData->discover_req;
