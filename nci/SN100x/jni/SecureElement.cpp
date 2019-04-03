@@ -708,15 +708,14 @@ void SecureElement::nfaHciCallback(tNFA_HCI_EVT event,
 bool SecureElement::notifySeInitialized() {
     JNIEnv* e = NULL;
     static const char fn [] = "SecureElement::notifySeInitialized";
+    if (NULL == mNativeData) {
+      return false;
+    }
     ScopedAttach attach(mNativeData->vm, &e);
     if (e == NULL)
     {
         DLOG_IF(ERROR, nfc_debug_enabled)
             << StringPrintf("%s: jni env is null", fn);
-        return false;
-    }
-    if(mNativeData == NULL)
-    {
         return false;
     }
     e->CallVoidMethod (mNativeData->manager, android::gCachedNfcManagerNotifySeInitialized);

@@ -147,18 +147,19 @@ static void NxpResponse_Cb(uint8_t event, uint16_t param_len,
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
       "NxpResponse_Cb Received length data = 0x%x status = 0x%x", param_len,
       p_param[3]);
-
-  if (p_param[3] == 0x00) {
-    SetCbStatus(NFA_STATUS_OK);
-  } else {
-    SetCbStatus(NFA_STATUS_FAILED);
+  if (p_param != NULL) {
+    if (p_param[3] == 0x00) {
+      SetCbStatus(NFA_STATUS_OK);
+    } else {
+      SetCbStatus(NFA_STATUS_FAILED);
+    }
+    gnxpfeature_conf.rsp_len = (uint8_t)param_len;
+    if (param_len > 0) {
+      memcpy(gnxpfeature_conf.rsp_data, p_param, param_len);
+    }
+    SyncEventGuard guard(gnxpfeature_conf.NxpFeatureConfigEvt);
+    gnxpfeature_conf.NxpFeatureConfigEvt.notifyOne();
   }
-  gnxpfeature_conf.rsp_len = (uint8_t)param_len;
-  if (param_len > 0 && p_param != NULL) {
-    memcpy(gnxpfeature_conf.rsp_data, p_param, param_len);
-  }
-  SyncEventGuard guard(gnxpfeature_conf.NxpFeatureConfigEvt);
-  gnxpfeature_conf.NxpFeatureConfigEvt.notifyOne();
 }
 
 
