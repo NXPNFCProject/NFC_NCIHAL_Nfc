@@ -53,7 +53,6 @@
 #include "nfc_config.h"
 #if(NXP_EXTNS == TRUE)
 #include "MposManager.h"
-#include "nfca_version.h"
 #include "SecureElement.h"
 #include "DwpChannel.h"
 #endif
