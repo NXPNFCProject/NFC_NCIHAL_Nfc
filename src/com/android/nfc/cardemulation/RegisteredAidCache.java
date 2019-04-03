@@ -910,16 +910,7 @@ public class RegisteredAidCache {
             } else if (resolveInfo.services.size() == 1) {
                 // Only one service, but not the default, must route to host
                 // to ask the user to choose one.
-                if (resolveInfo.category.equals(
-                        CardEmulation.CATEGORY_PAYMENT)) {
-                    aidType.isOnHost = true;
-                } else {
-                    aidType.isOnHost = resolveInfo.services.get(0).isOnHost();
-                    if (!aidType.isOnHost) {
-                        aidType.offHostSE =
-                                resolveInfo.services.get(0).getOffHostSecureElement();
-                  }
-                }
+                aidType.isOnHost = true;
                 aidType.powerstate = POWER_STATE_SWITCH_ON | SCREEN_STATE_ON_LOCKED;
                 Log.d(TAG," AID power state 2"+ aid  +" "+aidType.powerstate);
                 if(mGsmaPwrState > 0)
