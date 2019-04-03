@@ -470,7 +470,9 @@ public class RegisteredServicesCache {
                     out.startTag(null, "service");
                     out.attribute(null, "component", service.getKey().flattenToString());
                     out.attribute(null, "uid", Integer.toString(service.getValue().uid));
-                    out.attribute(null, "offHostSE", service.getValue().offHostSE);
+                    if(service.getValue().offHostSE != null) {
+                        out.attribute(null, "offHostSE", service.getValue().offHostSE);
+                    }
                     for (NfcAidGroup group : service.getValue().aidGroups.values()) {
                         group.writeAsXml(out);
                     }
