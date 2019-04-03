@@ -136,6 +136,7 @@ extern bool gGotDeact2IdleNtf;
 bool gActivated = false;
 SyncEvent gDeactivatedEvent;
 SyncEvent sNfaSetPowerSubState;
+bool legacy_mfc_reader = true;
 #if(NXP_EXTNS == TRUE)
 /*Structure to store  discovery parameters*/
 typedef struct discovery_Parameters
@@ -311,6 +312,14 @@ void initializeGlobalDebugEnabledFlag() {
 
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: level=%u", __func__, nfc_debug_enabled);
+}
+void initializeMfcReaderOption() {
+  legacy_mfc_reader =
+      (NfcConfig::getUnsigned(NAME_LEGACY_MIFARE_READER, 1) != 0) ? true : false;
+
+  DLOG_IF(INFO, nfc_debug_enabled)
+      << __func__ <<": mifare reader option=" << legacy_mfc_reader;
+
 }
 }  // namespace
 
@@ -830,6 +839,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
 *******************************************************************************/
 static jboolean nfcManager_initNativeStruc(JNIEnv* e, jobject o) {
   initializeGlobalDebugEnabledFlag();
+  initializeMfcReaderOption();
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
 
   nfc_jni_native_data* nat =
