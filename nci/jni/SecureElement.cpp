@@ -3415,6 +3415,7 @@ void SecureElement::NfccStandByOperation(nfcc_standby_operation_t value) {
         }
       }
     }  // this is to handle stop timer also.
+    FALLTHROUGH;
     case STANDBY_TIMER_STOP: {
       if (nfccStandbytimeout > 0) mNFCCStandbyModeTimer.kill();
     }
@@ -3459,6 +3460,7 @@ void SecureElement::NfccStandByOperation(nfcc_standby_operation_t value) {
       }
     }
       if (nfcFL.eseFL._WIRED_MODE_STANDBY == true) break;
+      FALLTHROUGH;
     case STANDBY_TIMER_TIMEOUT: {
       bool stat = false;
       if (nfcFL.eseFL._ESE_DWP_SPI_SYNC_ENABLE) {
@@ -4792,6 +4794,7 @@ void SecureElement::setDwpTranseiveState(bool block, tNFCC_EVTS_NTF action) {
         SyncEventGuard guard(mRfFieldOffEvent);
         mRfFieldOffEvent.notifyOne();
       }
+      FALLTHROUGH;
     case NFCC_DEACTIVATED_NTF:
     case NFCC_CE_DATA_EVT:
       if (block) {
