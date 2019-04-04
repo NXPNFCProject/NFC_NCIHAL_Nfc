@@ -601,12 +601,6 @@ public class NfcService implements DeviceHostListener {
     public void onETSIReaderModeRestart() {
         sendMessage(NfcService.MSG_SWP_READER_RESTART, null);
     }
-
-    @Override
-    public void onEeUpdated() {
-        new ApplyRoutingTask().execute();
-    }
-
     final class ReaderModeParams {
         public int flags;
         public IAppCallback callback;

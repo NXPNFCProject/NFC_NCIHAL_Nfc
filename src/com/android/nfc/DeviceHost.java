@@ -91,8 +91,6 @@ public interface DeviceHost {
         public void onETSIReaderModeRestart();
 
         public void onNfcTransactionEvent(byte[] aid, byte[] data, String seName);
-
-        public void onEeUpdated();
     }
 
     public interface TagEndpoint {

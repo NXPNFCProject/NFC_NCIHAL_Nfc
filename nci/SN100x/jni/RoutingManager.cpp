@@ -142,9 +142,6 @@ RoutingManager::RoutingManager() {
   mIsScbrSupported = false;
 
   mNfcFOnDhHandle = NFA_HANDLE_INVALID;
-
-  mDeinitializing = false;
-  mEeInfoChanged = false;
   mDefaultIsoDepRoute = NfcConfig::getUnsigned(NAME_DEFAULT_ISODEP_ROUTE, 0x0);
   mOffHostAidRoutingPowerState =
       NfcConfig::getUnsigned(NAME_OFFHOST_AID_ROUTE_PWR_STATE, 0x01);
@@ -397,10 +394,6 @@ bool RoutingManager::commitRouting() {
   static const char fn[] = "RoutingManager::commitRouting";
   tNFA_STATUS nfaStat = 0;
   DLOG_IF(INFO, nfc_debug_enabled) << fn;
-  if(mEeInfoChanged) {
-    mSeTechMask = updateEeTechRouteSetting();
-    mEeInfoChanged = false;
-  }
   {
     SyncEventGuard guard(mEeUpdateEvent);
     nfaStat = NFA_EeUpdateNow();
@@ -418,7 +411,6 @@ void RoutingManager::onNfccShutdown() {
   tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
   uint8_t actualNumEe = MAX_NUM_EE;
   tNFA_EE_INFO eeInfo[MAX_NUM_EE];
-  mDeinitializing = true;
 
   memset(&eeInfo, 0, sizeof(eeInfo));
   if ((nfaStat = NFA_EeGetInfo(&actualNumEe, eeInfo)) != NFA_STATUS_OK) {
@@ -534,22 +526,6 @@ void RoutingManager::handleData(uint8_t technology, const uint8_t* data,
   }
 TheEnd:
   mRxDataBuffer.clear();
-}
-
-void RoutingManager::notifyEeUpdated() {
-  JNIEnv* e = NULL;
-  ScopedAttach attach(mNativeData->vm, &e);
-  if (e == NULL) {
-    LOG(ERROR) << "jni env is null";
-    return;
-  }
-
-  e->CallVoidMethod(mNativeData->manager,
-                    android::gCachedNfcManagerNotifyEeUpdated);
-  if (e->ExceptionCheck()) {
-    e->ExceptionClear();
-    LOG(ERROR) << "fail notify";
-  }
 }
 
 void RoutingManager::stackCallback(uint8_t event,
@@ -832,7 +808,6 @@ void RoutingManager::nfaEeCallback(tNFA_EE_EVT event,
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
           "%s: NFA_EE_DEREGISTER_EVT; status=0x%X", fn, eventData->status);
       routingManager.mReceivedEeInfo = false;
-      routingManager.mDeinitializing = false;
     } break;
 
     case NFA_EE_MODE_SET_EVT: {
@@ -919,10 +894,6 @@ void RoutingManager::nfaEeCallback(tNFA_EE_EVT event,
       SyncEventGuard guard(routingManager.mEeInfoEvent);
       memcpy(&routingManager.mEeInfo, &eventData->discover_req,
              sizeof(routingManager.mEeInfo));
-      if (routingManager.mReceivedEeInfo && !routingManager.mDeinitializing) {
-        routingManager.mEeInfoChanged = true;
-        routingManager.notifyEeUpdated();
-      }
       routingManager.mReceivedEeInfo = true;
       routingManager.mEeInfoEvent.notifyOne();
 #if (NXP_EXTNS == TRUE)

@@ -163,7 +163,6 @@ jmethodID gCachedNfcManagerNotifyHostEmuData;
 jmethodID gCachedNfcManagerNotifyHostEmuDeactivated;
 jmethodID gCachedNfcManagerNotifyRfFieldActivated;
 jmethodID gCachedNfcManagerNotifyRfFieldDeactivated;
-jmethodID gCachedNfcManagerNotifyEeUpdated;
 const char* gNativeP2pDeviceClassName =
     "com/android/nfc/dhimpl/NativeP2pDevice";
 const char* gNativeLlcpServiceSocketClassName =
@@ -896,9 +895,6 @@ static jboolean nfcManager_initNativeStruc(JNIEnv* e, jobject o) {
       cls.get(), "notifyTransactionListeners", "([B[BLjava/lang/String;)V");
   gCachedNfcManagerNotifySeInitialized =
       e->GetMethodID(cls.get(),"notifySeInitialized", "()V");
-  gCachedNfcManagerNotifyEeUpdated =
-      e->GetMethodID(cls.get(), "notifyEeUpdated", "()V");
-
   if (nfc_jni_cache_object(e, gNativeNfcTagClassName, &(nat->cached_NfcTag)) ==
       -1) {
     LOG(ERROR) << StringPrintf("%s: fail cache NativeNfcTag", __func__);
