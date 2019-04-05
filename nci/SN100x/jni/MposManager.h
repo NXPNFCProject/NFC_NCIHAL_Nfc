@@ -296,7 +296,7 @@ public:
   const char* convertRdrStateToString(se_rd_req_state_t aState);
 
 private:
-  nfc_jni_native_data* mNativeData;
+  nfc_jni_native_data* mNativeData = NULL;
   static MposManager mMposMgr;
   static int32_t mDiscNtfTimeout;
   static int32_t mRdrTagOpTimeout;

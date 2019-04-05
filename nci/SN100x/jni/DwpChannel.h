@@ -55,7 +55,6 @@ void finalize();
 *******************************************************************************/
 void Initialize();
 
-bool dwpChannelForceClose;
 
 private:
 
@@ -94,7 +93,6 @@ DwpChannel () ;
 ** Returns:         True if ok.
 **
 *******************************************************************************/
-extern bool dwpChannelForceClose;
 int16_t open();
 bool close(int16_t mHandle);
 
