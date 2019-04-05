@@ -410,7 +410,7 @@ void NfcTag::discoverTechnologies(tNFA_ACTIVATED& activationData) {
            (rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_POLL_A_ACTIVE)) {
           double fc = 13560000;
           uint8_t fwi = rfDetail.intf_param.intf_param.pa_iso.fwi;
-          if (fwi >= MIN_FWI && fwi <= MAX_FWI) {
+          if ((int8_t)fwi >= MIN_FWI && fwi <= MAX_FWI) {
             double fwt = (((1 << fwi) * 256 * 16) / fc) * 1000;
             double iso_timeout = RETRY_COUNT*fwt;
               if (iso_timeout < MIN_TRANSCEIVE_TIMEOUT_IN_MILLISEC)
