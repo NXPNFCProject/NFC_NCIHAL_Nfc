@@ -162,7 +162,7 @@ public class NfcService implements DeviceHostListener {
     static final String PREF_NFC_ON = "nfc_on";
     static final boolean NFC_ON_DEFAULT = true;
     static final String PREF_NDEF_PUSH_ON = "ndef_push_on";
-    static final boolean NDEF_PUSH_ON_DEFAULT = false;
+    static final boolean NDEF_PUSH_ON_DEFAULT = true;
     static final String PREF_SECURE_NFC_ON = "secure_nfc_on";
     static final boolean SECURE_NFC_ON_DEFAULT = true;
     static final String PREF_FIRST_BEAM = "first_beam";
@@ -728,7 +728,6 @@ public class NfcService implements DeviceHostListener {
         mIsNdefPushEnabled =
             mPrefs.getBoolean(PREF_NDEF_PUSH_ON, NDEF_PUSH_ON_DEFAULT) &&
             mIsBeamCapable;
-
         if (mIsBeamCapable) {
             mP2pLinkManager = new P2pLinkManager(
                 mContext, mHandoverDataParser, mDeviceHost.getDefaultLlcpMiu(),
@@ -2604,6 +2603,7 @@ public class NfcService implements DeviceHostListener {
         if (DBG) Log.d(TAG, "Set Routing Entry");
         /* Routing for Protocol */
         mDeviceHost.setRoutingEntry(PROTOCOL_ENTRY, NFC_LISTEN_PROTO_ISO_DEP, ((protoRoute >> ROUTE_LOC_MASK) & 0x07), protoRoute & 0x3F);
+        mDeviceHost.setRoutingEntry(PROTOCOL_ENTRY, NFC_LISTEN_PROTO_NFC_DEP, 0x00, 0x01);
 
         /* Routing for Technology */
         TechSeId = (techRoute >> ROUTE_LOC_MASK);
