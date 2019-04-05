@@ -12,7 +12,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018 NXP
+*  Copyright 2018-2019 NXP
 *
 ******************************************************************************/
 
@@ -70,6 +70,7 @@ public:
   uint8_t mNewPipeId;
 
   bool mIsWiredModeOpen;
+  bool mIsSeIntfActivated;
   uint32_t SmbTransceiveTimeOutVal;/* maximum time to wait for APDU response */
   bool mErrorRecovery;
   SyncEvent   mPwrLinkCtrlEvent;

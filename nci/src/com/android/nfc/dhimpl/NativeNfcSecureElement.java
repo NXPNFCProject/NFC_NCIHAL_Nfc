@@ -12,7 +12,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018 NXP
+*  Copyright 2018-2019 NXP
 *
 ******************************************************************************/
 
@@ -70,7 +70,14 @@ public class NativeNfcSecureElement {
     public byte[] doGetAtr (int handle) {
         return doNativeGetAtr(handle);
     }
-
+    public int activateSeInterface() {
+        return doactivateSeInterface();
+    }
+    public int deactivateSeInterface() {
+        return dodeactivateSeInterface();
+    }
+    private native int doactivateSeInterface();
+    private native int dodeactivateSeInterface();
     private native byte[] doNativeGetAtr(int handle);
     private native boolean doNativeResetSecureElement(int handle);
     public native byte[] doTransceive(int handle, byte[] data);

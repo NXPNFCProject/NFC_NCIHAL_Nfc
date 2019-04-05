@@ -12,7 +12,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018 NXP
+*  Copyright 2018-2019 NXP
 *
 ******************************************************************************/
 
@@ -54,6 +54,7 @@ uint8_t  SecureElement::mStaticPipeProp;
 *******************************************************************************/
 SecureElement::SecureElement() :
     mNewPipeId (0),
+    mIsSeIntfActivated(false),
     mNativeData(NULL),
     mbNewEE (true),
     mIsInit (false),
@@ -102,6 +103,7 @@ bool SecureElement::initialize(nfc_jni_native_data* native) {
     mActualNumEe    = nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED;
     mbNewEE         = true;
     mNewPipeId      = 0;
+    mIsSeIntfActivated = false;
     mNewSourceGate  = 0;
     unsigned long val = 0;
     memset (mEeInfo, 0, sizeof(mEeInfo));

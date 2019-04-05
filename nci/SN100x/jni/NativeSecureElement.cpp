@@ -12,7 +12,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018 NXP
+*  Copyright 2018-2019 NXP
 *
 ******************************************************************************/
 
@@ -34,6 +34,7 @@ using android::base::StringPrintf;
 namespace android
 {
 static const int EE_ERROR_INIT = -3;
+extern bool nfcManager_isNfcActive();
 /*******************************************************************************
 **
 ** Function:        nativeNfcSecureElement_doOpenSecureElementConnection
@@ -276,7 +277,92 @@ static jbyteArray nativeNfcSecureElement_doTransceive (JNIEnv* e, jobject, jint 
     LOG(INFO) << StringPrintf("%s: exit: recv len=%d", __func__, recvBufferActualSize);
     return result;
 }
+/*******************************************************************************
+**
+** Function:        nfcManager_doactivateSeInterface
+**
+** Description:     Activate SecureElement Interface
+**
+** Returns:         Success/Failure
+**                  Success = 0x00
+**                  Failure = 0x03
+**
+*******************************************************************************/
+static jint nfcManager_doactivateSeInterface(JNIEnv* e, jobject o)
+{
+    jint ret = NFA_STATUS_FAILED;
+    tNFA_STATUS status = NFA_STATUS_FAILED;
+    SecureElement &se = SecureElement::getInstance();
+    se.mModeSetNtfstatus = NFA_STATUS_FAILED;
 
+    LOG(INFO) << StringPrintf("%s: enter", __func__);
+
+    if(!nfcManager_isNfcActive() || (!nfcFL.eseFL._NCI_NFCEE_PWR_LINK_CMD)) {
+        LOG(INFO) << StringPrintf("%s: Not supported", __func__);
+        return ret;
+    }
+    if(se.mIsSeIntfActivated) {
+        LOG(INFO) << StringPrintf("%s: Already activated", __func__);
+        return NFA_STATUS_OK;
+    }
+    status = se.setNfccPwrConfig(se.POWER_ALWAYS_ON|se.COMM_LINK_ACTIVE);
+    if(status == NFA_STATUS_OK) {
+        status = se.SecEle_Modeset(se.NFCEE_ENABLE);
+        if(se.mModeSetNtfstatus != NFA_STATUS_OK) {
+            LOG(INFO)<< StringPrintf("%s: Mode set ntf STATUS_FAILED", __func__);
+            SyncEventGuard guard (se.mEERecoveryComplete);
+            if (se.mEERecoveryComplete.wait(NFC_CMD_TIMEOUT)) {
+                LOG(INFO) << StringPrintf("%s: Recovery complete", __func__);
+                ret = NFA_STATUS_OK;
+            }
+        } else {
+            ret = NFA_STATUS_OK;
+        }
+    } else {
+        LOG(INFO) << StringPrintf("%s: power link command failed", __func__);
+    }
+
+    if(ret == NFA_STATUS_OK)
+        se.mIsSeIntfActivated = true;
+    LOG(INFO) << StringPrintf("%s: Exit", __func__);
+    return ret;
+}
+/*******************************************************************************
+**
+** Function:        nfcManager_dodeactivateSeInterface
+**
+** Description:     Deactivate SecureElement Interface
+**
+** Returns:         Success/Failure
+**                  Success = 0x00
+**                  Failure = 0x03
+**
+*******************************************************************************/
+static jint nfcManager_dodeactivateSeInterface(JNIEnv* e, jobject o)
+{
+    jint ret = NFA_STATUS_FAILED;
+    tNFA_STATUS status = NFA_STATUS_FAILED;
+    SecureElement &se = SecureElement::getInstance();
+    LOG(INFO) << StringPrintf("%s: enter", __func__);
+
+    if(!nfcManager_isNfcActive() || (!nfcFL.eseFL._NCI_NFCEE_PWR_LINK_CMD)) {
+        LOG(INFO) << StringPrintf("%s: Not supported", __func__);
+        return ret;
+    }
+    if(!se.mIsSeIntfActivated) {
+        LOG(INFO) << StringPrintf("%s: Already Deactivated or call activate first", __func__);
+        return NFA_STATUS_OK;
+    }
+
+    status = se.setNfccPwrConfig(se.POWER_ALWAYS_ON);
+    if(status == NFA_STATUS_OK) {
+        LOG(INFO) << StringPrintf("%s: power link command success", __func__);
+        se.mIsSeIntfActivated =false;
+        ret = NFA_STATUS_OK;
+    }
+    LOG(INFO) << StringPrintf("%s: Exit, status =0x02%u", __func__, status);
+    return ret;
+}
 /*****************************************************************************
 **
 ** Description:     JNI functions
@@ -289,6 +375,8 @@ static JNINativeMethod gMethods[] =
    {"doNativeResetSecureElement", "(I)Z", (void *) nativeNfcSecureElement_doResetSecureElement},
    {"doTransceive", "(I[B)[B", (void *) nativeNfcSecureElement_doTransceive},
    {"doNativeGetAtr", "(I)[B", (void *) nativeNfcSecureElement_doGetAtr},
+   {"doactivateSeInterface", "()I",(void*)nfcManager_doactivateSeInterface},
+   {"dodeactivateSeInterface", "()I",(void*)nfcManager_dodeactivateSeInterface},
 };
 
 

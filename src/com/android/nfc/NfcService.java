@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018 NXP
+*  Copyright 2018-2019 NXP
 *
 ******************************************************************************/
 package com.android.nfc;
@@ -1847,6 +1847,27 @@ public class NfcService implements DeviceHostListener {
                 throw new RemoteException("NFC is not enabled");
             }
             return mDeviceHost.doGetSelectedUicc();
+        }
+        /*
+        * Activate the SecureElement Interface
+        * @return: success/failure
+        */
+        @Override
+        public int activateSeInterface(){
+            synchronized (NfcService.this) {
+                return mSecureElement.activateSeInterface();
+            }
+        }
+
+        /*
+        * Deactivate the SecureElement Interface
+        * @return: success/failure
+        */
+        @Override
+        public int deactivateSeInterface(){
+            synchronized (NfcService.this) {
+                return mSecureElement.deactivateSeInterface();
+            }
         }
 }
 
