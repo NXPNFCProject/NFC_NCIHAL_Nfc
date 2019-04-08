@@ -130,6 +130,7 @@ RoutingManager::RoutingManager() {
   mTechSupportedByEse = 0;
   mTechSupportedByUicc1 = 0;
   mTechSupportedByUicc2 = 0;
+  memset(mLmrtEntries, 0, sizeof(LmrtEntry_t));
 #endif
 
   if (NfcConfig::hasKey(NAME_DEFAULT_SYS_CODE)) {

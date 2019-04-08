@@ -57,6 +57,7 @@ SecureElement::SecureElement() :
     mbNewEE (true),
     mIsInit (false),
     mNewSourceGate (0),
+    mAtrStatus (0),
     mAtrRespLen (0),
     mNumEePresent (0),
     mCreatedPipe (0),
