@@ -79,6 +79,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import com.android.nfc.NfcService;
+import android.os.SystemProperties;
 
 /**
  * This class is inspired by android.content.pm.RegisteredServicesCache
@@ -91,7 +92,7 @@ public class RegisteredServicesCache {
     static final String XML_INDENT_OUTPUT_FEATURE = "http://xmlpull.org/v1/doc/features.html#indent-output";
     static final String TAG = "RegisteredServicesCache";
     static final boolean DEBUG =
-        ("1" == (System.getProperty("persist.nfc.ce_debug")) ? true : false);
+        ((SystemProperties.get("persist.nfc.ce_debug").equals("1")) ? true : false);
     static final String SERVICE_STATE_FILE_VERSION="1.0";
 
     final Context mContext;

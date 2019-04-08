@@ -58,10 +58,11 @@ import com.android.nfc.cardemulation.RegisteredAidCache.AidResolveInfo;
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import android.os.SystemProperties;
 
 public class HostEmulationManager {
     static final String TAG = "HostEmulationManager";
-    static final boolean DBG = ("1" == (System.getProperty("persist.nfc.ce_debug")) ? true : false);
+    static final boolean DBG = ((SystemProperties.get("persist.nfc.ce_debug").equals("1")) ? true : false);
 
     static final int STATE_IDLE = 0;
     static final int STATE_W4_SELECT = 1;

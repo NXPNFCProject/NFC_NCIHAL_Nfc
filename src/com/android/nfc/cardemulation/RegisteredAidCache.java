@@ -57,10 +57,11 @@ import java.util.TreeMap;
 import android.nfc.cardemulation.NfcAidGroup;
 import com.android.nfc.NfcService;
 import com.nxp.nfc.NfcConstants;
+import android.os.SystemProperties;
 public class RegisteredAidCache {
     static final String TAG = "RegisteredAidCache";
 
-    static final boolean DBG = ("1" == (System.getProperty("persist.nfc.ce_debug")) ? true : false);
+    static final boolean DBG = ((SystemProperties.get("persist.nfc.ce_debug").equals("1")) ? true : false);
 
     static final int AID_ROUTE_QUAL_SUBSET = 0x20;
     static final int AID_ROUTE_QUAL_PREFIX = 0x10;

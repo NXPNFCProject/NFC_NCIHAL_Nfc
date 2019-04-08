@@ -56,12 +56,13 @@ import java.util.Set;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Hashtable;
+import android.os.SystemProperties;
 public class AidRoutingManager {
 
     static final String TAG = "AidRoutingManager";
 
     static final boolean DBG =
-        ("1" == (System.getProperty("persist.nfc.ce_debug")) ? true : false);
+        ((SystemProperties.get("persist.nfc.ce_debug").equals("1")) ? true : false);
 
     static final int ROUTE_HOST = 0x00;
 
