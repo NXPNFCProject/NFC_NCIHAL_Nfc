@@ -57,6 +57,9 @@ SecureElement::SecureElement() :
     mbNewEE (true),
     mIsInit (false),
     mNewSourceGate (0),
+    mAtrRespLen (0),
+    mNumEePresent (0),
+    mCreatedPipe (0),
     mRfFieldIsOn(false),
     mActivatedInListenMode (false)
 {
@@ -64,6 +67,7 @@ SecureElement::SecureElement() :
     memset (mAidForEmptySelect, 0, sizeof(mAidForEmptySelect));
     memset (&mHciCfg, 0, sizeof(mHciCfg));
     memset (&mLastRfFieldToggle, 0, sizeof(mLastRfFieldToggle));
+    memset (&mNfceeData_t, 0, sizeof(mNfceeData));
 }
 /*******************************************************************************
 **

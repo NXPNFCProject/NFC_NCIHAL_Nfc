@@ -3212,6 +3212,9 @@ static jint nfcManager_getFwVersion(JNIEnv * e, jobject o) {
 
     /*Constructor*/
     Command() : nfcAdapter(NfcAdaptation::GetInstance()) {
+      rspTimeout = 0;
+      retryCount = 0;
+      name = NULL;
       /*Retreive reference to HAL function manager*/
       halMgr = nfcAdapter.GetHalEntryFuncs();
     }

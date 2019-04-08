@@ -126,7 +126,12 @@ RoutingManager::RoutingManager() {
   mDefaultSysCode = DEFAULT_SYS_CODE;
 #else
   mDefaultSysCode = 0x00;
+  mCeRouteStrictDisable = 0;
+  mTechSupportedByEse = 0;
+  mTechSupportedByUicc1 = 0;
+  mTechSupportedByUicc2 = 0;
 #endif
+
   if (NfcConfig::hasKey(NAME_DEFAULT_SYS_CODE)) {
     std::vector<uint8_t> pSysCode = NfcConfig::getBytes(NAME_DEFAULT_SYS_CODE);
     if (pSysCode.size() == 0x02) {
@@ -135,7 +140,6 @@ RoutingManager::RoutingManager() {
           "%s: DEFAULT_SYS_CODE: 0x%02X", __func__, mDefaultSysCode);
     }
   }
-
   memset(&mEeInfo, 0, sizeof(mEeInfo));
   mReceivedEeInfo = false;
   mSeTechMask = 0x00;

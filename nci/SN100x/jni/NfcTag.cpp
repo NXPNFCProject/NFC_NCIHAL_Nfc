@@ -98,6 +98,7 @@ NfcTag::NfcTag()
 #if (NXP_EXTNS == TRUE)
   mPrevNumTechList = 0;
 #endif
+  memset (&mLastKovioTime, 0, sizeof(timespec));
 }
 
 /*******************************************************************************
