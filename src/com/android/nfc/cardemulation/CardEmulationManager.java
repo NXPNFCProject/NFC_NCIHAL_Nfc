@@ -117,6 +117,7 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         mPreferredServices = new PreferredServices(context, mServiceCache, mAidCache, this);
         mEnabledNfcFServices = new EnabledNfcFServices(
                 context, mNfcFServicesCache, mT3tIdentifiersCache, this);
+        mServiceCache.initialize();
         mNfcFServicesCache.initialize();
         mPowerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
     }

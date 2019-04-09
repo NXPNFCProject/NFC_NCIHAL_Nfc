@@ -916,6 +916,13 @@ public class RegisteredServicesCache {
         return success;
     }
 
+    void initialize() {
+        synchronized (mLock) {
+            readDynamicSettingsLocked();
+        }
+        invalidateCache(ActivityManager.getCurrentUser());
+    }
+
     public void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
         pw.println("Registered HCE services for current user: ");
         UserServices userServices = findOrCreateUserLocked(ActivityManager.getCurrentUser());
