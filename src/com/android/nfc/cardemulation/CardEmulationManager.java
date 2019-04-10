@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018 NXP
+*  Copyright 2018-2019 NXP
 *
 ******************************************************************************/
 package com.android.nfc.cardemulation;
@@ -67,6 +67,8 @@ import com.android.nfc.cardemulation.RegisteredServicesCache;
 import com.android.nfc.cardemulation.RegisteredNfcFServicesCache;
 import com.gsma.nfc.internal.RegisteredNfcServicesCache;
 import com.nxp.nfc.NfcAidServiceInfo;
+import android.os.SystemProperties;
+
 /**
  * CardEmulationManager is the central entity
  * responsible for delegating to individual components
@@ -86,7 +88,7 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         RegisteredNfcFServicesCache.Callback, PreferredServices.Callback,
         EnabledNfcFServices.Callback {
     static final String TAG = "CardEmulationManager";
-    static final boolean DBG = ("1" == (System.getProperty("persist.nfc.ce_debug")) ? true : false);
+    static final boolean DBG = ((SystemProperties.get("persist.nfc.ce_debug").equals("1")) ? true : false);
 
     static final int NFC_HCE_APDU = 0x01;
     static final int NFC_HCE_NFCF = 0x04;

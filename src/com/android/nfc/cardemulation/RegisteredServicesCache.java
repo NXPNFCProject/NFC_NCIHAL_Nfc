@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018 NXP
+*  Copyright 2018-2019 NXP
 *
 ******************************************************************************/
 package com.android.nfc.cardemulation;
@@ -80,6 +80,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import com.gsma.nfc.internal.RegisteredNfcServicesCache;
 import com.android.nfc.NfcService;
+import android.os.SystemProperties;
 
 /**
  * This class is inspired by android.content.pm.RegisteredServicesCache
@@ -91,7 +92,7 @@ import com.android.nfc.NfcService;
 public class RegisteredServicesCache {
     static final String XML_INDENT_OUTPUT_FEATURE = "http://xmlpull.org/v1/doc/features.html#indent-output";
     static final String TAG = "RegisteredServicesCache";
-    static final boolean DEBUG = ("1" == (System.getProperty("persist.nfc.ce_debug")) ? true : false);
+    static final boolean DEBUG = ((SystemProperties.get("persist.nfc.ce_debug").equals("1")) ? true : false);
     static final String SERVICE_STATE_FILE_VERSION="1.0";
 
     final Context mContext;

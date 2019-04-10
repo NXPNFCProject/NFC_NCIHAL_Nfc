@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018 NXP
+*  Copyright 2018-2019 NXP
 *
 ******************************************************************************/
 
@@ -54,10 +54,11 @@ import com.android.nfc.NfcService;
 
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
+import android.os.SystemProperties;
 
 public class HostNfcFEmulationManager {
     static final String TAG = "HostNfcFEmulationManager";
-    static final boolean DBG = ("1" == (System.getProperty("persist.nfc.ce_debug")) ? true : false);
+    static final boolean DBG = ((SystemProperties.get("persist.nfc.ce_debug").equals("1")) ? true : false);
 
     static final int STATE_IDLE = 0;
     static final int STATE_W4_SERVICE = 1;

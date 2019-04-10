@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018 NXP
+*  Copyright 2018-2019 NXP
 *
 ******************************************************************************/
 package com.android.nfc.cardemulation;
@@ -57,10 +57,12 @@ import java.util.TreeMap;
 import android.nfc.cardemulation.NfcAidGroup;
 import com.android.nfc.NfcService;
 import com.nxp.nfc.NfcConstants;
+import android.os.SystemProperties;
+
 public class RegisteredAidCache {
     static final String TAG = "RegisteredAidCache";
 
-    static final boolean DBG = ("1" == (System.getProperty("persist.nfc.ce_debug")) ? true : false);
+    static final boolean DBG = ((SystemProperties.get("persist.nfc.ce_debug").equals("1")) ? true : false);
 
     static final int AID_ROUTE_QUAL_SUBSET = 0x20;
     static final int AID_ROUTE_QUAL_PREFIX = 0x10;
@@ -441,11 +443,11 @@ public class RegisteredAidCache {
 
             for (String aid : service.getAids()) {
                 if (!CardEmulation.isValidAid(aid)) {
-                    Log.e(TAG, "Aid " + aid + " is not valid.");
+                    if (DBG) Log.e(TAG, "Aid " + aid + " is not valid.");
                     continue;
                 }
                 if (aid.endsWith("*") && !supportsAidPrefixRegistration()) {
-                    Log.e(TAG, "Prefix AID " + aid + " ignored on device that doesn't support it.");
+                   if (DBG) Log.e(TAG, "Prefix AID " + aid + " ignored on device that doesn't support it.");
                     continue;
                 } else if (supportsAidPrefixRegistration() && prefixAids.size() > 0 && isExact(aid)) {
                     // Check if we already have an overlapping prefix registered for this AID
@@ -453,7 +455,7 @@ public class RegisteredAidCache {
                     for (String prefixAid : prefixAids) {
                         String prefix = prefixAid.substring(0, prefixAid.length() - 1);
                         if (aid.startsWith(prefix)) {
-                            Log.e(TAG, "Ignoring exact AID " + aid + " because prefix AID " + prefixAid +
+                            if (DBG) Log.e(TAG, "Ignoring exact AID " + aid + " because prefix AID " + prefixAid +
                                     " is already registered");
                             foundPrefix = true;
                             break;
@@ -463,7 +465,7 @@ public class RegisteredAidCache {
                         continue;
                     }
                 } else if (aid.endsWith("#") && !supportsAidSubsetRegistration()) {
-                    Log.e(TAG, "Subset AID " + aid + " ignored on device that doesn't support it.");
+                    if (DBG) Log.e(TAG, "Subset AID " + aid + " ignored on device that doesn't support it.");
                     continue;
                 } else if (supportsAidSubsetRegistration() && subSetAids.size() > 0 && isExact(aid)) {
                     // Check if we already have an overlapping subset registered for this AID
@@ -471,7 +473,7 @@ public class RegisteredAidCache {
                     for (String subsetAid : subSetAids) {
                         String plainSubset = subsetAid.substring(0, subsetAid.length() - 1);
                         if (plainSubset.startsWith(aid)) {
-                            Log.e(TAG, "Ignoring exact AID " + aid + " because subset AID " + plainSubset +
+                            if (DBG) Log.e(TAG, "Ignoring exact AID " + aid + " because subset AID " + plainSubset +
                                     " is already registered");
                             foundSubset = true;
                             break;
@@ -491,7 +493,7 @@ public class RegisteredAidCache {
                      (service.getServiceState(CardEmulation.CATEGORY_OTHER) == NfcConstants.SERVICE_STATE_DISABLING))){
                     /*Do not include the services which are already disabled Or services which are disabled by user recently
                      * for the current commit to routing table*/
-                    Log.e(TAG, "ignoring other category aid because service category is disabled");
+                    if (DBG) Log.e(TAG, "ignoring other category aid because service category is disabled");
                     continue;
                 }
                 if (mAidServices.containsKey(serviceAidInfo.aid)) {
@@ -684,7 +686,7 @@ public class RegisteredAidCache {
                                     (resolveInfo.defaultService.getComponent().equals(mPreferredForegroundService))) {
                                 AidResolveInfo childResolveInfo = resolveAidConflictLocked(mAidServices.get(aid), false);
                                 aidCache.put(aid,childResolveInfo);
-                                Log.d(TAG, "AID " + aid+ " shared with prefix; " +
+                                if (DBG) Log.d(TAG, "AID " + aid+ " shared with prefix; " +
                                                 "adding subset .");
                              }
                         }
@@ -882,7 +884,7 @@ public class RegisteredAidCache {
                         {
                             powerstate = mGsmaPwrState;
                         }
-                        Log.d(TAG," Setting GSMA power state"+ aid  + powerstate);
+                        if (DBG) Log.d(TAG," Setting GSMA power state"+ aid  + powerstate);
                     }
                 }
 
@@ -891,7 +893,7 @@ public class RegisteredAidCache {
                 {
                   screenstate |= SCREEN_STATE_ON_LOCKED;
                   if (!isOnHost) {
-                    Log.d(TAG," set screen off enable for " + aid);
+                    if (DBG) Log.d(TAG," set screen off enable for " + aid);
                     screenstate |= SCREEN_STATE_OFF_UNLOCKED | SCREEN_STATE_OFF_LOCKED;
                   }
                   if(mGsmaPwrState == 0x00)
@@ -899,7 +901,7 @@ public class RegisteredAidCache {
                 }
 
                int route = isOnHost ? 0 : seInfo.getSeId();
-               Log.d(TAG," AID power state"+ aid  + powerstate  +"route"+route);
+               if (DBG) Log.d(TAG," AID power state"+ aid  + powerstate  +"route"+route);
                aidType.route = route;
                aidType.powerstate = powerstate;
                routingEntries.put(aid, aidType);
@@ -908,11 +910,11 @@ public class RegisteredAidCache {
                 // to ask the user to choose one.
                 aidType.isOnHost = true;
                 aidType.powerstate = POWER_STATE_SWITCH_ON | SCREEN_STATE_ON_LOCKED;
-                Log.d(TAG," AID power state 2"+ aid  +" "+aidType.powerstate);
+                if (DBG) Log.d(TAG," AID power state 2"+ aid  +" "+aidType.powerstate);
                 if(mGsmaPwrState > 0)
                 {
                     aidType.powerstate = (mGsmaPwrState & 0x39);
-                    Log.d(TAG," Setting GSMA power state"+ aid  + " " +aidType.powerstate);
+                    if (DBG) Log.d(TAG," Setting GSMA power state"+ aid  + " " +aidType.powerstate);
                 }
                 routingEntries.put(aid, aidType);
             } else if (resolveInfo.services.size() > 1) {
@@ -922,9 +924,9 @@ public class RegisteredAidCache {
                 if(mGsmaPwrState > 0)
                 {
                     aidType.powerstate = (mGsmaPwrState & 0x39);
-                    Log.d(TAG," Setting GSMA power state"+ aid  + " " +aidType.powerstate);
+                    if (DBG) Log.d(TAG," Setting GSMA power state"+ aid  + " " +aidType.powerstate);
                 }
-                Log.d(TAG," AID power state 3"+ aid  + aidType.powerstate);
+                if (DBG) Log.d(TAG," AID power state 3"+ aid  + aidType.powerstate);
                 routingEntries.put(aid, aidType);
             }
         }
