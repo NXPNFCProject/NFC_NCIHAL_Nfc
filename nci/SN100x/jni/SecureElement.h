@@ -53,8 +53,8 @@ public:
   tNFA_HANDLE  mActiveEeHandle;
   static const int MAX_NUM_EE = NFA_EE_MAX_EE_SUPPORTED;    /*max number of EE's*/
   static const uint8_t UICC_ID = 0x02;
-  static const uint8_t UICC2_ID = 0x04;
-  static const uint8_t UICC3_ID = 0x08;
+  static const uint8_t UICC2_ID = 0x03;
+  static const uint8_t UICC3_ID = 0x04;
   static const uint8_t ESE_ID = 0x01;
   static const uint8_t DH_ID = 0x00;
   static const uint8_t NFCC_DECIDES     = 0x00;     //NFCC decides
