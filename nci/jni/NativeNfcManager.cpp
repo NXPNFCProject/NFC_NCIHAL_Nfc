@@ -2345,8 +2345,8 @@ static void nfaConnectionCallback(uint8_t connEvent,
 #endif
     mwVer = NFA_GetMwVersion();
     DLOG_IF(INFO, nfc_debug_enabled)
-        << StringPrintf("%s:  MW Version: NFC_NCIHALx_AR%X.%x.%x.%x", __func__,
-                        mwVer.validation, mwVer.android_version,
+        << StringPrintf("%s:  MW Version: NFC_AR_%02X_%04x_%02d.%02x.%02x", __func__,
+                        mwVer.cust_id, mwVer.validation, mwVer.android_version,
                         mwVer.major_version, mwVer.minor_version);
 
     tNFA_STATUS stat = NFA_STATUS_OK;
