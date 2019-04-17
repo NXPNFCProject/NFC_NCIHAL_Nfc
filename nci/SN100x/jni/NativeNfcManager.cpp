@@ -2369,8 +2369,10 @@ static int nfcManager_doPartialInitialize(JNIEnv* e, jobject o) {
         gsNfaPartialEnabled = false;
         return NFA_STATUS_FAILED;
     }
+    theInstance.NFA_SetBootMode(NFA_FAST_BOOT_MODE);
     NFA_Init (halFuncEntries);
     DLOG_IF(INFO, nfc_debug_enabled)<< StringPrintf("%s: calling enable", __func__);
+
     stat = NFA_Enable (nfaDeviceManagementCallback, nfaConnectionCallback);
     if (stat == NFA_STATUS_OK)
     {
@@ -2380,8 +2382,6 @@ static int nfcManager_doPartialInitialize(JNIEnv* e, jobject o) {
 
     if (sIsNfaEnabled)
     {
-        RoutingManager::getInstance().configureEeRegister(true);
-        SecureElement::getInstance().initialize (getNative(e, o));
         gsNfaPartialEnabled = true;
         sIsNfaEnabled = false;
     }
@@ -2421,14 +2421,14 @@ static int nfcManager_doPartialDeInitialize(JNIEnv*, jobject) {
         DLOG_IF(INFO, nfc_debug_enabled)<< StringPrintf("%s: wait for completion", __func__);
         SyncEventGuard guard (sNfaDisableEvent);
         sNfaDisableEvent.wait (); //wait for NFA command to finish
-        RoutingManager::getInstance().configureEeRegister(false);
-        SecureElement::getInstance().finalize ();
     }
     else
     {
         DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf("%s: fail disable; error=0x%X", __func__, stat);
     }
     theInstance.Finalize();
+    theInstance.NFA_SetBootMode(NFA_NORMAL_BOOT_MODE);
+    gsNfaPartialEnabled = false;
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
 
   return NFA_STATUS_OK;
