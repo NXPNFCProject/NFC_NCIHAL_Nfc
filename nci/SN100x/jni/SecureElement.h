@@ -12,7 +12,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018 NXP
+*  Copyright 2018-2019 NXP
 *
 ******************************************************************************/
 
@@ -226,6 +226,16 @@ bool    mActivatedInListenMode; // whether we're activated in listen mode
 **
 *******************************************************************************/
 static SecureElement& getInstance();
+/*******************************************************************************
+**
+** Function:        isWiredModeOpen
+**
+** Description:     This function returns whether wired mode is running or not.
+**
+** Returns:         int
+**
+*******************************************************************************/
+int isWiredModeOpen();
 /*******************************************************************************
 **
 ** Function:        initialize

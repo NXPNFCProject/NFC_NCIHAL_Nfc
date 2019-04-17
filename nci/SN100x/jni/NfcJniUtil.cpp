@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018 NXP
+*  Copyright 2018-2019 NXP
 *
 ******************************************************************************/
 #include "NfcJniUtil.h"
@@ -42,7 +42,9 @@
 #include <nativehelper/ScopedLocalRef.h>
 
 #include "RoutingManager.h"
-
+#if (NXP_EXTNS == TRUE)
+#include "NativeJniExtns.h"
+#endif
 using android::base::StringPrintf;
 
 extern bool nfc_debug_enabled;
@@ -85,6 +87,7 @@ jint JNI_OnLoad(JavaVM* jvm, void*) {
     return JNI_ERR;
   if (android::register_com_android_nfc_NativeNfcMposManager (e) == -1)
            return JNI_ERR;
+  NativeJniExtns::getInstance().initialize(e);
 #endif
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
   return JNI_VERSION_1_6;

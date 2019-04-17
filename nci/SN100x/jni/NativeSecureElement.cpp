@@ -12,7 +12,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018 NXP
+*  Copyright 2018-2019 NXP
 *
 ******************************************************************************/
 
@@ -28,7 +28,7 @@
 #include "config.h"
 #include "SecureElement.h"
 #include "NfcAdaptation.h"
-
+#include "NativeJniExtns.h"
 using android::base::StringPrintf;
 
 namespace android
@@ -58,6 +58,7 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection (JNIEnv*, jobje
     SecureElement &se = SecureElement::getInstance();
     se.mModeSetNtfstatus = NFA_STATUS_FAILED;
 
+    NativeJniExtns::getInstance().notifyNfcEvent(__func__);
     /* Tell the controller to power up to get ready for sec elem operations */
     PowerSwitch::getInstance ().setLevel (PowerSwitch::FULL_POWER);
     PowerSwitch::getInstance ().setModeOn (PowerSwitch::SE_CONNECTED);

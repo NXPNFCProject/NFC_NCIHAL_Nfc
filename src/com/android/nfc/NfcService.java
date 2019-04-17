@@ -430,7 +430,8 @@ public class NfcService implements DeviceHostListener {
     Class mWiredSeClass;
     Method mWiredSeInitMethod, mWiredSeDeInitMethod;
     Object mWiredSeObj;
-
+    Class mNfcExtnsClass;
+    Object  mNfcExtnsObj;
     Class mNfcExtraClass;
     Object mNfcExtraObj;
 
@@ -632,6 +633,20 @@ public class NfcService implements DeviceHostListener {
         mContentResolver = mContext.getContentResolver();
         mDeviceHost = new NativeNfcManager(mContext, this);
 
+        try {
+            Object[] objargs = new Object[] {mContext};
+            mNfcExtnsClass = Class.forName("com.android.nfc.NfcExtnsService");
+            Constructor mNfcConstr = mNfcExtnsClass.getDeclaredConstructor(Context.class);
+            mNfcExtnsObj   = mNfcConstr.newInstance(objargs);
+        } catch(ClassNotFoundException | IllegalAccessException e) {
+            Log.d(TAG, "NfcExtnsService not found");
+        } catch (InstantiationException e) {
+            Log.e(TAG, "NfcExtnsService object Instantaiation failed");
+        }   catch (NoSuchMethodException e ) {
+            Log.e(TAG, " NoSuchMethodException");
+        }  catch (InvocationTargetException e) {
+            Log.e(TAG, " InvocationTargetException");
+        }
         Object[] args = new Object[] {mDeviceHost, mContext};
         try {
           mNfcExtraClass = Class.forName("com.android.nfc.NfcAdapterExtrasService");

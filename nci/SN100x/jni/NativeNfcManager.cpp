@@ -55,6 +55,7 @@
 #include "MposManager.h"
 #include "SecureElement.h"
 #include "DwpChannel.h"
+#include "NativeJniExtns.h"
 #endif
 
 #include "ce_api.h"
@@ -113,8 +114,8 @@ extern void nativeLlcpConnectionlessSocket_receiveData(uint8_t* data,
                                                        uint32_t remote_sap);
 #if(NXP_EXTNS == TRUE)
 
-static int nfcManager_doPartialInitialize(JNIEnv* e, jobject o);
-static int nfcManager_doPartialDeInitialize(JNIEnv* e, jobject o);
+int nfcManager_doPartialInitialize(JNIEnv* e, jobject o);
+int nfcManager_doPartialDeInitialize(JNIEnv* e, jobject o);
 static jint nfcManager_doaccessControlForCOSU(JNIEnv* e, jobject o, jint mode);
 extern tNFA_STATUS NxpNfc_Write_Cmd_Common(uint8_t retlen, uint8_t* buffer);
 extern void NxpPropCmd_OnResponseCallback(uint8_t event, uint16_t param_len,
@@ -1268,9 +1269,11 @@ static jboolean nfcManager_commitRouting(JNIEnv* e, jobject) {
 
   /*Stop RF discovery to reconfigure*/
   startRfDiscovery(false);
-
+  NativeJniExtns::getInstance().notifyNfcEvent(__func__);
   LOG(ERROR) << StringPrintf("commitRouting here");
   status = RoutingManager::getInstance().commitRouting();
+  NativeJniExtns::getInstance().notifyNfcEvent("checkIsodepRouting");
+
  if (!sRfEnabled) {
   /*Stop RF discovery to reconfigure*/
    startRfDiscovery(true);
@@ -1933,6 +1936,7 @@ static jboolean nfcManager_doDeinitialize(JNIEnv*, jobject) {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
 
 #if (NXP_EXTNS == TRUE)
+  NativeJniExtns::getInstance().notifyNfcEvent(__func__);
   SecureElement &se = SecureElement::getInstance();
   if(se.mIsWiredModeOpen) {
      const int32_t recvBufferMaxSize = 1024;
@@ -2355,7 +2359,7 @@ static jint nfcManager_doaccessControlForCOSU(JNIEnv* e, jobject o, jint mode)
 ** Returns:         True if ok.
 **
 *******************************************************************************/
-static int nfcManager_doPartialInitialize(JNIEnv* e, jobject o) {
+int nfcManager_doPartialInitialize(JNIEnv* e, jobject o) {
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
     tNFA_STATUS stat = NFA_STATUS_OK;
     NfcAdaptation& theInstance = NfcAdaptation::GetInstance();
@@ -2403,7 +2407,7 @@ static int nfcManager_doPartialInitialize(JNIEnv* e, jobject o) {
 ** Returns:         True if ok.
 **
 *******************************************************************************/
-static int nfcManager_doPartialDeInitialize(JNIEnv*, jobject) {
+int nfcManager_doPartialDeInitialize(JNIEnv*, jobject) {
 
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
     tNFA_STATUS stat = NFA_STATUS_OK;
@@ -2541,7 +2545,9 @@ static void nfcManager_doSetScreenState(JNIEnv* e, jobject o,
   uint8_t state = (screen_state_mask & NFA_SCREEN_STATE_MASK);
   uint8_t discovry_param =
       NCI_LISTEN_DH_NFCEE_ENABLE_MASK | NCI_POLLING_DH_ENABLE_MASK;
-
+#if (NXP_EXTNS == TRUE)
+  NativeJniExtns::getInstance().notifyNfcEvent(__func__);
+#endif
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: state = %d prevScreenState= %d, discovry_param = %d",
                       __FUNCTION__, state, prevScreenState, discovry_param);

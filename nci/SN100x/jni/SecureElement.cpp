@@ -1682,6 +1682,19 @@ void SecureElement::releasePendingTransceive()
     LOG(INFO) << StringPrintf("%s: Exit", fn);
 }
 
+/*******************************************************************************
+**
+** Function:        isWiredModeOpen
+**
+** Description:     Wired Mode open status
+**
+** Returns:         0 if wired mode closed.
+**
+*******************************************************************************/
+int SecureElement::isWiredModeOpen() {
+  if (mIsWiredModeOpen) return 1;
+  return 0;
+}
 /**********************************************************************************
  **
  ** Function:        getUiccStatus
