@@ -113,7 +113,7 @@ extern void nativeLlcpConnectionlessSocket_receiveData(uint8_t* data,
                                                        uint32_t len,
                                                        uint32_t remote_sap);
 #if(NXP_EXTNS == TRUE)
-
+void handleWiredmode(bool isShutdown);
 int nfcManager_doPartialInitialize(JNIEnv* e, jobject o);
 int nfcManager_doPartialDeInitialize(JNIEnv* e, jobject o);
 static jint nfcManager_doaccessControlForCOSU(JNIEnv* e, jobject o, jint mode);
@@ -1566,6 +1566,9 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
 
 static void nfcManager_doShutdown(JNIEnv*, jobject) {
   NfcAdaptation& theInstance = NfcAdaptation::GetInstance();
+#if (NXP_EXTNS == TRUE)
+  handleWiredmode(true); /* Device off*/
+#endif
   theInstance.DeviceShutdown();
 }
 /*******************************************************************************
@@ -1937,13 +1940,7 @@ static jboolean nfcManager_doDeinitialize(JNIEnv*, jobject) {
 
 #if (NXP_EXTNS == TRUE)
   NativeJniExtns::getInstance().notifyNfcEvent(__func__);
-  SecureElement &se = SecureElement::getInstance();
-  if(se.mIsWiredModeOpen) {
-     const int32_t recvBufferMaxSize = 1024;
-     uint8_t recvBuffer [recvBufferMaxSize];
-     int32_t recvBufferActualSize = 0;
-     se.apduGateReset(se.mActiveEeHandle, recvBuffer, &recvBufferActualSize);
-  }
+  handleWiredmode(false); /* Nfc Off*/
 #endif
   sIsDisabling = true;
 
@@ -2324,7 +2321,28 @@ static void nfcManager_doAbort(JNIEnv* e, jobject, jstring msg) {
   abort();  // <-- Unreachable
 }
 #if(NXP_EXTNS == TRUE)
-
+/*******************************************************************************
+ **
+ ** Function:        handleWiredmode
+ **
+ ** Description: The function will close the wired mode if it is open.
+ **              It shall be called in the NFC and Device off cases.
+ ** Returns:     void
+ **
+ *******************************************************************************/
+void handleWiredmode(bool isShutdown)
+{
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter, isShutdown %d", __func__, isShutdown);
+    SecureElement &se = SecureElement::getInstance();
+    if(se.mIsWiredModeOpen) {
+      se.setNfccPwrConfig(SecureElement::POWER_ALWAYS_ON);
+      se.sendEvent(SecureElement::EVT_END_OF_APDU_TRANSFER);
+      usleep(10 * 1000);
+    }
+    if(!isShutdown) {
+      se. SecEle_Modeset(SecureElement::NFCEE_DISABLE);
+    }
+}
 /*******************************************************************************
 **
 ** Function:        nfcManager_doaccessControlForCOSU
