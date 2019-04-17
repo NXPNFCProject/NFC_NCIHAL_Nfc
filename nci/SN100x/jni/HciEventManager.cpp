@@ -13,6 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/******************************************************************************
+*
+*  Licensed under the Apache License, Version 2.0 (the "License");
+*  you may not use this file except in compliance with the License.
+*  You may obtain a copy of the License at
+*
+*  http://www.apache.org/licenses/LICENSE-2.0
+*
+*  Unless required by applicable law or agreed to in writing, software
+*  distributed under the License is distributed on an "AS IS" BASIS,
+*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*  See the License for the specific language governing permissions and
+*  limitations under the License.
+*
+*  Copyright 2019 NXP
+*
+******************************************************************************/
 #include "HciEventManager.h"
 #include <android-base/stringprintf.h>
 #include <base/logging.h>
@@ -37,11 +54,13 @@ HciEventManager& HciEventManager::getInstance() {
 
 void HciEventManager::initialize(nfc_jni_native_data* native) {
   mNativeData = native;
+#if(NXP_EXTNS == FALSE)
   tNFA_STATUS nfaStat = NFA_HciRegister(const_cast<char*>(APP_NAME),
                                         (tNFA_HCI_CBACK*)&nfaHciCallback, true);
   if (nfaStat != NFA_STATUS_OK) {
     LOG(ERROR) << "HCI registration failed; status=" << nfaStat;
   }
+#endif
   sEsePipe = NfcConfig::getUnsigned(NAME_OFF_HOST_ESE_PIPE_ID, 0x16);
   sSimPipe = NfcConfig::getUnsigned(NAME_OFF_HOST_SIM_PIPE_ID, 0x0A);
 }
