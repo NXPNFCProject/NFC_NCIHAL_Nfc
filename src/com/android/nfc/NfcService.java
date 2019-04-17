@@ -206,6 +206,7 @@ public class NfcService implements DeviceHostListener {
     static final int MSG_CLEAR_ROUTING = 62;
     static final int MSG_INIT_WIREDSE = 63;
     static final int MSG_COMPUTE_ROUTING_PARAMS = 64;
+    static final int MSG_DEINIT_WIREDSE = 66;
     // Update stats every 4 hours
     static final long STATS_UPDATE_INTERVAL_MS = 4 * 60 * 60 * 1000;
     static final long MAX_POLLING_PAUSE_TIMEOUT = 40000;
@@ -1020,18 +1021,7 @@ public class NfcService implements DeviceHostListener {
             }
             Log.i(TAG, "Disabling NFC");
             updateState(NfcAdapter.STATE_TURNING_OFF);
-
-            try{
-                mWiredSeDeInitMethod = mWiredSeClass.getDeclaredMethod("wiredSeDeInitialize");
-                mWiredSeDeInitMethod.invoke(mWiredSeObj);
-            } catch (NoSuchElementException | NoSuchMethodException e) {
-                Log.i(TAG, "No such Method WiredSeInitialize");
-            } catch (RuntimeException | IllegalAccessException | InvocationTargetException e) {
-                Log.e(TAG, "Error in invoking wiredSeInitialize invocation");
-            } catch (Exception e) {
-                Log.e(TAG, "caught Exception during wiredSeInitialize");
-                e.printStackTrace();
-            }
+            deInitWiredSe();
             /* Sometimes mDeviceHost.deinitialize() hangs, use a watch-dog.
              * Implemented with a new thread (instead of a Handler or AsyncTask),
              * because the UI Thread and AsyncTask thread-pools can also get hung
@@ -2878,6 +2868,10 @@ public class NfcService implements DeviceHostListener {
         Log.d(TAG, "Init wired Se");
         mHandler.sendEmptyMessage(MSG_INIT_WIREDSE);
     }
+    public void deInitWiredSe() {
+        Log.d(TAG, "DeInit wired Se");
+        mHandler.sendEmptyMessage(MSG_DEINIT_WIREDSE);
+    }
     /**
      * get default Aid route entry in case application does not configure this route entry
      */
@@ -3455,6 +3449,20 @@ public class NfcService implements DeviceHostListener {
                      }
                     break;
                 }
+                case MSG_DEINIT_WIREDSE: {
+                    try {
+                      mWiredSeInitMethod = mWiredSeClass.getDeclaredMethod("wiredSeDeInitialize");
+                      mWiredSeInitMethod.invoke(mWiredSeObj);
+                    } catch (NoSuchElementException | NoSuchMethodException e) {
+                      Log.i(TAG, "No such Method wiredSeDeInitialize");
+                    } catch (RuntimeException | IllegalAccessException | InvocationTargetException e) {
+                      Log.e(TAG, "Error in invoking wiredSeDeInitialize invocation");
+                    } catch (Exception e) {
+                      Log.e(TAG, "caught Exception during wiredSeDeInitialize");
+                      e.printStackTrace();
+                    }
+                   break;
+               }
                 default:
                     Log.e(TAG, "Unknown message received");
                     break;
