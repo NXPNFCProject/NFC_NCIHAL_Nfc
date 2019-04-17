@@ -1265,10 +1265,10 @@ static jboolean nfcManager_unrouteAid(JNIEnv* e, jobject, jbyteArray aid) {
 static jboolean nfcManager_commitRouting(JNIEnv* e, jobject) {
 #if (NXP_EXTNS == TRUE)
   bool status = false;
- if (sRfEnabled) {
+
   /*Stop RF discovery to reconfigure*/
-   startRfDiscovery(false);
- }
+  startRfDiscovery(false);
+
   LOG(ERROR) << StringPrintf("commitRouting here");
   status = RoutingManager::getInstance().commitRouting();
  if (!sRfEnabled) {
