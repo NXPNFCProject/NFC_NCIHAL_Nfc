@@ -47,7 +47,12 @@
 #include "nfa_ee_api.h"
 #if(NXP_EXTNS == TRUE)
 #include "SecureElement.h"
+#define TYPE_LENGTH_SIZE 0x02
 #define AVAILABLE_PROTO_ENTRIES() 0x05
+#define TECHNOLOGY_BASED_ROUTING 0x00
+#define PROTOCOL_BASED_ROUTING 0x01
+#define AID_BASED_ROUTING 0x02
+#define ROUTE_UICC AID_BASED_ROUTING
 #endif
 using namespace std;
 #if(NXP_EXTNS == TRUE)
@@ -123,6 +128,8 @@ class RoutingManager {
   bool setNfcSecure(bool enable);
   void updateRoutingTable();
 #if(NXP_EXTNS == TRUE)
+    void getRouting(uint16_t* routeLen, uint8_t* routingBuff);
+    void processGetRoutingRsp(tNFA_DM_CBACK_DATA* eventData);
     uint16_t getUiccRouteLocId(const int route);
     static const int NFA_SET_AID_ROUTING = 4;
     static const int NFA_SET_TECHNOLOGY_ROUTING = 1;
@@ -150,7 +157,9 @@ class RoutingManager {
     uint32_t getUicc2selected();
     bool addAidRouting(const uint8_t* aid, uint8_t aidLen,
                                    int route, int aidInfo, int power);
-
+    uint16_t sRoutingBuffLen;
+    uint8_t* sRoutingBuff;
+    SyncEvent       sNfaGetRoutingEvent;
     SyncEvent       mAidAddRemoveEvent;
 #endif
  private:

@@ -1063,6 +1063,10 @@ if (!sP2pActive && eventData->rf_field.status == NFA_STATUS_OK) {
         sNfaTransitConfigEvent.notifyOne();
         break;
       }
+      case NFA_DM_GET_ROUTE_CONFIG_REVT: {
+          RoutingManager::getInstance().processGetRoutingRsp(eventData);
+        break;
+      }
 #endif
     case NFA_DM_SET_POWER_SUB_STATE_EVT: {
       DLOG_IF(INFO, nfc_debug_enabled)
@@ -2115,6 +2119,34 @@ static jint nfcManager_getDefaultAidRoute(JNIEnv* e, jobject o) {
     return num;
   }
 
+/*******************************************************************************
+ **
+ ** Function:        getConfig
+ **
+ ** Description:     read the config values from NFC controller.
+ **
+ ** Returns:         SUCCESS/FAILURE
+ **
+ *******************************************************************************/
+tNFA_STATUS getConfig(uint16_t* rspLen, uint8_t* configValue, uint8_t numParam,
+                      tNFA_PMID* param) {
+  tNFA_STATUS status = NFA_STATUS_FAILED;
+  if (rspLen == NULL || configValue == NULL || param == NULL)
+    return NFA_STATUS_FAILED;
+  SyncEventGuard guard(sNfaGetConfigEvent);
+  status = NFA_GetConfig(numParam, param);
+  if (status == NFA_STATUS_OK) {
+    if (sNfaGetConfigEvent.wait(WIRED_MODE_TRANSCEIVE_TIMEOUT) == false) {
+      *rspLen = 0;
+    } else {
+      *rspLen = sCurrentConfigLen;
+      memcpy(configValue, sConfig, sCurrentConfigLen);
+    }
+  } else {
+    *rspLen = 0;
+  }
+  return status;
+}
 /*******************************************************************************
 **
 ** Function:        nfcManager_getDefaultMifareCLTRoute

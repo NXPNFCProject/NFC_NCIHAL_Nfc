@@ -17,7 +17,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2015-2018 NXP Semiconductors
+ *  Copyright (C) 2015-2019 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@
 #include "RoutingManager.h"
 #include "SyncEvent.h"
 #include "config.h"
-
+#include "nfc_config.h"
 #include "nfa_api.h"
 #include "nfa_rw_api.h"
 
@@ -187,7 +187,18 @@ tNFA_STATUS NxpNfc_Write_Cmd_Common(uint8_t retlen, uint8_t* buffer) {
   status = GetCbStatus();
   return status;
 }
-
+/*******************************************************************************
+ **
+ ** Function:        getNumValue()
+ **
+ ** Description:     get the value from th config file.
+ **
+ ** Returns:         success/failure
+ **
+ *******************************************************************************/
+uint32_t getNumValue(const char* key ,uint32_t value) {
+  return NfcConfig::getUnsigned(key, value);
+}
 
 } /*namespace android*/
 
