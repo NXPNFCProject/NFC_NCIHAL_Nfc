@@ -1504,6 +1504,10 @@ static jboolean nativeNfcTag_doPresenceCheck(JNIEnv*, jobject) {
   if (!sRfInterfaceMutex.tryLock()) {
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
         "%s: tag is being reSelected assume it is present", __func__);
+#if (NXP_EXTNS == TRUE)
+    if (nfcManager_isNfcActive() == false)
+      return JNI_FALSE;
+#endif
     return JNI_TRUE;
   }
 
