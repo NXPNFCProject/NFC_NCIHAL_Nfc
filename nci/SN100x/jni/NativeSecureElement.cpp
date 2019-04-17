@@ -27,6 +27,7 @@
 #include "NfcJniUtil.h"
 #include "config.h"
 #include "SecureElement.h"
+#include "NfcAdaptation.h"
 
 using android::base::StringPrintf;
 
@@ -176,32 +177,25 @@ static jboolean nativeNfcSecureElement_doDisconnectSecureElementConnection (JNIE
 *******************************************************************************/
 static jboolean nativeNfcSecureElement_doResetSecureElement (JNIEnv*, jobject, jint handle)
 {
-    bool stat = false;
-    NFCSTATUS status = NFCSTATUS_FAILED;
-    SecureElement &se = SecureElement::getInstance();
-    if( nfcFL.nfcNxpEse) {
-        LOG(INFO) << StringPrintf("%s: enter; handle=0x%04x", __func__, handle);
-        status = se.setNfccPwrConfig(se.NFCC_DECIDES);
-        if(status != NFA_STATUS_OK)
-        {
-             LOG(INFO) << StringPrintf("%s: power link command failed", __func__);
-        }
-        else {
-            stat = se.SecEle_Modeset(se.NFCEE_DISABLE);
-            usleep(2000 * 1000);
-        }
-        status = se.setNfccPwrConfig(se.POWER_ALWAYS_ON|se.COMM_LINK_ACTIVE);
-        if(status != NFA_STATUS_OK)
-        {
-             LOG(INFO) << StringPrintf("%s: power link command failed", __func__);
-        }
-        else {
-            stat = se.SecEle_Modeset(se.NFCEE_ENABLE);
-            usleep(2000 * 1000);
-        }
+  bool stat = false;
+  int ret = -1;
+  NfcAdaptation& theInstance = NfcAdaptation::GetInstance();
+  tHAL_NFC_ENTRY* halFuncEntries = theInstance.GetHalEntryFuncs ();
+  nfc_nci_IoctlInOutData_t inpOutData;
+  inpOutData.inp.level = NCI_ESE_HARD_RESET_IOCTL;
+  LOG(INFO) << StringPrintf("%s: Entry", __func__);
+  if(NULL == halFuncEntries) {
+    LOG(INFO) << StringPrintf("%s: halFuncEntries is NULL", __func__);
+  } else {
+    ret = halFuncEntries->ioctl(HAL_NFC_IOCTL_ESE_HARD_RESET, (void*)&inpOutData);
+    if(ret < 0) {
+      LOG(INFO) << StringPrintf("%s: IOCTL failed", __func__);
+    } else {
+      stat = true;
     }
-LOG(INFO) << StringPrintf("%s: exit", __func__);
-return stat ? JNI_TRUE : JNI_FALSE;
+  }
+  LOG(INFO) << StringPrintf("%s: exit", __func__);
+  return stat;
 }
 
 /*******************************************************************************
