@@ -1218,6 +1218,18 @@ static jboolean nfcManager_routeAid(JNIEnv* e, jobject, jbyteArray aid,
     bufLen = bytes.size();
   }
 #if (NXP_EXTNS == TRUE)
+  SecureElement& se = SecureElement::getInstance();
+  if ((!isDynamicUiccEnabled) &&
+      (route == se.UICC_ID || route == se.UICC2_ID)) {  // UICC or UICC2 HANDLE
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("sCurrentSelectedUICCSlot:  %d ::: route: %d",
+                        sCurrentSelectedUICCSlot, route);
+    /* If current slot is 0x01 and UICC_ID is 0x02 then route location should be
+     * updated to UICC_ID(0x02) else if current slot is 0x02 and UICC_ID is 0x02
+     * then route location should be updated to UICC_ID2(0x04).
+     */
+    route = (sCurrentSelectedUICCSlot != se.UICC_ID) ? se.UICC_ID : se.UICC2_ID;
+  }
   return RoutingManager::getInstance().addAidRouting(buf, bufLen, route,
                                                      aidInfo, power);
 #else
