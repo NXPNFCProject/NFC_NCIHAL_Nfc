@@ -804,6 +804,8 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
          retry++;
         LOG(ERROR) << StringPrintf("%s: waiting for Card to be activated %x %x", __func__,retry,sConnectOk);
       } while(sConnectOk == false && retry < 3);
+      if(NfcTag::getInstance ().mNumDiscNtf)
+        NfcTag::getInstance ().mNumDiscNtf = 0;
     }
 #endif
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
