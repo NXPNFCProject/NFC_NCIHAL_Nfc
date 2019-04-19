@@ -462,6 +462,9 @@ void RoutingManager::notifyActivated(uint8_t technology) {
 }
 
 void RoutingManager::notifyDeactivated(uint8_t technology) {
+#if (NXP_EXTNS == TRUE)
+  SecureElement::getInstance().notifyListenModeState (false);
+#endif
   mRxDataBuffer.clear();
   JNIEnv* e = NULL;
   ScopedAttach attach(mNativeData->vm, &e);
