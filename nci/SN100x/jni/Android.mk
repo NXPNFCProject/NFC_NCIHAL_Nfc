@@ -48,7 +48,6 @@ LOCAL_C_INCLUDES += \
     $(VOB_COMPONENTS)/gki/common \
     $(VOB_COMPONENTS) \
     system/nfc/SN100x/utils/include \
-    hardware/nxp/nfc/SN100x/extns/impl\
 
 LOCAL_SHARED_LIBRARIES := \
     libandroidicu \
