@@ -116,7 +116,6 @@ extern void nativeLlcpConnectionlessSocket_receiveData(uint8_t* data,
 void handleWiredmode(bool isShutdown);
 int nfcManager_doPartialInitialize(JNIEnv* e, jobject o);
 int nfcManager_doPartialDeInitialize(JNIEnv* e, jobject o);
-static jint nfcManager_doaccessControlForCOSU(JNIEnv* e, jobject o, jint mode);
 extern tNFA_STATUS NxpNfc_Write_Cmd_Common(uint8_t retlen, uint8_t* buffer);
 extern void NxpPropCmd_OnResponseCallback(uint8_t event, uint16_t param_len,
                                             uint8_t * p_param);
@@ -288,8 +287,6 @@ static bool gIsDtaEnabled = false;
 #if (NXP_EXTNS==TRUE)
 
 static bool gsNfaPartialEnabled = false;
-static int MODE_DEDICATED = 1;
-static int MODE_NORMAL = 0;
 #endif
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
@@ -2377,27 +2374,34 @@ void handleWiredmode(bool isShutdown)
 }
 /*******************************************************************************
 **
-** Function:        nfcManager_doaccessControlForCOSU
+** Function:        nfcManager_doPartialInitForEseCosUpdate
 **
-** Description:     Access control for card OS update
+** Description:     Partial Init for card OS update
 **
 ** Returns:         NFA_STATUS_OK
 **
 *******************************************************************************/
-static jint nfcManager_doaccessControlForCOSU(JNIEnv* e, jobject o, jint mode)
-{
-        tNFA_STATUS stat = NFA_STATUS_OK;
-
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
-        if (mode == MODE_DEDICATED) {
-            stat = nfcManager_doPartialInitialize(e,o);
-        } else if(mode == MODE_NORMAL){
-            stat = nfcManager_doPartialDeInitialize(e,o);
-        } else {
-            stat = NFA_STATUS_FAILED;
-        }
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Exit", __func__);
-        return stat;
+static jboolean nfcManager_doPartialInitForEseCosUpdate(JNIEnv* e, jobject o) {
+  /* Dummy API return always true.No need to initlize nfc mw
+   * as jcop update is done over spi interface.This api is
+   * maintained sothat customer app does not break. */
+  return true;
+}
+/*******************************************************************************
+**
+** Function:        nfcManager_doPartialDeinitForEseCosUpdate
+**
+** Description:     Partial Deinit for card OS Update
+**
+** Returns:         NFA_STATUS_OK
+**
+*******************************************************************************/
+static jboolean nfcManager_doPartialDeinitForEseCosUpdate(JNIEnv* e,
+                                                          jobject o) {
+  /* Dummy API return always true.No need to initlize nfc mw
+   * as jcop update is done over spi interface.This api is
+   * maintained sothat customer app does not break. */
+  return true;
 }
 
 /*******************************************************************************
@@ -2908,7 +2912,10 @@ static JNINativeMethod gMethods[] = {
             (void *)nfcManager_getActiveSecureElementList},
      {"doChangeDiscoveryTech", "(II)V",
              (void *)nfcManager_changeDiscoveryTech},
-     {"doaccessControlForCOSU", "(I)I",(void*)nfcManager_doaccessControlForCOSU},
+    {"doPartialInitForEseCosUpdate", "()Z",
+             (void*)nfcManager_doPartialInitForEseCosUpdate},
+    {"doPartialDeinitForEseCosUpdate", "()Z",
+             (void*)nfcManager_doPartialDeinitForEseCosUpdate},
 
 #endif
      {"routeApduPattern", "(II[B[B)Z",

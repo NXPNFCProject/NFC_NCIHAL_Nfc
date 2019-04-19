@@ -166,7 +166,7 @@ static jboolean nativeNfcSecureElement_doDisconnectSecureElementConnection (JNIE
 }
 /*******************************************************************************
 **
-** Function:        nativeNfcSecureElement_doResetSecureElement
+** Function:        nativeNfcSecureElement_doResetForEseCosUpdate
 **
 ** Description:     Reset the secure element.
 **                  e: JVM environment.
@@ -176,8 +176,8 @@ static jboolean nativeNfcSecureElement_doDisconnectSecureElementConnection (JNIE
 ** Returns:         True if ok.
 **
 *******************************************************************************/
-static jboolean nativeNfcSecureElement_doResetSecureElement (JNIEnv*, jobject, jint handle)
-{
+static jboolean nativeNfcSecureElement_doResetForEseCosUpdate(JNIEnv*, jobject,
+                                                              jint handle) {
   bool stat = false;
   int ret = -1;
   NfcAdaptation& theInstance = NfcAdaptation::GetInstance();
@@ -276,13 +276,15 @@ static jbyteArray nativeNfcSecureElement_doTransceive (JNIEnv* e, jobject, jint 
 ** Description:     JNI functions
 **
 *****************************************************************************/
-static JNINativeMethod gMethods[] =
-{
-   {"doNativeOpenSecureElementConnection", "()I", (void *) nativeNfcSecureElement_doOpenSecureElementConnection},
-   {"doNativeDisconnectSecureElementConnection", "(I)Z", (void *) nativeNfcSecureElement_doDisconnectSecureElementConnection},
-   {"doNativeResetSecureElement", "(I)Z", (void *) nativeNfcSecureElement_doResetSecureElement},
-   {"doTransceive", "(I[B)[B", (void *) nativeNfcSecureElement_doTransceive},
-   {"doNativeGetAtr", "(I)[B", (void *) nativeNfcSecureElement_doGetAtr},
+static JNINativeMethod gMethods[] = {
+    {"doNativeOpenSecureElementConnection", "()I",
+     (void*)nativeNfcSecureElement_doOpenSecureElementConnection},
+    {"doNativeDisconnectSecureElementConnection", "(I)Z",
+     (void*)nativeNfcSecureElement_doDisconnectSecureElementConnection},
+    {"doResetForEseCosUpdate", "(I)Z",
+     (void*)nativeNfcSecureElement_doResetForEseCosUpdate},
+    {"doTransceive", "(I[B)[B", (void*)nativeNfcSecureElement_doTransceive},
+    {"doNativeGetAtr", "(I)[B", (void*)nativeNfcSecureElement_doGetAtr},
 };
 
 
