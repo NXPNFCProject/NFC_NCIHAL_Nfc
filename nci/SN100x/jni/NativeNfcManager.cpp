@@ -44,6 +44,7 @@
 #include "JavaClassConstants.h"
 #include "NfcAdaptation.h"
 #include "NfcJniUtil.h"
+#include "NfcSelfTest.h"
 #include "NfcTag.h"
 #include "PeerToPeer.h"
 #include "Pn544Interop.h"
@@ -113,6 +114,7 @@ extern void nativeLlcpConnectionlessSocket_receiveData(uint8_t* data,
                                                        uint32_t len,
                                                        uint32_t remote_sap);
 #if(NXP_EXTNS == TRUE)
+extern tNFA_STATUS Nxp_doResonantFrequency(bool modeOn);
 void handleWiredmode(bool isShutdown);
 int nfcManager_doPartialInitialize(JNIEnv* e, jobject o);
 int nfcManager_doPartialDeInitialize(JNIEnv* e, jobject o);
@@ -136,6 +138,7 @@ bool gActivated = false;
 SyncEvent gDeactivatedEvent;
 SyncEvent sNfaSetPowerSubState;
 bool legacy_mfc_reader = true;
+SyncEvent sChangeDiscTechEvent;
 #if(NXP_EXTNS == TRUE)
 /*Structure to store  discovery parameters*/
 typedef struct discovery_Parameters
@@ -809,7 +812,16 @@ static void nfaConnectionCallback(uint8_t connEvent,
           << StringPrintf("%s: NFA_CE_UICC_LISTEN_CONFIGURED_EVT : status=0x%X",
                           __func__, eventData->status);
       break;
-
+#if (NXP_EXTNS == TRUE)
+    case NFA_LISTEN_ENABLED_EVT: {
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("%s: NFA_LISTEN_ENABLED_EVT : status=0x%X", __func__,
+                          eventData->status);
+      SyncEventGuard guard(sChangeDiscTechEvent);
+      sChangeDiscTechEvent.notifyOne();
+      break;
+    }
+#endif
     case NFA_SET_P2P_LISTEN_TECH_EVT:
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: NFA_SET_P2P_LISTEN_TECH_EVT", __func__);
@@ -2417,6 +2429,77 @@ static jboolean nfcManager_doPartialDeinitForEseCosUpdate(JNIEnv* e,
 }
 
 /*******************************************************************************
+ **
+ ** Function:        nfcManager_doResonantFrequency
+ **
+ ** Description:     factory mode to measure resonance frequency
+ **
+ ** Returns:         void
+ **
+ *******************************************************************************/
+static void nfcManager_doResonantFrequency(JNIEnv* e, jobject o,
+                                               jboolean modeOn) {
+  (void)e;
+  (void)o;
+  tNFA_STATUS status = NFA_STATUS_FAILED;
+  jint pollTech, uiccListenTech;
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+      "startResonantFrequency : mode[%s]", modeOn == true ? "ON" : "OFF");
+
+  if (!sIsNfaEnabled) {
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("startResonantFrequency :NFC is not enabled!!");
+    return;
+  } else if (modeOn && gselfTestData.isStored) {
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("startResonantFrequency: Already ON!!");
+    return;
+  } else if (!modeOn && !gselfTestData.isStored) {
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("startResonantFrequency: already OFF!!");
+    return;
+  }
+  /* Read the Polling and Listen Tech Mask from the config file */
+  pollTech = NfcConfig::getUnsigned(NAME_POLLING_TECH_MASK,
+                                    RESONANT_FREQ_DEFAULT_POLL_MASK);
+  uiccListenTech = NfcConfig::getUnsigned(NAME_UICC_LISTEN_TECH_MASK,
+                                          RESONANT_FREQ_DEFAULT_LISTEN_MASK);
+  /* Stop RF Discovery */
+  if (android::isDiscoveryStarted()) android::startRfDiscovery(false);
+  /* Perform the Requested Test */
+  status = NfcSelfTest::GetInstance().doNfccSelfTest(
+      modeOn ? TEST_TYPE_SET_RFTXCFG_RESONANT_FREQ : TEST_TYPE_RESTORE_RFTXCFG);
+
+  if (NFA_STATUS_OK == status) {
+    nfcManager_doDeinitialize(NULL, NULL);
+    usleep(1000 * 1000);
+    nfcManager_doInitialize(NULL, NULL);
+    usleep(1000 * 2000);
+
+    if (modeOn)        /* TEST_TYPE_SET_RFTXCFG_RESONANT_FREQ */
+      pollTech = 0x00; /* Activate only Card Emulation Mode */
+
+    { /* Change the discovery tech mask as per the test */
+      SyncEventGuard guard(sChangeDiscTechEvent);
+      status = NFA_ChangeDiscoveryTech(pollTech, uiccListenTech);
+      if (NFA_STATUS_OK == status) {
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+            "%s: waiting for nfcManager_changeDiscoveryTech", __func__);
+        sChangeDiscTechEvent.wait();
+      } else {
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+            "%s: nfcManager_changeDiscoveryTech failed", __func__);
+      }
+    }
+  }
+  /* Restart the discovery
+   * CASE1: TEST_TYPE_SET_RFTXCFG_RESONANT_FREQ --> Only CARD EMULATION
+   * CASE2: TEST_TYPE_RESTORE_RFTXCFG --> Both the READER & CE  mode
+   * CASE3: FAILURE OF TEST -->  Restart last discovery*/
+  android::startRfDiscovery(true);
+}
+
+/*******************************************************************************
 **
 ** Function:        nfcManager_doPartialInitialize
 **
@@ -2929,6 +3012,8 @@ static JNINativeMethod gMethods[] = {
     {"doPartialDeinitForEseCosUpdate", "()Z",
              (void*)nfcManager_doPartialDeinitForEseCosUpdate},
 
+    {"doResonantFrequency", "(Z)V",
+              (void *)nfcManager_doResonantFrequency},
 #endif
      {"routeApduPattern", "(II[B[B)Z",
                     (void*) nfcManager_routeApduPattern},

@@ -1158,6 +1158,14 @@ public class NfcService implements DeviceHostListener {
             return true;
         }
 
+       public void resonantFrequency(int isResonantFreq)
+       {
+            Log.d(TAG, "resonantFrequency");
+            if(0x00 != isResonantFreq)
+                mDeviceHost.doResonantFrequency(true);
+            else
+                mDeviceHost.doResonantFrequency(false);
+       }
         @Override
         public boolean disable(boolean saveState) throws RemoteException {
           NfcPermissions.enforceAdminPermissions(mContext);

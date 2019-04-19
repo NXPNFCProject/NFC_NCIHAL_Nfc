@@ -316,6 +316,8 @@ public interface DeviceHost {
 
     public void doSetScreenState(int screen_state_mask);
 
+    public void doResonantFrequency(boolean isResonantFreq);
+
     void setEtsiReaederState(int newState);
 
     int getEtsiReaederState();
