@@ -284,12 +284,16 @@ static int nfcManager_setPreferredSimSlot(JNIEnv* e, jobject o, jint uiccSlot);
 #endif
 static uint16_t sCurrentConfigLen;
 static uint8_t sConfig[256];
-static int prevScreenState = NFA_SCREEN_STATE_OFF_LOCKED;
 static int NFA_SCREEN_POLLING_TAG_MASK = 0x10;
 static bool gIsDtaEnabled = false;
 #if (NXP_EXTNS==TRUE)
 
 static bool gsNfaPartialEnabled = false;
+#endif
+#if (NXP_EXTNS==TRUE)
+static int prevScreenState = NFA_SCREEN_STATE_UNKNOWN;
+#else
+static int prevScreenState = NFA_SCREEN_STATE_OFF_UNLOCKED;
 #endif
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
@@ -1550,7 +1554,11 @@ static jboolean nfcManager_doInitialize(JNIEnv* e, jobject o) {
           }
         }
 
+#if (NXP_EXTNS==TRUE)
+        prevScreenState = NFA_SCREEN_STATE_UNKNOWN;
+#else
         prevScreenState = NFA_SCREEN_STATE_OFF_LOCKED;
+#endif
 
         // Do custom NFCA startup configuration.
         doStartupConfig();
@@ -2695,6 +2703,10 @@ static void nfcManager_doSetScreenState(JNIEnv* e, jobject o,
   uint8_t discovry_param =
       NCI_LISTEN_DH_NFCEE_ENABLE_MASK | NCI_POLLING_DH_ENABLE_MASK;
 #if (NXP_EXTNS == TRUE)
+  if(prevScreenState == state) {
+    LOG_IF(INFO, nfc_debug_enabled)<< StringPrintf("Screen state is not changed.");
+    return;
+  }
   NativeJniExtns::getInstance().notifyNfcEvent(__func__);
 #endif
   DLOG_IF(INFO, nfc_debug_enabled)
@@ -2706,7 +2718,11 @@ static void nfcManager_doSetScreenState(JNIEnv* e, jobject o,
     prevScreenState = state;
     return;
   }
-  if (prevScreenState == NFA_SCREEN_STATE_OFF_LOCKED ||
+  if (
+#if (NXP_EXTNS == TRUE)
+      prevScreenState == NFA_SCREEN_STATE_UNKNOWN ||
+#endif
+      prevScreenState == NFA_SCREEN_STATE_OFF_LOCKED ||
       prevScreenState == NFA_SCREEN_STATE_OFF_UNLOCKED ||
       prevScreenState == NFA_SCREEN_STATE_ON_LOCKED) {
     SyncEventGuard guard(sNfaSetPowerSubState);
