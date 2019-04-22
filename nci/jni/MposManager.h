@@ -77,6 +77,7 @@ typedef struct {
 
 class MposManager {
  public:
+  MposManager();
   Rdr_req_ntf_info_t swp_rdr_req_ntf_info;
   static jmethodID gCachedMposManagerNotifyETSIReaderRequested;
   static jmethodID gCachedMposManagerNotifyETSIReaderRequestedFail;

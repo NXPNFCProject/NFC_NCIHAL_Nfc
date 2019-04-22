@@ -195,6 +195,7 @@ SecureElement::SecureElement()
       mCurrentRouteSelection(NoRoute),
       mActualResponseSize(0),
       mAtrInfolen(0),
+      mAtrStatus(0),
       mUseOberthurWarmReset(false),
       mActivatedInListenMode(false),
       mOberthurWarmResetCommand(3),

@@ -661,6 +661,12 @@ static jboolean nativeNfcTag_doWrite(JNIEnv* e, jobject, jbyteArray buf) {
 #endif
       } else {
         status = NFA_RwFormatTag();
+        if (status != NFA_STATUS_OK) {
+          LOG(ERROR) << StringPrintf("%s: can't format mifare classic tag",
+                                     __func__);
+          sem_destroy(&sFormatSem);
+          goto TheEnd;
+        }
       }
       sem_wait(&sFormatSem);
       sem_destroy(&sFormatSem);

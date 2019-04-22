@@ -7444,6 +7444,9 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
 
     /*Constructor*/
     Command() : nfcAdapter(NfcAdaptation::GetInstance()) {
+      rspTimeout = 0;
+      retryCount = 0;
+      name = NULL;
       /*Retreive reference to HAL function manager*/
       halMgr = nfcAdapter.GetHalEntryFuncs();
     }

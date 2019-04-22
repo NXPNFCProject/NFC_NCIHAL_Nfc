@@ -73,6 +73,7 @@ NfcTag::NfcTag()
       mNumDiscNtf(0),
       mNumDiscTechList(0),
       mTechListIndex(0),
+      mNfcDisableinProgress(false),
       mCashbeeDetected(false),
       mEzLinkTypeTag(false),
 #if (NXP_EXTNS == TRUE)

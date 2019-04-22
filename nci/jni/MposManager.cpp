@@ -29,6 +29,8 @@ using android::base::StringPrintf;
 
 extern bool nfc_debug_enabled;
 
+MposManager::MposManager() { mNativeData = NULL; }
+
 namespace android {
 extern tNFA_STATUS EmvCo_dosetPoll(jboolean enable);
 extern bool isDiscoveryStarted();
