@@ -13,29 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/******************************************************************************
- *
- *  The original Work has been changed by NXP Semiconductors.
- *
- *  Copyright (C) 2015-2018 NXP Semiconductors
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
- ******************************************************************************/
+
 package com.android.nfc;
 
+import android.content.Intent;
 import android.content.pm.UserInfo;
+
 import com.android.nfc.beam.BeamManager;
+import com.android.nfc.beam.BeamSendService;
+import com.android.nfc.beam.BeamTransferRecord;
+
 import android.os.UserManager;
 import com.android.nfc.sneptest.ExtDtaSnepServer;
 import com.android.nfc.sneptest.DtaSnepClient;
@@ -48,7 +35,6 @@ import com.android.nfc.ndefpush.NdefPushServer;
 import com.android.nfc.snep.SnepClient;
 import com.android.nfc.snep.SnepMessage;
 import com.android.nfc.snep.SnepServer;
-
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -67,12 +53,13 @@ import android.os.Message;
 import android.os.SystemClock;
 import android.os.UserHandle;
 import android.util.Log;
-
 import java.io.FileDescriptor;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
+import java.io.UnsupportedEncodingException;
 
 /**
  * Interface to listen for P2P events.
@@ -97,7 +84,6 @@ interface P2pEventListener {
      * Indicates a P2P device is in range.
      * <p>onP2pInRange() and onP2pOutOfRange() will always be called
      * alternately.
-     * <p>All other callbacks will only occur while a P2P device is in range.
      */
     public void onP2pInRange();
 
@@ -134,8 +120,8 @@ interface P2pEventListener {
     /**
      * Called to indicate the device is busy with another handover transfer
      */
-
     public void onP2pHandoverBusy();
+
     /**
      * Called to indicate a receive was successful.
      */
@@ -321,14 +307,15 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
                 if (mEchoServer != null) {
                     mHandler.sendEmptyMessage(MSG_STOP_ECHOSERVER);
                 }
-                if(mExtDtaSnepServerRunning)
+                if (mExtDtaSnepServerRunning)
                     disableExtDtaSnepServer();
             }
             mIsSendEnabled = sendEnable;
             mIsReceiveEnabled = receiveEnable;
         }
     }
-     /**
+
+    /**
      * To Enable DTA SNEP Server for NFC Forum testing
      */
     public void enableExtDtaSnepServer(String serviceName, int serviceSap, int miu, int rwSize,int testCaseId) {
@@ -430,6 +417,7 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
                 } else if (shareData.ndefMessage != null) {
                     mMessageToSend = shareData.ndefMessage;
                 }
+
                 mUserHandle = shareData.userHandle;
             }
             if (mMessageToSend != null ||
@@ -446,7 +434,6 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
      */
     public void onLlcpActivated(byte peerLlcpVersion) {
         Log.i(TAG, "LLCP activated");
-
         synchronized (P2pLinkManager.this) {
             if (mEchoServer != null) {
                 mEchoServer.onLlcpActivated();
@@ -456,7 +443,7 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
             switch (mLinkState) {
                 case LINK_STATE_DOWN:
                     if (DBG) Log.d(TAG, "onP2pInRange()");
-                 // Start taking a screenshot
+                    // Start taking a screenshot
                     mEventListener.onP2pInRange();
                     mLinkState = LINK_STATE_UP;
                     // If we had a pending send (manual Beam invoke),
@@ -731,7 +718,7 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
                 mEventListener.onP2pResumeSend();
                 sendNdefMessage();
             } else {
-             // Either nothing to send or canceled/complete, ignore
+                // Either nothing to send or canceled/complete, ignore
             }
         }
     }
@@ -881,6 +868,7 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
                     mHandoverDataParser.getOutgoingHandoverData(response), uris, userHandle)) {
                 return HANDOVER_BUSY;
             }
+
             return HANDOVER_SUCCESS;
         }
 

@@ -13,40 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 /******************************************************************************
- *
- *  The original Work has been changed by NXP Semiconductors.
- *
- *  Copyright (C) 2015-2018 NXP Semiconductors
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *  http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
- ******************************************************************************/
+*
+*  The original Work has been changed by NXP.
+*
+*  Licensed under the Apache License, Version 2.0 (the "License");
+*  you may not use this file except in compliance with the License.
+*  You may obtain a copy of the License at
+*
+*  http://www.apache.org/licenses/LICENSE-2.0
+*
+*  Unless required by applicable law or agreed to in writing, software
+*  distributed under the License is distributed on an "AS IS" BASIS,
+*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*  See the License for the specific language governing permissions and
+*  limitations under the License.
+*
+*  Copyright 2018-2019 NXP
+*
+******************************************************************************/
 package com.android.nfc.cardemulation;
 
-import android.app.ActivityManager;
-import android.app.ActivityManager.RunningTaskInfo;
-import android.app.ActivityThread;
-import android.content.Context;
 import android.util.Log;
 import android.util.SparseArray;
-
+import android.content.Context;
+import android.app.ActivityThread;
+import android.app.ActivityManager;
+import android.app.ActivityManager.RunningTaskInfo;
 import com.android.nfc.NfcService;
-
+import android.util.SparseArray;
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -54,12 +53,16 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.List;
 import java.util.ArrayList;
+import java.util.Hashtable;
+import android.os.SystemProperties;
 public class AidRoutingManager {
+
     static final String TAG = "AidRoutingManager";
 
     static final boolean DBG =
-        ("1" == (System.getProperty("persist.nfc.ce_debug")) ? true : false);
+        ((SystemProperties.get("persist.nfc.ce_debug").equals("1")) ? true : false);
 
     static final int ROUTE_HOST = 0x00;
 
@@ -71,30 +74,22 @@ public class AidRoutingManager {
     static final int AID_MATCHING_PREFIX_ONLY = 0x02;
     // Every routing table entry can be matched either exact or prefix or subset only
     static final int AID_MATCHING_EXACT_OR_SUBSET_OR_PREFIX = 0x03;
-    //Behavior as per Android-L, supporting prefix match and full
-    //match for both OnHost and OffHost apps.
-    static final int AID_MATCHING_L = 0x01;
-    //Behavior as per Android-KitKat by NXP, supporting prefix match for
-    //OffHost and prefix and full both for OnHost apps.
-    static final int AID_MATCHING_K = 0x02;
-    // This is the default IsoDep protocol route; it means
-    // that for any AID that needs to be routed to this
-    // destination, we won't need to add a rule to the routing
-    // table, because this destination is already the default route.
-    //
-    // For Nexus devices, the default route is always 0x00.
+
+    int mDefaultIsoDepRoute;
+    //Let mDefaultRoute as default aid route
     int mDefaultRoute;
-    boolean mRoutingTableChanged;
-    // For Nexus devices, just a static route to the eSE
-    // OEMs/Carriers could manually map off-host AIDs
-    // to the correct eSE/UICC based on state they keep.
-    int mDefaultOffHostRoute;
+
+    int mMaxAidRoutingTableSize;
+    int mDefaultAidRoute;
+    final byte[] mOffHostRouteUicc;
+    final byte[] mOffHostRouteEse;
+    // Used for backward compatibility in case application doesn't specify the
+    // SE
+    final int mDefaultOffHostRoute;
 
     // How the NFC controller can match AIDs in the routing table;
     // see AID_MATCHING constants
-    int mAidMatchingSupport;
-    int mAidMatchingPlatform;
-    //Changed from final to private int to update RoutingtableSize later in configureRouting.
+    final int mAidMatchingSupport;
     private int mAidRoutingTableSize;
     // Maximum AID routing table size
     final Object mLock = new Object();
@@ -111,30 +106,41 @@ public class AidRoutingManager {
     // Easy look-up what the route is for a certain AID
     HashMap<String, Integer> mRouteForAid = new HashMap<String, Integer>();
 
-    // Easy look-up what the power state is for a certain AID
-    HashMap<String, Integer> mPowerForAid = new HashMap<String, Integer>();
-
-
     private native int doGetDefaultRouteDestination();
     private native int doGetDefaultOffHostRouteDestination();
+    private native byte[] doGetOffHostUiccDestination();
+    private native byte[] doGetOffHostEseDestination();
     private native int doGetAidMatchingMode();
-    private native int doGetAidMatchingPlatform();
-
-    final VzwRoutingCache mVzwRoutingCache;
-
+    private native int doGetDefaultIsoDepRouteDestination();
     final ActivityManager mActivityManager;
+    final class AidEntry {
+        boolean isOnHost;
+        String offHostSE;
+        int aidInfo;
+        int powerstate;
+        int route;
+    }
 
     public AidRoutingManager() {
         mDefaultRoute = doGetDefaultRouteDestination();
-        mRoutingTableChanged = false;
-        if (DBG) Log.d(TAG, "mDefaultRoute=0x" + Integer.toHexString(mDefaultRoute));
+        if (DBG)
+          Log.d(TAG, "mDefaultRoute=0x" + Integer.toHexString(mDefaultRoute));
         mDefaultOffHostRoute = doGetDefaultOffHostRouteDestination();
-        if (DBG) Log.d(TAG, "mDefaultOffHostRoute=0x" + Integer.toHexString(mDefaultOffHostRoute));
+        if (DBG)
+          Log.d(TAG, "mDefaultOffHostRoute=0x" + Integer.toHexString(mDefaultOffHostRoute));
+        mOffHostRouteUicc = doGetOffHostUiccDestination();
+        if (DBG)
+            Log.d(TAG, "mOffHostRouteUicc=" + Arrays.toString(mOffHostRouteUicc));
+        mOffHostRouteEse = doGetOffHostEseDestination();
+        if (DBG)
+          Log.d(TAG, "mOffHostRouteEse=" + Arrays.toString(mOffHostRouteEse));
         mAidMatchingSupport = doGetAidMatchingMode();
         if (DBG) Log.d(TAG, "mAidMatchingSupport=0x" + Integer.toHexString(mAidMatchingSupport));
-        mAidMatchingPlatform = doGetAidMatchingPlatform();
-        if (DBG) Log.d(TAG, "mAidMatchingPlatform=0x" + Integer.toHexString(mAidMatchingPlatform));
-        mVzwRoutingCache = new VzwRoutingCache();
+        mDefaultAidRoute =   NfcService.getInstance().GetDefaultRouteEntry() >> 0x08;
+        if (DBG)
+          Log.d(TAG, "mDefaultAidRoute=0x" + Integer.toHexString(mDefaultAidRoute));
+        mDefaultIsoDepRoute = doGetDefaultIsoDepRouteDestination();
+        if (DBG) Log.d(TAG, "mDefaultIsoDepRoute=0x" + Integer.toHexString(mDefaultIsoDepRoute));
         mLastCommitStatus = true;
 
         Context context = (Context) ActivityThread.currentApplication();
@@ -151,11 +157,24 @@ public class AidRoutingManager {
         return mAidMatchingSupport == AID_MATCHING_EXACT_OR_SUBSET_OR_PREFIX;
     }
 
-    public boolean isRoutingTableUpdated() {
-        return mRoutingTableChanged;
+    public int calculateAidRouteSize(HashMap<String, AidEntry> routeCache) {
+        // TAG + ROUTE + LENGTH_BYTE + POWER
+        int AID_HDR_LENGTH = 0x04;
+        int routeTableSize = 0x00;
+        for(Map.Entry<String, AidEntry> aidEntry : routeCache.entrySet()) {
+            String aid = aidEntry.getKey();
+            // removing prefix length
+            if(aid.endsWith("*")) {
+                routeTableSize += ((aid.length() - 0x01) / 0x02) + AID_HDR_LENGTH;
+            } else {
+                routeTableSize += (aid.length() / 0x02)+ AID_HDR_LENGTH;
+            }
+        }
+        if (DBG) Log.d(TAG, "calculateAidRouteSize: " + routeTableSize);
+        return routeTableSize;
     }
-    void clearNfcRoutingTableLocked() {
-        /*
+
+    private void clearNfcRoutingTableLocked() {
         for (Map.Entry<String, Integer> aidEntry : mRouteForAid.entrySet())  {
             String aid = aidEntry.getKey();
             if (aid.endsWith("*")) {
@@ -186,19 +205,19 @@ public class AidRoutingManager {
             } else {
                 if (DBG) Log.d(TAG, "Unrouting exact AID " + aid);
             }
+
             NfcService.getInstance().unrouteAids(aid);
         }
-        */
-        NfcService.getInstance().clearRouting();
-        mRouteForAid.clear();
-        mPowerForAid.clear();
-        mAidRoutingTable.clear();
+        if (NfcService.getInstance().getNciVersion() != NfcService.getInstance().NCI_VERSION_1_0) {
+          // unRoute EmptyAid
+          NfcService.getInstance().unrouteAids("");
+        }
     }
 
     public boolean configureApduPatternRouting(List<ApduPatternResolveInfo> apduPatternList) {
+        NfcService.getInstance().unrouteApduPattern("FFFFFFFFFFFFFFEF");
         if(apduPatternList.size() == 0x00 || apduPatternList == null)
             return false;
-        NfcService.getInstance().unrouteApduPattern("FFFFFFFFFFFFFFEF");
         for(ApduPatternResolveInfo apduPatternInfo : apduPatternList) {
             NfcService.getInstance().routeApduPattern(apduPatternInfo.referenceData,apduPatternInfo.mask,
                     apduPatternInfo.route,apduPatternInfo.powerState);
@@ -206,73 +225,83 @@ public class AidRoutingManager {
         return true;
     }
 
-    public void refreshConfigParameters() {
-      mDefaultRoute = doGetDefaultRouteDestination();
-      if (DBG)
-        Log.d(TAG, "mDefaultRoute=0x" + Integer.toHexString(mDefaultRoute));
-      mDefaultOffHostRoute = doGetDefaultOffHostRouteDestination();
-      if (DBG)
-        Log.d(TAG, "mDefaultOffHostRoute=0x" + Integer.toHexString(mDefaultOffHostRoute));
-      mAidMatchingSupport = doGetAidMatchingMode();
-      if (DBG)
-        Log.d(TAG, "mAidMatchingSupport=0x" + Integer.toHexString(mAidMatchingSupport));
-      mAidMatchingPlatform = doGetAidMatchingPlatform();
+    private int getRouteForSecureElement(String se) {
+      if (se == null || se.length() <= 3) {
+        return 0;
+      }
+      try {
+        if (se.startsWith("eSE") && mOffHostRouteEse != null) {
+          int index = Integer.parseInt(se.substring(3));
+          if (mOffHostRouteEse.length >= index && index > 0) {
+            return mOffHostRouteEse[index - 1] & 0xFF;
+          }
+        } else if (se.startsWith("SIM") && mOffHostRouteUicc != null) {
+          int index = Integer.parseInt(se.substring(3));
+          if (mOffHostRouteUicc.length >= index && index > 0) {
+            return mOffHostRouteUicc[index - 1] & 0xFF;
+          }
+        }
+      } catch (NumberFormatException e) {
+      }
+      return 0;
     }
 
-    public boolean configureRouting(HashMap<String, AidElement> aidMap) {
-        mRoutingTableChanged = false;
-        //To handle Dynamic change in config files.
-        refreshConfigParameters();
-        mDefaultRoute = NfcService.getInstance().GetDefaultRouteLoc();
+    public boolean configureRouting(HashMap<String, AidEntry> aidMap, boolean force) {
         boolean aidRouteResolved = false;
-        if (DBG) Log.d(TAG, "mAidMatchingPlatform=0x" + Integer.toHexString(mAidMatchingPlatform));
-        mAidRoutingTableSize = NfcService.getInstance().getAidRoutingTableSize();
-        if (DBG) Log.d(TAG, "mDefaultRoute=0x" + Integer.toHexString(mDefaultRoute));
-        Hashtable<String, AidElement> routeCache = new Hashtable<String, AidElement>(50);
+        HashMap<String, AidEntry> aidRoutingTableCache = new HashMap<String, AidEntry>(aidMap.size());
+        ArrayList<Integer> seList = new ArrayList<Integer>();
         SparseArray<Set<String>> aidRoutingTable = new SparseArray<Set<String>>(aidMap.size());
         HashMap<String, Integer> routeForAid = new HashMap<String, Integer>(aidMap.size());
-        HashMap<String, Integer> powerForAid = new HashMap<String, Integer>(aidMap.size());
         HashMap<String, Integer> infoForAid = new HashMap<String, Integer>(aidMap.size());
+        HashMap<String, Integer> powerForAid = new HashMap<String, Integer>(aidMap.size());
+        mDefaultRoute = NfcService.getInstance().GetDefaultRouteLoc();
+        mAidRoutingTableSize = NfcService.getInstance().getAidRoutingTableSize();
+        mDefaultAidRoute =   NfcService.getInstance().GetDefaultRouteEntry() >> 0x08;
+        Log.e(TAG, "Size of routing table"+mAidRoutingTableSize);
+        seList.add(mDefaultAidRoute);
         // Then, populate internal data structures first
-        DefaultAidRouteResolveCache defaultRouteCache = new DefaultAidRouteResolveCache();
-
-        for (Map.Entry<String, AidElement> aidEntry : aidMap.entrySet())  {
-            AidElement elem = aidEntry.getValue();
-            int route = elem.getRouteLocation();
-            int power = elem.getPowerState();
-            int aidType = elem.getAidInfo();
-            if (route == -1 ) {
-                route = mDefaultOffHostRoute;
-                elem.setRouteLocation(route);
+        for (Map.Entry<String, AidEntry> aidEntry : aidMap.entrySet())  {
+            int route = ROUTE_HOST;
+            if (!aidEntry.getValue().isOnHost) {
+                String offHostSE = aidEntry.getValue().offHostSE;
+                if (offHostSE == null) {
+                    route = mDefaultOffHostRoute;
+                } else {
+                    route = getRouteForSecureElement(offHostSE);
+                    if (route == 0) {
+                        Log.e(TAG, "Invalid Off host Aid Entry " + offHostSE);
+                        continue;
+                    }
+                }
             }
+            if (!seList.contains(route))
+              seList.add(route);
+            aidEntry.getValue().route = route;
+            int aidType = aidEntry.getValue().aidInfo;
+            int power = aidEntry.getValue().powerstate;
             String aid = aidEntry.getKey();
             Set<String> entries = aidRoutingTable.get(route, new HashSet<String>());
             entries.add(aid);
             aidRoutingTable.put(route, entries);
             routeForAid.put(aid, route);
-            powerForAid.put(aid, power);
             infoForAid.put(aid, aidType);
+            powerForAid.put(aid, power);
             if (DBG) Log.d(TAG, "#######Routing AID " + aid + " to route "
                         + Integer.toString(route) + " with power "+ power);
         }
+        if (!seList.contains(ROUTE_HOST))
+          seList.add(ROUTE_HOST);
 
         synchronized (mLock) {
-            if (routeForAid.equals(mRouteForAid)) {
-                if (DBG) Log.d(TAG, "Routing table unchanged");
+            if (routeForAid.equals(mRouteForAid) && !force) {
+                if (DBG) Log.d(TAG, "Routing table unchanged, but commit the routing");
                 if(mLastCommitStatus == false){
                     NfcService.getInstance().updateStatusOfServices(false);
-                    NfcService.getInstance().notifyRoutingTableFull();
                 }
                 else
                 {/*If last commit status was success, And a new service is added whose AID's are
                 already resolved by previously installed services, service state of newly installed app needs to be updated*/
                     NfcService.getInstance().updateStatusOfServices(true);
-                }
-                if (isProcessingTapAgain() || NfcService.getInstance().mIsRoutingTableDirty) {
-                    if (DBG) Log.d(TAG, "Routing table unchanged, but commit the routing");
-                    NfcService.getInstance().commitRouting();
-                } else {
-                    if (DBG) Log.d(TAG, "Routing table unchanged, not updating");
                 }
                 return false;
             }
@@ -280,12 +309,17 @@ public class AidRoutingManager {
             // Otherwise, update internal structures and commit new routing
             clearNfcRoutingTableLocked();
             mRouteForAid = routeForAid;
-            mPowerForAid = powerForAid;
             mAidRoutingTable = aidRoutingTable;
-            for(int routeIndex=0; routeIndex < 0x03; routeIndex++) {
-                routeCache.clear();
-                if (mAidMatchingSupport == AID_MATCHING_PREFIX_ONLY ||
-                    mAidMatchingPlatform == AID_MATCHING_K) {
+            mMaxAidRoutingTableSize = NfcService.getInstance().getAidRoutingTableSize();
+            if (DBG) Log.d(TAG, "mMaxAidRoutingTableSize: " + mMaxAidRoutingTableSize);
+
+          for(int index=0; index < seList.size(); index++) {
+            mDefaultRoute = seList.get(index);
+            if(index != 0)
+              if (DBG) Log.d(TAG, "AidRoutingTable is full, try to switch mDefaultRoute to 0x" + Integer.toHexString(mDefaultRoute));
+
+              aidRoutingTableCache.clear();
+            if (mAidMatchingSupport == AID_MATCHING_PREFIX_ONLY) {
                 /* If a non-default route registers an exact AID which is shorter
                  * than this exact AID, this will create a problem with controllers
                  * that treat every AID in the routing table as a prefix.
@@ -310,18 +344,17 @@ public class AidRoutingManager {
                             int route = aidEntry.getValue();
                             if (defaultRouteAid.startsWith(aid) && route != mDefaultRoute) {
                                 if (DBG) Log.d(TAG, "Adding AID " + defaultRouteAid + " for default " +
-                                        "route, because a conflicting shorter AID will be added" +
-                                        "to the routing table");
-                                AidElement elem = aidMap.get(defaultRouteAid);
-                                elem.setRouteLocation(mDefaultRoute);
-                                routeCache.put(defaultRouteAid, elem);
-                                //NfcService.getInstance().routeAids(defaultRouteAid, mDefaultRoute, mPowerForAid.get(defaultRouteAid),infoForAid.get(defaultRouteAid));
+                                        "route, because a conflicting shorter AID will be " +
+                                        "added to the routing table");
+                                aidRoutingTableCache.put(defaultRouteAid, aidMap.get(defaultRouteAid));
                             }
                         }
                     }
                 }
             }
-
+            // Add AID entries for
+            // 1. all non-default routes
+            // 2. default route but only payment AID
             // Add AID entries for all non-default routes
             for (int i = 0; i < mAidRoutingTable.size(); i++) {
                 int route = mAidRoutingTable.keyAt(i);
@@ -335,19 +368,12 @@ public class AidRoutingManager {
                                 if (DBG) Log.d(TAG, "Routing prefix AID " + aid + " to route "
                                         + Integer.toString(route));
                                 // Cut off '*' since controller anyway treats all AIDs as a prefix
-                                AidElement elem = aidMap.get(aid);
-                                elem.setAid(aid.substring(0,aid.length() - 1));
-                                routeCache.put(aid, elem);
-                                //NfcService.getInstance().routeAids(aid.substring(0,
-                                                //aid.length() - 1), route, mPowerForAid.get(aid),infoForAid.get(aid));
-                            } else if (mAidMatchingSupport == AID_MATCHING_EXACT_OR_PREFIX
-                              || mAidMatchingSupport == AID_MATCHING_EXACT_OR_SUBSET_OR_PREFIX) {
-                                Log.d(TAG, "Routing AID in AID_MATCHING_EXACT_OR_PREFIX");
+                                  aidRoutingTableCache.put(aid.substring(0,aid.length() - 1), aidMap.get(aid));
+                            } else if (mAidMatchingSupport == AID_MATCHING_EXACT_OR_PREFIX ||
+                              mAidMatchingSupport == AID_MATCHING_EXACT_OR_SUBSET_OR_PREFIX) {
                                 if (DBG) Log.d(TAG, "Routing prefix AID " + aid + " to route "
                                         + Integer.toString(route));
-                                AidElement elem = aidMap.get(aid);
-                                routeCache.put(aid, elem);
-                                //NfcService.getInstance().routeAids(aid, route, (mPowerForAid.get(aid)),infoForAid.get(aid));
+                             aidRoutingTableCache.put(aid.substring(0,aid.length() - 1), aidMap.get(aid));
                             }
                         } else if (aid.endsWith("#")) {
                             if (mAidMatchingSupport == AID_MATCHING_EXACT_ONLY) {
@@ -360,87 +386,72 @@ public class AidRoutingManager {
                             } else if (mAidMatchingSupport == AID_MATCHING_EXACT_OR_SUBSET_OR_PREFIX) {
                                 if (DBG) Log.d(TAG, "Routing subset AID " + aid + " to route "
                                         + Integer.toString(route));
-                                AidElement elem = aidMap.get(aid);
-                                routeCache.put(aid, elem);
-                                //NfcService.getInstance().routeAids(aid, route, (mPowerForAid.get(aid)),infoForAid.get(aid));
+                                  aidRoutingTableCache.put(aid.substring(0,aid.length() - 1), aidMap.get(aid));
                             }
                         } else {
                             if (DBG) Log.d(TAG, "Routing exact AID " + aid + " to route "
                                     + Integer.toString(route));
-                            AidElement elem = aidMap.get(aid);
-                            routeCache.put(aid, elem);
-                            //NfcService.getInstance().routeAids(aid, route, mPowerForAid.get(aid),infoForAid.get(aid));
+                             aidRoutingTableCache.put(aid, aidMap.get(aid));
                         }
+                      }
                     }
                 }
-            }
-
-            if((routeIndex == 0x00) && (defaultRouteCache.calculateAidRouteSize(routeCache) <= mAidRoutingTableSize)) {
-                // maximum aid table size is less than  AID route table size
+                if(mDefaultRoute != mDefaultIsoDepRoute) {
+                  if(NfcService.getInstance().getNciVersion() != NfcService.getInstance().NCI_VERSION_1_0) {
+                    String emptyAid = "";
+                    AidEntry entry = new AidEntry();
+                    entry.route = mDefaultRoute;
+                    if(mDefaultRoute==ROUTE_HOST) {
+                    entry.isOnHost = true;
+                  } else{
+                    entry.isOnHost = false;
+                   }
+                    entry.aidInfo = RegisteredAidCache.AID_ROUTE_QUAL_PREFIX;
+                    aidRoutingTableCache.put(emptyAid, entry);
+                    if (DBG) Log.d(TAG, "Add emptyAid into AidRoutingTable");
+                  }
+                }
+                if( calculateAidRouteSize(aidRoutingTableCache) <= mMaxAidRoutingTableSize) {
                 aidRouteResolved = true;
                 break;
-            } else {
-                defaultRouteCache.updateDefaultAidRouteCache(routeCache , mDefaultRoute);
-                mDefaultRoute = defaultRouteCache.getNextRouteLoc();
-                if(mDefaultRoute == 0xFF)
-                {
-                    break;
-                }
+              }
             }
-
+            if(aidRouteResolved == true) {
+              commit(aidRoutingTableCache);
+              NfcService.getInstance().updateStatusOfServices(true);
+              mLastCommitStatus = true;
+          } else {
+              Log.e(TAG, "RoutingTable unchanged because it's full, not updating");
+              NfcService.getInstance().notifyRoutingTableFull();
+              NfcService.getInstance().updateStatusOfServices(false);
+              mLastCommitStatus = false;
+          }
         }
-        }
-        if(aidRouteResolved == false) {
-            if(mAidRoutingTable.size() == 0x00) {
-                aidRouteResolved = true;
-                //update the cache , no applications present.
-            }
-            else if(defaultRouteCache.resolveDefaultAidRoute() == true) {
-                aidRouteResolved = true;
-                routeCache = defaultRouteCache.getResolvedAidRouteCache();
-                //update preferences if different
-                NfcService.getInstance().setDefaultAidRouteLoc(defaultRouteCache.getResolvedAidRoute());
-            } else {
-                NfcService.getInstance().notifyRoutingTableFull();
-            }
-        }
-        // And finally commit the routing and update the status of commit for each service
-        if(aidRouteResolved == true) {
-            mRoutingTableChanged = true;
-            commit(routeCache);
-            NfcService.getInstance().updateStatusOfServices(true);
-            mLastCommitStatus = true;
-        }
-        else{
-            NfcService.getInstance().updateStatusOfServices(false);
-            mLastCommitStatus = false;
-        }
-//        NfcService.getInstance().commitRouting();
-
+        NfcService.getInstance().commitRouting();
         return true;
     }
 
-    private void commit(Hashtable<String, AidElement> routeCache ) {
-
-        if(routeCache != null) {
-            List<AidElement> list = Collections.list(routeCache.elements());
-            Collections.sort(list);
-            Iterator<AidElement> it = list.iterator();
-            NfcService.getInstance().clearRouting();
-            while(it.hasNext()){
-                AidElement element =it.next();
-                if (DBG) Log.d (TAG, element.toString());
-                NfcService.getInstance().routeAids(
-                    element.getAid(),
-                    element.getRouteLocation(),
-                    element.getPowerState(),
-                    element.getAidInfo());
-            }
+    private void commit(HashMap<String, AidEntry> routeCache ) {
+       if(routeCache == null)
+       {
+         return;
+       }
+        for (Map.Entry<String, AidEntry> aidEntry : routeCache.entrySet())  {
+            if(aidEntry.getKey().isEmpty())
+                continue;
+            AidEntry element = aidEntry.getValue();
+            if (DBG) Log.d (TAG, element.toString());
+            NfcService.getInstance().routeAids(
+                 aidEntry.getKey(),
+                 element.route,
+                 element.aidInfo,
+                 element.powerstate);
         }
-        // And finally commit the routing
-        NfcService.getInstance().commitRouting();
+        AidEntry emptyAidEntry = routeCache.get("");
+        if (emptyAidEntry != null)
+          NfcService.getInstance().routeAids(
+              "", emptyAidEntry.route, emptyAidEntry.aidInfo, emptyAidEntry.powerstate);
     }
-
     /**
      * This notifies that the AID routing table in the controller
      * has been cleared (usually due to NFC being turned off).
@@ -454,44 +465,8 @@ public class AidRoutingManager {
         }
     }
 
-    public boolean UpdateVzwCache(byte[] aid,int route,int power,boolean isAllowed){
-       mVzwRoutingCache.addAid(aid,route,power,isAllowed);
-       return true;
-    }
-
-    public VzwRoutingCache GetVzwCache(){
-       return mVzwRoutingCache;
-    }
-
-    public void ClearVzwCache() {
-        mVzwRoutingCache.clear();
-    }
-
-    public int getAidMatchMode() {
-        return mAidMatchingSupport;
-    }
-
     public boolean getLastCommitRoutingStatus() {
         return mLastCommitStatus;
-    }
-
-    public int getAidMatchingPlatform() {
-        return mAidMatchingPlatform;
-    }
-
-    public void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
-        pw.println("Routing table:");
-        pw.println("    Default route: " +
-                (NfcService.getInstance().GetDefaultRouteLoc() == 0x00 ? "host" : "secure element"));
-        synchronized (mLock) {
-            for (int i = 0; i < mAidRoutingTable.size(); i++) {
-                Set<String> aids = mAidRoutingTable.valueAt(i);
-                pw.println("    Routed to 0x" + Integer.toHexString(mAidRoutingTable.keyAt(i)) + ":");
-                for (String aid : aids) {
-                    pw.println("        \"" + aid + "\"");
-                }
-            }
-        }
     }
 
     final class ApduPatternResolveInfo {
@@ -501,121 +476,18 @@ public class AidRoutingManager {
         public int powerState;
     }
 
-    final class DefaultAidRouteResolveCache {
-        static final int AID_HDR_LENGTH = 0x04; // TAG + ROUTE + LENGTH_BYTE + POWER
-        static final int MAX_AID_ENTRIES = 50;
-        //AidCacheTable contains the current aid routing table for particular route.
-        //The index is the route ID.
-        private SparseArray<Hashtable<String, AidElement>> aidCacheTable;
-        private HashMap <Integer , Integer> aidCacheSize;
-        //HashMap containing aid routing size .
-        //The index is route ID.
-        private Hashtable<String, AidElement> resolvedAidCache;//HashTable containing resolved default aid routeCache
-        private int mCurrDefaultAidRoute; // current default route in preferences
-        private int mResolvedAidRoute;    //resolved aid route location
-        private boolean mAidRouteResolvedStatus; // boolean value
-        private ArrayList<Integer> aidRoutes;//non-default route location
-
-        DefaultAidRouteResolveCache () {
-            aidCacheTable = new SparseArray<Hashtable<String, AidElement>>(0x03);
-            resolvedAidCache = new Hashtable<String, AidElement>();
-            aidCacheSize= new HashMap <Integer , Integer>(0x03);
-            aidRoutes = new ArrayList<Integer>();
-            mCurrDefaultAidRoute = NfcService.getInstance().GetDefaultRouteLoc();
-            mAidRouteResolvedStatus = false;
-        }
-
-        private Hashtable<String, AidElement> extractResolvedCache()
-        {
-            if(mAidRouteResolvedStatus == false) {
-                return null;
-            }
-            for(int i=0;i< aidCacheTable.size() ;i++) {
-                int route = aidCacheTable.keyAt(i);
-                if(route == mResolvedAidRoute) {
-                    return aidCacheTable.get(route);
+    public void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
+        pw.println("Routing table:");
+        pw.println("    Default route: " + ((mDefaultRoute == 0x00) ? "host" : "secure element"));
+        synchronized (mLock) {
+            for (int i = 0; i < mAidRoutingTable.size(); i++) {
+                Set<String> aids = mAidRoutingTable.valueAt(i);
+                pw.println("    Routed to 0x" + Integer.toHexString(mAidRoutingTable.keyAt(i)) + ":");
+                for (String aid : aids) {
+                    pw.println("        \"" + aid + "\"");
                 }
             }
-            return null;
         }
-
-
-        public int calculateAidRouteSize(Hashtable<String, AidElement> routeCache) {
-            int routeTableSize = 0x00;
-            int routeAidCount = 0x00;
-            for(Map.Entry<String, AidElement> aidEntry : routeCache.entrySet()) {
-                String aid = aidEntry.getKey();
-                if(aid.endsWith("*")) {
-                    routeTableSize += ((aid.length() - 0x01) / 0x02) + AID_HDR_LENGTH; // removing prefix length
-                } else {
-                    routeTableSize += (aid.length() / 0x02)+ AID_HDR_LENGTH;
-                }
-                routeAidCount++;
-            }
-            Log.d(TAG, "calculateAidRouteSize final Routing table size" +routeTableSize);
-            if(routeTableSize <= mAidRoutingTableSize && routeAidCount > MAX_AID_ENTRIES) {
-                routeTableSize = mAidRoutingTableSize + 0x01;
-            }
-                return routeTableSize;
-        }
-
-       public int updateDefaultAidRouteCache(Hashtable<String, AidElement> routeCache , int route) {
-           int routesize = 0x00;
-           Hashtable<String, AidElement> tempRouteCache = new Hashtable<String, AidElement>(0x50);
-           tempRouteCache.putAll(routeCache);
-           routesize = calculateAidRouteSize(tempRouteCache);
-           aidCacheTable.put(route, tempRouteCache);
-           aidCacheSize.put(route, routesize);
-           Log.d(TAG, "updateDefaultAidRouteCache Routing table size" +routesize);
-           return routesize;
-       }
-
-       public boolean resolveDefaultAidRoute () {
-
-           int minRoute = 0xFF;
-           int minAidRouteSize = mAidRoutingTableSize;
-           int tempRoute = 0x00;
-           int tempCacheSize = 0x00;
-           Hashtable<String, AidElement> aidRouteCache = new Hashtable<String, AidElement>();
-           Set<Integer> keys = aidCacheSize.keySet();
-           for (Integer key : keys) {
-               tempRoute = key;
-               tempCacheSize = aidCacheSize.get(key);
-               if (tempCacheSize <= minAidRouteSize) {
-                   minAidRouteSize = tempCacheSize;
-                   minRoute = tempRoute;
-               }
-           }
-           if(minRoute != 0xFF) {
-               mAidRouteResolvedStatus = true;
-               mResolvedAidRoute = minRoute;
-               Log.d(TAG, "min route found "+mResolvedAidRoute);
-           }
-
-           return mAidRouteResolvedStatus;
-       }
-
-       public int getResolvedAidRoute () {
-           return mResolvedAidRoute;
-       }
-
-       public Hashtable<String, AidElement>  getResolvedAidRouteCache() {
-
-           return extractResolvedCache();
-       }
-
-       public int getNextRouteLoc() {
-
-           for (int i = 0; i < 0x03; i++) {
-               if((i != mCurrDefaultAidRoute) && (!aidRoutes.contains(i)))
-               {
-                   aidRoutes.add(i);
-                   return i;
-               }
-           }
-           return 0xFF;
-       }
-
     }
 
     // Returns true if AppChooserActivity is foreground to restart RF discovery so that

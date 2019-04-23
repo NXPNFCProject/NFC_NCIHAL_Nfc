@@ -38,8 +38,9 @@
     <string name="wifi_connect" msgid="6250727951843550671">"ಸಂಪರ್ಕಪಡಿಸು"</string>
     <string name="status_unable_to_connect" msgid="9183908200295307657">"ನೆಟ್‌ವರ್ಕ್‌ಗೆ ಸಂಪರ್ಕಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ"</string>
     <string name="status_wifi_connected" msgid="5893022897732105739">"ಸಂಪರ್ಕಗೊಂಡಿದೆ"</string>
-    <string name="title_connect_to_network" msgid="2474034615817280146">"ನೆಟ್‌ವರ್ಕ್‌ಗೆ ಸಂಪರ್ಕಪಡಿಸಿ"</string>
+    <string name="title_connect_to_network" msgid="2474034615817280146">"ನೆಟ್‌ವರ್ಕ್‌ಗೆ ಸಂಪರ್ಕಿಸಿ"</string>
     <string name="prompt_connect_to_network" msgid="8511683573657516114">"<xliff:g id="NETWORK_SSID">%1$s</xliff:g> ನೆಟ್‌ವರ್ಕ್‌ಗೆ ಸಂಪರ್ಕಿಸುವುದೇ?"</string>
     <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"Android Beam ಬಳಸಲು NFC ಸಕ್ರಿಯಗೊಂಡಿರಬೇಕು. ನೀವದನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಲು ಬಯಸುವಿರಾ?"</string>
     <string name="android_beam" msgid="1666446406999492763">"Android Beam"</string>
+    <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"ಅಪ್ಲಿಕೇಶನ್ ಬಾಹ್ಯ ಸಂಗ್ರಹಣಾ ಅನುಮತಿಯನ್ನು ಹೊಂದಿಲ್ಲ. ಈ ಫೈಲ್‌ ಅನ್ನು ಬೀಮ್‌ ಮಾಡಲು ಇದರ ಅಗತ್ಯವಿದೆ"</string>
 </resources>

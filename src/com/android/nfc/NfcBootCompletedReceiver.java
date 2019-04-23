@@ -40,4 +40,3 @@ public class NfcBootCompletedReceiver extends BroadcastReceiver {
         }
     }
 }
-

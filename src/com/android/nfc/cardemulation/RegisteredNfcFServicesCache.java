@@ -56,11 +56,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import android.os.SystemProperties;
 
 public class RegisteredNfcFServicesCache {
     static final String XML_INDENT_OUTPUT_FEATURE = "http://xmlpull.org/v1/doc/features.html#indent-output";
     static final String TAG = "RegisteredNfcFServicesCache";
-    static final boolean DBG = ("1" == (System.getProperty("persist.nfc.ce_debug")) ? true : false);
+    static final boolean DBG = ((SystemProperties.get("persist.nfc.ce_debug").equals("1")) ? true : false);
 
     final Context mContext;
     final AtomicReference<BroadcastReceiver> mReceiver;

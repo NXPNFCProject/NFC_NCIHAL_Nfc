@@ -9,7 +9,7 @@ import android.os.PowerManager;
  */
 class ScreenStateHelper {
 
-    static final int SCREEN_STATE_UNKNOWN = 0;
+    static final int SCREEN_STATE_UNKNOWN = 0x00;
     static final int SCREEN_STATE_OFF_UNLOCKED = 0x01;
     static final int SCREEN_STATE_OFF_LOCKED = 0x02;
     static final int SCREEN_STATE_ON_LOCKED = 0x04;
@@ -19,8 +19,6 @@ class ScreenStateHelper {
     static final int SCREEN_POLLING_TAG_MASK = 0x10;
     static final int SCREEN_POLLING_P2P_MASK = 0x20;
     static final int SCREEN_POLLING_READER_MASK = 0x40;
-    static final int POWER_STATE_ON = 0x09;
-    static final int POWER_STATE_OFF = 0x0A;
 
     private final PowerManager mPowerManager;
     private final KeyguardManager mKeyguardManager;

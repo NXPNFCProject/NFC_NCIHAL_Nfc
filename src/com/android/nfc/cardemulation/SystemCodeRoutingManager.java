@@ -25,11 +25,12 @@ import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
+import android.os.SystemProperties;
 
 public class SystemCodeRoutingManager {
     static final String TAG = "SystemCodeRoutingManager";
 
-    static final boolean DBG = ("1" == (System.getProperty("persist.nfc.ce_debug")) ? true : false);
+    static final boolean DBG = ((SystemProperties.get("persist.nfc.ce_debug").equals("1")) ? true : false);
 
     final Object mLock = new Object();
 
@@ -79,8 +80,6 @@ public class SystemCodeRoutingManager {
                     Log.d(TAG, "    " + t3tIdentifier.systemCode +
                             "/" + t3tIdentifier.nfcid2 +
                             "/" + t3tIdentifier.t3tPmm);
-
-                    Log.d(TAG, "    " + t3tIdentifier.systemCode + "/");
                 }
             }
             mConfiguredT3tIdentifiers = t3tIdentifiers;

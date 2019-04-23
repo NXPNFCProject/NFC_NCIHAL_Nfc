@@ -29,11 +29,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import android.os.SystemProperties;
 
 public class RegisteredT3tIdentifiersCache {
     static final String TAG = "RegisteredT3tIdentifiersCache";
 
-    static final boolean DBG = ("1" == (System.getProperty("persist.nfc.ce_debug")) ? true : false);
+    static final boolean DBG = ((SystemProperties.get("persist.nfc.ce_debug").equals("1")) ? true : false);
 
     // All NFC-F services that have registered
     List<NfcFServiceInfo> mServices = new ArrayList<NfcFServiceInfo>();
@@ -47,6 +48,7 @@ public class RegisteredT3tIdentifiersCache {
         public final String systemCode;
         public final String nfcid2;
         public final String t3tPmm;
+
         T3tIdentifier(String systemCode, String nfcid2, String t3tPmm) {
             this.systemCode = systemCode;
             this.nfcid2 = nfcid2;
@@ -122,21 +124,21 @@ public class RegisteredT3tIdentifiersCache {
             }
         }
 
-        updateRoutingLocked();
+        updateRoutingLocked(false);
     }
 
-    void clearT3tidentifiercache()
-    {
-        mRoutingManager.onNfccRoutingTableCleared();
-    }
-
-    void updateRoutingLocked() {
+    void updateRoutingLocked(boolean force) {
         if (DBG) Log.d(TAG, "updateRoutingLocked");
         if (!mNfcEnabled) {
             Log.d(TAG, "Not updating routing table because NFC is off.");
             return;
         }
         List<T3tIdentifier> t3tIdentifiers = new ArrayList<T3tIdentifier>();
+
+        // Sending an empty table will de-register all entries
+        if (force) {
+            mRoutingManager.configureRouting(t3tIdentifiers);
+        }
         Iterator<Map.Entry<String, NfcFServiceInfo>> it;
         // Register foreground service
         it = mForegroundT3tIdentifiersCache.entrySet().iterator();
@@ -147,6 +149,12 @@ public class RegisteredT3tIdentifiersCache {
                     entry.getValue().getSystemCode(), entry.getValue().getNfcid2(), entry.getValue().getT3tPmm()));
         }
         mRoutingManager.configureRouting(t3tIdentifiers);
+    }
+
+    public void onSecureNfcToggled() {
+        synchronized(mLock) {
+            updateRoutingLocked(true);
+      }
     }
 
     public void onServicesUpdated(int userId, List<NfcFServiceInfo> services) {
@@ -197,7 +205,7 @@ public class RegisteredT3tIdentifiersCache {
     public void onUserSwitched() {
         synchronized (mLock) {
             mForegroundT3tIdentifiersCache.clear();
-            updateRoutingLocked();
+            updateRoutingLocked(false);
             mEnabledForegroundService = null;
         }
     }

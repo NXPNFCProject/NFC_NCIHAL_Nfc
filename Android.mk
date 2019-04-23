@@ -23,8 +23,10 @@ LOCAL_JAVA_LIBRARIES := com.nxp.nfc
 
 LOCAL_STATIC_JAVA_LIBRARIES := android-support-core-utils
 LOCAL_STATIC_JAVA_LIBRARIES +=android.hardware.secure_element-V1.0-java
-LOCAL_STATIC_JAVA_LIBRARIES +=vendor.nxp.nxpwiredse-V1.0-java
-
+NXP_WIRED_SE:=TRUE
+ifeq ($(NXP_WIRED_SE),TRUE)
+  LOCAL_STATIC_JAVA_LIBRARIES += vendor.nxp.nxpwiredse-V1.0-java
+endif
 LOCAL_PROGUARD_ENABLED := disabled
 
 include $(BUILD_PACKAGE)

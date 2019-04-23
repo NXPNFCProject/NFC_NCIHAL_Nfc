@@ -42,4 +42,5 @@
     <string name="prompt_connect_to_network" msgid="8511683573657516114">"连接到网络<xliff:g id="NETWORK_SSID">%1$s</xliff:g>？"</string>
     <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"需要开启NFC才能使用Android Beam。要开启吗？"</string>
     <string name="android_beam" msgid="1666446406999492763">"Android Beam"</string>
+    <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"应用不具备外部存储权限。需要此权限才能传输此文件"</string>
 </resources>

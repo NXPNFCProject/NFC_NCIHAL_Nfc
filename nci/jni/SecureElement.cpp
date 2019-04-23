@@ -1202,42 +1202,6 @@ TheEnd:
 
 /*******************************************************************************
 **
-** Function:        notifyConnectivityListeners
-**
-** Description:     Notify the NFC service about a connectivity event from
-*secure element.
-**                  evtSrc: source of event UICC/eSE.
-**
-** Returns:         None
-**
-*******************************************************************************/
-void SecureElement::notifyConnectivityListeners(uint8_t evtSrc) {
-  static const char fn[] = "SecureElement::notifyConnectivityListeners";
-  DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: enter; evtSrc =%u", fn, evtSrc);
-
-  JNIEnv* e = NULL;
-  ScopedAttach attach(mNativeData->vm, &e);
-  if (e == NULL) {
-    LOG(ERROR) << StringPrintf("%s: jni env is null", fn);
-    return;
-  }
-
-  e->CallVoidMethod(mNativeData->manager,
-                    android::gCachedNfcManagerNotifyConnectivityListeners,
-                    evtSrc);
-  if (e->ExceptionCheck()) {
-    e->ExceptionClear();
-    LOG(ERROR) << StringPrintf("%s: fail notify", fn);
-    goto TheEnd;
-  }
-
-TheEnd:
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", fn);
-}
-
-/*******************************************************************************
-**
 ** Function:        notifyEmvcoMultiCardDetectedListeners
 **
 ** Description:     Notify the NFC service about a multiple card presented to
@@ -2573,7 +2537,6 @@ void SecureElement::nfaHciCallback(tNFA_HCI_EVT event,
         }
         //            int pipe = (eventData->rcvd_evt.pipe);
         //            /*commented to eliminate unused variable warning*/
-        sSecElem.notifyConnectivityListeners(evtSrc);
       } else {
         DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
             "%s: NFA_HCI_EVENT_RCVD_EVT; ################################### "

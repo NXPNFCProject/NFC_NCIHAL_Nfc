@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 NXP Semiconductors
+ * Copyright (C) 2017 NXP Semiconductors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,13 +44,11 @@ public class DtaServiceConnector {
     }
 
     public void bindService() {
-      if (!isBound) {
-        Intent intent = new Intent(sMessageService);
-        Intent explicitIntent = createExplicitFromImplicitIntent(mContext, intent);
-        if (null != explicitIntent) {
-          mContext.bindService(explicitIntent, myConnection, Context.BIND_AUTO_CREATE);
+        if (!isBound) {
+            Intent intent = new Intent(sMessageService);
+            mContext.bindService(createExplicitFromImplicitIntent(mContext,intent),
+                                   myConnection,Context.BIND_AUTO_CREATE);
         }
-      }
     }
 
     private ServiceConnection myConnection = new ServiceConnection() {

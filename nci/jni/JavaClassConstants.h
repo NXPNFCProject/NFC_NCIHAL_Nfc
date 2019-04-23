@@ -38,7 +38,6 @@
 namespace android {
 extern jmethodID gCachedNfcManagerNotifyNdefMessageListeners;
 extern jmethodID gCachedNfcManagerNotifyTransactionListeners;
-extern jmethodID gCachedNfcManagerNotifyConnectivityListeners;
 extern jmethodID gCachedNfcManagerNotifyEmvcoMultiCardDetectedListeners;
 extern jmethodID gCachedNfcManagerNotifyLlcpLinkActivation;
 extern jmethodID gCachedNfcManagerNotifyLlcpLinkDeactivated;

@@ -35,11 +35,12 @@
     <string name="complete_with" msgid="6797459104103012992">"ഇതുപയോഗിച്ച് പൂർത്തിയാക്കുക"</string>
     <string name="default_pay_app_removed" msgid="4108250545457437360">"\'ടാപ്പുചെയ്‌ത് പണമടയ്‌ക്കുക\' എന്നതിനായി നിങ്ങൾ തിരഞ്ഞെടുത്ത സേവനം നീക്കംചെയ്‌തു. മറ്റൊന്ന് തിരഞ്ഞെടുക്കണോ?"</string>
     <string name="ask_nfc_tap" msgid="2925239870458286340">"പൂർത്തിയാക്കുന്നതിന് മറ്റൊരു ഉപകരണം ടാപ്പുചെയ്യുക"</string>
-    <string name="wifi_connect" msgid="6250727951843550671">"കണക്റ്റുചെയ്യുക"</string>
+    <string name="wifi_connect" msgid="6250727951843550671">"കണക്റ്റ് ചെയ്യുക"</string>
     <string name="status_unable_to_connect" msgid="9183908200295307657">"നെറ്റ്‌വർക്കിലേക്ക് കണക്റ്റുചെയ്യാനായില്ല"</string>
     <string name="status_wifi_connected" msgid="5893022897732105739">"കണക്റ്റുചെയ്‌തു"</string>
     <string name="title_connect_to_network" msgid="2474034615817280146">"നെ‌റ്റ്‌വർക്കിൽ കണക്‌റ്റുചെയ്യുക"</string>
     <string name="prompt_connect_to_network" msgid="8511683573657516114">"<xliff:g id="NETWORK_SSID">%1$s</xliff:g> എന്ന നെറ്റ്‌വർക്കിലേക്ക് കണക്‌റ്റുചെയ്യണോ?"</string>
     <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"Android ബീമിന്, NFC പ്രവർത്തനക്ഷമമാക്കേണ്ടതുണ്ട്. നിങ്ങൾക്കത് പ്രവർത്തനക്ഷമമാക്കണോ?"</string>
     <string name="android_beam" msgid="1666446406999492763">"Android ബീം"</string>
+    <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"ആപ്പിന് എക്‌സ്‌റ്റേണൽ സ്‌റ്റോറേജ് അനുമതി ഇല്ല. ഈ ഫയൽ ബീംചെയ്യാൻ ഇത് ആവശ്യമാണ്"</string>
 </resources>

@@ -33,7 +33,7 @@
     <string name="could_not_use_app" msgid="8137587876138569083">"Aplikaci <xliff:g id="APP">%1$s</xliff:g> nelze použít."</string>
     <string name="pay_with" msgid="5531545488795798945">"Platební metoda"</string>
     <string name="complete_with" msgid="6797459104103012992">"Dokončit pomocí"</string>
-    <string name="default_pay_app_removed" msgid="4108250545457437360">"Preferovaná služba pro platbu dotykem telefonu byla odstraněna. Chcete vybrat jinou?"</string>
+    <string name="default_pay_app_removed" msgid="4108250545457437360">"Preferovaná služba pro platbu přiložením telefonu byla odstraněna. Chcete vybrat jinou?"</string>
     <string name="ask_nfc_tap" msgid="2925239870458286340">"Akci dokončíte tím, že se zařízením dotknete jiného zařízení"</string>
     <string name="wifi_connect" msgid="6250727951843550671">"Připojit"</string>
     <string name="status_unable_to_connect" msgid="9183908200295307657">"K síti se nelze připojit."</string>
@@ -42,4 +42,5 @@
     <string name="prompt_connect_to_network" msgid="8511683573657516114">"Připojit k síti <xliff:g id="NETWORK_SSID">%1$s</xliff:g>?"</string>
     <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"Funkce Android Beam k aktivaci vyžaduje technologii NFC. Chcete ji aktivovat?"</string>
     <string name="android_beam" msgid="1666446406999492763">"Teleport Android"</string>
+    <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"Aplikace nemá přístup k externímu úložišti. Přístup je vyžadován k odeslání souboru pomocí funkce Beam."</string>
 </resources>

@@ -42,4 +42,5 @@
     <string name="prompt_connect_to_network" msgid="8511683573657516114">"ネットワーク<xliff:g id="NETWORK_SSID">%1$s</xliff:g>に接続しますか？"</string>
     <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"Androidビームを使用するにはNFCを有効にする必要があります。有効にしますか？"</string>
     <string name="android_beam" msgid="1666446406999492763">"Androidビーム"</string>
+    <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"アプリに外部ストレージへのアクセス権限が付与されていません。このファイルをビームするには、権限を付与してください"</string>
 </resources>

@@ -334,6 +334,7 @@ public class BluetoothPeripheralHandover implements BluetoothProfile.ServiceList
     void nextStepConnect() {
         switch (mState) {
             case STATE_INIT_COMPLETE:
+
                 if (mDevice.getBondState() != BluetoothDevice.BOND_BONDED) {
                     requestPairConfirmation();
                     mState = STATE_WAITING_FOR_BOND_CONFIRMATION;

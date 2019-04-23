@@ -42,4 +42,5 @@
     <string name="prompt_connect_to_network" msgid="8511683573657516114">"Да се установи ли връзка с мрежата „<xliff:g id="NETWORK_SSID">%1$s</xliff:g>“?"</string>
     <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"Функцията „Android Лъч“ изисква да активирате КБП. Искате ли да го направите?"</string>
     <string name="android_beam" msgid="1666446406999492763">"Android Лъч"</string>
+    <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"Приложението няма разрешение за външно хранилище. То се изисква за излъчването на този файл"</string>
 </resources>

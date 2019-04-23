@@ -425,19 +425,6 @@ class SecureElement {
 
   /*******************************************************************************
   **
-  ** Function:        notifyConnectivityListeners
-  **
-  ** Description:     Notify the NFC service about a connectivity event from
-  *secure element.
-  **                  evtSrc: source of event UICC/eSE.
-  **
-  ** Returns:         None
-  **
-  *******************************************************************************/
-  void notifyConnectivityListeners(uint8_t evtSrc);
-
-  /*******************************************************************************
-  **
   ** Function:        notifyEmvcoMultiCardDetectedListeners
   **
   ** Description:     Notify the NFC service about a multiple card presented to

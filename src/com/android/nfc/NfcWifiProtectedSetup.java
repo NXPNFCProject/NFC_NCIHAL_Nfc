@@ -25,8 +25,11 @@ import android.nfc.NdefRecord;
 import android.nfc.tech.Ndef;
 import android.os.UserHandle;
 import android.os.UserManager;
+import android.util.Log;
+
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.BitSet;
 
 public final class NfcWifiProtectedSetup {
@@ -51,6 +54,7 @@ public final class NfcWifiProtectedSetup {
     private static final short AUTH_TYPE_WPA_EAP =  0x0008;
     private static final short AUTH_TYPE_WPA2_EAP = 0x0010;
     private static final short AUTH_TYPE_WPA2_PSK = 0x0020;
+    private static final short AUTH_TYPE_WPA_AND_WPA2_PSK = 0x0022;
 
     private static final int MAX_NETWORK_KEY_SIZE_BYTES = 64;
 
@@ -135,7 +139,7 @@ public final class NfcWifiProtectedSetup {
                     byte[] networkKey = new byte[fieldSize];
                     payload.get(networkKey);
                     if (fieldSize > 0) {
-                        result.preSharedKey = "\"" + new String(networkKey) + "\"";
+                        result.preSharedKey = getPskValidFormat(new String(networkKey));
                     }
                     break;
                 case AUTH_TYPE_FIELD_ID:
@@ -170,12 +174,24 @@ public final class NfcWifiProtectedSetup {
     }
 
     private static void populateAllowedKeyManagement(BitSet allowedKeyManagement, short authType) {
-        if (authType == AUTH_TYPE_WPA_PSK || authType == AUTH_TYPE_WPA2_PSK) {
+        if (authType == AUTH_TYPE_WPA_PSK || authType == AUTH_TYPE_WPA2_PSK
+                || authType == AUTH_TYPE_WPA_AND_WPA2_PSK) {
             allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
         } else if (authType == AUTH_TYPE_WPA_EAP || authType == AUTH_TYPE_WPA2_EAP) {
             allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_EAP);
         } else if (authType == AUTH_TYPE_OPEN) {
             allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
         }
+    }
+
+    private static String getPskValidFormat(String data) {
+        if (!data.matches("[0-9A-Fa-f]{64}")) { // if not HEX string
+            data = convertToQuotedString(data);
+        }
+        return data;
+    }
+
+    private static String convertToQuotedString(String str) {
+        return '"' + str + '"';
     }
 }

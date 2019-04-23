@@ -42,4 +42,5 @@
     <string name="prompt_connect_to_network" msgid="8511683573657516114">"​ເຊື່ອມ​ຕໍ່​ກັບ​ເຄືອ​ຂ່າຍ <xliff:g id="NETWORK_SSID">%1$s</xliff:g> ບໍ?"</string>
     <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"Android Beam ຕ້ອງ​ໃຊ້ NFC. ທ່ານ​ຕ້ອງ​ການ​ເປີດ​ໃຊ້ NFC ບໍ່?"</string>
     <string name="android_beam" msgid="1666446406999492763">"Android Beam"</string>
+    <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"ແອັບພລິເຄຊັນບໍ່ມີສິດອະນຸຍາດໃຊ້ບ່ອນຈັດເກັບຂໍ້ມູນພາຍນອກ. ສິດອະນຸຍາດນີ້ຈຳເປັນສຳລັບການສົ່ງໄຟລ໌ນີ້"</string>
 </resources>

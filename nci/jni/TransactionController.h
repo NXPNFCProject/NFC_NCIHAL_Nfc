@@ -40,7 +40,6 @@ typedef enum transactionId {
   NFA_EE_ACTION_EVENT,
   NFA_TRANS_CE_ACTIVATED_EVENT,
   etsiReader,
-  jcosDownload,
   setScreenState,
   staticDualUicc,
   getTransanctionRequest,

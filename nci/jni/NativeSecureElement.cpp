@@ -81,13 +81,8 @@ static const int EE_ERROR_INIT = -3;
 ** Returns:         Handle of secure element.  values < 0 represent failure.
 **
 *******************************************************************************/
-#if (NXP_EXTNS == TRUE)
-static jint nativeNfcSecureElement_doOpenSecureElementConnection(
-    JNIEnv*, jobject, __attribute__((unused)) jint seId)
-#else
 static jint nativeNfcSecureElement_doOpenSecureElementConnection(JNIEnv*,
                                                                  jobject)
-#endif
 {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
   bool stat = false;
@@ -492,8 +487,8 @@ static jboolean nativeNfcSecureElement_doResetSecureElement(JNIEnv*, jobject,
  ** Returns:         True if ok.
  **
  *******************************************************************************/
-static jboolean nativeNfcSecureElement_doeSEChipResetSecureElement(JNIEnv*,
-                                                                   jobject) {
+__attribute__((unused)) static jboolean
+nativeNfcSecureElement_doeSEChipResetSecureElement(JNIEnv*, jobject) {
   bool stat = false;
   NFCSTATUS status = NFCSTATUS_FAILED;
   unsigned long num = 0x01;
@@ -616,19 +611,13 @@ static jbyteArray nativeNfcSecureElement_doTransceive(JNIEnv* e, jobject,
 **
 *****************************************************************************/
 static JNINativeMethod gMethods[] = {
-#if (NXP_EXTNS == TRUE)
-    {"doNativeOpenSecureElementConnection", "(I)I",
-     (void*)nativeNfcSecureElement_doOpenSecureElementConnection},
-#else
     {"doNativeOpenSecureElementConnection", "()I",
      (void*)nativeNfcSecureElement_doOpenSecureElementConnection},
-#endif
     {"doNativeDisconnectSecureElementConnection", "(I)Z",
      (void*)nativeNfcSecureElement_doDisconnectSecureElementConnection},
     {"doNativeResetSecureElement", "(I)Z",
      (void*)nativeNfcSecureElement_doResetSecureElement},
-    {"doNativeeSEChipResetSecureElement", "()Z",
-     (void*)nativeNfcSecureElement_doeSEChipResetSecureElement},
+
     {"doTransceive", "(I[B)[B", (void*)nativeNfcSecureElement_doTransceive},
     {"doNativeGetAtr", "(I)[B", (void*)nativeNfcSecureElement_doGetAtr},
 };

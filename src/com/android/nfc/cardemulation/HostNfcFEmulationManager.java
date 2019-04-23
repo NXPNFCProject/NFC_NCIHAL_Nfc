@@ -13,6 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/******************************************************************************
+*
+*  The original Work has been changed by NXP.
+*
+*  Licensed under the Apache License, Version 2.0 (the "License");
+*  you may not use this file except in compliance with the License.
+*  You may obtain a copy of the License at
+*
+*  http://www.apache.org/licenses/LICENSE-2.0
+*
+*  Unless required by applicable law or agreed to in writing, software
+*  distributed under the License is distributed on an "AS IS" BASIS,
+*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*  See the License for the specific language governing permissions and
+*  limitations under the License.
+*
+*  Copyright 2018 NXP
+*
+******************************************************************************/
 
 package com.android.nfc.cardemulation;
 
@@ -35,10 +54,11 @@ import com.android.nfc.NfcService;
 
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
+import android.os.SystemProperties;
 
 public class HostNfcFEmulationManager {
     static final String TAG = "HostNfcFEmulationManager";
-    static final boolean DBG = ("1" == (System.getProperty("persist.nfc.ce_debug")) ? true : false);
+    static final boolean DBG = ((SystemProperties.get("persist.nfc.ce_debug").equals("1")) ? true : false);
 
     static final int STATE_IDLE = 0;
     static final int STATE_W4_SERVICE = 1;
@@ -143,8 +163,7 @@ public class HostNfcFEmulationManager {
                 break;
             }
         }
-
-	}
+    }
 
     public void onHostEmulationDeactivated() {
         if (DBG) Log.d(TAG, "notifyHostEmulationDeactivated");
@@ -284,7 +303,6 @@ public class HostNfcFEmulationManager {
                 mServiceName = null;
             }
         }
-
     };
 
     class MessageHandler extends Handler {
@@ -305,19 +323,18 @@ public class HostNfcFEmulationManager {
                     return;
                 }
                 byte[] data = dataBundle.getByteArray("data");
+                /* this piece of code is commented to allow the application to send an empty
+                   data packet */
                 /*if (data == null) {
                     Log.e(TAG, "Data is null");
                     return;
                 }
-                */
-                if (data == null || data.length == 0) {
-                    Log.e(TAG, "Empty response packet");
-                    sendEmptyData();
+                if (data.length == 0) {
+                    Log.e(TAG, "Invalid response packet");
                     return;
-                }
+                }*/
                 if (data != null && (data.length != (data[0] & 0xff))) {
                     Log.e(TAG, "Invalid response packet");
-                    sendEmptyData();
                     return;
                 }
                 int state;
@@ -333,12 +350,6 @@ public class HostNfcFEmulationManager {
                 }
             }
         }
-    }
-
-    static void sendEmptyData() {
-        byte[] data = new byte[0]; /* to send NCI empty message */
-        Log.d(TAG, "sending empty data");
-        NfcService.getInstance().sendData(data);
     }
 
     static String bytesToString(byte[] bytes, int offset, int length) {
