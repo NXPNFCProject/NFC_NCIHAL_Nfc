@@ -1675,8 +1675,6 @@ bool SecureElement::transceive(uint8_t* xmitBuffer, int32_t xmitBufferSize,
       }
       if (nfcFL.nfcNxpEse) {
         if (nfcFL.eseFL._ESE_DUAL_MODE_PRIO_SCHEME ==
-                nfcFL.eseFL._ESE_WIRED_MODE_RESUME ||
-            nfcFL.eseFL._ESE_DUAL_MODE_PRIO_SCHEME ==
                 nfcFL.eseFL._ESE_WIRED_MODE_RESUME) {
           if (!checkForWiredModeAccess()) {
             DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(

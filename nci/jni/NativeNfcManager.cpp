@@ -6665,7 +6665,7 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
         }
       }
 
-      actualWrittenCntxLen = write(fileStream, &uiccContextLen, 1);
+      actualWrittenCntxLen = write(fileStream, &uiccContextLen, sizeof(uiccContextLen));
       if (uiccContextLen > 0x00) {
         cntx_len = uiccContextLen;
         techCap = uiccTechCapLen;
