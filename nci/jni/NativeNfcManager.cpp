@@ -3105,7 +3105,12 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
     // Stop RF Discovery.
     startRfDiscovery(false);
 
-    if (sPollingEnabled) status = stopPolling_rfDiscoveryDisabled();
+    if (sPollingEnabled) {
+      status = stopPolling_rfDiscoveryDisabled();
+      if (status != NFA_STATUS_OK) {
+        LOG(ERROR) << StringPrintf("%s: fail disable polling", __func__);
+      }
+    }
     sDiscoveryEnabled = false;
 
     if (NfcConfig::hasKey(NAME_UICC_LISTEN_TECH_MASK)) {
@@ -6622,12 +6627,16 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
       size_t actualWrittenCntxLen = 0;
 
       if (slotnum == 1) {
-        lseek(fileStream, 0, SEEK_SET);
+        if(lseek(fileStream, 0, SEEK_SET) < 0) {
+          LOG(ERROR) << StringPrintf("lseek failed");
+        }
       } else if (slotnum == 2) {
-        lseek(fileStream,
+        if(lseek(fileStream,
               sizeof(dualUiccInfo.sUicc1Cntx) +
                   sizeof(dualUiccInfo.sUicc1TechCapblty),
-              SEEK_SET);
+              SEEK_SET) < 0) {
+          LOG(ERROR) << StringPrintf("lseek failed");
+        }
       }
 
       actualWrittenCntxLen = write(fileStream, &uiccContextLen, 1);
@@ -6708,12 +6717,16 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
       uint8_t readCntxLen = 0;
 
       if (slotnum == 1) {
-        lseek(fileStream, 0, SEEK_SET);
+        if(lseek(fileStream, 0, SEEK_SET) < 0) {
+          LOG(ERROR) << StringPrintf("lseek failed");
+        }
       } else if (slotnum == 2) {
-        lseek(fileStream,
+        if(lseek(fileStream,
               sizeof(dualUiccInfo.sUicc1Cntx) +
                   sizeof(dualUiccInfo.sUicc1TechCapblty),
-              SEEK_SET);
+              SEEK_SET) < 0) {
+          LOG(ERROR) << StringPrintf("lseek failed");
+        }
       }
       actualReadCntxLen = read(fileStream, &readCntxLen, 1);
       if (readCntxLen > 0x00) {

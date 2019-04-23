@@ -58,6 +58,7 @@ HciRFParams::HciRFParams() {
   bMode_CeB = 0;
   bAfi_CeB = 0;
   bHighLayerRspSize_CeB = 0;
+  get_config = NULL;
   mIsInit = false;
 }
 

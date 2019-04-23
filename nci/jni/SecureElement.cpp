@@ -4029,7 +4029,9 @@ void releaseSPIEvtHandlerThread() {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("Killed spiEvtHandler_thread error status:%d", errno);
   } else {
-    pthread_join(spiEvtHandler_thread, NULL);
+    if (pthread_join(spiEvtHandler_thread, NULL) != 0) {
+      LOG(ERROR) << StringPrintf("%s: SpiEvtHandler failed ", __func__);
+    }
   }
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("Exit releaseSPIEvtHandlerThread");

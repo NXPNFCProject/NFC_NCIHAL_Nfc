@@ -163,7 +163,10 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection(JNIEnv*,
     if (nfcFL.eseFL._ESE_FORCE_ENABLE &&
         (!(p61_current_state & (P61_STATE_SPI | P61_STATE_SPI_PRIO))) &&
         (!(dual_mode_current_state & CL_ACTIVE)))
-      stat = se.SecEle_Modeset(0x01);  // Workaround
+      stat = se.SecEle_Modeset(0x01);// Workaround
+      if(!stat) {
+        LOG(ERROR) << StringPrintf("Modeset failed");
+      }
     usleep(150000); /*provide enough delay if NFCC enter in recovery*/
   }
 #endif
