@@ -1447,6 +1447,7 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route,
       value, route, power);
   unsigned long max_tech_mask = 0x03;
   unsigned long uiccListenTech = 0;
+  unsigned long eseListenTech = 0;
 
   if (!nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC) {
     if (nfcManager_getUiccRoute(sCurrentSelectedUICCSlot) != 0xFF) {
@@ -1678,24 +1679,51 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route,
 
   uiccListenTech = NfcConfig::getUnsigned("NAME_UICC_LISTEN_TECH_MASK", 0x07);
   if ((ActDevHandle != NFA_HANDLE_INVALID) && (0 != uiccListenTech)) {
-    {
-      SyncEventGuard guard (SecureElement::getInstance().mUiccListenEvent);
-      nfaStat = NFA_CeConfigureUiccListenTech(ActDevHandle, 0x00);
-      if (nfaStat == NFA_STATUS_OK) {
-        SecureElement::getInstance().mUiccListenEvent.wait ();
-      } else
-        DLOG_IF(ERROR, nfc_debug_enabled)
-            << StringPrintf("fail to start UICC listen");
+    if ((ActDevHandle != SecureElement::EE_HANDLE_0xF3) &&
+        (ActDevHandle != 0x00)) {
+      {
+        SyncEventGuard guard(SecureElement::getInstance().mUiccListenEvent);
+        nfaStat = NFA_CeConfigureUiccListenTech(ActDevHandle, 0x00);
+        if (nfaStat == NFA_STATUS_OK) {
+          SecureElement::getInstance().mUiccListenEvent.wait();
+        } else
+          DLOG_IF(ERROR, nfc_debug_enabled)
+              << StringPrintf("fail to start UICC listen");
+      }
+      {
+        SyncEventGuard guard(SecureElement::getInstance().mUiccListenEvent);
+        nfaStat = NFA_CeConfigureUiccListenTech(ActDevHandle,
+                                                (uiccListenTech & 0x07));
+        if (nfaStat == NFA_STATUS_OK) {
+          SecureElement::getInstance().mUiccListenEvent.wait();
+        } else
+          DLOG_IF(ERROR, nfc_debug_enabled)
+              << StringPrintf("fail to start UICC listen");
+      }
     }
-    {
-      SyncEventGuard guard (SecureElement::getInstance().mUiccListenEvent);
-      nfaStat =
-          NFA_CeConfigureUiccListenTech(ActDevHandle, (uiccListenTech & 0x07));
-      if (nfaStat == NFA_STATUS_OK) {
-        SecureElement::getInstance().mUiccListenEvent.wait ();
-      } else
-        DLOG_IF(ERROR, nfc_debug_enabled)
-            << StringPrintf("fail to start UICC listen");
+  }
+  eseListenTech = NfcConfig::getUnsigned("NAME_NXP_ESE_LISTEN_TECH_MASK", 0x07);
+  if ((ActDevHandle != NFA_HANDLE_INVALID) && (0 != eseListenTech)) {
+    if (ActDevHandle == SecureElement::EE_HANDLE_0xF3) {
+      {
+        SyncEventGuard guard(SecureElement::getInstance().mEseListenEvent);
+        nfaStat = NFA_CeConfigureEseListenTech(ActDevHandle, 0x00);
+        if (nfaStat == NFA_STATUS_OK) {
+          SecureElement::getInstance().mEseListenEvent.wait();
+        } else
+          DLOG_IF(ERROR, nfc_debug_enabled)
+              << StringPrintf("fail to start eSE listen");
+      }
+      {
+        SyncEventGuard guard(SecureElement::getInstance().mEseListenEvent);
+        nfaStat =
+            NFA_CeConfigureEseListenTech(ActDevHandle, (eseListenTech & 0x07));
+        if (nfaStat == NFA_STATUS_OK) {
+          SecureElement::getInstance().mEseListenEvent.wait();
+        } else
+          DLOG_IF(ERROR, nfc_debug_enabled)
+              << StringPrintf("fail to start eSE listen");
+      }
     }
   }
   return nfaStat;
