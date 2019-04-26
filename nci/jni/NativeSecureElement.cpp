@@ -306,7 +306,7 @@ static jboolean nativeNfcSecureElement_doDisconnectSecureElementConnection(
 
 #if (NXP_EXTNS == TRUE)
   if (nfcFL.nfcNxpEse) {
-    if (handle == (SecureElement::EE_HANDLE_0xF8 || se.EE_HANDLE_0xF4)) {
+    if ((handle == SecureElement::EE_HANDLE_0xF8) || (handle == se.EE_HANDLE_0xF4)) {
       stat = SecureElement::getInstance().disconnectEE(handle);
       se.mIsWiredModeOpen = false;
       if (nfcFL.eseFL._ESE_EXCLUSIVE_WIRED_MODE) {
