@@ -1006,6 +1006,11 @@ static void nfaConnectionCallback(uint8_t connEvent,
       }
 
       nativeNfcTag_resetPresenceCheck();
+      if (!isListenMode(eventData->activated) &&
+          (prevScreenState == NFA_SCREEN_STATE_OFF_LOCKED ||
+           prevScreenState == NFA_SCREEN_STATE_OFF_UNLOCKED)) {
+        NFA_Deactivate(FALSE);
+      }
 
       if (isPeerToPeer(eventData->activated)) {
         if (sReaderModeEnabled) {
@@ -5074,7 +5079,9 @@ static void restartUiccListen(jint uiccSlot) {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: Enter state = %d", __func__, state);
 
-    if (sIsDisabling || !sIsNfaEnabled) {
+    if (sIsDisabling || !sIsNfaEnabled ||
+      (NFC_GetNCIVersion() != NCI_VERSION_2_0)) {
+      prevScreenState = state;
       return;
     }
 
