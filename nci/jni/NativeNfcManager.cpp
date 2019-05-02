@@ -1895,10 +1895,17 @@ static void nfaConnectionCallback(uint8_t connEvent,
   *******************************************************************************/
   static jboolean nfcManager_routeAid(JNIEnv * e, jobject, jbyteArray aid,
                                       jint route, jint power, jint aidInfo) {
-    ScopedByteArrayRO bytes(e, aid);
-    uint8_t* buf =
-        const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
-    size_t bufLen = bytes.size();
+    uint8_t* buf;
+    size_t bufLen;
+
+    if (aid == NULL) {
+      buf = NULL;
+      bufLen = 0;
+    } else {
+      ScopedByteArrayRO bytes(e, aid);
+      buf = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
+      bufLen = bytes.size();
+    }
 
 #if (NXP_EXTNS == TRUE)
     if ((nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH) &&
@@ -1940,9 +1947,18 @@ static void nfaConnectionCallback(uint8_t connEvent,
   *******************************************************************************/
   static jboolean nfcManager_unrouteAid(JNIEnv * e, jobject, jbyteArray aid) {
     ScopedByteArrayRO bytes(e, aid);
-    uint8_t* buf =
-        const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
-    size_t bufLen = bytes.size();
+    uint8_t* buf;
+    size_t bufLen;
+
+    if (aid == NULL) {
+      buf = NULL;
+      bufLen = 0;
+    } else {
+      ScopedByteArrayRO bytes(e, aid);
+      buf = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
+      bufLen = bytes.size();
+    }
+
     bool result = RoutingManager::getInstance().removeAidRouting(buf, bufLen);
     return result;
   }
@@ -3665,8 +3681,8 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
   static jint nfcManager_getDefaultDesfireRoute(JNIEnv * e, jobject o) {
     unsigned long num = 0;
 #if (NXP_EXTNS == TRUE)
-    if (NfcConfig::hasKey(NAME_DEFAULT_ROUTE))
-      num = NfcConfig::getUnsigned(NAME_DEFAULT_ROUTE);
+    if (NfcConfig::hasKey(NAME_DEFAULT_ISODEP_ROUTE))
+      num = NfcConfig::getUnsigned(NAME_DEFAULT_ISODEP_ROUTE);
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: enter; NAME_DEFAULT_ROUTE = %02lx", __func__, num);
 #endif

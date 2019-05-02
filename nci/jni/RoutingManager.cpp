@@ -112,7 +112,7 @@ extern bool nfcManager_getTransanctionRequest(int t3thandle,
 #endif
 #endif
 }  // namespace android
-
+static const uint8_t AID_ROUTE_QUAL_PREFIX = 0x10;
 #if (NXP_EXTNS == TRUE)
 static RouteInfo_t gRouteInfo;
 #endif
@@ -1208,7 +1208,7 @@ void RoutingManager::setEmptyAidEntry() {
     return;
   }
 
-  tNFA_STATUS nfaStat = NFA_EeAddAidRouting(routeLoc, 0, NULL, power, 0x10);
+  tNFA_STATUS nfaStat = NFA_EeAddAidRouting(routeLoc, 0, NULL, power, AID_ROUTE_QUAL_PREFIX);
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: Status :0x%2x", __func__, nfaStat);
 }
@@ -1228,6 +1228,13 @@ bool RoutingManager::addAidRouting(const uint8_t* aid, uint8_t aidLen,
   tNFA_HANDLE handle;
   tNFA_HANDLE current_handle;
   SecureElement& se = SecureElement::getInstance();
+
+  if ((aid == nullptr) && (aidLen == 0x00)) {
+    power = mCeRouteStrictDisable
+                ? mDefaultIso7816Powerstate
+                : (mDefaultIso7816Powerstate & POWER_STATE_MASK);
+  }
+
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
       "%s: enter, route:%x power:0x%x aidInfo:%x", fn, route, power, aidInfo);
   handle = SecureElement::getInstance().getEseHandleFromGenericId(route);
