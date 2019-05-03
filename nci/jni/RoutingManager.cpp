@@ -292,8 +292,7 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
     }
   }
 
-  mDefaultFelicaRoute =
-      NfcConfig::getUnsigned(NAME_DEFAULT_FELICA_CLT_ROUTE, 0x00);
+  mDefaultFelicaRoute = NfcConfig::getUnsigned(NAME_DEFAULT_NFCF_ROUTE, 0x00);
 
   if (nfcFL.eseFL._ESE_FELICA_CLT) {
     if (NfcConfig::hasKey(NAME_DEFAULT_NFCF_ROUTE)) {
@@ -1195,14 +1194,18 @@ void RoutingManager::setEmptyAidEntry() {
   uint16_t routeLoc;
   uint8_t power;
 
-  routeLoc = mDefaultIso7816SeID;
+  routeLoc = ((mDefaultIso7816SeID == 0x00)
+                  ? ROUTE_LOC_HOST_ID
+                  : ((mDefaultIso7816SeID == 0x01)
+                         ? ROUTE_LOC_ESE_ID
+                         : getUiccRouteLocId(mDefaultIso7816SeID)));
 
   power = mCeRouteStrictDisable
               ? mDefaultIso7816Powerstate
               : (mDefaultIso7816Powerstate & POWER_STATE_MASK);
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: route %x", __func__, routeLoc);
-  if (routeLoc == 0x400) power &= 0x11;
+  if (routeLoc == ROUTE_LOC_HOST_ID) power &= 0x11;
   if (routeLoc == NFA_HANDLE_INVALID) {
     LOG(ERROR) << StringPrintf("%s: Invalid routeLoc. Return.", __func__);
     return;

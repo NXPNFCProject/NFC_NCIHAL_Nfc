@@ -61,7 +61,7 @@ using namespace std;
 #define EE_HCI_DEFAULT_HANDLE 0x401
 
 typedef struct protoroutInfo {
-  uint8_t ee_handle;
+  uint16_t ee_handle;
   tNFA_PROTOCOL_MASK protocols_switch_on;
   tNFA_PROTOCOL_MASK protocols_switch_off;
   tNFA_PROTOCOL_MASK protocols_battery_off;
