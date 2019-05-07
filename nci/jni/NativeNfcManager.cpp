@@ -1956,7 +1956,6 @@ static void nfaConnectionCallback(uint8_t connEvent,
   **
   *******************************************************************************/
   static jboolean nfcManager_unrouteAid(JNIEnv * e, jobject, jbyteArray aid) {
-    ScopedByteArrayRO bytes(e, aid);
     uint8_t* buf;
     size_t bufLen;
 
