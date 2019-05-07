@@ -150,6 +150,8 @@ class RoutingManager {
   static RoutingManager& getInstance();
   bool initialize(nfc_jni_native_data* native);
   void deinitialize();
+  void enableRoutingToHost();
+  void disableRoutingToHost();
 #if (NXP_EXTNS == TRUE)
   void setRouting(bool);
   void getRouting();
@@ -331,6 +333,7 @@ class RoutingManager {
   uint8_t mDefaultSysCodePowerstate;
   uint8_t mOffHostAidRoutingPowerState;
   tNFA_EE_CBACK_DATA mCbEventData;
+  tNFA_EE_DISCOVER_REQ mEeInfo;
   int mAidMatchingPlatform;
   tNFA_TECHNOLOGY_MASK mSeTechMask;
   static const JNINativeMethod sMethods[];

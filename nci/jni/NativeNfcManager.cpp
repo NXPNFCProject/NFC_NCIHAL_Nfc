@@ -293,12 +293,12 @@ static bool sP2pEnabled = false;
 static bool sP2pActive = false;  // whether p2p was last active
 static bool sAbortConnlessWait = false;
 static jint sLfT3tMax = 0;
+static bool sRoutingInitialized = false;
 
 static uint8_t sIsSecElemSelected = 0;  // has NFC service selected a sec elem
 static uint8_t sIsSecElemDetected = 0;  // has NFC service deselected a sec elem
 static bool sDiscCmdwhleNfcOff = false;
 static uint8_t sAutonomousSet = 0;
-static bool sRoutingInitialized = false;
 
 #define CONFIG_UPDATE_TECH_MASK (1 << 1)
 #define TRANSACTION_TIMER_VALUE 50
@@ -3026,6 +3026,18 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
           LOG(ERROR) << StringPrintf("fail to start UICC listen");
       }
     }
+
+    // Check listen configuration
+
+#if (NXP_EXTNS != TRUE)
+    if (enable_host_routing) {
+      RoutingManager::getInstance().enableRoutingToHost();
+      RoutingManager::getInstance().commitRouting();
+    } else {
+      RoutingManager::getInstance().disableRoutingToHost();
+      RoutingManager::getInstance().commitRouting();
+    }
+#endif
     // Actually start discovery.
     startRfDiscovery(true);
     sDiscoveryEnabled = true;
