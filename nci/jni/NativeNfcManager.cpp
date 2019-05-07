@@ -1879,7 +1879,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
       }
 #endif
       DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("nfcManager_sendRawFrame(): bufLen:%lu", bufLen);
+      << StringPrintf("nfcManager_sendRawFrame(): bufLen:%zu", bufLen);
       status = NFA_SendRawFrame(buf, bufLen, 0);
     } else {
       DLOG_IF(INFO, nfc_debug_enabled)

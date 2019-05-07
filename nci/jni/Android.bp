@@ -1,0 +1,62 @@
+cc_library_shared {
+    name: "libnfc_nci_jni",
+
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Wno-unused-parameter",
+        "-Werror",
+
+        "-DNXP_UICC_ENABLE",
+
+        //NXP PN547 Enable
+        "-DNXP_EXTNS=TRUE",
+        "-DNFC_NXP_NON_STD_CARD=FALSE",
+        "-DNFC_NXP_HFO_SETTINGS=FALSE",
+
+      //#Enable HCE-F specific
+        "-DNXP_NFCC_HCE_F=TRUE",
+        "-DNXP_LDR_SVC_VER_2=TRUE",
+    ],
+
+    srcs: ["**/*.cpp"],
+
+    include_dirs: [
+        "libnativehelper/include/nativehelper",
+        "system/nfc/src/nfa/include",
+        "system/nfc/src/nfc/include",
+        "system/nfc/src/include",
+        "system/nfc/src/gki/ulinux",
+        "system/nfc/src/gki/common",
+        "system/nfc/utils/include",
+
+    ],
+
+    local_include_dirs: [
+        "extns/pn54x/inc",
+        "extns/pn54x/src/common",
+        "extns/pn54x/src/mifare",
+        "extns/pn54x/src/log",
+        "extns/pn54x/src/utils",
+    ],
+
+    shared_libs: [
+        "libandroidicu",
+        "libnativehelper",
+        "libcutils",
+        "libutils",
+        "liblog",
+        "libnfc-nci",
+        "libchrome",
+        "libbase",
+        "android.hardware.nfc@1.0",
+        "android.hardware.nfc@1.1",
+        "vendor.nxp.nxpnfc@1.0",
+    ],
+
+    product_variables: {
+        debuggable: {
+            cflags: ["-DDCHECK_ALWAYS_ON"],
+        },
+    },
+}

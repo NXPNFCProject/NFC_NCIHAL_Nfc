@@ -605,7 +605,7 @@ bool SecureElement::getEeInfo() {
 #endif
             for (size_t yy = 0; yy < mEeInfo[eeIndex].num_tlvs; yy++) {
               DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-                  "%s: EE[%u] TLV[%lu]  Tag: 0x%02x  Len: %u  Values[]: 0x%02x  "
+                  "%s: EE[%u] TLV[%zu]  Tag: 0x%02x  Len: %u  Values[]: 0x%02x  "
                   "0x%02x  0x%02x ...",
                   fn, eeIndex, yy, mEeInfo[eeIndex].ee_tlv[yy].tag,
                   mEeInfo[eeIndex].ee_tlv[yy].len, mEeInfo[eeIndex].ee_tlv[yy].info[0],
