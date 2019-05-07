@@ -1904,7 +1904,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
   **
   *******************************************************************************/
   static jboolean nfcManager_routeAid(JNIEnv * e, jobject, jbyteArray aid,
-                                      jint route, jint power, jint aidInfo) {
+                                      jint route, jint aidInfo, jint power) {
     uint8_t* buf;
     size_t bufLen;
 
