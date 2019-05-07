@@ -1907,12 +1907,13 @@ static void nfaConnectionCallback(uint8_t connEvent,
                                       jint route, jint aidInfo, jint power) {
     uint8_t* buf;
     size_t bufLen;
+    ScopedByteArrayRO bytes(e);
 
     if (aid == NULL) {
       buf = NULL;
       bufLen = 0;
     } else {
-      ScopedByteArrayRO bytes(e, aid);
+      bytes.reset(aid);
       buf = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
       bufLen = bytes.size();
     }
@@ -1958,12 +1959,13 @@ static void nfaConnectionCallback(uint8_t connEvent,
   static jboolean nfcManager_unrouteAid(JNIEnv * e, jobject, jbyteArray aid) {
     uint8_t* buf;
     size_t bufLen;
+    ScopedByteArrayRO bytes(e);
 
     if (aid == NULL) {
       buf = NULL;
       bufLen = 0;
     } else {
-      ScopedByteArrayRO bytes(e, aid);
+      bytes.reset(aid);
       buf = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
       bufLen = bytes.size();
     }
