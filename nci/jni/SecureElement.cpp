@@ -176,6 +176,7 @@ SecureElement::SecureElement()
       meSESessionIdOk(false),
       mIsWiredModeOpen(false),
       mIsAllowWiredInDesfireMifareCE(false),
+      mIsWiredModeBlocked(false),
       mRfFieldEventTimeout(0),
       mModeSetInfo(NFA_STATUS_FAILED),
       mPwrCmdstatus(NFA_STATUS_FAILED),

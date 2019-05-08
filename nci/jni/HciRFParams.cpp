@@ -56,6 +56,7 @@ HciRFParams::HciRFParams() {
   bPipeStatus_CeA = 0;
   bPipeStatus_CeB = 0;
   bMode_CeB = 0;
+  aPupiRegDataSize_CeB = 0;
   bAfi_CeB = 0;
   bHighLayerRspSize_CeB = 0;
   get_config = NULL;

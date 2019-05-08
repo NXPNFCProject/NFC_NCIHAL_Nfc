@@ -173,6 +173,21 @@ RoutingManager::RoutingManager()
   mOffHostAidRoutingPowerState =
       NfcConfig::getUnsigned(NAME_OFFHOST_AID_ROUTE_PWR_STATE, 0x01);
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:exit", fn);
+
+#if(NXP_EXTNS == TRUE)
+  memset (mProtoTableEntries, 0, sizeof(mProtoTableEntries));
+  memset (mTechTableEntries, 0, sizeof(mTechTableEntries));
+  memset (mLmrtEntries, 0, sizeof(mLmrtEntries));
+  mCeRouteStrictDisable = 0;
+  mDefaultIso7816SeID = 0;
+  mDefaultIso7816Powerstate = 0;
+  mDefaultTechASeID = 0;
+  mDefaultTechFSeID = 0;
+  mDefaultTechFPowerstate = 0;
+  mTechSupportedByEse = 0;
+  mTechSupportedByUicc1 = 0;
+  mTechSupportedByUicc2 = 0;
+#endif
 }
 
 int RoutingManager::mChipId = 0;
