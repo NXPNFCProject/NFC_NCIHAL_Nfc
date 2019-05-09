@@ -216,11 +216,16 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
 #if (NXP_EXTNS != TRUE)
   mSeTechMask = updateEeTechRouteSetting();
 #endif
-  // Register a wild-card for AIDs routed to the host
-  nfaStat = NFA_CeRegisterAidOnDH(NULL, 0, stackCallback);
-  if (nfaStat != NFA_STATUS_OK)
-    LOG(ERROR) << fn << "Failed to register wildcard AID for DH";
-
+#if (NXP_EXTNS == TRUE)
+  if (mHostListnTechMask) {
+#endif
+     // Register a wild-card for AIDs routed to the host
+     nfaStat = NFA_CeRegisterAidOnDH(NULL, 0, stackCallback);
+     if (nfaStat != NFA_STATUS_OK)
+        LOG(ERROR) << fn << "Failed to register wildcard AID for DH";
+#if (NXP_EXTNS == TRUE)
+  }
+#endif
   updateDefaultRoute();
 #if (NXP_EXTNS != TRUE)
   updateDefaultProtocolRoute();
