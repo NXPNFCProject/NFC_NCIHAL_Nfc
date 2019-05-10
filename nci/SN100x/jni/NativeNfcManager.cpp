@@ -1224,6 +1224,17 @@ static jboolean nfcManager_routeAid(JNIEnv* e, jobject, jbyteArray aid,
 #endif
   uint8_t* buf;
   size_t bufLen;
+  ScopedByteArrayRO bytes(e);
+  if (aid == NULL) {
+    buf = NULL;
+    bufLen = 0;
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("nfcManager_routeAid:  NULL");
+  } else {
+    bytes.reset(aid);
+    buf = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
+    bufLen = bytes.size();
+  }
 #if (NXP_EXTNS == TRUE)
   SecureElement& se = SecureElement::getInstance();
   if ((!isDynamicUiccEnabled) &&
@@ -1237,24 +1248,9 @@ static jboolean nfcManager_routeAid(JNIEnv* e, jobject, jbyteArray aid,
      */
     route = (sCurrentSelectedUICCSlot != se.UICC_ID) ? se.UICC_ID : se.UICC2_ID;
   }
-#endif
-  if (aid == NULL) {
-    buf = NULL;
-    bufLen = 0;
-#if (NXP_EXTNS == TRUE)
     return RoutingManager::getInstance().addAidRouting(buf, bufLen, route,
                                                      aidInfo, power);
-#endif
-  } else {
-    ScopedByteArrayRO bytes(e, aid);
-    buf = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
-    bufLen = bytes.size();
-#if (NXP_EXTNS == TRUE)
-    return RoutingManager::getInstance().addAidRouting(buf, bufLen, route,
-                                                     aidInfo, power);
-#endif
-  }
-#if (NXP_EXTNS != TRUE)
+#else
   return RoutingManager::getInstance().addAidRouting(buf, bufLen, route,
                                                      aidInfo);
 #endif
