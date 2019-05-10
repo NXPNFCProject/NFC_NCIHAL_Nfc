@@ -38,30 +38,17 @@
 namespace android {
 extern jmethodID gCachedNfcManagerNotifyNdefMessageListeners;
 extern jmethodID gCachedNfcManagerNotifyTransactionListeners;
-extern jmethodID gCachedNfcManagerNotifyEmvcoMultiCardDetectedListeners;
 extern jmethodID gCachedNfcManagerNotifyLlcpLinkActivation;
 extern jmethodID gCachedNfcManagerNotifyLlcpLinkDeactivated;
 extern jmethodID gCachedNfcManagerNotifyLlcpFirstPacketReceived;
-extern jmethodID gCachedNfcManagerNotifySeFieldActivated;
-extern jmethodID gCachedNfcManagerNotifySeFieldDeactivated;
 extern jmethodID gCachedNfcManagerNotifySeListenActivated;
 extern jmethodID gCachedNfcManagerNotifySeListenDeactivated;
-extern jmethodID gCachedNfcManagerNotifyUiccStatusEvent;
 /*
  * host-based card emulation
  */
 extern jmethodID gCachedNfcManagerNotifyHostEmuActivated;
 extern jmethodID gCachedNfcManagerNotifyHostEmuData;
-#if (NXP_EXTNS == TRUE)
-#if (NXP_NFCC_HCE_F == TRUE)
-extern jmethodID gCachedNfcManagerNotifyT3tConfigure;
-extern jmethodID gCachedNfcManagerNotifyReRoutingEntry;
-#endif
-extern jmethodID gCachedNfcManagerNotifyDownloadInProgress;
-extern jmethodID gCachedNfcManagerNotifyFwDwnldRequested;
-#endif
 extern jmethodID gCachedNfcManagerNotifyHostEmuDeactivated;
-extern jmethodID gCachedNfcManagerNotifyAidRoutingTableFull;
 
 extern const char* gNativeP2pDeviceClassName;
 extern const char* gNativeLlcpServiceSocketClassName;

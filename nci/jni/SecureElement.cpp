@@ -1204,41 +1204,6 @@ TheEnd:
 
 /*******************************************************************************
 **
-** Function:        notifyEmvcoMultiCardDetectedListeners
-**
-** Description:     Notify the NFC service about a multiple card presented to
-**                  Emvco reader.
-**
-** Returns:         None
-**
-*******************************************************************************/
-void SecureElement::notifyEmvcoMultiCardDetectedListeners() {
-  static const char fn[] =
-      "SecureElement::notifyEmvcoMultiCardDetectedListeners";
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", fn);
-
-  JNIEnv* e = NULL;
-  ScopedAttach attach(mNativeData->vm, &e);
-  if (e == NULL) {
-    LOG(ERROR) << StringPrintf("%s: jni env is null", fn);
-    return;
-  }
-
-  e->CallVoidMethod(
-      mNativeData->manager,
-      android::gCachedNfcManagerNotifyEmvcoMultiCardDetectedListeners);
-  if (e->ExceptionCheck()) {
-    e->ExceptionClear();
-    LOG(ERROR) << StringPrintf("%s: fail notify", fn);
-    goto TheEnd;
-  }
-
-TheEnd:
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", fn);
-}
-
-/*******************************************************************************
-**
 ** Function:        connectEE
 **
 ** Description:     Connect to the execution environment.

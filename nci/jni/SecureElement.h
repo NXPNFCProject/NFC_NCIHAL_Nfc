@@ -425,18 +425,6 @@ class SecureElement {
 
   /*******************************************************************************
   **
-  ** Function:        notifyEmvcoMultiCardDetectedListeners
-  **
-  ** Description:     Notify the NFC service about a multiple card presented to
-  **                  Emvco reader.
-  **
-  ** Returns:         None
-  **
-  *******************************************************************************/
-  void notifyEmvcoMultiCardDetectedListeners();
-
-  /*******************************************************************************
-  **
   ** Function:        notifyTransactionListenersOfTlv
   **
   ** Description:     Notify the NFC service about a transaction event from

@@ -184,7 +184,6 @@ bool nfcManager_isRequestPending(void);
 static jint nfcManager_doaccessControlForCOSU(JNIEnv* e, jobject o, jint mode);
 extern tNFA_STATUS enableSWPInterface();
 extern tNFA_STATUS NxpNfc_Send_CoreResetInit_Cmd(void);
-jmethodID gCachedNfcManagerNotifyFwDwnldRequested;
 extern tNFA_STATUS SendAGCDebugCommand();
 extern tNFA_STATUS Set_EERegisterValue(uint16_t RegAddr, uint8_t bitVal);
 extern void nativeNfcTag_cacheNonNciCardDetection();
@@ -212,12 +211,9 @@ namespace android {
 int gGeneralPowershutDown = 0;
 jmethodID gCachedNfcManagerNotifyNdefMessageListeners;
 jmethodID gCachedNfcManagerNotifyTransactionListeners;
-jmethodID gCachedNfcManagerNotifyEmvcoMultiCardDetectedListeners;
 jmethodID gCachedNfcManagerNotifyLlcpLinkActivation;
 jmethodID gCachedNfcManagerNotifyLlcpLinkDeactivated;
 jmethodID gCachedNfcManagerNotifyLlcpFirstPacketReceived;
-jmethodID gCachedNfcManagerNotifySeFieldActivated;
-jmethodID gCachedNfcManagerNotifySeFieldDeactivated;
 jmethodID gCachedNfcManagerNotifySeListenActivated;
 jmethodID gCachedNfcManagerNotifySeListenDeactivated;
 jmethodID gCachedNfcManagerNotifyHostEmuActivated;
@@ -225,12 +221,8 @@ jmethodID gCachedNfcManagerNotifyHostEmuData;
 jmethodID gCachedNfcManagerNotifyHostEmuDeactivated;
 jmethodID gCachedNfcManagerNotifyRfFieldActivated;
 jmethodID gCachedNfcManagerNotifyRfFieldDeactivated;
-jmethodID gCachedNfcManagerNotifyAidRoutingTableFull;
 #if (NXP_EXTNS == TRUE)
 int gMaxEERecoveryTimeout = MAX_EE_RECOVERY_TIMEOUT;
-jmethodID gCachedNfcManagerNotifyUiccStatusEvent;
-jmethodID gCachedNfcManagerNotifyT3tConfigure;
-jmethodID gCachedNfcManagerNotifyReRoutingEntry;
 #endif
 const char* gNativeP2pDeviceClassName =
     "com/android/nfc/dhimpl/NativeP2pDevice";
@@ -425,7 +417,6 @@ tNFA_STATUS getUICC_RF_Param_SetSWPBitRate();
 static IntervalTimer
     nfaNxpSelfTestNtfTimer;           // notification timer for swp self test
 static IntervalTimer uiccEventTimer;  // notification timer for uicc select
-static void notifyUiccEvent(union sigval);
 static SyncEvent sNfaNxpNtfEvent;
 static SyncEvent sNfaSetPowerSubState;  // event for power substate
 static int nfcManager_setPreferredSimSlot(JNIEnv* e, jobject o, jint uiccSlot);
@@ -1836,11 +1827,6 @@ static void nfaConnectionCallback(uint8_t connEvent,
         SyncEventGuard guard(sNfaSetPowerSubState);
         sNfaSetPowerSubState.notifyOne();
       } break;
-      case NFA_DM_EMVCO_PCD_COLLISION_EVT:
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-            "STATUS_EMVCO_PCD_COLLISION - Multiple card detected");
-        SecureElement::getInstance().notifyEmvcoMultiCardDetectedListeners();
-        break;
 
       default:
         DLOG_IF(INFO, nfc_debug_enabled)
@@ -2348,7 +2334,6 @@ static void nfaConnectionCallback(uint8_t connEvent,
                   NFC_NFCEE_STATUS_REMOVED) {
                 dualUiccInfo.uiccActivStat |= (sSelectedUicc & 0x0F);
               }
-              uiccEventTimer.set(1, notifyUiccEvent);
             }
           } else
             SecureElement::getInstance().updateEEStatus();
@@ -2592,8 +2577,8 @@ static void nfaConnectionCallback(uint8_t connEvent,
           return;
         }
         if (nfcFL.nfccFL._NFCC_SPI_FW_DOWNLOAD_SYNC) {
-          e->CallVoidMethod(gNativeData->manager,
-                            android::gCachedNfcManagerNotifyFwDwnldRequested);
+          /*e->CallVoidMethod(gNativeData->manager,
+                            android::gCachedNfcManagerNotifyFwDwnldRequested);*/
         }
         if (e->ExceptionCheck()) {
           e->ExceptionClear();
@@ -5829,7 +5814,6 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
             transaction_data.t3thandle);
       }
       transaction_data.last_request &= ~(T3T_CONFIGURE);
-      RoutingManager::getInstance().notifyT3tConfigure();
     }
 #endif
     if (last_request & RE_ROUTING) {
@@ -5841,7 +5825,6 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
         // nfcManager_doCommitRouting(NULL,NULL);
       }
       transaction_data.last_request &= ~(RE_ROUTING);
-      RoutingManager::getInstance().notifyReRoutingEntry();
     }
 #endif
     if (screen_lock_flag && disable_discovery) {
@@ -6958,51 +6941,6 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
       }
     }
     return sUiccConfigured;
-  }
-  /**********************************************************************************
-   **
-   ** Function:        notifyUiccEvent
-   **
-   ** Description:     Notifies UICC event sto Service
-   **                  Possible values:
-   **                  UICC_CONNECTED_0 - 0 UICC connected
-   **                  UICC_CONNECTED_1 - 1 UICC connected
-   **                  UICC_CONNECTED_2 - 2 UICCs connected
-   **
-   ** Returns:         None
-   **
-   **********************************************************************************/
-  static void notifyUiccEvent(union sigval) {
-    if (!nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_EXT_SWITCH) {
-      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-          "%s: STAT_DUAL_UICC_EXT_SWITCH not available. Returning", __func__);
-      return;
-    }
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s", __func__);
-    struct nfc_jni_native_data* nat = getNative(NULL, NULL);
-    JNIEnv* e;
-    ScopedAttach attach(nat->vm, &e);
-    if (e == NULL) {
-      LOG(ERROR) << StringPrintf("jni env is null");
-      return;
-    }
-    if (dualUiccInfo.uiccActivStat == 0x00) /*No UICC Detected*/
-    {
-      e->CallVoidMethod(nat->manager,
-                        android::gCachedNfcManagerNotifyUiccStatusEvent,
-                        UICC_CONNECTED_0);
-    } else if ((dualUiccInfo.uiccActivStat == 0x01) ||
-               (dualUiccInfo.uiccActivStat == 0x02)) /*One UICC Detected*/
-    {
-      e->CallVoidMethod(nat->manager,
-                        android::gCachedNfcManagerNotifyUiccStatusEvent,
-                        UICC_CONNECTED_1);
-    } else if (dualUiccInfo.uiccActivStat == 0x03) /*Two UICC Detected*/
-    {
-      e->CallVoidMethod(nat->manager,
-                        android::gCachedNfcManagerNotifyUiccStatusEvent,
-                        UICC_CONNECTED_2);
-    }
   }
 
   static int nfcManager_staticDualUicc_Precondition(int uiccSlot) {

@@ -162,7 +162,6 @@ class RoutingManager {
                                tNFA_PROTOCOL_MASK protocols_screen_lock,
                                tNFA_PROTOCOL_MASK protocols_screen_off,
                                tNFA_PROTOCOL_MASK protocols_screen_off_lock);
-  void notifyReRoutingEntry();
   void HandleAddNfcID2_Req();
   void HandleRmvNfcID2_Req();
   void setCeRouteStrictDisable(uint32_t state);
@@ -183,9 +182,6 @@ class RoutingManager {
   void handleSERemovedNtf();
   bool is_ee_recovery_ongoing();
   void setEmptyAidEntry(void);
-#if (NXP_NFCC_HCE_F == TRUE)
-  void notifyT3tConfigure();
-#endif
 #else
   bool addAidRouting(const uint8_t* aid, uint8_t aidLen, int route,
                      int aidInfo);
@@ -239,7 +235,6 @@ class RoutingManager {
   tNFA_TECHNOLOGY_MASK updateEeTechRouteSetting();
   void updateDefaultProtocolRoute();
   void updateDefaultRoute();
-  void notifyLmrtFull();
   void printMemberData(void);
   void extractRouteLocationAndPowerStates(const int defaultRoute,
                                           const int protoRoute,

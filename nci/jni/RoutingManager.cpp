@@ -1873,21 +1873,6 @@ void RoutingManager::notifyDeactivated(uint8_t technology) {
   }
 }
 
-void RoutingManager::notifyLmrtFull() {
-  JNIEnv* e = NULL;
-  ScopedAttach attach(mNativeData->vm, &e);
-  if (e == NULL) {
-    LOG(ERROR) << StringPrintf("jni env is null");
-    return;
-  }
-
-  e->CallVoidMethod(mNativeData->manager,
-                    android::gCachedNfcManagerNotifyAidRoutingTableFull);
-  if (e->ExceptionCheck()) {
-    e->ExceptionClear();
-    LOG(ERROR) << StringPrintf("fail notify");
-  }
-}
 #if (NXP_EXTNS == TRUE)
 void RoutingManager::nfcFRspTimerCb(union sigval) {
   if (!nfcFL.nfccFL._NXP_NFCC_EMPTY_DATA_PACKET) {
@@ -2286,7 +2271,7 @@ void RoutingManager::nfaEeCallback(tNFA_EE_EVT event,
       if (eventData->status == NFA_STATUS_BUFFER_FULL) {
         DLOG_IF(INFO, nfc_debug_enabled)
             << StringPrintf("%s: AID routing table is FULL!!!", fn);
-        RoutingManager::getInstance().notifyLmrtFull();
+        // RoutingManager::getInstance().notifyLmrtFull();
       }
       SyncEventGuard guard(se.mAidAddRemoveEvent);
       se.mAidAddRemoveEvent.notifyOne();
@@ -2304,7 +2289,7 @@ void RoutingManager::nfaEeCallback(tNFA_EE_EVT event,
       if (eventData->status == NFA_STATUS_BUFFER_FULL) {
         DLOG_IF(INFO, nfc_debug_enabled)
             << StringPrintf("%s: routing table is FULL!!!", fn);
-        RoutingManager::getInstance().notifyLmrtFull();
+        // RoutingManager::getInstance().notifyLmrtFull();
       }
       SyncEventGuard guard(se.mApduPaternAddRemoveEvent);
       se.mApduPaternAddRemoveEvent.notifyOne();
@@ -2336,41 +2321,6 @@ void RoutingManager::nfaEeCallback(tNFA_EE_EVT event,
       break;
   }
 }
-
-#if (NXP_EXTNS == TRUE)
-#if (NXP_NFCC_HCE_F == TRUE)
-void RoutingManager::notifyT3tConfigure() {
-  JNIEnv* e = NULL;
-  ScopedAttach attach(mNativeData->vm, &e);
-  if (e == NULL) {
-    LOG(ERROR) << StringPrintf("jni env is null");
-    return;
-  }
-
-  e->CallVoidMethod(mNativeData->manager,
-                    android::gCachedNfcManagerNotifyT3tConfigure);
-  if (e->ExceptionCheck()) {
-    e->ExceptionClear();
-    LOG(ERROR) << StringPrintf("fail notify");
-  }
-}
-#endif
-void RoutingManager::notifyReRoutingEntry() {
-  JNIEnv* e = NULL;
-  ScopedAttach attach(mNativeData->vm, &e);
-  if (e == NULL) {
-    LOG(ERROR) << StringPrintf("jni env is null");
-    return;
-  }
-
-  e->CallVoidMethod(mNativeData->manager,
-                    android::gCachedNfcManagerNotifyReRoutingEntry);
-  if (e->ExceptionCheck()) {
-    e->ExceptionClear();
-    LOG(ERROR) << StringPrintf("fail notify");
-  }
-}
-#endif
 
 int RoutingManager::registerT3tIdentifier(uint8_t* t3tId, uint8_t t3tIdLen) {
   static const char fn[] = "RoutingManager::registerT3tIdentifier";
