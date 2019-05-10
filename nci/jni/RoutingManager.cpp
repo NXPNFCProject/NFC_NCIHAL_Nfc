@@ -1509,7 +1509,7 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route,
   uint8_t screen_off_lock_mask = 0x00;
   uint8_t protocol_mask = 0x00;
 
-  if (!nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC) {
+  if (nfcFL.nfccFL._NFCC_DYNAMIC_DUAL_UICC && nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH) {
     if (nfcManager_getUiccRoute(sCurrentSelectedUICCSlot) != 0xFF) {
       ee_handle =
           ((route == 0x01)
