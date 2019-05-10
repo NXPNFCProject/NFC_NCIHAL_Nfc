@@ -1678,7 +1678,6 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route,
       }
     }
   } else if (NFA_SET_PROTOCOL_ROUTING == type) {
-    value &= ~(0xF0);
     while (value) {
       if (value & 0x01) {
         protocol_mask = NFA_PROTOCOL_MASK_ISO_DEP;
@@ -1689,9 +1688,9 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route,
       } else if (value & 0x04) {
         protocol_mask = NFA_PROTOCOL_MASK_T3T;
         value &= ~(0x04);
-      } else if (value & 0x08) {
+      } else if (value & 0x20) {
         protocol_mask = NFC_PROTOCOL_MASK_ISO7816;
-        value &= ~(0x08);
+        value &= ~(0x20);
       }
 
       if (protocol_mask) {
