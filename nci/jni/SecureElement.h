@@ -656,7 +656,7 @@ class SecureElement {
 #endif
   jint getSETechnology(tNFA_HANDLE eeHandle);
   static const uint8_t UICC_ID = 0x02;
-  static const uint8_t UICC2_ID = 0x04;
+  static const uint8_t UICC2_ID = 0x03;
   static const uint8_t ESE_ID = 0x01;
   static const uint8_t DH_ID = 0x00;
 #if (NXP_EXTNS == TRUE)
