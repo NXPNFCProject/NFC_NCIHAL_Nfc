@@ -350,7 +350,11 @@ void DWPChannel_init(IChannel_t* DWP);
 IChannel_t Dwp;
 static uint16_t sCurrentConfigLen;
 static uint8_t sConfig[256];
+#if (NXP_EXTNS==TRUE)
+static int prevScreenState = NFA_SCREEN_STATE_UNKNOWN;
+#else
 static int prevScreenState = NFA_SCREEN_STATE_OFF_LOCKED;
+#endif
 #if (NXP_EXTNS == TRUE)
 static uint8_t sNfcState = NFC_OFF;
 bool isp2pActivated();
@@ -2459,7 +2463,11 @@ static void nfaConnectionCallback(uint8_t connEvent,
           // TODO: Check this in L_OSP_EXT[PN547C2]
           //                NFA_SetCEStrictDisable(num);
           RoutingManager::getInstance().setCeRouteStrictDisable(num);
+#if (NXP_EXTNS==TRUE)
+          prevScreenState = NFA_SCREEN_STATE_UNKNOWN;
+#else
           prevScreenState = NFA_SCREEN_STATE_OFF_LOCKED;
+#endif
 #if (NXP_EXTNS != TRUE)
           // Do custom NFCA startup configuration.
           doStartupConfig();
