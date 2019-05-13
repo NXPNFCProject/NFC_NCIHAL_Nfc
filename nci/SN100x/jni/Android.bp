@@ -1,0 +1,45 @@
+cc_library_shared {
+    name: "libnfc_nci_jni",
+
+    cflags:
+     ["-DNXP_EXTNS=TRUE"]  + [
+        "-Wall",
+        "-Wextra",
+        "-Wno-unused-parameter",
+        "-Werror",
+    ],
+    srcs: ["**/*.cpp"],
+
+    include_dirs: [
+        "external/libxml2/include",
+        "frameworks/native/include",
+        "system/nfc/SN100x/src/include",
+        "system/nfc/SN100x/src/nfa/include",
+        "system/nfc/SN100x/src/nfc/include",
+        "system/nfc/SN100x/src/gki/ulinux",
+        "system/nfc/SN100x/src/gki/common",
+    ] + ["system/nfc/SN100x/utils/include"],
+
+    local_include_dirs: [
+        "extns/pn54x/inc",
+        "extns/pn54x/src/common",
+        "extns/pn54x/src/mifare",
+        "extns/pn54x/src/log",
+    ],
+    shared_libs: [
+        "libandroidicu",
+        "libnativehelper",
+        "libcutils",
+        "libutils",
+        "liblog",
+        "libnfc-nci",
+        "libchrome",
+        "libbase",
+    ],
+    product_variables: {
+        debuggable: {
+            cflags: ["-DDCHECK_ALWAYS_ON"],
+        },
+    },
+    static_libs: ["libxml2"],
+}
