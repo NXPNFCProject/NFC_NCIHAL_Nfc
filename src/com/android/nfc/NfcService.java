@@ -960,14 +960,17 @@ public class NfcService implements DeviceHostListener {
             int uiccSlot = 0;
             uiccSlot = mPrefs.getInt(PREF_CUR_SELECTED_UICC_ID, SECURE_ELEMENT_UICC_SLOT_DEFAULT);
             mDeviceHost.setPreferredSimSlot(uiccSlot);
+            nci_version = getNciVersion();
+            Log.d(TAG, "NCI_Version: " + nci_version);
+            if (nci_version == NCI_VERSION_1_0) {
+                /*reset default AID route shared preference while enabling NFC*/
+                mNxpPrefsEditor.remove("PREF_SET_DEFAULT_ROUTE_ID").commit();
+            }
             if (mIsHceCapable) {
                 // Generate the initial card emulation routing table
                 mCardEmulationManager.onNfcEnabled();
                 computeRoutingParameters();
             }
-
-            nci_version = getNciVersion();
-            Log.d(TAG, "NCI_Version: " + nci_version);
 
             synchronized (NfcService.this) {
                 mObjectMap.clear();
