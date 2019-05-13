@@ -3947,7 +3947,6 @@ public class NfcService implements DeviceHostListener {
       mNxpPrefsEditor.commit();
       int defaultRoute = mNxpPrefs.getInt("PREF_SET_DEFAULT_ROUTE_ID", 0xFF);
       Log.d(TAG, "Reading updated preference  :" + defaultRoute);
-      mDeviceHost.clearRoutingEntry(AID_ENTRY);
       mDeviceHost.clearRoutingEntry(TECH_ENTRY);
       mDeviceHost.clearRoutingEntry(PROTOCOL_ENTRY);
       computeRoutingParameters();
