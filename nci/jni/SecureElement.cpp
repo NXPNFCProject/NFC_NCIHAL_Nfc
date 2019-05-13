@@ -175,6 +175,8 @@ SecureElement::SecureElement()
       mPassiveListenCnt(0),
       meSESessionIdOk(false),
       mIsWiredModeOpen(false),
+      mlistenDisabled(false),
+      mIsExclusiveWiredMode(false),
       mIsAllowWiredInDesfireMifareCE(false),
       mIsWiredModeBlocked(false),
       mRfFieldEventTimeout(0),
