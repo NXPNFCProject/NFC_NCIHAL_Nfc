@@ -5126,8 +5126,7 @@ static void restartUiccListen(jint uiccSlot) {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: Enter state = %d", __func__, state);
 
-    if (sIsDisabling || !sIsNfaEnabled ||
-      (NFC_GetNCIVersion() != NCI_VERSION_2_0)) {
+    if (sIsDisabling || !sIsNfaEnabled) {
       prevScreenState = state;
       return;
     }
