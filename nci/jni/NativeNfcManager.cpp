@@ -1913,7 +1913,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
         (route == 2 || route == 4)) {  // UICC or UICC2 HANDLE
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
           "sCurrentSelectedUICCSlot:  %d", sCurrentSelectedUICCSlot);
-      route = (sCurrentSelectedUICCSlot != 0x02) ? 0x02 : 0x04;
+      route = (sCurrentSelectedUICCSlot != 0x02) ? 0x02 : 0x03;
     }
     /*In case of 66T/67T field on is observed as last field event once reader
      is removed from proximity, which will hold the transaction lock

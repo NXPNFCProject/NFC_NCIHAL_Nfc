@@ -1558,34 +1558,6 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route,
     }
   }
 
-  if (((ee_handle == SecureElement::getInstance().EE_HANDLE_0xF4) ||
-       (ee_handle == 0x481)) &&
-      (isSeIDPresent != 1)) {
-    // check if eSE is exist
-    for (int i = 0; ((count != 0) && (i < count)); i++) {
-      seId = SecureElement::getInstance().getGenericEseId(ee_handleList[i]);
-      ActDevHandle =
-          SecureElement::getInstance().getEseHandleFromGenericId(seId);
-      if (ActDevHandle == 0x4C0) {
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-            "%s: enter, UICC is not activated, so Routing is changed UICC to "
-            "eSE",
-            fn);
-        isSeIDPresent = 1;
-        ee_handle = ActDevHandle;
-        break;
-      }
-    }
-  }
-
-  if ((ee_handle != 0x400) &&
-      ((NFA_SET_PROTOCOL_ROUTING == type) && (isSeIDPresent != 1))) {
-    DLOG_IF(INFO, nfc_debug_enabled)
-        << StringPrintf("%s: changing the destination to DH", fn);
-    ee_handle = 0x400;
-    power &= 0x31;
-  }
-
   max_tech_mask = SecureElement::getInstance().getSETechnology(ee_handle);
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: enter,max_tech_mask :%lx", fn, max_tech_mask);
@@ -1697,8 +1669,8 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route,
         switch_on_mask = (power & 0x01) ? protocol_mask : 0;
         switch_off_mask = (power & 0x02) ? protocol_mask : 0;
         battery_off_mask = (power & 0x04) ? protocol_mask : 0;
-        screen_lock_mask = (power & 0x08) ? protocol_mask : 0;
-        screen_off_mask = (power & 0x10) ? protocol_mask : 0;
+        screen_off_mask = (power & 0x08) ? protocol_mask : 0;
+        screen_lock_mask = (power & 0x10) ? protocol_mask : 0;
         screen_off_lock_mask = (power & 0x20) ? protocol_mask : 0;
         DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
             "%s: enter >>>> ee_handle:%x %x %x %x %x %x %x", fn, ee_handle,
