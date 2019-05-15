@@ -169,7 +169,6 @@ class SecureElement {
   mNfceeData mNfceeData_t;
   uint8_t mHostsPresent;
   uint8_t mETSI12InitStatus;
-  uint8_t mHostsId[MAX_NFCEE];
   uint8_t eSE_Compliancy;
   uint8_t mCreatedPipe;
   uint8_t mDeletePipeHostId;

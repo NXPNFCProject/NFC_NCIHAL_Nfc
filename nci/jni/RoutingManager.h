@@ -349,7 +349,6 @@ class RoutingManager {
   uint32_t mCeRouteStrictDisable;
   uint32_t mDefaultIso7816SeID;
   uint32_t mDefaultIso7816Powerstate;
-  uint32_t mDefaultTechType;
   uint32_t mDefaultTechASeID;
   uint32_t mDefaultTechFSeID;
   uint32_t mDefaultTechFPowerstate;

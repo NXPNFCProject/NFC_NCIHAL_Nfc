@@ -169,10 +169,18 @@ SecureElement::SecureElement()
     : mActiveEeHandle(NFA_HANDLE_INVALID),
 #if (NXP_EXTNS == TRUE)
       mETSI12InitStatus(NFA_STATUS_FAILED),
+      eSE_Compliancy(0),
+      mCreatedPipe(0),
+      mDeletePipeHostId(0),
       mWmMaxWtxCount(0),
       meseETSI12Recovery(false),
+      mPassiveListenEnabled(false),
+      meseUiccConcurrentAccess(false),
       mPassiveListenTimeout(0),
       mPassiveListenCnt(0),
+#endif
+      mDownloadMode(0),
+#if (NXP_EXTNS == TRUE)
       meSESessionIdOk(false),
       mIsWiredModeOpen(false),
       mlistenDisabled(false),
