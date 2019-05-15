@@ -62,7 +62,7 @@ public class NativeNfcSecureElement {
 
     //TODO: Just stub for compilation
     public boolean doReset(int handle) {
-        return doNativeResetSecureElement(handle);
+        return doResetForEseCosUpdate(handle);
     }
 
 
@@ -72,7 +72,7 @@ public class NativeNfcSecureElement {
     }
 
     private native byte[] doNativeGetAtr(int handle);
-    private native boolean doNativeResetSecureElement(int handle);
+    private native boolean doResetForEseCosUpdate(int handle);
     public native byte[] doTransceive(int handle, byte[] data);
 
 }

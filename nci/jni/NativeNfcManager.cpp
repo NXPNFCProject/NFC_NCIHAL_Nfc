@@ -181,7 +181,8 @@ extern bool gIsWaiting4Deact2SleepNtf;
 extern bool gGotDeact2IdleNtf;
 bool nfcManager_isTransanctionOnGoing(bool isInstallRequest);
 bool nfcManager_isRequestPending(void);
-static jint nfcManager_doaccessControlForCOSU(JNIEnv* e, jobject o, jint mode);
+static jboolean nfcManager_doPartialInitForEseCosUpdate(JNIEnv* e, jobject o);
+static jboolean nfcManager_doPartialDeinitForEseCosUpdate(JNIEnv* e, jobject o);
 extern tNFA_STATUS enableSWPInterface();
 extern tNFA_STATUS NxpNfc_Send_CoreResetInit_Cmd(void);
 extern tNFA_STATUS SendAGCDebugCommand();
@@ -4555,8 +4556,10 @@ static void restartUiccListen(jint uiccSlot) {
     {"getDefaultMifareCLTPowerState", "()I",
      (void*)nfcManager_getDefaultMifareCLTPowerState},
     {"doChangeDiscoveryTech", "(II)V", (void*)nfcManager_changeDiscoveryTech},
-    {"doaccessControlForCOSU", "(I)I",
-     (void*)nfcManager_doaccessControlForCOSU},
+    {"doPartialInitForEseCosUpdate", "()Z",
+      (void*)nfcManager_doPartialInitForEseCosUpdate},
+    {"doPartialDeinitForEseCosUpdate", "()Z",
+      (void*)nfcManager_doPartialDeinitForEseCosUpdate},
 #endif
     {"doRegisterT3tIdentifier", "([B)I",
      (void*)nfcManager_doRegisterT3tIdentifier},
@@ -7008,32 +7011,37 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
   }
 
 #if (NXP_EXTNS == TRUE)
-  /*******************************************************************************
-  **
-  ** Function:        nfcManager_doaccessControlForCOSU
-  **
-  ** Description:     Access control for card OS update
-  **
-  ** Returns:         NFA_STATUS_OK
-  **
-  *******************************************************************************/
-  static jint nfcManager_doaccessControlForCOSU(JNIEnv * e, jobject o,
-                                                jint mode) {
-    return NFA_STATUS_FAILED;
-    // Commented Following code as per QSSI.
-    // tNFA_STATUS stat = NFA_STATUS_OK;
+/*******************************************************************************
+**
+** Function:        nfcManager_doPartialInitForEseCosUpdate
+**
+** Description:      Partial Init for card OS update
+**
+** Returns:         NFA_STATUS_OK
+**
+*******************************************************************************/
+static jboolean nfcManager_doPartialInitForEseCosUpdate(JNIEnv* e, jobject o) {
+  /* Dummy API return always true.No need to initlize nfc mw
+   * as jcop update is done over spi interface.This api is
+   * maintained sothat customer app does not break. */
+  return true;
+}
+/*******************************************************************************
+**
+** Function:  nfcManager_doPartialDeinitForEseCosUpdate
+**
+** Description:  Partial Deinit for card OS Update
+**
+** Returns:  NFA_STATUS_OK
+**
+*******************************************************************************/
+static jboolean nfcManager_doPartialDeinitForEseCosUpdate(JNIEnv* e, jobject o) {
+  /* Dummy API return always true.No need to initlize nfc mw
+   * as jcop update is done over spi interface.This api is
+   * maintained sothat customer app does not break. */
+  return true;
+}
 
-    // DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
-    // if (mode == MODE_DEDICATED) {
-    //     stat = nfcManager_doPartialInitialize(e,o);
-    // } else if(mode == MODE_NORMAL){
-    //     stat = nfcManager_doPartialDeInitialize(e,o);
-    // } else {
-    //     stat = NFA_STATUS_FAILED;
-    // }
-    // DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Exit", __func__);
-    // return stat;
-  }
 #endif
 
   /*******************************************************************************

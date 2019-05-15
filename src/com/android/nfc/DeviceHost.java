@@ -350,7 +350,7 @@ public interface DeviceHost {
 
 /* NXP extension are here */
     public void doChangeDiscoveryTech(int pollTech, int listenTech);
-    public int accessControlForCOSU (int mode);
+    public boolean accessControlForCOSU (int mode);
 
     public int getFWVersion();
     public byte[] readerPassThruMode(byte status, byte modulationTyp);

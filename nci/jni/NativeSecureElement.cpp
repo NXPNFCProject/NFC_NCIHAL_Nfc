@@ -416,7 +416,7 @@ static int checkP61Status(void) {
 #endif
 /*******************************************************************************
 **
-** Function:        nativeNfcSecureElement_doResetSecureElement
+** Function:        nativeNfcSecureElement_doResetForEseCosUpdate
 **
 ** Description:     Reset the secure element.
 **                  e: JVM environment.
@@ -426,7 +426,7 @@ static int checkP61Status(void) {
 ** Returns:         True if ok.
 **
 *******************************************************************************/
-static jboolean nativeNfcSecureElement_doResetSecureElement(JNIEnv*, jobject,
+static jboolean nativeNfcSecureElement_doResetForEseCosUpdate(JNIEnv*, jobject,
                                                             jint handle) {
   bool stat = false;
   if (nfcFL.nfcNxpEse) {
@@ -585,7 +585,7 @@ static jbyteArray nativeNfcSecureElement_doTransceive(JNIEnv* e, jobject,
     LOG(ERROR) << StringPrintf("%s: Wired Mode Max WTX count reached",
                                __FUNCTION__);
     jbyteArray result = e->NewByteArray(0);
-    nativeNfcSecureElement_doResetSecureElement(e, NULL, handle);
+    nativeNfcSecureElement_doResetForEseCosUpdate(e, NULL, handle);
     return result;
   }
 
@@ -619,8 +619,8 @@ static JNINativeMethod gMethods[] = {
      (void*)nativeNfcSecureElement_doOpenSecureElementConnection},
     {"doNativeDisconnectSecureElementConnection", "(I)Z",
      (void*)nativeNfcSecureElement_doDisconnectSecureElementConnection},
-    {"doNativeResetSecureElement", "(I)Z",
-     (void*)nativeNfcSecureElement_doResetSecureElement},
+    {"doResetForEseCosUpdate", "(I)Z",
+     (void*)nativeNfcSecureElement_doResetForEseCosUpdate},
 
     {"doTransceive", "(I[B)[B", (void*)nativeNfcSecureElement_doTransceive},
     {"doNativeGetAtr", "(I)[B", (void*)nativeNfcSecureElement_doGetAtr},

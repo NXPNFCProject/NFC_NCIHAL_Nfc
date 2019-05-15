@@ -2386,7 +2386,7 @@ public class NfcService implements DeviceHostListener {
      * @return 0:success 1:SWP is already in use -1:error
      */
     @Override
-    public int accessControlForCOSU (int mode)
+    public boolean accessControlForCOSU (int mode)
     {
         return mDeviceHost.accessControlForCOSU(mode);
     }
