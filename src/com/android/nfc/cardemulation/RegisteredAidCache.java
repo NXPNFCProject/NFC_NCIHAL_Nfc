@@ -869,10 +869,10 @@ public class RegisteredAidCache {
                 // There is a default service set, route to where that service resides
                 // either on the host (HCE) or on an SE.
                 NfcApduServiceInfo.ESeInfo seInfo = resolveInfo.defaultService.getSEInfo();
-                aidType.isOnHost = resolveInfo.services.get(0).isOnHost();
+                aidType.isOnHost = resolveInfo.defaultService.isOnHost();
                 if (!aidType.isOnHost) {
                     aidType.offHostSE =
-                            resolveInfo.services.get(0).getOffHostSecureElement();
+                            resolveInfo.defaultService.getOffHostSecureElement();
                 }
                 int powerstate = seInfo.getPowerState() & POWER_STATE_ALL;
                 int screenstate= 0;
