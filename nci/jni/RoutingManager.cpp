@@ -1296,6 +1296,7 @@ bool RoutingManager::addAidRouting(const uint8_t* aid, uint8_t aidLen,
     powerState = power;
   }
 #endif
+  if (handle == ROUTE_LOC_HOST_ID) powerState &= 0x11;
   tNFA_STATUS nfaStat =
       NFA_EeAddAidRouting(handle, aidLen, (uint8_t*)aid, powerState, aidInfo);
 
@@ -1570,8 +1571,8 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route,
     switch_on_mask = (power & 0x01) ? value : 0;
     switch_off_mask = (power & 0x02) ? value : 0;
     battery_off_mask = (power & 0x04) ? value : 0;
-    screen_off_mask = (power & 0x10) ? value : 0;
-    screen_lock_mask = (power & 0x08) ? value : 0;
+    screen_off_mask = (power & 0x08) ? value : 0;
+    screen_lock_mask = (power & 0x10) ? value : 0;
     screen_off_lock_mask = (power & 0x20) ? value : 0;
 
     if ((max_tech_mask != 0x01) && (max_tech_mask == 0x02))  // type B only
