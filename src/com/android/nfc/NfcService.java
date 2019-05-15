@@ -206,6 +206,7 @@ public class NfcService implements DeviceHostListener {
     static final int MSG_CLEAR_ROUTING = 62;
     static final int MSG_INIT_WIREDSE = 63;
     static final int MSG_COMPUTE_ROUTING_PARAMS = 64;
+    static final int MSG_RESET_AND_UPDATE_ROUTING_PARAMS = 65;
     // Update stats every 4 hours
     static final long STATS_UPDATE_INTERVAL_MS = 4 * 60 * 60 * 1000;
     static final long MAX_POLLING_PAUSE_TIMEOUT = 40000;
@@ -3123,7 +3124,11 @@ public class NfcService implements DeviceHostListener {
                     }
                     break;
                 }
-
+                case MSG_RESET_AND_UPDATE_ROUTING_PARAMS: {
+                  mDeviceHost.clearRoutingEntry(TECH_ENTRY);
+                  mDeviceHost.clearRoutingEntry(PROTOCOL_ENTRY);
+                }
+                /*fallThrough to compute routing params*/
                 case MSG_COMPUTE_ROUTING_PARAMS:
                     Log.d(TAG, "computeRoutingParameters >>>");
                     synchronized (NfcService.this) {
@@ -3952,6 +3957,6 @@ public class NfcService implements DeviceHostListener {
       mNxpPrefsEditor.commit();
       int defaultRoute = mNxpPrefs.getInt("PREF_SET_DEFAULT_ROUTE_ID", 0xFF);
       Log.d(TAG, "Reading updated preference  :" + defaultRoute);
-      computeRoutingParameters();
+      mHandler.sendEmptyMessage(MSG_RESET_AND_UPDATE_ROUTING_PARAMS);
     }
 }
