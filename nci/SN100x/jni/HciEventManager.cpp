@@ -141,8 +141,8 @@ std::vector<uint8_t> HciEventManager::getDataFromBerTlv(
       return std::vector<uint8_t>(berTlv.begin() + 4, berTlv.end());
     }
   } else if (lengthTag == 0x83 && berTlv.size() > 5) {
-    size_t length =
-        (berTlv[1] << 24) | (berTlv[2] << 16) | (berTlv[3] << 8) | berTlv[4];
+    size_t length = ((size_t)(berTlv[1] << 24) | (size_t)(berTlv[2] << 16) |
+                     (size_t)(berTlv[3] << 8) | (size_t)berTlv[4]);
     if ((length + 5) == berTlv.size()) {
       return std::vector<uint8_t>(berTlv.begin() + 5, berTlv.end());
     }
