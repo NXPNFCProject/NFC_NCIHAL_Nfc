@@ -3932,7 +3932,10 @@ public class NfcService implements DeviceHostListener {
     public void updateDefaultAidRouteForNci_1_0(int routeLoc) {
       mNxpPrefsEditor = mNxpPrefs.edit();
       Log.d(TAG, "writing to preferences setDefaultAidRouteLoc  :" + routeLoc);
-
+      if (mNxpPrefs.getInt("PREF_SET_DEFAULT_ROUTE_ID", 0xFF) == routeLoc) {
+        Log.d(TAG, "DefaultRoute :" + routeLoc + " is not changed. Returning.");
+        return;
+      }
       int defaultAidRoute =
           ((mDeviceHost.getDefaultAidPowerState() & 0x3F) | (routeLoc << ROUTE_LOC_MASK));
       if (routeLoc == 0x00) {
@@ -3949,8 +3952,6 @@ public class NfcService implements DeviceHostListener {
       mNxpPrefsEditor.commit();
       int defaultRoute = mNxpPrefs.getInt("PREF_SET_DEFAULT_ROUTE_ID", 0xFF);
       Log.d(TAG, "Reading updated preference  :" + defaultRoute);
-      mDeviceHost.clearRoutingEntry(TECH_ENTRY);
-      mDeviceHost.clearRoutingEntry(PROTOCOL_ENTRY);
       computeRoutingParameters();
     }
 }
