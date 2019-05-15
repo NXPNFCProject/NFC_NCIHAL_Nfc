@@ -3939,12 +3939,11 @@ public class NfcService implements DeviceHostListener {
         /*
         bit pos 1 = Power Off
         bit pos 2 = Battery Off
-        bit pos 3 = Screen Off and Unlocked
-        bit pos 5 = Screen Off and locked
+        bit pos 3 = Screen Off
         Set these bits to 0 because in case routeLoc = HOST it can not work on POWER_OFF,
         BATTERY_OFF and SCREEN_OFF*/
 
-        defaultAidRoute &= 0xE9;
+        defaultAidRoute &= 0x11;
       }
       mNxpPrefsEditor.putInt("PREF_SET_DEFAULT_ROUTE_ID", defaultAidRoute);
       mNxpPrefsEditor.commit();
