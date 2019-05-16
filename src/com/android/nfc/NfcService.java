@@ -1537,14 +1537,13 @@ public class NfcService implements DeviceHostListener {
 
         @Override
         public boolean deviceSupportsNfcSecure() {
-            /*String skuList[] = mContext.getResources().getStringArray(
+            String skuList[] = mContext.getResources().getStringArray(
                 R.array.config_skuSupportsSecureNfc);
             String sku = SystemProperties.get("ro.boot.hardware.sku");
             if (TextUtils.isEmpty(sku) || !ArrayUtils.contains(skuList, sku)) {
                 return false;
             }
-            return true;*/
-            return false; //TODO - Needto revert this changes once stabilised.
+            return true;
         }
 
         private int computeLockscreenPollMask(int[] techList) {
