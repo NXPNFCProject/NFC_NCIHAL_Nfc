@@ -425,7 +425,9 @@ static jboolean nativeNfcTag_doWrite(JNIEnv* e, jobject, jbyteArray buf) {
 
         if (sFormatOk == false)  // if format operation failed
         {
-          sem_wait(&sFormatSem);
+          if (-1 == sem_wait(&sFormatSem)) {
+            LOG(ERROR) << StringPrintf("%s: sem_wait failed \n", __func__);
+          }
           sem_destroy(&sFormatSem);
           sem_init(&sFormatSem, 0, 0);
           status = EXTNS_MfcFormatTag(mfc_key2, sizeof(mfc_key2));
@@ -1703,7 +1705,9 @@ static jboolean nativeNfcTag_makeMifareNdefFormat(JNIEnv* e, jobject o,
   if (status == NFA_STATUS_OK) {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: wait for completion", __func__);
-    sem_wait(&sFormatSem);
+    if (-1 == sem_wait(&sFormatSem)) {
+      LOG(ERROR) << StringPrintf("%s: sem_wait failed \n", __func__);
+    }
     status = sFormatOk ? NFA_STATUS_OK : NFA_STATUS_FAILED;
   } else {
     LOG(ERROR) << StringPrintf("%s: error status=%u", __func__, status);
@@ -1757,7 +1761,9 @@ static jboolean nativeNfcTag_doNdefFormat(JNIEnv* e, jobject o, jbyteArray) {
   if (status == NFA_STATUS_OK) {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: wait for completion", __func__);
-    sem_wait(&sFormatSem);
+    if (-1 == sem_wait(&sFormatSem)) {
+      LOG(ERROR) << StringPrintf("%s: sem_wait failed \n", __func__);
+    }
     status = sFormatOk ? NFA_STATUS_OK : NFA_STATUS_FAILED;
   } else
     LOG(ERROR) << StringPrintf("%s: error status=%u", __func__, status);
@@ -1832,7 +1838,9 @@ static jboolean nativeNfcTag_makeMifareReadonly(JNIEnv* e, jobject o,
   if (status != NFA_STATUS_OK) {
     goto TheEnd;
   }
-  sem_wait(&sMakeReadonlySem);
+  if (-1 == sem_wait(&sMakeReadonlySem)) {
+    LOG(ERROR) << StringPrintf("%s: sem_wait failed \n", __func__);
+  }
 
   if (sMakeReadonlyStatus == NFA_STATUS_OK) {
     result = JNI_TRUE;
