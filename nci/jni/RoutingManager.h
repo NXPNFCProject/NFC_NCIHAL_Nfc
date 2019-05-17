@@ -339,12 +339,10 @@ class RoutingManager {
   int mHostListnTechMask;
   int mUiccListnTechMask;
   int mFwdFuntnEnable;
-  int mHostListnEnable;
   static int mChipId;
   SyncEvent mEeRegisterEvent;
   SyncEvent mRoutingEvent;
 #if (NXP_EXTNS == TRUE)
-  bool mIsDirty;
   protoEntry_t mProtoTableEntries[MAX_PROTO_ENTRIES];
   techEntry_t mTechTableEntries[MAX_TECH_ENTRIES];
   LmrtEntry_t mLmrtEntries[MAX_ROUTE_LOC_ENTRIES];
