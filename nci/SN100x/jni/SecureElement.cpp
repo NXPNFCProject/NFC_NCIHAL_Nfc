@@ -53,9 +53,13 @@ uint8_t  SecureElement::mStaticPipeProp;
 *******************************************************************************/
 SecureElement::SecureElement() :
     mNewPipeId (0),
+    mIsWiredModeOpen (false),
     mNativeData(NULL),
     mbNewEE (true),
     mIsInit (false),
+    mTransceiveWaitOk (false),
+    mGetAtrRspwait (false),
+    mAbortEventWaitOk (false),
     mNewSourceGate (0),
     mAtrStatus (0),
     mAtrRespLen (0),
@@ -64,8 +68,20 @@ SecureElement::SecureElement() :
     mRfFieldIsOn(false),
     mActivatedInListenMode (false)
 {
+    mPwrCmdstatus = NFA_STATUS_FAILED;
+    mModeSetNtfstatus = NFA_STATUS_FAILED;
+    mNfccPowerMode = 0;
+    mTransceiveStatus = NFA_STATUS_FAILED;
+    mCommandStatus = NFA_STATUS_FAILED;
+    mActualResponseSize = 0;
+    mAtrInfolen = 0;
+    mActualNumEe = 0;
     memset (&mEeInfo, 0, nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED *sizeof(tNFA_EE_INFO));
     memset (mAidForEmptySelect, 0, sizeof(mAidForEmptySelect));
+    memset (mVerInfo, 0, sizeof(mVerInfo));
+    memset (mAtrInfo, 0, sizeof(mAtrInfo));
+    memset (mResponseData, 0, sizeof(mResponseData));
+    memset (mAtrRespData, 0, sizeof(mAtrRespData));
     memset (&mHciCfg, 0, sizeof(mHciCfg));
     memset (&mLastRfFieldToggle, 0, sizeof(mLastRfFieldToggle));
     memset (&mNfceeData_t, 0, sizeof(mNfceeData));
@@ -1542,8 +1558,11 @@ tNFA_STATUS SecureElement::setNfccPwrConfig(uint8_t value)
     cur_value = value;
     SyncEventGuard guard (mPwrLinkCtrlEvent);
     nfaStat = NFA_SendPowerLinkCommand((uint8_t)EE_HANDLE_0xF3, value);
-    if(nfaStat ==  NFA_STATUS_OK)
-       mPwrLinkCtrlEvent.wait(NFC_CMD_TIMEOUT);
+    if(nfaStat ==  NFA_STATUS_OK) {
+        if (mPwrLinkCtrlEvent.wait(NFC_CMD_TIMEOUT) == false) {
+            LOG(ERROR) << StringPrintf("mPwrLinkCtrlEvent has terminated");
+        }
+    }
     LOG(INFO) << StringPrintf("%s: Exit: Status= 0x%X", fn, mPwrCmdstatus);
     return mPwrCmdstatus;
 }

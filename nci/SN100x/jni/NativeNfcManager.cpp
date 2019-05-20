@@ -3791,8 +3791,11 @@ static int nfcManager_setTransitConfig(JNIEnv * e, jobject o,
     int stat = NFA_SetTransitConfig(transitConfig);
     if (stat != NFA_STATUS_OK) {
       LOG(ERROR) << StringPrintf("%s: NFA_SetTransitConfig failed", __func__);
+    } else {
+      if(sNfaTransitConfigEvent.wait(10 * ONE_SECOND_MS) == false) {
+        LOG(ERROR) << StringPrintf("Nfa transitConfig Event has terminated");
+      }
     }
-    sNfaTransitConfigEvent.wait(10 * ONE_SECOND_MS);
     return stat;
 }
 

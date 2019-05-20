@@ -126,10 +126,13 @@ RoutingManager::RoutingManager() {
   mDefaultSysCode = DEFAULT_SYS_CODE;
 #else
   mDefaultSysCode = 0x00;
+  mDefaultTechASeID = 0;
   mCeRouteStrictDisable = 0;
   mTechSupportedByEse = 0;
   mTechSupportedByUicc1 = 0;
   mTechSupportedByUicc2 = 0;
+  memset (mProtoTableEntries, 0, sizeof(mProtoTableEntries));
+  memset (mTechTableEntries, 0, sizeof(mTechTableEntries));
   memset(mLmrtEntries, 0, sizeof(LmrtEntry_t));
 #endif
 
@@ -141,6 +144,8 @@ RoutingManager::RoutingManager() {
           "%s: DEFAULT_SYS_CODE: 0x%02X", __func__, mDefaultSysCode);
     }
   }
+  mSecureNfcEnabled = false;
+  memset(&mCbEventData, 0, sizeof(mCbEventData));
   memset(&mEeInfo, 0, sizeof(mEeInfo));
   mReceivedEeInfo = false;
   mSeTechMask = 0x00;
@@ -2137,7 +2142,9 @@ void RoutingManager::getRouting(uint16_t* routeLen, uint8_t* routingBuff) {
   SyncEventGuard guard(sNfaGetRoutingEvent);
   nfcStat = NFC_GetRouting();
   if (nfcStat == NFA_STATUS_OK) {
-    sNfaGetRoutingEvent.wait(NFC_CMD_TIMEOUT);
+    if(sNfaGetRoutingEvent.wait(NFC_CMD_TIMEOUT) == false) {
+      LOG(ERROR) << StringPrintf("Routing Event has terminated");
+    }
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("status=0x0%x", nfcStat);
     *routeLen = sRoutingBuffLen;
   } else {
