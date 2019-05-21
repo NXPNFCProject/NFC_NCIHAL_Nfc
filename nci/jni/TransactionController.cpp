@@ -49,8 +49,7 @@ void transactionController::lastRequestResume(void) {
   pthread_attr_t attr;
   pthread_attr_init(&attr);
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-  pendingTransHandleTimer->kill();
-  pendingTransHandleTimer = new IntervalTimer();
+  mPendingTransHandleTimer.kill();
 
   // Fork a thread which shall abort a stuck transaction and resume last
   // trasaction*/
@@ -60,7 +59,7 @@ void transactionController::lastRequestResume(void) {
     LOG(ERROR) << StringPrintf("Unable to create the thread");
   }
   pthread_attr_destroy(&attr);
-  pTransactionDetail->current_transcation_state = NFA_TRANS_DM_RF_TRANS_END;
+  mPTransactionDetail->current_transcation_state = NFA_TRANS_DM_RF_TRANS_END;
 }
 /*******************************************************************************
  **
@@ -109,12 +108,10 @@ transactionController::transactionController(void) {
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: transaction controller created", __FUNCTION__);
 
-  sem_init(&barrier, 0, 1);
+  sem_init(&mBarrier, 0, 1);
 
-  pTransactionDetail = android::nfcManager_transactionDetail();
-  abortTimer = new IntervalTimer();
-  pendingTransHandleTimer = new IntervalTimer();
-  requestor = NO_REQUESTOR;
+  mPTransactionDetail = android::nfcManager_transactionDetail();
+  mRequestor = NO_REQUESTOR;
 }
 /*******************************************************************************
  **
@@ -155,33 +152,33 @@ bool transactionController::transactionAttempt(
   // Set timeout factor relative to current time
   timeout.tv_sec += timeoutInSec;
 
-  sem_getvalue(&barrier, &semVal);
+  sem_getvalue(&mBarrier, &semVal);
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: Transaction attempted : %d when barrier is: %d",
                       __FUNCTION__, transactionRequestor, semVal);
 
-  if (pendingTransHandleTimer->isRunning()) {
+  if (mPendingTransHandleTimer.isRunning()) {
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
         "%s: Transaction denied due to pending transaction: %d ", __FUNCTION__,
         transactionRequestor);
     return false;
   }
   // Block wait on barrier
-  if (sem_timedwait(&barrier, &timeout) != 0) {
+  if (sem_timedwait(&mBarrier, &timeout) != 0) {
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
         "%s: Transaction denied : %d ", __FUNCTION__, transactionRequestor);
     return false;
   }
 
-  pTransactionDetail->trans_in_progress = true;
-  requestor = transactionRequestor;
+  mPTransactionDetail->trans_in_progress = true;
+  mRequestor = transactionRequestor;
 
   // In case there is a chance that transaction will be stuck; start transaction
   // abort timer
   if (transactionLiveLockable(transactionRequestor)) {
-    abortTimer->set(1000000, transactionAbortTimerCb);
+    mAbortTimer.set(1000000, transactionAbortTimerCb);
   }
-  sem_getvalue(&barrier, &semVal);
+  sem_getvalue(&mBarrier, &semVal);
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: Transaction granted : %d and barrier is: %d",
                       __FUNCTION__, transactionRequestor, semVal);
@@ -202,29 +199,29 @@ bool transactionController::transactionAttempt(
     eTransactionId transactionRequestor) {
   int semVal = 0;
 
-  sem_getvalue(&barrier, &semVal);
+  sem_getvalue(&mBarrier, &semVal);
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: Transaction attempted : %d when barrier is: %d",
                       __FUNCTION__, transactionRequestor, semVal);
 
-  if (pendingTransHandleTimer->isRunning()) {
+  if (mPendingTransHandleTimer.isRunning()) {
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
         "%s: Transaction denied due to pending transaction: %d ", __FUNCTION__,
         transactionRequestor);
     return false;
   }
 
-  if (sem_trywait(&barrier) == 0) {
-    pTransactionDetail->trans_in_progress = true;
+  if (sem_trywait(&mBarrier) == 0) {
+    mPTransactionDetail->trans_in_progress = true;
 
     if (transactionLiveLockable(transactionRequestor)) {
-      abortTimer->set(1000000, transactionAbortTimerCb);
+      mAbortTimer.set(1000000, transactionAbortTimerCb);
     }
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
         "%s: Transaction granted : %d ", __FUNCTION__, transactionRequestor);
 
-    requestor = transactionRequestor;
-    sem_getvalue(&barrier, &semVal);
+    mRequestor = transactionRequestor;
+    sem_getvalue(&mBarrier, &semVal);
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: Transaction granted : %d and barrier is: %d",
                         __FUNCTION__, transactionRequestor, semVal);
@@ -248,16 +245,14 @@ void transactionController::transactionEnd(
     eTransactionId transactionRequestor) {
   int val;
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter", __FUNCTION__);
-  if (requestor == transactionRequestor) {
+  if (mRequestor == transactionRequestor) {
     /*If any abort timer is running for this transaction then stop it*/
-    abortTimer->kill();
-    /*Create new abort timer for next use*/
-    abortTimer = new IntervalTimer();
+    mAbortTimer.kill();
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: Transaction control timer killed", __FUNCTION__);
 
-    pTransactionDetail->trans_in_progress = false;
-    requestor = NO_REQUESTOR;
+    mPTransactionDetail->trans_in_progress = false;
+    mRequestor = NO_REQUESTOR;
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
         "%s: Transaction ended : %d ", __FUNCTION__, transactionRequestor);
 
@@ -266,11 +261,11 @@ void transactionController::transactionEnd(
     *reduced
     **/
     if (android::nfcManager_isRequestPending()) {
-      pendingTransHandleTimer->set(1, transactionHandlePendingCb);
+      mPendingTransHandleTimer.set(1, transactionHandlePendingCb);
     }
 
-    sem_getvalue(&barrier, &val);
-    if (!val) sem_post(&barrier);
+    sem_getvalue(&mBarrier, &val);
+    if (!val) sem_post(&mBarrier);
   }
 }
 /*******************************************************************************
@@ -290,18 +285,18 @@ bool transactionController::transactionTerminate(
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
       "%s: Enter. Requested by : %d ", __FUNCTION__, transactionRequestor);
 
-  if ((requestor != 0) && (requestor == transactionRequestor ||
+  if ((mRequestor != 0) && (mRequestor == transactionRequestor ||
                            transactionRequestor == exec_pending_req)) {
-    pTransactionDetail->trans_in_progress = false;
-    requestor = NO_REQUESTOR;
+    mPTransactionDetail->trans_in_progress = false;
+    mRequestor = NO_REQUESTOR;
     killAbortTimer();
 
     if (android::nfcManager_isRequestPending()) {
-      pendingTransHandleTimer->set(1, transactionHandlePendingCb);
+      mPendingTransHandleTimer.set(1, transactionHandlePendingCb);
     }
 
-    sem_getvalue(&barrier, &val);
-    if (!val) sem_post(&barrier);
+    sem_getvalue(&mBarrier, &val);
+    if (!val) sem_post(&mBarrier);
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
         "%s: Transaction terminated : %d ", __FUNCTION__, transactionRequestor);
     return true;
@@ -318,7 +313,7 @@ bool transactionController::transactionTerminate(
  **
  *******************************************************************************/
 bool transactionController::transactionInProgress(void) {
-  return (pTransactionDetail->trans_in_progress == true);
+  return (mPTransactionDetail->trans_in_progress == true);
 }
 /*******************************************************************************
  **
@@ -347,22 +342,20 @@ transactionController* transactionController::controller(void) {
   if (pInstance == NULL) {
     pInstance = new transactionController();
   } else {
-    pInstance->pTransactionDetail->trans_in_progress = false;
-    pInstance->requestor = NO_REQUESTOR;
-    pInstance->abortTimer->kill();
-    pInstance->pendingTransHandleTimer->kill();
-    pInstance->abortTimer = new IntervalTimer();
-    pInstance->pendingTransHandleTimer = new IntervalTimer();
+    pInstance->mPTransactionDetail->trans_in_progress = false;
+    pInstance->mRequestor = NO_REQUESTOR;
+    pTransactionController->mAbortTimer.kill();
+    pTransactionController->mPendingTransHandleTimer.kill();
 
-    sem_destroy(&pInstance->barrier);
+    sem_destroy(&pInstance->mBarrier);
 
-    sem_init(&pInstance->barrier, 0, 1);
+    sem_init(&pInstance->mBarrier, 0, 1);
 
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: transaction controller initialized", __FUNCTION__);
   }
-  memset(pInstance->pTransactionDetail, 0x00,
-         sizeof(*(pInstance->pTransactionDetail)));
+  memset(pInstance->mPTransactionDetail, 0x00,
+         sizeof(*(pInstance->mPTransactionDetail)));
   return pInstance;
 }
 /*******************************************************************************
@@ -379,8 +372,7 @@ void transactionController::killAbortTimer(void) {
       "%s: transaction controller abort timer killed", __FUNCTION__);
 
   if (transactionInProgress()) {
-    abortTimer->kill();
-    abortTimer = new IntervalTimer();
+    mAbortTimer.kill();
   }
 }
 /*******************************************************************************
@@ -397,7 +389,7 @@ void transactionController::setAbortTimer(unsigned int msec) {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
       "%s: transaction controller abort timer set", __FUNCTION__);
 
-  if (transactionInProgress()) abortTimer->set(msec, transactionAbortTimerCb);
+  if (transactionInProgress()) mAbortTimer.set(msec, transactionAbortTimerCb);
 }
 
 /*******************************************************************************
@@ -410,5 +402,5 @@ void transactionController::setAbortTimer(unsigned int msec) {
  **
  *******************************************************************************/
 eTransactionId transactionController::getCurTransactionRequestor() {
-  return requestor;
+  return mRequestor;
 }
