@@ -447,7 +447,9 @@ static jboolean nativeNfcTag_doWrite(JNIEnv* e, jobject, jbyteArray buf) {
             goto TheEnd;
         }
       }
-      sem_wait(&sFormatSem);
+      if (-1 == sem_wait(&sFormatSem)) {
+        LOG(ERROR) << StringPrintf("%s: sem_wait failed \n", __func__);
+      }
       sem_destroy(&sFormatSem);
       if (sFormatOk == false)  // if format operation failed
         goto TheEnd;
