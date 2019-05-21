@@ -181,7 +181,7 @@ class RoutingManager {
                        int optparamlen);
   void handleSERemovedNtf();
   bool is_ee_recovery_ongoing();
-  void setEmptyAidEntry(void);
+  void setEmptyAidEntry(int route);
 #else
   bool addAidRouting(const uint8_t* aid, uint8_t aidLen, int route,
                      int aidInfo);

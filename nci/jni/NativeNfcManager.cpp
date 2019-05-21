@@ -2086,8 +2086,8 @@ static void nfaConnectionCallback(uint8_t connEvent,
   **
   *******************************************************************************/
 
-  static void nfcManager_setEmptyAidRoute(JNIEnv*, jobject) {
-    RoutingManager::getInstance().setEmptyAidEntry();
+  static void nfcManager_setEmptyAidRoute(JNIEnv*, jobject, jint route) {
+    RoutingManager::getInstance().setEmptyAidEntry(route);
     return;
   }
 

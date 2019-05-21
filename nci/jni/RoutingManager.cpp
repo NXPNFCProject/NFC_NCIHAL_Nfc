@@ -1210,10 +1210,11 @@ bool RoutingManager::clearRoutingEntry(int type) {
  *  Length = 2 [0x02]
  *  Value  = [Route_loc, Power_state]
  * */
-void RoutingManager::setEmptyAidEntry() {
+void RoutingManager::setEmptyAidEntry(int route) {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
   uint16_t routeLoc;
   uint8_t power;
+  mDefaultIso7816SeID = route;
 
   routeLoc = ((mDefaultIso7816SeID == 0x00)
                   ? ROUTE_LOC_HOST_ID
