@@ -73,6 +73,7 @@ SecureElement::SecureElement() :
     mNfccPowerMode = 0;
     mTransceiveStatus = NFA_STATUS_FAILED;
     mCommandStatus = NFA_STATUS_FAILED;
+    mNfaHciHandle = NFA_HANDLE_INVALID;
     mActualResponseSize = 0;
     mAtrInfolen = 0;
     mActualNumEe = 0;

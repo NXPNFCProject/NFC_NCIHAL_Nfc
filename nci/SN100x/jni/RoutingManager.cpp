@@ -126,11 +126,17 @@ RoutingManager::RoutingManager() {
   mDefaultSysCode = DEFAULT_SYS_CODE;
 #else
   mDefaultSysCode = 0x00;
+  mHostListnTechMask = 0;
+  mUiccListnTechMask = 0;
+  mFwdFuntnEnable = 0;
+  mDefaultIso7816SeID = 0;
+  mDefaultIso7816Powerstate = 0;
   mDefaultTechASeID = 0;
   mCeRouteStrictDisable = 0;
   mTechSupportedByEse = 0;
   mTechSupportedByUicc1 = 0;
   mTechSupportedByUicc2 = 0;
+  mDefaultTechFPowerstate = 0;
   memset (mProtoTableEntries, 0, sizeof(mProtoTableEntries));
   memset (mTechTableEntries, 0, sizeof(mTechTableEntries));
   memset(mLmrtEntries, 0, sizeof(LmrtEntry_t));
