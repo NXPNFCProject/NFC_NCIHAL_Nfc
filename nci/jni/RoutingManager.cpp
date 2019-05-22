@@ -1601,10 +1601,10 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route,
           SyncEventGuard guard(mRoutingEvent);
           if (mCeRouteStrictDisable == 0x01) {
             nfaStat = NFA_EeSetDefaultTechRouting(
-                0x400, NFA_TECHNOLOGY_MASK_A, 0, 0,
+                0x400, switch_on_mask ? NFA_TECHNOLOGY_MASK_A : 0, 0, 0,
                 mSecureNfcEnabled ? 0 : NFA_TECHNOLOGY_MASK_A, 0, 0);
           } else {
-            nfaStat = NFA_EeSetDefaultTechRouting(0x400, NFA_TECHNOLOGY_MASK_A,
+            nfaStat = NFA_EeSetDefaultTechRouting(0x400, switch_on_mask ? NFA_TECHNOLOGY_MASK_A : 0,
                                                   0, 0, 0, 0, 0);
           }
           if (nfaStat == NFA_STATUS_OK)
@@ -1619,10 +1619,10 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route,
           SyncEventGuard guard(mRoutingEvent);
           if (mCeRouteStrictDisable == 0x01) {
             nfaStat = NFA_EeSetDefaultTechRouting(
-                0x400, NFA_TECHNOLOGY_MASK_B, 0, 0,
+                0x400, switch_on_mask ? NFA_TECHNOLOGY_MASK_B : 0, 0, 0,
                 mSecureNfcEnabled ? 0 : NFA_TECHNOLOGY_MASK_B, 0, 0);
           } else {
-            nfaStat = NFA_EeSetDefaultTechRouting(0x400, NFA_TECHNOLOGY_MASK_B,
+            nfaStat = NFA_EeSetDefaultTechRouting(0x400, switch_on_mask ? NFA_TECHNOLOGY_MASK_B : 0,
                                                   0, 0, 0, 0, 0);
           }
           if (nfaStat == NFA_STATUS_OK)
