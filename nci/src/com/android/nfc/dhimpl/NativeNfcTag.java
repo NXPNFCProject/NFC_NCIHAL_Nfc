@@ -191,7 +191,7 @@ public class NativeNfcTag implements TagEndpoint {
                         // special case for NDEF, this will cause switch to ISO_DEP frame intf
                         i = 0;
                        // status = 0;
-                    }
+                    } 
                     status = reconnectWithStatus(i);
                         /*
                         if ((technology != TagTechnology.ISO_DEP) &&
@@ -211,8 +211,8 @@ public class NativeNfcTag implements TagEndpoint {
                             status = 0;
                         }
                         */
-
-
+                    
+                    
                     if (status == 0) {
                         mConnectedTechIndex = i;
                         // Handle was already identical
