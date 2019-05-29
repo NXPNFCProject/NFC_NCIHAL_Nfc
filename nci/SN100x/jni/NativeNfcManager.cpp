@@ -1297,6 +1297,12 @@ static jboolean nfcManager_unrouteAid(JNIEnv* e, jobject, jbyteArray aid) {
 static jboolean nfcManager_commitRouting(JNIEnv* e, jobject) {
 #if (NXP_EXTNS == TRUE)
   bool status = false;
+  SecureElement& se = SecureElement::getInstance();
+
+  if (se.isRfFieldOn() || se.mActivatedInListenMode) {
+    /* Delay is required to avoid update routing during RF Field session*/
+    usleep(1000 * 1000);
+  }
 
   /*Stop RF discovery to reconfigure*/
   startRfDiscovery(false);
