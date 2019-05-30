@@ -3104,20 +3104,10 @@ public class NfcService implements DeviceHostListener {
                     break;
                 }
                 case MSG_COMMIT_ROUTING: {
-                    boolean commit = false;
                     Log.d(TAG, "commitRouting >>>");
-                    synchronized (NfcService.this) {
-                        int defaultRoute=mNxpPrefs.getInt("PREF_SET_DEFAULT_ROUTE_ID", GetDefaultRouteEntry());
-                        mDeviceHost.setEmptyAidRoute(defaultRoute >> ROUTE_LOC_MASK);
-                        if (mCurrentDiscoveryParameters.shouldEnableDiscovery()) {
-                            commit = true;
-                        } else {
-                            Log.d(TAG, "Not committing routing because discovery is disabled.");
-                        }
-                    }
-                    if (commit) {
-                        mDeviceHost.commitRouting();
-                    }
+                    int defaultRoute = mNxpPrefs.getInt("PREF_SET_DEFAULT_ROUTE_ID", GetDefaultRouteEntry());
+                    mDeviceHost.setEmptyAidRoute(defaultRoute >> ROUTE_LOC_MASK);
+                    mDeviceHost.commitRouting();
                     break;
                 }
                 case MSG_RESET_AND_UPDATE_ROUTING_PARAMS: {
