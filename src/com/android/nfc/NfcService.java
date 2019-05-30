@@ -3110,11 +3110,9 @@ public class NfcService implements DeviceHostListener {
                 }
                 case MSG_COMMIT_ROUTING: {
                     Log.d(TAG, "commitRouting >>>");
-                    synchronized (NfcService.this) {
-                        int defaultRoute=mNxpPrefs.getInt("PREF_SET_DEFAULT_ROUTE_ID", GetDefaultRouteEntry());
-                        mDeviceHost.setEmptyAidRoute(defaultRoute >> ROUTE_LOC_MASK);
-                        mDeviceHost.commitRouting();
-                    }
+                    int defaultRoute=mNxpPrefs.getInt("PREF_SET_DEFAULT_ROUTE_ID", GetDefaultRouteEntry());
+                    mDeviceHost.setEmptyAidRoute(defaultRoute >> ROUTE_LOC_MASK);
+                    mDeviceHost.commitRouting();
                     break;
                 }
 
