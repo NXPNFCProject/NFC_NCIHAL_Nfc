@@ -81,6 +81,8 @@ void NxpPropCmd_OnResponseCallback(uint8_t event, uint16_t param_len,
   uint8_t status = NFA_STATUS_FAILED;
 
   switch (oid) {
+  case (0x03):
+  /*FALL_THRU*/
   case (0x1A):
   /*FALL_THRU*/
   case (0x1C):
