@@ -107,10 +107,10 @@ void HciEventManager::notifyTransactionListenersOfAid(std::vector<uint8_t> aid,
  *
  * byte1 byte2 byte3 byte4 byte5 byte6
  * 00-7F   -    -     -     -     -
- * 80    00-FF  -     -     -     -
- * 81    0000-FFFF    -     -     -
- * 82      000000-FFFFFF    -     -
- * 83      00000000-FFFFFFFF      -
+ * 81    00-FF  -     -     -     -
+ * 82    0000-FFFF    -     -     -
+ * 83      000000-FFFFFF    -     -
+ * 84      00000000-FFFFFFFF      -
  */
 std::vector<uint8_t> HciEventManager::getDataFromBerTlv(
     std::vector<uint8_t> berTlv) {
@@ -125,22 +125,22 @@ std::vector<uint8_t> HciEventManager::getDataFromBerTlv(
    */
   if (lengthTag < 0x80 && berTlv.size() == (lengthTag + 1)) {
     return std::vector<uint8_t>(berTlv.begin() + 1, berTlv.end());
-  } else if (lengthTag == 0x80 && berTlv.size() > 2) {
+  } else if (lengthTag == 0x81 && berTlv.size() > 2) {
     size_t length = berTlv[1];
     if ((length + 2) == berTlv.size()) {
       return std::vector<uint8_t>(berTlv.begin() + 2, berTlv.end());
     }
-  } else if (lengthTag == 0x81 && berTlv.size() > 3) {
+  } else if (lengthTag == 0x82 && berTlv.size() > 3) {
     size_t length = ((berTlv[1] << 8) | berTlv[2]);
     if ((length + 3) == berTlv.size()) {
       return std::vector<uint8_t>(berTlv.begin() + 3, berTlv.end());
     }
-  } else if (lengthTag == 0x82 && berTlv.size() > 4) {
+  } else if (lengthTag == 0x83 && berTlv.size() > 4) {
     size_t length = (berTlv[1] << 16) | (berTlv[2] << 8) | berTlv[3];
     if ((length + 4) == berTlv.size()) {
       return std::vector<uint8_t>(berTlv.begin() + 4, berTlv.end());
     }
-  } else if (lengthTag == 0x83 && berTlv.size() > 5) {
+  } else if (lengthTag == 0x84 && berTlv.size() > 5) {
     size_t length = ((size_t)(berTlv[1] << 24) | (size_t)(berTlv[2] << 16) |
                      (size_t)(berTlv[3] << 8) | (size_t)berTlv[4]);
     if ((length + 5) == berTlv.size()) {
