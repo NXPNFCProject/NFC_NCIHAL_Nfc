@@ -220,6 +220,7 @@ class RoutingManager {
   Mutex mResetHandlerMutex;
   IntervalTimer LmrtRspTimer;
   SyncEvent mEeUpdateEvent;
+  SyncEvent mEeInfoEvent;
   IntervalTimer mNfcFRspTimer;
 
  private:
@@ -334,6 +335,7 @@ class RoutingManager {
   static const JNINativeMethod sMethods[];
   int mDefaultEe;  // since this variable is used in both cases moved out of
                    // compiler switch
+  bool mReceivedEeInfo;
   int mHostListnTechMask;
   int mUiccListnTechMask;
   int mFwdFuntnEnable;

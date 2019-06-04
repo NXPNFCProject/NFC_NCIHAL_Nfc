@@ -165,6 +165,7 @@ RoutingManager::RoutingManager()
 
   memset(&mEeInfo, 0, sizeof(mEeInfo));
   mSeTechMask = 0x00;  // unused
+  mReceivedEeInfo = false;
   mNfcFOnDhHandle = NFA_HANDLE_INVALID;
   mIsScbrSupported = false;
   mDefaultIsoDepRoute = NfcConfig::getUnsigned(NAME_DEFAULT_ISODEP_ROUTE, 0x00);
@@ -202,6 +203,7 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
   unsigned long num = 0;
   mNativeData = native;
   mRxDataBuffer.clear();
+
   uint8_t ActualNumEe = nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED;
   tNFA_EE_INFO mEeInfo[ActualNumEe];
 
@@ -374,6 +376,15 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
       return false;
     }
     mEeRegisterEvent.wait();
+  }
+
+  if ((mDefaultOffHostRoute != 0) || (mDefaultFelicaRoute != 0)) {
+    // Wait for EE info if needed
+    SyncEventGuard guard(mEeInfoEvent);
+    if (!mReceivedEeInfo) {
+      LOG(INFO) << fn << "Waiting for EE info";
+      mEeInfoEvent.wait();
+    }
   }
 
 #if (NXP_EXTNS != TRUE)
@@ -2044,6 +2055,12 @@ void RoutingManager::nfaEeCallback(tNFA_EE_EVT event,
           "%s: NFA_EE_REMOVE_SYSCODE_EVT  status=%u", fn, eventData->status);
     } break;
 
+    case NFA_EE_DEREGISTER_EVT: {
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+          "%s: NFA_EE_DEREGISTER_EVT; status=0x%X", fn, eventData->status);
+      routingManager.mReceivedEeInfo = false;
+    } break;
+
     case NFA_EE_MODE_SET_EVT: {
       SyncEventGuard guard(routingManager.mEeSetModeEvent);
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
@@ -2096,9 +2113,23 @@ void RoutingManager::nfaEeCallback(tNFA_EE_EVT event,
       routingManager.mRoutingEvent.notifyOne();
     } break;
 
+    case NFA_EE_CLEAR_TECH_CFG_EVT: {
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+          "%s: NFA_EE_CLEAR_TECH_CFG_EVT; status=0x%X", fn, eventData->status);
+      SyncEventGuard guard(routingManager.mRoutingEvent);
+      routingManager.mRoutingEvent.notifyOne();
+    } break;
+
     case NFA_EE_SET_PROTO_CFG_EVT: {
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
           "%s: NFA_EE_SET_PROTO_CFG_EVT; status=0x%X", fn, eventData->status);
+      SyncEventGuard guard(routingManager.mRoutingEvent);
+      routingManager.mRoutingEvent.notifyOne();
+    } break;
+
+    case NFA_EE_CLEAR_PROTO_CFG_EVT: {
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+          "%s: NFA_EE_CLEAR_PROTO_CFG_EVT; status=0x%X", fn, eventData->status);
       SyncEventGuard guard(routingManager.mRoutingEvent);
       routingManager.mRoutingEvent.notifyOne();
     } break;
@@ -2228,6 +2259,11 @@ void RoutingManager::nfaEeCallback(tNFA_EE_EVT event,
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
           "%s: NFA_EE_DISCOVER_REQ_EVT; status=0x%X; num ee=%u", __func__,
           eventData->discover_req.status, eventData->discover_req.num_ee);
+      SyncEventGuard guard(routingManager.mEeInfoEvent);
+      memcpy(&routingManager.mEeInfo, &eventData->discover_req,
+             sizeof(routingManager.mEeInfo));
+      routingManager.mReceivedEeInfo = true;
+      routingManager.mEeInfoEvent.notifyOne();
       if (nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
         MposManager::getInstance().hanldeEtsiReaderReqEvent(&info);
       }
