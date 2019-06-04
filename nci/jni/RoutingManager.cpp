@@ -387,6 +387,8 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
     }
   }
 
+  mReceivedEeInfo = false;
+
 #if (NXP_EXTNS != TRUE)
   mSeTechMask = updateEeTechRouteSetting();
 #endif
