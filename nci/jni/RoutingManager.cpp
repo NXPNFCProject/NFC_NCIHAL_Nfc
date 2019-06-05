@@ -556,46 +556,19 @@ void RoutingManager::cleanRouting() {
         "SecureElement::MAX_NUM_EE");
   }
   for (i = 0; i < count; i++) {
-#if (NXP_EXTNS == TRUE)
-    nfaStat = NFA_EeSetDefaultTechRouting(ee_handleList[i], 0, 0, 0, 0, 0, 0);
-#else
-    nfaStat = NFA_EeSetDefaultTechRouting(ee_handleList[i], 0, 0, 0);
-#endif
+    nfaStat = NFA_EeClearDefaultTechRouting(
+        ee_handleList[i], (NFA_TECHNOLOGY_MASK_A | NFA_TECHNOLOGY_MASK_B |
+                           NFA_TECHNOLOGY_MASK_F));
     if (nfaStat == NFA_STATUS_OK) {
       mRoutingEvent.wait();
     }
-#if (NXP_EXTNS == TRUE)
-    nfaStat = NFA_EeSetDefaultProtoRouting(ee_handleList[i], 0, 0, 0, 0, 0, 0);
-#else
-    nfaStat = NFA_EeSetDefaultProtoRouting(ee_handleList[i], 0, 0, 0);
-#endif
+    nfaStat = NFA_EeClearDefaultProtoRouting(
+        ee_handleList[i],
+        (NFA_PROTOCOL_MASK_ISO_DEP | NFC_PROTOCOL_MASK_ISO7816));
     if (nfaStat == NFA_STATUS_OK) {
       mRoutingEvent.wait();
     }
   }
-// clean HOST
-#if (NXP_EXTNS == TRUE)
-  nfaStat = NFA_EeSetDefaultTechRouting(NFA_EE_HANDLE_DH, 0, 0, 0, 0, 0, 0);
-#else
-  nfaStat = NFA_EeSetDefaultTechRouting(NFA_EE_HANDLE_DH, 0, 0, 0);
-#endif
-  if (nfaStat == NFA_STATUS_OK) {
-    mRoutingEvent.wait();
-  }
-#if (NXP_EXTNS == TRUE)
-  nfaStat = NFA_EeSetDefaultProtoRouting(NFA_EE_HANDLE_DH, 0, 0, 0, 0, 0, 0);
-#else
-  nfaStat = NFA_EeSetDefaultProtoRouting(NFA_EE_HANDLE_DH, 0, 0, 0);
-#endif
-  if (nfaStat == NFA_STATUS_OK) {
-    mRoutingEvent.wait();
-  }
-#if 0
-    /*commented to avoid send LMRT command twice*/
-    nfaStat = NFA_EeUpdateNow();
-    if (nfaStat != NFA_STATUS_OK)
-        LOG(ERROR) << StringPrintf("Failed to commit routing configuration");
-#endif
 }
 
 #if (NXP_EXTNS == TRUE)
