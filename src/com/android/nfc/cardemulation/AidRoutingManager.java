@@ -396,21 +396,6 @@ public class AidRoutingManager {
                       }
                     }
                 }
-                if(mDefaultRoute != mDefaultIsoDepRoute) {
-                  if(NfcService.getInstance().getNciVersion() != NfcService.getInstance().NCI_VERSION_1_0) {
-                    String emptyAid = "";
-                    AidEntry entry = new AidEntry();
-                    entry.route = mDefaultRoute;
-                    if(mDefaultRoute==ROUTE_HOST) {
-                    entry.isOnHost = true;
-                  } else{
-                    entry.isOnHost = false;
-                   }
-                    entry.aidInfo = RegisteredAidCache.AID_ROUTE_QUAL_PREFIX;
-                    aidRoutingTableCache.put(emptyAid, entry);
-                    if (DBG) Log.d(TAG, "Add emptyAid into AidRoutingTable");
-                  }
-                }
                 if( calculateAidRouteSize(aidRoutingTableCache) <= mMaxAidRoutingTableSize) {
                 aidRouteResolved = true;
                 break;
@@ -419,6 +404,7 @@ public class AidRoutingManager {
             if(aidRouteResolved == true) {
               commit(aidRoutingTableCache);
               NfcService.getInstance().updateStatusOfServices(true);
+              NfcService.getInstance().updateDefaultAidRoute(mDefaultRoute);
               mLastCommitStatus = true;
           } else {
               Log.e(TAG, "RoutingTable unchanged because it's full, not updating");
