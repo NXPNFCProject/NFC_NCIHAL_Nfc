@@ -135,7 +135,18 @@ void NativeJniExtns::initialize(JNIEnv* e) {
     (*regNfcExtnsFunc.initNativeJni)(e);
   }
 }
-
+/*******************************************************************************
+ **
+ ** Function:        isExtensionPresent
+ **
+ ** Description:     Used externally to determine if extension is present or not.
+ **
+ ** Returns:         'true' if extension is Present, else 'false'.
+ **
+ *******************************************************************************/
+bool NativeJniExtns::isExtensionPresent() {
+  return (lib_handle != NULL) ? true : false;
+}
 /*******************************************************************************
  **
  ** Function:        NativeJniExtns

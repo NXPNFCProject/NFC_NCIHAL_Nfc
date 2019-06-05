@@ -3866,117 +3866,139 @@ static jint nfcManager_getRemainingAidTableSize (JNIEnv* , jobject )
 }
 
 /*******************************************************************************
-   **
-   ** Function:        nfcManager_doSelectUicc()
-   **
-   ** Description:     Issue any single TLV set config command as per input
-   ** register values and bit values
-   **
-   ** Returns:         success/failure
-   **
-   *******************************************************************************/
-  static int nfcManager_doSelectUicc(JNIEnv * e, jobject o, jint uiccSlot) {
-    (void)e;
-    (void)o;
-    uint8_t retStat = STATUS_UNKNOWN_ERROR;
-
-     if (!isDynamicUiccEnabled) {
+**
+** Function:        nfcManager_doSelectUicc()
+**
+** Description:     Select the preferred UICC slot
+**
+** Returns:        Returns status as below
+**                 DUAL_UICC_ERROR_STATUS_UNKNOWN when error status not defined.
+**                 DUAL_UICC_ERROR_NFC_TURNING_OFF when Nfc is Disabling,
+**                 DUAL_UICC_ERROR_INVALID_SLOT when slot id mismatch,
+**                 DUAL_UICC_ERROR_NFCC_BUSY when RF session is ongoing
+**                 DUAL_UICC_FEATURE_NOT_AVAILABLE when feature not available
+**                 UICC_NOT_CONFIGURED when UICC is not configured.
+*******************************************************************************/
+static int nfcManager_doSelectUicc(JNIEnv* e, jobject o, jint uiccSlot) {
+  (void)e;
+  (void)o;
+  int retStat = DUAL_UICC_ERROR_STATUS_UNKNOWN;
+  tNFA_STATUS status = NFA_STATUS_FAILED;
+  NativeJniExtns& jniExtns = NativeJniExtns::getInstance();
+  if (!isDynamicUiccEnabled) {
+    if (!jniExtns.isExtensionPresent()) {
       retStat = nfcManager_staticDualUicc_Precondition(uiccSlot);
+
+      if (sSeRfActive || SecureElement::getInstance().isRfFieldOn()) {
+        LOG(ERROR) << StringPrintf("%s:FAIL  RF session ongoing", __func__);
+        retStat = DUAL_UICC_ERROR_NFCC_BUSY;
+      }
 
       if (retStat != UICC_NOT_CONFIGURED) {
         DLOG_IF(INFO, nfc_debug_enabled)
             << StringPrintf("staticDualUicc_Precondition failed.");
         return retStat;
       }
-
-      nfcManager_setPreferredSimSlot(NULL, NULL, uiccSlot);
-      retStat = UICC_CONFIGURED;
-      // TODO when
-      //RoutingManager::getInstance().cleanRouting();
-    } else {
-      retStat = DUAL_UICC_FEATURE_NOT_AVAILABLE;
-      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-          "%s: Dual uicc not supported retStat = %d", __func__, retStat);
     }
-    return retStat;
+    status = nfcManager_setPreferredSimSlot(NULL, NULL, uiccSlot);
+    if (status == NFA_STATUS_OK) retStat = UICC_CONFIGURED;
+  } else {
+    retStat = DUAL_UICC_FEATURE_NOT_AVAILABLE;
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+        "%s: Dual uicc not supported retStat = %d", __func__, retStat);
   }
+  return retStat;
+}
 
-  /*******************************************************************************
-   **
-   ** Function:        nfcManager_doGetSelectedUicc()
-   **
-   ** Description:     get the current selected active UICC
-   **
-   ** Returns:         UICC id
-   **
-   *******************************************************************************/
-  static int nfcManager_doGetSelectedUicc(JNIEnv * e, jobject o) {
-    uint8_t uicc_stat = STATUS_UNKNOWN_ERROR;
-    if (!isDynamicUiccEnabled) {
-      uicc_stat =
-          SecureElement::getInstance().getUiccStatus(sCurrentSelectedUICCSlot);
-    } else {
-      DLOG_IF(INFO, nfc_debug_enabled)
-          << StringPrintf("%s: dual uicc not supported ", __func__);
-      uicc_stat = DUAL_UICC_FEATURE_NOT_AVAILABLE;
-    }
-    return uicc_stat;
-  }
-
-  static int nfcManager_staticDualUicc_Precondition(int uiccSlot) {
-    if (isDynamicUiccEnabled) {
-      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-          "%s:Dual UICC feature not available . Returning", __func__);
-      return DUAL_UICC_FEATURE_NOT_AVAILABLE;
-    }
-
-    uint8_t retStat = UICC_NOT_CONFIGURED;
-
-    if (sIsDisabling) {
-      LOG(ERROR) << StringPrintf(
-          "%s:FAIL Nfc is Disabling : Switch UICC not allowed", __func__);
-      retStat = DUAL_UICC_ERROR_NFC_TURNING_OFF;
-    } else if (sSeRfActive) {
-      LOG(ERROR) << StringPrintf("%s:FAIL  RF session ongoing", __func__);
-      retStat = DUAL_UICC_ERROR_NFCC_BUSY;
-    } else if ((uiccSlot != 0x01) && (uiccSlot != 0x02)) {
-      LOG(ERROR) << StringPrintf("%s: Invalid slot id", __func__);
-      retStat = DUAL_UICC_ERROR_INVALID_SLOT;
-    } else if (SecureElement::getInstance().isRfFieldOn()) {
-      LOG(ERROR) << StringPrintf("%s:FAIL  RF field on", __func__);
-      retStat = DUAL_UICC_ERROR_NFCC_BUSY;
-    } else if (sDiscoveryEnabled || sRfEnabled) {
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Transaction state enabled", __func__);
-    }
-    return retStat;
-  }
-
-  /*******************************************************************************
-   **
-   ** Function:        nfcManager_setPreferredSimSlot()
-   **
-   ** Description:     This api is used to select a particular UICC slot.
-   **
-   **
-   ** Returns:         success/failure
-   **
-   *******************************************************************************/
-  static int nfcManager_setPreferredSimSlot(JNIEnv * e, jobject o,
-                                            jint uiccSlot) {
+/*******************************************************************************
+**
+** Function:        nfcManager_doGetSelectedUicc()
+**
+** Description:     get the current selected active UICC
+**
+** Returns:         UICC id
+**
+*******************************************************************************/
+static int nfcManager_doGetSelectedUicc(JNIEnv * e, jobject o) {
+  uint8_t uicc_stat = STATUS_UNKNOWN_ERROR;
+  if (!isDynamicUiccEnabled) {
+    uicc_stat =
+        SecureElement::getInstance().getUiccStatus(sCurrentSelectedUICCSlot);
+  } else {
     DLOG_IF(INFO, nfc_debug_enabled)
-        << StringPrintf("%s : uiccslot : %d : enter", __func__, uiccSlot);
-
-    tNFA_STATUS status = NFA_STATUS_OK;
-    if (!isDynamicUiccEnabled) {
-      sCurrentSelectedUICCSlot = uiccSlot;
-      NFA_SetPreferredUiccId(
-          (uiccSlot == 2) ? (SecureElement::getInstance().EE_HANDLE_0xF8 &
-                             ~NFA_HANDLE_GROUP_EE)
-                          : (SecureElement::getInstance().EE_HANDLE_0xF4 &
-                             ~NFA_HANDLE_GROUP_EE));
-    }
-    return status;
+        << StringPrintf("%s: dual uicc not supported ", __func__);
+    uicc_stat = DUAL_UICC_FEATURE_NOT_AVAILABLE;
   }
+  return uicc_stat;
+}
+/**********************************************************************************
+**
+** Function:        nfcManager_staticDualUicc_Precondition
+**
+** Description:    Performs precondition checks before switching UICC
+**
+** Returns:        Returns status as below
+**                 DUAL_UICC_ERROR_NFC_TURNING_OFF when Nfc is Disabling,
+**                 DUAL_UICC_ERROR_INVALID_SLOT when slot id mismatch,
+**                 DUAL_UICC_FEATURE_NOT_AVAILABLE when feature not available,
+**                 UICC_NOT_CONFIGURED when UICC is not configured.
+**********************************************************************************/
+static int nfcManager_staticDualUicc_Precondition(int uiccSlot) {
+  if (isDynamicUiccEnabled) {
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+        "%s:Dual UICC feature not available . Returning", __func__);
+    return DUAL_UICC_FEATURE_NOT_AVAILABLE;
+  }
+
+  int retStat = UICC_NOT_CONFIGURED;
+
+  if (sIsDisabling) {
+    LOG(ERROR) << StringPrintf(
+        "%s:FAIL Nfc is Disabling : Switch UICC not allowed", __func__);
+    retStat = DUAL_UICC_ERROR_NFC_TURNING_OFF;
+  } else if ((uiccSlot != 0x01) && (uiccSlot != 0x02)) {
+    LOG(ERROR) << StringPrintf("%s: Invalid slot id", __func__);
+    retStat = DUAL_UICC_ERROR_INVALID_SLOT;
+  }
+  return retStat;
+}
+
+/*******************************************************************************
+**
+** Function:        nfcManager_setPreferredSimSlot()
+**
+** Description:     This api is used to select a particular UICC slot.
+**
+**
+** Returns:         success/failure
+**
+*******************************************************************************/
+static int nfcManager_setPreferredSimSlot(JNIEnv* e, jobject o,
+                                          jint uiccSlot) {
+  DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("%s : uiccslot : %d : enter", __func__, uiccSlot);
+
+  int retStat = UICC_NOT_CONFIGURED;
+  NativeJniExtns& jniExtns = NativeJniExtns::getInstance();
+  if (!isDynamicUiccEnabled) {
+    if (jniExtns.isExtensionPresent()) {
+      retStat = nfcManager_staticDualUicc_Precondition(uiccSlot);
+
+      if (retStat != UICC_NOT_CONFIGURED) {
+        DLOG_IF(INFO, nfc_debug_enabled)
+            << StringPrintf("staticDualUicc_Precondition failed.");
+        return NFA_STATUS_FAILED;
+      }
+    }
+    sCurrentSelectedUICCSlot = uiccSlot;
+    NFA_SetPreferredUiccId(
+        (uiccSlot == 2) ? (SecureElement::getInstance().EE_HANDLE_0xF8 &
+                           ~NFA_HANDLE_GROUP_EE)
+                        : (SecureElement::getInstance().EE_HANDLE_0xF4 &
+                           ~NFA_HANDLE_GROUP_EE));
+  }
+  return NFA_STATUS_OK;
+}
 #endif
 } /* namespace android */
 /* namespace android */
