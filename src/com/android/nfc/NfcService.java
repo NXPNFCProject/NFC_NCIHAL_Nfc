@@ -2619,7 +2619,7 @@ public class NfcService implements DeviceHostListener {
         TechSeId = (techRoute >> ROUTE_LOC_MASK);
         TechFSeId = (techfRoute >> ROUTE_LOC_MASK);
         /* Technology types are masked internally depending on the capability of SE */
-        if(TechSeId == TechFSeId)
+        if(techRoute == techfRoute)
         {
            TechRoute = 0x07;
            mDeviceHost.setRoutingEntry(TECH_ENTRY,TechRoute, TechSeId, techRoute & 0x3F);
