@@ -240,6 +240,8 @@ public class AidRoutingManager {
           if (mOffHostRouteUicc.length >= index && index > 0) {
             return mOffHostRouteUicc[index - 1] & 0xFF;
           }
+          if (mOffHostRouteEse == null && mOffHostRouteUicc == null)
+            return mDefaultOffHostRoute;
         }
       } catch (NumberFormatException e) {
       }
