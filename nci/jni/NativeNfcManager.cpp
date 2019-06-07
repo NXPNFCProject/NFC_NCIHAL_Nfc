@@ -4425,7 +4425,6 @@ static void restartUiccListen(jint uiccSlot) {
       restartUiccListen(uiccSlot);
       nfcManager_setPreferredSimSlot(NULL, NULL, uiccSlot);
       retStat = UICC_CONFIGURED;
-      RoutingManager::getInstance().cleanRouting();
       pTransactionController->transactionEnd(
           TRANSACTION_REQUESTOR(staticDualUicc));
     } else {
