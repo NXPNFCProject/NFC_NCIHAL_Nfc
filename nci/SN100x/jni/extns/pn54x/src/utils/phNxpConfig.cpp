@@ -13,6 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/******************************************************************************
+ *
+ *  The original Work has been changed by NXP.
+ *
+ *  Copyright 2019 NXP
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ *
+ ******************************************************************************/
 #include <phNxpConfig.h>
 #include <stdio.h>
 #include <sys/stat.h>
@@ -71,6 +91,7 @@ class CNxpNfcConfig : public vector<const CNxpNfcParam*> {
   virtual ~CNxpNfcConfig();
   static CNxpNfcConfig& GetInstance();
   friend void readOptionalConfig(const char* optional);
+  friend void setNxpRfConfigPath(const char* name);
   int checkTimestamp();
 
   bool getValue(const char* name, char* pValue, size_t len) const;
@@ -829,4 +850,24 @@ void readOptionalConfig(const char* extra) {
 extern int isNxpConfigModified() {
   CNxpNfcConfig& rConfig = CNxpNfcConfig::GetInstance();
   return rConfig.checkTimestamp();
+}
+
+/*******************************************************************************
+**
+** Function:    setNxpRfConfigPath
+**
+** Description: sets the path of the NXP RF config file
+**
+** Returns:     none
+**
+*******************************************************************************/
+void setNxpRfConfigPath(const char* name) {
+  char nxp_rf_config_path[256];
+  CNxpNfcConfig& rConfig = CNxpNfcConfig::GetInstance();
+  if (strlen(name) > sizeof(nxp_rf_config_path)) return;
+  memset(nxp_rf_config_path, 0, sizeof(nxp_rf_config_path));
+  strcpy(nxp_rf_config_path, name);
+  DLOG_IF(INFO, gLog_level.extns_log_level >= NXPLOG_LOG_DEBUG_LOGLEVEL)
+      << StringPrintf("nxp_rf_conig_path=%s", nxp_rf_config_path);
+  rConfig.readConfig(nxp_rf_config_path, false);
 }

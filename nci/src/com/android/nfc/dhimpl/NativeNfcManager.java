@@ -58,7 +58,8 @@ public class NativeNfcManager implements DeviceHost {
 
     static final int DEFAULT_LLCP_MIU = 1980;
     static final int DEFAULT_LLCP_RWSIZE = 2;
-
+    static final int MODE_DEDICATED = 1;
+    static final int MODE_NORMAL = 0;
     static final String DRIVER_NAME = "android-nci";
 
     static {
@@ -93,11 +94,19 @@ public class NativeNfcManager implements DeviceHost {
     public void checkFirmware() {
         doDownload();
     }
-    public native int doaccessControlForCOSU (int mode);
+    public native boolean doPartialInitForEseCosUpdate();
+    public native boolean doPartialDeinitForEseCosUpdate();
 
     @Override
-    public int accessControlForCOSU (int mode) {
-        return doaccessControlForCOSU (mode);
+    public boolean accessControlForCOSU (int mode) {
+        boolean stat = false;
+        if(mode == MODE_DEDICATED) {
+             stat = doPartialInitForEseCosUpdate();
+        }
+        else if(mode == MODE_NORMAL) {
+             stat = doPartialDeinitForEseCosUpdate();
+        }
+        return stat;
     }
 
     private native boolean doInitialize();
@@ -206,6 +215,9 @@ public class NativeNfcManager implements DeviceHost {
     public native int   getDefaultFelicaCLTPowerState();
 
     @Override
+    public native int getGsmaPwrState();
+
+    @Override
     public native boolean commitRouting();
 
     @Override
@@ -262,6 +274,9 @@ public class NativeNfcManager implements DeviceHost {
 
     @Override
     public native void doSetScreenState(int screen_state_mask);
+
+    @Override
+    public native void doResonantFrequency(boolean isResonantFreq);
 
     @Override
     public native int getNciVersion();

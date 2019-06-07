@@ -18,24 +18,24 @@
  *  Manage the listen-mode routing table.
  */
 /******************************************************************************
-*
-*  The original Work has been changed by NXP.
-*
-*  Licensed under the Apache License, Version 2.0 (the "License");
-*  you may not use this file except in compliance with the License.
-*  You may obtain a copy of the License at
-*
-*  http://www.apache.org/licenses/LICENSE-2.0
-*
-*  Unless required by applicable law or agreed to in writing, software
-*  distributed under the License is distributed on an "AS IS" BASIS,
-*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-*  See the License for the specific language governing permissions and
-*  limitations under the License.
-*
-*  Copyright 2018 NXP
-*
-******************************************************************************/
+ *
+ *  The original Work has been changed by NXP.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ *  Copyright 2018-2019 NXP
+ *
+ ******************************************************************************/
 #pragma once
 #include <vector>
 #include "NfcJniUtil.h"
@@ -45,12 +45,17 @@
 #include <map>
 #include "nfa_api.h"
 #include "nfa_ee_api.h"
-#if(NXP_EXTNS == TRUE)
-#include "SecureElement.h"
-#define AVAILABLE_PROTO_ENTRIES() 0x05
-#endif
+
 using namespace std;
 #if(NXP_EXTNS == TRUE)
+#include "SecureElement.h"
+#define TYPE_LENGTH_SIZE 0x02
+#define AVAILABLE_PROTO_ENTRIES() 0x05
+#define TECHNOLOGY_BASED_ROUTING 0x00
+#define PROTOCOL_BASED_ROUTING 0x01
+#define AID_BASED_ROUTING 0x02
+#define ROUTE_UICC AID_BASED_ROUTING
+
 typedef struct
 {
     uint8_t protocol;
@@ -102,6 +107,9 @@ typedef struct routeInfo {
 #endif
 class RoutingManager {
  public:
+#if(NXP_EXTNS == TRUE)
+  uint32_t mDefaultGsmaPowerState;
+#endif
   static RoutingManager& getInstance();
   bool initialize(nfc_jni_native_data* native);
   void enableRoutingToHost();
@@ -117,6 +125,8 @@ class RoutingManager {
   void onNfccShutdown();
   int registerJniFunctions(JNIEnv* e);
 #if(NXP_EXTNS == TRUE)
+    void getRouting(uint16_t* routeLen, uint8_t* routingBuff);
+    void processGetRoutingRsp(tNFA_DM_CBACK_DATA* eventData);
     uint16_t getUiccRouteLocId(const int route);
     static const int NFA_SET_AID_ROUTING = 4;
     static const int NFA_SET_TECHNOLOGY_ROUTING = 1;
@@ -144,7 +154,9 @@ class RoutingManager {
     uint32_t getUicc2selected();
     bool addAidRouting(const uint8_t* aid, uint8_t aidLen,
                                    int route, int aidInfo, int power);
-
+    uint16_t sRoutingBuffLen;
+    uint8_t* sRoutingBuff;
+    SyncEvent       sNfaGetRoutingEvent;
     SyncEvent       mAidAddRemoveEvent;
 #endif
  private:
@@ -177,7 +189,6 @@ class RoutingManager {
   static int com_android_nfc_cardemulation_doGetDefaultOffHostRouteDestination(
       JNIEnv* e);
   static int com_android_nfc_cardemulation_doGetAidMatchingMode(JNIEnv* e);
-
   std::vector<uint8_t> mRxDataBuffer;
   map<int, uint16_t> mMapScbrHandle;
 

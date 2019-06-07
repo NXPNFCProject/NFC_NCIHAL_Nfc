@@ -18,24 +18,24 @@
  *  Manage the listen-mode routing table.
  */
 /******************************************************************************
-*
-*  The original Work has been changed by NXP.
-*
-*  Licensed under the Apache License, Version 2.0 (the "License");
-*  you may not use this file except in compliance with the License.
-*  You may obtain a copy of the License at
-*
-*  http://www.apache.org/licenses/LICENSE-2.0
-*
-*  Unless required by applicable law or agreed to in writing, software
-*  distributed under the License is distributed on an "AS IS" BASIS,
-*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-*  See the License for the specific language governing permissions and
-*  limitations under the License.
-*
-*  Copyright 2018 NXP
-*
-******************************************************************************/
+ *
+ *  The original Work has been changed by NXP.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ *  Copyright 2018-2019 NXP
+ *
+ ******************************************************************************/
 #include <android-base/stringprintf.h>
 #include <base/logging.h>
 #include <nativehelper/JNIHelp.h>
@@ -178,6 +178,12 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
         mDefaultIso7816Powerstate = num;
     else
         mDefaultIso7816Powerstate = 0xFF;
+    if(GetNxpNumValue (NAME_DEFUALT_GSMA_PWR_STATE, (void*)&num, sizeof(num)))
+        mDefaultGsmaPowerState = num;
+    else
+        mDefaultGsmaPowerState = 0x00;
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s: mDefaultGsmaPowerState %02x)", fn, mDefaultGsmaPowerState);
     LOG(ERROR) << StringPrintf("%s: >>>> mDefaultIso7816SeID=0x%X", fn, mDefaultIso7816SeID);
     LOG(ERROR) << StringPrintf("%s: >>>> mDefaultIso7816Powerstate=0x%X", fn, mDefaultIso7816Powerstate);
 #endif
@@ -571,6 +577,9 @@ void RoutingManager::notifyActivated(uint8_t technology) {
 }
 
 void RoutingManager::notifyDeactivated(uint8_t technology) {
+#if (NXP_EXTNS == TRUE)
+  SecureElement::getInstance().notifyListenModeState (false);
+#endif
   mRxDataBuffer.clear();
   JNIEnv* e = NULL;
   ScopedAttach attach(mNativeData->vm, &e);
@@ -1686,9 +1695,16 @@ void RoutingManager::setEmptyAidEntry(int route) {
     }
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: route %x",__func__,routeLoc);
     if(routeLoc == ROUTE_LOC_HOST_ID) {
-      if(NFA_GetNCIVersion() == NCI_VERSION_2_0)
-        power &= 0x11;
+      power &= 0x11;
     }
+    if(mDefaultGsmaPowerState) {
+      if(routeLoc == ROUTE_LOC_HOST_ID)
+        power = (mDefaultGsmaPowerState & 0x39);
+      else
+        power = mDefaultGsmaPowerState;
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: gsma  %x",__func__,power);
+    }
+
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: power %x",__func__,power);
     if(power){
         tNFA_STATUS nfaStat = NFA_EeAddAidRouting(routeLoc, 0, NULL, power, 0x10);
@@ -1940,5 +1956,75 @@ bool RoutingManager::removeApduRouting(uint8_t apduDataLen, const uint8_t* apduD
         LOG(ERROR) << StringPrintf("%s: removed APDU pattern successfully", fn);
     }
     return ((nfaStat == NFA_STATUS_OK)?true:false);
+}
+
+/*******************************************************************************
+**
+** Function:        getRouting
+**
+** Description:     Send GET_LISTEN_MODE_ROUTING command
+**
+** Returns:         None
+**
+*******************************************************************************/
+void RoutingManager::getRouting(uint16_t* routeLen, uint8_t* routingBuff) {
+  tNFA_STATUS nfcStat = NFA_STATUS_FAILED;
+  if (routingBuff == NULL || routeLen == NULL) return;
+  sRoutingBuff = routingBuff;
+  SyncEventGuard guard(sNfaGetRoutingEvent);
+  nfcStat = NFC_GetRouting();
+  if (nfcStat == NFA_STATUS_OK) {
+    sNfaGetRoutingEvent.wait(NFC_CMD_TIMEOUT);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("status=0x0%x", nfcStat);
+    *routeLen = sRoutingBuffLen;
+  } else {
+    *routeLen = 0x00;
+  }
+}
+
+/*******************************************************************************
+**
+** Function:        processGetRouting
+**
+** Description:     Process the eventData(current routing info) received during
+**                  getRouting
+**                  eventData : eventData
+**                  sRoutingBuff : Array containing processed data
+**
+** Returns:         None
+**
+*******************************************************************************/
+void RoutingManager::processGetRoutingRsp(tNFA_DM_CBACK_DATA* eventData) {
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s : Enter", __func__);
+  uint8_t xx = 0, numTLVs = 0, currPos = 0, curTLVLen = 0;
+  uint8_t sRoutingCurrent[256];
+  if (eventData == NULL) return;
+  numTLVs = *(eventData->get_routing.param_tlvs + 1);
+  /*Copying only routing Entries.
+  Skipping fields,
+  More                  : 1Byte
+  No of Routing Entries : 1Byte*/
+  memcpy(sRoutingCurrent, eventData->get_routing.param_tlvs + 2,
+         eventData->get_routing.tlv_size - 2);
+
+  while (xx < numTLVs) {
+    curTLVLen = *(sRoutingCurrent + currPos + 1);
+    /*Filtering out Routing Entry corresponding to PROTOCOL_NFC_DEP*/
+    if ((*(sRoutingCurrent + currPos) == PROTOCOL_BASED_ROUTING) &&
+        (*(sRoutingCurrent + currPos + (curTLVLen + 1)) ==
+         NFA_PROTOCOL_NFC_DEP)) {
+      currPos = currPos + curTLVLen + TYPE_LENGTH_SIZE;
+    } else {
+      memcpy(sRoutingBuff + sRoutingBuffLen, sRoutingCurrent + currPos,
+             curTLVLen + TYPE_LENGTH_SIZE);
+      currPos = currPos + curTLVLen + TYPE_LENGTH_SIZE;
+      sRoutingBuffLen = sRoutingBuffLen + curTLVLen + TYPE_LENGTH_SIZE;
+    }
+    xx++;
+  }
+  if (eventData->status != NFA_STATUS_CONTINUE) {
+    SyncEventGuard guard(sNfaGetRoutingEvent);
+    sNfaGetRoutingEvent.notifyOne();
+  }
 }
 #endif

@@ -12,7 +12,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018 NXP
+*  Copyright 2018-2019 NXP
 *
 ******************************************************************************/
 
@@ -28,7 +28,8 @@
 #include "config.h"
 #include "phNxpConfig.h"
 #include "SecureElement.h"
-
+#include "NfcAdaptation.h"
+#include "NativeJniExtns.h"
 using android::base::StringPrintf;
 
 namespace android
@@ -58,6 +59,7 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection (JNIEnv*, jobje
     SecureElement &se = SecureElement::getInstance();
     se.mModeSetNtfstatus = NFA_STATUS_FAILED;
 
+    NativeJniExtns::getInstance().notifyNfcEvent(__func__);
     /* Tell the controller to power up to get ready for sec elem operations */
     PowerSwitch::getInstance ().setLevel (PowerSwitch::FULL_POWER);
     PowerSwitch::getInstance ().setModeOn (PowerSwitch::SE_CONNECTED);
@@ -165,7 +167,7 @@ static jboolean nativeNfcSecureElement_doDisconnectSecureElementConnection (JNIE
 }
 /*******************************************************************************
 **
-** Function:        nativeNfcSecureElement_doResetSecureElement
+** Function:        nativeNfcSecureElement_doResetForEseCosUpdate
 **
 ** Description:     Reset the secure element.
 **                  e: JVM environment.
@@ -175,34 +177,27 @@ static jboolean nativeNfcSecureElement_doDisconnectSecureElementConnection (JNIE
 ** Returns:         True if ok.
 **
 *******************************************************************************/
-static jboolean nativeNfcSecureElement_doResetSecureElement (JNIEnv*, jobject, jint handle)
-{
-    bool stat = false;
-    NFCSTATUS status = NFCSTATUS_FAILED;
-    SecureElement &se = SecureElement::getInstance();
-    if( nfcFL.nfcNxpEse) {
-        LOG(INFO) << StringPrintf("%s: enter; handle=0x%04x", __func__, handle);
-        status = se.setNfccPwrConfig(se.NFCC_DECIDES);
-        if(status != NFA_STATUS_OK)
-        {
-             LOG(INFO) << StringPrintf("%s: power link command failed", __func__);
-        }
-        else {
-            stat = se.SecEle_Modeset(se.NFCEE_DISABLE);
-            usleep(2000 * 1000);
-        }
-        status = se.setNfccPwrConfig(se.POWER_ALWAYS_ON|se.COMM_LINK_ACTIVE);
-        if(status != NFA_STATUS_OK)
-        {
-             LOG(INFO) << StringPrintf("%s: power link command failed", __func__);
-        }
-        else {
-            stat = se.SecEle_Modeset(se.NFCEE_ENABLE);
-            usleep(2000 * 1000);
-        }
+static jboolean nativeNfcSecureElement_doResetForEseCosUpdate(JNIEnv*, jobject,
+                                                              jint handle) {
+  bool stat = false;
+  int ret = -1;
+  NfcAdaptation& theInstance = NfcAdaptation::GetInstance();
+  tHAL_NFC_ENTRY* halFuncEntries = theInstance.GetHalEntryFuncs ();
+  nfc_nci_IoctlInOutData_t inpOutData;
+  inpOutData.inp.level = NCI_ESE_HARD_RESET_IOCTL;
+  LOG(INFO) << StringPrintf("%s: Entry", __func__);
+  if(NULL == halFuncEntries) {
+    LOG(INFO) << StringPrintf("%s: halFuncEntries is NULL", __func__);
+  } else {
+    ret = halFuncEntries->ioctl(HAL_NFC_IOCTL_ESE_HARD_RESET, (void*)&inpOutData);
+    if(ret < 0) {
+      LOG(INFO) << StringPrintf("%s: IOCTL failed", __func__);
+    } else {
+      stat = true;
     }
-LOG(INFO) << StringPrintf("%s: exit", __func__);
-return stat ? JNI_TRUE : JNI_FALSE;
+  }
+  LOG(INFO) << StringPrintf("%s: exit", __func__);
+  return stat;
 }
 
 /*******************************************************************************
@@ -282,13 +277,15 @@ static jbyteArray nativeNfcSecureElement_doTransceive (JNIEnv* e, jobject, jint 
 ** Description:     JNI functions
 **
 *****************************************************************************/
-static JNINativeMethod gMethods[] =
-{
-   {"doNativeOpenSecureElementConnection", "()I", (void *) nativeNfcSecureElement_doOpenSecureElementConnection},
-   {"doNativeDisconnectSecureElementConnection", "(I)Z", (void *) nativeNfcSecureElement_doDisconnectSecureElementConnection},
-   {"doNativeResetSecureElement", "(I)Z", (void *) nativeNfcSecureElement_doResetSecureElement},
-   {"doTransceive", "(I[B)[B", (void *) nativeNfcSecureElement_doTransceive},
-   {"doNativeGetAtr", "(I)[B", (void *) nativeNfcSecureElement_doGetAtr},
+static JNINativeMethod gMethods[] = {
+    {"doNativeOpenSecureElementConnection", "()I",
+     (void*)nativeNfcSecureElement_doOpenSecureElementConnection},
+    {"doNativeDisconnectSecureElementConnection", "(I)Z",
+     (void*)nativeNfcSecureElement_doDisconnectSecureElementConnection},
+    {"doResetForEseCosUpdate", "(I)Z",
+     (void*)nativeNfcSecureElement_doResetForEseCosUpdate},
+    {"doTransceive", "(I[B)[B", (void*)nativeNfcSecureElement_doTransceive},
+    {"doNativeGetAtr", "(I)[B", (void*)nativeNfcSecureElement_doGetAtr},
 };
 
 

@@ -488,11 +488,11 @@ bool PeerToPeer::deregisterServer(tJNI_HANDLE jniHandle) {
   }
 
   removeServer(jniHandle);
-
+#if (NXP_EXTNS == FALSE)
   if (isPollingTempStopped) {
     startRfDiscovery(true);
   }
-
+#endif
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", fn);
   return true;
 }

@@ -29,7 +29,7 @@ import java.util.List;
 public class SystemCodeRoutingManager {
     static final String TAG = "SystemCodeRoutingManager";
 
-    static final boolean DBG = false;
+    static final boolean DBG = ("1" == (System.getProperty("persist.nfc.ce_debug")) ? true : false);
 
     final Object mLock = new Object();
 

@@ -255,6 +255,8 @@ public interface DeviceHost {
 
     public int getDefaultFelicaCLTPowerState();
 
+    public int getGsmaPwrState();
+
     public boolean commitRouting();
 
     public void setEmptyAidRoute(int defaultAidRoute);
@@ -314,6 +316,8 @@ public interface DeviceHost {
 
     public void doSetScreenState(int screen_state_mask);
 
+    public void doResonantFrequency(boolean isResonantFreq);
+
     void setEtsiReaederState(int newState);
 
     int getEtsiReaederState();
@@ -346,7 +350,7 @@ public interface DeviceHost {
 
 /* NXP extension are here */
     public void doChangeDiscoveryTech(int pollTech, int listenTech);
-    public int accessControlForCOSU (int mode);
+    public boolean accessControlForCOSU (int mode);
 
     public int getFWVersion();
     public byte[] readerPassThruMode(byte status, byte modulationTyp);

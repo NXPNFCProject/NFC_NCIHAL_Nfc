@@ -13,7 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+/******************************************************************************
+ *
+ *  The original Work has been changed by NXP.
+ *
+ *  Copyright 2019 NXP
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ *
+ ******************************************************************************/
 #ifndef _NXP_CONFIG_H
 #define _NXP_CONFIG_H
 
@@ -23,6 +42,7 @@ int GetNxpByteArrayValue(const char* name, char* pValue, long bufflen,
                          long* len);
 void resetNxpConfig(void);
 int isNxpConfigModified();
+void setNxpRfConfigPath(const char* name);
 
 #define NAME_NXPLOG_EXTNS_LOGLEVEL "NXPLOG_EXTNS_LOGLEVEL"
 #define NAME_NXPLOG_NCIHAL_LOGLEVEL "NXPLOG_NCIHAL_LOGLEVEL"
@@ -58,5 +78,6 @@ int isNxpConfigModified();
 #define default_storage_location "/data/nfc"
 #if(NXP_EXTNS == TRUE)
 #define NAME_NFA_CONFIG_FORMAT              "NFA_CONFIG_FORMAT"
+#define NAME_DEFUALT_GSMA_PWR_STATE "DEFUALT_GSMA_PWR_STATE"
 #endif
 #endif  // _NXP_CONFIG_H

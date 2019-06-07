@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018 NXP
+*  Copyright 2018-2019 NXP
 *
 ******************************************************************************/
 package com.android.nfc.cardemulation;
@@ -59,7 +59,7 @@ public class AidRoutingManager {
 
     static final String TAG = "AidRoutingManager";
 
-    static final boolean DBG = true;
+    static final boolean DBG = ("1" == (System.getProperty("persist.nfc.ce_debug")) ? true : false);
 
     static final int ROUTE_HOST = 0x00;
 
@@ -334,8 +334,10 @@ public class AidRoutingManager {
                     }
                 }
                 defaultRouteCache.updateDefaultAidRouteCache(routeCache , mDefaultRoute);
-                if(defaultRouteCache.mAidRouteResolvedStatus)
+                if(defaultRouteCache.mAidRouteResolvedStatus){
+                    NfcService.getInstance().setDefaultAidRouteLoc(mDefaultRoute);
                     break;
+                }
                 else
                     mDefaultRoute = defaultRouteCache.getNextRouteLoc();
             }
@@ -431,7 +433,7 @@ public class AidRoutingManager {
     }
     final class DefaultAidRouteResolveCache {
         static final int AID_HDR_LENGTH = 0x04; // TAG + ROUTE + LENGTH_BYTE + POWER
-        static final int MAX_AID_ENTRIES = 32;
+        static final int MAX_AID_ENTRIES = 50;
         //AidCacheTable contains the current aid routing table for particular route.
         //The index is the route ID.
         private SparseArray<Hashtable<String, AidEntry>> aidCacheTable;

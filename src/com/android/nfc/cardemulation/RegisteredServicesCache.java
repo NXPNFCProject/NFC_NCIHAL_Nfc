@@ -91,7 +91,7 @@ import com.android.nfc.NfcService;
 public class RegisteredServicesCache {
     static final String XML_INDENT_OUTPUT_FEATURE = "http://xmlpull.org/v1/doc/features.html#indent-output";
     static final String TAG = "RegisteredServicesCache";
-    static final boolean DEBUG = true;
+    static final boolean DEBUG = ("1" == (System.getProperty("persist.nfc.ce_debug")) ? true : false);
     static final String SERVICE_STATE_FILE_VERSION="1.0";
 
     final Context mContext;
@@ -167,6 +167,7 @@ public class RegisteredServicesCache {
                         invalidateCache(UserHandle.getUserId(uid));
                         } else {
                             // Cache will automatically be updated on user switch
+                            if (DEBUG) Log.d(TAG, " Not removing service here " + replaced);
                         }
                     } else {
                         if (DEBUG) Log.d(TAG, "Ignoring package intent due to package being replaced.");
