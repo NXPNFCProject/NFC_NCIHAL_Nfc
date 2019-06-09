@@ -144,7 +144,7 @@ RoutingManager::RoutingManager()
       NfcConfig::getUnsigned("AID_MATCHING_PLATFORM", AID_MATCHING_L);
 
   mDefaultSysCodeRoute =
-      NfcConfig::getUnsigned(NAME_DEFAULT_SYS_CODE_ROUTE, 0xC0);
+      NfcConfig::getUnsigned(NAME_DEFAULT_SYS_CODE_ROUTE, 0x01);
 
   mDefaultSysCodePowerstate =
       NfcConfig::getUnsigned(NAME_DEFAULT_SYS_CODE_PWR_STATE, 0x19);
@@ -218,7 +218,7 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
       NfcConfig::getUnsigned("AID_MATCHING_PLATFORM", AID_MATCHING_L);
 
   mDefaultSysCodeRoute =
-      NfcConfig::getUnsigned(NAME_DEFAULT_SYS_CODE_ROUTE, 0xC0);
+      NfcConfig::getUnsigned(NAME_DEFAULT_SYS_CODE_ROUTE, 0x01);
 
   mDefaultSysCodePowerstate =
       NfcConfig::getUnsigned(NAME_DEFAULT_SYS_CODE_PWR_STATE, 0x19);
@@ -276,10 +276,10 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
   LOG(ERROR) << StringPrintf("%s: >>>> mDefaultIso7816Powerstate=0x%X", fn,
                              mDefaultIso7816Powerstate);
 
-  if (NfcConfig::hasKey(NAME_NXP_DEFAULT_SE)) {
-    mDefaultEe = NfcConfig::getUnsigned(NAME_NXP_DEFAULT_SE);
+  if (NfcConfig::hasKey(NAME_DEFAULT_ROUTE)) {
+    mDefaultEe = NfcConfig::getUnsigned(NAME_DEFAULT_ROUTE);
   } else {
-    mDefaultEe = 0x01;
+    mDefaultEe = 0x00;
   }
 
 
@@ -780,7 +780,7 @@ void RoutingManager::printMemberData() {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
       "%s: AID_MATCHING_MODE = 0x%0X", __func__, mAidMatchingMode);
   DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: DEFAULT_ISODEP_ROUTE = 0x%0X", __func__, mDefaultEe);
+      << StringPrintf("%s: DEFAULT_ISODEP_ROUTE = 0x%0X", __func__, mDefaultIsoDepRoute);
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
       "%s: AID_MATCHING_PLATFORM = 0x%0X", __func__, mAidMatchingPlatform);
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
@@ -796,7 +796,7 @@ void RoutingManager::printMemberData() {
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: NXP_NFC_CHIP = 0x%0X;", __func__, mChipId);
   DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: NXP_DEFAULT_SE = 0x%0X;", __func__, mDefaultEe);
+      << StringPrintf("%s: NXP_DEFAULT_ROUTE = 0x%0X;", __func__, mDefaultEe);
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: NXP_ENABLE_ADD_AID = 0x%0u;", __func__, mAddAid);
   DLOG_IF(INFO, nfc_debug_enabled)
