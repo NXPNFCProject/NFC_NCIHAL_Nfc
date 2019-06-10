@@ -2357,6 +2357,22 @@ void RoutingManager::deregisterT3tIdentifier(int handle) {
 #endif
 }
 
+#if (NXP_EXTNS == TRUE)
+void RoutingManager::ClearSystemCodeRouting() {
+  if (mIsScbrSupported) {
+    SyncEventGuard guard(mRoutingEvent);
+    tNFA_STATUS nfaStat = NFA_EeRemoveSystemCodeRouting(mDefaultSysCode);
+    if (nfaStat == NFA_STATUS_OK) {
+      mRoutingEvent.wait();
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+          "%s: Succeeded in deregistering system Code on DH", __func__);
+    } else {
+      LOG(ERROR) << StringPrintf("%s: Fail to deregister system Code on DH",
+                                 __func__);
+    }
+  }
+}
+#endif
 void RoutingManager::nfcFCeCallback(uint8_t event,
                                     tNFA_CONN_EVT_DATA* eventData) {
   static const char fn[] = "RoutingManager::nfcFCeCallback";

@@ -3841,11 +3841,14 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
     tNFA_STATUS status = NFA_STATUS_OK;
     if (nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH) {
       sCurrentSelectedUICCSlot = uiccSlot;
+      RoutingManager& routingManager = RoutingManager::getInstance();
+      routingManager.ClearSystemCodeRouting();
       NFA_SetPreferredUiccId(
           (uiccSlot == 2) ? (SecureElement::getInstance().EE_HANDLE_0xF8 &
                              ~NFA_HANDLE_GROUP_EE)
                           : (SecureElement::getInstance().EE_HANDLE_0xF4 &
                              ~NFA_HANDLE_GROUP_EE));
+      routingManager.updateRoutingTable();
     }
     return status;
   }
@@ -4424,6 +4427,7 @@ static void restartUiccListen(jint uiccSlot) {
 
       restartUiccListen(uiccSlot);
       nfcManager_setPreferredSimSlot(NULL, NULL, uiccSlot);
+
       retStat = UICC_CONFIGURED;
       pTransactionController->transactionEnd(
           TRANSACTION_REQUESTOR(staticDualUicc));

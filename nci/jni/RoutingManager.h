@@ -182,6 +182,7 @@ class RoutingManager {
   void handleSERemovedNtf();
   bool is_ee_recovery_ongoing();
   void setEmptyAidEntry(int route);
+  void ClearSystemCodeRouting();
 #else
   bool addAidRouting(const uint8_t* aid, uint8_t aidLen, int route,
                      int aidInfo);
