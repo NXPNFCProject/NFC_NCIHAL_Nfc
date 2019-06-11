@@ -119,6 +119,7 @@ static const uint8_t AID_ROUTE_QUAL_PREFIX = 0x10;
 
 RoutingManager::RoutingManager()
     : mNativeData(NULL),
+      mDefaultFelicaRoute(0),
       mDefaultEe(NFA_HANDLE_INVALID),
       mHostListnTechMask(0),
       mUiccListnTechMask(0),
@@ -363,7 +364,7 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
     mChipId = num;
   }
 
-  tNFA_STATUS nfaStat;
+  tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
   {
     SyncEventGuard guard(mEeRegisterEvent);
     DLOG_IF(INFO, nfc_debug_enabled) << fn << ": try ee register";
@@ -446,7 +447,7 @@ RoutingManager& RoutingManager::getInstance() {
 
 void RoutingManager::enableRoutingToHost() {
   static const char fn[] = "RoutingManager::enableRoutingToHost()";
-  tNFA_STATUS nfaStat;
+  tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
   SyncEventGuard guard(mRoutingEvent);
   // Default routing for T3T protocol
   if (!mIsScbrSupported && mDefaultEe == NFC_DH_ID) {
@@ -496,7 +497,7 @@ void RoutingManager::enableRoutingToHost() {
 
 void RoutingManager::disableRoutingToHost() {
   static const char fn[] = "RoutingManager::disableRoutingToHost()";
-  tNFA_STATUS nfaStat;
+  tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
   SyncEventGuard guard(mRoutingEvent);
 
   // Default routing for IsoDep protocol
@@ -539,7 +540,7 @@ void RoutingManager::disableRoutingToHost() {
 
 #if (NXP_EXTNS == TRUE)
 void RoutingManager::setRouting(bool isHCEEnabled) {
-  tNFA_STATUS nfaStat;
+  tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
   tNFA_HANDLE defaultHandle = NFA_HANDLE_INVALID;
   tNFA_HANDLE ee_handleList[nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED];
   uint8_t i = 0, count;
@@ -1062,7 +1063,7 @@ void RoutingManager::dumpTables(int xx) {
 bool RoutingManager::clearRoutingEntry(int type) {
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: Enter . Clear Routing Type = %d", __func__, type);
-  tNFA_STATUS nfaStat;
+  tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
   tNFA_HANDLE ee_handleList[nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED];
   uint8_t i, count;
   SyncEventGuard guard(mRoutingEvent);
@@ -1289,7 +1290,7 @@ void RoutingManager::setDefaultTechRouting(int seId, int tech_switchon,
   SecureElement& se = SecureElement::getInstance();
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("ENTER setDefaultTechRouting");
-  tNFA_STATUS nfaStat;
+  tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
   /*// !!! CLEAR ALL REGISTERED TECHNOLOGIES !!!*/
   {
     SyncEventGuard guard(mRoutingEvent);
@@ -1356,7 +1357,7 @@ void RoutingManager::setDefaultTechRouting(int seId, int tech_switchon,
 
 void RoutingManager::setDefaultProtoRouting(int seId, int proto_switchon,
                                             int proto_switchoff) {
-  tNFA_STATUS nfaStat;
+  tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("ENTER setDefaultProtoRouting");
   SyncEventGuard guard(mRoutingEvent);
@@ -2656,7 +2657,7 @@ void RoutingManager::updateDefaultProtocolRoute() {
 
   // Default Routing for ISO-DEP
   tNFA_PROTOCOL_MASK protoMask = NFA_PROTOCOL_MASK_ISO_DEP;
-  tNFA_STATUS nfaStat;
+  tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
   if (mDefaultIsoDepRoute != NFC_DH_ID) {
     nfaStat = NFA_EeClearDefaultProtoRouting(mDefaultIsoDepRoute, protoMask);
     nfaStat = NFA_EeSetDefaultProtoRouting(
@@ -2768,7 +2769,7 @@ tNFA_TECHNOLOGY_MASK RoutingManager::updateEeTechRouteSetting() {
   DLOG_IF(INFO, nfc_debug_enabled)
       << fn << ": Number of EE is " << mEeInfo.num_ee;
 
-  tNFA_STATUS nfaStat;
+  tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
   for (uint8_t i = 0; i < mEeInfo.num_ee; i++) {
     tNFA_HANDLE eeHandle = mEeInfo.ee_disc_info[i].ee_handle;
     tNFA_TECHNOLOGY_MASK seTechMask = 0;
@@ -2930,7 +2931,7 @@ void RoutingManager::handleSERemovedNtf() {
   static const char fn[] = "RoutingManager::handleSERemovedNtf()";
   uint8_t ActualNumEe = nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED;
   tNFA_EE_INFO mEeInfo[ActualNumEe];
-  tNFA_STATUS nfaStat;
+  tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
   LOG(ERROR) << StringPrintf("%s:Enter", __func__);
   if ((nfaStat = NFA_AllEeGetInfo(&ActualNumEe, mEeInfo)) != NFA_STATUS_OK) {
     LOG(ERROR) << StringPrintf("%s: fail get info; error=0x%X", fn, nfaStat);

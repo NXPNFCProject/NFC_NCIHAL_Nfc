@@ -168,6 +168,7 @@ const uint16_t ACTIVE_SE_USE_ANY = 0xFFFF;
 SecureElement::SecureElement()
     : mActiveEeHandle(NFA_HANDLE_INVALID),
 #if (NXP_EXTNS == TRUE)
+      mHostsPresent(0),
       mETSI12InitStatus(NFA_STATUS_FAILED),
       eSE_Compliancy(0),
       mCreatedPipe(0),
