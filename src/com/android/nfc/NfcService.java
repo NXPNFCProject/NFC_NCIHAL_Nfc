@@ -164,7 +164,7 @@ public class NfcService implements DeviceHostListener {
     static final String PREF_NDEF_PUSH_ON = "ndef_push_on";
     static final boolean NDEF_PUSH_ON_DEFAULT = true;
     static final String PREF_SECURE_NFC_ON = "secure_nfc_on";
-    static final boolean SECURE_NFC_ON_DEFAULT = true;
+    static final boolean SECURE_NFC_ON_DEFAULT = false;
     static final String PREF_FIRST_BEAM = "first_beam";
     static final String PREF_FIRST_BOOT = "first_boot";
     public static final int ROUTE_LOC_MASK=8;
@@ -1117,16 +1117,6 @@ public class NfcService implements DeviceHostListener {
         UserManager um = (UserManager) context.getSystemService(Context.USER_SERVICE);
         IPackageManager mIpm = IPackageManager.Stub.asInterface(ServiceManager.getService("package"));
         boolean isGlobalEnabled = mIsNdefPushEnabled;
-        if (uh.getIdentifier() != mUserId) {
-            try {
-            int userSetting = mIpm.getComponentEnabledSetting(new ComponentName(
-                    BeamShareActivity.class.getPackageName$(),
-                    BeamShareActivity.class.getName()), uh.getIdentifier());
-            isGlobalEnabled = (userSetting == PackageManager.COMPONENT_ENABLED_STATE_DISABLED) ? false : true;
-            } catch (RemoteException e) {
-                Log.w(TAG, "Unable to get Beam status for user " + uh);
-            }
-        }
         boolean isActiveForUser =
             (!um.hasUserRestriction(UserManager.DISALLOW_OUTGOING_BEAM, uh)) &&
             isGlobalEnabled && mIsBeamCapable;
@@ -1231,6 +1221,12 @@ public class NfcService implements DeviceHostListener {
                 mPrefsEditor.putBoolean(PREF_NDEF_PUSH_ON, true);
                 mPrefsEditor.apply();
                 mIsNdefPushEnabled = true;
+                // Propagate the state change to all user profiles
+                UserManager um = (UserManager) mContext.getSystemService(Context.USER_SERVICE);
+                List <UserHandle> luh = um.getUserProfiles();
+                for (UserHandle uh : luh){
+                    enforceBeamShareActivityPolicy(mContext, uh);
+                }
                 enforceBeamShareActivityPolicy(mContext, new UserHandle(mUserId));
                 if (isNfcEnabled()) {
                     mP2pLinkManager.enableDisable(true, true);
@@ -1276,6 +1272,12 @@ public class NfcService implements DeviceHostListener {
                 mPrefsEditor.putBoolean(PREF_NDEF_PUSH_ON, false);
                 mPrefsEditor.apply();
                 mIsNdefPushEnabled = false;
+                // Propagate the state change to all user profiles
+                UserManager um = (UserManager) mContext.getSystemService(Context.USER_SERVICE);
+                List <UserHandle> luh = um.getUserProfiles();
+                for (UserHandle uh : luh){
+                    enforceBeamShareActivityPolicy(mContext, uh);
+                }
                 enforceBeamShareActivityPolicy(mContext, new UserHandle(mUserId));
                 if (isNfcEnabled()) {
                     mP2pLinkManager.enableDisable(false, true);
@@ -3831,7 +3833,13 @@ public class NfcService implements DeviceHostListener {
                            mIsNdefPushEnabled = false;
                         } else {
                            mIsNdefPushEnabled = true;
+                        }                        // Propagate the state change to all user profiles
+                        UserManager um = (UserManager) mContext.getSystemService(Context.USER_SERVICE);
+                        List <UserHandle> luh = um.getUserProfiles();
+                        for (UserHandle uh : luh){
+                            enforceBeamShareActivityPolicy(mContext, uh);
                         }
+                        enforceBeamShareActivityPolicy(mContext, new UserHandle(mUserId));
                     }
                     mP2pLinkManager.onUserSwitched(getUserId());
                 }
