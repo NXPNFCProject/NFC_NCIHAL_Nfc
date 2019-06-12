@@ -247,6 +247,8 @@ public interface DeviceHost {
 
     public int getDefaultFelicaCLTRoute();
 
+    public void doResonantFrequency(boolean isResonantFreq);
+
     public int getDefaultAidPowerState();
 
     public int getDefaultDesfirePowerState();
