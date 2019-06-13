@@ -119,6 +119,7 @@ static const uint8_t AID_ROUTE_QUAL_PREFIX = 0x10;
 
 RoutingManager::RoutingManager()
     : mNativeData(NULL),
+      mSecureNfcEnabled(false),
       mDefaultFelicaRoute(0),
       mDefaultEe(NFA_HANDLE_INVALID),
       mHostListnTechMask(0),
