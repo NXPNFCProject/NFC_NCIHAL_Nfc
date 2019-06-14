@@ -156,7 +156,6 @@ public class RegisteredAidCache {
 
     ComponentName mPreferredPaymentService;
     ComponentName mPreferredForegroundService;
-    ComponentName mPreviousPreferredPaymentService;
     boolean mNfcEnabled = false;
     boolean mSupportsPrefixes = false;
     boolean mSupportsSubset = false;
@@ -230,9 +229,7 @@ public class RegisteredAidCache {
             return resolveInfo;
         }
     }
-    public void setPreviousPreferredPaymentService(ComponentName mPrevPaymentService) {
-        mPreviousPreferredPaymentService = mPrevPaymentService;
-    }
+
     public ComponentName getPreferredPaymentService(){
         return mPreferredPaymentService;
     }
@@ -993,13 +990,10 @@ public class RegisteredAidCache {
         if (DBG) Log.d(TAG, "Preferred payment service changed.");
        synchronized (mLock) {
            mPreferredPaymentService = service;
-           mPreviousPreferredPaymentService = mPreferredPaymentService;
            generateAidCacheLocked();
        }
     }
-     public ComponentName getPreviousPreferredPaymentService() {
-        return mPreviousPreferredPaymentService;
-       }
+
     public void onPreferredForegroundServiceChanged(ComponentName service) {
         if (DBG) Log.d(TAG, "Preferred foreground service changed.");
         synchronized (mLock) {

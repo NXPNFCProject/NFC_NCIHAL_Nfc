@@ -2769,7 +2769,6 @@ public class NfcService implements DeviceHostListener {
                 "please disable other servives in Settings Menu", 20);
         Log.d(TAG, "notify aid routing table full to the user here");
 
-        ComponentName prevPaymentComponent = mAidCache.getPreviousPreferredPaymentService();
         mNxpPrefsEditor = mNxpPrefs.edit();
         mNxpPrefsEditor.putInt("PREF_SET_AID_ROUTING_TABLE_FULL",0x01);
         mNxpPrefsEditor.commit();
@@ -2780,7 +2779,6 @@ public class NfcService implements DeviceHostListener {
             Log.d(TAG, "notify aid routing table full to the user");
         }
         mContext.sendBroadcastAsUser(aidTableFull, UserHandle.CURRENT);
-        mAidCache.setPreviousPreferredPaymentService(null);
     }
 
     public void routeAids(String aid, int route, int aidInfo, int power) {
@@ -3920,16 +3918,6 @@ public class NfcService implements DeviceHostListener {
             pw.flush();
             mDeviceHost.dump(fd);
         }
-    }
-   /**
-     * Update the status of all the services which were populated to commit to routing table
-     */
-    public void updateStatusOfServices(boolean commitStatus) {
-        if(commitStatus == true)
-        {
-            mAidCache.setPreviousPreferredPaymentService(null);
-        }
-        mCardEmulationManager.updateStatusOfServices(commitStatus);
     }
 
     public void updateDefaultAidRoute(int routeLoc) {

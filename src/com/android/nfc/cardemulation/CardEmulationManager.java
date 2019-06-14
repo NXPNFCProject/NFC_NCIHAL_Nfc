@@ -658,7 +658,4 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         int userId = ActivityManager.getCurrentUser();
         return mServiceCache.getServices(userId);
     }
-     public void updateStatusOfServices(boolean commitStatus) {
-        mServiceCache.updateStatusOfServices(commitStatus);
-    }
 }
