@@ -255,6 +255,7 @@ void storeLastDiscoveryParams(int technologies_mask, bool enable_lptd,
 static void activatedNtf_Cb();
 static void nfcManager_changeDiscoveryTech(JNIEnv* e, jobject o, jint pollTech,
                                            jint listenTech);
+bool nfcManager_isNfcActive();
 #endif
 }  // namespace android
 
@@ -381,6 +382,13 @@ typedef enum {
   UICC_CONNECTED_1,
   UICC_CONNECTED_2
 } uicc_enumeration_t;
+
+typedef enum {
+  FDSTATUS_SUCCESS = 0,
+  FDSTATUS_ERROR_NFC_IS_OFF,
+  FDSTATUS_ERROR_NFC_BUSY_IN_MPOS,
+  FDSTATUS_ERROR_UNKNOWN
+} field_detect_status_t;
 
 #endif
 static uint8_t sLongGuardTime[] = {0x00, 0x20};
@@ -2092,6 +2100,69 @@ static void nfaConnectionCallback(uint8_t connEvent,
     return;
   }
 
+  /*******************************************************************************
+  **
+  ** Function:        nfcManager_SetFieldDetectMode
+  **
+  ** Description:     Updates field detect mode ENABLE/DISABLE
+  **                  e: JVM environment.
+  **                  o: Java object.
+  **
+  ** Returns:         Update status
+  **
+  *******************************************************************************/
+  static field_detect_status_t nfcManager_SetFieldDetectMode(JNIEnv*, jobject,
+                                                             jboolean mode) {
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter", __func__);
+    se_rd_req_state_t state = MposManager::getInstance().getEtsiReaederState();
+    if (!nfcManager_isNfcActive()) {
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("%s: Nfc is not Enabled. Returning", __func__);
+      return FDSTATUS_ERROR_NFC_IS_OFF;
+    }
+
+    if ((state != STATE_SE_RDR_MODE_STOPPED) &&
+        (state != STATE_SE_RDR_MODE_INVALID)) {
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("%s: MPOS is ongoing.. Returning", __func__);
+      return FDSTATUS_ERROR_NFC_BUSY_IN_MPOS;
+    }
+
+    if (NFA_IsFieldDetectEnabled() == mode) {
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+          "%s: Already %s", __func__, ((mode) ? "ENABLED" : "DISABLED"));
+      return FDSTATUS_SUCCESS;
+    }
+
+    if (sRfEnabled) {
+      // Stop RF Discovery
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("%s: stop discovery", __func__);
+      startRfDiscovery(false);
+    }
+    NFA_SetFieldDetectMode(mode);
+    // start discovery
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s: reconfigured start discovery", __func__);
+    startRfDiscovery(true);
+    return FDSTATUS_SUCCESS;
+  }
+
+  /*******************************************************************************
+  **
+  ** Function:        nfcManager_IsFieldDetectEnabled
+  **
+  ** Description:     Returns current status of field detect mode
+  **                  e: JVM environment.
+  **                  o: Java object.
+  **
+  ** Returns:         true/false
+  **
+  *******************************************************************************/
+  static jboolean nfcManager_IsFieldDetectEnabled(JNIEnv*, jobject) {
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter", __func__);
+    return NFA_IsFieldDetectEnabled();
+  }
 #endif
 
   /*******************************************************************************
@@ -3557,6 +3628,9 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
     sP2pEnabled = false;
 #if (NXP_EXTNS == TRUE)
     gsRouteUpdated = false;
+    /*Disable Field Detect Mode if enabled*/
+    if (NFA_IsFieldDetectEnabled())
+      NFA_SetFieldDetectMode(false);
 #endif
     sLfT3tMax = 0;
     {
@@ -4625,6 +4699,10 @@ static void restartUiccListen(jint uiccSlot) {
      (void*)nfcManager_getDefaultFelicaCLTRoute},
     {"doResonantFrequency", "(Z)V",
               (void *)nfcManager_doResonantFrequency},
+     {"doSetFieldDetectMode", "(Z)I",
+     (void*)nfcManager_SetFieldDetectMode},
+     {"isFieldDetectEnabled", "()Z",
+     (void*)nfcManager_IsFieldDetectEnabled},
 #endif
     {"commitRouting", "()Z", (void*)nfcManager_doCommitRouting},
     {"doGetActiveSecureElementList", "()[I",
