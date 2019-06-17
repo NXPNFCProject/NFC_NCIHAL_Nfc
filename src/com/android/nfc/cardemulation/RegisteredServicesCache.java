@@ -932,22 +932,4 @@ public class RegisteredServicesCache {
         }
         pw.println("");
     }
-
-    public void updateStatusOfServices(boolean commitStatus) {
-      final UserServices userServices = mUserServices.get(ActivityManager.getCurrentUser());
-      if (userServices != null && userServices.services != null) {
-        for (NfcApduServiceInfo serviceInfo : userServices.services.values()) {
-          if (!serviceInfo.hasCategory(CardEmulation.CATEGORY_OTHER)) {
-            continue;
-          }
-          serviceInfo.updateServiceCommitStatus(CardEmulation.CATEGORY_OTHER, commitStatus);
-        }
-        Log.e(TAG,
-            "3" + Thread.currentThread().getStackTrace()[2].getMethodName()
-                + ":WriteServiceStateToFile");
-        writeServiceStateToFile(ActivityManager.getCurrentUser());
-      } else {
-        Log.e(TAG, "updateStatusOfServices failed... ");
-      }
-    }
 }
