@@ -247,8 +247,6 @@ public interface DeviceHost {
 
     public int getDefaultFelicaCLTRoute();
 
-    public void doResonantFrequency(boolean isResonantFreq);
-
     public int getDefaultAidPowerState();
 
     public int getDefaultDesfirePowerState();
@@ -317,6 +315,8 @@ public interface DeviceHost {
     boolean disableScreenOffSuspend();
 
     public void doSetScreenState(int screen_state_mask);
+
+    public void doResonantFrequency(boolean isResonantFreq);
 
     void setEtsiReaederState(int newState);
 
