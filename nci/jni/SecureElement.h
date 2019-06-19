@@ -689,7 +689,6 @@ class SecureElement {
   SyncEvent mEeSetModeEvent;
   SyncEvent mModeSetNtf;
   SyncEvent mHciAddStaticPipe;
-  SyncEvent mApduPaternAddRemoveEvent;
 #if ((NXP_EXTNS == TRUE))
   SyncEvent mPwrLinkCtrlEvent;
 #endif

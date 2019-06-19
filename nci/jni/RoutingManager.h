@@ -188,11 +188,6 @@ class RoutingManager {
                      int aidInfo);
 #endif
 
-  bool addApduRouting(uint8_t route, uint8_t powerState,
-                      const uint8_t* apduData, uint8_t apduDataLen,
-                      const uint8_t* apduMask, uint8_t apduMaskLen);
-
-  bool removeApduRouting(uint8_t apduDataLen, const uint8_t* apduData);
   void setEERecovery(bool value);
   void cleanRouting();
   bool removeAidRouting(const uint8_t* aid, uint8_t aidLen);

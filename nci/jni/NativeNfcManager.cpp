@@ -1974,69 +1974,6 @@ static void nfaConnectionCallback(uint8_t connEvent,
     return result;
   }
 
-  /*******************************************************************************
-  **
-  ** Function:        nfcManager_routeApduPattern
-  **
-  ** Description:     Route an APDU and APDU mask to an EE
-  **                  e: JVM environment.
-  **                  o: Java object.
-  **
-  ** Returns:         True if ok.
-  **
-  *******************************************************************************/
-  static jboolean nfcManager_routeApduPattern(
-      JNIEnv * e, jobject, jint route, jint powerState, jbyteArray apduData,
-      jbyteArray apduMask) {
-    ScopedByteArrayRO bytes(e, apduData);
-    uint8_t* apdu =
-        const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
-    size_t apduLen = bytes.size();
-    ScopedByteArrayRO bytes2(e, apduMask);
-    uint8_t* mask =
-        const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes2[0]));
-    size_t maskLen = bytes2.size();
-#if (NXP_EXTNS == TRUE)
-    if (nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH) {
-      if (route == 2 || route == 4) {  // UICC or UICC2 HANDLE
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-            "sCurrentSelectedUICCSlot:  %d", sCurrentSelectedUICCSlot);
-        route = (sCurrentSelectedUICCSlot != 0x02) ? 0x02 : 0x04;
-      }
-    }
-    if (nfcManager_isTransanctionOnGoing(true)) {
-      return false;
-    }
-#endif
-    return RoutingManager::getInstance().addApduRouting(route, powerState, apdu,
-                                                        apduLen, mask, maskLen);
-  }
-
-  /*******************************************************************************
-  **
-  ** Function:        nfcManager_unrouteApduPattern
-  **
-  ** Description:     Remove a APDU and APDU mask routing
-  **                  e: JVM environment.
-  **                  o: Java object.
-  **
-  ** Returns:         True if ok.
-  **
-  *******************************************************************************/
-  static jboolean nfcManager_unrouteApduPattern(JNIEnv * e, jobject,
-                                                jbyteArray apduData) {
-#if (NXP_EXTNS == TRUE)
-    if (nfcManager_isTransanctionOnGoing(true)) {
-      return false;
-    }
-#endif
-    ScopedByteArrayRO bytes(e, apduData);
-    uint8_t* apdu =
-        const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
-    size_t apduLen = bytes.size();
-    return RoutingManager::getInstance().removeApduRouting(apduLen, apdu);
-  }
-
 #if (NXP_EXTNS == TRUE)
   /*******************************************************************************
   **
@@ -4726,8 +4663,6 @@ static void restartUiccListen(jint uiccSlot) {
     {"doselectUicc", "(I)I", (void*)nfcManager_doSelectUicc},
     {"doGetSelectedUicc", "()I", (void*)nfcManager_doGetSelectedUicc},
     {"setPreferredSimSlot", "(I)I", (void*)nfcManager_setPreferredSimSlot},
-    {"routeApduPattern", "(II[B[B)Z", (void*)nfcManager_routeApduPattern},
-    {"unrouteApduPattern", "([B)Z", (void*)nfcManager_unrouteApduPattern},
 #endif
     {"doSetNfcSecure", "(Z)Z", (void*)nfcManager_doSetNfcSecure},
   };

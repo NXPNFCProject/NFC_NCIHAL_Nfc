@@ -185,9 +185,6 @@ public class NativeNfcManager implements DeviceHost {
     public native boolean unrouteAid(byte[] aid);
 
     @Override
-    public native boolean routeApduPattern(int route, int powerState, byte[] apduData, byte[] apduMask);
-
-    @Override
     public native int getAidTableSize();
 
     @Override
@@ -228,9 +225,6 @@ public class NativeNfcManager implements DeviceHost {
 
     @Override
     public native void setEmptyAidRoute(int deafultAidroute);
-
-    @Override
-    public native boolean unrouteApduPattern(byte[] apduData);
 
     @Override
     public native int[] doGetActiveSecureElementList();
