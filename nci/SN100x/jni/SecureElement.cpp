@@ -52,9 +52,15 @@ uint8_t  SecureElement::mStaticPipeProp;
 **
 *******************************************************************************/
 SecureElement::SecureElement() :
+    mActiveEeHandle(NFA_HANDLE_INVALID),
     mNewPipeId (0),
     mIsWiredModeOpen (false),
+    SmbTransceiveTimeOutVal(0),
+    mErrorRecovery(false),
+    EE_HANDLE_0xF4(0),
+    muicc2_selected(0),
     mNativeData(NULL),
+    mthreadnative(NULL),
     mbNewEE (true),
     mIsInit (false),
     mTransceiveWaitOk (false),

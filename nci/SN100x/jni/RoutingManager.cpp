@@ -92,7 +92,8 @@ extern bool isDynamicUiccEnabled;
 
 static const uint8_t AID_ROUTE_QUAL_PREFIX = 0x10;
 
-RoutingManager::RoutingManager() {
+RoutingManager::RoutingManager()
+      : mNativeData(NULL) {
   static const char fn[] = "RoutingManager::RoutingManager()";
 
   mDefaultOffHostRoute =
@@ -125,6 +126,9 @@ RoutingManager::RoutingManager() {
 #if (NXP_EXTNS != TRUE)
   mDefaultSysCode = DEFAULT_SYS_CODE;
 #else
+  mDefaultGsmaPowerState = 0;
+  sRoutingBuffLen = 0;
+  sRoutingBuff = NULL;
   mDefaultSysCode = 0x00;
   mHostListnTechMask = 0;
   mUiccListnTechMask = 0;
