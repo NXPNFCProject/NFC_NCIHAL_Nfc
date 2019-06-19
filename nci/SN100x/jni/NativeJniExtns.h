@@ -26,6 +26,7 @@
 #endif
 
 #include "NativeNfcExtnsEvt.h"
+#include "NfcJniUtil.h"
 #include "jni.h"
 #include "string"
 typedef int (*fp_InitNative_t)(JNIEnv* e);
@@ -37,7 +38,6 @@ class NativeJniExtns {
   const char* extns_jni_path;
   void* lib_handle;
   fpRegisterNfcExtns regNfcExtnsFunc;
-
   NativeJniExtns();
   static NativeJniExtns nativeExtnsObj;
   bool loadExtnsLibrary();
@@ -45,8 +45,10 @@ class NativeJniExtns {
 
  public:
   static NativeJniExtns& getInstance();
-  void notifyNfcEvent(std::string evt);
+  void notifyNfcEvent(std::string evt, void* evt_data = NULL);
   void initialize(JNIEnv* e);
   bool isExtensionPresent();
+  nfc_jni_native_data* gNativeData;
+  void initializeNativeData(nfc_jni_native_data* native);
   ~NativeJniExtns();
 };

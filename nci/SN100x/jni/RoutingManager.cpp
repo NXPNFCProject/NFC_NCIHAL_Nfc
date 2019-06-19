@@ -48,6 +48,7 @@
 #include "nfc_config.h"
 #if (NXP_EXTNS == TRUE)
 #include "MposManager.h"
+#include "NativeJniExtns.h"
 #include "SecureElement.h"
 #endif
 
@@ -910,9 +911,17 @@ void RoutingManager::nfaEeCallback(tNFA_EE_EVT event,
             "%s: NFA_EE_ACTION_EVT; h=0x%X; trigger=rf tech (0x%X)", fn,
             action.ee_handle, action.trigger);
       else
+#if (NXP_EXTNS == TRUE)
+      {
+#endif
         DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
             "%s: NFA_EE_ACTION_EVT; h=0x%X; unknown trigger (0x%X)", fn,
             action.ee_handle, action.trigger);
+#if (NXP_EXTNS == TRUE)
+        NativeJniExtns::getInstance().notifyNfcEvent("updateNfceeActionNtf",
+                                                     (void*)&action);
+      }
+#endif
     } break;
 
     case NFA_EE_DISCOVER_REQ_EVT: {

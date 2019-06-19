@@ -148,6 +148,18 @@ bool NativeJniExtns::isExtensionPresent() {
   return (lib_handle != NULL) ? true : false;
 }
 /*******************************************************************************
+**
+** Function:        initializeNativeData
+**
+** Description:     initialize native data
+**
+** Returns:         None
+**
+******************************************************************************/
+void NativeJniExtns::initializeNativeData(nfc_jni_native_data* native) {
+  gNativeData = native;
+}
+/*******************************************************************************
  **
  ** Function:        NativeJniExtns
  **
@@ -168,8 +180,9 @@ NativeJniExtns::~NativeJniExtns() { unloadExtnsLibrary(); };
 ** Returns:         None
 **
 *******************************************************************************/
-void NativeJniExtns::notifyNfcEvent(std::string evt) {
-  if (gNfcExtnsImplInstance != NULL) gNfcExtnsImplInstance->notifyNfcEvt(evt);
+void NativeJniExtns::notifyNfcEvent(std::string evt, void* evt_data) {
+  if (gNfcExtnsImplInstance != NULL)
+    gNfcExtnsImplInstance->notifyNfcEvt(evt, evt_data);
 }
 
 /*******************************************************************************
