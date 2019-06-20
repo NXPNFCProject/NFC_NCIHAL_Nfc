@@ -2871,6 +2871,7 @@ public class NfcService implements DeviceHostListener {
 
     public void commitRouting() {
         Log.d(TAG, "commitRouting >>>");
+        if (!isNfcEnabled()) return;
         mHandler.sendEmptyMessage(MSG_COMMIT_ROUTING);
     }
     public void initWiredSe() {
