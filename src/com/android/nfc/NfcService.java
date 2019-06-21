@@ -201,8 +201,6 @@ public class NfcService implements DeviceHostListener {
     static final int MSG_ETSI_SWP_TIMEOUT = 50;
     static final int MSG_SWP_READER_RESTART = 58;
     static final int MSG_SE_INIT = 59;
-    static final int MSG_ROUTE_APDU = 60;
-    static final int MSG_UNROUTE_APDU = 61;
     static final int MSG_CLEAR_ROUTING = 62;
     static final int MSG_INIT_WIREDSE = 63;
     static final int MSG_COMPUTE_ROUTING_PARAMS = 64;
@@ -2819,25 +2817,6 @@ public class NfcService implements DeviceHostListener {
         sendMessage(MSG_UNROUTE_AID, aid);
     }
 
-    public void routeApduPattern(String apdu, String mask ,int route, int powerState) {
-        Message msg = mHandler.obtainMessage();
-        msg.what = MSG_ROUTE_APDU;
-        msg.arg1 = route;
-        msg.arg2 = powerState;
-        Bundle apduPatternbundle = new Bundle();
-        apduPatternbundle.putString("apduData",apdu);
-        apduPatternbundle.putString("apduMask",mask);
-        msg.setData(apduPatternbundle);
-        mHandler.sendMessage(msg);
-   }
-
-    public void unrouteApduPattern(String apdu) {
-        Message msg = mHandler.obtainMessage();
-        msg.what = MSG_UNROUTE_APDU;
-        msg.obj = apdu;
-        mHandler.sendMessage(msg);
-    }
-
     public int getNciVersion() {
         return mDeviceHost.getNciVersion();
     }
@@ -3426,26 +3405,7 @@ public class NfcService implements DeviceHostListener {
                     }
 
                     break;
-                case MSG_ROUTE_APDU:{
-                    int route = msg.arg1;
-                    int power = msg.arg2;
-                    String apduData = null;
-                    String apduMask = null;
-                    Bundle dataBundle = msg.getData();
-                    if (dataBundle != null) {
-                        apduData = dataBundle.getString("apduData");
-                        apduMask = dataBundle.getString("apduMask");
-                    }
-                    // Send the APDU
-                    if(apduData != null && dataBundle != null)
-                        mDeviceHost.routeApduPattern(route, power, hexStringToBytes(apduData) ,hexStringToBytes(apduMask));
-                    break;
-                }
-                case MSG_UNROUTE_APDU: {
-                    String apdu = (String) msg.obj;
-                    mDeviceHost.unrouteApduPattern(hexStringToBytes(apdu));
-                    break;
-                }
+
                 case MSG_INIT_WIREDSE: {
                      try {
                        mWiredSeInitMethod = mWiredSeClass.getDeclaredMethod("wiredSeInitialize");

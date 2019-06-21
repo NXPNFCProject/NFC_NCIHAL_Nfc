@@ -214,17 +214,6 @@ public class AidRoutingManager {
         }
     }
 
-    public boolean configureApduPatternRouting(List<ApduPatternResolveInfo> apduPatternList) {
-        NfcService.getInstance().unrouteApduPattern("FFFFFFFFFFFFFFEF");
-        if(apduPatternList.size() == 0x00 || apduPatternList == null)
-            return false;
-        for(ApduPatternResolveInfo apduPatternInfo : apduPatternList) {
-            NfcService.getInstance().routeApduPattern(apduPatternInfo.referenceData,apduPatternInfo.mask,
-                    apduPatternInfo.route,apduPatternInfo.powerState);
-        }
-        return true;
-    }
-
     private int getRouteForSecureElement(String se) {
       if (se == null || se.length() <= 3) {
         return 0;
@@ -455,13 +444,6 @@ public class AidRoutingManager {
 
     public boolean getLastCommitRoutingStatus() {
         return mLastCommitStatus;
-    }
-
-    final class ApduPatternResolveInfo {
-        public String  mask;
-        public String  referenceData;
-        public int route;
-        public int powerState;
     }
 
     public void dump(FileDescriptor fd, PrintWriter pw, String[] args) {

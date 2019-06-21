@@ -1323,55 +1323,6 @@ static jboolean nfcManager_commitRouting(JNIEnv* e, jobject) {
 
 /*******************************************************************************
 **
-** Function:        nfcManager_unrouteApduPattern
-**
-** Description:     Remove a APDU and APDU mask routing
-**                  e: JVM environment.
-**                  o: Java object.
-**
-** Returns:         True if ok.
-**
-*******************************************************************************/
-static jboolean nfcManager_unrouteApduPattern (JNIEnv* e, jobject, jbyteArray apduData)
-{
-  bool stat = false;
-#if(NXP_EXTNS == TRUE)
-    ScopedByteArrayRO bytes(e, apduData);
-    uint8_t* apdu = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
-    size_t apduLen = bytes.size();
-    stat =  RoutingManager::getInstance().removeApduRouting(apduLen ,apdu);
-#endif
-    return stat;
-}
-
-/*******************************************************************************
-**
-** Function:        nfcManager_routeApduPattern
-**
-** Description:     Route an APDU and APDU mask to an EE
-**                  e: JVM environment.
-**                  o: Java object.
-**
-** Returns:         True if ok.
-**
-*******************************************************************************/
-static jboolean nfcManager_routeApduPattern (JNIEnv* e, jobject, jint route, jint powerState,jbyteArray apduData, jbyteArray apduMask)
-{
-    bool stat = false;
-#if(NXP_EXTNS == TRUE)
-    ScopedByteArrayRO bytes(e, apduData);
-    uint8_t* apdu = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
-    size_t apduLen = bytes.size();
-    ScopedByteArrayRO bytes2(e, apduMask);
-    uint8_t* mask = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes2[0]));
-    size_t maskLen = bytes2.size();
-    stat = RoutingManager::getInstance().addApduRouting(route, powerState, apdu, apduLen, mask , maskLen);
-#endif
-    return stat;
-}
-
-/*******************************************************************************
-**
 ** Function:        nfcManager_doRegisterT3tIdentifier
 **
 ** Description:     Registers LF_T3T_IDENTIFIER for NFC-F.
@@ -3039,10 +2990,6 @@ static JNINativeMethod gMethods[] = {
     {"doResonantFrequency", "(Z)V",
               (void *)nfcManager_doResonantFrequency},
 #endif
-     {"routeApduPattern", "(II[B[B)Z",
-                    (void*) nfcManager_routeApduPattern},
-     {"unrouteApduPattern", "([B)Z",
-                    (void*) nfcManager_unrouteApduPattern},
 #if(NXP_EXTNS == TRUE)
     // check firmware version
     {"getFWVersion", "()I", (void*)nfcManager_getFwVersion},

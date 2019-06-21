@@ -980,23 +980,6 @@ void RoutingManager::nfaEeCallback(tNFA_EE_EVT event,
       SyncEventGuard guard(routingManager.mEeUpdateEvent);
       routingManager.mEeUpdateEvent.notifyOne();
     } break;
-#if(NXP_EXTNS == TRUE)
-    case NFA_EE_ADD_APDU_EVT:
-    {
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_EE_ADD_APDU_EVT  status=%u", fn, eventData->status);
-      SyncEventGuard guard(se.mApduPaternAddRemoveEvent);
-      se.mApduPaternAddRemoveEvent.notifyOne();
-    }
-    break;
-    case NFA_EE_REMOVE_APDU_EVT:
-    {
-      DLOG_IF(INFO, nfc_debug_enabled)
-          << StringPrintf("%s: NFA_EE_REMOVE_APDU_EVT  status=%u", fn, eventData->status);
-      SyncEventGuard guard(se.mApduPaternAddRemoveEvent);
-      se.mApduPaternAddRemoveEvent.notifyOne();
-    }
-    break;
-#endif
     default:
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: unknown event=%u ????", fn, event);
@@ -2097,43 +2080,6 @@ uint32_t RoutingManager:: getUicc2selected()
     return (SecureElement::getInstance().muicc2_selected == SecureElement::UICC2_ID)?
                  SecureElement::getInstance().EE_HANDLE_0xF8:
                     SecureElement::getInstance().EE_HANDLE_0xF9;
-}
-
-bool RoutingManager::addApduRouting(uint8_t route, uint8_t powerState,const uint8_t* apduData,
-     uint8_t apduDataLen ,const uint8_t* apduMask, uint8_t apduMaskLen)
-{
-    static const char fn [] = "RoutingManager::addApduRouting";
-    LOG(ERROR) << StringPrintf("%s: enter, route:%x power:0x%x", fn, route, powerState);
-
-    int seId = SecureElement::getInstance().getEseHandleFromGenericId(route);
-    if (seId  == NFA_HANDLE_INVALID)
-    {
-      return false;
-    }
-    SyncEventGuard guard(SecureElement::getInstance().mApduPaternAddRemoveEvent);
-    tNFA_STATUS nfaStat = NFA_EeAddApduPatternRouting(apduDataLen, (uint8_t*)apduData, apduMaskLen, (uint8_t*)apduMask, seId, powerState);
-    if (nfaStat == NFA_STATUS_OK)
-    {
-
-        SecureElement::getInstance().mApduPaternAddRemoveEvent.wait();
-
-        LOG(ERROR) << StringPrintf("%s: routed APDU pattern successfully", fn);
-    }
-    return ((nfaStat == NFA_STATUS_OK)?true:false);
-}
-
-bool RoutingManager::removeApduRouting(uint8_t apduDataLen, const uint8_t* apduData)
-{
-    static const char fn [] = "RoutingManager::removeApduRouting";
-    LOG(ERROR) << StringPrintf("%s: enter", fn);
-    SyncEventGuard guard(SecureElement::getInstance().mApduPaternAddRemoveEvent);
-    tNFA_STATUS nfaStat = NFA_EeRemoveApduPatternRouting(apduDataLen, (uint8_t*) apduData);
-    if (nfaStat == NFA_STATUS_OK)
-    {
-        SecureElement::getInstance().mApduPaternAddRemoveEvent.wait();
-        LOG(ERROR) << StringPrintf("%s: removed APDU pattern successfully", fn);
-    }
-    return ((nfaStat == NFA_STATUS_OK)?true:false);
 }
 
 /*******************************************************************************
