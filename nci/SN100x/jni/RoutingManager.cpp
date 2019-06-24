@@ -1486,8 +1486,8 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
         switch_on_mask    = (power & 0x01) ? value : 0;
         switch_off_mask   = (power & 0x02) ? value : 0;
         battery_off_mask  = (power & 0x04) ? value : 0;
-        screen_off_mask   = (power & 0x10) ? value : 0;
-        screen_lock_mask  = (power & 0x08) ? value : 0;
+        screen_off_mask   = (power & 0x08) ? value : 0;
+        screen_lock_mask  = (power & 0x10) ? value : 0;
         screen_off_lock_mask = (power & 0x20) ? value : 0;
 
         if((max_tech_mask != 0x01) && (max_tech_mask == 0x02)) // type B only
@@ -1676,112 +1676,50 @@ bool RoutingManager::clearAidTable ()
 
 bool RoutingManager::clearRoutingEntry(int type)
 {
-    static const char fn [] = "RoutingManager::clearRoutingEntry";
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter, type:0x%x", fn, type );
-    tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
-    //tNFA_HANDLE ee_handle = NFA_HANDLE_INVLAID;
-
-    memset(&gRouteInfo, 0x00, sizeof(RouteInfo_t));
-
+    DLOG_IF(INFO, nfc_debug_enabled)
+            << StringPrintf("%s: Enter . Clear Routing Type = %d", __func__, type);
+    tNFA_STATUS nfaStat;
+    tNFA_HANDLE ee_handleList[nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED];
+    uint8_t i, count;
+    SyncEventGuard guard(mRoutingEvent);
+    SecureElement::getInstance().getEeHandleList(ee_handleList, &count);
+    if (count > nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED) {
+      count = nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED;
+      DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf(
+              "Count is more than SecureElement::MAX_NUM_EE,Forcing to "
+              "SecureElement::MAX_NUM_EE");
+    }
 
     if(NFA_SET_TECHNOLOGY_ROUTING & type)
     {
-      {
-        SyncEventGuard guard (mRoutingEvent);
-        nfaStat = NFA_EeSetDefaultTechRouting (0x400, 0x00, 0x00, 0x00, 0x00, 0x00,0x00);
-        if(nfaStat == NFA_STATUS_OK){
-            mRoutingEvent.wait ();
-            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("tech routing SUCCESS");
-        }
-        else{
-            DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf("Fail to set default tech routing");
+      for (i = 0; i < count; i++) {
+        nfaStat = NFA_EeClearDefaultTechRouting(
+                ee_handleList[i], (NFA_TECHNOLOGY_MASK_A |
+                NFA_TECHNOLOGY_MASK_B | NFA_TECHNOLOGY_MASK_F));
+        if (nfaStat == NFA_STATUS_OK) {
+          mRoutingEvent.wait();
         }
       }
-
-      {
-        SyncEventGuard guard (mRoutingEvent);
-        nfaStat = NFA_EeSetDefaultTechRouting (SecureElement::getInstance().EE_HANDLE_0xF4, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);
-        if(nfaStat == NFA_STATUS_OK){
-            mRoutingEvent.wait ();
-            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("tech routing SUCCESS");
-        }
-        else{
-            DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf("Fail to set default tech routing");
-        }
-      }
-
-      {
-        SyncEventGuard guard (mRoutingEvent);
-        nfaStat = NFA_EeSetDefaultTechRouting (0x4C0, 0x00, 0x00, 0x00, 0x00, 0x00,0x00);
-        if(nfaStat == NFA_STATUS_OK){
-            mRoutingEvent.wait ();
-            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("tech routing SUCCESS");
-        }
-        else{
-            DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf("Fail to set default tech routing");
-        }
-      }
-
-      {
-        SyncEventGuard guard (mRoutingEvent);
-        nfaStat = NFA_EeSetDefaultTechRouting (0x481, 0x00, 0x00, 0x00, 0x00, 0x00,0x00);
-        if(nfaStat == NFA_STATUS_OK){
-            mRoutingEvent.wait ();
-            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("tech routing SUCCESS");
-        }
-        else{
-            DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf("Fail to set default tech routing");
-        }
+      nfaStat = NFA_EeClearDefaultTechRouting(
+              NFA_EE_HANDLE_DH, (NFA_TECHNOLOGY_MASK_A | NFA_TECHNOLOGY_MASK_B |
+              NFA_TECHNOLOGY_MASK_F));
+      if (nfaStat == NFA_STATUS_OK) {
+        mRoutingEvent.wait();
       }
     }
     if(NFA_SET_PROTOCOL_ROUTING & type)
     {
-      {
-        SyncEventGuard guard (mRoutingEvent);
-        nfaStat = NFA_EeSetDefaultProtoRouting (0x400, 0x00, 0x00, 0x00, 0x00 ,0x00,0x00);
-        if(nfaStat == NFA_STATUS_OK){
-            mRoutingEvent.wait ();
-            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("protocol routing SUCCESS");
-        }
-        else{
-            DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf("Fail to set default protocol routing");
+      for (i = 0; i < count; i++) {
+        nfaStat = NFA_EeClearDefaultProtoRouting( ee_handleList[i],
+                (NFA_PROTOCOL_MASK_ISO_DEP | NFC_PROTOCOL_MASK_ISO7816));
+        if (nfaStat == NFA_STATUS_OK) {
+          mRoutingEvent.wait();
         }
       }
-
-      {
-        SyncEventGuard guard (mRoutingEvent);
-        nfaStat = NFA_EeSetDefaultProtoRouting (SecureElement::getInstance().EE_HANDLE_0xF4, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);
-        if(nfaStat == NFA_STATUS_OK){
-            mRoutingEvent.wait ();
-            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("protocol routing SUCCESS");
-        }
-        else{
-            DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf("Fail to set default protocol routing");
-        }
-      }
-
-      {
-        SyncEventGuard guard (mRoutingEvent);
-        nfaStat = NFA_EeSetDefaultProtoRouting (0x4C0, 0x00, 0x00, 0x00, 0x00, 0x00,0x00);
-        if(nfaStat == NFA_STATUS_OK){
-            mRoutingEvent.wait ();
-            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("protocol routing SUCCESS");
-        }
-        else{
-            DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf("Fail to set default protocol routing");
-        }
-      }
-
-      {
-        SyncEventGuard guard (mRoutingEvent);
-        nfaStat = NFA_EeSetDefaultProtoRouting (0x481, 0x00, 0x00, 0x00, 0x00, 0x00,0x00);
-        if(nfaStat == NFA_STATUS_OK){
-            mRoutingEvent.wait ();
-            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("protocol routing SUCCESS");
-        }
-        else{
-            DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf("Fail to set default protocol routing");
-        }
+      nfaStat = NFA_EeClearDefaultProtoRouting( NFA_EE_HANDLE_DH,
+              (NFA_PROTOCOL_MASK_ISO_DEP | NFC_PROTOCOL_MASK_ISO7816));
+      if (nfaStat == NFA_STATUS_OK) {
+        mRoutingEvent.wait();
       }
     }
 
@@ -1789,7 +1727,7 @@ bool RoutingManager::clearRoutingEntry(int type)
     {
         clearAidTable();
     }
-    return nfaStat;
+    return ((nfaStat == NFA_STATUS_OK)? true: false);
 }
 
 /*
