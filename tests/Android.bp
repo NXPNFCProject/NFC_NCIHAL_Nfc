@@ -20,7 +20,6 @@ android_test {
     ],
     static_libs: [
         "junit",
-        "legacy-android-test",
     ],
     // Include all test java files.
     srcs: ["src/**/*.java"],
