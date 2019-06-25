@@ -1649,6 +1649,13 @@ static void nfcManager_enableDiscovery(JNIEnv* e, jobject o,
     tech_mask = (tNFA_TECHNOLOGY_MASK)nat->tech_mask;
   else if (technologies_mask != -1)
     tech_mask = (tNFA_TECHNOLOGY_MASK)technologies_mask;
+
+#if (NXP_EXTNS == TRUE)
+  uint8_t default_tech_mask =
+      NfcConfig::getUnsigned(NAME_POLLING_TECH_MASK, DEFAULT_TECH_MASK);
+  tech_mask &= default_tech_mask;
+#endif
+
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: enter; tech_mask = %02x", __func__, tech_mask);
 
