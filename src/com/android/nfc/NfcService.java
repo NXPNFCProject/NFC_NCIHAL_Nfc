@@ -2494,7 +2494,7 @@ public class NfcService implements DeviceHostListener {
         }
     }
 
-    boolean isNfcEnabled() {
+    public boolean isNfcEnabled() {
         synchronized (this) {
             return mState == NfcAdapter.STATE_ON;
         }
@@ -2899,7 +2899,6 @@ public class NfcService implements DeviceHostListener {
 
     public void commitRouting() {
         Log.d(TAG, "commitRouting >>>");
-        if (!isNfcEnabled()) return;
         mHandler.sendEmptyMessage(MSG_COMMIT_ROUTING);
     }
     public void initWiredSe() {
