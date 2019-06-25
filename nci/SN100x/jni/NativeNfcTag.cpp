@@ -816,6 +816,9 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
         "%s: select completed; sConnectOk=%d", __func__, sConnectOk);
     if (NfcTag::getInstance().getActivationState() != NfcTag::Active) {
       LOG(ERROR) << StringPrintf("%s: tag is not active", __func__);
+#if (NXP_EXTNS == TRUE)
+      NfcTag::getInstance().connectionEventHandler(NFA_DEACTIVATED_EVT, NULL);
+#endif
       rVal = STATUS_CODE_TARGET_LOST;
       break;
     }

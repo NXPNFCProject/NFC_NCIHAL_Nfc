@@ -639,8 +639,15 @@ static void nfaConnectionCallback(uint8_t connEvent,
         NfcTag::getInstance ().mTechListIndex =0;
 #endif
         nativeNfcTag_resetPresenceCheck();
+#if (NXP_EXTNS == TRUE)
+        if (gIsSelectingRfInterface == false) {
+          NfcTag::getInstance().connectionEventHandler(connEvent, eventData);
+          nativeNfcTag_abortWaits();
+        }
+#else
         NfcTag::getInstance().connectionEventHandler(connEvent, eventData);
         nativeNfcTag_abortWaits();
+#endif
         NfcTag::getInstance().abort();
 #if (NXP_EXTNS == TRUE)
         NfcTag::getInstance().mIsMultiProtocolTag = false;
