@@ -1125,6 +1125,7 @@ void RoutingManager::setEmptyAidEntry(int route) {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
   uint16_t routeLoc;
   uint8_t power;
+  int max_tech_mask = 0;
   mDefaultIso7816SeID = route;
 
   routeLoc = ((mDefaultIso7816SeID == 0x00)
@@ -1141,6 +1142,10 @@ void RoutingManager::setEmptyAidEntry(int route) {
   if (routeLoc == ROUTE_LOC_HOST_ID) power &= 0x11;
   if (routeLoc == NFA_HANDLE_INVALID) {
     LOG(ERROR) << StringPrintf("%s: Invalid routeLoc. Return.", __func__);
+    return;
+  }
+  max_tech_mask = SecureElement::getInstance().getSETechnology(routeLoc);
+  if ((routeLoc != ROUTE_LOC_HOST_ID) && ((max_tech_mask & 0x03) == 0)) {
     return;
   }
 
@@ -1530,6 +1535,18 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route,
       } else if (value & 0x20) {
         protocol_mask = NFC_PROTOCOL_MASK_ISO7816;
         value &= ~(0x20);
+      }
+
+      /*if NFCEE doesn't support tech A/B don't configure ISO-DEP/ISO7816 proto
+       * route */
+      if ((protocol_mask &
+           (NFA_PROTOCOL_MASK_ISO_DEP | NFC_PROTOCOL_MASK_ISO7816)) &&
+          (ee_handle != NFA_EE_HANDLE_DH) && ((max_tech_mask & 0x03) == 0)) {
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+            "%s: Proto Entry rejected. ee_handle 0x%x doesn't support proto "
+            "mask 0x%x.",
+            fn, ee_handle, protocol_mask);
+        return nfaStat;
       }
 
       if (protocol_mask) {
@@ -2948,10 +2965,10 @@ void RoutingManager::registerProtoRouteEnrty(
         protocols_screen_off_lock);
     if (nfaStat == NFA_STATUS_OK) {
       mRoutingEvent.wait();
-      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("tech routing SUCCESS");
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("proto routing SUCCESS");
     } else {
       DLOG_IF(ERROR, nfc_debug_enabled)
-          << StringPrintf("Fail to set default tech routing");
+          << StringPrintf("Fail to set proto routing");
     }
   }
 }
