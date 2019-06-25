@@ -359,5 +359,6 @@ public interface DeviceHost {
     public int doselectUicc(int uiccSlot);
     public int doGetSelectedUicc();
     public int setPreferredSimSlot(int uiccSlot);
-
+    public int doSetFieldDetectMode(boolean mode);
+    public boolean isFieldDetectEnabled();
 }

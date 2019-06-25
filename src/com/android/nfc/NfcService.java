@@ -1960,6 +1960,18 @@ public class NfcService implements DeviceHostListener {
             }
             return mDeviceHost.doGetSelectedUicc();
         }
+
+        @Override
+        public int setFieldDetectMode(boolean mode) {
+          NfcPermissions.enforceUserPermissions(mContext);
+          return mDeviceHost.doSetFieldDetectMode(mode);
+        }
+
+        @Override
+        public boolean isFieldDetectEnabled() {
+          NfcPermissions.enforceUserPermissions(mContext);
+          return mDeviceHost.isFieldDetectEnabled();
+        }
 }
 
     final class ReaderModeDeathRecipient implements IBinder.DeathRecipient {

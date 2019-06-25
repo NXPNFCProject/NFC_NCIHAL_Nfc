@@ -247,6 +247,14 @@ typedef enum dual_uicc_error_states {
   DUAL_UICC_ERROR_INVALID_SLOT,
   DUAL_UICC_ERROR_STATUS_UNKNOWN
 } dual_uicc_error_state_t;
+
+typedef enum {
+  FDSTATUS_SUCCESS = 0,
+  FDSTATUS_ERROR_NFC_IS_OFF,
+  FDSTATUS_ERROR_NFC_BUSY_IN_MPOS,
+  FDSTATUS_ERROR_UNKNOWN
+} field_detect_status_t;
+
 #endif
 
 static void nfaConnectionCallback(uint8_t event, tNFA_CONN_EVT_DATA* eventData);
@@ -1976,6 +1984,10 @@ static jboolean nfcManager_doDeinitialize(JNIEnv*, jobject) {
     sNfaEnableDisablePollingEvent.notifyOne();
   }
 #if (NXP_EXTNS == TRUE)
+  /*Disable Field Detect Mode if enabled*/
+#ifdef FIELD_DETECT_FEATURE
+  if (NFA_IsFieldDetectEnabled()) NFA_SetFieldDetectMode(false);
+#endif
   SecureElement::getInstance().finalize ();
 #endif
   NfcAdaptation& theInstance = NfcAdaptation::GetInstance();
@@ -2189,6 +2201,81 @@ tNFA_STATUS getConfig(uint16_t* rspLen, uint8_t* configValue, uint8_t numParam,
     if (NfcConfig::hasKey(NAME_DEFAULT_FELICA_CLT_ROUTE))
       num = NfcConfig::getUnsigned(NAME_DEFAULT_FELICA_CLT_ROUTE);
     return num;
+  }
+
+  /*******************************************************************************
+  **
+  ** Function:        nfcManager_SetFieldDetectMode
+  **
+  ** Description:     Updates field detect mode ENABLE/DISABLE
+  **                  e: JVM environment.
+  **                  o: Java object.
+  **
+  ** Returns:         Update status
+  **
+  *******************************************************************************/
+  static field_detect_status_t nfcManager_SetFieldDetectMode(JNIEnv*, jobject,
+                                                             jboolean mode) {
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter", __func__);
+#ifdef FIELD_DETECT_FEATURE
+    se_rd_req_state_t state = MposManager::getInstance().getEtsiReaederState();
+    if (!nfcManager_isNfcActive()) {1
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("%s: Nfc is not Enabled. Returning", __func__);
+      return FDSTATUS_ERROR_NFC_IS_OFF;
+    }
+
+    if ((state != STATE_SE_RDR_MODE_STOPPED) &&
+        (state != STATE_SE_RDR_MODE_INVALID)) {
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("%s: MPOS is ongoing.. Returning", __func__);
+      return FDSTATUS_ERROR_NFC_BUSY_IN_MPOS;
+    }
+
+    if (NFA_IsFieldDetectEnabled() == mode) {
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+          "%s: Already %s", __func__, ((mode) ? "ENABLED" : "DISABLED"));
+      return FDSTATUS_SUCCESS;
+    }
+
+    if (sRfEnabled) {
+      // Stop RF Discovery
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("%s: stop discovery", __func__);
+      startRfDiscovery(false);
+    }
+    NFA_SetFieldDetectMode(mode);
+    // start discovery
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s: reconfigured start discovery", __func__);
+    startRfDiscovery(true);
+#else
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s: Feature not supported", __func__);
+#endif
+    return FDSTATUS_ERROR_UNKNOWN;
+  }
+
+  /*******************************************************************************
+  **
+  ** Function:        nfcManager_IsFieldDetectEnabled
+  **
+  ** Description:     Returns current status of field detect mode
+  **                  e: JVM environment.
+  **                  o: Java object.
+  **
+ ** Returns:         true/false
+  **
+  *******************************************************************************/
+  static jboolean nfcManager_IsFieldDetectEnabled(JNIEnv*, jobject) {
+#ifdef FIELD_DETECT_FEATURE
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter", __func__);
+    return NFA_IsFieldDetectEnabled();
+#else
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s: Feature not supported", __func__);
+    return false;
+#endif
   }
 #endif
 
@@ -2990,6 +3077,10 @@ static JNINativeMethod gMethods[] = {
 
     {"doResonantFrequency", "(Z)V",
               (void *)nfcManager_doResonantFrequency},
+     {"doSetFieldDetectMode", "(Z)I",
+     (void*)nfcManager_SetFieldDetectMode},
+     {"isFieldDetectEnabled", "()Z",
+     (void*)nfcManager_IsFieldDetectEnabled},
 #endif
 #if(NXP_EXTNS == TRUE)
     // check firmware version
