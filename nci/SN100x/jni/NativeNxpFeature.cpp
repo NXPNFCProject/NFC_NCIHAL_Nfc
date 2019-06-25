@@ -202,6 +202,30 @@ uint32_t getNumValue(const char* key ,uint32_t value) {
   return NfcConfig::getUnsigned(key, value);
 }
 
+/*******************************************************************************
+ **
+ ** Function:        send_flush_ram_to_flash
+ **
+ ** Description:     This is used to update ram to flash command to NFCC.
+ **                  This will write the contents of RAM to FLASH.This will
+ **                  be sent only one time after NFC init.
+ **
+ ** Returns:         NFA_STATUS_OK on success
+ **www
+ *******************************************************************************/
+tNFA_STATUS send_flush_ram_to_flash() {
+  DLOG_IF(INFO, nfc_debug_enabled)
+    << StringPrintf("%s: enter", __func__);
+  tNFA_STATUS status = NFA_STATUS_OK;
+  uint8_t  cmd[] = {0x2F, 0x21, 0x00};
+
+  status = NxpNfc_Write_Cmd_Common(sizeof(cmd), cmd);
+  if(status != NFA_STATUS_OK) {
+    DLOG_IF(ERROR, nfc_debug_enabled)
+      << StringPrintf("%s: send_flush_ram_to_flash sending status %x", __func__,status);
+  }
+  return status;
+}
 } /*namespace android*/
 
 #endif

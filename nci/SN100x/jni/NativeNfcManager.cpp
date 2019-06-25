@@ -124,6 +124,7 @@ extern void NxpPropCmd_OnResponseCallback(uint8_t event, uint16_t param_len,
 extern tNFA_STATUS NxpPropCmd_send(uint8_t * pData4Tx, uint8_t dataLen,
                                    uint8_t * rsp_len, uint8_t * rsp_buf,
                                    uint32_t rspTimeout, tHAL_NFC_ENTRY * halMgr);
+extern tNFA_STATUS send_flush_ram_to_flash();
 extern bool gIsWaiting4Deact2SleepNtf;
 extern bool gGotDeact2IdleNtf;
 #endif
@@ -3120,6 +3121,9 @@ void doStartupConfig() {
     if (status != NFA_STATUS_OK) {
       LOG(ERROR) << __func__ << ": Failed to configure NFCC_CONFIG_CONTROL";
     }
+#if (NXP_EXTNS == TRUE)
+    send_flush_ram_to_flash();
+#endif
   }
 }
 
