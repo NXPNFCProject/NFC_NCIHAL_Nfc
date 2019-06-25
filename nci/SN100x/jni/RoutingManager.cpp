@@ -1634,16 +1634,6 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
     {
          {
                //SyncEventGuard guard (SecureElement::getInstance().mUiccListenEvent);
-               nfaStat = NFA_CeConfigureUiccListenTech (ActDevHandle, 0x00);
-               if (nfaStat == NFA_STATUS_OK)
-               {
-                     //SecureElement::getInstance().mUiccListenEvent.wait ();
-               }
-               else
-                     DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf("fail to start UICC listen");
-         }
-         {
-               //SyncEventGuard guard (SecureElement::getInstance().mUiccListenEvent);
                nfaStat = NFA_CeConfigureUiccListenTech (ActDevHandle, (uiccListenTech & 0x07));
                if(nfaStat == NFA_STATUS_OK)
                {
