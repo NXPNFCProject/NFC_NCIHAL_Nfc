@@ -342,8 +342,8 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
       mDefaultTechFSeID = getUiccRoute(sCurrentSelectedUICCSlot);
     }
 
-    if (NfcConfig::hasKey(NAME_DEFAULT_FELICA_CLT_PWR_STATE)) {
-      num = NfcConfig::getUnsigned(NAME_DEFAULT_FELICA_CLT_PWR_STATE);
+    if (NfcConfig::hasKey(NAME_DEFAULT_NFCF_PWR_STATE)) {
+      num = NfcConfig::getUnsigned(NAME_DEFAULT_NFCF_PWR_STATE);
       mDefaultTechFPowerstate = num;
     } else {
       mDefaultTechFPowerstate = 0x3F;
@@ -792,7 +792,7 @@ void RoutingManager::printMemberData() {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
       "%s: DEFAULT_FELICA_CLT_ROUTE = 0x%0u;", __func__, mDefaultTechFSeID);
   DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: DEFAULT_FELICA_CLT_PWR_STATE = 0x%0u;", __func__,
+      << StringPrintf("%s: DEFAULT_NFCF_PWR_STATE = 0x%0u;", __func__,
                       mDefaultTechFPowerstate);
 
   DLOG_IF(INFO, nfc_debug_enabled)

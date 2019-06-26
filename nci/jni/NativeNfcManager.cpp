@@ -3751,8 +3751,8 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
   *******************************************************************************/
   static jint nfcManager_getDefaultFelicaCLTPowerState(JNIEnv * e, jobject o) {
     unsigned long num = 0;
-    if (NfcConfig::hasKey(NAME_DEFAULT_FELICA_CLT_PWR_STATE))
-      num = NfcConfig::getUnsigned(NAME_DEFAULT_FELICA_CLT_PWR_STATE);
+    if (NfcConfig::hasKey(NAME_DEFAULT_NFCF_PWR_STATE))
+      num = NfcConfig::getUnsigned(NAME_DEFAULT_NFCF_PWR_STATE);
     return num;
   }
   /*******************************************************************************
@@ -3805,8 +3805,8 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
   *******************************************************************************/
   static jint nfcManager_getDefaultDesfirePowerState(JNIEnv * e, jobject o) {
     unsigned long num = 0;
-    if (NfcConfig::hasKey(NAME_DEFAULT_ROUTE_PWR_STATE)) {
-      num = NfcConfig::getUnsigned(NAME_DEFAULT_ROUTE_PWR_STATE);
+    if (NfcConfig::hasKey(NAME_DEFAULT_ISODEP_PWR_STATE)) {
+      num = NfcConfig::getUnsigned(NAME_DEFAULT_ISODEP_PWR_STATE);
     }
     return num;
   }
