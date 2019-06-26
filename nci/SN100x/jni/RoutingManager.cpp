@@ -1240,84 +1240,21 @@ void RoutingManager::registerProtoRouteEnrty(tNFA_HANDLE     ee_handle,
                                          tNFA_PROTOCOL_MASK  protocols_screen_off_lock
                                          )
 {
-    static const char fn [] = "RoutingManager::registerProtoRouteEnrty";
-    bool new_entry = true;
-    uint8_t i = 0;
-    tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
-
-    if(gRouteInfo.num_entries == 0)
-    {
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter, first entry :%x", fn, ee_handle);
-        gRouteInfo.protoInfo[0].ee_handle = ee_handle;
-        gRouteInfo.protoInfo[0].protocols_switch_on = protocols_switch_on;
-        gRouteInfo.protoInfo[0].protocols_switch_off = protocols_switch_off;
-        gRouteInfo.protoInfo[0].protocols_battery_off = protocols_battery_off;
-        gRouteInfo.protoInfo[0].protocols_screen_lock = protocols_screen_lock;
-        gRouteInfo.protoInfo[0].protocols_screen_off = protocols_screen_off;
-        gRouteInfo.protoInfo[0].protocols_screen_off_lock = protocols_screen_off_lock;
-        gRouteInfo.num_entries = 1;
+  tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
+  {
+    SyncEventGuard guard(mRoutingEvent);
+    nfaStat = NFA_EeSetDefaultProtoRouting(
+        ee_handle, protocols_switch_on, protocols_switch_off,
+        protocols_battery_off, protocols_screen_lock, protocols_screen_off,
+        protocols_screen_off_lock);
+    if (nfaStat == NFA_STATUS_OK) {
+      mRoutingEvent.wait();
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("tech routing SUCCESS");
+    } else {
+      DLOG_IF(ERROR, nfc_debug_enabled)
+          << StringPrintf("Fail to set default tech routing");
     }
-    else
-    {
-        for (i = 0;i < gRouteInfo.num_entries; i++)
-        {
-            if(gRouteInfo.protoInfo[i].ee_handle == ee_handle)
-            {
-                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter, proto handle match found :%x", fn, ee_handle);
-                gRouteInfo.protoInfo[i].protocols_switch_on |= protocols_switch_on;
-                gRouteInfo.protoInfo[i].protocols_switch_off |= protocols_switch_off;
-                gRouteInfo.protoInfo[i].protocols_battery_off |= protocols_battery_off;
-                gRouteInfo.protoInfo[i].protocols_screen_lock |= protocols_screen_lock;
-                gRouteInfo.protoInfo[i].protocols_screen_off |= protocols_screen_off;
-                gRouteInfo.protoInfo[i].protocols_screen_off_lock |= protocols_screen_off_lock;
-                new_entry = false;
-                break;
-            }
-        }
-        if(new_entry)
-        {
-            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter,new proto handle entry :%x", fn, ee_handle);
-            i = gRouteInfo.num_entries;
-            gRouteInfo.protoInfo[i].ee_handle = ee_handle;
-            gRouteInfo.protoInfo[i].protocols_switch_on = protocols_switch_on;
-            gRouteInfo.protoInfo[i].protocols_switch_off = protocols_switch_off;
-            gRouteInfo.protoInfo[i].protocols_battery_off = protocols_battery_off;
-            gRouteInfo.protoInfo[i].protocols_screen_lock = protocols_screen_lock;
-            gRouteInfo.protoInfo[i].protocols_screen_off = protocols_screen_off;
-            gRouteInfo.protoInfo[i].protocols_screen_off_lock = protocols_screen_off_lock;
-            gRouteInfo.num_entries++;
-        }
-    }
-    for (i = 0;i < gRouteInfo.num_entries; i++)
-    {
-        {
-            SyncEventGuard guard (mRoutingEvent);
-            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter >>>> ee_handle:%x %x %x %x %x %x %x", fn, gRouteInfo.protoInfo[i].ee_handle,
-                                                                    gRouteInfo.protoInfo[i].protocols_switch_on,
-                                                                    gRouteInfo.protoInfo[i].protocols_switch_off,
-                                                                    gRouteInfo.protoInfo[i].protocols_battery_off,
-                                                                    gRouteInfo.protoInfo[i].protocols_screen_lock,
-                                                                    gRouteInfo.protoInfo[i].protocols_screen_off,
-                                                                    gRouteInfo.protoInfo[i].protocols_screen_off_lock);
-
-
-
-            nfaStat = NFA_EeSetDefaultProtoRouting (gRouteInfo.protoInfo[i].ee_handle,
-                                                    gRouteInfo.protoInfo[i].protocols_switch_on,
-                                                    mSecureNfcEnabled ? 0 : gRouteInfo.protoInfo[i].protocols_switch_off,
-                                                    mSecureNfcEnabled ? 0 : gRouteInfo.protoInfo[i].protocols_battery_off,
-                                                    mSecureNfcEnabled ? 0 : gRouteInfo.protoInfo[i].protocols_screen_lock,
-                                                    mSecureNfcEnabled ? 0 : gRouteInfo.protoInfo[i].protocols_screen_off,
-                                                    mSecureNfcEnabled ? 0 : gRouteInfo.protoInfo[i].protocols_screen_off_lock);
-            if(nfaStat == NFA_STATUS_OK){
-                mRoutingEvent.wait ();
-                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("tech routing SUCCESS");
-            }
-            else{
-                DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf("Fail to set default tech routing");
-            }
-        }
-    }
+  }
 }
 /*******************************************************************************
  **
