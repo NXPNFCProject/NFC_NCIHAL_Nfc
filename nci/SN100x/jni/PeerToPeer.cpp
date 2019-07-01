@@ -13,7 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+/******************************************************************************
+ *
+ *  The original Work has been changed by NXP.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ *  Copyright 2019 NXP
+ *
+ ******************************************************************************/
 /*
  *  Communicate with a peer using NFC-DEP, LLCP, SNEP.
  */
@@ -27,6 +45,9 @@
 #include "NfcJniUtil.h"
 #include "llcp_defs.h"
 #include "nfc_config.h"
+#if (NXP_EXTNS == TRUE)
+#include "NativeJniExtns.h"
+#endif
 
 using android::base::StringPrintf;
 
@@ -665,6 +686,9 @@ bool PeerToPeer::createDataLinkConn(tJNI_HANDLE jniHandle,
   if ((pClient = findClient(jniHandle)) == NULL) {
     LOG(ERROR) << StringPrintf("%s: can't find client, JNI handle: %u", fn,
                                jniHandle);
+#if (NXP_EXTNS == TRUE)
+    NativeJniExtns::getInstance().notifyNfcEvent("nfaClientCallback");
+#endif
     return (false);
   }
 
@@ -744,7 +768,19 @@ sp<P2pClient> PeerToPeer::findClient(tJNI_HANDLE jniHandle) {
   }
   return (NULL);
 }
-
+/*******************************************************************************
+**
+** Function:        checkClientHandle
+**
+** Description:     Check a PeerToPeer object with a client connection handle.
+**                  jniHandle: Connection handle.
+**
+** Returns:         PeerToPeer object.
+**
+*******************************************************************************/
+sp<P2pClient> PeerToPeer::checkClientHandle(tJNI_HANDLE jniHandle) {
+  return findClient(jniHandle);
+}
 /*******************************************************************************
 **
 ** Function:        findClientCon
@@ -1224,6 +1260,10 @@ void PeerToPeer::nfaServerCallback(tNFA_P2P_EVT p2pEvent,
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: enter; event=0x%X", fn, p2pEvent);
 
+#if (NXP_EXTNS == TRUE)
+  NativeJniExtns::getInstance().notifyNfcEvent(
+      "nfaClientCallback", (void*)&p2pEvent, (void*)&eventData);
+#endif
   switch (p2pEvent) {
     case NFA_P2P_REG_SERVER_EVT:  // NFA_P2pRegisterServer() has started to
                                   // listen
@@ -1401,7 +1441,10 @@ void PeerToPeer::nfaClientCallback(tNFA_P2P_EVT p2pEvent,
 
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: enter; event=%u", fn, p2pEvent);
-
+#if (NXP_EXTNS == TRUE)
+  NativeJniExtns::getInstance().notifyNfcEvent(
+      "nfaClientCallback", (void*)&p2pEvent, (void*)&eventData);
+#endif
   switch (p2pEvent) {
     case NFA_P2P_REG_CLIENT_EVT:
       // Look for a client that is trying to register

@@ -57,6 +57,9 @@
 #include "nfc_brcm_defs.h"
 #include "phNxpExtns.h"
 #include "rw_api.h"
+#if (NXP_EXTNS == TRUE)
+#include "NativeJniExtns.h"
+#endif
 
 using android::base::StringPrintf;
 
@@ -482,6 +485,10 @@ static jboolean nativeNfcTag_doWrite(JNIEnv* e, jobject, jbyteArray buf) {
 
   if (status != NFA_STATUS_OK) {
     LOG(ERROR) << StringPrintf("%s: write/format error=%d", __func__, status);
+#if (NXP_EXTNS == TRUE)
+    NativeJniExtns::getInstance().notifyNfcEvent("nativeNfcTag_doWrite",
+                                                 (void*)&status);
+#endif
     goto TheEnd;
   }
 
@@ -630,6 +637,10 @@ static jint nativeNfcTag_doConnect(JNIEnv*, jobject, jint targetHandle) {
   }
 
 TheEnd:
+#if (NXP_EXTNS == TRUE)
+  NativeJniExtns::getInstance().notifyNfcEvent("nativeNfcTag_doConnect",
+                                               (void*)&retCode);
+#endif
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: exit 0x%X", __func__, retCode);
   return retCode;

@@ -77,8 +77,6 @@ class NfcTag {
   int mNumDiscNtf;
   int mNumDiscTechList;
   int mTechListIndex;
-  int mPrevNumTechList;
-  int mPrevTechLibNfcTypes [MAX_NUM_TECHNOLOGY]; //array of detailed tag types according to NFC service
   bool mIsMultiProtocolTag;
   bool mCashbeeDetected;
 #endif
@@ -475,7 +473,6 @@ class NfcTag {
   bool mIsDynamicTagId;  // whether the tag has dynamic tag ID
   tNFA_RW_PRES_CHK_OPTION mPresenceCheckAlgorithm;
   bool mIsFelicaLite;
-
   /*******************************************************************************
   **
   ** Function:        IsSameKovio

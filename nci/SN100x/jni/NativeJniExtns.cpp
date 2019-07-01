@@ -180,9 +180,10 @@ NativeJniExtns::~NativeJniExtns() { unloadExtnsLibrary(); };
 ** Returns:         None
 **
 *******************************************************************************/
-void NativeJniExtns::notifyNfcEvent(std::string evt, void* evt_data) {
+void NativeJniExtns::notifyNfcEvent(std::string evt, void* evt_data,
+                                    void* evt_code) {
   if (gNfcExtnsImplInstance != NULL)
-    gNfcExtnsImplInstance->notifyNfcEvt(evt, evt_data);
+    gNfcExtnsImplInstance->notifyNfcEvt(evt, evt_data, evt_code);
 }
 
 /*******************************************************************************

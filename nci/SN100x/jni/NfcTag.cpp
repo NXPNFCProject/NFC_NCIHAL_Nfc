@@ -96,7 +96,6 @@ NfcTag::NfcTag()
   memset(mTechParams, 0, sizeof(mTechParams));
   memset(mLastKovioUid, 0, NFC_KOVIO_MAX_LEN);
 #if (NXP_EXTNS == TRUE)
-  mPrevNumTechList = 0;
   memset(&mActivationParams_t, 0, sizeof(activationParams_t));
 #endif
   memset (&mLastKovioTime, 0, sizeof(timespec));

@@ -409,7 +409,10 @@ static void nfaConnectionCallback(uint8_t connEvent,
 #endif
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: event= %u", __func__, connEvent);
-
+#if (NXP_EXTNS == TRUE)
+  NativeJniExtns::getInstance().notifyNfcEvent(
+      "nfaConnectionCallback", (void*)&connEvent, (void*)&eventData);
+#endif
   switch (connEvent) {
     case NFA_POLL_ENABLED_EVT:  // whether polling successfully started
     {

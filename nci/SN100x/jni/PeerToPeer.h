@@ -13,7 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+/******************************************************************************
+ *
+ *  The original Work has been changed by NXP.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ *  Copyright 2019 NXP
+ *
+ ******************************************************************************/
 /*
  *  Communicate with a peer using NFC-DEP, LLCP, SNEP.
  */
@@ -371,7 +389,19 @@ class PeerToPeer {
   *******************************************************************************/
   static void nfaClientCallback(tNFA_P2P_EVT p2pEvent,
                                 tNFA_P2P_EVT_DATA* eventData);
-
+#if (NXP_EXTNS == TRUE)
+  /*******************************************************************************
+  **
+  ** Function:        checkClientHandle
+  **
+  ** Description:     Check a PeerToPeer object with a client connection handle.
+  **                  jniHandle: Connection handle.
+  **
+  ** Returns:         PeerToPeer object.
+  **
+  *******************************************************************************/
+  android::sp<P2pClient> checkClientHandle(tJNI_HANDLE jniHandle);
+#endif
  private:
   static const int sMax = 10;
   static PeerToPeer sP2p;
@@ -400,7 +430,6 @@ class PeerToPeer {
       mSnepRegisterEvent;    // completion event for NFA_SnepRegisterClient()
   Mutex mDisconnectMutex;    // synchronize the disconnect operation
   Mutex mNewJniHandleMutex;  // synchronize the creation of a new JNI handle
-
   /*******************************************************************************
   **
   ** Function:        ndefTypeCallback

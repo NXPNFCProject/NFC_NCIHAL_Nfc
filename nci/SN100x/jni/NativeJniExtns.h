@@ -45,7 +45,8 @@ class NativeJniExtns {
 
  public:
   static NativeJniExtns& getInstance();
-  void notifyNfcEvent(std::string evt, void* evt_data = NULL);
+  void notifyNfcEvent(std::string evt, void* evt_data = NULL,
+                      void* evt_code = NULL);
   void initialize(JNIEnv* e);
   bool isExtensionPresent();
   nfc_jni_native_data* gNativeData;
