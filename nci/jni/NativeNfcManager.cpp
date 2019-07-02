@@ -474,7 +474,6 @@ void set_AGC_process_state(bool state);
 bool get_AGC_process_state();
 
 void checkforTranscation(uint8_t connEvent, void* eventData);
-void sig_handler(int signo);
 void cleanup_timer();
 tNFA_STATUS updateEeprom(uint8_t* param, uint8_t len, uint8_t* val);
 /* Transaction Events in order */
@@ -5882,43 +5881,6 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
     pthread_exit(NULL);
     return NULL;
   }
-  /*******************************************************************************
-  **
-  ** Function         sig_handler
-  **
-  ** Description      This function is used to handle the different types of
-  **                  signal events.
-  **
-  ** Returns          None
-  **
-  *******************************************************************************/
-  void sig_handler(int signo) {
-    if (!nfcFL.eseFL._JCOP_WA_ENABLE) {
-      DLOG_IF(INFO, nfc_debug_enabled)
-          << StringPrintf("JCOP_WA_ENABLE not available..Returning");
-      return;
-    }
-    switch (signo) {
-      case SIGINT:
-        LOG(ERROR) << StringPrintf("received SIGINT\n");
-        break;
-      case SIGABRT:
-        LOG(ERROR) << StringPrintf("received SIGABRT\n");
-#if (NXP_EXTNS == TRUE)
-        if (nfcFL.nfccFL._NFCC_MW_RCVRY_BLK_FW_DNLD) {
-          NFA_MW_Fwdnlwd_Recovery(true);
-        }
-#endif
-        NFA_HciW4eSETransaction_Complete(Wait);
-        break;
-      case SIGSEGV:
-        LOG(ERROR) << StringPrintf("received SIGSEGV\n");
-        break;
-      case SIGHUP:
-        LOG(ERROR) << StringPrintf("received SIGHUP\n");
-        break;
-    }
-  }
 
 #if (NXP_EXTNS == TRUE)
   /**********************************************************************************
@@ -7441,10 +7403,6 @@ static void nfcManager_doResonantFrequency(JNIEnv* e, jobject o,
     if (sigaction(SIG_NFC, &sig, NULL) < 0) {
       LOG(ERROR) << StringPrintf(
           "Failed to register spi prio session signal handler");
-    }
-    if ((signal(SIGABRT, sig_handler) == SIG_ERR) &&
-        (signal(SIGSEGV, sig_handler) == SIG_ERR)) {
-      LOG(ERROR) << StringPrintf("Failed to register signal handler");
     }
   }
 
