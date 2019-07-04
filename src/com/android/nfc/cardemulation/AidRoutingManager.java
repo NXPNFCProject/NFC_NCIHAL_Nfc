@@ -394,7 +394,8 @@ public class AidRoutingManager {
               mLastCommitStatus = false;
           }
         }
-        NfcService.getInstance().commitRouting();
+        if (NfcService.getInstance().isNfcEnabled())
+          NfcService.getInstance().commitRouting();
         return true;
     }
 

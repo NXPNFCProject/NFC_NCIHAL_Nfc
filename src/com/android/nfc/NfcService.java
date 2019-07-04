@@ -2463,7 +2463,7 @@ public class NfcService implements DeviceHostListener {
         }
     }
 
-    boolean isNfcEnabled() {
+    public boolean isNfcEnabled() {
         synchronized (this) {
             return mState == NfcAdapter.STATE_ON;
         }
