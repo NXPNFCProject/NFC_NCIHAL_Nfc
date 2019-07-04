@@ -3406,6 +3406,7 @@ public class NfcService implements DeviceHostListener {
                     if (mIsHceCapable) {
                         // Generate the initial card emulation routing table
                         computeRoutingParameters();
+                        commitRouting();
                     }
 
                     /* TODO Call WiredSe HAL to notify */
