@@ -1215,6 +1215,24 @@ static void nfcManager_setEmptyAidRoute (JNIEnv*, jobject, jint route)
     RoutingManager::getInstance().setEmptyAidEntry(route);
     return;
 }
+
+/*******************************************************************************
+**
+** Function:        nfcFwUpdateStatusCallback
+**
+** Description:     This callback shall be registered to libnfc-nci by
+**                  nfcManager_doDownload
+**
+** Params:          status: 1 -> FW update start, 2 -> FW update success,
+**                                     3 -> FW update failed.
+** Returns:         void.
+**
+*******************************************************************************/
+static void nfcFwUpdateStatusCallback(uint8_t status) {
+  LOG(INFO) << StringPrintf("nfcFwUpdateStatusCallback Enter status = %u", status);
+  NativeJniExtns::getInstance().notifyNfcEvent("nfcFwDwnldStatus", (void *)&status);
+}
+
 #endif
 
 /*******************************************************************************
@@ -1460,7 +1478,10 @@ static jboolean nfcManager_doInitialize(JNIEnv* e, jobject o) {
       tHAL_NFC_ENTRY* halFuncEntries = theInstance.GetHalEntryFuncs();
 
       NFA_Init(halFuncEntries);
-
+#if (NXP_EXTNS == TRUE)
+      NativeJniExtns::getInstance().initializeNativeData(getNative(e, o));
+      stat = theInstance.DownloadFirmware(nfcFwUpdateStatusCallback, true);
+#endif
       stat = NFA_Enable(nfaDeviceManagementCallback, nfaConnectionCallback);
       if (stat == NFA_STATUS_OK) {
         sNfaEnableEvent.wait();  // wait for NFA command to finish
@@ -1483,7 +1504,6 @@ static jboolean nfcManager_doInitialize(JNIEnv* e, jobject o) {
         HciEventManager::getInstance().initialize(getNative(e, o));
 #if(NXP_EXTNS == TRUE)
         MposManager::getInstance().initialize(getNative(e, o));
-        NativeJniExtns::getInstance().initializeNativeData(getNative(e, o));
 #endif
         /////////////////////////////////////////////////////////////////////////////////
         // Add extra configuration here (work-arounds, etc.)
@@ -2665,12 +2685,17 @@ int nfcManager_doPartialDeInitialize(JNIEnv*, jobject) {
 ** Returns:         True if ok.
 **
 *******************************************************************************/
-static jboolean nfcManager_doDownload(JNIEnv*, jobject) {
+static jboolean nfcManager_doDownload(JNIEnv* e, jobject o) {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
   NfcAdaptation& theInstance = NfcAdaptation::GetInstance();
   bool result = JNI_FALSE;
   theInstance.Initialize();  // start GKI, NCI task, NFC task
+#if (NXP_EXTNS == TRUE)
+  NativeJniExtns::getInstance().initializeNativeData(getNative(e, o));
+  result = theInstance.DownloadFirmware(nfcFwUpdateStatusCallback, false);
+#else
   result = theInstance.DownloadFirmware();
+#endif
   theInstance.Finalize();
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
   return result;
