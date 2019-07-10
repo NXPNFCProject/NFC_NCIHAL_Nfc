@@ -1339,19 +1339,23 @@ static jboolean nfcManager_commitRouting(JNIEnv* e, jobject) {
     /* Delay is required to avoid update routing during RF Field session*/
     usleep(1000 * 1000);
   }
-
-  /*Stop RF discovery to reconfigure*/
-  startRfDiscovery(false);
+  if (sIsDisabling || !sIsNfaEnabled) {
+    return status;
+  }
+  if (sRfEnabled) {
+    /*Stop RF discovery to reconfigure*/
+    startRfDiscovery(false);
+  }
   NativeJniExtns::getInstance().notifyNfcEvent(__func__);
   LOG(ERROR) << StringPrintf("commitRouting here");
   status = RoutingManager::getInstance().commitRouting();
   NativeJniExtns::getInstance().notifyNfcEvent("checkIsodepRouting");
 
- if (!sRfEnabled) {
-  /*Stop RF discovery to reconfigure*/
-   startRfDiscovery(true);
- }
- return status;
+  if (!sRfEnabled) {
+    /*Stop RF discovery to reconfigure*/
+    startRfDiscovery(true);
+  }
+  return status;
 #else
   return RoutingManager::getInstance().commitRouting();
 #endif
