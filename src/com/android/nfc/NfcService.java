@@ -1277,6 +1277,11 @@ public class NfcService implements DeviceHostListener {
         @Override
         public boolean setNfcSecure(boolean enable) {
             NfcPermissions.enforceAdminPermissions(mContext);
+            if(mKeyguard.isKeyguardLocked() && !enable) {
+                Log.i(TAG, "KeyGuard need to be unlocked before setting Secure NFC OFF");
+                return false;
+            }
+
             synchronized (NfcService.this) {
                 Log.i(TAG, "setting Secure NFC " + enable);
                 mPrefsEditor.putBoolean(PREF_SECURE_NFC_ON, enable);
