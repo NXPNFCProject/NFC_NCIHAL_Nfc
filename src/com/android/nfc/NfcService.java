@@ -1960,6 +1960,27 @@ public class NfcService implements DeviceHostListener {
             }
             return mDeviceHost.doGetSelectedUicc();
         }
+        /*
+        * Activate the SecureElement Interface
+        * @return: success/failure
+        */
+        @Override
+        public int activateSeInterface(){
+            synchronized (NfcService.this) {
+                return mSecureElement.activateSeInterface();
+            }
+        }
+
+        /*
+        * Deactivate the SecureElement Interface
+        * @return: success/failure
+        */
+        @Override
+        public int deactivateSeInterface(){
+            synchronized (NfcService.this) {
+                return mSecureElement.deactivateSeInterface();
+            }
+        }
 
         @Override
         public int setFieldDetectMode(boolean mode) {
