@@ -432,6 +432,7 @@ public class NfcService implements DeviceHostListener {
     private ForegroundUtils mForegroundUtils;
 
     private static NfcService sService;
+    private static Toast mToast;
     public  static boolean sIsDtaMode = false;
 
     private IVrManager vrManager;
@@ -3245,8 +3246,12 @@ public class NfcService implements DeviceHostListener {
                         if (!tag.reconnect()) {
                             tag.disconnect();
                             if (mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED) {
-                                Toast.makeText(mContext,
-                                        R.string.tag_read_error, Toast.LENGTH_SHORT).show();
+                                if (mToast == null) {
+                                  mToast = Toast.makeText(mContext,
+                                      R.string.tag_read_error, Toast.LENGTH_SHORT);
+                                }
+                                mToast.setText(R.string.tag_read_error);
+                                mToast.show();
                             }
                             break;
                         }
@@ -3706,8 +3711,12 @@ public class NfcService implements DeviceHostListener {
             if (dispatchResult == NfcDispatcher.DISPATCH_FAIL && !mInProvisionMode) {
                 unregisterObject(tagEndpoint.getHandle());
                 if (mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED) {
-                    Toast.makeText(mContext,
-                            R.string.tag_dispatch_failed, Toast.LENGTH_SHORT).show();
+                  if (mToast == null) {
+                    mToast = Toast.makeText(mContext,
+                        R.string.tag_dispatch_failed, Toast.LENGTH_SHORT);
+                  }
+                  mToast.setText(R.string.tag_dispatch_failed);
+                  mToast.show();
                 }
                 playSound(SOUND_ERROR);
             } else if (dispatchResult == NfcDispatcher.DISPATCH_SUCCESS) {
