@@ -56,6 +56,8 @@ import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import android.os.SystemProperties;
 
+import android.util.StatsLog;
+
 public class HostNfcFEmulationManager {
     static final String TAG = "HostNfcFEmulationManager";
     static final boolean DBG = ((SystemProperties.get("persist.nfc.ce_debug").equals("1")) ? true : false);
@@ -153,6 +155,9 @@ public class HostNfcFEmulationManager {
                     mPendingPacket = data;
                     mState = STATE_W4_SERVICE;
                 }
+                StatsLog.write(StatsLog.NFC_CARDEMULATION_OCCURRED,
+                               StatsLog.NFC_CARDEMULATION_OCCURRED__CATEGORY__HCE_PAYMENT,
+                               "HCEF");
                 break;
             case STATE_W4_SERVICE:
                 Log.d(TAG, "Unexpected packet in STATE_W4_SERVICE");

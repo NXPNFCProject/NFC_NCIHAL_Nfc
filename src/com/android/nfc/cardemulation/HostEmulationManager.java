@@ -60,6 +60,8 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import android.os.SystemProperties;
 
+import android.util.StatsLog;
+
 public class HostEmulationManager {
     static final String TAG = "HostEmulationManager";
     static final boolean DBG = ((SystemProperties.get("persist.nfc.ce_debug").equals("1")) ? true : false);
@@ -164,6 +166,7 @@ public class HostEmulationManager {
         Log.d(TAG, "notifyHostEmulationData");
         String selectAid = findSelectAid(data);
         ComponentName resolvedService = null;
+        AidResolveInfo resolveInfo = null;
         synchronized (mLock) {
             if (mState == STATE_IDLE) {
                 Log.e(TAG, "Got data in idle state.");
@@ -177,7 +180,7 @@ public class HostEmulationManager {
                     NfcService.getInstance().sendData(ANDROID_HCE_RESPONSE);
                     return;
                 }
-                AidResolveInfo resolveInfo = mAidCache.resolveAid(selectAid);
+                resolveInfo = mAidCache.resolveAid(selectAid);
                 if (resolveInfo == null || resolveInfo.services.size() == 0) {
                     // Tell the remote we don't handle this AID
                     NfcService.getInstance().sendData(AID_NOT_FOUND);
@@ -237,6 +240,15 @@ public class HostEmulationManager {
                         mSelectApdu = data;
                         mState = STATE_W4_SERVICE;
                     }
+                    if(CardEmulation.CATEGORY_PAYMENT.equals(resolveInfo.category))
+                      StatsLog.write(StatsLog.NFC_CARDEMULATION_OCCURRED,
+                                     StatsLog.NFC_CARDEMULATION_OCCURRED__CATEGORY__HCE_PAYMENT,
+                                     "HCE");
+                    else
+                      StatsLog.write(StatsLog.NFC_CARDEMULATION_OCCURRED,
+                                     StatsLog.NFC_CARDEMULATION_OCCURRED__CATEGORY__HCE_OTHER,
+                                     "HCE");
+
                 } else {
                     Log.d(TAG, "Dropping non-select APDU in STATE_W4_SELECT");
                     NfcService.getInstance().sendData(UNKNOWN_ERROR);
