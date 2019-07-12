@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="bluetooth_package" translatable="false">com.android.bluetooth</string>
+    <bool name="enable_nfc_url_open_dialog">false</bool>
     <!-- List of SKUs where Secure NFC functionality is supported -->
     <string-array name="config_skuSupportsSecureNfc" translatable="false" />
 </resources>
