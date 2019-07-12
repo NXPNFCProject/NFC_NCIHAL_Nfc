@@ -1289,6 +1289,10 @@ public class NfcService implements DeviceHostListener {
             if (mIsHceCapable) {
                 mCardEmulationManager.onSecureNfcToggled();
             }
+            if (enable)
+                StatsLog.write(StatsLog.NFC_STATE_CHANGED, StatsLog.NFC_STATE_CHANGED__STATE__ON_LOCKED);
+            else
+                StatsLog.write(StatsLog.NFC_STATE_CHANGED, StatsLog.NFC_STATE_CHANGED__STATE__ON);
             return true;
         }
 
