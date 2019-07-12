@@ -98,6 +98,7 @@ import android.service.vr.IVrManager;
 import android.service.vr.IVrStateCallbacks;
 import android.text.TextUtils;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.android.internal.logging.MetricsLogger;
 import com.android.internal.util.ArrayUtils;
@@ -3229,6 +3230,10 @@ public class NfcService implements DeviceHostListener {
                         // First try to see if this was a bad tag read
                         if (!tag.reconnect()) {
                             tag.disconnect();
+                            if (mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED) {
+                                Toast.makeText(mContext,
+                                        R.string.tag_read_error, Toast.LENGTH_SHORT).show();
+                            }
                             break;
                         }
                     }
@@ -3686,6 +3691,10 @@ public class NfcService implements DeviceHostListener {
             int dispatchResult = mNfcDispatcher.dispatchTag(tag);
             if (dispatchResult == NfcDispatcher.DISPATCH_FAIL && !mInProvisionMode) {
                 unregisterObject(tagEndpoint.getHandle());
+                if (mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED) {
+                    Toast.makeText(mContext,
+                            R.string.tag_dispatch_failed, Toast.LENGTH_SHORT).show();
+                }
                 playSound(SOUND_ERROR);
             } else if (dispatchResult == NfcDispatcher.DISPATCH_SUCCESS) {
                 mVibrator.vibrate(mVibrationEffect);

@@ -84,4 +84,8 @@
     <!-- Message shown in a toast when user wants to Beam a file, but application doesn't have required permission -->
     <string name="beam_requires_external_storage_permission">Application does not have External Storage Permission. This is required to Beam this file</string>
 
+    <!-- Toast string informing the user that NFC tag read failure occurs -->
+    <string name="tag_read_error">NFC read error. Try again.</string>
+    <!-- Toast string informing the user that no application can handle the NFC tag -->
+    <string name="tag_dispatch_failed">No supported application for this NFC Tag</string>
 </resources>
