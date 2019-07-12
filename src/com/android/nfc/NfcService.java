@@ -3950,6 +3950,7 @@ public class NfcService implements DeviceHostListener {
             pw.println("mState=" + stateToString(mState));
             pw.println("mIsZeroClickRequested=" + mIsNdefPushEnabled);
             pw.println("mScreenState=" + ScreenStateHelper.screenStateToString(mScreenState));
+            pw.println("mIsSecureNfcEnabled=" + mIsSecureNfcEnabled);
             pw.println(mCurrentDiscoveryParameters);
             if (mIsBeamCapable)
                 mP2pLinkManager.dump(fd, pw, args);
