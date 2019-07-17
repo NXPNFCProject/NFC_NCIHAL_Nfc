@@ -125,6 +125,7 @@ extern tNFA_STATUS NxpPropCmd_send(uint8_t * pData4Tx, uint8_t dataLen,
                                    uint8_t * rsp_len, uint8_t * rsp_buf,
                                    uint32_t rspTimeout, tHAL_NFC_ENTRY * halMgr);
 extern tNFA_STATUS send_flush_ram_to_flash();
+extern void nativeNfcTag_checkActivatedProtoParameters(tNFA_ACTIVATED& activationData);
 extern bool gIsWaiting4Deact2SleepNtf;
 extern bool gGotDeact2IdleNtf;
 #endif
@@ -555,6 +556,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
       NfcTag::getInstance().setActivationState();
       if (gIsSelectingRfInterface) {
         nativeNfcTag_doConnectStatus(true);
+        nativeNfcTag_checkActivatedProtoParameters(eventData->activated);
         break;
       }
 

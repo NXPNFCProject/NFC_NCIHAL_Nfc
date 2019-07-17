@@ -79,6 +79,7 @@ class NfcTag {
   int mTechListIndex;
   bool mIsMultiProtocolTag;
   bool mCashbeeDetected;
+  int  mCurrentRequestedProtocol;
 #endif
 
   /*******************************************************************************

@@ -597,6 +597,7 @@ static jint nativeNfcTag_doConnect(JNIEnv*, jobject, jint targetHandle) {
   LOG(ERROR)<< StringPrintf("%s:  doConnect sCurrentConnectedTargetProtocol %x sCurrentConnectedTargetType %x",
             __func__,sCurrentConnectedTargetProtocol,sCurrentConnectedTargetType);
 #if (NXP_EXTNS == TRUE)
+  natTag.mCurrentRequestedProtocol = sCurrentConnectedTargetProtocol;
   sCurrentConnectedHandle = targetHandle;
   if(sCurrentConnectedTargetProtocol == NFC_PROTOCOL_T3BT) {
     goto TheEnd;
@@ -1332,8 +1333,7 @@ static jint nativeNfcTag_doCheckNdef(JNIEnv* e, jobject o, jintArray ndefInfo) {
 #if (NXP_EXTNS == TRUE)
   int handle = sCurrentConnectedHandle;
 #endif
-
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter ", __func__);
 
 #if (NXP_EXTNS == TRUE)
   if (sCurrentConnectedTargetProtocol == NFA_PROTOCOL_T3BT) {
@@ -2019,6 +2019,28 @@ void nativeNfcTag_releaseRfInterfaceMutexLock() {
       << StringPrintf("%s: sRfInterfaceMutex unlock", __func__);
 }
 
+#if (NXP_EXTNS == TRUE)
+/*******************************************************************************
+**
+** Function:        nativeNfcTag_checkActivatedProtoParameters
+**
+** Description:     Check whether tag activated params are same.If different it
+**                  will restart rf discovery.
+**
+**
+** Returns:         None
+**
+*******************************************************************************/
+void nativeNfcTag_checkActivatedProtoParameters(tNFA_ACTIVATED& activationData) {
+  NfcTag& natTag = NfcTag::getInstance();
+  tNFC_ACTIVATE_DEVT& rfDetail = activationData.activate_ntf;
+  if(rfDetail.protocol != natTag.mCurrentRequestedProtocol) {
+    NFA_Deactivate(FALSE);
+  }
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: sCurrentConnectedTargetProtocol %x rfDetail.protocol %x",
+    __func__,natTag.mCurrentRequestedProtocol, rfDetail.protocol);
+}
+#endif
 /*****************************************************************************
 **
 ** JNI functions for Android 4.0.3
