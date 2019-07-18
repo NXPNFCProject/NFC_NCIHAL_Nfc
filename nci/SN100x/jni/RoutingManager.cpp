@@ -1605,7 +1605,7 @@ bool RoutingManager::clearRoutingEntry(int type)
 {
     DLOG_IF(INFO, nfc_debug_enabled)
             << StringPrintf("%s: Enter . Clear Routing Type = %d", __func__, type);
-    tNFA_STATUS nfaStat;
+    tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
     tNFA_HANDLE ee_handleList[nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED];
     uint8_t i, count;
     SyncEventGuard guard(mRoutingEvent);

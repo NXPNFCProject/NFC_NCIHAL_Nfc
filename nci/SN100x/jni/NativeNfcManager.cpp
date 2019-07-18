@@ -2700,8 +2700,8 @@ int nfcManager_doPartialDeInitialize(JNIEnv*, jobject) {
     {
         DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf("%s: fail disable; error=0x%X", __func__, stat);
     }
-    theInstance.Finalize();
     theInstance.NFA_SetBootMode(NFA_NORMAL_BOOT_MODE);
+    theInstance.Finalize();
     gsNfaPartialEnabled = false;
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
 
