@@ -1262,7 +1262,7 @@ void PeerToPeer::nfaServerCallback(tNFA_P2P_EVT p2pEvent,
 
 #if (NXP_EXTNS == TRUE)
   NativeJniExtns::getInstance().notifyNfcEvent(
-      "nfaClientCallback", (void*)&p2pEvent, (void*)&eventData);
+      "nfaClientCallback", (void*)&p2pEvent, (void*)eventData);
 #endif
   switch (p2pEvent) {
     case NFA_P2P_REG_SERVER_EVT:  // NFA_P2pRegisterServer() has started to
@@ -1443,7 +1443,7 @@ void PeerToPeer::nfaClientCallback(tNFA_P2P_EVT p2pEvent,
       << StringPrintf("%s: enter; event=%u", fn, p2pEvent);
 #if (NXP_EXTNS == TRUE)
   NativeJniExtns::getInstance().notifyNfcEvent(
-      "nfaClientCallback", (void*)&p2pEvent, (void*)&eventData);
+      "nfaClientCallback", (void*)&p2pEvent, (void*)eventData);
 #endif
   switch (p2pEvent) {
     case NFA_P2P_REG_CLIENT_EVT:
