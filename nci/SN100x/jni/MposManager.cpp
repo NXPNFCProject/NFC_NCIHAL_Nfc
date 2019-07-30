@@ -23,11 +23,14 @@
 #include <android-base/stringprintf.h>
 #include "nfc_config.h"
 #include "nfa_rw_api.h"
+#include "NativeT4tNfcee.h"
+
 using android::base::StringPrintf;
 //#include "TransactionController.h"
 
 using namespace android;
 extern bool nfc_debug_enabled;
+
 typedef struct nxp_feature_data
 {
     SyncEvent    NxpFeatureConfigEvt;
@@ -177,7 +180,12 @@ tNFA_STATUS MposManager::setDedicatedReaderMode(bool on)
   {
     status = NFA_STATUS_BUSY;
   }
-
+  if (t4tNfcEe.isT4tNfceeBusy()) {
+    mIsMposWaitToStart = true;
+    SyncEventGuard g(t4tNfcEe.mT4tNfceeMPOSEvt);
+    t4tNfcEe.mT4tNfceeMPOSEvt.wait(500);
+    mIsMposWaitToStart = false;
+  }
   if(status == NFA_STATUS_OK)
   {
     state = getEtsiReaederState();
@@ -185,6 +193,8 @@ tNFA_STATUS MposManager::setDedicatedReaderMode(bool on)
     DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%x, rfStat=%x", on, rfStat);
     if (on) {
+
+
       if(rfStat)
       {
         startRfDiscovery(false);

@@ -206,6 +206,9 @@ public class NfcService implements DeviceHostListener {
     static final int MSG_COMPUTE_ROUTING_PARAMS = 64;
     static final int MSG_RESET_AND_UPDATE_ROUTING_PARAMS = 65;
     static final int MSG_DEINIT_WIREDSE = 66;
+    static final int MSG_READ_T4TNFCEE = 67;
+    static final int MSG_WRITE_T4TNFCEE = 68;
+
     // Update stats every 4 hours
     static final long STATS_UPDATE_INTERVAL_MS = 4 * 60 * 60 * 1000;
     static final long MAX_POLLING_PAUSE_TIMEOUT = 40000;
@@ -441,6 +444,10 @@ public class NfcService implements DeviceHostListener {
     private int ROUTE_ID_UICC  = 0x02;
     private int ROUTE_ID_UICC2 = 0x04;
     private int DEFAULT_ROUTE_ID_DEFAULT = 0x00;
+
+    public static final int T4TNFCEE_STATUS_FAILED = -1;
+    private Object mT4tNfcEeObj = new Object();
+    private Bundle mT4tNfceeReturnBundle = new Bundle();
 
     public static NfcService getInstance() {
         return sService;
@@ -1993,6 +2000,48 @@ public class NfcService implements DeviceHostListener {
           NfcPermissions.enforceUserPermissions(mContext);
           return mDeviceHost.isFieldDetectEnabled();
         }
+
+        @Override
+        public int doWriteT4tData(byte[] fileId, byte[] data, int length) {
+          NfcPermissions.enforceUserPermissions(mContext);
+          Bundle writeBundle = new Bundle();
+          writeBundle.putByteArray("fileId", fileId);
+          writeBundle.putByteArray("writeData", data);
+          writeBundle.putInt("length", length);
+          try {
+            sendMessage(NfcService.MSG_WRITE_T4TNFCEE, writeBundle);
+            synchronized (mT4tNfcEeObj) {
+              mT4tNfcEeObj.wait(1000);
+            }
+          } catch (Exception e) {
+            e.printStackTrace();
+          }
+          /*return T4TNFCEE_STATUS_FAILED(-1) if readData not found.
+         This can happen in case of mT4tNfcEeObj timeout*/
+          int status = mT4tNfceeReturnBundle.getInt("writeStatus", T4TNFCEE_STATUS_FAILED);
+          mT4tNfceeReturnBundle.clear();
+          return status;
+        }
+
+        @Override
+        public byte[] doReadT4tData(byte[] fileId) {
+          NfcPermissions.enforceUserPermissions(mContext);
+          Bundle readBundle = new Bundle();
+          readBundle.putByteArray("fileId", fileId);
+          try {
+            sendMessage(NfcService.MSG_READ_T4TNFCEE, readBundle);
+            synchronized (mT4tNfcEeObj) {
+              mT4tNfcEeObj.wait(1000);
+            }
+          } catch (Exception e) {
+            e.printStackTrace();
+          }
+          /*getByteArray returns null if readData not found.
+          This can happen in case of mT4tNfcEeObj timeout*/
+          byte[] readData = mT4tNfceeReturnBundle.getByteArray("readData");
+          mT4tNfceeReturnBundle.clear();
+          return readData;
+        }
 }
 
     final class ReaderModeDeathRecipient implements IBinder.DeathRecipient {
@@ -3466,9 +3515,31 @@ public class NfcService implements DeviceHostListener {
                     }
                    break;
                }
-                default:
-                    Log.e(TAG, "Unknown message received");
-                    break;
+               case MSG_WRITE_T4TNFCEE: {
+                 Bundle writeBundle = (Bundle) msg.obj;
+                 byte[] fileId = writeBundle.getByteArray("fileId");
+                 byte[] writeData = writeBundle.getByteArray("writeData");
+                 int length = writeBundle.getInt("length");
+                 int status = mDeviceHost.doWriteT4tData(fileId, writeData, length);
+                 mT4tNfceeReturnBundle.putInt("writeStatus", status);
+                 synchronized (mT4tNfcEeObj) {
+                   mT4tNfcEeObj.notify();
+                 }
+                 break;
+               }
+               case MSG_READ_T4TNFCEE: {
+                 Bundle readBundle = (Bundle) msg.obj;
+                 byte[] fileId = readBundle.getByteArray("fileId");
+                 byte[] readData = mDeviceHost.doReadT4tData(fileId);
+                 mT4tNfceeReturnBundle.putByteArray("readData", readData);
+                 synchronized (mT4tNfcEeObj) {
+                   mT4tNfcEeObj.notify();
+                 }
+                 break;
+               }
+               default:
+                 Log.e(TAG, "Unknown message received");
+                 break;
             }
         }
 

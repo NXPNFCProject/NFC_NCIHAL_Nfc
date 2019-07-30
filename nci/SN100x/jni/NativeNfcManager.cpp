@@ -57,6 +57,8 @@
 #include "SecureElement.h"
 #include "DwpChannel.h"
 #include "NativeJniExtns.h"
+#include "NativeT4tNfcee.h"
+#include "nfa_nfcee_int.h"
 #endif
 
 #include "ce_api.h"
@@ -184,9 +186,12 @@ const char* gNativeNfcSecureElementClassName =
     "com/android/nfc/dhimpl/NativeNfcSecureElement";
 const char*             gNativeNfcMposManagerClassName       =
     "com/android/nfc/dhimpl/NativeNfcMposManager";
-    void                    enableLastRfDiscovery();
-    void                    storeLastDiscoveryParams(int technologies_mask, bool enable_lptd,
-                                bool reader_mode,  bool enable_host_routing ,bool enable_p2p, bool restart);
+const char* gNativeT4tNfceeClassName =
+    "com/android/nfc/dhimpl/NativeT4tNfceeManager";
+void enableLastRfDiscovery();
+void storeLastDiscoveryParams(int technologies_mask, bool enable_lptd,
+                              bool reader_mode, bool enable_host_routing,
+                              bool enable_p2p, bool restart);
 #endif
 jmethodID  gCachedNfcManagerNotifySeListenActivated;
 jmethodID  gCachedNfcManagerNotifySeListenDeactivated;
@@ -846,6 +851,11 @@ static void nfaConnectionCallback(uint8_t connEvent,
       sChangeDiscTechEvent.notifyOne();
       break;
     }
+    case NFA_T4TNFCEE_EVT:
+    case NFA_T4TNFCEE_READ_CPLT_EVT:
+    case NFA_T4TNFCEE_WRITE_CPLT_EVT:
+      t4tNfcEe.eventHandler(connEvent, eventData);
+      break;
 #endif
     case NFA_SET_P2P_LISTEN_TECH_EVT:
       DLOG_IF(INFO, nfc_debug_enabled)

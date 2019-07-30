@@ -72,6 +72,7 @@ public class NativeNfcManager implements DeviceHost {
     private int mIsoDepMaxTransceiveLength;
     private final DeviceHostListener mListener;
     private final NativeNfcMposManager mMposMgr;
+    private final NativeT4tNfceeManager mT4tNfceeMgr;
     private final Context mContext;
 
     private final Object mLock = new Object();
@@ -82,6 +83,7 @@ public class NativeNfcManager implements DeviceHost {
         initializeNativeStructure();
         mContext = context;
         mMposMgr = new NativeNfcMposManager();
+        mT4tNfceeMgr = new NativeT4tNfceeManager();
     }
 
     public native boolean initializeNativeStructure();
@@ -347,6 +349,16 @@ public class NativeNfcManager implements DeviceHost {
     @Override
     public boolean mposGetReaderMode() {
         return mMposMgr.doMposGetReaderMode();
+    }
+
+    @Override
+    public int doWriteT4tData(byte[] fileId, byte[] data, int length) {
+      return mT4tNfceeMgr.doWriteT4tData(fileId, data, length);
+    }
+
+    @Override
+    public byte[] doReadT4tData(byte[] fileId) {
+      return mT4tNfceeMgr.doReadT4tData(fileId);
     }
 
     private native NativeLlcpConnectionlessSocket doCreateLlcpConnectionlessSocket(int nSap,

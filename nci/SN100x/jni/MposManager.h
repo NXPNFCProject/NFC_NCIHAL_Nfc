@@ -28,7 +28,7 @@
 
 
 #define ONE_SECOND_MS 1000
-  
+
 typedef struct {
     tNFA_HANDLE src;
     tNFA_TECHNOLOGY_MASK tech_mask;
@@ -84,6 +84,7 @@ typedef struct{
 class MposManager
 {
 public:
+  bool mIsMposWaitToStart;
   Rdr_req_ntf_info_t swp_rdr_req_ntf_info;
   static jmethodID  gCachedMposManagerNotifyETSIReaderRequested;
   static jmethodID  gCachedMposManagerNotifyETSIReaderRequestedFail;

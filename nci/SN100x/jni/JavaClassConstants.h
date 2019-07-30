@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018 NXP
+*  Copyright 2018-2019 NXP
 *
 ******************************************************************************/
 #pragma once
@@ -61,5 +61,6 @@ extern jmethodID gCachedNfcManagerNotifySeListenDeactivated;
 extern jmethodID gCachedNfcManagerNotifySeListenActivated;
 extern jmethodID gCachedNfcManagerNotifySeInitialized;
 extern const char* gNativeNfcMposManagerClassName;
+extern const char* gNativeT4tNfceeClassName;
 #endif
 }  // namespace android
