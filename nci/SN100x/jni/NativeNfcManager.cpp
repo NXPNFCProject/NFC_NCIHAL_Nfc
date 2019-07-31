@@ -2038,9 +2038,7 @@ static jboolean nfcManager_doDeinitialize(JNIEnv*, jobject) {
   }
 #if (NXP_EXTNS == TRUE)
   /*Disable Field Detect Mode if enabled*/
-#ifdef FIELD_DETECT_FEATURE
   if (NFA_IsFieldDetectEnabled()) NFA_SetFieldDetectMode(false);
-#endif
   SecureElement::getInstance().finalize ();
 #endif
   NfcAdaptation& theInstance = NfcAdaptation::GetInstance();
@@ -2295,9 +2293,9 @@ tNFA_STATUS getConfig(uint16_t* rspLen, uint8_t* configValue, uint8_t numParam,
   static field_detect_status_t nfcManager_SetFieldDetectMode(JNIEnv*, jobject,
                                                              jboolean mode) {
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter", __func__);
-#ifdef FIELD_DETECT_FEATURE
+
     se_rd_req_state_t state = MposManager::getInstance().getEtsiReaederState();
-    if (!nfcManager_isNfcActive()) {1
+    if (!sIsNfaEnabled) {
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: Nfc is not Enabled. Returning", __func__);
       return FDSTATUS_ERROR_NFC_IS_OFF;
@@ -2327,10 +2325,6 @@ tNFA_STATUS getConfig(uint16_t* rspLen, uint8_t* configValue, uint8_t numParam,
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: reconfigured start discovery", __func__);
     startRfDiscovery(true);
-#else
-    DLOG_IF(INFO, nfc_debug_enabled)
-        << StringPrintf("%s: Feature not supported", __func__);
-#endif
     return FDSTATUS_ERROR_UNKNOWN;
   }
 
@@ -2346,14 +2340,8 @@ tNFA_STATUS getConfig(uint16_t* rspLen, uint8_t* configValue, uint8_t numParam,
   **
   *******************************************************************************/
   static jboolean nfcManager_IsFieldDetectEnabled(JNIEnv*, jobject) {
-#ifdef FIELD_DETECT_FEATURE
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter", __func__);
     return NFA_IsFieldDetectEnabled();
-#else
-    DLOG_IF(INFO, nfc_debug_enabled)
-        << StringPrintf("%s: Feature not supported", __func__);
-    return false;
-#endif
   }
 #endif
 
