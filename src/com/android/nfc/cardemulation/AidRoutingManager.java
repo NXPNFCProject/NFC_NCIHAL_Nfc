@@ -53,6 +53,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import android.util.StatsLog;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Hashtable;
@@ -389,6 +390,7 @@ public class AidRoutingManager {
               NfcService.getInstance().updateDefaultAidRoute(mDefaultRoute);
               mLastCommitStatus = true;
           } else {
+              StatsLog.write(StatsLog.NFC_ERROR_OCCURRED, StatsLog.NFC_ERROR_OCCURRED__TYPE__AID_OVERFLOW, 0, 0);
               Log.e(TAG, "RoutingTable unchanged because it's full, not updating");
               NfcService.getInstance().notifyRoutingTableFull();
               mLastCommitStatus = false;
