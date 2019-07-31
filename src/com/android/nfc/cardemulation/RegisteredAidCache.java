@@ -853,7 +853,7 @@ public class RegisteredAidCache {
                 int powerstate = seInfo.getPowerState() & POWER_STATE_ALL;
                 int screenstate= 0;
                 if(powerstate == 0x00) {
-                    powerstate = POWER_STATE_SWITCH_ON;
+                    powerstate = (NfcService.getInstance().GetDefaultMifateCLTRouteEntry() & 0x3F);
                     if(mGsmaPwrState > 0)
                     {
                         if(aidType.isOnHost)
