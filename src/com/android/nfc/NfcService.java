@@ -1780,6 +1780,18 @@ public class NfcService implements DeviceHostListener {
         }
 
         @Override
+        public int nfcSelfTest(int type) {
+            NfcPermissions.enforceUserPermissions(mContext);
+            NfcPermissions.enforceAdminPermissions(mContext);
+            int status = 0xFF;
+
+            synchronized(NfcService.this) {
+                status = mDeviceHost.doNfcSelfTest(type);
+            }
+            return status;
+        }
+
+        @Override
         public void DefaultRouteSet(int routeLoc, boolean fullPower, boolean lowPower, boolean noPower)
                 throws RemoteException
         {

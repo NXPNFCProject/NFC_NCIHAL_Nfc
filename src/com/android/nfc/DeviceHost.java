@@ -334,6 +334,8 @@ public interface DeviceHost {
 
     boolean mposGetReaderMode();
 
+    public int doNfcSelfTest(int type);
+
     public int getNciVersion();
 
     public void enableDtaMode();

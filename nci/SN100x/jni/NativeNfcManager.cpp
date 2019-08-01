@@ -294,6 +294,7 @@ static jint nfcManager_getAidTableSize (JNIEnv*, jobject );
 static jint nfcManager_getRemainingAidTableSize (JNIEnv* , jobject );
 static int nfcManager_doSelectUicc(JNIEnv* e, jobject o, jint uiccSlot);
 static int nfcManager_doGetSelectedUicc(JNIEnv* e, jobject o);
+static jint nfcManager_nfcSelfTest(JNIEnv* e, jobject o, jint aType);
 static int nfcManager_staticDualUicc_Precondition(int uiccSlot);
 static int nfcManager_setPreferredSimSlot(JNIEnv* e, jobject o, jint uiccSlot);
 #endif
@@ -3168,6 +3169,7 @@ static JNINativeMethod gMethods[] = {
     {"doselectUicc", "(I)I", (void*)nfcManager_doSelectUicc},
     {"doGetSelectedUicc", "()I", (void*)nfcManager_doGetSelectedUicc},
     {"setPreferredSimSlot", "(I)I", (void*)nfcManager_setPreferredSimSlot},
+    {"doNfcSelfTest", "(I)I", (void*) nfcManager_nfcSelfTest},
 #endif
     {"doSetNfcSecure", "(Z)Z", (void*)nfcManager_doSetNfcSecure},
 };
@@ -4112,6 +4114,30 @@ static int nfcManager_setPreferredSimSlot(JNIEnv* e, jobject o,
   }
   return NFA_STATUS_OK;
 }
+
+/*******************************************************************************
+ **
+ ** Function:        nfcManager_nfcSelfTest
+ **
+ ** Description:     Function to perform different types of analog tests
+ **                  i'e RF ON, RF OFF, Transc A, Transc B.
+ **
+ ** Returns:         success/failure
+ **
+ *******************************************************************************/
+
+static jint nfcManager_nfcSelfTest(JNIEnv* e, jobject o, jint aType)
+{
+    tNFA_STATUS status = NFA_STATUS_FAILED;
+
+    if (!sIsNfaEnabled) {
+        DLOG_IF(INFO, nfc_debug_enabled)
+            << StringPrintf("Nfa does not enabled!! returning...");
+        return status;
+    }
+    return NfcSelfTest::GetInstance().doNfccSelfTest(aType);
+}
+
 #endif
 } /* namespace android */
 /* namespace android */
