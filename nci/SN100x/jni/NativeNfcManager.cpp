@@ -1145,13 +1145,15 @@ static jintArray nfcManager_getActiveSecureElementList(JNIEnv *e, jobject o)
 **
 *******************************************************************************/
 static jboolean nfcManager_sendRawFrame(JNIEnv* e, jobject, jbyteArray data) {
+  size_t bufLen = 0;
+  uint8_t* buf = NULL;
+  ScopedByteArrayRO bytes(e);
+
 #if (NXP_EXTNS == TRUE)
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: nfcManager_sendRawFrame", __func__);
-  size_t bufLen;
-  uint8_t* buf = NULL;
-  if (data !=NULL) {
-    ScopedByteArrayRO bytes(e, data);
+  if (data != NULL) {
+    bytes.reset(data);
     buf = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
     bufLen = bytes.size();
   } else {
@@ -1159,10 +1161,9 @@ static jboolean nfcManager_sendRawFrame(JNIEnv* e, jobject, jbyteArray data) {
     bufLen = 0x00;
   }
 #else
-  ScopedByteArrayRO bytes(e, data);
-  uint8_t* buf =
-      const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
-  size_t bufLen = bytes.size();
+  bytes.reset(data);
+  buf = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
+  bufLen = bytes.size();
 #endif
   tNFA_STATUS status = NFA_SendRawFrame(buf, bufLen, 0);
 
@@ -1319,12 +1320,13 @@ static jboolean nfcManager_routeAid(JNIEnv* e, jobject, jbyteArray aid,
 static jboolean nfcManager_unrouteAid(JNIEnv* e, jobject, jbyteArray aid) {
   uint8_t* buf;
   size_t bufLen;
+  ScopedByteArrayRO bytes(e);
 
   if (aid == NULL) {
     buf = NULL;
     bufLen = 0;
   } else {
-    ScopedByteArrayRO bytes(e, aid);
+    bytes.reset(aid);
     buf = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
     bufLen = bytes.size();
   }
