@@ -201,6 +201,9 @@ void doStartupConfig();
 void startStopPolling(bool isStartPolling);
 void startRfDiscovery(bool isStart);
 bool isDiscoveryStarted();
+#if (NXP_EXTNS == TRUE)
+void setDiscoveryStartedCfg(bool isStarted);
+#endif
 }  // namespace android
 
 /*****************************************************************************
@@ -543,22 +546,6 @@ static void nfaConnectionCallback(uint8_t connEvent,
         nativeNfcTag_doConnectStatus(true);
         break;
       }
-#if(NXP_EXTNS == TRUE)
-      if(nfcFL.nfcNxpEse) {
-          if(nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
-     /*
-                     * Handle Reader over SWP START_READER_EVENT
-     * */
-          if(eventData->activated.activate_ntf.intf_param.type == NCI_INTERFACE_UICC_DIRECT ||
-                          eventData->activated.activate_ntf.intf_param.type == NCI_INTERFACE_ESE_DIRECT)
-          {
-             MposManager::getInstance().setEtsiReaederState(STATE_SE_RDR_MODE_ACTIVATED);
-             MposManager::getInstance().notifyEEReaderEvent(ETSI_READER_ACTIVATED);
-             break;
-          }
-        }
-     }
-#endif
       NfcTag::getInstance().setActive(true);
       if (sIsDisabling || !sIsNfaEnabled) break;
       gActivated = true;
@@ -1654,52 +1641,6 @@ static void nfcManager_enableDiscovery(JNIEnv* e, jobject o,
 #if(NXP_EXTNS == TRUE)
   storeLastDiscoveryParams(technologies_mask, enable_lptd,
         reader_mode, enable_host_routing ,enable_p2p, restart);
-  tNFA_STATUS status = NFA_STATUS_OK;
-  tNFA_TECHNOLOGY_MASK etsi_tech_mask = 0;
-    if((nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE) &&
-            (MposManager::getInstance().getEtsiReaederState() == STATE_SE_RDR_MODE_STARTED)) {
-        DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: enter STATE_SE_RDR_MODE_START_CONFIG", __func__);
-        Rdr_req_ntf_info_t mSwp_info = MposManager::getInstance().getSwpRrdReqInfo();
-        {
-            SyncEventGuard guard (android::sNfaEnableDisablePollingEvent);
-            DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: disable polling", __func__);
-            status = NFA_DisablePolling ();
-            if (status == NFA_STATUS_OK)
-            {
-                android::sNfaEnableDisablePollingEvent.wait (); //wait for NFA_POLL_DISABLED_EVT
-            }
-            else
-            {
-                DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: fail disable polling; error=0x%X", __func__, status);
-            }
-        }
-
-        if(mSwp_info.swp_rd_req_info.tech_mask & NFA_TECHNOLOGY_MASK_A)
-            etsi_tech_mask |= NFA_TECHNOLOGY_MASK_A;
-        if(mSwp_info.swp_rd_req_info.tech_mask & NFA_TECHNOLOGY_MASK_B)
-            etsi_tech_mask |= NFA_TECHNOLOGY_MASK_B;
-
-        {
-            SyncEventGuard guard (android::sNfaEnableDisablePollingEvent);
-            status = NFA_EnablePolling (etsi_tech_mask);
-            if (status == NFA_STATUS_OK)
-            {
-                DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: wait for enable event", __func__);
-                android::sNfaEnableDisablePollingEvent.wait (); //wait for NFA_POLL_ENABLED_EVT
-            }
-            else
-            {
-                DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: fail enable polling; error=0x%X", __func__, status);
-            }
-        }
-        startRfDiscovery (true);
-        return;
-    }
 #endif
   if (technologies_mask == -1 && nat)
     tech_mask = (tNFA_TECHNOLOGY_MASK)nat->tech_mask;
@@ -1802,22 +1743,6 @@ void nfcManager_disableDiscovery(JNIEnv* e, jobject o) {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter;", __func__);
 
   pn544InteropAbortNow();
-#if(NXP_EXTNS == TRUE)
-    if(nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
-        if(MposManager::getInstance().getEtsiReaederState() == STATE_SE_RDR_MODE_START_IN_PROGRESS)
-        {
-            Rdr_req_ntf_info_t mSwp_info = MposManager::getInstance().getSwpRrdReqInfo();
-            //        if(android::isDiscoveryStarted() == true)
-            android::startRfDiscovery(false);
-            goto TheEnd;
-        }
-        else if(MposManager::getInstance().getEtsiReaederState() == STATE_SE_RDR_MODE_STOP_IN_PROGRESS)
-        {
-            android::startRfDiscovery(false);
-            goto TheEnd;
-        }
-    }
-#endif
   if (sDiscoveryEnabled == false) {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: already disabled", __func__);
@@ -2304,15 +2229,13 @@ tNFA_STATUS getConfig(uint16_t* rspLen, uint8_t* configValue, uint8_t numParam,
                                                              jboolean mode) {
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter", __func__);
 
-    se_rd_req_state_t state = MposManager::getInstance().getEtsiReaederState();
     if (!sIsNfaEnabled) {
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: Nfc is not Enabled. Returning", __func__);
       return FDSTATUS_ERROR_NFC_IS_OFF;
     }
 
-    if ((state != STATE_SE_RDR_MODE_STOPPED) &&
-        (state != STATE_SE_RDR_MODE_INVALID)) {
+    if (MposManager::getInstance().isMposOngoing()) {
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: MPOS is ongoing.. Returning", __func__);
       return FDSTATUS_ERROR_NFC_BUSY_IN_MPOS;
@@ -3239,7 +3162,19 @@ void startRfDiscovery(bool isStart) {
 **
 *******************************************************************************/
 bool isDiscoveryStarted() { return sRfEnabled; }
-
+#if(NXP_EXTNS == TRUE)
+/*******************************************************************************
+**
+** Function:        setDiscoveryStartedCfg
+**
+** Description:     If discovery is started, this function shall be called to set
+**                  sRfEnabled flag oterhwise false.
+**
+** Returns:         None
+**
+*******************************************************************************/
+void setDiscoveryStartedCfg(bool isStarted) { sRfEnabled = isStarted; };
+#endif
 /*******************************************************************************
 **
 ** Function:        doStartupConfig

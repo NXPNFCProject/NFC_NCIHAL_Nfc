@@ -298,42 +298,6 @@ public class NativeNfcManager implements DeviceHost {
                 params.shouldEnableReaderMode(), params.shouldEnableHostRouting(),
                 params.shouldEnableP2p(), restart);
     }
-
-    @Override
-    public native void disableDiscovery();
-
-   @Override
-    public void setEtsiReaederState(int newState) {
-        mMposMgr.doSetEtsiReaederState(newState);
-    }
-
-    @Override
-    public int getEtsiReaederState() {
-        int state;
-        state = mMposMgr.doGetEtsiReaederState();
-        return state;
-    }
-
-    @Override
-    public void etsiReaderConfig(int eeHandle) {
-        mMposMgr.doEtsiReaderConfig(eeHandle);
-    }
-
-    @Override
-    public void notifyEEReaderEvent(int evt) {
-        mMposMgr.doNotifyEEReaderEvent(evt);
-    }
-
-    @Override
-    public void etsiInitConfig() {
-        mMposMgr.doEtsiInitConfig();
-    }
-
-    @Override
-    public void etsiResetReaderConfig() {
-        mMposMgr.doEtsiResetReaderConfig();
-    }
-
     @Override
     public void stopPoll(int mode) {
         mMposMgr.doStopPoll(mode);
@@ -343,6 +307,8 @@ public class NativeNfcManager implements DeviceHost {
     public void startPoll() {
         mMposMgr.doStartPoll();
     }
+    @Override
+    public native void disableDiscovery();
 
     @Override
     public int mposSetReaderMode(boolean on) {
@@ -590,32 +556,37 @@ public class NativeNfcManager implements DeviceHost {
     }
 
     /* Reader over SWP listeners*/
-    private void notifyETSIReaderRequested(boolean istechA, boolean istechB) {
-        mListener.onETSIReaderRequestedEvent(istechA, istechB);
-    }
-
-    private void notifyETSIReaderRequestedFail(int FailureCause) {
-        mListener.onETSIReaderRequestedFail(FailureCause);
-    }
-
-    private void notifyonETSIReaderModeStartConfig(int eeHandle) {
-        mListener.onETSIReaderModeStartConfig(eeHandle);
-    }
-
-    private void notifyonETSIReaderModeStopConfig(int disc_ntf_timeout) {
-        mListener.onETSIReaderModeStopConfig(disc_ntf_timeout);
+    private void notifyonReaderRequestedFail() {
+        mListener.onReaderRequestedFail();
     }
 
     private void notifyHostEmuActivated(int technology) {
         mListener.onHostCardEmulationActivated(technology);
     }
 
-    private void notifyonETSIReaderModeSwpTimeout(int disc_ntf_timeout) {
-        mListener.onETSIReaderModeSwpTimeout(disc_ntf_timeout);
+    private void notifyonReaderStartSuccess() {
+        mListener.onReaderStartSuccess();
     }
 
-    private void notifyonETSIReaderModeRestart() {
-        mListener.onETSIReaderModeRestart();
+    private void notifyonReaderStopSuccess() {
+        mListener.onReaderStopSuccess();
+    }
+
+    private void notifyonReaderRestart() {
+        mListener.onReaderRestart();
+    }
+
+    private void notifyonReaderRemoveCard() {
+        mListener.onReaderRemoveCard();
+    }
+
+    private void notifyonReaderStartFail() {
+        mListener.onReaderStartFail();
+    }
+
+
+    private void notifyonReaderTimeout() {
+        mListener.onReaderTimeout();
     }
 
     private void notifyHostEmuData(int technology, byte[] data) {

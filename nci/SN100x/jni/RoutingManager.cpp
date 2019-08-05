@@ -824,7 +824,6 @@ void RoutingManager::nfaEeCallback(tNFA_EE_EVT event,
   routingManager.mCbEventData = *eventData;
 #if (NXP_EXTNS == TRUE)
   SecureElement& se = SecureElement::getInstance();
-  tNFA_EE_DISCOVER_REQ info = eventData->discover_req;
 #endif
 
   switch (event) {
@@ -935,11 +934,6 @@ void RoutingManager::nfaEeCallback(tNFA_EE_EVT event,
              sizeof(routingManager.mEeInfo));
       routingManager.mReceivedEeInfo = true;
       routingManager.mEeInfoEvent.notifyOne();
-#if (NXP_EXTNS == TRUE)
-      if(nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
-          MposManager::getInstance().hanldeEtsiReaderReqEvent(&info);
-      }
-#endif
     } break;
 
     case NFA_EE_NO_CB_ERR_EVT:

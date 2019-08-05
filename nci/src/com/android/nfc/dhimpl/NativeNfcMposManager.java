@@ -21,17 +21,7 @@ package com.android.nfc.dhimpl;
 public class NativeNfcMposManager {
     private static final String TAG = "NativeNfcMposManager";
 
-    public native void doSetEtsiReaederState(int newState);
-
-    public native int doGetEtsiReaederState();
-
-    public native void doEtsiReaderConfig(int eeHandle);
-
     public native void doNotifyEEReaderEvent(int evt);
-
-    public native void doEtsiInitConfig();
-
-    public native void doEtsiResetReaderConfig();
 
     public native void doStopPoll(int mode);
 

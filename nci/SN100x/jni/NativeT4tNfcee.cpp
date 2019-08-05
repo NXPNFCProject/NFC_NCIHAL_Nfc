@@ -306,10 +306,7 @@ T4TNFCEE_STATUS_t NativeT4tNfcee::validatePreCondition(T4TNFCEE_OPERATIONS_t op,
     t4tNfceeStatus = ERROR_NFC_NOT_ON;
   } else if (gActivated) {
     t4tNfceeStatus = ERROR_RF_ACTIVATED;
-  } else if ((MposManager::getInstance().getEtsiReaederState() !=
-              STATE_SE_RDR_MODE_INVALID) &&
-             (MposManager::getInstance().getEtsiReaederState() !=
-              STATE_SE_RDR_MODE_STOPPED)) {
+  } else if (MposManager::getInstance().isMposOngoing()) {
     t4tNfceeStatus = ERROR_MPOS_ON;
   } else if (fileId == NULL) {
     DLOG_IF(ERROR, nfc_debug_enabled)
