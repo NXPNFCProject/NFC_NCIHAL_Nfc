@@ -136,6 +136,8 @@ static SyncEvent sPresenceCheckEvent;
 static sem_t sMakeReadonlySem;
 static IntervalTimer sSwitchBackTimer;  // timer used to tell us to switch back
                                         // to ISO_DEP frame interface
+uint8_t RW_TAG_SLP_REQ[] = {0x50, 0x00};
+uint8_t RW_DESELECT_REQ[] = {0xC2};
 static IntervalTimer
     sPresenceCheckTimer;  // timer used for presence cmd notification timeout.
 static IntervalTimer sReconnectNtfTimer;
@@ -954,6 +956,23 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
           << StringPrintf("%s: NDEF detection timeout; break", __func__);
       rVal = STATUS_CODE_TARGET_LOST;
       break;
+    }
+    if ((sCurrentRfInterface == NFA_INTERFACE_FRAME) &&
+        (NFC_GetNCIVersion() >= NCI_VERSION_2_0)) {
+      {
+        SyncEventGuard g3(sReconnectEvent);
+        if(sCurrentConnectedTargetProtocol == NFA_PROTOCOL_T2T) {
+          status = NFA_SendRawFrame(RW_TAG_SLP_REQ, sizeof(RW_TAG_SLP_REQ), 0);
+        } else if (sCurrentConnectedTargetProtocol == NFA_PROTOCOL_ISO_DEP) {
+          status = NFA_SendRawFrame(RW_DESELECT_REQ,
+                                    sizeof(RW_DESELECT_REQ), 0);
+        }
+        sReconnectEvent.wait(4);
+        if (status != NFA_STATUS_OK) {
+          LOG(ERROR) << StringPrintf("%s: send error=%d", __func__, status);
+          break;
+        }
+      }
     }
 
 #if (NFC_NXP_NON_STD_CARD == TRUE)
