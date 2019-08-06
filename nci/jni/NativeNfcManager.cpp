@@ -208,7 +208,6 @@ extern uint8_t checkCmdSent;
 bool gActivated = false;
 SyncEvent gDeactivatedEvent;
 bool legacy_mfc_reader = true;
-bool gNfccConfigControlStatus = false;
 
 namespace android {
 int gGeneralPowershutDown = 0;
@@ -625,7 +624,6 @@ static void nfcManager_configNfccConfigControl(bool flag) {
         uint8_t nfa_set_config[] = { 0x00 };
 
         nfa_set_config[0] = (flag == true ? 1 : 0);
-        gNfccConfigControlStatus = flag;
 
         tNFA_STATUS status = NFA_SetConfig(NCI_PARAM_ID_NFCC_CONFIG_CONTROL,
                                            sizeof(nfa_set_config),
@@ -708,9 +706,8 @@ static void handleRfDiscoveryEvent(tNFC_RESULT_DEVT* discoveredDevice) {
   }
 
   // configure NFCC_CONFIG_CONTROL- NFCC allowed to manage RF configuration.
-  if(gNfccConfigControlStatus == false){
-      nfcManager_configNfccConfigControl(true);
-  }
+  nfcManager_configNfccConfigControl(true);
+
 }
 
 #if (NXP_EXTNS == TRUE)
@@ -2978,10 +2975,7 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
 #if (NXP_EXTNS == TRUE)
           discDuration = nat->discovery_duration;
 #endif
-          // configure NFCC_CONFIG_CONTROL- NFCC allowed to manage RF configuration.
-          if(gNfccConfigControlStatus == false){
-              nfcManager_configNfccConfigControl(true);
-          }
+          nfcManager_configNfccConfigControl(true);
           NFA_SetRfDiscoveryDuration(nat->discovery_duration);
         } else {
           {
