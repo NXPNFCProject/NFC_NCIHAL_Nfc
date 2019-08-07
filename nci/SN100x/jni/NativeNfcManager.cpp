@@ -143,6 +143,7 @@ SyncEvent gDeactivatedEvent;
 SyncEvent sNfaSetPowerSubState;
 bool legacy_mfc_reader = true;
 SyncEvent sChangeDiscTechEvent;
+SyncEvent sNfaSetConfigEvent;  // event for Set_Config....
 #if(NXP_EXTNS == TRUE)
 /*Structure to store  discovery parameters*/
 typedef struct discovery_Parameters
@@ -214,7 +215,6 @@ static SyncEvent sNfaDisableEvent;               // event for NFA_Disable()
 static SyncEvent sNfaEnableDisablePollingEvent;  // event for
                                                  // NFA_EnablePolling(),
                                                  // NFA_DisablePolling()
-static SyncEvent sNfaSetConfigEvent;             // event for Set_Config....
 static SyncEvent sNfaGetConfigEvent;             // event for Get_Config....
 #if(NXP_EXTNS == TRUE)
 static SyncEvent sNfaTransitConfigEvent;  // event for NFA_SetTransitConfig()
@@ -527,6 +527,10 @@ static void nfaConnectionCallback(uint8_t connEvent,
           /* T5T doesn't support multiproto detection logic */
           NfcTag::getInstance ().mNumDiscNtf = 0x00;
         }
+        if (NfcSelfTest::GetInstance().SelfTestType != TEST_TYPE_NONE) {
+          NfcSelfTest::GetInstance().ActivatedNtf_Cb();
+          break;
+        }
 #endif
       if ((eventData->activated.activate_ntf.protocol !=
            NFA_PROTOCOL_NFC_DEP) &&
@@ -624,6 +628,9 @@ static void nfaConnectionCallback(uint8_t connEvent,
           __func__, eventData->deactivated.type, gIsTagDeactivating);
 
 #if (NXP_EXTNS == TRUE)
+      if (NfcSelfTest::GetInstance().SelfTestType != TEST_TYPE_NONE) {
+        break;
+      }
       if(gIsWaiting4Deact2SleepNtf) {
         if(eventData->deactivated.type == NFA_DEACTIVATE_TYPE_IDLE) {
           gGotDeact2IdleNtf = true;
@@ -4130,13 +4137,6 @@ static int nfcManager_setPreferredSimSlot(JNIEnv* e, jobject o,
 
 static jint nfcManager_nfcSelfTest(JNIEnv* e, jobject o, jint aType)
 {
-    tNFA_STATUS status = NFA_STATUS_FAILED;
-
-    if (!sIsNfaEnabled) {
-        DLOG_IF(INFO, nfc_debug_enabled)
-            << StringPrintf("Nfa does not enabled!! returning...");
-        return status;
-    }
     return NfcSelfTest::GetInstance().doNfccSelfTest(aType);
 }
 

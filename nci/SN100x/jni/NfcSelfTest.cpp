@@ -16,13 +16,6 @@
  *
  ******************************************************************************/
 
-/******************************************************************************
- *
- *  Copyright 2019 NXP
- *
- *  NOT A CONTRIBUTION
- *
- ******************************************************************************/
 #include "NfcSelfTest.h"
 
 /* Declaration of the singleTone class(static member) */
@@ -30,9 +23,16 @@ NfcSelfTest NfcSelfTest::sSelfTestMgr;
 
 nxp_selftest_data gselfTestData;
 extern bool nfc_debug_enabled;
+extern SyncEvent sChangeDiscTechEvent;
+extern SyncEvent sNfaSetConfigEvent;
 
 using android::base::StringPrintf;
+using namespace android;
 
+namespace android {
+extern bool isDiscoveryStarted();
+extern void startRfDiscovery(bool isStart);
+}  // namespace android
 /*******************************************************************************
  ** Set the global Self Test status to @param value
  ** @param status- Status to be set
@@ -65,6 +65,36 @@ NfcSelfTest::~NfcSelfTest() {}
 NfcSelfTest& NfcSelfTest::GetInstance() { return sSelfTestMgr; }
 
 /*******************************************************************************
+ ** Function:        NxpResponse_SelfTest_Cb
+ **
+ ** Description:     Store the value of RF_TRANSITION_CFG and notify the
+ **                  Nxp_doResonantFrequency along with updated status
+ **
+ ** Returns:         void
+ *******************************************************************************/
+static void NxpResponse_SelfTest_Cb(uint8_t event, uint16_t param_len,
+                                    uint8_t* p_param) {
+  (void)event;
+  DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("%s Received length data = 0x%x status = 0x%x", __func__,
+                      param_len, p_param[3]);
+
+  if (NFA_STATUS_OK == p_param[3]) {
+    if (gselfTestData.copyData) {
+      memmove((void*)gselfTestData.prestorerftxcfg, (void*)(p_param + 5),
+              (size_t)p_param[4]);
+      gselfTestData.copyData = false;
+    }
+    SetSelfTestCbStatus(NFA_STATUS_OK);
+  } else {
+    SetSelfTestCbStatus(NFA_STATUS_FAILED);
+  }
+
+  SyncEventGuard guard(gselfTestData.NxpSelfTestEvt);
+  gselfTestData.NxpSelfTestEvt.notifyOne();
+}
+
+/*******************************************************************************
  ** Provides the command buffer for the given command type
  ** @param CmdBuf- for the given command type
  **        aType - is the command type
@@ -89,6 +119,48 @@ uint8_t NfcSelfTest::GetCmdBuffer(uint8_t* aCmdBuf, uint8_t aType) {
       uint8_t CMD_CORE_INIT[] = {0x20, 0x01, 0x02, 0x00, 0x00};
       cmdLen = sizeof(CMD_CORE_INIT);
       memcpy(aCmdBuf, CMD_CORE_INIT, cmdLen);
+      break;
+    }
+    case CMD_TYPE_NXP_PROP_EXT: {
+      uint8_t CMD_NXP_PROP_EXT[] = {0x2F, 0x02, 0x00};
+      cmdLen = sizeof(CMD_NXP_PROP_EXT);
+      memcpy(aCmdBuf, CMD_NXP_PROP_EXT, cmdLen);
+      break;
+    }
+    case CMD_TYPE_NFCC_STANDBY_ON: {
+      uint8_t CMD_NFCC_STANDBY_ON[] = {0x2F, 0x00, 0x01, 0x01};
+      cmdLen = sizeof(CMD_NFCC_STANDBY_ON);
+      memcpy(aCmdBuf, CMD_NFCC_STANDBY_ON, cmdLen);
+      break;
+    }
+    case CMD_TYPE_NFCC_STANDBY_OFF: {
+      uint8_t CMD_NFCC_STANDBY_OFF[] = {0x2F, 0x00, 0x01, 0x00};
+      cmdLen = sizeof(CMD_NFCC_STANDBY_OFF);
+      memcpy(aCmdBuf, CMD_NFCC_STANDBY_OFF, cmdLen);
+      break;
+    }
+    case CMD_TYPE_NFCC_DISC_MAP: {
+      uint8_t CMD_NFCC_DISC_MAP[] = {0x21, 0x00, 0x04, 0x01, 0x04, 0x01, 0x02};
+      cmdLen = sizeof(CMD_NFCC_DISC_MAP);
+      memcpy(aCmdBuf, CMD_NFCC_DISC_MAP, cmdLen);
+      break;
+    }
+    case CMD_TYPE_NFCC_DEACTIVATE: {
+      uint8_t CMD_NFCC_DEACTIVATE[] = {0x21, 0x06, 0x01, 0x00};
+      cmdLen = sizeof(CMD_NFCC_DEACTIVATE);
+      memcpy(aCmdBuf, CMD_NFCC_DEACTIVATE, cmdLen);
+      break;
+    }
+    case CMD_TYPE_RF_ON: {
+      uint8_t CMD_RF_ON[] = {0x2F, 0x3F, 0x03, 0x32, 0x01, 0x00};
+      cmdLen = sizeof(CMD_RF_ON);
+      memcpy(aCmdBuf, CMD_RF_ON, cmdLen);
+      break;
+    }
+    case CMD_TYPE_RF_OFF: {
+      uint8_t CMD_RF_OFF[] = {0x2F, 0x3F, 0x03, 0x32, 0x00, 0x00};
+      cmdLen = sizeof(CMD_RF_OFF);
+      memcpy(aCmdBuf, CMD_RF_OFF, cmdLen);
       break;
     }
     case CMD_TYPE_CORE_GET_CONFIG_RFTXCFG0: {
@@ -192,6 +264,18 @@ tNFA_STATUS NfcSelfTest::doNfccSelfTest(int aType) {
     case TEST_TYPE_SET_RFTXCFG_RESONANT_FREQ:
       status = PerformResonantFreq(true);
       break;
+    case TEST_TYPE_RF_ON:
+      status = PerformRFTest(true);
+      break;
+    case TEST_TYPE_RF_OFF:
+      status = PerformRFTest(false);
+      break;
+    case TEST_TYPE_TRANSAC_A:
+      status = PerformTransacAB(TEST_TYPE_TRANSAC_A);
+      break;
+    case TEST_TYPE_TRANSAC_B:
+      status = PerformTransacAB(TEST_TYPE_TRANSAC_B);
+      break;
     default:
       DLOG_IF(ERROR, nfc_debug_enabled)
           << StringPrintf("Self-test type invalid/not supported");
@@ -200,6 +284,110 @@ tNFA_STATUS NfcSelfTest::doNfccSelfTest(int aType) {
   }
   SelfTestType = TEST_TYPE_NONE;
   return status;
+}
+
+tNFA_STATUS NfcSelfTest::PerformRFTest(bool on) {
+  tNFA_STATUS status = NFA_STATUS_FAILED;
+  uint8_t* pp = NULL;
+  uint8_t RFTestCmdSeq[5] = {
+      CMD_TYPE_CORE_RESET,
+      CMD_TYPE_CORE_INIT,
+      CMD_TYPE_NXP_PROP_EXT,
+  };
+  /* Stop RF Discovery */
+  if (isDiscoveryStarted()) startRfDiscovery(false);
+
+  pp = RFTestCmdSeq + 2 + 1;
+  if (on) {
+    *pp++ = CMD_TYPE_NFCC_STANDBY_OFF;
+    *pp = CMD_TYPE_RF_ON;
+  } else {
+    *pp++ = CMD_TYPE_RF_OFF;
+    *pp = CMD_TYPE_NFCC_STANDBY_ON;
+  }
+
+  status = executeCmdSeq(RFTestCmdSeq, sizeof(RFTestCmdSeq));
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("status=%u", status);
+  return status;
+}
+
+tNFA_STATUS NfcSelfTest::PerformTransacAB(uint8_t aType) {
+  tNFA_STATUS status = NFA_STATUS_FAILED;
+  uint8_t tech_mask = 0;
+  uint8_t readerProfileSelCfg[] = {0x20, 0x02, 0x09, 0x02, 0xA0, 0x3F,
+                                   0x01, 0x01, 0xA0, 0x44, 0x01, 0x63};
+  uint8_t val85[] = {0x01};
+  uint8_t NFCInitCmdSeq[3] = {CMD_TYPE_CORE_RESET, CMD_TYPE_CORE_INIT,
+                              CMD_TYPE_NXP_PROP_EXT};
+
+  /* Stop RF Discovery */
+  if (isDiscoveryStarted()) startRfDiscovery(false);
+
+  {
+    SyncEventGuard gaurd(sChangeDiscTechEvent);
+    status = NFA_ChangeDiscoveryTech(0x00, 0x00);
+    if (status == NFA_STATUS_OK) sChangeDiscTechEvent.wait(2 * ONE_SECOND_MS);
+  }
+
+  if (aType == TEST_TYPE_TRANSAC_A) {
+    tech_mask = NFA_TECHNOLOGY_MASK_A;
+  } else {
+    readerProfileSelCfg[11] = 0x43;
+    tech_mask = NFA_TECHNOLOGY_MASK_A | NFA_TECHNOLOGY_MASK_B;
+  }
+
+  status = executeCmdSeq(NFCInitCmdSeq, sizeof(NFCInitCmdSeq));
+  if (status == NFA_STATUS_OK) {
+    {
+      SyncEventGuard guard(sNfaSetConfigEvent);
+      status = NFA_SetConfig(0x85, 1, val85);
+      if (status == NFA_STATUS_OK) sNfaSetConfigEvent.wait(2 * ONE_SECOND_MS);
+    }
+    {
+      SyncEventGuard guard(gselfTestData.NxpSelfTestEvt);
+      status =
+          NFA_SendRawVsCommand(sizeof(readerProfileSelCfg), readerProfileSelCfg,
+                               NxpResponse_SelfTest_Cb);
+      if (status == NFA_STATUS_OK)
+        gselfTestData.NxpSelfTestEvt.wait(2 * ONE_SECOND_MS);
+    }
+  } else {
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("failed in to reset and init NFCC");
+  }
+
+  if (status == NFA_STATUS_OK) {
+    uint8_t discMapCmd[] = {CMD_TYPE_NFCC_DISC_MAP};
+    status = executeCmdSeq(discMapCmd, sizeof(discMapCmd));
+  }
+
+  if (status == NFA_STATUS_OK) {
+    NFA_SetEmvCoState(TRUE);
+    SyncEventGuard gaurd(sChangeDiscTechEvent);
+    if ((status = NFA_ChangeDiscoveryTech(tech_mask, 0x00)) == NFA_STATUS_OK) {
+      sChangeDiscTechEvent.wait(2 * ONE_SECOND_MS);
+      startRfDiscovery(true);
+      {
+        SyncEventGuard gaurd(mSelfTestTransacAB);
+        mSelfTestTransacAB.wait(30 * ONE_SECOND_MS);
+      }
+    }
+  } else {
+    SyncEventGuard gaurd(sChangeDiscTechEvent);
+    status = NFA_ChangeDiscoveryTech(tech_mask, 0x00);
+    if (status == NFA_STATUS_OK) sChangeDiscTechEvent.wait(2 * ONE_SECOND_MS);
+    startRfDiscovery(true);
+  }
+
+  NFA_SetEmvCoState(false);
+  startRfDiscovery(false);
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("exiting status=%u", status);
+  return status;
+}
+
+void NfcSelfTest::ActivatedNtf_Cb() {
+  SyncEventGuard gaurd(mSelfTestTransacAB);
+  mSelfTestTransacAB.notifyOne();
 }
 
 /*******************************************************************************
@@ -225,6 +413,7 @@ tNFA_STATUS NfcSelfTest::setResonantFreq() {
   gselfTestData.fSetResFreq = false;
   return status;
 }
+
 /********************************************************************************
  ** Executes Restore the RF_TRANSITION_CFG values, if stored by the
  *setResonantFreq()
@@ -260,36 +449,6 @@ tNFA_STATUS NfcSelfTest::PerformResonantFreq(bool on) {
       << StringPrintf(" PerformResonantFreq status=%u", status);
 
   return status;
-}
-
-/*******************************************************************************
- ** Function:        NxpResponse_SelfTest_Cb
- **
- ** Description:     Store the value of RF_TRANSITION_CFG and notify the
- **                  Nxp_doResonantFrequency along with updated status
- **
- ** Returns:         void
- *******************************************************************************/
-void NxpResponse_SelfTest_Cb(uint8_t event, uint16_t param_len,
-                             uint8_t* p_param) {
-  (void)event;
-  DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s Received length data = 0x%x status = 0x%x", __func__,
-                      param_len, p_param[3]);
-
-  if (NFA_STATUS_OK == p_param[3]) {
-    if (gselfTestData.copyData) {
-      memmove((void*)gselfTestData.prestorerftxcfg, (void*)(p_param + 5),
-              (size_t)p_param[4]);
-      gselfTestData.copyData = false;
-    }
-    SetSelfTestCbStatus(NFA_STATUS_OK);
-  } else {
-    SetSelfTestCbStatus(NFA_STATUS_FAILED);
-  }
-
-  SyncEventGuard guard(gselfTestData.NxpSelfTestEvt);
-  gselfTestData.NxpSelfTestEvt.notifyOne();
 }
 
 /*******************************************************************************

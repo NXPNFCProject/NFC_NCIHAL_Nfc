@@ -15,14 +15,8 @@
  *  limitations under the License.
  *
  ******************************************************************************/
+#pragma once
 
-/******************************************************************************
- *
- *  Copyright 2019 NXP
- *
- *  NOT A CONTRIBUTION
- *
- ******************************************************************************/
 #include <android-base/stringprintf.h>
 #include <base/logging.h>
 #include <string.h>
@@ -47,6 +41,10 @@
   (NFA_TECHNOLOGY_MASK_A | NFA_TECHNOLOGY_MASK_B | NFA_TECHNOLOGY_MASK_F | \
    NFA_TECHNOLOGY_MASK_V | NFA_TECHNOLOGY_MASK_B_PRIME |                   \
    NFA_TECHNOLOGY_MASK_KOVIO | NFA_TECHNOLOGY_MASK_ACTIVE)
+
+#define ONE_SECOND_MS 1000
+#define HUNDRED_MS 100
+#define ONE_MS 1
 
 /**************************************************
  ** enum declarations                            **
@@ -74,6 +72,10 @@ enum NFCSELFTESTCMDTYPE {
 enum NFCCSELFTESTTYPE {
   TEST_TYPE_RESTORE_RFTXCFG = 0x00,
   TEST_TYPE_SET_RFTXCFG_RESONANT_FREQ,
+  TEST_TYPE_RF_ON,
+  TEST_TYPE_RF_OFF,
+  TEST_TYPE_TRANSAC_A,
+  TEST_TYPE_TRANSAC_B,
   TEST_TYPE_NONE = 0xFF
 };
 
@@ -113,6 +115,12 @@ class NfcSelfTest {
    */
   tNFA_STATUS doNfccSelfTest(int aType);
 
+  /**
+   * Notifies whenever INTF_ACTIVATED_NTF is received
+   * @return None
+   */
+  void ActivatedNtf_Cb();
+
   int32_t SelfTestType;
 
  private:
@@ -129,6 +137,24 @@ class NfcSelfTest {
    * @return None
    */
   ~NfcSelfTest();
+
+  /**
+   * Executes NFC self-test for RF ON and OFF.
+   * @param  on denotes
+   *         TRUE  - RF ON
+   *         FALSE - RF OFF
+   * @return status SUCCESS or FAILED.
+   */
+  tNFA_STATUS PerformRFTest(bool on);
+
+  /**
+   * To verify analog parameters of A and B
+   * @param  aType denotes
+   *         TEST_TYPE_TRANSAC_A
+   *         TEST_TYPE_TRANSAC_B
+   * @return status SUCCESS or FAILED.
+   */
+  tNFA_STATUS PerformTransacAB(uint8_t aType);
 
   /**
    * Executes: 1. Save the current value of the NFCC's RF_TRANSITION_CFG.
@@ -171,4 +197,5 @@ class NfcSelfTest {
    * @return status SUCCESS or FAILED.
    */
   tNFA_STATUS executeCmdSeq(uint8_t* aCmdType, uint8_t aNumOfCmds);
+  SyncEvent mSelfTestTransacAB;
 };
