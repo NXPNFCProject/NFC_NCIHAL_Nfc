@@ -168,6 +168,7 @@ const uint16_t ACTIVE_SE_USE_ANY = 0xFFFF;
 SecureElement::SecureElement()
     : mActiveEeHandle(NFA_HANDLE_INVALID),
 #if (NXP_EXTNS == TRUE)
+      mActivatedInListenMode(false),
       mHostsPresent(0),
       mETSI12InitStatus(NFA_STATUS_FAILED),
       eSE_Compliancy(0),
@@ -212,9 +213,9 @@ SecureElement::SecureElement()
       mCurrentRouteSelection(NoRoute),
       mActualResponseSize(0),
       mAtrInfolen(0),
+      /*mActivatedInListenMode(false),*/
       mAtrStatus(0),
       mUseOberthurWarmReset(false),
-      mActivatedInListenMode(false),
       mOberthurWarmResetCommand(3),
       mGetAtrRspwait(false),
       mRfFieldIsOn(false),
@@ -2409,7 +2410,7 @@ void SecureElement::nfaHciCallback(tNFA_HCI_EVT event,
         if (nfcFL.nfcNxpEse) {
           if (eventData->rcvd_evt.evt_len > 0) {
             sSecElem.mTransceiveWaitOk = true;
-            if (nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
+            /*if (nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
               se_rd_req_state_t state =
                   MposManager::getInstance().getEtsiReaederState();
               if ((state == STATE_SE_RDR_MODE_STOPPED) ||
@@ -2419,7 +2420,8 @@ void SecureElement::nfaHciCallback(tNFA_HCI_EVT event,
                 DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
                     "ETSI in progress, do not start standby timer");
               }
-            } else {
+            } else*/
+            {
               sSecElem.NfccStandByOperation(STANDBY_TIMER_START);
             }
           }

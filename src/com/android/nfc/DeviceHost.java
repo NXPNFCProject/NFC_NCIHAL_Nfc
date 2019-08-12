@@ -78,17 +78,21 @@ public interface DeviceHost {
         /**
          * Notifies SWP Reader Events.
          */
-        public void onETSIReaderRequestedEvent(boolean istechA, boolean istechB);
+        public void onReaderRequestedFail();
 
-        public void onETSIReaderRequestedFail(int FailCause);
+        public void onReaderStartSuccess();
 
-        public void onETSIReaderModeStartConfig(int eeHandle);
+        public void onReaderStartFail();
 
-        public void onETSIReaderModeStopConfig(int disc_ntf_timeout);
+        public void onReaderRestart();
 
-        public void onETSIReaderModeSwpTimeout(int disc_ntf_timeout);
+        public void onReaderStopSuccess();
 
-        public void onETSIReaderModeRestart();
+        public void onReaderStopFail();
+
+        public void onReaderRemoveCard();
+
+        public void onReaderTimeout();
 
         public void onNfcTransactionEvent(byte[] aid, byte[] data, String seName);
     }
@@ -314,17 +318,7 @@ public interface DeviceHost {
 
     public void doResonantFrequency(boolean isResonantFreq);
 
-    void setEtsiReaederState(int newState);
-
-    int getEtsiReaederState();
-
-    void etsiReaderConfig(int eeHandle);
-
-    void etsiResetReaderConfig();
-
-    void notifyEEReaderEvent(int evt);
-
-    void etsiInitConfig();
+    //void notifyEEReaderEvent(int evt);
 
     void stopPoll(int mode);
 

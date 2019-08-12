@@ -159,6 +159,7 @@ extern void startStopPolling(bool isStartPolling);
 class SecureElement {
  public:
   tNFA_HANDLE mActiveEeHandle;
+  bool mActivatedInListenMode;  // whether we're activated in listen mode
 #if (NXP_EXTNS == TRUE)
 #define MAX_NFCEE 5
   struct mNfceeData {
@@ -789,7 +790,6 @@ class SecureElement {
   int mAtrInfolen;
   uint8_t mAtrStatus;
   bool mUseOberthurWarmReset;         // whether to use warm-reset command
-  bool mActivatedInListenMode;        // whether we're activated in listen mode
   uint8_t mOberthurWarmResetCommand;  // warm-reset command byte
   tNFA_EE_INFO mEeInfo[MAX_NUM_EE];   // actual size stored in mActualNumEe
   tNFA_EE_DISCOVER_REQ mUiccInfo;
