@@ -151,7 +151,6 @@ typedef enum apdu_gate {
 typedef enum nfcee_type { UICC1 = 0x01, UICC2 = 0x02, ESE = 0x04 } nfcee_type_t;
 typedef enum { NONE = 0x00, FW_DOWNLOAD, JCOP_DOWNLOAD } Downlaod_mode_t;
 namespace android {
-extern SyncEvent sNfaEnableDisablePollingEvent;
 extern void startStopPolling(bool isStartPolling);
 
 }  // namespace android

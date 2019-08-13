@@ -238,6 +238,9 @@ public class NativeNfcManager implements DeviceHost {
     public native int doRegisterT3tIdentifier(byte[] t3tIdentifier);
 
     @Override
+    public native int doNfcSelfTest(int type);
+
+    @Override
     public void registerT3tIdentifier(byte[] t3tIdentifier) {
         synchronized (mLock) {
             int handle = doRegisterT3tIdentifier(t3tIdentifier);

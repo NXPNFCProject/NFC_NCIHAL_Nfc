@@ -47,6 +47,7 @@
 #include "JavaClassConstants.h"
 #include "NfcAdaptation.h"
 #include "NfcJniUtil.h"
+#include "NfcSelfTest.h"
 #include "NfcTag.h"
 #include "PeerToPeer.h"
 #include "Pn544Interop.h"
@@ -207,6 +208,8 @@ extern uint8_t checkCmdSent;
 *****************************************************************************/
 bool gActivated = false;
 SyncEvent gDeactivatedEvent;
+SyncEvent sNfaSetConfigEvent;             // event for Set_Config....
+SyncEvent sNfaEnableDisablePollingEvent;  // event for NFA_EnablePolling(),
 bool legacy_mfc_reader = true;
 
 namespace android {
@@ -270,9 +273,7 @@ static jint sLastError = ERROR_BUFFER_TOO_SMALL;
 static SyncEvent sNfaEnableEvent;         // event for NFA_Enable()
 static SyncEvent sNfaDisableEvent;        // event for NFA_Disable()
 static SyncEvent sNfaTransitConfigEvent;  // event for NFA_SetTransitConfig()
-SyncEvent sNfaEnableDisablePollingEvent;  // event for NFA_EnablePolling(),
                                           // NFA_DisablePolling()
-SyncEvent sNfaSetConfigEvent;             // event for Set_Config....
 SyncEvent sNfaGetConfigEvent;             // event for Get_Config....
 SyncEvent sExecPendingRegEvent;
 
@@ -970,6 +971,10 @@ static void nfaConnectionCallback(uint8_t connEvent,
         activatedNtf_Cb();
         break;
       }
+      if (NfcSelfTest::GetInstance().SelfTestType != TEST_TYPE_NONE) {
+        NfcSelfTest::GetInstance().ActivatedNtf_Cb();
+        break;
+      }
       rfActivation = true;
 
       checkforTranscation(NFA_ACTIVATED_EVT, (void*)eventData);
@@ -1143,6 +1148,9 @@ static void nfaConnectionCallback(uint8_t connEvent,
             "%s: NFA_DEACTIVATED_EVT: Type=%u, gIsTagDeactivating=%d", __func__,
             eventData->deactivated.type, gIsTagDeactivating);
 #if (NXP_EXTNS == TRUE)
+        if (NfcSelfTest::GetInstance().SelfTestType != TEST_TYPE_NONE) {
+          break;
+        }
         rfActivation = false;
         if ((nfcFL.chipType == pn547C2) &&
             (eventData->deactivated.type == NFA_DEACTIVATE_TYPE_IDLE)) {
@@ -2093,6 +2101,22 @@ static void nfaConnectionCallback(uint8_t connEvent,
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter", __func__);
     return NFA_IsFieldDetectEnabled();
   }
+
+  /*******************************************************************************
+   **
+   ** Function:        nfcManager_nfcSelfTest
+   **
+   ** Description:     Function to perform different types of analog tests
+   **                  i'e RF ON, RF OFF, Transc A, Transc B.
+   **
+   ** Returns:         success/failure
+   **
+   *******************************************************************************/
+
+  static jint nfcManager_nfcSelfTest(JNIEnv * e, jobject o, jint aType) {
+    return NfcSelfTest::GetInstance().doNfccSelfTest(aType);
+  }
+
 #endif
 
   /*******************************************************************************
@@ -4568,9 +4592,9 @@ static void restartUiccListen(jint uiccSlot) {
      (void*)nfcManager_getDefaultMifareCLTPowerState},
     {"doChangeDiscoveryTech", "(II)V", (void*)nfcManager_changeDiscoveryTech},
     {"doPartialInitForEseCosUpdate", "()Z",
-      (void*)nfcManager_doPartialInitForEseCosUpdate},
+     (void*)nfcManager_doPartialInitForEseCosUpdate},
     {"doPartialDeinitForEseCosUpdate", "()Z",
-      (void*)nfcManager_doPartialDeinitForEseCosUpdate},
+     (void*)nfcManager_doPartialDeinitForEseCosUpdate},
 #endif
     {"doRegisterT3tIdentifier", "([B)I",
      (void*)nfcManager_doRegisterT3tIdentifier},
@@ -4630,12 +4654,9 @@ static void restartUiccListen(jint uiccSlot) {
      (void*)nfcManager_getDefaultFelicaCLTPowerState},
     {"getDefaultFelicaCLTRoute", "()I",
      (void*)nfcManager_getDefaultFelicaCLTRoute},
-    {"doResonantFrequency", "(Z)V",
-              (void *)nfcManager_doResonantFrequency},
-     {"doSetFieldDetectMode", "(Z)I",
-     (void*)nfcManager_SetFieldDetectMode},
-     {"isFieldDetectEnabled", "()Z",
-     (void*)nfcManager_IsFieldDetectEnabled},
+    {"doResonantFrequency", "(Z)V", (void*)nfcManager_doResonantFrequency},
+    {"doSetFieldDetectMode", "(Z)I", (void*)nfcManager_SetFieldDetectMode},
+    {"isFieldDetectEnabled", "()Z", (void*)nfcManager_IsFieldDetectEnabled},
 #endif
     {"commitRouting", "()Z", (void*)nfcManager_doCommitRouting},
     {"doGetActiveSecureElementList", "()[I",
@@ -4659,6 +4680,7 @@ static void restartUiccListen(jint uiccSlot) {
     {"doselectUicc", "(I)I", (void*)nfcManager_doSelectUicc},
     {"doGetSelectedUicc", "()I", (void*)nfcManager_doGetSelectedUicc},
     {"setPreferredSimSlot", "(I)I", (void*)nfcManager_setPreferredSimSlot},
+    {"doNfcSelfTest", "(I)I", (void*)nfcManager_nfcSelfTest},
 #endif
     {"doSetNfcSecure", "(Z)Z", (void*)nfcManager_doSetNfcSecure},
   };

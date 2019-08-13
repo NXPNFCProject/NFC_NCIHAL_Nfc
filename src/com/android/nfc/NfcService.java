@@ -1793,9 +1793,9 @@ public class NfcService implements DeviceHostListener {
             NfcPermissions.enforceAdminPermissions(mContext);
             int status = 0xFF;
 
-            /*synchronized(NfcService.this) {
+            synchronized(NfcService.this) {
                 status = mDeviceHost.doNfcSelfTest(type);
-            }*/
+            }
             return status;
         }
 
