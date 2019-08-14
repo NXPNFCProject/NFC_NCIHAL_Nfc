@@ -609,6 +609,36 @@ static jbyteArray nativeNfcSecureElement_doTransceive(JNIEnv* e, jobject,
 #endif
 }
 
+/*******************************************************************************
+**
+** Function:        nfcManager_doactivateSeInterface
+**
+** Description:     Activate SecureElement Interface
+**
+** Returns:         Success/Failure
+**                  Success = 0x00
+**                  Failure = 0x03
+**
+*******************************************************************************/
+static jint nfcManager_doactivateSeInterface(JNIEnv* e, jobject o) {
+  return NFA_STATUS_FAILED;
+}
+
+/*******************************************************************************
+**
+** Function:        nfcManager_dodeactivateSeInterface
+**
+** Description:     Deactivate SecureElement Interface
+**
+** Returns:         Success/Failure
+**                  Success = 0x00
+**                  Failure = 0x03
+**
+*******************************************************************************/
+static jint nfcManager_dodeactivateSeInterface(JNIEnv* e, jobject o) {
+  return NFA_STATUS_FAILED;
+}
+
 /*****************************************************************************
 **
 ** Description:     JNI functions
@@ -624,6 +654,9 @@ static JNINativeMethod gMethods[] = {
 
     {"doTransceive", "(I[B)[B", (void*)nativeNfcSecureElement_doTransceive},
     {"doNativeGetAtr", "(I)[B", (void*)nativeNfcSecureElement_doGetAtr},
+    {"doactivateSeInterface", "()I", (void*)nfcManager_doactivateSeInterface},
+    {"dodeactivateSeInterface", "()I",
+     (void*)nfcManager_dodeactivateSeInterface},
 };
 
 /*******************************************************************************

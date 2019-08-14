@@ -65,6 +65,14 @@ public class NativeNfcSecureElement {
         return doResetForEseCosUpdate(handle);
     }
 
+    public int activateSeInterface() {
+        return doactivateSeInterface();
+    }
+    public int deactivateSeInterface() {
+        return dodeactivateSeInterface();
+    }
+    private native int doactivateSeInterface();
+    private native int dodeactivateSeInterface();
 
     //TODO: Just stub for compilation
     public byte[] doGetAtr (int handle) {

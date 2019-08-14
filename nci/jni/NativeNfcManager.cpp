@@ -244,6 +244,8 @@ const char* gNativeNfcSecureElementClassName =
     "com/android/nfc/dhimpl/NativeNfcSecureElement";
 const char* gNativeNfcMposManagerClassName =
     "com/android/nfc/dhimpl/NativeNfcMposManager";
+const char* gNativeT4tNfceeClassName =
+    "com/android/nfc/dhimpl/NativeT4tNfceeManager";
 void doStartupConfig();
 void startStopPolling(bool isStartPolling);
 void startRfDiscovery(bool isStart);

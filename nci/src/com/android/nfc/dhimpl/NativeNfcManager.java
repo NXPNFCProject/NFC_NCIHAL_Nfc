@@ -72,6 +72,7 @@ public class NativeNfcManager implements DeviceHost {
     private int mIsoDepMaxTransceiveLength;
     private final DeviceHostListener mListener;
     private final NativeNfcMposManager mMposMgr;
+    private final NativeT4tNfceeManager mT4tNfceeMgr;
     private final Context mContext;
 
     private final Object mLock = new Object();
@@ -82,6 +83,7 @@ public class NativeNfcManager implements DeviceHost {
         initializeNativeStructure();
         mContext = context;
         mMposMgr = new NativeNfcMposManager();
+        mT4tNfceeMgr = new NativeT4tNfceeManager();
     }
 
     public native boolean initializeNativeStructure();
@@ -200,9 +202,6 @@ public class NativeNfcManager implements DeviceHost {
     public native int   getDefaultFelicaCLTRoute();
 
     @Override
-    public native void doResonantFrequency(boolean isResonantFreq);
-
-    @Override
     public native int   getDefaultAidPowerState();
 
     @Override
@@ -282,6 +281,9 @@ public class NativeNfcManager implements DeviceHost {
     public native void doSetScreenState(int screen_state_mask);
 
     @Override
+    public native void doResonantFrequency(boolean isResonantFreq);
+
+    @Override
     public native int getNciVersion();
 
     private native void doEnableDiscovery(int techMask,
@@ -296,7 +298,6 @@ public class NativeNfcManager implements DeviceHost {
                 params.shouldEnableReaderMode(), params.shouldEnableHostRouting(),
                 params.shouldEnableP2p(), restart);
     }
-
     @Override
     public void stopPoll(int mode) {
         mMposMgr.doStopPoll(mode);
@@ -306,7 +307,6 @@ public class NativeNfcManager implements DeviceHost {
     public void startPoll() {
         mMposMgr.doStartPoll();
     }
-
     @Override
     public native void disableDiscovery();
 
@@ -318,6 +318,16 @@ public class NativeNfcManager implements DeviceHost {
     @Override
     public boolean mposGetReaderMode() {
         return mMposMgr.doMposGetReaderMode();
+    }
+
+    @Override
+    public int doWriteT4tData(byte[] fileId, byte[] data, int length) {
+      return mT4tNfceeMgr.doWriteT4tData(fileId, data, length);
+    }
+
+    @Override
+    public byte[] doReadT4tData(byte[] fileId) {
+      return mT4tNfceeMgr.doReadT4tData(fileId);
     }
 
     private native NativeLlcpConnectionlessSocket doCreateLlcpConnectionlessSocket(int nSap,
@@ -573,6 +583,7 @@ public class NativeNfcManager implements DeviceHost {
     private void notifyonReaderStartFail() {
         mListener.onReaderStartFail();
     }
+
 
     private void notifyonReaderTimeout() {
         mListener.onReaderTimeout();
