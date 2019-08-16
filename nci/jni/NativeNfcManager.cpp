@@ -1462,24 +1462,6 @@ static void nfaConnectionCallback(uint8_t connEvent,
             << StringPrintf("%s: NFA_CE_LOCAL_TAG_CONFIGURED_EVT", __func__);
       } break;
 #if (NXP_EXTNS == TRUE)
-      case NFA_RECOVERY_EVT: {
-        /*if (nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
-          DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-              "%s: NFA_RECOVERY_EVT: Discovery Started in lower layer:Updating "
-              "status in JNI",
-              __func__);
-          if (MposManager::getInstance().getEtsiReaederState() ==
-              STATE_SE_RDR_MODE_STOP_IN_PROGRESS) {
-            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-                "%s: Reset the ETSI Reader State to STATE_SE_RDR_MODE_STOPPED",
-                __func__);
-            MposManager::getInstance().setEtsiReaederState(
-                STATE_SE_RDR_MODE_STOPPED);
-          }
-        }*/
-      } break;
-#endif
-#if (NXP_EXTNS == TRUE)
       case NFA_PASSIVE_LISTEN_DISABLED_EVT: {
         if (nfcFL.nfcNxpEse &&
             nfcFL.eseFL._NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION) {
@@ -2788,7 +2770,6 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
     struct nfc_jni_native_data* nat = NULL;
 
 #if (NXP_EXTNS == TRUE)
-    /*tNFA_TECHNOLOGY_MASK etsi_tech_mask = 0;*/
     p61_access_state_t p61_current_state = P61_STATE_INVALID;
     long ret_val = -1;
 #endif
@@ -2814,59 +2795,6 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
       goto TheEnd;
     }
 #endif
-
-    /*#if (NXP_EXTNS == TRUE)
-        if ((nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE) &&
-            (MposManager::getInstance().getEtsiReaederState() ==
-             STATE_SE_RDR_MODE_STARTED)) {
-          DLOG_IF(INFO, nfc_debug_enabled)
-              << StringPrintf("%s: enter STATE_SE_RDR_MODE_START_CONFIG",
-    __func__); Rdr_req_ntf_info_t mSwp_info =
-              MposManager::getInstance().getSwpRrdReqInfo();
-          {
-            SyncEventGuard guard(android::sNfaEnableDisablePollingEvent);
-            DLOG_IF(INFO, nfc_debug_enabled)
-                << StringPrintf("%s: disable polling", __func__);
-            status = NFA_DisablePolling();
-            if (status == NFA_STATUS_OK) {
-              android::sNfaEnableDisablePollingEvent
-                  .wait();  // wait for NFA_POLL_DISABLED_EVT
-            } else {
-              LOG(ERROR) << StringPrintf("%s: fail disable polling; error=0x%X",
-                                         __func__, status);
-            }
-          }
-
-          if (mSwp_info.swp_rd_req_info.tech_mask & NFA_TECHNOLOGY_MASK_A)
-            etsi_tech_mask |= NFA_TECHNOLOGY_MASK_A;
-          if (mSwp_info.swp_rd_req_info.tech_mask & NFA_TECHNOLOGY_MASK_B)
-            etsi_tech_mask |= NFA_TECHNOLOGY_MASK_B;
-
-          {
-            SyncEventGuard guard(android::sNfaEnableDisablePollingEvent);
-            status = NFA_EnablePolling(etsi_tech_mask);
-            if (status == NFA_STATUS_OK) {
-              DLOG_IF(INFO, nfc_debug_enabled)
-                  << StringPrintf("%s: wait for enable event", __func__);
-              android::sNfaEnableDisablePollingEvent
-                  .wait();  // wait for NFA_POLL_ENABLED_EVT
-            } else {
-              LOG(ERROR) << StringPrintf("%s: fail enable polling; error=0x%X",
-                                         __func__, status);
-            }
-          }
-          startRfDiscovery(true);
-          pTransactionController->transactionEnd(
-              TRANSACTION_REQUESTOR(enableDiscovery));
-
-          if (!pTransactionController->transactionAttempt(
-                  TRANSACTION_REQUESTOR(etsiReader))) {
-            LOG(ERROR) << StringPrintf("%s: transaction attempt failed",
-                                       __FUNCTION__);
-          }
-          goto TheEnd;
-        }
-    #endif*/
 
     if (technologies_mask == -1 && nat)
       tech_mask = (tNFA_TECHNOLOGY_MASK)nat->tech_mask;
@@ -3127,39 +3055,6 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
     }
 #endif
     pn544InteropAbortNow();
-    /*#if (NXP_EXTNS == TRUE)
-        if (nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
-          if (MposManager::getInstance().getEtsiReaederState() ==
-              STATE_SE_RDR_MODE_START_IN_PROGRESS) {
-            Rdr_req_ntf_info_t mSwp_info =
-                MposManager::getInstance().getSwpRrdReqInfo();
-            //        if(android::isDiscoveryStarted() == true)
-            android::startRfDiscovery(false);
-            PeerToPeer::getInstance().enableP2pListening(false);
-            {
-              if (mSwp_info.swp_rd_req_info.src == 0x4C0) {
-                SyncEventGuard
-    guard(SecureElement::getInstance().mEseListenEvent); status =
-    NFA_CeConfigureEseListenTech(handle, 0x00); if (status == NFA_STATUS_OK)
-                  SecureElement::getInstance().mEseListenEvent.wait();
-              } else {
-                SyncEventGuard
-    guard(SecureElement::getInstance().mUiccListenEvent); status =
-    NFA_CeConfigureUiccListenTech(handle, 0x00); if (status == NFA_STATUS_OK)
-                  SecureElement::getInstance().mUiccListenEvent.wait();
-              }
-              if (status != NFA_STATUS_OK) {
-                LOG(ERROR) << StringPrintf("fail to reset UICC/eSE listen");
-              }
-            }
-            goto TheEnd;
-          } else if (MposManager::getInstance().getEtsiReaederState() ==
-                     STATE_SE_RDR_MODE_STOP_IN_PROGRESS) {
-            android::startRfDiscovery(false);
-            goto TheEnd;
-          }
-        }
-    #endif*/
 
     if (sDiscoveryEnabled == false) {
       DLOG_IF(INFO, nfc_debug_enabled)
@@ -4742,13 +4637,6 @@ static void restartUiccListen(jint uiccSlot) {
     status = isStart ? NFA_StartRfDiscovery() : NFA_StopRfDiscovery();
     if (status == NFA_STATUS_OK) {
       if (gGeneralPowershutDown == NFC_MODE_OFF) sDiscCmdwhleNfcOff = true;
-      /*se_rd_req_state_t state =
-          MposManager::getInstance().getEtsiReaederState();
-      if (state == STATE_SE_RDR_MODE_STOP_IN_PROGRESS ||
-          state == STATE_SE_RDR_MODE_ACTIVATED) {
-        sNfaEnableDisablePollingEvent
-            .wait();  // wait for NFA_RF_DISCOVERY_xxxx_EVT
-      } else*/
       {
         sNfaEnableDisablePollingEvent.wait(
             NFC_CMD_TIMEOUT);  // wait for NFA_RF_DISCOVERY_xxxx_EVT
@@ -4782,8 +4670,7 @@ static void restartUiccListen(jint uiccSlot) {
   ** Function:        setDiscoveryStartedCfg
   **
   ** Description:     If discovery is started, this function shall be called to
-  *set
-  **                  sRfEnabled flag oterhwise false.
+  **                  set sRfEnabled flag oterhwise false.
   **
   ** Returns:         None
   **

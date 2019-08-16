@@ -318,8 +318,6 @@ public interface DeviceHost {
 
     public void doResonantFrequency(boolean isResonantFreq);
 
-    //void notifyEEReaderEvent(int evt);
-
     void stopPoll(int mode);
 
     void startPoll();

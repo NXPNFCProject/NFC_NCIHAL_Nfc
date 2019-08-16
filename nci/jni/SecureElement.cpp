@@ -213,7 +213,6 @@ SecureElement::SecureElement()
       mCurrentRouteSelection(NoRoute),
       mActualResponseSize(0),
       mAtrInfolen(0),
-      /*mActivatedInListenMode(false),*/
       mAtrStatus(0),
       mUseOberthurWarmReset(false),
       mOberthurWarmResetCommand(3),
@@ -2410,17 +2409,6 @@ void SecureElement::nfaHciCallback(tNFA_HCI_EVT event,
         if (nfcFL.nfcNxpEse) {
           if (eventData->rcvd_evt.evt_len > 0) {
             sSecElem.mTransceiveWaitOk = true;
-            /*if (nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
-              se_rd_req_state_t state =
-                  MposManager::getInstance().getEtsiReaederState();
-              if ((state == STATE_SE_RDR_MODE_STOPPED) ||
-                  (state == STATE_SE_RDR_MODE_STOP_CONFIG)) {
-                sSecElem.NfccStandByOperation(STANDBY_TIMER_START);
-              } else {
-                DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-                    "ETSI in progress, do not start standby timer");
-              }
-            } else*/
             {
               sSecElem.NfccStandByOperation(STANDBY_TIMER_START);
             }
