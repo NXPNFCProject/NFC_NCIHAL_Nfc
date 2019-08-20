@@ -77,6 +77,7 @@ NfcTag::NfcTag()
       mTechListIndex (0),
       mIsMultiProtocolTag(false),
       mCashbeeDetected(false),
+      mCurrentRequestedProtocol(NFC_PROTOCOL_UNKNOWN),
 #endif
       mTechnologyTimeoutsTable(MAX_NUM_TECHNOLOGY),
       mNativeData(NULL),

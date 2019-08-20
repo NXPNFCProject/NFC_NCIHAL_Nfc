@@ -81,6 +81,7 @@ class NfcTag {
   int mPrevTechLibNfcTypes [MAX_NUM_TECHNOLOGY]; //array of detailed tag types according to NFC service
   bool mIsMultiProtocolTag;
   bool mCashbeeDetected;
+  int  mCurrentRequestedProtocol;
 #endif
 
   /*******************************************************************************

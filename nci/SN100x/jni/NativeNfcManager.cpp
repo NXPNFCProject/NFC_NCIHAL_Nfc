@@ -122,6 +122,7 @@ int nfcManager_doPartialDeInitialize(JNIEnv* e, jobject o);
 extern tNFA_STATUS NxpNfc_Write_Cmd_Common(uint8_t retlen, uint8_t* buffer);
 extern void NxpPropCmd_OnResponseCallback(uint8_t event, uint16_t param_len,
                                             uint8_t * p_param);
+extern void nativeNfcTag_checkActivatedProtoParameters(tNFA_ACTIVATED& activationData);
 extern tNFA_STATUS NxpPropCmd_send(uint8_t * pData4Tx, uint8_t dataLen,
                                    uint8_t * rsp_len, uint8_t * rsp_buf,
                                    uint32_t rspTimeout, tHAL_NFC_ENTRY * halMgr);
@@ -536,6 +537,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
       NfcTag::getInstance().setActivationState();
       if (gIsSelectingRfInterface) {
         nativeNfcTag_doConnectStatus(true);
+        nativeNfcTag_checkActivatedProtoParameters(eventData->activated);
         break;
       }
 
@@ -618,8 +620,15 @@ static void nfaConnectionCallback(uint8_t connEvent,
         NfcTag::getInstance ().mTechListIndex =0;
 #endif
         nativeNfcTag_resetPresenceCheck();
+#if (NXP_EXTNS == TRUE)
+        if (gIsSelectingRfInterface == false) {
+          NfcTag::getInstance().connectionEventHandler(connEvent, eventData);
+          nativeNfcTag_abortWaits();
+        }
+#else
         NfcTag::getInstance().connectionEventHandler(connEvent, eventData);
         nativeNfcTag_abortWaits();
+#endif
         NfcTag::getInstance().abort();
 #if (NXP_EXTNS == TRUE)
         NfcTag::getInstance().mIsMultiProtocolTag = false;
