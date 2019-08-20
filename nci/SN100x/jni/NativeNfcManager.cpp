@@ -307,7 +307,7 @@ static int NFA_SCREEN_POLLING_TAG_MASK = 0x10;
 static bool gIsDtaEnabled = false;
 #if (NXP_EXTNS==TRUE)
 
-static bool gsNfaPartialEnabled = false;
+bool gsNfaPartialEnabled = false;
 #endif
 #if (NXP_EXTNS==TRUE)
 static int prevScreenState = NFA_SCREEN_STATE_UNKNOWN;
@@ -2590,7 +2590,6 @@ int nfcManager_doPartialInitialize(JNIEnv* e, jobject o) {
     if (sIsNfaEnabled)
     {
         gsNfaPartialEnabled = true;
-        sIsNfaEnabled = false;
     }
     else
     {
@@ -3245,7 +3244,6 @@ void doStartupConfig() {
 **
 *******************************************************************************/
 bool nfcManager_isNfcActive() { return sIsNfaEnabled; }
-
 /*******************************************************************************
 **
 ** Function:        startStopPolling

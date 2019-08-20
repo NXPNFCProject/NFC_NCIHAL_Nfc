@@ -63,7 +63,26 @@ NfcSelfTest::~NfcSelfTest() {}
  ** @return NfcSeManager object.
  *******************************************************************************/
 NfcSelfTest& NfcSelfTest::GetInstance() { return sSelfTestMgr; }
+/*******************************************************************************
+ ** Executes: Perform Prbs
+ ** @param  on denotes
+ **         TRUE  - prbs start()
+ **         FALSE - prbs stop()
+ ** @return status SUCCESS or FAILED.
+ *******************************************************************************/
+tNFA_STATUS NfcSelfTest::PerformPrbs(bool on) {
+  tNFA_STATUS status = NFA_STATUS_FAILED;
+  uint8_t startPrbs[] = {CMD_TYPE_PRBS_ON};
+  uint8_t stopPrbs[] = {CMD_TYPE_CORE_RESET, CMD_TYPE_CORE_INIT,
+                        CMD_TYPE_NXP_PROP_EXT};
 
+  if (on)
+    status = executeCmdSeq(startPrbs, sizeof(startPrbs));
+  else
+    status = executeCmdSeq(stopPrbs, sizeof(stopPrbs));
+
+  return status;
+}
 /*******************************************************************************
  ** Function:        NxpResponse_SelfTest_Cb
  **
@@ -240,6 +259,15 @@ uint8_t NfcSelfTest::GetCmdBuffer(uint8_t* aCmdBuf, uint8_t aType) {
       memcpy(aCmdBuf, CMD_CORE_GET_CONFIG_RFTXCFG5, cmdLen);
       break;
     }
+    case CMD_TYPE_PRBS_ON: {
+      uint8_t CMD_EXTN_PRBS_START[] = {0x2F, 0x30, 0x06, 0x00, 0x00,
+                                       0xFF, 0xFF, 0x01, 0xFF};
+      CMD_EXTN_PRBS_START[5] = gselfTestData.prbsTech;  // TECH
+      CMD_EXTN_PRBS_START[6] = gselfTestData.prbsRate;  // BITRATE
+      cmdLen = sizeof(CMD_EXTN_PRBS_START);
+      memcpy(aCmdBuf, CMD_EXTN_PRBS_START, cmdLen);
+      break;
+    }
     default:
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Command not supported");
       break;
@@ -275,6 +303,12 @@ tNFA_STATUS NfcSelfTest::doNfccSelfTest(int aType) {
       break;
     case TEST_TYPE_TRANSAC_B:
       status = PerformTransacAB(TEST_TYPE_TRANSAC_B);
+      break;
+    case TEST_TYPE_PRBS_ON:
+      status = PerformPrbs(true);
+      break;
+    case TEST_TYPE_PRBS_OFF:
+      status = PerformPrbs(false);
       break;
     default:
       DLOG_IF(ERROR, nfc_debug_enabled)

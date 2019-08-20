@@ -66,7 +66,8 @@ enum NFCSELFTESTCMDTYPE {
   CMD_TYPE_NFCC_DISC_MAP,
   CMD_TYPE_NFCC_DEACTIVATE,
   CMD_TYPE_RF_ON,
-  CMD_TYPE_RF_OFF
+  CMD_TYPE_RF_OFF,
+  CMD_TYPE_PRBS_ON,
 };
 
 enum NFCCSELFTESTTYPE {
@@ -76,6 +77,8 @@ enum NFCCSELFTESTTYPE {
   TEST_TYPE_RF_OFF,
   TEST_TYPE_TRANSAC_A,
   TEST_TYPE_TRANSAC_B,
+  TEST_TYPE_PRBS_ON,
+  TEST_TYPE_PRBS_OFF,
   TEST_TYPE_NONE = 0xFF
 };
 
@@ -89,6 +92,8 @@ typedef struct nxp_selftest_data {
   bool isStored;
   bool copyData;
   bool fSetResFreq;
+  uint8_t prbsTech;
+  uint8_t prbsRate;
   tNFA_STATUS wstatus;
 } nxp_selftest_data;
 
@@ -181,7 +186,14 @@ class NfcSelfTest {
    * @return status SUCCESS or FAILED.
    */
   tNFA_STATUS PerformResonantFreq(bool on);
-
+  /*******************************************************************************
+   ** Executes: Perform Prbs
+   ** @param  on denotes
+   **         TRUE  - prbs start()
+   **         FALSE - prbs stop()
+   ** @return status SUCCESS or FAILED.
+   *******************************************************************************/
+  tNFA_STATUS PerformPrbs(bool on);
   /**
    * Provides the command buffer for the given command type
    * @param CmdBuf- for the given command type
