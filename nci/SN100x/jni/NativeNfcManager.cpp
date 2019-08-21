@@ -246,6 +246,14 @@ typedef enum dual_uicc_error_states {
   DUAL_UICC_ERROR_INVALID_SLOT,
   DUAL_UICC_ERROR_STATUS_UNKNOWN
 } dual_uicc_error_state_t;
+
+typedef enum {
+  FDSTATUS_SUCCESS = 0,
+  FDSTATUS_ERROR_NFC_IS_OFF,
+  FDSTATUS_ERROR_NFC_BUSY_IN_MPOS,
+  FDSTATUS_ERROR_UNKNOWN
+} field_detect_status_t;
+
 #endif
 
 static void nfaConnectionCallback(uint8_t event, tNFA_CONN_EVT_DATA* eventData);
@@ -281,6 +289,9 @@ static int nfcManager_doSelectUicc(JNIEnv* e, jobject o, jint uiccSlot);
 static int nfcManager_doGetSelectedUicc(JNIEnv* e, jobject o);
 static int nfcManager_staticDualUicc_Precondition(int uiccSlot);
 static int nfcManager_setPreferredSimSlot(JNIEnv* e, jobject o, jint uiccSlot);
+static field_detect_status_t nfcManager_SetFieldDetectMode(JNIEnv*, jobject,
+                                                           jboolean mode);
+static jboolean nfcManager_IsFieldDetectEnabled(JNIEnv*, jobject);
 #endif
 static uint16_t sCurrentConfigLen;
 static uint8_t sConfig[256];
@@ -1995,6 +2006,8 @@ static jboolean nfcManager_doDeinitialize(JNIEnv*, jobject) {
     sNfaEnableDisablePollingEvent.notifyOne();
   }
 #if (NXP_EXTNS == TRUE)
+  /*Disable Field Detect Mode if enabled*/
+  if (NFA_IsFieldDetectEnabled()) NFA_SetFieldDetectMode(false);
   SecureElement::getInstance().finalize ();
 #endif
   NfcAdaptation& theInstance = NfcAdaptation::GetInstance();
@@ -2997,6 +3010,8 @@ static JNINativeMethod gMethods[] = {
 
     {"doResonantFrequency", "(Z)V",
               (void *)nfcManager_doResonantFrequency},
+    {"doSetFieldDetectMode", "(Z)I", (void*)nfcManager_SetFieldDetectMode},
+    {"isFieldDetectEnabled", "()Z", (void*)nfcManager_IsFieldDetectEnabled},
 #endif
      {"routeApduPattern", "(II[B[B)Z",
                     (void*) nfcManager_routeApduPattern},
@@ -3916,9 +3931,73 @@ static jint nfcManager_getRemainingAidTableSize (JNIEnv* , jobject )
     }
     return status;
   }
+
+  /*******************************************************************************
+  **
+  ** Function:        nfcManager_SetFieldDetectMode
+  **
+  ** Description:     Updates field detect mode ENABLE/DISABLE
+  **                  e: JVM environment.
+  **                  o: Java object.
+  **
+  ** Returns:         Update status
+  **
+  *******************************************************************************/
+  static field_detect_status_t nfcManager_SetFieldDetectMode(JNIEnv*, jobject,
+                                                             jboolean mode) {
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter", __func__);
+
+    se_rd_req_state_t state = MposManager::getInstance().getEtsiReaederState();
+    if (!sIsNfaEnabled) {
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("%s: Nfc is not Enabled. Returning", __func__);
+      return FDSTATUS_ERROR_NFC_IS_OFF;
+    }
+
+    if ((state != STATE_SE_RDR_MODE_STOPPED) &&
+        (state != STATE_SE_RDR_MODE_INVALID)) {
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("%s: MPOS is ongoing.. Returning", __func__);
+      return FDSTATUS_ERROR_NFC_BUSY_IN_MPOS;
+    }
+
+    if (NFA_IsFieldDetectEnabled() == mode) {
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+          "%s: Already %s", __func__, ((mode) ? "ENABLED" : "DISABLED"));
+      return FDSTATUS_SUCCESS;
+    }
+
+    if (sRfEnabled) {
+      // Stop RF Discovery
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("%s: stop discovery", __func__);
+      startRfDiscovery(false);
+    }
+    NFA_SetFieldDetectMode(mode);
+    // start discovery
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s: reconfigured start discovery", __func__);
+    startRfDiscovery(true);
+    return FDSTATUS_ERROR_UNKNOWN;
+  }
+
+  /*******************************************************************************
+  **
+  ** Function:        nfcManager_IsFieldDetectEnabled
+  **
+  ** Description:     Returns current status of field detect mode
+  **                  e: JVM environment.
+  **                  o: Java object.
+  **
+  ** Returns:         true/false
+  **
+  *******************************************************************************/
+  static jboolean nfcManager_IsFieldDetectEnabled(JNIEnv*, jobject) {
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter", __func__);
+    return NFA_IsFieldDetectEnabled();
+  }
 #endif
-} /* namespace android */
-/* namespace android */
+}/* namespace android */
 /*******************************************************************************
  **
  ** Function:        nfcManager_getUiccId()

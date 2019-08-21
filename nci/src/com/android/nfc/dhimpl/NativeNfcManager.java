@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018 NXP
+*  Copyright 2018-2019 NXP
 *
 ******************************************************************************/
 package com.android.nfc.dhimpl;
@@ -231,6 +231,12 @@ public class NativeNfcManager implements DeviceHost {
 
     @Override
     public native int[] doGetActiveSecureElementList();
+
+    @Override
+    public native int doSetFieldDetectMode(boolean mode);
+
+    @Override
+    public native boolean isFieldDetectEnabled();
 
     public native int doRegisterT3tIdentifier(byte[] t3tIdentifier);
 

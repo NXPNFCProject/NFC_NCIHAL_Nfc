@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018 NXP
+*  Copyright 2018-2019 NXP
 *
 ******************************************************************************/
 package com.android.nfc;
@@ -361,5 +361,6 @@ public interface DeviceHost {
     public int doselectUicc(int uiccSlot);
     public int doGetSelectedUicc();
     public int setPreferredSimSlot(int uiccSlot);
-
+    public int doSetFieldDetectMode(boolean mode);
+    public boolean isFieldDetectEnabled();
 }
