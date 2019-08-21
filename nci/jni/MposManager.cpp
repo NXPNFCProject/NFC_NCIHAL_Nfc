@@ -41,6 +41,7 @@ extern void setDiscoveryStartedCfg(bool isStarted);
 
 MposManager MposManager::mMposMgr;
 bool MposManager::isMposOn = false;
+bool MposManager::isMposEnabled = false;
 jmethodID MposManager::gCachedMposManagerNotifyFail;
 jmethodID MposManager::gCachedMposManagerNotifyStartSuccess;
 jmethodID MposManager::gCachedMposManagerNotifyStopSuccess;
@@ -107,6 +108,9 @@ MposManager& MposManager::getInstance() { return mMposMgr; }
 bool MposManager::initialize(nfc_jni_native_data* native) {
   mNativeData = native;
   isMposOn = false;
+  isMposEnabled = (NfcConfig::getUnsigned(NAME_ETSI_READER_ENABLE, 0) == 1) ? true : false;
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+      "%s:enter, isMposEnabled %d", __FUNCTION__, isMposEnabled);
   return true;
 }
 

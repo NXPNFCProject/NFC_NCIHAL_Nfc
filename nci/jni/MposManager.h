@@ -34,6 +34,7 @@ class MposManager {
   static jmethodID gCachedMposManagerNotifyRemoveCard;
   static jmethodID gCachedMposManagerNotifyStartFail;
   static jmethodID gCachedMposManagerNotifyTimeout;
+  static bool isMposEnabled;
 
   /*******************************************************************************
   **

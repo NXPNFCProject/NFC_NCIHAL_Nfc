@@ -49,7 +49,7 @@ extern void disableRfDiscovery();
 static int nativeNfcMposManage_doMposSetReaderMode(JNIEnv*, jobject, bool on) {
   tNFA_STATUS status = NFA_STATUS_REJECTED;
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:enter", __func__);
-  if (nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
+  if (nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE && MposManager::isMposEnabled) {
     status = MposManager::getInstance().setMposReaderMode(on);
   } else {
     LOG(ERROR) << StringPrintf("%s: ETSI_READER not available. Returning",
@@ -73,7 +73,7 @@ static bool nativeNfcMposManager_doMposGetReaderMode(JNIEnv*, jobject) {
   bool isEnabled = false;
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:enter", __func__);
 
-  if (nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
+  if (nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE && MposManager::isMposEnabled) {
     isEnabled = MposManager::getInstance().getMposReaderMode();
   } else {
     DLOG_IF(INFO, nfc_debug_enabled)
@@ -99,7 +99,7 @@ static bool nativeNfcMposManager_doMposGetReaderMode(JNIEnv*, jobject) {
 static void nativeNfcMposManage_doStopPoll(JNIEnv* e, jobject, int mode) {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
       "%s:enter - %s mode", __func__, covertToString((POWER_MODE)mode));
-  if (nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
+  if (nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE && MposManager::isMposEnabled) {
     switch (mode) {
       case LOW_POWER:
         disableRfDiscovery();
@@ -129,7 +129,7 @@ static void nativeNfcMposManage_doStopPoll(JNIEnv* e, jobject, int mode) {
 *******************************************************************************/
 static void nativeNfcMposManage_doStartPoll(JNIEnv*, jobject) {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:enter", __func__);
-  if (nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE) {
+  if (nfcFL.nfcNxpEse && nfcFL.eseFL._ESE_ETSI_READER_ENABLE && MposManager::isMposEnabled) {
     enableRfDiscovery();
   } else {
     LOG(ERROR) << StringPrintf("%s: ETSI_READER not available. Returning",
