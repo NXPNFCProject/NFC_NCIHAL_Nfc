@@ -21,7 +21,7 @@
 #include "nfa_api.h"
 #define t4tNfcEe (NativeT4tNfcee::getInstance())
 
-typedef enum { OP_READ = 0, OP_WRITE } T4TNFCEE_OPERATIONS_t;
+typedef enum { OP_READ = 0, OP_WRITE, OP_LOCK } T4TNFCEE_OPERATIONS_t;
 
 typedef enum {
   STATUS_SUCCESS = 0,
@@ -33,7 +33,8 @@ typedef enum {
   ERROR_INVALID_LENGTH = -6,
   ERROR_CONNECTION_FAILED = -7,
   ERROR_EMPTY_PAYLOAD = -8,
-  ERROR_NDEF_VALIDATION_FAILED = -9
+  ERROR_NDEF_VALIDATION_FAILED = -9,
+  ERROR_WRITE_PERMISSION = -10
 } T4TNFCEE_STATUS_t;
 
 class NativeT4tNfcee {
@@ -100,7 +101,47 @@ class NativeT4tNfcee {
    **
    *******************************************************************************/
   void t4tWriteComplete(tNFA_STATUS status, tNFA_RX_DATA data);
-
+  /*******************************************************************************
+  **
+  ** Function:        doLockT4tData
+  **
+  ** Description:     Lock/Unlock the data in the T4T NDEF file.
+  **
+  ** Parameter:       boolean lock : True(lock) or False(unlock)
+  **
+  ** Returns:         boolean : Return the Success or fail of the operation.
+  **                  Return "True" when operation is successful. else "False"
+  **
+  *******************************************************************************/
+  bool doLockT4tData(JNIEnv* e, jobject o, bool lock);
+  /*******************************************************************************
+  **
+  ** Function:        isLockedT4tData
+  **
+  ** Description:     Check Lock status of the T4T NDEF file.
+  **
+  ** Parameter:       NULL
+  **
+  ** Returns:         Return T4T NDEF lock status.
+  **                  Return "True" when T4T data is locked (un-writable).
+  **                  Otherwise, "False" shall be returned.
+  **
+  *******************************************************************************/
+  bool isLockedT4tData(JNIEnv* e, jobject o);
+  /*******************************************************************************
+  **
+  ** Function:        isNdefWritePermission
+  **
+  ** Description:     Read from config file for write permission
+  **
+  ** Parameter:       NULL
+  **
+  ** Returns:         Return T4T NDEF write permission status.
+  **                  Return "True" when T4T write permission allow to change.
+  **                  Otherwise, "False" shall be returned.
+  **
+  *******************************************************************************/
+  bool isNdefWritePermission();
   /*******************************************************************************
    **
    ** Function:        isT4tNfceeBusy
@@ -125,6 +166,14 @@ class NativeT4tNfcee {
 
  private:
   bool mBusy;
+  static const int NXP_NFC_PARAM_ID_T4T_NFCEE = 0x95;
+  static const int NXP_PARAM_LEN_T4T_NFCEE = 0x01;
+  static const int MASK_T4T_FEATURE_BIT = 1;
+  static const int MASK_LOCK_BIT = 6;
+  static const int MASK_PROP_NDEF_FILE_BIT = 7;
+  static const int MAX_CONFIG_VALUE_LEN = 0x16;
+  static const int NXP_PARAM_GET_CONFIG_INDEX = 4;
+  static const int NXP_PARAM_SET_CONFIG_INDEX = 7;
   static NativeT4tNfcee sNativeT4tNfceeInstance;
   SyncEvent mT4tNfcEeRWEvent;
   SyncEvent mT4tNfcEeWriteEvent;

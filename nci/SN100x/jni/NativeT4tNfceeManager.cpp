@@ -24,6 +24,7 @@
 #include "NfcJniUtil.h"
 extern bool nfc_debug_enabled;
 using android::base::StringPrintf;
+
 namespace android {
 /*******************************************************************************
  **
@@ -59,7 +60,37 @@ jbyteArray t4tNfceeManager_doReadT4tData(JNIEnv* e, jobject o,
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
   return t4tNfcEe.t4tReadData(e, o, fileId);
 }
-
+/*******************************************************************************
+**
+** Function:        t4tNfceeManager_doLockT4tData
+**
+** Description:     Lock/Unlock the data in the T4T NDEF file.
+**
+** Parameter:       boolean lock : True(lock) or False(unlock)
+**
+** Returns:         boolean : Return the Success or fail of the operation.
+**                  Return "True" when operation is successful. else "False"
+**
+*******************************************************************************/
+jboolean t4tNfceeManager_doLockT4tData(JNIEnv* e, jobject o, jboolean lock) {
+  return t4tNfcEe.doLockT4tData(e, o, lock);
+}
+/*******************************************************************************
+**
+** Function:        t4tNfceeManager_doLockT4tData
+**
+** Description:     Check Lock status of the T4T NDEF file.
+**
+** Parameter:       NULL
+**
+** Returns:         Return T4T NDEF lock status.
+**                  Return "True" when T4T data is locked (un-writable).
+**                  Otherwise, "False" shall be returned.
+**
+*******************************************************************************/
+jboolean t4tNfceeManager_isLockedT4tData(JNIEnv* e, jobject o) {
+  return t4tNfcEe.isLockedT4tData(e, o);
+}
 /*****************************************************************************
  **
  ** Description:     JNI functions
@@ -68,6 +99,8 @@ jbyteArray t4tNfceeManager_doReadT4tData(JNIEnv* e, jobject o,
 static JNINativeMethod gMethods[] = {
     {"doWriteT4tData", "([B[BI)I", (void*)t4tNfceeManager_doWriteT4tData},
     {"doReadT4tData", "([B)[B", (void*)t4tNfceeManager_doReadT4tData},
+    {"doLockT4tData", "(Z)Z", (void*)t4tNfceeManager_doLockT4tData},
+    {"isLockedT4tData", "()Z", (void*)t4tNfceeManager_isLockedT4tData},
 };
 
 /*******************************************************************************

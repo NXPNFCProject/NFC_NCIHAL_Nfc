@@ -359,4 +359,6 @@ public interface DeviceHost {
     public boolean isFieldDetectEnabled();
     public int doWriteT4tData(byte[] fileId, byte[] data, int length);
     public byte[] doReadT4tData(byte[] fileId);
+    public boolean doLockT4tData(boolean lock);
+    public boolean isLockedT4tData();
 }

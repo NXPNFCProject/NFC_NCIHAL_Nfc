@@ -24,6 +24,7 @@
 #include "NfcJniUtil.h"
 #include "nfa_nfcee_api.h"
 #include "nfa_nfcee_int.h"
+#include "nfc_config.h"
 
 using android::base::StringPrintf;
 extern bool nfc_debug_enabled;
@@ -38,6 +39,9 @@ namespace android {
 extern bool isDiscoveryStarted();
 extern void startRfDiscovery(bool isStart);
 extern bool nfcManager_isNfcActive();
+extern tNFA_STATUS getConfig(uint16_t* len, uint8_t* configValue,
+                             uint8_t numParam, tNFA_PMID* param);
+extern tNFA_STATUS NxpNfc_Write_Cmd_Common(uint8_t retlen, uint8_t* buffer);
 }  // namespace android
 
 NativeT4tNfcee NativeT4tNfcee::sNativeT4tNfceeInstance;
@@ -324,6 +328,10 @@ T4TNFCEE_STATUS_t NativeT4tNfcee::validatePreCondition(T4TNFCEE_OPERATIONS_t op,
         t4tNfceeStatus = ERROR_EMPTY_PAYLOAD;
       }
       break;
+    case OP_LOCK:
+      if (t4tNfceeStatus != STATUS_SUCCESS) break;
+      if (!isNdefWritePermission()) t4tNfceeStatus = ERROR_WRITE_PERMISSION;
+      break;
     default:
       break;
   }
@@ -415,7 +423,161 @@ void NativeT4tNfcee::eventHandler(uint8_t event,
       break;
   }
 }
+/*******************************************************************************
+**
+** Function:        doLockT4tData
+**
+** Description:     Lock/Unlock the data in the T4T NDEF file.
+**
+** Parameter:       boolean lock : True(lock) or False(unlock)
+**
+** Returns:         boolean : Return the Success or fail of the operation.
+**                  Return "True" when operation is successful. else "False"
+**
+*******************************************************************************/
+bool NativeT4tNfcee::doLockT4tData(JNIEnv* e, jobject o, bool lock) {
+  DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("%s: enter %d", __func__, lock);
 
+  uint8_t ndef_fileId[] = {0xE1, 0x04};
+  jbyteArray fileIdArray = e->NewByteArray(2);
+  e->SetByteArrayRegion(fileIdArray, 0, 2, (jbyte*)ndef_fileId);
+
+  T4TNFCEE_STATUS_t t4tNfceeStatus = validatePreCondition(OP_LOCK, fileIdArray);
+  if (t4tNfceeStatus != STATUS_SUCCESS) return false;
+
+  tNFA_STATUS status = NFA_STATUS_FAILED;
+  tNFA_PMID t4tNfcEeNdef[] = {NXP_NFC_SET_CONFIG_PARAM_EXT,
+                              NXP_NFC_PARAM_ID_T4T_NFCEE};
+  uint8_t set_config[] = {0x20,
+                          0x02,
+                          0x05,
+                          0x01,
+                          NXP_NFC_SET_CONFIG_PARAM_EXT,
+                          NXP_NFC_PARAM_ID_T4T_NFCEE,
+                          NXP_PARAM_LEN_T4T_NFCEE,
+                          0xFF};
+
+  uint16_t rspLen = 0;
+  uint8_t configValue[MAX_CONFIG_VALUE_LEN] = {}, ndefFileValue = 0;
+
+  memset(&configValue, 0x00, sizeof(configValue));
+
+  status = android::getConfig(&rspLen, configValue, NXP_PARAM_LEN_T4T_NFCEE,
+                              t4tNfcEeNdef);
+  if (rspLen > 0) ndefFileValue = *(configValue + NXP_PARAM_GET_CONFIG_INDEX);
+
+  if ((status != NFA_STATUS_OK) || !(ndefFileValue & MASK_T4T_FEATURE_BIT) ||
+      (ndefFileValue == 0)) {
+    return false;
+  }
+
+  if (android::isDiscoveryStarted()) {
+    android::startRfDiscovery(false);
+  }
+
+  if (lock) {
+    if (ndefFileValue & (1 << MASK_LOCK_BIT)) {
+      /* Lock bit is already set in NFCC */
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("%s: Lock bit is already set", __func__);
+    } else {
+      /* Enable lock bit */
+      ndefFileValue |= (1 << MASK_LOCK_BIT);
+      *(set_config + NXP_PARAM_SET_CONFIG_INDEX) = ndefFileValue;
+      status = android::NxpNfc_Write_Cmd_Common(sizeof(set_config), set_config);
+    }
+  } else {
+    /*Disable the lock bit*/
+    if (!(ndefFileValue & (1 << MASK_LOCK_BIT))) {
+      /* Lock bit is already disable in NFCC */
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("%s: Lock bit is already disable", __func__);
+    } else {
+      /* Disable lock bit */
+      ndefFileValue &= ~(1 << MASK_LOCK_BIT);
+      *(set_config + NXP_PARAM_SET_CONFIG_INDEX) = ndefFileValue;
+      status = android::NxpNfc_Write_Cmd_Common(sizeof(set_config), set_config);
+    }
+  }
+  if (!android::isDiscoveryStarted()) android::startRfDiscovery(true);
+  if (status != NFA_STATUS_OK) return false;
+
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Exit", __func__);
+  return true;
+}
+/*******************************************************************************
+**
+** Function:        isLockedT4tData
+**
+** Description:     Check Lock status of the T4T NDEF file.
+**
+** Parameter:       NULL
+**
+** Returns:         Return T4T NDEF lock status.
+**                  Return "True" when T4T data is locked (un-writable).
+**                  Otherwise, "False" shall be returned.
+**
+*******************************************************************************/
+bool NativeT4tNfcee::isLockedT4tData(JNIEnv* e, jobject o) {
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+
+  uint8_t ndef_fileId[] = {0xE1, 0x04};
+  jbyteArray fileIdArray = e->NewByteArray(2);
+  e->SetByteArrayRegion(fileIdArray, 0, 2, (jbyte*)ndef_fileId);
+
+  T4TNFCEE_STATUS_t t4tNfceeStatus = validatePreCondition(OP_LOCK, fileIdArray);
+  if (t4tNfceeStatus != STATUS_SUCCESS) return false;
+
+  tNFA_STATUS status = NFA_STATUS_FAILED;
+  tNFA_PMID t4tNfcEeNdef[] = {NXP_NFC_SET_CONFIG_PARAM_EXT,
+                              NXP_NFC_PARAM_ID_T4T_NFCEE};
+  uint16_t rspLen = 0;
+  uint8_t configValue[MAX_CONFIG_VALUE_LEN] = {}, ndefFileValue = 0;
+
+  memset(&configValue, 0x00, sizeof(configValue));
+
+  status = android::getConfig(&rspLen, configValue, NXP_PARAM_LEN_T4T_NFCEE,
+                              t4tNfcEeNdef);
+  if (rspLen > 0) ndefFileValue = *(configValue + NXP_PARAM_GET_CONFIG_INDEX);
+
+  if ((status != NFA_STATUS_OK) || !(ndefFileValue & MASK_T4T_FEATURE_BIT) ||
+      (ndefFileValue == 0)) {
+    return false;
+  }
+
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Exit", __func__);
+
+  return (((ndefFileValue & (1 << MASK_LOCK_BIT))!=0)?true:false);
+}
+/*******************************************************************************
+**
+** Function:        isNdefWritePermission
+**
+** Description:     Read from config file for write permission
+**
+** Parameter:       NULL
+**
+** Returns:         Return T4T NDEF write permission status.
+**                  Return "True" when T4T write permission allow to change.
+**                  Otherwise, "False" shall be returned.
+**
+*******************************************************************************/
+bool NativeT4tNfcee::isNdefWritePermission() {
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+  unsigned long num = 0x00;
+  bool isNdefWriteAccess = false;
+  if (NfcConfig::hasKey(NAME_NXP_T4T_NFCEE_ENABLE))
+    num = NfcConfig::getUnsigned(NAME_NXP_T4T_NFCEE_ENABLE);
+
+  if ((num & MASK_T4T_FEATURE_BIT) && (num & (1 << MASK_LOCK_BIT)) &&
+      (num & (1 << MASK_PROP_NDEF_FILE_BIT)))
+    isNdefWriteAccess = true;
+
+  DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("%s: Exit 0x%lx", __func__, num);
+  return isNdefWriteAccess;
+}
 /*******************************************************************************
  **
  ** Function:        isT4tNfceeBusy
