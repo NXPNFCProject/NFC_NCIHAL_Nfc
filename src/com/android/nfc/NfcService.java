@@ -1591,7 +1591,7 @@ public class NfcService implements DeviceHostListener {
                             ((routeLoc & 0x07) == 0x01) ? (0x01 << ROUTE_LOC_MASK) : /*eSE*/
                             0x00;
           protoRouteEntry |=
-              ((fullPower ? (mDeviceHost.getDefaultDesfirePowerState() & 0x1F) | 0x01 : 0)
+              ((fullPower ? (mDeviceHost.getDefaultDesfirePowerState() & 0x39) | 0x01 : 0)
                   | (lowPower ? 0x01 << 1 : 0) | (noPower ? 0x01 << 2 : 0));
 
           if (routeLoc == 0x00) {
@@ -1624,7 +1624,7 @@ public class NfcService implements DeviceHostListener {
                             ((routeLoc & 0x07) == 0x01) ? (0x01 << ROUTE_LOC_MASK) : /*eSE*/
                             0x00;
           techRouteEntry |=
-              ((fullPower ? (mDeviceHost.getDefaultMifareCLTPowerState() & 0x1F) | 0x01 : 0)
+              ((fullPower ? (mDeviceHost.getDefaultMifareCLTPowerState() & 0x39) | 0x01 : 0)
                   | (lowPower ? 0x01 << 1 : 0) | (noPower ? 0x01 << 2 : 0));
           techRouteEntry |= (TECH_TYPE_A << TECH_TYPE_MASK);
 
@@ -1761,7 +1761,7 @@ public class NfcService implements DeviceHostListener {
                                 ((routeLoc & 0x07) == 0x01) ? (0x01 << ROUTE_LOC_MASK) : /*eSE*/
                                 0x00;
                 protoRouteEntry |=
-                    ((fullPower ? (mDeviceHost.getDefaultAidPowerState() & 0x1F) | 0x01 : 0)
+                    ((fullPower ? (mDeviceHost.getDefaultAidPowerState() & 0x39) | 0x01 : 0)
                         | (lowPower ? 0x01 << 1 : 0) | (noPower ? 0x01 << 2 : 0));
 
                 if(routeLoc == 0x00) {
