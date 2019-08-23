@@ -985,6 +985,8 @@ public class NfcService implements DeviceHostListener {
             } finally {
                 watchDog.cancel();
             }
+            int mDefaultRoute = GetDefaultRouteLoc();
+            setDefaultAidRouteLoc(mDefaultRoute);
             int uiccSlot = 0;
             uiccSlot = mPrefs.getInt(PREF_CUR_SELECTED_UICC_ID, SECURE_ELEMENT_UICC_SLOT_DEFAULT);
             mDeviceHost.setPreferredSimSlot(uiccSlot);
