@@ -114,13 +114,16 @@ jint NativeT4tNfcee::t4tWriteData(JNIEnv* e, jobject object, jbyteArray fileId,
       if (mT4tNfcEeRWEvent.wait(T4TNFCEE_TIMEOUT) == false)
         t4tWriteReturn = STATUS_FAILED;
       else {
-        if (mWriteStatus == NFA_STATUS_OK) {
+        if (mT4tOpStatus == NFA_STATUS_OK) {
           /*if status is success then return length of data written*/
           t4tWriteReturn = mReadData.len;
-        } else if (mWriteStatus == NFA_STATUS_REJECTED) {
+        } else if (mT4tOpStatus == NFA_STATUS_REJECTED) {
           t4tWriteReturn = ERROR_NDEF_VALIDATION_FAILED;
-        } else
+        } else if (mT4tOpStatus == NFA_T4T_STATUS_INVALID_FILE_ID){
+          t4tWriteReturn = ERROR_INVALID_FILE_ID;
+        } else {
           t4tWriteReturn = STATUS_FAILED;
+        }
       }
     }
   }
@@ -191,7 +194,7 @@ jbyteArray NativeT4tNfcee::t4tReadData(JNIEnv* e, jobject object,
                __func__);
     }
     sRxDataBuffer.clear();
-  } else {
+  } else if (mT4tOpStatus == NFA_T4T_STATUS_INVALID_FILE_ID){
     char data[1] = {0xFF};
     result.reset(e->NewByteArray(0x01));
     e->SetByteArrayRegion(result.get(), 0, 0x01, (jbyte*)data);
@@ -356,7 +359,7 @@ T4TNFCEE_STATUS_t NativeT4tNfcee::validatePreCondition(T4TNFCEE_OPERATIONS_t op,
 **
 *******************************************************************************/
 void NativeT4tNfcee::t4tReadComplete(tNFA_STATUS status, tNFA_RX_DATA data) {
-
+  mT4tOpStatus = status;
   if (status == NFA_STATUS_OK) {
     if(data.len > 0) {
       sRxDataBuffer.append(data.p_data, data.len);
@@ -381,7 +384,7 @@ void NativeT4tNfcee::t4tWriteComplete(tNFA_STATUS status, tNFA_RX_DATA data) {
   mReadData.len = 0x00;
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter", __func__);
   if (status == NFA_STATUS_OK) mReadData.len = data.len;
-  mWriteStatus = status;
+  mT4tOpStatus = status;
   SyncEventGuard g(mT4tNfcEeRWEvent);
   mT4tNfcEeRWEvent.notifyOne();
 }

@@ -179,7 +179,7 @@ class NativeT4tNfcee {
   SyncEvent mT4tNfcEeWriteEvent;
   SyncEvent mT4tNfcEeEvent;
   tNFA_RX_DATA mReadData;
-  tNFA_STATUS mWriteStatus;
+  tNFA_STATUS mT4tOpStatus;
   tNFA_STATUS mT4tNfcEeEventStat = NFA_STATUS_FAILED;
   std::basic_string<uint8_t> sRxDataBuffer;
   NativeT4tNfcee();
