@@ -1240,9 +1240,12 @@ void RoutingManager::registerProtoRouteEnrty(tNFA_HANDLE     ee_handle,
   {
     SyncEventGuard guard(mRoutingEvent);
     nfaStat = NFA_EeSetDefaultProtoRouting(
-        ee_handle, protocols_switch_on, protocols_switch_off,
-        protocols_battery_off, protocols_screen_lock, protocols_screen_off,
-        protocols_screen_off_lock);
+        ee_handle, protocols_switch_on,
+        mSecureNfcEnabled ? 0 :protocols_switch_off,
+        mSecureNfcEnabled ? 0 :protocols_battery_off,
+        mSecureNfcEnabled ? 0 :protocols_screen_lock,
+        mSecureNfcEnabled ? 0 :protocols_screen_off,
+        mSecureNfcEnabled ? 0 :protocols_screen_off_lock);
     if (nfaStat == NFA_STATUS_OK) {
       mRoutingEvent.wait();
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("tech routing SUCCESS");
