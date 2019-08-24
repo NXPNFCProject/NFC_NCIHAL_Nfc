@@ -19,6 +19,7 @@
 #include "NfcJniUtil.h"
 #include "SyncEvent.h"
 #include "nfa_api.h"
+#include <nativehelper/ScopedLocalRef.h>
 #define t4tNfcEe (NativeT4tNfcee::getInstance())
 
 typedef enum { OP_READ = 0, OP_WRITE, OP_LOCK } T4TNFCEE_OPERATIONS_t;
@@ -163,7 +164,6 @@ class NativeT4tNfcee {
   **
   *******************************************************************************/
   void eventHandler(uint8_t event, tNFA_CONN_EVT_DATA* eventData);
-
  private:
   bool mBusy;
   static const int NXP_NFC_PARAM_ID_T4T_NFCEE = 0x95;
@@ -181,6 +181,7 @@ class NativeT4tNfcee {
   tNFA_RX_DATA mReadData;
   tNFA_STATUS mWriteStatus;
   tNFA_STATUS mT4tNfcEeEventStat = NFA_STATUS_FAILED;
+  std::basic_string<uint8_t> sRxDataBuffer;
   NativeT4tNfcee();
 
   /*******************************************************************************

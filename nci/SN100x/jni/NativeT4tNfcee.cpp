@@ -34,7 +34,6 @@ extern bool nfc_debug_enabled;
 #define FILE_ID_LEN 0x02
 
 extern bool gActivated;
-
 namespace android {
 extern bool isDiscoveryStarted();
 extern void startRfDiscovery(bool isStart);
@@ -154,6 +153,7 @@ jbyteArray NativeT4tNfcee::t4tReadData(JNIEnv* e, jobject object,
   if (t4tNfceeStatus != STATUS_SUCCESS) return NULL;
 
   ScopedByteArrayRO bytes(e, fileId);
+  ScopedLocalRef<jbyteArray> result(e, NULL);
   if (bytes.size() < FILE_ID_LEN) {
     DLOG_IF(ERROR, nfc_debug_enabled)
         << StringPrintf("%s:Wrong File Id", __func__);
@@ -167,6 +167,7 @@ jbyteArray NativeT4tNfcee::t4tReadData(JNIEnv* e, jobject object,
 
   { /*syncEvent code section*/
     SyncEventGuard g(mT4tNfcEeRWEvent);
+    sRxDataBuffer.clear();
     status = NFA_T4tNfcEeRead(pFileId);
     if ((status != NFA_STATUS_OK) ||
         (mT4tNfcEeRWEvent.wait(T4TNFCEE_TIMEOUT) == false)) {
@@ -177,20 +178,27 @@ jbyteArray NativeT4tNfcee::t4tReadData(JNIEnv* e, jobject object,
     }
   }
 
-  jbyteArray buf = NULL;
-  if (mReadData.len > 0x00) {
-    /*. Set JNI variables for sending response to application*/
-    buf = e->NewByteArray(mReadData.len);
-    e->SetByteArrayRegion(buf, 0, mReadData.len, (jbyte*)mReadData.p_data);
-    if (mReadData.p_data != nullptr) free(mReadData.p_data);
+  if (sRxDataBuffer.size() > 0) {
+    result.reset(e->NewByteArray(sRxDataBuffer.size()));
+    if (result.get() != NULL) {
+      e->SetByteArrayRegion(result.get(), 0, sRxDataBuffer.size(),
+            (const jbyte*)sRxDataBuffer.data());
+    } else {
+      char data[1] = {0xFF};
+      result.reset(e->NewByteArray(0x01));
+      e->SetByteArrayRegion(result.get(), 0, 0x01, (jbyte*)data);
+      LOG(ERROR) << StringPrintf("%s: Failed to allocate java byte array",
+               __func__);
+    }
+    sRxDataBuffer.clear();
   } else {
     char data[1] = {0xFF};
-    buf = e->NewByteArray(0x01);
-    e->SetByteArrayRegion(buf, 0, 0x01, (jbyte*)data);
+    result.reset(e->NewByteArray(0x01));
+    e->SetByteArrayRegion(result.get(), 0, 0x01, (jbyte*)data);
   }
   /*Close connection and start discovery*/
   cleanup();
-  return buf;
+  return result.release();
 }
 
 /*******************************************************************************
@@ -348,17 +356,12 @@ T4TNFCEE_STATUS_t NativeT4tNfcee::validatePreCondition(T4TNFCEE_OPERATIONS_t op,
 **
 *******************************************************************************/
 void NativeT4tNfcee::t4tReadComplete(tNFA_STATUS status, tNFA_RX_DATA data) {
-  mReadData.len = 0x00;
-  if (mReadData.p_data != nullptr) free(mReadData.p_data);
-  mReadData.p_data = nullptr;
 
   if (status == NFA_STATUS_OK) {
-    mReadData.len = data.len;
-    if (mReadData.len > 0) {
-      mReadData.p_data = (uint8_t*)malloc(sizeof(uint8_t) * mReadData.len);
-      memcpy(mReadData.p_data, data.p_data, data.len);
+    if(data.len > 0) {
+      sRxDataBuffer.append(data.p_data, data.len);
       DLOG_IF(INFO, nfc_debug_enabled)
-          << StringPrintf("%s: Read Data len: %d ", __func__, mReadData.len);
+        << StringPrintf("%s: Read Data len new: %d ", __func__, data.len);
     }
   }
   SyncEventGuard g(mT4tNfcEeRWEvent);
