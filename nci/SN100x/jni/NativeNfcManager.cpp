@@ -201,9 +201,6 @@ void doStartupConfig();
 void startStopPolling(bool isStartPolling);
 void startRfDiscovery(bool isStart);
 bool isDiscoveryStarted();
-#if (NXP_EXTNS == TRUE)
-void setDiscoveryStartedCfg(bool isStarted);
-#endif
 }  // namespace android
 
 /*****************************************************************************
@@ -3160,20 +3157,17 @@ void startRfDiscovery(bool isStart) {
 ** Returns:         True if discovery is started
 **
 *******************************************************************************/
-bool isDiscoveryStarted() { return sRfEnabled; }
+bool isDiscoveryStarted() {
 #if(NXP_EXTNS == TRUE)
-/*******************************************************************************
-**
-** Function:        setDiscoveryStartedCfg
-**
-** Description:     If discovery is started, this function shall be called to set
-**                  sRfEnabled flag oterhwise false.
-**
-** Returns:         None
-**
-*******************************************************************************/
-void setDiscoveryStartedCfg(bool isStarted) { sRfEnabled = isStarted; };
+  bool rfEnabled;
+  nativeNfcTag_acquireRfInterfaceMutexLock();
+  rfEnabled = sRfEnabled;
+  nativeNfcTag_releaseRfInterfaceMutexLock();
+  return rfEnabled;
+#else
+  return sRfEnabled;
 #endif
+}
 /*******************************************************************************
 **
 ** Function:        doStartupConfig

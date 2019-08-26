@@ -35,21 +35,14 @@ extern bool nfc_debug_enabled;
 namespace android {
 extern bool isDiscoveryStarted ();
 extern void startRfDiscovery (bool isStart);
-extern void setDiscoveryStartedCfg(bool isStarted);
 }
 tNFA_STATUS EmvCo_dosetPoll(jboolean enable);
 
 
 MposManager MposManager::mMposMgr;
-bool MposManager::isMposOn = false;
-jmethodID MposManager::gCachedMposManagerNotifyFail;
-jmethodID MposManager::gCachedMposManagerNotifyStartSuccess;
-jmethodID MposManager::gCachedMposManagerNotifyStopSuccess;
-jmethodID MposManager::gCachedMposManagerNotifyRestart;
-jmethodID MposManager::gCachedMposManagerNotifyRemoveCard;
-jmethodID MposManager::gCachedMposManagerNotifyStartFail;
-jmethodID MposManager::gCachedMposManagerNotifyTimeout;
-
+bool MposManager::mIsMposOn = false;
+bool MposManager::mStartNfcForumPoll = false;
+jmethodID MposManager::gCachedMposManagerNotifyEvents;
 /*******************************************************************************
 **
 ** Function:        initMposNativeStruct
@@ -63,26 +56,8 @@ void MposManager::initMposNativeStruct(JNIEnv* e, jobject o)
 {
   ScopedLocalRef<jclass> cls(e, e->GetObjectClass(o));
 
-  gCachedMposManagerNotifyFail= e->GetMethodID (cls.get(),
-          "notifyonReaderRequestedFail", "()V");
-
-  gCachedMposManagerNotifyStartSuccess= e->GetMethodID (cls.get(),
-          "notifyonReaderStartSuccess", "()V");
-
-  gCachedMposManagerNotifyStopSuccess= e->GetMethodID (cls.get(),
-          "notifyonReaderStopSuccess", "()V");
-
-  gCachedMposManagerNotifyRestart = e->GetMethodID (cls.get(),
-          "notifyonReaderRestart", "()V");
-
-  gCachedMposManagerNotifyRemoveCard = e->GetMethodID (cls.get(),
-          "notifyonReaderRemoveCard", "()V");
-
-  gCachedMposManagerNotifyStartFail = e->GetMethodID (cls.get(),
-          "notifyonReaderStartFail", "()V");
-
-  gCachedMposManagerNotifyTimeout = e->GetMethodID (cls.get(),
-          "notifyonReaderTimeout", "()V");
+  gCachedMposManagerNotifyEvents= e->GetMethodID (cls.get(),
+          "notifyonMposManagerEvents", "(I)V");
 }
 
 /*******************************************************************************
@@ -110,7 +85,8 @@ MposManager& MposManager::getInstance()
 *******************************************************************************/
 bool MposManager::initialize(nfc_jni_native_data* native) {
   mNativeData = native;
-  isMposOn = false;
+  mIsMposOn = false;
+  mStartNfcForumPoll = false;
   return true;
 }
 
@@ -139,21 +115,22 @@ void MposManager::finalize()
 *******************************************************************************/
 tNFA_STATUS MposManager::setMposReaderMode(bool on) {
   tNFA_STATUS status = NFA_STATUS_OK;
-  bool rfStat = false;
   SecureElement &se = SecureElement::getInstance();
 
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s:enter, Reader Mode %s", __FUNCTION__, on?"ON":"OFF");
 
   if(se.isRfFieldOn() || se.mActivatedInListenMode) {
-    status = NFA_STATUS_BUSY;
     DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf("Payment is in progress,"
             "aborting reader mode start");
-    return status;
+    return NFA_STATUS_BUSY;
   }
-  if(mMposMgr.isMposOn == on) {
+  if(mIsMposOn == on) {
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:Operation is not permitted", __func__);
     return NFA_STATUS_BUSY;
+  }
+  if(on) {
+    mIsMposOn = true;
   }
   if (t4tNfcEe.isT4tNfceeBusy()) {
     mIsMposWaitToStart = true;
@@ -162,33 +139,31 @@ tNFA_STATUS MposManager::setMposReaderMode(bool on) {
     mIsMposWaitToStart = false;
   }
 
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%x, rfStat=%x", on, rfStat);
   {
     tNFA_SCR_CBACK* scr_cback = nullptr;
-    SyncEventGuard guard(mNfaScrApiEvent);
     if(on) {
-      mMposMgr.isMposOn = true;
+      if(isDiscoveryStarted()) startRfDiscovery(false);
       scr_cback = mMposMgr.notifyEEReaderEvent;
-      if(isDiscoveryStarted()) {
-        startRfDiscovery(false);
-      }
-    } else {
-      scr_cback = nullptr;
     }
+
+    SyncEventGuard guard(mNfaScrApiEvent);
     status = NFA_ScrSetReaderMode(on, scr_cback);
     if(NFA_STATUS_OK == status) {
-      DLOG_IF(INFO, nfc_debug_enabled)
-              << StringPrintf("%s: waiting on mNfaScrApiEvent", __func__);
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: waiting on mNfaScrApiEvent", __func__);
       mNfaScrApiEvent.wait();
-      if(on == false) {
-        setDiscoveryStartedCfg(true);
-        mMposMgr.isMposOn = false;
+      if(on == false && mStartNfcForumPoll) {
+        if(!isDiscoveryStarted()) startRfDiscovery(true);
+        mStartNfcForumPoll = false;
+        mIsMposOn = false;
+      }else if(on == true) { /* Clear the flag if Reader Start was requested */
+        mStartNfcForumPoll = false;
       }
     } else {
-        DLOG_IF(INFO, nfc_debug_enabled)
-                << StringPrintf("%s: Failed Status=%d", __func__, status);
+      mIsMposOn = on?false:true;
     }
   }
+
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit Status=%d", __func__, status);
   return status;
 }
 
@@ -217,8 +192,24 @@ bool MposManager::getMposReaderMode(void){
 **
 *******************************************************************************/
 bool MposManager::isMposOngoing(void) {
-  return mMposMgr.isMposOn;
+  return mIsMposOn;
 }
+
+/*******************************************************************************
+**
+** Function:        notifyScrApiEvent
+**
+** Description:     This API shall be called to notify the mNfaScrApiEvent event.
+**
+** Returns:         None
+**
+*******************************************************************************/
+void MposManager::notifyScrApiEvent () {
+  /* unblock the api here */
+  SyncEventGuard guard(mMposMgr.mNfaScrApiEvent);
+  mMposMgr.mNfaScrApiEvent.notifyOne();
+}
+
 /*******************************************************************************
 **
 ** Function:        notifyEEReaderEvent
@@ -232,58 +223,67 @@ void MposManager::notifyEEReaderEvent (uint8_t evt, uint8_t status) {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter; event=%x status=%u",
           __func__, evt, status);
   JNIEnv* e = NULL;
-
   ScopedAttach attach(mMposMgr.mNativeData->vm, &e);
   if (e == NULL) {
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: jni env is null", __FUNCTION__);
     return;
   }
 
+  uint8_t msg = MSG_SCR_INVALID;
   switch (evt) {
   case NFA_SCR_SET_READER_MODE_EVT: {
-    /* unblock the api here */
-    SyncEventGuard guard(mMposMgr.mNfaScrApiEvent);
-    mMposMgr.mNfaScrApiEvent.notifyOne();
+    if(status == NFA_STATUS_OK) {
+      mStartNfcForumPoll = true;
+    }
+    mMposMgr.notifyScrApiEvent();
     break;
   }
   case NFA_SCR_START_SUCCESS_EVT:
-    DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: ETSI_READER_START_SUCCESS", __func__);
-    e->CallVoidMethod(mMposMgr.mNativeData->manager, gCachedMposManagerNotifyStartSuccess);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: ETSI_READER_START_SUCCESS", __func__);
+    msg = MSG_SCR_START_SUCCESS_EVT;
     break;
-  case NFA_SCR_STOP_SUCCESS_EVT:
-    DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: NFA_SCR_STOP_SUCCESS_EVT", __func__);
-    e->CallVoidMethod(mMposMgr.mNativeData->manager, gCachedMposManagerNotifyStopSuccess);
+  case NFA_SCR_START_FAIL_EVT:
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_SCR_START_FAIL_EVT", __func__);
+    msg = MSG_SCR_START_FAIL_EVT;
     break;
   case NFA_SCR_RESTART_EVT:
-    DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: NFA_SCR_RESTART_EVT", __func__);
-    e->CallVoidMethod(mMposMgr.mNativeData->manager, gCachedMposManagerNotifyRestart);
-    break;
-  case NFA_SCR_REMOVE_CARD_EVT:
-    DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: NFA_SCR_REMOVE_CARD_EVT", __func__);
-    e->CallVoidMethod(mMposMgr.mNativeData->manager, gCachedMposManagerNotifyRemoveCard);
-    break;
-  case NFA_SCR_FAIL_EVT:
-    [[fallthrough]];
-  case NFA_SCR_STOP_FAIL_EVT:
-    [[fallthrough]];
-  case NFA_SCR_START_FAIL_EVT:
-    DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: NFA_SCR_START_FAIL_EVT", __func__);
-    e->CallVoidMethod(mMposMgr.mNativeData->manager, gCachedMposManagerNotifyStartFail);
-    break;
-  case NFA_SCR_TIMEOUT_EVT:
-    DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: NFA_SCR_TIMEOUT_EVT", __func__);
-    e->CallVoidMethod(mMposMgr.mNativeData->manager, gCachedMposManagerNotifyTimeout);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_SCR_RESTART_EVT", __func__);
+    msg = MSG_SCR_RESTART_EVT;
     break;
   case NFA_SCR_TARGET_ACTIVATED_EVT:
-    DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: NFA_SCR_TARGET_ACTIVATED_EVT", __func__);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_SCR_TARGET_ACTIVATED_EVT", __func__);
+    msg = MSG_SCR_ACTIVATED_EVT;
     break;
+  case NFA_SCR_STOP_SUCCESS_EVT:
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_SCR_STOP_SUCCESS_EVT", __func__);
+    msg = MSG_SCR_STOP_SUCCESS_EVT;
+    break;
+  case NFA_SCR_STOP_FAIL_EVT:
+    DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("%s: NFA_SCR_STOP_FAIL_EVT", __func__);
+    msg = MSG_SCR_STOP_FAIL_EVT;
+    mMposMgr.notifyScrApiEvent();
+    break;
+  case NFA_SCR_TIMEOUT_EVT:
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_SCR_TIMEOUT_EVT", __func__);
+    msg = MSG_SCR_TIMEOUT_EVT;
+    break;
+  case NFA_SCR_REMOVE_CARD_EVT:
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_SCR_REMOVE_CARD_EVT", __func__);
+    msg = MSG_SCR_REMOVE_CARD_EVT;
+    break;
+  case NFA_SCR_MULTI_TARGET_DETECTED_EVT:
+    DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("%s: NFA_SCR_MULTIPLE_TARGET_DETECTED_EVT", __func__);
+    msg = MSG_SCR_MULTIPLE_TARGET_DETECTED_EVT;
+    break;
+  default:
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Invalid event received", __func__);
+    break;
+  }
+
+  if (msg != MSG_SCR_INVALID) {
+    e->CallVoidMethod(mMposMgr.mNativeData->manager, gCachedMposManagerNotifyEvents,(int)msg);
   }
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
 }

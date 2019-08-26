@@ -251,11 +251,7 @@ tNFA_STATUS NativeT4tNfcee::closeConnection() {
         status = mT4tNfcEeEventStat;
     }
   }
-  if (MposManager::getInstance().mIsMposWaitToStart) {
-    /**Notify MPOS if MPOS is waiting for T4t Operation to complete*/
-    SyncEventGuard g(mT4tNfceeMPOSEvt);
-    mT4tNfceeMPOSEvt.notifyOne();
-  }
+
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: Exit status = 0x%02x", __func__, status);
   return status;
@@ -301,7 +297,14 @@ void NativeT4tNfcee::cleanup(void) {
         << StringPrintf("%s: closeConnection Failed", __func__);
   }
   resetBusy();
-  if (!android::isDiscoveryStarted()) android::startRfDiscovery(true);
+  if (!android::isDiscoveryStarted() && !(MposManager::getInstance().isMposOngoing())) {
+    android::startRfDiscovery(true);
+  }
+  if (MposManager::getInstance().mIsMposWaitToStart) {
+    /**Notify MPOS if MPOS is waiting for T4t Operation to complete*/
+    SyncEventGuard g(mT4tNfceeMPOSEvt);
+    mT4tNfceeMPOSEvt.notifyOne();
+  }
 }
 
 /*******************************************************************************

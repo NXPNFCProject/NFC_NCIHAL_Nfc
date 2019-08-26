@@ -194,9 +194,6 @@ public class NfcService implements DeviceHostListener {
     static final int MSG_APPLY_SCREEN_STATE = 16;
     static final int MSG_TRANSACTION_EVENT = 17;
     static final int MSG_CARD_EMULATION = 21;
-    static final int MSG_SCR_REQUESTED_FAIL =20 ;
-    static final int MSG_SCR_TIMEOUT = 50;
-    static final int MSG_SCR_RESTART = 58;
     static final int MSG_SE_INIT = 59;
     static final int MSG_CLEAR_ROUTING = 62;
     static final int MSG_INIT_WIREDSE = 63;
@@ -205,11 +202,20 @@ public class NfcService implements DeviceHostListener {
     static final int MSG_DEINIT_WIREDSE = 66;
     static final int MSG_READ_T4TNFCEE = 67;
     static final int MSG_WRITE_T4TNFCEE = 68;
-    static final int MSG_SCR_START_SUCCESS = 69;
-    static final int MSG_SCR_START_FAIL = 70;
-    static final int MSG_SCR_STOP_SUCCESS = 71;
-    static final int MSG_SCR_STOP_FAIL = 72;
-    static final int MSG_SCR_REMOVE_CARD = 73;
+
+    // SCR/MPOS constants
+    static final int MSG_SCR_START_SUCCESS            = 70;
+    static final int MSG_SCR_START_FAIL               = 71;
+    static final int MSG_SCR_RESTART                  = 72;
+    static final int MSG_SCR_ACTIVATED                = 73;
+    static final int MSG_SCR_STOP_SUCCESS             = 74;
+    static final int MSG_SCR_STOP_FAIL                = 75;
+    static final int MSG_SCR_TIMEOUT                  = 76;
+    static final int MSG_SCR_REMOVE_CARD              = 77;
+    static final int MSG_SCR_MULTIPLE_TARGET_DETECTED = 78;
+
+
+
 
     // Update stats every 4 hours
     static final long STATS_UPDATE_INTERVAL_MS = 4 * 60 * 60 * 1000;
@@ -569,49 +575,11 @@ public class NfcService implements DeviceHostListener {
         sendMessage(NfcService.MSG_TRANSACTION_EVENT, dataObj);
         StatsLog.write(StatsLog.NFC_CARDEMULATION_OCCURRED, StatsLog.NFC_CARDEMULATION_OCCURRED__CATEGORY__OFFHOST, seName);
     }
-    @Override
-    public void onReaderRequestedFail()
-    {
-        sendMessage(NfcService.MSG_SCR_REQUESTED_FAIL , null);
-    }
-    @Override
-    public void onReaderStartSuccess()
-     {
-        sendMessage(NfcService.MSG_SCR_START_SUCCESS , null);
-     }
-    @Override
-    public void onReaderStartFail()
-     {
-        sendMessage(NfcService.MSG_SCR_START_FAIL , null);
-    }
 
     @Override
-    public void onReaderRestart()
-     {
-        sendMessage(NfcService.MSG_SCR_RESTART , null);
-     }
-
-    public void onReaderStopSuccess()
+    public void onScrNotifyEvents(int event)
     {
-        sendMessage(NfcService.MSG_SCR_STOP_SUCCESS , null);
-     }
-
-    @Override
-    public void onReaderStopFail()
-    {
-        sendMessage(NfcService.MSG_SCR_STOP_FAIL , null);
-    }
-
-    @Override
-    public void onReaderRemoveCard()
-    {
-        sendMessage(NfcService.MSG_SCR_REMOVE_CARD , null);
-    }
-
-    @Override
-    public void onReaderTimeout()
-    {
-        sendMessage(NfcService.MSG_SCR_TIMEOUT, null);
+      sendMessage(event , null);
     }
 
     final class ReaderModeParams {
@@ -3393,90 +3361,6 @@ public class NfcService implements DeviceHostListener {
 
                     mDeviceHost.doSetScreenState(screen_state_mask);
                     break;
-
-                case MSG_SCR_TIMEOUT:
-
-                    Log.d(TAG, "NfcServiceHandler - MSG_SCR_TIMEOUT");
-
-                    /* Send broadcast ordered */
-                    Intent swpReaderTimeoutIntent = new Intent();
-
-                    swpReaderTimeoutIntent
-                            .setAction(NfcConstants.ACTION_NFC_MPOS_READER_MODE_TIMEOUT);
-                    if (DBG) {
-                        Log.d(TAG, "SWP READER - Timeout");
-                    }
-                    mContext.sendBroadcast(swpReaderTimeoutIntent);
-                    break;
-
-                case MSG_SCR_RESTART: {
-                    Log.d(TAG, "NfcServiceHandler - MSG_SWP_READER_RESTART");
-                    /* Send broadcast ordered */
-                    Intent scrRestartIntent = new Intent();
-                    scrRestartIntent
-                            .setAction(NfcConstants.ACTION_NFC_MPOS_READER_MODE_RESTART);
-                    if (DBG) {
-                        Log.d(TAG, "SWP READER - RESTART");
-                    }
-                    mContext.sendBroadcast(scrRestartIntent);
-                    break;
-               }
-               case MSG_SCR_REQUESTED_FAIL: {
-                    Log.d(TAG, "NfcServiceHandler - MSG_SCR_REQUESTED_FAIL");
-                    break;
-               }
-               case MSG_SCR_START_SUCCESS: {
-                    Log.d(TAG, "NfcServiceHandler - MSG_SCR_START_SUCCESS");
-                    /* Send broadcast ordered */
-                    Intent scrStartSuccessIntent = new Intent();
-                    scrStartSuccessIntent
-                            .setAction(NfcConstants.ACTION_NFC_MPOS_READER_MODE_START_SUCCESS);
-                    if (DBG) {
-                        Log.d(TAG, "SWP READER - START SUCCESS");
-                    }
-                    mContext.sendBroadcast(scrStartSuccessIntent);
-                    break;
-                }
-                case MSG_SCR_START_FAIL: {
-                    Log.d(TAG, "NfcServiceHandler - MSG_SCR_START_FAIL");
-                    /* Send broadcast ordered */
-                    Intent scrStartFailIntent = new Intent();
-                    scrStartFailIntent
-                            .setAction(NfcConstants.ACTION_NFC_MPOS_READER_MODE_START_FAIL);
-                    if (DBG) {
-                        Log.d(TAG, "SWP READER - START_FAIL");
-                    }
-                    mContext.sendBroadcast(scrStartFailIntent);
-                    break;
-                }
-                case MSG_SCR_STOP_SUCCESS: {
-                    Log.d(TAG, "NfcServiceHandler - MSG_SCR_STOP_SUCCESS");
-                    /* Send broadcast ordered */
-                    Intent swpStopSuccessIntent = new Intent();
-                    swpStopSuccessIntent
-                            .setAction(NfcConstants.ACTION_NFC_MPOS_READER_MODE_STOP_SUCCESS);
-                    if (DBG) {
-                        Log.d(TAG, "SWP READER - STOP_SUCCESS");
-                    }
-                    mContext.sendBroadcast(swpStopSuccessIntent);
-                    break;
-                }
-                case MSG_SCR_STOP_FAIL: {
-                    Log.d(TAG, "NfcServiceHandler - MSG_SCR_STOP_FAIL");
-                    break;
-                }
-                case MSG_SCR_REMOVE_CARD: {
-                    Log.d(TAG, "NfcServiceHandler - MSG_SCR_REMOVE_CARD");
-                    /* Send broadcast ordered */
-                    Intent swpRemoveCardIntent = new Intent();
-                    swpRemoveCardIntent
-                            .setAction(NfcConstants.ACTION_NFC_MPOS_READER_MODE_REMOVE_CARD);
-                    if (DBG) {
-                        Log.d(TAG, "SWP READER - REMOVE_CARD");
-                    }
-                    mContext.sendBroadcast(swpRemoveCardIntent);
-                    break;
-                }
                 case MSG_TRANSACTION_EVENT:
                     if (mCardEmulationManager != null) {
                         mCardEmulationManager.onOffHostAidSelected();
@@ -3552,9 +3436,124 @@ public class NfcService implements DeviceHostListener {
                  }
                  break;
                }
+               case MSG_SCR_START_SUCCESS:
+               case MSG_SCR_START_FAIL:
+               case MSG_SCR_RESTART:
+               case MSG_SCR_ACTIVATED:
+               case MSG_SCR_STOP_SUCCESS:
+               case MSG_SCR_STOP_FAIL:
+               case MSG_SCR_TIMEOUT:
+               case MSG_SCR_REMOVE_CARD:
+               case MSG_SCR_MULTIPLE_TARGET_DETECTED:
+                 sendScrEvent(msg.what);
+                 break;
                default:
                  Log.e(TAG, "Unknown message received");
                  break;
+            }
+        }
+
+        private void sendScrEvent(int msg) {
+            switch (msg) {
+                case MSG_SCR_START_SUCCESS: {
+                    /* Send broadcast ordered */
+                    Intent scrStartSuccessIntent = new Intent();
+                    scrStartSuccessIntent
+                            .setAction(NfcConstants.ACTION_NFC_MPOS_READER_MODE_START_SUCCESS);
+                    if (DBG) {
+                        Log.d(TAG, "SWP READER - START SUCCESS");
+                    }
+                    mContext.sendBroadcast(scrStartSuccessIntent);
+                    break;
+                }
+                case MSG_SCR_START_FAIL: {
+                    /* Send broadcast ordered */
+                    Intent scrStartFailIntent = new Intent();
+                    scrStartFailIntent
+                            .setAction(NfcConstants.ACTION_NFC_MPOS_READER_MODE_START_FAIL);
+                    if (DBG) {
+                        Log.d(TAG, "SWP READER - START_FAIL");
+                    }
+                    mContext.sendBroadcast(scrStartFailIntent);
+                    break;
+                }
+                case MSG_SCR_RESTART: {
+                    /* Send broadcast ordered */
+                    Intent scrRestartIntent = new Intent();
+                    scrRestartIntent
+                            .setAction(NfcConstants.ACTION_NFC_MPOS_READER_MODE_RESTART);
+                    if (DBG) {
+                        Log.d(TAG, "SWP READER - RESTART");
+                    }
+                    mContext.sendBroadcast(scrRestartIntent);
+                    break;
+                }
+                case MSG_SCR_ACTIVATED: {
+                    /* Send broadcast ordered */
+                    Intent swpActivateIntent = new Intent();
+                    swpActivateIntent.setAction(NfcConstants.ACTION_NFC_MPOS_READER_MODE_ACTIVATED);
+                    if (DBG) {
+                        Log.d(TAG, "SWP READER - ACTIVATED");
+                    }
+                    mContext.sendBroadcast(swpActivateIntent);
+                    break;
+                }
+                case MSG_SCR_STOP_SUCCESS: {
+                    /* Send broadcast ordered */
+                    Intent swpStopSuccessIntent = new Intent();
+                    swpStopSuccessIntent
+                            .setAction(NfcConstants.ACTION_NFC_MPOS_READER_MODE_STOP_SUCCESS);
+                    if (DBG) {
+                        Log.d(TAG, "SWP READER - STOP_SUCCESS");
+                    }
+                    mContext.sendBroadcast(swpStopSuccessIntent);
+                    break;
+                }
+                case MSG_SCR_STOP_FAIL: {
+                    /* Send broadcast ordered */
+                    Intent swpStopFailIntent = new Intent();
+                    swpStopFailIntent.setAction(NfcConstants.ACTION_NFC_MPOS_READER_MODE_STOP_FAIL);
+                    if (DBG) {
+                        Log.d(TAG, "SWP READER - REQUESTED_FAIL");
+                    }
+                    mContext.sendBroadcast(swpStopFailIntent);
+                    break;
+                }
+                case MSG_SCR_TIMEOUT: {
+                    /* Send broadcast ordered */
+                    Intent swpRdrTimeoutIntent = new Intent();
+                    swpRdrTimeoutIntent.setAction(NfcConstants.ACTION_NFC_MPOS_READER_MODE_TIMEOUT);
+                    if (DBG) {
+                        Log.d(TAG, "SWP READER - Timeout");
+                    }
+                    mContext.sendBroadcast(swpRdrTimeoutIntent);
+                    break;
+                }
+                case MSG_SCR_REMOVE_CARD: {
+                    /* Send broadcast ordered */
+                    Intent swpRmCardIntent = new Intent();
+                    swpRmCardIntent.setAction(NfcConstants.ACTION_NFC_MPOS_READER_MODE_REMOVE_CARD);
+                    if (DBG) {
+                        Log.d(TAG, "SWP READER - REMOVE_CARD");
+                    }
+                    mContext.sendBroadcast(swpRmCardIntent);
+                    break;
+                }
+                case MSG_SCR_MULTIPLE_TARGET_DETECTED: {
+                    /* Send broadcast ordered */
+                    Intent swpMultiTargetDetectIntent = new Intent();
+                    swpMultiTargetDetectIntent.setAction(
+                            NfcConstants.ACTION_NFC_MPOS_READER_MODE_MULTIPLE_TARGET_DETECTED);
+                    if (DBG) {
+                        Log.d(TAG, "SWP READER - MULTIPLE_TARGET_DETECTED");
+                    }
+                    mContext.sendBroadcast(swpMultiTargetDetectIntent);
+                    break;
+                }
+                default: {
+                    Log.e(TAG, "Unknown message received");
+                    break;
+                }
             }
         }
 

@@ -29,13 +29,8 @@ class MposManager
 {
 public:
   bool mIsMposWaitToStart;
-  static jmethodID gCachedMposManagerNotifyFail;
-  static jmethodID gCachedMposManagerNotifyStartSuccess;
-  static jmethodID gCachedMposManagerNotifyStopSuccess;
-  static jmethodID gCachedMposManagerNotifyRestart;
-  static jmethodID gCachedMposManagerNotifyRemoveCard;
-  static jmethodID gCachedMposManagerNotifyStartFail;
-  static jmethodID gCachedMposManagerNotifyTimeout;
+  static jmethodID gCachedMposManagerNotifyEvents;
+
   /*******************************************************************************
   **
   ** Function:        initMposNativeStruct
@@ -112,6 +107,17 @@ public:
   **
   *******************************************************************************/
   bool isMposOngoing(void);
+
+  /*******************************************************************************
+  **
+  ** Function:        notifyScrApiEvent
+  **
+  ** Description:     This API shall be called to notify the mNfaScrApiEvent event.
+  **
+  ** Returns:         None
+  **
+  *******************************************************************************/
+  void notifyScrApiEvent ();
   /*******************************************************************************
   **
   ** Function:        notifyEEReaderEvent
@@ -137,11 +143,24 @@ public:
 
 private:
   nfc_jni_native_data* mNativeData = NULL;
-  static const uint8_t EVENT_RF_ERROR   = 0x80; //HCI_TRANSACTION_EVENT parameter type
-  static const uint8_t EVENT_RF_VERSION = 0x00; //HCI_TRANSACTION_EVENT parameter version
+  static const uint8_t EVENT_RF_ERROR   = 0x80;    //HCI_TRANSACTION_EVENT parameter type
+  static const uint8_t EVENT_RF_VERSION = 0x00;    //HCI_TRANSACTION_EVENT parameter version
   static const uint8_t EVENT_EMV_POWER_OFF = 0x72; //HCI_TRANSACTION_EVENT parameter power off
   static const uint8_t EVENT_RDR_MODE_RESTART = 0x04; //EVENT to Restart Reader mode
-  static bool isMposOn;
-  SyncEvent       mNfaScrApiEvent;
+  /* Events to be posted to the NFC service */
+  static const uint8_t MSG_SCR_INVALID            = 0x00;
+  static const uint8_t MSG_SCR_START_SUCCESS_EVT  = 70;
+  static const uint8_t MSG_SCR_START_FAIL_EVT     = 71;
+  static const uint8_t MSG_SCR_RESTART_EVT        = 72;
+  static const uint8_t MSG_SCR_ACTIVATED_EVT      = 73;
+  static const uint8_t MSG_SCR_STOP_SUCCESS_EVT   = 74;
+  static const uint8_t MSG_SCR_STOP_FAIL_EVT      = 75;
+  static const uint8_t MSG_SCR_TIMEOUT_EVT        = 76;
+  static const uint8_t MSG_SCR_REMOVE_CARD_EVT    = 77;
+  static const uint8_t MSG_SCR_MULTIPLE_TARGET_DETECTED_EVT = 78;
+
+  static bool        mIsMposOn;
+  static bool        mStartNfcForumPoll; /* It shall be used only in reader stop case */
+  SyncEvent          mNfaScrApiEvent;
   static MposManager mMposMgr;
 };
