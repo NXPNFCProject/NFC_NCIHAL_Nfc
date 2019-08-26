@@ -2255,7 +2255,7 @@ tNFA_STATUS getConfig(uint16_t* rspLen, uint8_t* configValue, uint8_t numParam,
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: reconfigured start discovery", __func__);
     startRfDiscovery(true);
-    return FDSTATUS_ERROR_UNKNOWN;
+    return FDSTATUS_SUCCESS;
   }
 
   /*******************************************************************************
