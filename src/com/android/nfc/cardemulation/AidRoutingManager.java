@@ -142,7 +142,7 @@ public class AidRoutingManager {
           Log.d(TAG, "mDefaultAidRoute=0x" + Integer.toHexString(mDefaultAidRoute));
         mDefaultIsoDepRoute = doGetDefaultIsoDepRouteDestination();
         if (DBG) Log.d(TAG, "mDefaultIsoDepRoute=0x" + Integer.toHexString(mDefaultIsoDepRoute));
-        mLastCommitStatus = true;
+        mLastCommitStatus = false;
 
         Context context = (Context) ActivityThread.currentApplication();
         mActivityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
@@ -250,6 +250,7 @@ public class AidRoutingManager {
         mAidRoutingTableSize = NfcService.getInstance().getAidRoutingTableSize();
         mDefaultAidRoute =   NfcService.getInstance().GetDefaultRouteEntry() >> 0x08;
         Log.e(TAG, "Size of routing table"+mAidRoutingTableSize);
+        mLastCommitStatus = false;
         seList.add(mDefaultAidRoute);
         // Then, populate internal data structures first
         for (Map.Entry<String, AidEntry> aidEntry : aidMap.entrySet())  {
@@ -386,9 +387,9 @@ public class AidRoutingManager {
               }
             }
             if(aidRouteResolved == true) {
-              commit(aidRoutingTableCache);
               NfcService.getInstance().updateDefaultAidRoute(mDefaultRoute);
               mLastCommitStatus = true;
+              commit(aidRoutingTableCache);
           } else {
               StatsLog.write(StatsLog.NFC_ERROR_OCCURRED, StatsLog.NFC_ERROR_OCCURRED__TYPE__AID_OVERFLOW, 0, 0);
               Log.e(TAG, "RoutingTable unchanged because it's full, not updating");
@@ -396,8 +397,6 @@ public class AidRoutingManager {
               mLastCommitStatus = false;
           }
         }
-        if (NfcService.getInstance().isNfcEnabled())
-          NfcService.getInstance().commitRouting();
         return true;
     }
 
@@ -417,10 +416,13 @@ public class AidRoutingManager {
                  element.aidInfo,
                  element.powerstate);
         }
+
         AidEntry emptyAidEntry = routeCache.get("");
         if (emptyAidEntry != null)
           NfcService.getInstance().routeAids(
               "", emptyAidEntry.route, emptyAidEntry.aidInfo, emptyAidEntry.powerstate);
+        if (NfcService.getInstance().isNfcEnabled())
+          NfcService.getInstance().commitRouting();
     }
     /**
      * This notifies that the AID routing table in the controller

@@ -1974,9 +1974,11 @@ public class NfcService implements DeviceHostListener {
                         mDeviceHost.clearRoutingEntry(AID_ENTRY);
                         mDeviceHost.clearRoutingEntry(TECH_ENTRY);
                         mDeviceHost.clearRoutingEntry(PROTOCOL_ENTRY);
-                        mCardEmulationManager.onNfcEnabled();
                         computeRoutingParameters();
-                        commitRouting();
+                        mCardEmulationManager.onNfcEnabled();
+                        if (getLastCommitRoutingStatus() == false) {
+                          commitRouting();
+                        }
                     }
                     else
                     {
