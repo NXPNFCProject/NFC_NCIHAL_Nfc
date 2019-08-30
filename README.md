@@ -27,6 +27,12 @@
 
 
 
+#### Supported versions on "br_ar_p_sn1xx" branch
+| Android Version        | NXP Release          | NXP Tag  |
+| :-------------: |:---------------------:| :-----:|
+| aosp-master                |  09.00.08 (SN100x) |  NFC_AR_00_2000_09.00.08_OpnSrc  |
+
+
 
 
 
