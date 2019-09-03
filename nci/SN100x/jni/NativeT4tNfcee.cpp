@@ -268,11 +268,11 @@ tNFA_STATUS NativeT4tNfcee::closeConnection() {
 *******************************************************************************/
 tNFA_STATUS NativeT4tNfcee::setup(void) {
   tNFA_STATUS status = NFA_STATUS_FAILED;
-
+  setBusy();
   if (android::isDiscoveryStarted()) {
     android::startRfDiscovery(false);
   }
-  setBusy();
+
   status = openConnection();
   if (status != NFA_STATUS_OK) {
     DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf(
