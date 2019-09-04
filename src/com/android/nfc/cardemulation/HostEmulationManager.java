@@ -327,8 +327,7 @@ public class HostEmulationManager {
             Intent aidIntent = new Intent(HostApduService.SERVICE_INTERFACE);
             aidIntent.setComponent(service);
             if (mContext.bindServiceAsUser(aidIntent, mConnection,
-                    Context.BIND_AUTO_CREATE | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS,
-                    UserHandle.CURRENT)) {
+                    Context.BIND_AUTO_CREATE, UserHandle.CURRENT)) {
                 mServiceBound = true;
             } else {
                 Log.e(TAG, "Could not bind service.");
