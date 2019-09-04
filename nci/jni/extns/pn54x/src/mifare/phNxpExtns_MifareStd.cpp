@@ -15,6 +15,7 @@
  */
 #include <android-base/stringprintf.h>
 #include <base/logging.h>
+#include <log/log.h>
 
 #include <nfc_api.h>
 #include <nfc_int.h>
@@ -1868,6 +1869,11 @@ NFCSTATUS phFriNfc_ExtnsTransceive(phNfc_sTransceiveInfo_t* pTransceiveInfo,
   uint8_t restore_payload[] = {
       0x00, 0x00, 0x00, 0x00,
   };
+
+  if (SendLength == 0) {
+    android_errorWriteLog(0x534e4554, "132083376");
+    return status;
+  }
 
   buff = (uint8_t*)malloc((uint32_t)MAX_BUFF_SIZE);
   if (NULL == buff) {
