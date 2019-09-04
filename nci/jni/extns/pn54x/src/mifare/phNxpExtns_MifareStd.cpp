@@ -1007,6 +1007,11 @@ NFCSTATUS Mfc_Transceive(uint8_t* p_data, uint32_t len) {
   NFCSTATUS status = NFCSTATUS_FAILED;
   uint8_t i = 0x00;
 
+  if (len == 0) {
+    android_errorWriteLog(0x534e4554, "132082342");
+    return status;
+  }
+
   gphNxpExtns_Context.RawWriteCallBack = false;
   gphNxpExtns_Context.CallBackMifare = NULL;
   gphNxpExtns_Context.CallBackCtxt = NdefMap;
