@@ -54,6 +54,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.UserInfo;
 import android.content.res.Resources.NotFoundException;
+import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import android.net.Uri;
@@ -791,7 +792,14 @@ public class NfcService implements DeviceHostListener {
     void initSoundPool() {
         synchronized (this) {
             if (mSoundPool == null) {
-                mSoundPool = new SoundPool(1, AudioManager.STREAM_NOTIFICATION, 0);
+                mSoundPool = new SoundPool.Builder()
+                        .setMaxStreams(1)
+                        .setAudioAttributes(
+                                new AudioAttributes.Builder()
+                                        .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+                                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                                        .build())
+                        .build();
                 mStartSound = mSoundPool.load(mContext, R.raw.start, 1);
                 mEndSound = mSoundPool.load(mContext, R.raw.end, 1);
                 mErrorSound = mSoundPool.load(mContext, R.raw.error, 1);
