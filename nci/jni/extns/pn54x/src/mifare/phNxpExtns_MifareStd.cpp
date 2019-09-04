@@ -1018,6 +1018,10 @@ NFCSTATUS Mfc_Transceive(uint8_t* p_data, uint32_t len) {
 
   EXTNS_SetCallBackFlag(true);
   if (p_data[0] == 0x60 || p_data[0] == 0x61) {
+    if (len < 12) {
+      android_errorWriteLog(0x534e4554, "125900276");
+      return status;
+    }
     NdefMap->Cmd.MfCmd = (phNfc_eMifareCmdList_t) p_data[0];
 
     NdefMap->SendRecvBuf[i++] = p_data[1];
