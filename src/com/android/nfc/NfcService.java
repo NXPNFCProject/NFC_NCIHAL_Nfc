@@ -40,7 +40,6 @@ import android.app.backup.BackupManager;
 import android.app.KeyguardManager;
 import android.app.PendingIntent;
 import android.app.admin.DevicePolicyManager;
-import android.app.BroadcastOptions;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentResolver;
@@ -3582,13 +3581,10 @@ public class NfcService implements DeviceHostListener {
                 }
                 String url = new String ("nfc://secure:0/" + reader + "/" + aidString.toString());
                 intent.setData(Uri.parse(url));
-
-                final BroadcastOptions options = BroadcastOptions.makeBasic();
-                options.setBackgroundActivityStartsAllowed(true);
                 for (int i = 0; i < nfcAccess.length; i++) {
                     if (nfcAccess[i]) {
                         intent.setPackage(mNfcEventInstalledPackages.get(i));
-                        mContext.sendBroadcast(intent, null, options.toBundle());
+                        mContext.sendBroadcast(intent);
                     }
                 }
             } catch (RemoteException e) {
