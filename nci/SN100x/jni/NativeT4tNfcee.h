@@ -35,7 +35,8 @@ typedef enum {
   ERROR_CONNECTION_FAILED = -7,
   ERROR_EMPTY_PAYLOAD = -8,
   ERROR_NDEF_VALIDATION_FAILED = -9,
-  ERROR_WRITE_PERMISSION = -10
+  ERROR_WRITE_PERMISSION = -10,
+  ERROR_NFC_OFF_TRIGGERED = -11,
 } T4TNFCEE_STATUS_t;
 
 class NativeT4tNfcee {
@@ -51,6 +52,27 @@ class NativeT4tNfcee {
   **
   *******************************************************************************/
   static NativeT4tNfcee& getInstance();
+
+  /*******************************************************************************
+  **
+  ** Function:        initialize
+  **
+  ** Description:     Initialize all member variables.
+  **
+  ** Returns:         None.
+  **
+  *******************************************************************************/
+  void initialize(void);
+  /*****************************************************************************
+  **
+  ** Function:        onNfccShutdown
+  **
+  ** Description:     This api shall be called in NFC OFF case.
+  **
+  ** Returns:         none.
+  **
+  *******************************************************************************/
+  void onNfccShutdown();
 
   /*******************************************************************************
   **
@@ -175,6 +197,8 @@ class NativeT4tNfcee {
   static const int NXP_PARAM_GET_CONFIG_INDEX = 4;
   static const int NXP_PARAM_SET_CONFIG_INDEX = 7;
   static NativeT4tNfcee sNativeT4tNfceeInstance;
+  static bool sIsNfcOffTriggered;
+  SyncEvent mT4tNfcOffEvent;
   SyncEvent mT4tNfcEeRWEvent;
   SyncEvent mT4tNfcEeWriteEvent;
   SyncEvent mT4tNfcEeEvent;

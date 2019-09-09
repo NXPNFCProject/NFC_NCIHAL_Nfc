@@ -1517,6 +1517,7 @@ static jboolean nfcManager_doInitialize(JNIEnv* e, jobject o) {
         HciEventManager::getInstance().initialize(getNative(e, o));
 #if(NXP_EXTNS == TRUE)
         MposManager::getInstance().initialize(getNative(e, o));
+        NativeT4tNfcee::getInstance().initialize();
 #endif
         /////////////////////////////////////////////////////////////////////////////////
         // Add extra configuration here (work-arounds, etc.)
@@ -1608,6 +1609,7 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
 static void nfcManager_doShutdown(JNIEnv*, jobject) {
   NfcAdaptation& theInstance = NfcAdaptation::GetInstance();
 #if (NXP_EXTNS == TRUE)
+  NativeT4tNfcee::getInstance().onNfccShutdown();
   handleWiredmode(true); /* Device off*/
 #endif
   theInstance.DeviceShutdown();
@@ -1931,6 +1933,9 @@ static jboolean nfcManager_doDeinitialize(JNIEnv*, jobject) {
   sIsDisabling = true;
 
   pn544InteropAbortNow();
+#if (NXP_EXTNS == TRUE)
+  NativeT4tNfcee::getInstance().onNfccShutdown();
+#endif
   RoutingManager::getInstance().onNfccShutdown();
   PowerSwitch::getInstance().initialize(PowerSwitch::UNKNOWN_LEVEL);
   HciEventManager::getInstance().finalize();

@@ -31,6 +31,7 @@ extern bool nfc_debug_enabled;
 
 /*Considering NCI response timeout which is 2s, Timeout set 100ms more*/
 #define T4TNFCEE_TIMEOUT 2100
+#define T4TOP_TIMEOUT 200
 #define FILE_ID_LEN 0x02
 
 extern bool gActivated;
@@ -44,6 +45,7 @@ extern tNFA_STATUS NxpNfc_Write_Cmd_Common(uint8_t retlen, uint8_t* buffer);
 }  // namespace android
 
 NativeT4tNfcee NativeT4tNfcee::sNativeT4tNfceeInstance;
+bool NativeT4tNfcee::sIsNfcOffTriggered = false;
 
 NativeT4tNfcee::NativeT4tNfcee() {}
 
@@ -58,6 +60,46 @@ NativeT4tNfcee::NativeT4tNfcee() {}
 *******************************************************************************/
 NativeT4tNfcee& NativeT4tNfcee::getInstance() {
   return sNativeT4tNfceeInstance;
+}
+
+/*******************************************************************************
+**
+** Function:        initialize
+**
+** Description:     Initialize all member variables.
+**
+** Returns:         None.
+**
+*******************************************************************************/
+void NativeT4tNfcee::initialize(void) {
+  sIsNfcOffTriggered = false;
+  mBusy = false;
+}
+
+/*****************************************************************************
+**
+** Function:        onNfccShutdown
+**
+** Description:     This api shall be called in NFC OFF case.
+**
+** Returns:         none.
+**
+*******************************************************************************/
+void NativeT4tNfcee::onNfccShutdown() {
+  sIsNfcOffTriggered = true;
+  if(mBusy) {
+    /* Unblock JNI APIs */
+    {
+      SyncEventGuard g(mT4tNfcOffEvent);
+      if (mT4tNfcOffEvent.wait(T4TOP_TIMEOUT) == false) {
+        SyncEventGuard ga(mT4tNfcEeRWEvent);
+        mT4tNfcEeRWEvent.notifyOne();
+      }
+    }
+    /* Try to close the connection with t4t nfcee, discard the status */
+    (void)closeConnection();
+    resetBusy();
+  }
 }
 
 /*******************************************************************************
@@ -292,14 +334,20 @@ tNFA_STATUS NativeT4tNfcee::setup(void) {
 **
 *******************************************************************************/
 void NativeT4tNfcee::cleanup(void) {
-  if (closeConnection() != NFA_STATUS_OK) {
-    DLOG_IF(ERROR, nfc_debug_enabled)
-        << StringPrintf("%s: closeConnection Failed", __func__);
+
+  if(sIsNfcOffTriggered) {
+    SyncEventGuard g(mT4tNfcOffEvent);
+    mT4tNfcOffEvent.notifyOne();
+    DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf("%s: Nfc Off triggered", __func__);
+    return;
   }
-  resetBusy();
+  if (closeConnection() != NFA_STATUS_OK) {
+    DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf("%s: closeConnection Failed", __func__);
+  }
   if (!android::isDiscoveryStarted() && !(MposManager::getInstance().isMposOngoing())) {
     android::startRfDiscovery(true);
   }
+  resetBusy();
   if (MposManager::getInstance().mIsMposWaitToStart) {
     /**Notify MPOS if MPOS is waiting for T4t Operation to complete*/
     SyncEventGuard g(mT4tNfceeMPOSEvt);
@@ -322,7 +370,9 @@ T4TNFCEE_STATUS_t NativeT4tNfcee::validatePreCondition(T4TNFCEE_OPERATIONS_t op,
   T4TNFCEE_STATUS_t t4tNfceeStatus = STATUS_SUCCESS;
   if (!android::nfcManager_isNfcActive()) {
     t4tNfceeStatus = ERROR_NFC_NOT_ON;
-  } else if (gActivated) {
+  } else if (sIsNfcOffTriggered) {
+    t4tNfceeStatus = ERROR_NFC_OFF_TRIGGERED;
+  }else if (gActivated) {
     t4tNfceeStatus = ERROR_RF_ACTIVATED;
   } else if (MposManager::getInstance().isMposOngoing()) {
     t4tNfceeStatus = ERROR_MPOS_ON;
