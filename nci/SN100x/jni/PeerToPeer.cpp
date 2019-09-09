@@ -560,12 +560,22 @@ bool PeerToPeer::createClient(tJNI_HANDLE jniHandle, uint16_t miu, uint8_t rw) {
                       fn, client.get(), jniHandle);
 
   {
-    SyncEventGuard guard(mClients[i]->mRegisteringEvent);
-    NFA_P2pRegisterClient(NFA_P2P_DLINK_TYPE, nfaClientCallback);
-    mClients[i]->mRegisteringEvent.wait();  // wait for NFA_P2P_REG_CLIENT_EVT
+#if (NXP_EXTNS == TRUE)
+    if (i < sMax) {
+#endif
+      SyncEventGuard guard(mClients[i]->mRegisteringEvent);
+      NFA_P2pRegisterClient(NFA_P2P_DLINK_TYPE, nfaClientCallback);
+      mClients[i]->mRegisteringEvent.wait();  // wait for NFA_P2P_REG_CLIENT_EVT
+#if (NXP_EXTNS == TRUE)
+    }
+#endif
   }
 
-  if (mClients[i]->mNfaP2pClientHandle != NFA_HANDLE_INVALID) {
+  if (
+#if (NXP_EXTNS == TRUE)
+      (i < sMax) &&
+#endif
+      mClients[i]->mNfaP2pClientHandle != NFA_HANDLE_INVALID) {
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
         "%s: exit; new client jniHandle: %u   NFA Handle: 0x%04x", fn,
         jniHandle, client->mClientConn->mNfaConnHandle);

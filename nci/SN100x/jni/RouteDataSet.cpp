@@ -17,6 +17,24 @@
 /*
  *  Import and export general routing data using a XML file.
  */
+/******************************************************************************
+ *
+ *  Copyright 2019 NXP
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ *
+ ******************************************************************************/
 
 #include <android-base/stringprintf.h>
 #include <base/logging.h>
@@ -56,21 +74,27 @@ AidBuffer::AidBuffer(std::string& aid) : mBuffer(NULL), mBufferLen(0) {
 
   // parse the AID string; each hex number is separated by a colon;
   mBuffer = new uint8_t[aid.length()];
-  while (true) {
-    num = 0;
-    if (pos2 == std::string::npos) {
-      sscanf(aid.substr(pos1).c_str(), "%x", &num);
-      mBuffer[mBufferLen] = (uint8_t)num;
-      mBufferLen++;
-      break;
-    } else {
-      sscanf(aid.substr(pos1, pos2 - pos1 + 1).c_str(), "%x", &num);
-      mBuffer[mBufferLen] = (uint8_t)num;
-      mBufferLen++;
-      pos1 = pos2 + 1;
-      pos2 = aid.find_first_of(delimiter, pos1);
+#if (NXP_EXTNS == TRUE)
+  if (mBuffer != NULL) {
+#endif
+    while (true) {
+      num = 0;
+      if (pos2 == std::string::npos) {
+        sscanf(aid.substr(pos1).c_str(), "%x", &num);
+        mBuffer[mBufferLen] = (uint8_t)num;
+        mBufferLen++;
+        break;
+      } else {
+        sscanf(aid.substr(pos1, pos2 - pos1 + 1).c_str(), "%x", &num);
+        mBuffer[mBufferLen] = (uint8_t)num;
+        mBufferLen++;
+        pos1 = pos2 + 1;
+        pos2 = aid.find_first_of(delimiter, pos1);
+      }
     }
+#if (NXP_EXTNS == TRUE)
   }
+#endif
 }
 
 /*******************************************************************************
