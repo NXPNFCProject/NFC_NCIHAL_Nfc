@@ -485,13 +485,13 @@ bool NativeT4tNfcee::doLockT4tData(JNIEnv* e, jobject o, bool lock) {
     android::startRfDiscovery(false);
   }
 
-  if (lock) {
+  if (!lock) {
     if (ndefFileValue & (1 << MASK_LOCK_BIT)) {
       /* Lock bit is already set in NFCC */
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: Lock bit is already set", __func__);
     } else {
-      /* Enable lock bit */
+      /* Set bit6 to enable write permission */
       ndefFileValue |= (1 << MASK_LOCK_BIT);
       *(set_config + NXP_PARAM_SET_CONFIG_INDEX) = ndefFileValue;
       status = android::NxpNfc_Write_Cmd_Common(sizeof(set_config), set_config);
@@ -503,7 +503,7 @@ bool NativeT4tNfcee::doLockT4tData(JNIEnv* e, jobject o, bool lock) {
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: Lock bit is already disable", __func__);
     } else {
-      /* Disable lock bit */
+      /* Reset bit6 to disable write permission */
       ndefFileValue &= ~(1 << MASK_LOCK_BIT);
       *(set_config + NXP_PARAM_SET_CONFIG_INDEX) = ndefFileValue;
       status = android::NxpNfc_Write_Cmd_Common(sizeof(set_config), set_config);
@@ -557,7 +557,7 @@ bool NativeT4tNfcee::isLockedT4tData(JNIEnv* e, jobject o) {
 
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Exit", __func__);
 
-  return (((ndefFileValue & (1 << MASK_LOCK_BIT))!=0)?true:false);
+  return (((ndefFileValue & (1 << MASK_LOCK_BIT)) == 0) ? true : false);
 }
 /*******************************************************************************
 **
