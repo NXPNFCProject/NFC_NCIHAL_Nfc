@@ -46,6 +46,7 @@ HciRFParams::HciRFParams() {
   memset(aHighLayerRsp_CeB_CeB, 0, sizeof(aHighLayerRsp_CeB_CeB));
   memset(aPupiReg_CeB, 0, sizeof(aPupiReg_CeB));
   memset(aUidReg_CeA, 0, sizeof(aUidReg_CeA));
+  memset(&get_config, 0, sizeof(tNFA_GET_CONFIG));
   bMode_CeA = 0;
   bUidRegSize_CeA = 0;
   bSak_CeA = 0;
@@ -59,7 +60,6 @@ HciRFParams::HciRFParams() {
   aPupiRegDataSize_CeB = 0;
   bAfi_CeB = 0;
   bHighLayerRspSize_CeB = 0;
-  get_config = NULL;
   mIsInit = false;
 }
 
@@ -111,17 +111,17 @@ bool HciRFParams::initialize() {
     }
   }
   DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: status %x", __func__, get_config->status);
+      << StringPrintf("%s: status %x", __func__, get_config.status);
   DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: tlv_size %d", __func__, get_config->tlv_size);
+      << StringPrintf("%s: tlv_size %d", __func__, get_config.tlv_size);
   DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: param_tlvs %x", __func__, get_config->param_tlvs[0]);
+      << StringPrintf("%s: param_tlvs %x", __func__, get_config.param_tlvs[0]);
 
 #if (NXP_EXTNS == true)
-  if ((get_config->param_tlvs[1] == 0xA0 &&
-       get_config->param_tlvs[2] == 0xF0) &&
-      (get_config->param_tlvs[5] == 0xFF ||
-       get_config->param_tlvs[43] == 0xFF) &&
+  if ((get_config.param_tlvs[1] == 0xA0 &&
+       get_config.param_tlvs[2] == 0xF0) &&
+      (get_config.param_tlvs[5] == 0xFF ||
+       get_config.param_tlvs[43] == 0xFF) &&
       SecureElement::getInstance().getEeStatus(ESE_HANDLE) ==
           NFA_EE_STATUS_ACTIVE) {
     DLOG_IF(INFO, nfc_debug_enabled)
@@ -130,7 +130,7 @@ bool HciRFParams::initialize() {
   }
 #endif
 
-  uint8_t* params = get_config->param_tlvs;
+  uint8_t* params = get_config.param_tlvs;
   params += VAL_START_IDX;
 
   bPipeStatus_CeA = *params++;
@@ -211,7 +211,8 @@ void HciRFParams::connectionEventHandler(uint8_t event,
 
   switch (event) {
     case NFA_DM_GET_CONFIG_EVT: {
-      get_config = (tNFA_GET_CONFIG*)eventData;
+      // get_config = (tNFA_GET_CONFIG*)eventData;
+       memcpy(&get_config, eventData, sizeof(tNFA_GET_CONFIG));
       //        SyncEventGuard guard (android::sNfaGetConfigEvent);
       //        android::sNfaGetConfigEvent.notifyOne ();
     } break;
@@ -268,16 +269,16 @@ bool HciRFParams::isCeWithEseDisabled() {
     }
   }
   DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: status %x", __func__, get_config->status);
+      << StringPrintf("%s: status %x", __func__, get_config.status);
   DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: tlv_size %d", __func__, get_config->tlv_size);
+      << StringPrintf("%s: tlv_size %d", __func__, get_config.tlv_size);
   DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: param_tlvs %x", __func__, get_config->param_tlvs[0]);
+      << StringPrintf("%s: param_tlvs %x", __func__, get_config.param_tlvs[0]);
 
-  if ((get_config->param_tlvs[1] == 0xA0 &&
-       get_config->param_tlvs[2] == 0xF0) &&
-      (get_config->param_tlvs[5] == 0xFF ||
-       get_config->param_tlvs[43] == 0xFF) &&
+  if ((get_config.param_tlvs[1] == 0xA0 &&
+       get_config.param_tlvs[2] == 0xF0) &&
+      (get_config.param_tlvs[5] == 0xFF ||
+       get_config.param_tlvs[43] == 0xFF) &&
       SecureElement::getInstance().getEeStatus(ESE_HANDLE) ==
           NFA_EE_STATUS_ACTIVE) {
     DLOG_IF(INFO, nfc_debug_enabled)

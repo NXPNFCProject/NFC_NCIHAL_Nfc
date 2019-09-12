@@ -103,7 +103,7 @@ class HciRFParams {
   uint8_t aHighLayerRsp_CeB_CeB[15];
   uint8_t aDataRateMax_CeB[3];
 
-  tNFA_GET_CONFIG* get_config;
+  tNFA_GET_CONFIG get_config;
 
   static HciRFParams sHciRFParams;
 
