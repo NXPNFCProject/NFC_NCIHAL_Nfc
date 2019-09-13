@@ -142,6 +142,7 @@ bool gActivated = false;
 SyncEvent gDeactivatedEvent;
 SyncEvent sNfaSetPowerSubState;
 bool legacy_mfc_reader = true;
+bool gNfccConfigControlStatus = false;
 SyncEvent sChangeDiscTechEvent;
 SyncEvent sNfaSetConfigEvent;  // event for Set_Config....
 #if(NXP_EXTNS == TRUE)
@@ -1614,6 +1615,22 @@ static void nfcManager_doShutdown(JNIEnv*, jobject) {
 #endif
   theInstance.DeviceShutdown();
 }
+
+static void nfcManager_configNfccConfigControl(bool flag) {
+  // configure NFCC_CONFIG_CONTROL- NFCC allowed to manage RF configuration.
+  if (NFC_GetNCIVersion() != NCI_VERSION_1_0) {
+    uint8_t nfa_set_config[] = { 0x00 };
+    nfa_set_config[0] = (flag == true ? 1 : 0);
+    gNfccConfigControlStatus = flag;
+
+    tNFA_STATUS status = NFA_SetConfig(NCI_PARAM_ID_NFCC_CONFIG_CONTROL, sizeof(nfa_set_config),
+            &nfa_set_config[0]);
+    if (status != NFA_STATUS_OK) {
+      LOG(ERROR) << __func__  << ": Failed to configure NFCC_CONFIG_CONTROL";
+    }
+  }
+}
+
 /*******************************************************************************
 **
 ** Function:        nfcManager_enableDiscovery
@@ -1693,11 +1710,21 @@ static void nfcManager_enableDiscovery(JNIEnv* e, jobject o,
       if (reader_mode && !sReaderModeEnabled) {
         sReaderModeEnabled = true;
         NFA_DisableListening();
+#if (NXP_EXTNS == FALSE)
+        // configure NFCC_CONFIG_CONTROL- NFCC not allowed to manage RF configuration.
+        nfcManager_configNfccConfigControl(false);
+#endif
         NFA_SetRfDiscoveryDuration(READER_MODE_DISCOVERY_DURATION);
       } else if (!reader_mode && sReaderModeEnabled) {
         struct nfc_jni_native_data* nat = getNative(e, o);
         sReaderModeEnabled = false;
         NFA_EnableListening();
+#if (NXP_EXTNS == FALSE)
+        // configure NFCC_CONFIG_CONTROL- NFCC allowed to manage RF configuration.
+        if(gNfccConfigControlStatus == false){
+            nfcManager_configNfccConfigControl(true);
+       }
+#endif
         NFA_SetRfDiscoveryDuration(nat->discovery_duration);
       }
     }
@@ -3220,13 +3247,8 @@ void doStartupConfig() {
   }
 
   // configure NFCC_CONFIG_CONTROL- NFCC allowed to manage RF configuration.
-  if (NFC_GetNCIVersion() != NCI_VERSION_1_0) {
-    uint8_t nfa_set_config[] = {0x01};
-    tNFA_STATUS status = NFA_SetConfig(NCI_PARAM_ID_NFCC_CONFIG_CONTROL,
-        sizeof(nfa_set_config), &nfa_set_config[0]);
-    if (status != NFA_STATUS_OK) {
-      LOG(ERROR) << __func__ << ": Failed to configure NFCC_CONFIG_CONTROL";
-    }
+  if(gNfccConfigControlStatus == false){
+     nfcManager_configNfccConfigControl(true);
 #if (NXP_EXTNS == TRUE)
     send_flush_ram_to_flash();
 #endif
