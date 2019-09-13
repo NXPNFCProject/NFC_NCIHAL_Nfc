@@ -15,7 +15,7 @@
 | aosp-master                |  10.00.06 (SN110x) |  NFC_AR_00_6000_10.00.06_OpnSrc  |
 | aosp-master              |  10.00.08 (SN100x) |  NFC_AR_00_6000_10.00.08_OpnSrc |
 | aosp-master              |  10.00.0A (SN110) |  NFC_AR_00_6000_10.00.0A_OpnSrc |
-
+| aosp-master              |  10.00.0B (SN100) |  NFC_AR_00_6000_10.00.0B_OpnSrc |
 
 
 
