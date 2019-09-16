@@ -2663,14 +2663,21 @@ void RoutingManager::updateDefaultRoute() {
 
   // Register System Code for routing
   SyncEventGuard guard(mRoutingEvent);
+  tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
 #if (NXP_EXTNS == TRUE)
-  tNFA_STATUS nfaStat = NFA_EeAddSystemCodeRouting(
-      mDefaultSysCode, routeLoc,
-      mSecureNfcEnabled ? 0x01 : mDefaultSysCodePowerstate);
+  if (mDefaultSysCodePowerstate) {
+    nfaStat = NFA_EeAddSystemCodeRouting(
+        mDefaultSysCode, routeLoc,
+        mSecureNfcEnabled ? 0x01 : mDefaultSysCodePowerstate);
+  } else {
+    nfaStat = NFA_STATUS_NOT_SUPPORTED;
+    LOG(ERROR) << fn << ": SCBR power state set to 0x00";
+  }
 #else
-  tNFA_STATUS nfaStat = NFA_EeAddSystemCodeRouting(
+  nfaStat = NFA_EeAddSystemCodeRouting(
       mDefaultSysCode, mDefaultSysCodeRoute,
       mSecureNfcEnabled ? 0x01 : mDefaultSysCodePowerstate);
+
 #endif
   if (nfaStat == NFA_STATUS_NOT_SUPPORTED) {
     mIsScbrSupported = false;
