@@ -216,6 +216,9 @@ public class HostNfcFEmulationManager {
             mActiveService = service;
             mActiveServiceName = mServiceName;
         }
+        if (mActiveService == null) {
+            return;
+        }
         Message msg = Message.obtain(null, HostNfcFService.MSG_COMMAND_PACKET);
         Bundle dataBundle = new Bundle();
         dataBundle.putByteArray("data", data);

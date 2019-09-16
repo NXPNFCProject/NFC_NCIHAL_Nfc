@@ -255,6 +255,9 @@ public class HandoverDataParser {
     }
 
     public BluetoothHandoverData getOutgoingHandoverData(NdefMessage handoverSelect) {
+        if (handoverSelect == null) {
+            return null;
+        }
         return parseBluetooth(handoverSelect);
     }
 
