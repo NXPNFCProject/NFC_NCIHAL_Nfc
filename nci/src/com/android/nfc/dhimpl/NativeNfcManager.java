@@ -555,38 +555,13 @@ public class NativeNfcManager implements DeviceHost {
         mListener.onLlcpFirstPacketReceived(device);
     }
 
-    /* Reader over SWP listeners*/
-    private void notifyonReaderRequestedFail() {
-        mListener.onReaderRequestedFail();
+    /* Reader over SWP/SCR listeners*/
+    private void notifyonMposManagerEvents(int event) {
+        mListener.onScrNotifyEvents(event);
     }
 
     private void notifyHostEmuActivated(int technology) {
         mListener.onHostCardEmulationActivated(technology);
-    }
-
-    private void notifyonReaderStartSuccess() {
-        mListener.onReaderStartSuccess();
-    }
-
-    private void notifyonReaderStopSuccess() {
-        mListener.onReaderStopSuccess();
-    }
-
-    private void notifyonReaderRestart() {
-        mListener.onReaderRestart();
-    }
-
-    private void notifyonReaderRemoveCard() {
-        mListener.onReaderRemoveCard();
-    }
-
-    private void notifyonReaderStartFail() {
-        mListener.onReaderStartFail();
-    }
-
-
-    private void notifyonReaderTimeout() {
-        mListener.onReaderTimeout();
     }
 
     private void notifyHostEmuData(int technology, byte[] data) {

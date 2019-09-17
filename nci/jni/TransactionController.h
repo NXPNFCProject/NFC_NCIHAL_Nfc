@@ -46,6 +46,7 @@ typedef enum transactionId {
   isTransanctionOnGoing,
   exec_pending_req,
   TAG_PRESENCE_CHECK,
+  setMposState,
   /* add new requestors here in capital letters*/
 } eTransactionId;
 

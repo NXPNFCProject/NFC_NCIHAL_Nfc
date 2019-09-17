@@ -261,7 +261,6 @@ static void activatedNtf_Cb();
 static void nfcManager_changeDiscoveryTech(JNIEnv* e, jobject o, jint pollTech,
                                            jint listenTech);
 bool nfcManager_isNfcActive();
-void setDiscoveryStartedCfg(bool isStarted);
 #endif
 }  // namespace android
 
@@ -4667,21 +4666,17 @@ static void restartUiccListen(jint uiccSlot) {
    ** Returns:         True if discovery is started
    **
    *******************************************************************************/
-  bool isDiscoveryStarted() { return sRfEnabled; }
-
-#if (NXP_EXTNS == TRUE)
-  /*******************************************************************************
-  **
-  ** Function:        setDiscoveryStartedCfg
-  **
-  ** Description:     If discovery is started, this function shall be called to
-  **                  set sRfEnabled flag oterhwise false.
-  **
-  ** Returns:         None
-  **
-  *******************************************************************************/
-  void setDiscoveryStartedCfg(bool isStarted) { sRfEnabled = isStarted; };
-#endif
+  bool isDiscoveryStarted() {
+  #if(NXP_EXTNS == TRUE)
+    bool rfEnabled;
+    nativeNfcTag_acquireRfInterfaceMutexLock();
+    rfEnabled = sRfEnabled;
+    nativeNfcTag_releaseRfInterfaceMutexLock();
+    return rfEnabled;
+  #else
+    return sRfEnabled;
+  #endif
+  }
 
   /*******************************************************************************
   **

@@ -78,21 +78,7 @@ public interface DeviceHost {
         /**
          * Notifies SWP Reader Events.
          */
-        public void onReaderRequestedFail();
-
-        public void onReaderStartSuccess();
-
-        public void onReaderStartFail();
-
-        public void onReaderRestart();
-
-        public void onReaderStopSuccess();
-
-        public void onReaderStopFail();
-
-        public void onReaderRemoveCard();
-
-        public void onReaderTimeout();
+        public void onScrNotifyEvents(int event);
 
         public void onNfcTransactionEvent(byte[] aid, byte[] data, String seName);
     }
