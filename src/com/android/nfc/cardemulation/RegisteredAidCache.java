@@ -505,6 +505,9 @@ public class RegisteredAidCache {
     }
 
     static boolean isPrefix(String aid) {
+        if (aid == null) {
+            return false;
+        }
         return aid.endsWith("*");
     }
 

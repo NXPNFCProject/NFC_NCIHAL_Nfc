@@ -99,7 +99,10 @@ public class NdefPushClient {
         byte[] buffer = proto.toByteArray();
         int offset = 0;
         int remoteMiu;
-
+        if (buffer == null) {
+            Log.e(TAG, "Length of buffer is NULL.");
+            return false;
+        }
         try {
             remoteMiu = sock.getRemoteMiu();
             if (DBG) Log.d(TAG, "about to send a " + buffer.length + " byte message");
