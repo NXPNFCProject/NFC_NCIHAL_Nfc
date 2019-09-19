@@ -240,7 +240,9 @@ void MposManager::notifyEEReaderEvent(uint8_t evt, uint8_t status) {
     case NFA_SCR_START_SUCCESS_EVT:
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_SCR_START_SUCCESS_EVT", __func__);
       msg = MSG_SCR_START_SUCCESS_EVT;
-      pTransactionController->transactionAttempt(TRANSACTION_REQUESTOR(setMposState));
+      if (pTransactionController->transactionAttempt(TRANSACTION_REQUESTOR(setMposState)) == 0) {
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: transaction attempt failed", __func__);
+      }
       break;
     case NFA_SCR_START_FAIL_EVT:
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_SCR_START_FAIL_EVT", __func__);
