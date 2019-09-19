@@ -864,9 +864,11 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
             } else {
                 return HANDOVER_UNSUPPORTED;
             }
-
-            if (!beamManager.startBeamSend(mContext,
-                    mHandoverDataParser.getOutgoingHandoverData(response), uris, userHandle)) {
+            HandoverDataParser.BluetoothHandoverData data = mHandoverDataParser.getOutgoingHandoverData(response);
+            if (data == null) {
+                return HANDOVER_FAILURE;
+            }
+            if (!beamManager.startBeamSend(mContext, data, uris, userHandle)) {
                 return HANDOVER_BUSY;
             }
 

@@ -512,6 +512,9 @@ public class RegisteredAidCache {
     }
 
     static boolean isSubset(String aid) {
+        if (aid == null) {
+            return false;
+        }
         return aid.endsWith("#");
     }
 
