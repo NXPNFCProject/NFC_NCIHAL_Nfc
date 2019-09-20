@@ -1848,8 +1848,10 @@ public class NfcService implements DeviceHostListener {
 
         private void WaitForAdapterChange(int state) {
             while (true) {
-                if(mState == state) {
-                    break;
+                synchronized(NfcService.this) {
+                    if(mState == state) {
+                        break;
+                    }
                 }
                 try {
                     Thread.sleep(100);
