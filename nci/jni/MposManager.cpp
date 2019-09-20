@@ -164,6 +164,9 @@ tNFA_STATUS MposManager::setMposReaderMode(bool on) {
       mIsMposOn = on?false:true;
     }
   }
+  if((on == false) && (pTransactionController->getCurTransactionRequestor() == setMposState)) {
+    pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(setMposState));
+  }
 
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit Status=%d", __func__, status);
   return status;
@@ -260,7 +263,6 @@ void MposManager::notifyEEReaderEvent(uint8_t evt, uint8_t status) {
     case NFA_SCR_STOP_SUCCESS_EVT:
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_SCR_STOP_SUCCESS_EVT", __func__);
       msg = MSG_SCR_STOP_SUCCESS_EVT;
-      pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(setMposState));
       break;
     case NFA_SCR_STOP_FAIL_EVT:
       DLOG_IF(INFO, nfc_debug_enabled)
@@ -272,6 +274,7 @@ void MposManager::notifyEEReaderEvent(uint8_t evt, uint8_t status) {
     case NFA_SCR_TIMEOUT_EVT:
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_SCR_TIMEOUT_EVT", __func__);
       msg = MSG_SCR_TIMEOUT_EVT;
+      pTransactionController->transactionEnd(TRANSACTION_REQUESTOR(setMposState));
       break;
     case NFA_SCR_REMOVE_CARD_EVT:
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_SCR_REMOVE_CARD_EVT", __func__);
