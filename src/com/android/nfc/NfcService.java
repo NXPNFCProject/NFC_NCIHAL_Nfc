@@ -1908,6 +1908,7 @@ public class NfcService implements DeviceHostListener {
                     fw = null;
                     Log.e(TAG, "File Written to libnfc-nxpTransit.conf successfully" );
                 }
+                newTextFile = null;
                 mDeviceHost.setTransitConfig(configs);
             } catch (Exception e) {
                 e.printStackTrace();

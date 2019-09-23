@@ -249,7 +249,6 @@ public class AidRoutingManager {
         mAidRoutingTableSize = NfcService.getInstance().getAidRoutingTableSize();
         mDefaultAidRoute =   NfcService.getInstance().GetDefaultRouteEntry() >> 0x08;
         Log.e(TAG, "Size of routing table"+mAidRoutingTableSize);
-        mLastCommitStatus = false;
         seList.add(mDefaultAidRoute);
         // Then, populate internal data structures first
         for (Map.Entry<String, AidEntry> aidEntry : aidMap.entrySet())  {
@@ -285,6 +284,7 @@ public class AidRoutingManager {
           seList.add(ROUTE_HOST);
 
         synchronized (mLock) {
+            mLastCommitStatus = false;
             if (routeForAid.equals(mRouteForAid) && !force) {
                 if (DBG) Log.d(TAG, "Routing table unchanged, not updating");
                 return false;
