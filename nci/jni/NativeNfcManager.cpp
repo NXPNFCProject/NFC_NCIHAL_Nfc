@@ -3653,8 +3653,8 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
   static jint nfcManager_getDefaultMifareCLTRoute(JNIEnv * e, jobject o) {
     unsigned long num = 0;
 #if (NXP_EXTNS == TRUE)
-    if (NfcConfig::hasKey(NAME_DEFAULT_OFFHOST_ROUTE))
-      num = NfcConfig::getUnsigned(NAME_DEFAULT_OFFHOST_ROUTE);
+    if (NfcConfig::hasKey(NAME_DEFAULT_TECH_ABF_ROUTE))
+      num = NfcConfig::getUnsigned(NAME_DEFAULT_TECH_ABF_ROUTE);
 #endif
     return num;
   }
@@ -3672,8 +3672,8 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
   *******************************************************************************/
   static jint nfcManager_getDefaultFelicaCLTPowerState(JNIEnv * e, jobject o) {
     unsigned long num = 0;
-    if (NfcConfig::hasKey(NAME_DEFAULT_NFCF_PWR_STATE))
-      num = NfcConfig::getUnsigned(NAME_DEFAULT_NFCF_PWR_STATE);
+    if (NfcConfig::hasKey(NAME_DEFAULT_TECH_ABF_PWR_STATE))
+      num = NfcConfig::getUnsigned(NAME_DEFAULT_TECH_ABF_PWR_STATE);
     return num;
   }
   /*******************************************************************************
@@ -3690,8 +3690,8 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
   *******************************************************************************/
   static jint nfcManager_getDefaultFelicaCLTRoute(JNIEnv * e, jobject o) {
     unsigned long num = 0;
-    if (NfcConfig::hasKey(NAME_DEFAULT_NFCF_ROUTE))
-      num = NfcConfig::getUnsigned(NAME_DEFAULT_NFCF_ROUTE);
+    if (NfcConfig::hasKey(NAME_DEFAULT_TECH_ABF_ROUTE))
+      num = NfcConfig::getUnsigned(NAME_DEFAULT_TECH_ABF_ROUTE);
     return num;
   }
   /*******************************************************************************
@@ -3750,8 +3750,8 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
   *******************************************************************************/
   static jint nfcManager_getDefaultMifareCLTPowerState(JNIEnv * e, jobject o) {
     unsigned long num = 0;
-    if (NfcConfig::hasKey(NAME_DEFAULT_OFFHOST_PWR_STATE)) {
-      num = NfcConfig::getUnsigned(NAME_DEFAULT_OFFHOST_PWR_STATE);
+    if (NfcConfig::hasKey(NAME_DEFAULT_TECH_ABF_PWR_STATE)) {
+      num = NfcConfig::getUnsigned(NAME_DEFAULT_TECH_ABF_PWR_STATE);
     }
     return num;
   }

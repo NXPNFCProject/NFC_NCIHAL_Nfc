@@ -86,7 +86,7 @@ public class AidRoutingManager {
     final byte[] mOffHostRouteEse;
     // Used for backward compatibility in case application doesn't specify the
     // SE
-    final int mDefaultOffHostRoute;
+    int mDefaultOffHostRoute;
 
     // How the NFC controller can match AIDs in the routing table;
     // see AID_MATCHING constants
@@ -248,6 +248,7 @@ public class AidRoutingManager {
         HashMap<String, Integer> powerForAid = new HashMap<String, Integer>(aidMap.size());
         mAidRoutingTableSize = NfcService.getInstance().getAidRoutingTableSize();
         mDefaultAidRoute =   NfcService.getInstance().GetDefaultRouteEntry() >> 0x08;
+        mDefaultOffHostRoute = doGetDefaultOffHostRouteDestination();
         Log.e(TAG, "Size of routing table"+mAidRoutingTableSize);
         seList.add(mDefaultAidRoute);
         // Then, populate internal data structures first

@@ -229,7 +229,9 @@ class RoutingManager {
                   tNFA_STATUS status);
   void notifyActivated(uint8_t technology);
   void notifyDeactivated(uint8_t technology);
+#if (NXP_EXTNS != TRUE)
   tNFA_TECHNOLOGY_MASK updateEeTechRouteSetting();
+#endif
   void updateDefaultProtocolRoute();
   void updateDefaultRoute();
   void printMemberData(void);
@@ -314,8 +316,11 @@ class RoutingManager {
   // Fields below are final after initialize()
   vector<uint8_t> mOffHostRouteUicc;
   vector<uint8_t> mOffHostRouteEse;
+#if (NXP_EXTNS != TRUE)
   int mDefaultFelicaRoute;
+#endif
   int mDefaultOffHostRoute;
+  int mDefaultTechABFRoute;
   int mAidMatchingMode;
   int mNfcFOnDhHandle;
   bool mIsScbrSupported;
@@ -346,8 +351,6 @@ class RoutingManager {
   uint32_t mDefaultIso7816SeID;
   uint32_t mDefaultIso7816Powerstate;
   uint32_t mDefaultTechASeID;
-  uint32_t mDefaultTechFSeID;
-  uint32_t mDefaultTechFPowerstate;
   uint32_t mAddAid;
   uint32_t mTechSupportedByEse;
   uint32_t mTechSupportedByUicc1;
