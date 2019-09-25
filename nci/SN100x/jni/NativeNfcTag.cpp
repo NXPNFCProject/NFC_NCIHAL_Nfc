@@ -87,6 +87,10 @@ bool gIsSelectingRfInterface =
 #if (NXP_EXTNS == TRUE)
 bool gIsWaiting4Deact2SleepNtf = false;
 bool gGotDeact2IdleNtf = false;
+extern bool nfcManager_isNfcActive();
+extern bool nfcManager_isNfcDisabling();
+void nativeNfcTag_acquireRfInterfaceMutexLock();
+void nativeNfcTag_releaseRfInterfaceMutexLock();
 #endif
 }  // namespace android
 
@@ -973,7 +977,28 @@ static jint nativeNfcTag_doHandleReconnect(JNIEnv* e, jobject o,
       << StringPrintf("%s: targetHandle = %d", __func__, targetHandle);
   return nativeNfcTag_doConnect(e, o, targetHandle);
 }
-
+#if (NXP_EXTNS == TRUE)
+/*******************************************************************************
+**
+** Function:        nativeNfcTag_safeDisconnect
+**
+** Description:     Deactivate the RF field only if NFC stack is up and running
+**
+** Returns:         True if ok.
+**
+*******************************************************************************/
+static tNFA_STATUS nativeNfcTag_safeDisconnect() {
+  tNFA_STATUS nfaStat = NFA_STATUS_OK;
+  if(nfcManager_isNfcDisabling() || !nfcManager_isNfcActive()) {
+    LOG(ERROR) << StringPrintf("%s: Nfc is Off", __func__);
+  } else {
+    nativeNfcTag_acquireRfInterfaceMutexLock();
+    nfaStat = NFA_Deactivate(FALSE);
+    nativeNfcTag_releaseRfInterfaceMutexLock();
+  }
+  return nfaStat;
+}
+#endif
 /*******************************************************************************
 **
 ** Function:        nativeNfcTag_doDisconnect
@@ -995,12 +1020,14 @@ jboolean nativeNfcTag_doDisconnect(JNIEnv*, jobject) {
     LOG(ERROR) << StringPrintf("%s: tag already deactivated", __func__);
     goto TheEnd;
   }
-
+#if (NXP_EXTNS == TRUE)
+  nfaStat = nativeNfcTag_safeDisconnect();
+#else
   nfaStat = NFA_Deactivate(FALSE);
+#endif
   if (nfaStat != NFA_STATUS_OK)
     LOG(ERROR) << StringPrintf("%s: deactivate failed; error=0x%X", __func__,
                                nfaStat);
-
 TheEnd:
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
   return (nfaStat == NFA_STATUS_OK) ? JNI_TRUE : JNI_FALSE;

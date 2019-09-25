@@ -3265,6 +3265,18 @@ void doStartupConfig() {
 **
 *******************************************************************************/
 bool nfcManager_isNfcActive() { return sIsNfaEnabled; }
+#if (NXP_EXTNS == TRUE)
+/*******************************************************************************
+**
+** Function:        nfcManager_isNfcDisabling
+**
+** Description:     Used externally to determine if NFC is being turned off.
+**
+** Returns:         'true' if the NFC stack is turning off, else 'false'.
+**
+*******************************************************************************/
+bool nfcManager_isNfcDisabling() { return sIsDisabling; }
+#endif
 /*******************************************************************************
 **
 ** Function:        startStopPolling
