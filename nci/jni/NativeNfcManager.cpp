@@ -2066,6 +2066,17 @@ static void nfaConnectionCallback(uint8_t connEvent,
           << StringPrintf("%s: stop discovery", __func__);
       startRfDiscovery(false);
     }
+
+    // At this point, the RF Discover should be idle to allow the change of the list of techno
+    // So release transaction if still locked due to lack of appropriate RF event
+    if (pTransactionController != NULL && pTransactionController->transactionInProgress() &&
+      (RF_FIELD_EVT == pTransactionController->getCurTransactionRequestor())) {
+      pTransactionController->transactionEnd(
+              TRANSACTION_REQUESTOR(RF_FIELD_EVT));
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("Force end of transaction in progress");
+    }
+
     NFA_SetFieldDetectMode(mode);
     // start discovery
     DLOG_IF(INFO, nfc_debug_enabled)
