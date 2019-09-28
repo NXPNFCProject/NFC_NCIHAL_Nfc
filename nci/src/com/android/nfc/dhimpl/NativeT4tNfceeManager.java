@@ -27,4 +27,6 @@ public class NativeT4tNfceeManager {
   public native boolean doLockT4tData(boolean lock);
 
   public native boolean isLockedT4tData();
+
+  public native boolean doClearNdefT4tData();
 }

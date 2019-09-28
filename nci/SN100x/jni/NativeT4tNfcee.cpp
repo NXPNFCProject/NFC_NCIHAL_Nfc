@@ -42,6 +42,8 @@ extern bool nfcManager_isNfcActive();
 extern tNFA_STATUS getConfig(uint16_t* len, uint8_t* configValue,
                              uint8_t numParam, tNFA_PMID* param);
 extern tNFA_STATUS NxpNfc_Write_Cmd_Common(uint8_t retlen, uint8_t* buffer);
+extern int nfcManager_doPartialInitialize(JNIEnv* e, jobject o, jint mode);
+extern int nfcManager_doPartialDeInitialize(JNIEnv*, jobject);
 }  // namespace android
 
 NativeT4tNfcee NativeT4tNfcee::sNativeT4tNfceeInstance;
@@ -101,7 +103,86 @@ void NativeT4tNfcee::onNfccShutdown() {
     resetBusy();
   }
 }
+/*******************************************************************************
+**
+** Function:        t4tClearData
+**
+** Description:     This API will set all the T4T NFCEE NDEF data to zero.
+**                  This API can be called regardless of NDEF file lock state.
+**
+** Returns:         boolean : Return the Success or fail of the operation.
+**                  Return "True" when operation is successful. else "False"
+**
+*******************************************************************************/
+jboolean NativeT4tNfcee::t4tClearData(JNIEnv* e, jobject o) {
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:Enter: ", __func__);
 
+  /*Local variable Initalization*/
+  uint8_t pFileId[] = {0xE1, 0x04};
+  jbyteArray fileIdArray = e->NewByteArray(sizeof(pFileId));
+  e->SetByteArrayRegion(fileIdArray, 0, sizeof(pFileId), (jbyte*)pFileId);
+  bool clear_status = false;
+
+  /*Validate Precondition*/
+  T4TNFCEE_STATUS_t t4tNfceeStatus =
+      validatePreCondition(OP_CLEAR, fileIdArray);
+
+  switch (t4tNfceeStatus) {
+    case STATUS_SUCCESS:
+      /*NFC is ON*/
+      clear_status = performT4tClearData(pFileId);
+      break;
+    case ERROR_NFC_NOT_ON:
+      /*NFC is OFF*/
+      if (android::nfcManager_doPartialInitialize(e, o, NFA_MINIMUM_BOOT_MODE) ==
+          NFA_STATUS_OK) {
+        NativeT4tNfcee::getInstance().initialize();
+        clear_status = performT4tClearData(pFileId);
+        android::nfcManager_doPartialDeInitialize(NULL, NULL);
+      }
+      break;
+    default:
+      DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf(
+          "%s:Exit: Returnig status : %d", __func__, clear_status);
+      break;
+  }
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:Exit: ", __func__);
+  return clear_status;
+}
+/*******************************************************************************
+**
+** Function:        performT4tClearData
+**
+** Description:     This api clear the T4T Nfcee data
+**
+** Returns:         boolean : Return the Success or fail of the operation.
+**                  Return "True" when operation is successful. else "False"
+**
+*******************************************************************************/
+jboolean NativeT4tNfcee::performT4tClearData(uint8_t* fileId) {
+  bool t4tClearReturn = false;
+  tNFA_STATUS status = NFA_STATUS_FAILED;
+
+  /*Open connection and stop discovery*/
+  if (setup() != NFA_STATUS_OK) return t4tClearReturn;
+
+  /*Clear Ndef data*/
+  SyncEventGuard g(mT4tNfcEeClrDataEvent);
+  status = NFA_T4tNfcEeClear(fileId);
+  if (status == NFA_STATUS_OK) {
+    if (mT4tNfcEeClrDataEvent.wait(T4TNFCEE_TIMEOUT) == false)
+      t4tClearReturn = false;
+    else {
+      if (mT4tOpStatus == NFA_STATUS_OK) {
+        t4tClearReturn = true;
+      }
+    }
+  }
+
+  /*Close connection and start discovery*/
+  cleanup();
+  return t4tClearReturn;
+}
 /*******************************************************************************
 **
 ** Function:        t4tWriteData
@@ -396,6 +477,8 @@ T4TNFCEE_STATUS_t NativeT4tNfcee::validatePreCondition(T4TNFCEE_OPERATIONS_t op,
       if (t4tNfceeStatus != STATUS_SUCCESS) break;
       if (!isNdefWritePermission()) t4tNfceeStatus = ERROR_WRITE_PERMISSION;
       break;
+    case OP_CLEAR:
+    [[fallthrough]];
     default:
       break;
   }
@@ -441,7 +524,21 @@ void NativeT4tNfcee::t4tWriteComplete(tNFA_STATUS status, tNFA_RX_DATA data) {
   SyncEventGuard g(mT4tNfcEeRWEvent);
   mT4tNfcEeRWEvent.notifyOne();
 }
-
+/*******************************************************************************
+ **
+ ** Function:        t4tClearComplete
+ **
+ ** Description:     Update T4T clear data status, waiting T4tClearData API.
+ **
+ ** Returns:         none
+ **
+ *******************************************************************************/
+void NativeT4tNfcee::t4tClearComplete(tNFA_STATUS status) {
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter", __func__);
+  mT4tOpStatus = status;
+  SyncEventGuard g(mT4tNfcEeClrDataEvent);
+  mT4tNfcEeClrDataEvent.notifyOne();
+}
 /*******************************************************************************
 **
 ** Function:        t4tNfceeEventHandler
@@ -474,6 +571,12 @@ void NativeT4tNfcee::eventHandler(uint8_t event,
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: NFA_T4TNFCEE_WRITE_CPLT_EVT", __func__);
       t4tWriteComplete(eventData->status, eventData->data);
+      break;
+
+    case NFA_T4TNFCEE_CLEAR_CPLT_EVT:
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("%s: NFA_T4TNFCEE_CLEAR_CPLT_EVT", __func__);
+      t4tClearComplete(eventData->status);
       break;
 
     default:

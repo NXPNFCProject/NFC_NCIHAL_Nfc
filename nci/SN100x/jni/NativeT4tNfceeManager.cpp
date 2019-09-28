@@ -27,6 +27,22 @@ using android::base::StringPrintf;
 
 namespace android {
 /*******************************************************************************
+**
+** Function:        t4tClearData
+**
+** Description:     This API will set all the T4T NFCEE NDEF data to zero.
+**                  This API can be called regardless of NDEF file lock state.
+**
+** Returns:         boolean : Return the Success or fail of the operation.
+**                  Return "True" when operation is successful. else "False"
+**
+*******************************************************************************/
+jint t4tNfceeManager_doClearNdefT4tData(JNIEnv* e, jobject o) {
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+
+  return t4tNfcEe.t4tClearData(e, o);
+}
+/*******************************************************************************
  **
  ** Function:        nfcManager_doWriteT4tData
  **
@@ -101,6 +117,7 @@ static JNINativeMethod gMethods[] = {
     {"doReadT4tData", "([B)[B", (void*)t4tNfceeManager_doReadT4tData},
     {"doLockT4tData", "(Z)Z", (void*)t4tNfceeManager_doLockT4tData},
     {"isLockedT4tData", "()Z", (void*)t4tNfceeManager_isLockedT4tData},
+    {"doClearNdefT4tData", "()Z", (void*)t4tNfceeManager_doClearNdefT4tData},
 };
 
 /*******************************************************************************

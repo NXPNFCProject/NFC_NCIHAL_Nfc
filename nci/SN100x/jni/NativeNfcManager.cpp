@@ -118,7 +118,7 @@ extern void nativeLlcpConnectionlessSocket_receiveData(uint8_t* data,
 #if(NXP_EXTNS == TRUE)
 extern tNFA_STATUS Nxp_doResonantFrequency(bool modeOn);
 void handleWiredmode(bool isShutdown);
-int nfcManager_doPartialInitialize(JNIEnv* e, jobject o);
+int nfcManager_doPartialInitialize(JNIEnv* e, jobject o, jint mode);
 int nfcManager_doPartialDeInitialize(JNIEnv* e, jobject o);
 extern tNFA_STATUS NxpNfc_Write_Cmd_Common(uint8_t retlen, uint8_t* buffer);
 extern void NxpPropCmd_OnResponseCallback(uint8_t event, uint16_t param_len,
@@ -847,6 +847,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
     case NFA_T4TNFCEE_EVT:
     case NFA_T4TNFCEE_READ_CPLT_EVT:
     case NFA_T4TNFCEE_WRITE_CPLT_EVT:
+    case NFA_T4TNFCEE_CLEAR_CPLT_EVT:
       t4tNfcEe.eventHandler(connEvent, eventData);
       break;
 #endif
@@ -2591,41 +2592,39 @@ static void nfcManager_doResonantFrequency(JNIEnv* e, jobject o,
 ** Returns:         True if ok.
 **
 *******************************************************************************/
-int nfcManager_doPartialInitialize(JNIEnv* e, jobject o) {
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
-    tNFA_STATUS stat = NFA_STATUS_OK;
-    NfcAdaptation& theInstance = NfcAdaptation::GetInstance();
+int nfcManager_doPartialInitialize(JNIEnv* e, jobject o, jint mode) {
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+  tNFA_STATUS stat = NFA_STATUS_OK;
+  NfcAdaptation& theInstance = NfcAdaptation::GetInstance();
 
-    theInstance.Initialize();
-    tHAL_NFC_ENTRY* halFuncEntries = theInstance.GetHalEntryFuncs ();
+  theInstance.Initialize();
+  tHAL_NFC_ENTRY* halFuncEntries = theInstance.GetHalEntryFuncs();
 
-    if(NULL == halFuncEntries)
-    {
-        theInstance.Finalize();
-        gsNfaPartialEnabled = false;
-        return NFA_STATUS_FAILED;
-    }
-    theInstance.NFA_SetBootMode(NFA_FAST_BOOT_MODE);
-    NFA_Init (halFuncEntries);
-    DLOG_IF(INFO, nfc_debug_enabled)<< StringPrintf("%s: calling enable", __func__);
+  if (NULL == halFuncEntries) {
+    theInstance.Finalize();
+    gsNfaPartialEnabled = false;
+    return NFA_STATUS_FAILED;
+  }
 
-    stat = NFA_Enable (nfaDeviceManagementCallback, nfaConnectionCallback);
-    if (stat == NFA_STATUS_OK)
-    {
-        SyncEventGuard guard (sNfaEnableEvent);
-        sNfaEnableEvent.wait(); //wait for NFA command to finish
-    }
+  theInstance.NFA_SetBootMode(mode);
 
-    if (sIsNfaEnabled)
-    {
-        gsNfaPartialEnabled = true;
-    }
-    else
-    {
-        NFA_Disable (false /* ungraceful */);
-        theInstance.Finalize();
-        gsNfaPartialEnabled = false;
-    }
+  NFA_Init(halFuncEntries);
+  DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("%s: calling enable", __func__);
+
+  stat = NFA_Enable(nfaDeviceManagementCallback, nfaConnectionCallback);
+  if (stat == NFA_STATUS_OK) {
+    SyncEventGuard guard(sNfaEnableEvent);
+    sNfaEnableEvent.wait();  // wait for NFA command to finish
+  }
+
+  if (sIsNfaEnabled) {
+    gsNfaPartialEnabled = true;
+  } else {
+    NFA_Disable(false /* ungraceful */);
+    theInstance.Finalize();
+    gsNfaPartialEnabled = false;
+  }
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
   return NFA_STATUS_OK;
 }

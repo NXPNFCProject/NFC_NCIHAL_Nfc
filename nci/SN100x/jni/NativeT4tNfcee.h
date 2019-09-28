@@ -22,7 +22,7 @@
 #include <nativehelper/ScopedLocalRef.h>
 #define t4tNfcEe (NativeT4tNfcee::getInstance())
 
-typedef enum { OP_READ = 0, OP_WRITE, OP_LOCK } T4TNFCEE_OPERATIONS_t;
+typedef enum { OP_READ = 0, OP_WRITE, OP_LOCK, OP_CLEAR } T4TNFCEE_OPERATIONS_t;
 
 typedef enum {
   STATUS_SUCCESS = 0,
@@ -86,7 +86,29 @@ class NativeT4tNfcee {
   *******************************************************************************/
   int t4tWriteData(JNIEnv* e, jobject o, jbyteArray fileId, jbyteArray data,
                    int length);
-
+  /*******************************************************************************
+  **
+  ** Function:        t4tClearData
+  **
+  ** Description:     This API will set all the T4T NFCEE NDEF data to zero.
+  **                  This API can be called regardless of NDEF file lock state.
+  **
+  ** Returns:         boolean : Return the Success or fail of the operation.
+  **                  Return "True" when operation is successful. else "False"
+  **
+  *******************************************************************************/
+  jboolean t4tClearData(JNIEnv* e, jobject o);
+  /*******************************************************************************
+  **
+  ** Function:        performT4tClearData
+  **
+  ** Description:     This api clear the T4T Nfcee data
+  **
+  ** Returns:         boolean : Return the Success or fail of the operation.
+  **                  Return "True" when operation is successful. else "False"
+  **
+  *******************************************************************************/
+  jboolean performT4tClearData(uint8_t* fileId);
   /*******************************************************************************
   **
   ** Function:        t4tReadData
@@ -124,6 +146,16 @@ class NativeT4tNfcee {
    **
    *******************************************************************************/
   void t4tWriteComplete(tNFA_STATUS status, tNFA_RX_DATA data);
+  /*******************************************************************************
+   **
+   ** Function:        t4tClearComplete
+   **
+   ** Description:     Update T4T clear data status, waiting T4tClearData API.
+   **
+   ** Returns:         none
+   **
+   *******************************************************************************/
+  void t4tClearComplete(tNFA_STATUS status);
   /*******************************************************************************
   **
   ** Function:        doLockT4tData
@@ -202,6 +234,7 @@ class NativeT4tNfcee {
   SyncEvent mT4tNfcEeRWEvent;
   SyncEvent mT4tNfcEeWriteEvent;
   SyncEvent mT4tNfcEeEvent;
+  SyncEvent mT4tNfcEeClrDataEvent;
   tNFA_RX_DATA mReadData;
   tNFA_STATUS mT4tOpStatus;
   tNFA_STATUS mT4tNfcEeEventStat = NFA_STATUS_FAILED;

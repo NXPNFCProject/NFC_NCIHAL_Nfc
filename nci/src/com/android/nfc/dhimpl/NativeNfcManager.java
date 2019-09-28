@@ -338,6 +338,12 @@ public class NativeNfcManager implements DeviceHost {
     public boolean isLockedT4tData() {
       return mT4tNfceeMgr.isLockedT4tData();
     }
+
+    @Override
+    public boolean doClearNdefT4tData() {
+      return mT4tNfceeMgr.doClearNdefT4tData();
+    }
+
     private native NativeLlcpConnectionlessSocket doCreateLlcpConnectionlessSocket(int nSap,
             String sn);
 

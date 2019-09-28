@@ -40,7 +40,7 @@ extern tNFA_STATUS NxpPropCmd_send(uint8_t* pData4Tx, uint8_t dataLen,
                                    uint32_t rspTimeout, tHAL_NFC_ENTRY* halMgr);
 extern bool isDiscoveryStarted();
 extern void startRfDiscovery(bool isStart);
-extern int nfcManager_doPartialInitialize(JNIEnv* e, jobject o);
+extern int nfcManager_doPartialInitialize(JNIEnv* e, jobject o, jint mode);
 extern int nfcManager_doPartialDeInitialize(JNIEnv*, jobject);
 extern bool nfcManager_isNfcActive();
 }  // namespace android

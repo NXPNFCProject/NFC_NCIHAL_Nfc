@@ -347,4 +347,5 @@ public interface DeviceHost {
     public byte[] doReadT4tData(byte[] fileId);
     public boolean doLockT4tData(boolean lock);
     public boolean isLockedT4tData();
+    public boolean doClearNdefT4tData();
 }
