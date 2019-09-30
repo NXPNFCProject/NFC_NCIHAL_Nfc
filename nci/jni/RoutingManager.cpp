@@ -2627,21 +2627,14 @@ void RoutingManager::updateDefaultRoute() {
 
   // Register System Code for routing
   SyncEventGuard guard(mRoutingEvent);
-  tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
 #if (NXP_EXTNS == TRUE)
-  if (mDefaultSysCodePowerstate) {
-    nfaStat = NFA_EeAddSystemCodeRouting(
-        mDefaultSysCode, routeLoc,
-        mSecureNfcEnabled ? 0x01 : mDefaultSysCodePowerstate);
-  } else {
-    nfaStat = NFA_STATUS_NOT_SUPPORTED;
-    LOG(ERROR) << fn << ": SCBR power state set to 0x00";
-  }
+  tNFA_STATUS nfaStat = NFA_EeAddSystemCodeRouting(
+      mDefaultSysCode, routeLoc,
+      mSecureNfcEnabled ? 0x01 : mDefaultSysCodePowerstate);
 #else
-  nfaStat = NFA_EeAddSystemCodeRouting(
+  tNFA_STATUS nfaStat = NFA_EeAddSystemCodeRouting(
       mDefaultSysCode, mDefaultSysCodeRoute,
       mSecureNfcEnabled ? 0x01 : mDefaultSysCodePowerstate);
-
 #endif
   if (nfaStat == NFA_STATUS_NOT_SUPPORTED) {
     mIsScbrSupported = false;
