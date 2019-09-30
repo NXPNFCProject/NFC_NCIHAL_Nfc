@@ -2630,7 +2630,8 @@ void RoutingManager::updateDefaultRoute() {
 #if (NXP_EXTNS == TRUE)
   tNFA_STATUS nfaStat = NFA_EeAddSystemCodeRouting(
       mDefaultSysCode, routeLoc,
-      mSecureNfcEnabled ? 0x01 : mDefaultSysCodePowerstate);
+      (mSecureNfcEnabled && mDefaultSysCodePowerstate)
+          ? 0x01 : mDefaultSysCodePowerstate);
 #else
   tNFA_STATUS nfaStat = NFA_EeAddSystemCodeRouting(
       mDefaultSysCode, mDefaultSysCodeRoute,
