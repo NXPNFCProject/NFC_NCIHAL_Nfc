@@ -3428,17 +3428,9 @@ static jint nfcManager_getFwVersion(JNIEnv * e, jobject o) {
     (void)e;
     (void)o;
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
-    tNFA_STATUS status = NFA_STATUS_FAILED;
-    //    bool stat = false;                        /*commented to eliminate
-    //    unused variable warning*/
     jint version = 0, temp = 0;
     tNFC_FW_VERSION nfc_native_fw_version;
 
-    if (!sIsNfaEnabled) {
-      DLOG_IF(INFO, nfc_debug_enabled)
-          << StringPrintf("NFC does not enabled!!");
-      return status;
-    }
     memset(&nfc_native_fw_version, 0, sizeof(nfc_native_fw_version));
 
     nfc_native_fw_version = nfc_ncif_getFWVersion();
