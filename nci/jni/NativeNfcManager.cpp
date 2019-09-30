@@ -2167,8 +2167,6 @@ static void nfaConnectionCallback(uint8_t connEvent,
         RoutingManager::getInstance().registerT3tIdentifier(buf, bufLen);
           DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: handle=%d", __func__, handle);
-    if (handle != NFA_HANDLE_INVALID)
-      RoutingManager::getInstance().commitRouting();
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
     return handle;
   }
@@ -2189,7 +2187,6 @@ static void nfaConnectionCallback(uint8_t connEvent,
                                                    jint handle) {
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
     RoutingManager::getInstance().deregisterT3tIdentifier(handle);
-    RoutingManager::getInstance().commitRouting();
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
   }
 
