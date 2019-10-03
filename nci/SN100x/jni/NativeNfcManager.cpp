@@ -126,6 +126,7 @@ extern void nativeNfcTag_checkActivatedProtoParameters(tNFA_ACTIVATED& activatio
 extern tNFA_STATUS NxpPropCmd_send(uint8_t * pData4Tx, uint8_t dataLen,
                                    uint8_t * rsp_len, uint8_t * rsp_buf,
                                    uint32_t rspTimeout, tHAL_NFC_ENTRY * halMgr);
+extern tNFA_STATUS send_flush_ram_to_flash();
 extern bool gIsWaiting4Deact2SleepNtf;
 extern bool gGotDeact2IdleNtf;
 #endif
@@ -3138,6 +3139,9 @@ void doStartupConfig() {
     nfa_dm_disc_freq_cfg.pfa = polling_frequency[7];
     p_nfa_dm_rf_disc_freq_cfg = &nfa_dm_disc_freq_cfg;
   }
+#if (NXP_EXTNS == TRUE)
+  send_flush_ram_to_flash();
+#endif
 }
 
 /*******************************************************************************
