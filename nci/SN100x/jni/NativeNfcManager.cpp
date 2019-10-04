@@ -3112,8 +3112,6 @@ static JNINativeMethod gMethods[] = {
      (void*)nfcManager_SetFieldDetectMode},
      {"isFieldDetectEnabled", "()Z",
      (void*)nfcManager_IsFieldDetectEnabled},
-#endif
-#if(NXP_EXTNS == TRUE)
     // check firmware version
     {"getFWVersion", "()I", (void*)nfcManager_getFwVersion},
     {"readerPassThruMode", "(BB)[B", (void*)nfcManager_readerPassThruMode},

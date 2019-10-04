@@ -17,7 +17,7 @@
  ******************************************************************************/
 
 #include "NfcSelfTest.h"
-
+#include "NfcJniUtil.h" // for JNIEnv, jobject & jint
 /* Declaration of the singleTone class(static member) */
 NfcSelfTest NfcSelfTest::sSelfTestMgr;
 
@@ -25,13 +25,17 @@ nxp_selftest_data gselfTestData;
 extern bool nfc_debug_enabled;
 extern SyncEvent sChangeDiscTechEvent;
 extern SyncEvent sNfaSetConfigEvent;
+static SyncEvent sNfaVscNtfEvent;
 
 using android::base::StringPrintf;
 using namespace android;
 
 namespace android {
+extern bool nfcManager_isNfcActive();
 extern bool isDiscoveryStarted();
 extern void startRfDiscovery(bool isStart);
+extern int nfcManager_doPartialInitialize(JNIEnv* e, jobject o, jint mode);
+extern int nfcManager_doPartialDeInitialize(JNIEnv*, jobject);
 }  // namespace android
 /*******************************************************************************
  ** Set the global Self Test status to @param value
@@ -268,6 +272,80 @@ uint8_t NfcSelfTest::GetCmdBuffer(uint8_t* aCmdBuf, uint8_t aType) {
       memcpy(aCmdBuf, CMD_EXTN_PRBS_START, cmdLen);
       break;
     }
+    case CMD_TYPE_SPC_NTF_EN: {
+      uint8_t CMD_SPC_NTF_EN[] = {0x2F, 0x3D, 0x0F, 0x30, 0x00, 0xE0, 0x2E, 0x32,
+              0x51, 0x27, 0x05, 0xED, 0x91, 0x10, 0x01, 0x00, 0x12, 0x1F};
+      cmdLen = sizeof(CMD_SPC_NTF_EN);
+      memcpy(aCmdBuf, CMD_SPC_NTF_EN, cmdLen);
+      break;
+    }
+    case CMD_TYPE_SPC_BLK1: {
+      uint8_t CMD_SPC_BLK1[] = {0x2F, 0x3D, 0x7E, 0x30, 0x01, 0x80, 0x0C, 0x00,
+              0x66, 0x41, 0x19, 0x03, 0x66, 0xC0, 0x0C, 0x03, 0x66, 0x81, 0x99,
+              0x03, 0x66, 0x81, 0x99, 0x01, 0x66, 0xC1, 0x99, 0x04, 0x66, 0xC1,
+              0x99, 0x02, 0x66, 0xC1, 0x99, 0x00, 0x66, 0x01, 0x9A, 0x03, 0x66,
+              0x00, 0x8D, 0x00, 0x66, 0x40, 0x8D, 0x04, 0x66, 0x40, 0x8D, 0x03,
+              0x66, 0x40, 0x8D, 0x02, 0x66, 0x40, 0x8D, 0x01, 0x66, 0x40, 0x8D,
+              0x00, 0x66, 0xC1, 0x9A, 0x03, 0x66, 0xC1, 0x9A, 0x01, 0x66, 0x01,
+              0x9B, 0x04, 0x66, 0x01, 0x9B, 0x02, 0x66, 0x01, 0x9B, 0x00, 0x66,
+              0x41, 0x9B, 0x03, 0x66, 0xC0, 0x0D, 0x03, 0x66, 0xC0, 0x0D, 0x02,
+              0x66, 0xC0, 0x0D, 0x01, 0x66, 0xC0, 0x0D, 0x00, 0x66, 0xC1, 0x1B,
+              0x03, 0x66, 0x00, 0x0E, 0x03, 0x66, 0x00, 0x0E, 0x02, 0x66, 0x01,
+              0x9C, 0x01, 0x66, 0x41, 0x9C, 0x04, 0x66, 0x41, 0x9C, 0x02, 0x66};
+      cmdLen = sizeof(CMD_SPC_BLK1);
+      memcpy(aCmdBuf, CMD_SPC_BLK1, cmdLen);
+      break;
+    }
+    case CMD_TYPE_SPC_BLK2: {
+      uint8_t CMD_SPC_BLK2[] = {0x2F, 0x3D, 0x7E, 0x30, 0x02, 0x41, 0x9C, 0x00,
+              0x66, 0x81, 0x9C, 0x03, 0x66, 0x40, 0x8E, 0x00, 0x66, 0x80, 0x8E,
+              0x04, 0x66, 0x80, 0x8E, 0x03, 0x66, 0x80, 0x8E, 0x02, 0x66, 0x80,
+              0x8E, 0x01, 0x66, 0x80, 0x8E, 0x00, 0x66, 0xC0, 0x8E, 0x04, 0x66,
+              0x41, 0x9D, 0x01, 0x66, 0x81, 0x9D, 0x04, 0x66, 0x81, 0x9D, 0x02,
+              0x66, 0x81, 0x9D, 0x00, 0x66, 0xC1, 0x9D, 0x03, 0x66, 0x00, 0x0F,
+              0x03, 0x66, 0x00, 0x0F, 0x02, 0x66, 0x00, 0x0F, 0x01, 0x66, 0x00,
+              0x0F, 0x00, 0x66, 0x41, 0x1E, 0x03, 0x66, 0x40, 0x0F, 0x03, 0x66,
+              0x40, 0x0F, 0x02, 0x66, 0x81, 0x9E, 0x01, 0x66, 0xC1, 0x9E, 0x04,
+              0x66, 0xC1, 0x9E, 0x02, 0x66, 0xC1, 0x9E, 0x00, 0x66, 0x01, 0x9F,
+              0x03, 0x66, 0x80, 0x8F, 0x00, 0x66, 0xC0, 0x8F, 0x04, 0x66, 0xC0,
+              0x8F, 0x03, 0x66, 0xC0, 0x8F, 0x02, 0x66, 0xC0, 0x8F, 0x01, 0x66};
+      cmdLen = sizeof(CMD_SPC_BLK2);
+      memcpy(aCmdBuf, CMD_SPC_BLK2, cmdLen);
+      break;
+    }
+    case CMD_TYPE_SPC_BLK3: {
+      uint8_t CMD_SPC_BLK3[] = {0x2F, 0x3D, 0x4E, 0x30, 0x03, 0xC0, 0x8F, 0x00,
+              0x66, 0x00, 0x90, 0x04, 0x66, 0xC1, 0x9F, 0x01, 0x66, 0x01, 0xA0,
+              0x04, 0x66, 0x01, 0xA0, 0x02, 0x66, 0x01, 0xA0, 0x00, 0x66, 0x41,
+              0xA0, 0x03, 0x66, 0x40, 0x10, 0x03, 0x66, 0x40, 0x10, 0x02, 0x66,
+              0x40, 0x10, 0x01, 0x66, 0x40, 0x10, 0x00, 0x66, 0xC1, 0x20, 0x03,
+              0x66, 0x80, 0x10, 0x03, 0x66, 0x01, 0xA1, 0x03, 0x66, 0x01, 0xA1,
+              0x01, 0x66, 0x41, 0xA1, 0x04, 0x66, 0x41, 0xA1, 0x02, 0x66, 0x41,
+              0xA1, 0x00, 0x66, 0x81, 0xA1, 0x03, 0x66};
+      cmdLen = sizeof(CMD_SPC_BLK3);
+      memcpy(aCmdBuf, CMD_SPC_BLK3, cmdLen);
+      break;
+    }
+    case CMD_TYPE_SPC_START: {
+      uint8_t CMD_SPC_START[] = {0x2F, 0x3D, 0x01, 0x31};
+      cmdLen = sizeof(CMD_SPC_START);
+      memcpy(aCmdBuf, CMD_SPC_START, cmdLen);
+      break;
+    }
+    case CMD_TYPE_SPC_ROUTE: {
+      uint8_t CMD_SPC_ROUTE[] = {0x21, 0x01, 0x1C, 0x00, 0x05, 0x03, 0x04, 0xC0,
+              0x39, 0xFE, 0xFF, 0x01, 0x03, 0x00, 0x11, 0x04, 0x00, 0x03, 0xC0,
+              0x3F, 0x00, 0x00, 0x03, 0xC0, 0x3F, 0x01, 0x00, 0x03, 0xC0, 0x3F, 0x02};
+      cmdLen = sizeof(CMD_SPC_ROUTE);
+      memcpy(aCmdBuf, CMD_SPC_ROUTE, cmdLen);
+      break;
+    }
+    case CMD_TYPE_NFCC_ALLOW_CHANGE_PARAM: {
+      uint8_t CMD_SPC_ROUTE[] = {0x20, 0x02, 0x04, 0x01, 0x85, 0x01, 0x01};
+      cmdLen = sizeof(CMD_SPC_ROUTE);
+      memcpy(aCmdBuf, CMD_SPC_ROUTE, cmdLen);
+      break;
+    }
     default:
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Command not supported");
       break;
@@ -309,6 +387,9 @@ tNFA_STATUS NfcSelfTest::doNfccSelfTest(int aType) {
       break;
     case TEST_TYPE_PRBS_OFF:
       status = PerformPrbs(false);
+      break;
+    case TEST_TYPE_SPC:
+      status = PerformSPCTest();
       break;
     default:
       DLOG_IF(ERROR, nfc_debug_enabled)
@@ -485,6 +566,60 @@ tNFA_STATUS NfcSelfTest::PerformResonantFreq(bool on) {
   return status;
 }
 
+/*******************************************************************************
+ ** Callback: Callback to be registered with NFA_RegVSCback()
+ ** @param    Event: for which the callback is invoked
+ **           param_len: Len of the Parameters passed
+ **           p_param: Pointer to the event param
+ ** @return   None
+ *******************************************************************************/
+static void nfaVSCNtfCallback(uint8_t event, uint16_t param_len, uint8_t *p_param) {
+  (void)event;
+  if((param_len == 0x09) && (p_param[0]==0x6F) && (p_param[1]==0x3D) && (p_param[2]==0x06)){
+    uint16_t trim_val = (p_param[7]<<8) + p_param[8];
+    uint16_t spc_rssi = (p_param[6]<<8) + p_param[5];
+    LOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s MIN_RSSI[%X] at Customer phase"
+            "trim value[%X]. min RSSI start index is %X & end index is %X", __func__,
+            spc_rssi, trim_val, p_param[3], p_param[4]);
+    SyncEventGuard guard (sNfaVscNtfEvent);
+    sNfaVscNtfEvent.notifyOne();
+  }
+}
+
+/*******************************************************************************
+ ** Executes: Configures the FW and starts the SPC algorithm to save the customer
+ **           phase offset into RF_CUST_PHASE_COMPENSATION.
+ ** @param    None
+ ** @return status SUCCESS or FAILED.
+ *******************************************************************************/
+tNFA_STATUS NfcSelfTest::PerformSPCTest() {
+  tNFA_STATUS status = NFA_STATUS_FAILED;
+  uint8_t SPCTestCmdSeq[] = {CMD_TYPE_CORE_RESET, CMD_TYPE_CORE_INIT,
+          CMD_TYPE_NFCC_ALLOW_CHANGE_PARAM, CMD_TYPE_NXP_PROP_EXT, CMD_TYPE_SPC_NTF_EN,
+          CMD_TYPE_SPC_BLK1, CMD_TYPE_SPC_BLK2, CMD_TYPE_SPC_BLK3, CMD_TYPE_SPC_START};
+  uint8_t SPCTestPostCmdSeq[] = {CMD_TYPE_SPC_ROUTE};
+
+  if(nfcManager_isNfcActive()) {
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Nfc needs to be turned off");
+    return status;
+  }
+  if (NFA_STATUS_OK ==
+          android::nfcManager_doPartialInitialize(nullptr, nullptr, NFA_FAST_BOOT_MODE)) {
+    if(NFA_STATUS_OK != NFA_RegVSCback (true,nfaVSCNtfCallback)) { //Register CallBack for VS NTF
+      return status;
+    }
+
+    if(NFA_STATUS_OK == executeCmdSeq(SPCTestCmdSeq, sizeof(SPCTestCmdSeq))) {
+      SyncEventGuard guard (sNfaVscNtfEvent);
+      sNfaVscNtfEvent.wait(); //wait for NFA VS NTF to come
+    }
+    status = executeCmdSeq(SPCTestPostCmdSeq, sizeof(SPCTestPostCmdSeq));
+    NFA_RegVSCback (false,nfaVSCNtfCallback); //DeRegister CallBack for VS NTF
+    android::nfcManager_doPartialDeInitialize(NULL, NULL);
+  }
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("status=%u", status);
+  return status;
+}
 /*******************************************************************************
  ** Writes sequence of commands provided to NFCC
  ** @param *aCmdType- pointer for the list of command types
