@@ -175,6 +175,9 @@ public class ForegroundUtils extends IProcessObserver.Stub {
         }
     }
 
+    @Override
+    public void onForegroundServicesChanged(int pid, int uid, int fgServiceTypes) {
+    }
 
     @Override
     public void onProcessDied(int pid, int uid) throws RemoteException {
