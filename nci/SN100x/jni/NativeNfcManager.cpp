@@ -2129,6 +2129,31 @@ static jint nfcManager_getDefaultAidRoute (JNIEnv* e, jobject o)
 #if(NXP_EXTNS == TRUE)
     GetNxpNumValue(NAME_DEFAULT_AID_ROUTE, &num, sizeof(num));
 #endif
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: num %lx", __func__, num);
+    if(num != SecureElement::DH_ID) {
+      tNFA_HANDLE defaultRouteHandle = SecureElement::getInstance().getEseHandleFromGenericId(num) & ~NFA_HANDLE_GROUP_EE;
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: defaultRouteHandle %hx", __func__, defaultRouteHandle);
+      bool  found = false;
+      tNFA_HANDLE ee_handleList[nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED];
+      uint8_t count = 0;
+      SecureElement::getInstance().getEeHandleList(ee_handleList, &count);
+      for (int  i = 0; i < count; i++) {
+        if(ee_handleList[i] == defaultRouteHandle) {
+          DLOG_IF(INFO, nfc_debug_enabled)
+            << StringPrintf("%s: Default AID Route handle found 0x %hx", __func__, defaultRouteHandle);
+          found = true;
+          break;
+        }
+      }
+      if(!found) {
+        DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf(" Default AID Route handle not found , DH ");
+        num = SecureElement::DH_ID;
+      }
+    }
+
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s route = %lx",__func__, num);
     return num;
 }
 /*******************************************************************************
