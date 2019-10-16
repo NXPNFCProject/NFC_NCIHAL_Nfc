@@ -1494,6 +1494,7 @@ tNFA_EE_INFO *SecureElement::findEeByHandle (tNFA_HANDLE eeHandle)
 tNFA_HANDLE SecureElement::getEseHandleFromGenericId(jint eseId)
 {
     uint16_t handle = NFA_HANDLE_INVALID;
+    RoutingManager& rm = RoutingManager::getInstance();
     static const char fn [] = "SecureElement::getEseHandleFromGenericId";
     LOG(INFO) << StringPrintf("%s: enter; ESE-ID = 0x%02X", fn, eseId);
 
@@ -1502,11 +1503,15 @@ tNFA_HANDLE SecureElement::getEseHandleFromGenericId(jint eseId)
     {
         handle = EE_HANDLE_0xF3; //0x4C0;
     }
-    else if(eseId == UICC_ID || eseId == EE_APP_HANLDE_UICC) //UICC
+    else if(eseId == UICC_ID || eseId == UICC2_ID)
+    {
+      handle = rm.getUiccRouteLocId(eseId);
+    }
+    else if(eseId == EE_APP_HANLDE_UICC) //UICC
     {
         handle = SecureElement::getInstance().EE_HANDLE_0xF4; //0x402;
     }
-    else if(eseId == UICC2_ID || eseId == EE_APP_HANLDE_UICC2) //UICC
+    else if(eseId == EE_APP_HANLDE_UICC2) //UICC
     {
         handle = RoutingManager::getInstance().getUicc2selected(); //0x402;
     }
