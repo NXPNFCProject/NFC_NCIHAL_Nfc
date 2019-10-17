@@ -2821,7 +2821,11 @@ static void nfcManager_doSetScreenState(JNIEnv* e, jobject o,
     // screen turns off, disconnect tag if connected
 #if (NXP_EXTNS == TRUE)
     if(!sSeRfActive && gActivated) {
-      nativeNfcTag_safeDisconnect();
+      status = nativeNfcTag_safeDisconnect();
+      if (status != NFA_STATUS_OK) {
+        LOG(ERROR) << StringPrintf("%s: deactivate failed; error=0x%X", __func__,
+            status);
+      }
     }else{
       //CardEmulation: Shouldn't take an action.
     }
