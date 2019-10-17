@@ -81,6 +81,9 @@ bool gIsSelectingRfInterface =
     false;  // flag for nfa callback indicating we are
             // selecting for RF interface switch
 #if (NXP_EXTNS == TRUE)
+extern bool nfcManager_isNfcDisabling();
+void nativeNfcTag_acquireRfInterfaceMutexLock();
+void nativeNfcTag_releaseRfInterfaceMutexLock();
 bool gIsWaiting4Deact2SleepNtf = false;
 bool gGotDeact2IdleNtf = false;
 #endif
@@ -928,6 +931,28 @@ static jint nativeNfcTag_doHandleReconnect(JNIEnv* e, jobject o,
   return nativeNfcTag_doConnect(e, o, targetHandle);
 }
 
+#if (NXP_EXTNS == TRUE)
+/*******************************************************************************
+**
+** Function:        nativeNfcTag_safeDisconnect
+**
+** Description:     Deactivate the RF field only if NFC stack is up and running
+**
+** Returns:         True if ok.
+**
+*******************************************************************************/
+tNFA_STATUS nativeNfcTag_safeDisconnect() {
+  tNFA_STATUS nfaStat = NFA_STATUS_OK;
+  if(nfcManager_isNfcDisabling() || !nfcManager_isNfcActive()) {
+    LOG(ERROR) << StringPrintf("%s: Nfc is Off", __func__);
+  } else {
+    nativeNfcTag_acquireRfInterfaceMutexLock();
+    nfaStat = NFA_Deactivate(FALSE);
+    nativeNfcTag_releaseRfInterfaceMutexLock();
+  }
+  return nfaStat;
+}
+#endif
 /*******************************************************************************
 **
 ** Function:        nativeNfcTag_doDisconnect

@@ -127,6 +127,7 @@ extern tNFA_STATUS NxpPropCmd_send(uint8_t * pData4Tx, uint8_t dataLen,
                                    uint8_t * rsp_len, uint8_t * rsp_buf,
                                    uint32_t rspTimeout, tHAL_NFC_ENTRY * halMgr);
 extern tNFA_STATUS send_flush_ram_to_flash();
+extern tNFA_STATUS nativeNfcTag_safeDisconnect();
 extern bool gIsWaiting4Deact2SleepNtf;
 extern bool gGotDeact2IdleNtf;
 #endif
@@ -2814,13 +2815,13 @@ static void nfcManager_doSetScreenState(JNIEnv* e, jobject o,
       sNfaSetPowerSubState.wait();
     }
   }
-  if ((state == NFA_SCREEN_STATE_OFF_LOCKED ||
-       state == NFA_SCREEN_STATE_OFF_UNLOCKED) &&
+  if ((state > NFA_SCREEN_STATE_UNKNOWN &&
+       state <= NFA_SCREEN_STATE_ON_LOCKED) &&
       prevScreenState == NFA_SCREEN_STATE_ON_UNLOCKED) {
     // screen turns off, disconnect tag if connected
 #if (NXP_EXTNS == TRUE)
-    if(sReaderModeEnabled || sP2pActive){
-        nativeNfcTag_doDisconnect(NULL, NULL);
+    if(!sSeRfActive && gActivated) {
+      nativeNfcTag_safeDisconnect();
     }else{
       //CardEmulation: Shouldn't take an action.
     }
@@ -3187,6 +3188,18 @@ void doStartupConfig() {
 *******************************************************************************/
 bool nfcManager_isNfcActive() { return sIsNfaEnabled; }
 
+#if (NXP_EXTNS == TRUE)
+/*******************************************************************************
+**
+** Function:        nfcManager_isNfcDisabling
+**
+** Description:     Used externally to determine if NFC is being turned off.
+**
+** Returns:         'true' if the NFC stack is turning off, else 'false'.
+**
+*******************************************************************************/
+bool nfcManager_isNfcDisabling() { return sIsDisabling; }
+#endif
 /*******************************************************************************
 **
 ** Function:        startStopPolling
