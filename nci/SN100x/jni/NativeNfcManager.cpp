@@ -130,6 +130,7 @@ extern tNFA_STATUS send_flush_ram_to_flash();
 extern tNFA_STATUS nativeNfcTag_safeDisconnect();
 extern bool gIsWaiting4Deact2SleepNtf;
 extern bool gGotDeact2IdleNtf;
+extern void nativeNfcTag_abortTagOperations(tNFA_STATUS status);
 #endif
 }  // namespace android
 
@@ -731,8 +732,12 @@ static void nfaConnectionCallback(uint8_t connEvent,
     case NFA_RW_INTF_ERROR_EVT:
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: NFC_RW_INTF_ERROR_EVT", __func__);
+#if(NXP_EXTNS == TRUE)
+      nativeNfcTag_abortTagOperations(NFA_STATUS_TIMEOUT);
+#else
       nativeNfcTag_notifyRfTimeout();
       nativeNfcTag_doReadCompleted(NFA_STATUS_TIMEOUT);
+#endif
       break;
     case NFA_SELECT_CPLT_EVT:  // Select completed
       status = eventData->status;
