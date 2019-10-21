@@ -131,6 +131,14 @@ extern tNFA_STATUS nativeNfcTag_safeDisconnect();
 extern bool gIsWaiting4Deact2SleepNtf;
 extern bool gGotDeact2IdleNtf;
 extern void nativeNfcTag_abortTagOperations(tNFA_STATUS status);
+typedef enum {
+  STATUS_SUCCESS = 0,
+  STATUS_FAILED = -1,
+  ERROR_STATUS_BUSY = -2,
+  ERROR_NFC_NOT_ON = -3,
+  ERROR_EMPTY_PAYLOAD = -4
+} RF_PARAMS_STATUS_t;
+RF_PARAMS_STATUS_t validatePreCondition(uint8_t* data);
 #endif
 }  // namespace android
 
@@ -295,6 +303,8 @@ static int nfcManager_setPreferredSimSlot(JNIEnv* e, jobject o, jint uiccSlot);
 static field_detect_status_t nfcManager_SetFieldDetectMode(JNIEnv*, jobject,
                                                            jboolean mode);
 static jboolean nfcManager_IsFieldDetectEnabled(JNIEnv*, jobject);
+static jint nfcManager_changeRfParams(JNIEnv* e, jobject o, jbyteArray data,
+                                      jboolean lastCMD);
 #endif
 static uint16_t sCurrentConfigLen;
 static uint8_t sConfig[256];
@@ -3075,7 +3085,8 @@ static JNINativeMethod gMethods[] = {
             (void*) nfcManager_getRemainingAidTableSize},
     {"doselectUicc", "(I)I", (void*)nfcManager_doSelectUicc},
     {"doGetSelectedUicc", "()I", (void*)nfcManager_doGetSelectedUicc},
-    {"setPreferredSimSlot", "(I)I", (void*)nfcManager_setPreferredSimSlot}
+    {"setPreferredSimSlot", "(I)I", (void*)nfcManager_setPreferredSimSlot},
+    {"changeRfParams", "([BZ)I", (void*)nfcManager_changeRfParams},
 #endif
 };
 
@@ -3817,7 +3828,6 @@ static int nfcManager_setTransitConfig(JNIEnv * e, jobject o,
     sNfaTransitConfigEvent.wait(10 * ONE_SECOND_MS);
     return stat;
 }
-
 /*******************************************************************************
 **
 ** Function:        ConvertJavaStrToStdString
@@ -4055,6 +4065,96 @@ static jint nfcManager_getRemainingAidTableSize (JNIEnv* , jobject )
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter", __func__);
     return NFA_IsFieldDetectEnabled();
   }
+/*******************************************************************************
+**
+** Function:        nfcManager_changeRfParams
+**
+** Description:     Writes the data from Application to NFCC
+**
+** Returns:            STATUS_SUCCESS = 0,
+**                     STATUS_FAILED = -1,
+**                     ERROR_STATUS_BUSY = -2,
+**                     ERROR_NFC_NOT_ON = -3,
+**                     ERROR_EMPTY_PAYLOAD = -4
+**
+*******************************************************************************/
+static jint nfcManager_changeRfParams(JNIEnv* e, jobject o, jbyteArray data,
+                                      jboolean lastCMD) {
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter", __func__);
+
+  ScopedByteArrayRO bytesData(e);
+  if (data == NULL) {
+    DLOG_IF(ERROR, nfc_debug_enabled)
+         << StringPrintf("%s:Empty Data", __func__);
+    return ERROR_EMPTY_PAYLOAD;
+  }
+
+  bytesData.reset(data);
+  uint8_t* pData =
+      const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytesData[0]));
+
+  /*Validate PreCondition*/
+  RF_PARAMS_STATUS_t rf_paramStatus = android::validatePreCondition(pData);
+  if (rf_paramStatus != STATUS_SUCCESS) return rf_paramStatus;
+
+  if (sRfEnabled) {
+    // Stop RF Discovery
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s: stop discovery", __func__);
+    startRfDiscovery(false);
+  }
+
+  /* Send Data*/
+  if (NxpNfc_Write_Cmd_Common(bytesData.size(), pData) != NFA_STATUS_OK) {
+    rf_paramStatus = STATUS_FAILED;
+    DLOG_IF(ERROR, nfc_debug_enabled)
+        << StringPrintf("%s: sending status %x", __func__, rf_paramStatus);
+  }
+
+  /*Send RAM Flash Command*/
+  if (lastCMD && (rf_paramStatus == STATUS_SUCCESS)) {
+    if (send_flush_ram_to_flash() != NFA_STATUS_OK)
+      rf_paramStatus = STATUS_FAILED;
+  }
+
+  /*Start RF Discovery*/
+  startRfDiscovery(true);
+
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Exit rf_paramStatus:%d"
+          , __func__,rf_paramStatus);
+
+  return rf_paramStatus;
+}
+/*******************************************************************************
+**
+** Function:        validatePreCondition
+**
+** Description:     Runs precondition checks for update RF parameters.
+**
+** Returns:            STATUS_SUCCESS = 0,
+**                     ERROR_STATUS_BUSY = -2,
+**                     ERROR_NFC_NOT_ON = -3
+**
+*******************************************************************************/
+RF_PARAMS_STATUS_t validatePreCondition(uint8_t* data) {
+  RF_PARAMS_STATUS_t rf_paramStatus = STATUS_SUCCESS;
+  static const int NFC_SET_CONFIG_H1 = 0x20;
+  static const int NFC_SET_CONFIG_H2 = 0x02;
+  se_rd_req_state_t state = MposManager::getInstance().getEtsiReaederState();
+
+  if (!android::nfcManager_isNfcActive()) {
+    rf_paramStatus = ERROR_NFC_NOT_ON;
+  } else if ((!(prevScreenState & NFA_SCREEN_STATE_ON_UNLOCKED)) ||
+             (*data++ != NFC_SET_CONFIG_H1) ||
+             (*data++ != NFC_SET_CONFIG_H2) ||
+             (nfcManager_isNfccBusy(NULL, NULL)) ||
+             SecureElement::getInstance().isRfFieldOn() ||
+             ((state != STATE_SE_RDR_MODE_STOPPED) &&
+                     (state != STATE_SE_RDR_MODE_INVALID))) {
+    rf_paramStatus = ERROR_STATUS_BUSY;
+  }
+  return rf_paramStatus;
+}
 #endif
 }/* namespace android */
 /*******************************************************************************

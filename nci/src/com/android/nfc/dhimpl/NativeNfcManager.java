@@ -641,4 +641,6 @@ public class NativeNfcManager implements DeviceHost {
     public native int doGetSelectedUicc();
     @Override
     public native int setPreferredSimSlot(int uiccSlot);
+    @Override
+    public native int changeRfParams(byte[] data, boolean lastCMD);
 }

@@ -363,4 +363,5 @@ public interface DeviceHost {
     public int setPreferredSimSlot(int uiccSlot);
     public int doSetFieldDetectMode(boolean mode);
     public boolean isFieldDetectEnabled();
+    public int changeRfParams(byte[] data, boolean lastCMD);
 }

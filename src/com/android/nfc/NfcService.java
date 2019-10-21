@@ -1885,6 +1885,14 @@ public class NfcService implements DeviceHostListener {
         }
 
         @Override
+        public int changeRfParams(byte[] data, boolean lastCMD) {
+            Log.i(TAG, "Setting configs Rf params" );
+            /*Check permissions*/
+            NfcPermissions.enforceAdminPermissions(mContext);
+            return mDeviceHost.changeRfParams(data, lastCMD);
+        }
+
+        @Override
         public int selectUicc(int uiccSlot) throws RemoteException {
             synchronized(NfcService.this) {
                 if (!isNfcEnabled()) {
