@@ -192,6 +192,10 @@ void nativeNfcTag_abortWaits() {
   sCurrentRfInterface = NFA_INTERFACE_ISO_DEP;
   sCurrentConnectedTargetType = TARGET_TYPE_UNKNOWN;
   sCurrentConnectedTargetProtocol = NFC_PROTOCOL_UNKNOWN;
+#if (NXP_EXTNS == TRUE)
+  NfcTag& natTag = NfcTag::getInstance();
+  natTag.mCurrentRequestedProtocol = NFC_PROTOCOL_UNKNOWN;
+#endif
 }
 
 /*******************************************************************************
@@ -987,7 +991,7 @@ static jint nativeNfcTag_doHandleReconnect(JNIEnv* e, jobject o,
 ** Returns:         True if ok.
 **
 *******************************************************************************/
-static tNFA_STATUS nativeNfcTag_safeDisconnect() {
+tNFA_STATUS nativeNfcTag_safeDisconnect() {
   tNFA_STATUS nfaStat = NFA_STATUS_OK;
   if(nfcManager_isNfcDisabling() || !nfcManager_isNfcActive()) {
     LOG(ERROR) << StringPrintf("%s: Nfc is Off", __func__);
@@ -2078,17 +2082,23 @@ void nativeNfcTag_releaseRfInterfaceMutexLock() {
 **                  will restart rf discovery.
 **
 **
-** Returns:         None
+** Returns:         true(same protocol)/false(different protocol)
 **
 *******************************************************************************/
-void nativeNfcTag_checkActivatedProtoParameters(tNFA_ACTIVATED& activationData) {
+bool nativeNfcTag_checkActivatedProtoParameters(
+    tNFA_ACTIVATED& activationData) {
+  bool status = false;
   NfcTag& natTag = NfcTag::getInstance();
   tNFC_ACTIVATE_DEVT& rfDetail = activationData.activate_ntf;
-  if(rfDetail.protocol != natTag.mCurrentRequestedProtocol) {
+  if (natTag.mCurrentRequestedProtocol != NFC_PROTOCOL_UNKNOWN &&
+      rfDetail.protocol != natTag.mCurrentRequestedProtocol) {
     NFA_Deactivate(FALSE);
+  } else {
+    status = true;
   }
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: sCurrentConnectedTargetProtocol %x rfDetail.protocol %x",
     __func__,natTag.mCurrentRequestedProtocol, rfDetail.protocol);
+  return status;
 }
 #endif
 /*****************************************************************************
