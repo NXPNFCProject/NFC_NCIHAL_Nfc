@@ -377,7 +377,15 @@ bool RoutingManager::addAidRouting(const uint8_t* aid, uint8_t aidLen,
                        ? mDefaultIso7816Powerstate
                        : (mDefaultIso7816Powerstate & POWER_STATE_MASK);
     } else {
-      if (route == SecureElement::DH_ID) power = HOST_PWR_STATE;
+      if (route == SecureElement::DH_ID) {
+        NativeJniExtns& jniExtns = NativeJniExtns::getInstance();
+        if(jniExtns.isExtensionPresent()) {
+          power &= (PWR_SWTCH_ON_SCRN_LOCK_MASK | PWR_SWTCH_ON_SCRN_UNLCK_MASK |
+                  PWR_SWTCH_ON_SCRN_OFF_LOCK_MASK | PWR_SWTCH_ON_SCRN_OFF_MASK);;
+        } else {
+          power = HOST_PWR_STATE;
+        }
+    }
       powerState = power;
     }
   }
@@ -1413,7 +1421,13 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
 
     if((ee_handle == ROUTE_LOC_HOST_ID) && (NFA_SET_PROTOCOL_ROUTING == type))
     {
-      power &= (PWR_SWTCH_ON_SCRN_LOCK_MASK | PWR_SWTCH_ON_SCRN_UNLCK_MASK);
+      NativeJniExtns& jniExtns = NativeJniExtns::getInstance();
+      if(jniExtns.isExtensionPresent()) {
+        power &= (PWR_SWTCH_ON_SCRN_LOCK_MASK | PWR_SWTCH_ON_SCRN_UNLCK_MASK |
+                PWR_SWTCH_ON_SCRN_OFF_LOCK_MASK | PWR_SWTCH_ON_SCRN_OFF_MASK);
+      } else {
+        power &= (PWR_SWTCH_ON_SCRN_LOCK_MASK | PWR_SWTCH_ON_SCRN_UNLCK_MASK);
+      }
       isSeIDPresent = 1;
     }
 
@@ -1734,7 +1748,13 @@ void RoutingManager::setEmptyAidEntry(int route) {
     }
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: route %x",__func__,routeLoc);
     if(routeLoc == ROUTE_LOC_HOST_ID) {
-      power &= 0x11;
+      NativeJniExtns& jniExtns = NativeJniExtns::getInstance();
+      if(jniExtns.isExtensionPresent()) {
+        power &= (PWR_SWTCH_ON_SCRN_LOCK_MASK | PWR_SWTCH_ON_SCRN_UNLCK_MASK |
+                PWR_SWTCH_ON_SCRN_OFF_LOCK_MASK | PWR_SWTCH_ON_SCRN_OFF_MASK);
+      } else {
+        power &= (PWR_SWTCH_ON_SCRN_LOCK_MASK | PWR_SWTCH_ON_SCRN_UNLCK_MASK);
+      }
     }
     if(mDefaultGsmaPowerState) {
       if(routeLoc == ROUTE_LOC_HOST_ID)
