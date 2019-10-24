@@ -136,7 +136,8 @@ typedef enum {
   STATUS_FAILED = -1,
   ERROR_STATUS_BUSY = -2,
   ERROR_NFC_NOT_ON = -3,
-  ERROR_EMPTY_PAYLOAD = -4
+  ERROR_EMPTY_PAYLOAD = -4,
+  ERROR_INVALID_LENGTH = -5
 } RF_PARAMS_STATUS_t;
 RF_PARAMS_STATUS_t validatePreCondition(uint8_t* data);
 #endif
@@ -247,6 +248,7 @@ static jint sLfT3tMax = 0;
 #define READER_MODE_DISCOVERY_DURATION 200
 
 #if(NXP_EXTNS == TRUE)
+#define NCI_SET_CONF_MIN_LEN 04
 #define DUAL_UICC_FEATURE_NOT_AVAILABLE 0xED;
 #define STATUS_UNKNOWN_ERROR 0xEF;
 enum { UICC_CONFIGURED, UICC_NOT_CONFIGURED };
@@ -4076,6 +4078,7 @@ static jint nfcManager_getRemainingAidTableSize (JNIEnv* , jobject )
 **                     ERROR_STATUS_BUSY = -2,
 **                     ERROR_NFC_NOT_ON = -3,
 **                     ERROR_EMPTY_PAYLOAD = -4
+**                     ERROR_INVALID_LENGTH = -5
 **
 *******************************************************************************/
 static jint nfcManager_changeRfParams(JNIEnv* e, jobject o, jbyteArray data,
@@ -4090,6 +4093,11 @@ static jint nfcManager_changeRfParams(JNIEnv* e, jobject o, jbyteArray data,
   }
 
   bytesData.reset(data);
+  if((bytesData.size() > NCI_MAX_VSC_SIZE) || (bytesData.size() < NCI_SET_CONF_MIN_LEN)) {
+    DLOG_IF(ERROR, nfc_debug_enabled)
+         << StringPrintf("%s:Payload Size out of Range", __func__);
+    return ERROR_INVALID_LENGTH;
+  }
   uint8_t* pData =
       const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytesData[0]));
 
