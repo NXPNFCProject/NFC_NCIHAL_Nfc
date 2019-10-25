@@ -1213,9 +1213,7 @@ static jbyteArray nativeNfcTag_doTransceive(JNIEnv* e, jobject o,
         if (doReconnect) {
           nativeNfcTag_doReconnect(e, o);
         }
-#if (NXP_EXTNS != TRUE)
          else {
-#endif
           if (transDataLen != 0) {
             result.reset(e->NewByteArray(transDataLen));
             if (result.get() != NULL) {
@@ -1225,9 +1223,7 @@ static jbyteArray nativeNfcTag_doTransceive(JNIEnv* e, jobject o,
               LOG(ERROR) << StringPrintf("%s: Failed to allocate java byte array",
                                        __func__);
           }
-#if (NXP_EXTNS != TRUE)
         }
-#endif
       } else {
         // marshall data to java for return
         result.reset(e->NewByteArray(sRxDataBuffer.size()));
