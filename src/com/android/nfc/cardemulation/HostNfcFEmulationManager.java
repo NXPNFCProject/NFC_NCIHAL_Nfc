@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018 NXP
+*  Copyright 2018- 2019 NXP
 *
 ******************************************************************************/
 
@@ -215,6 +215,9 @@ public class HostNfcFEmulationManager {
             sendDeactivateToActiveServiceLocked(HostNfcFService.DEACTIVATION_LINK_LOSS);
             mActiveService = service;
             mActiveServiceName = mServiceName;
+        }
+        if (mActiveService == null) {
+            return;
         }
         Message msg = Message.obtain(null, HostNfcFService.MSG_COMMAND_PACKET);
         Bundle dataBundle = new Bundle();

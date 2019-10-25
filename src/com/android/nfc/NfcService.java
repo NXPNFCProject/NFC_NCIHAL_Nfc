@@ -1666,6 +1666,10 @@ public class NfcService implements DeviceHostListener {
           if (isNfcEnabled()) {
             list = mDeviceHost.doGetActiveSecureElementList();
           }
+          if (list == null) {
+            Log.e(TAG, "Array List is null.");
+            return null;
+          }
           for (int i = 0; i < list.length; i++) {
             Log.d(TAG, "Active element = " + list[i]);
           }
@@ -1854,8 +1858,10 @@ public class NfcService implements DeviceHostListener {
 
         private void WaitForAdapterChange(int state) {
             while (true) {
-                if(mState == state) {
-                    break;
+                synchronized(NfcService.this) {
+                    if(mState == state) {
+                        break;
+                    }
                 }
                 try {
                     Thread.sleep(100);

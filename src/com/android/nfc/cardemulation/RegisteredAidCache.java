@@ -505,10 +505,16 @@ public class RegisteredAidCache {
     }
 
     static boolean isPrefix(String aid) {
+        if (aid == null) {
+            return false;
+        }
         return aid.endsWith("*");
     }
 
     static boolean isSubset(String aid) {
+        if (aid == null) {
+            return false;
+        }
         return aid.endsWith("#");
     }
 

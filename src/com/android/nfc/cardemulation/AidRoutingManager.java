@@ -246,7 +246,6 @@ public class AidRoutingManager {
         HashMap<String, Integer> routeForAid = new HashMap<String, Integer>(aidMap.size());
         HashMap<String, Integer> infoForAid = new HashMap<String, Integer>(aidMap.size());
         HashMap<String, Integer> powerForAid = new HashMap<String, Integer>(aidMap.size());
-        mDefaultRoute = NfcService.getInstance().GetDefaultRouteLoc();
         mAidRoutingTableSize = NfcService.getInstance().getAidRoutingTableSize();
         mDefaultAidRoute =   NfcService.getInstance().GetDefaultRouteEntry() >> 0x08;
         Log.e(TAG, "Size of routing table"+mAidRoutingTableSize);
@@ -296,13 +295,12 @@ public class AidRoutingManager {
             mAidRoutingTable = aidRoutingTable;
             mMaxAidRoutingTableSize = NfcService.getInstance().getAidRoutingTableSize();
             if (DBG) Log.d(TAG, "mMaxAidRoutingTableSize: " + mMaxAidRoutingTableSize);
-
-          for(int index=0; index < seList.size(); index++) {
-            mDefaultRoute = seList.get(index);
-            if(index != 0)
-              if (DBG) Log.d(TAG, "AidRoutingTable is full, try to switch mDefaultRoute to 0x" + Integer.toHexString(mDefaultRoute));
-
-              aidRoutingTableCache.clear();
+            mDefaultRoute = NfcService.getInstance().GetDefaultRouteLoc();
+            for(int index=0; index < seList.size(); index++) {
+              mDefaultRoute = seList.get(index);
+              if(index != 0)
+                if (DBG) Log.d(TAG, "AidRoutingTable is full, try to switch mDefaultRoute to 0x" + Integer.toHexString(mDefaultRoute));
+            aidRoutingTableCache.clear();
             if (mAidMatchingSupport == AID_MATCHING_PREFIX_ONLY) {
                 /* If a non-default route registers an exact AID which is shorter
                  * than this exact AID, this will create a problem with controllers
@@ -436,7 +434,9 @@ public class AidRoutingManager {
     }
 
     public boolean getLastCommitRoutingStatus() {
-        return mLastCommitStatus;
+        synchronized (mLock) {
+            return mLastCommitStatus;
+        }
     }
 
     public void dump(FileDescriptor fd, PrintWriter pw, String[] args) {

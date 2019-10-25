@@ -13,6 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/******************************************************************************
+*
+*  The original Work has been changed by NXP.
+*
+*  Licensed under the Apache License, Version 2.0 (the "License");
+*  you may not use this file except in compliance with the License.
+*  You may obtain a copy of the License at
+*
+*  http://www.apache.org/licenses/LICENSE-2.0
+*
+*  Unless required by applicable law or agreed to in writing, software
+*  distributed under the License is distributed on an "AS IS" BASIS,
+*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*  See the License for the specific language governing permissions and
+*  limitations under the License.
+*
+*  Copyright 2019 NXP
+*
+******************************************************************************/
 
 package com.android.nfc.cardemulation;
 
@@ -412,7 +431,6 @@ public class RegisteredNfcFServicesCache {
                 int currentUid = -1;
                 String systemCode = null;
                 String nfcid2 = null;
-                String description = null;
                 while (eventType != XmlPullParser.END_DOCUMENT) {
                     tagName = parser.getName();
                     if (eventType == XmlPullParser.START_TAG) {
@@ -423,8 +441,6 @@ public class RegisteredNfcFServicesCache {
                                     parser.getAttributeValue(null, "uid");
                             String systemCodeString =
                                     parser.getAttributeValue(null, "system-code");
-                            String descriptionString =
-                                    parser.getAttributeValue(null, "description");
                             String nfcid2String =
                                     parser.getAttributeValue(null, "nfcid2");
                             if (compString == null || uidString == null) {
@@ -434,7 +450,6 @@ public class RegisteredNfcFServicesCache {
                                     componentName = ComponentName.unflattenFromString(compString);
                                     currentUid = Integer.parseInt(uidString);
                                     systemCode = systemCodeString;
-                                    description = descriptionString;
                                     nfcid2 = nfcid2String;
                                 } catch (NumberFormatException e) {
                                     Log.e(TAG, "Could not parse service uid");
@@ -463,7 +478,6 @@ public class RegisteredNfcFServicesCache {
                             componentName = null;
                             currentUid = -1;
                             systemCode = null;
-                            description = null;
                             nfcid2 = null;
                         }
                     }
