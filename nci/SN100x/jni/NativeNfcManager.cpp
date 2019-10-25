@@ -3407,7 +3407,10 @@ static void nfcManager_changeDiscoveryTech(JNIEnv* e, jobject o, jint pollTech, 
 {
     DLOG_IF(INFO, nfc_debug_enabled)<< StringPrintf("Enter :%s  pollTech = 0x%x, listenTech = 0x%x", __func__, pollTech, listenTech);
 
-    NFA_ChangeDiscoveryTech(pollTech, listenTech);
+    if (NFA_ChangeDiscoveryTech(pollTech, listenTech) == NFA_STATUS_FAILED) {
+      LOG(ERROR) << StringPrintf(
+            "%s: nfcManager_changeDiscoveryTech failed", __func__);
+    }
 }
 
 /*******************************************************************************

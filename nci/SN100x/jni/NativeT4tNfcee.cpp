@@ -49,7 +49,7 @@ extern int nfcManager_doPartialDeInitialize(JNIEnv*, jobject);
 NativeT4tNfcee NativeT4tNfcee::sNativeT4tNfceeInstance;
 bool NativeT4tNfcee::sIsNfcOffTriggered = false;
 
-NativeT4tNfcee::NativeT4tNfcee() {}
+NativeT4tNfcee::NativeT4tNfcee() { mBusy = false; memset (&mReadData, 0x00, sizeof(tNFA_RX_DATA)); mT4tOpStatus = NFA_STATUS_FAILED; }
 
 /*****************************************************************************
 **

@@ -58,6 +58,7 @@ NativeJniExtns& NativeJniExtns::getInstance() { return nativeExtnsObj; }
  *******************************************************************************/
 NativeJniExtns::NativeJniExtns() : lib_handle(NULL) {
   memset(&regNfcExtnsFunc, 0, sizeof(fpRegisterNfcExtns));
+  gNativeData = NULL;
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter", __func__);
   extns_jni_path = "/system/lib64/libnfc_jni_extns.so";
 }
