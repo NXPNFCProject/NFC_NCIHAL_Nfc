@@ -2736,7 +2736,6 @@ public class NfcService implements DeviceHostListener {
           mDeviceHost.setRoutingEntry(PROTOCOL_ENTRY, NFC_LISTEN_PROTO_T3T, 0x00, 0x01);
         }
         mDeviceHost.setRoutingEntry(PROTOCOL_ENTRY, NFC_LISTEN_PROTO_ISO_DEP, ((protoRoute >> ROUTE_LOC_MASK) & 0x07), protoRoute & 0x3F);
-        mDeviceHost.setRoutingEntry(PROTOCOL_ENTRY, NFC_LISTEN_PROTO_NFC_DEP, 0x00, 0x01);
 
         /* Routing for Technology */
         TechSeId = (techRoute >> ROUTE_LOC_MASK);
