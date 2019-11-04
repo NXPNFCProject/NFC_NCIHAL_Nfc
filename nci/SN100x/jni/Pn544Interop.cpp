@@ -13,6 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/******************************************************************************
+ *
+ *  The original Work has been changed by NXP.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ *  Copyright 2019 NXP
+ *
+ ******************************************************************************/
 
 /*****************************************************************************
 **
@@ -51,6 +70,9 @@ static void pn544InteropStartPolling(
     union sigval);              // callback function for interval timer
 static bool gIsBusy = false;    // is timer busy?
 static bool gAbortNow = false;  // stop timer during next callback
+#if (NXP_EXTNS == TRUE)
+static void pn544UpdateIsBusy(bool isBusy);
+#endif
 
 /*******************************************************************************
 **
@@ -64,14 +86,24 @@ static bool gAbortNow = false;  // stop timer during next callback
 *******************************************************************************/
 void pn544InteropStopPolling() {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+#if (NXP_EXTNS != TRUE)
   gMutex.lock();
+#endif
+
   gTimer.kill();
   android::startStopPolling(false);
+#if (NXP_EXTNS == TRUE)
+  pn544UpdateIsBusy(true);
+  pn544InteropAbortNow(false);
+#else
   gIsBusy = true;
   gAbortNow = false;
+#endif
   gTimer.set(gIntervalTime,
              pn544InteropStartPolling);  // after some time, start polling again
+#if (NXP_EXTNS != TRUE)
   gMutex.unlock();
+#endif
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
 }
 
@@ -87,12 +119,19 @@ void pn544InteropStopPolling() {
 *******************************************************************************/
 void pn544InteropStartPolling(union sigval) {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+#if (NXP_EXTNS != TRUE)
   gMutex.lock();
+#endif
   NfcTag::ActivationState state = NfcTag::getInstance().getActivationState();
 
   if (gAbortNow) {
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: abort now", __func__);
+
+#if (NXP_EXTNS == TRUE)
+    pn544UpdateIsBusy(false);
+#else
     gIsBusy = false;
+#endif
     goto TheEnd;
   }
 
@@ -100,7 +139,11 @@ void pn544InteropStartPolling(union sigval) {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: start polling", __func__);
     android::startStopPolling(true);
+#if (NXP_EXTNS == TRUE)
+    pn544UpdateIsBusy(false);
+#else
     gIsBusy = false;
+#endif
   } else {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: try again later", __func__);
@@ -110,7 +153,9 @@ void pn544InteropStartPolling(union sigval) {
   }
 
 TheEnd:
+#if (NXP_EXTNS != TRUE)
   gMutex.unlock();
+#endif
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
 }
 
@@ -137,13 +182,40 @@ bool pn544InteropIsBusy() {
 ** Function:        pn544InteropAbortNow
 **
 ** Description:     Request to abort all operations.
+**                  flag : update global flag as per input
 **
 ** Returns:         None.
 **
 *******************************************************************************/
-void pn544InteropAbortNow() {
+#if (NXP_EXTNS == TRUE)
+void pn544InteropAbortNow(bool flag)
+#else
+void pn544InteropAbortNow()
+#endif
+{
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s", __func__);
   gMutex.lock();
+#if (NXP_EXTNS == TRUE)
+  gAbortNow = flag;
+#else
   gAbortNow = true;
+#endif
   gMutex.unlock();
 }
+#if (NXP_EXTNS == TRUE)
+/*******************************************************************************
+**
+** Function:        pn544UpdateIsBusy
+**
+** Description:     Update gISBusy flag as per  isBusy input.
+**
+** Returns:         None.
+**
+*******************************************************************************/
+void pn544UpdateIsBusy(bool isBusy) {
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s", __func__);
+  gMutex.lock();
+  gIsBusy = isBusy;
+  gMutex.unlock();
+}
+#endif

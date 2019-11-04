@@ -1786,7 +1786,11 @@ void nfcManager_disableDiscovery(JNIEnv* e, jobject o) {
   tNFA_STATUS status = NFA_STATUS_OK;
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter;", __func__);
 
+#if (NXP_EXTNS == TRUE)
+  pn544InteropAbortNow(true);
+#else
   pn544InteropAbortNow();
+#endif
   if (sDiscoveryEnabled == false) {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: already disabled", __func__);
@@ -1974,10 +1978,12 @@ static jboolean nfcManager_doDeinitialize(JNIEnv*, jobject) {
 #if (NXP_EXTNS == TRUE)
   NativeJniExtns::getInstance().notifyNfcEvent(__func__);
   handleWiredmode(false); /* Nfc Off*/
+  pn544InteropAbortNow(true);
+#else
+  pn544InteropAbortNow();
 #endif
   sIsDisabling = true;
 
-  pn544InteropAbortNow();
 #if (NXP_EXTNS == TRUE)
   NativeT4tNfcee::getInstance().onNfccShutdown();
 #endif
