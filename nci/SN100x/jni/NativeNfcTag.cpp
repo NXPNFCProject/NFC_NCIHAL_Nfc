@@ -1479,7 +1479,9 @@ static jint nativeNfcTag_doCheckNdef(JNIEnv* e, jobject o, jintArray ndefInfo) {
     status = NFA_STATUS_FAILED;
   } else if ((sCheckNdefStatus == NFA_STATUS_TIMEOUT) &&
              (NfcTag::getInstance().getProtocol() == NFC_PROTOCOL_ISO_DEP)) {
+#if(NXP_EXTNS != TRUE)
     pn544InteropStopPolling();
+#endif
     status = sCheckNdefStatus;
   } else {
     DLOG_IF(INFO, nfc_debug_enabled)
@@ -2095,6 +2097,33 @@ bool nativeNfcTag_checkActivatedProtoParameters(
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: sCurrentConnectedTargetProtocol %x rfDetail.protocol %x",
     __func__,natTag.mCurrentRequestedProtocol, rfDetail.protocol);
   return status;
+}
+
+/*******************************************************************************
+**
+** Function:        nativeNfcTag_abortTagOperations
+**
+** Description:     Unblock all thread synchronization objects.
+**
+** Returns:         None
+**
+*******************************************************************************/
+void nativeNfcTag_abortTagOperations(tNFA_STATUS status) {
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s, status : 0x%x", __func__,status);
+  /*Transcieve timeout will be notify*/
+  nativeNfcTag_notifyRfTimeout();
+  /*Read Event will be notify*/
+  nativeNfcTag_doReadCompleted(status);
+  /*Write Semaphore will be waiting*/
+  nativeNfcTag_doWriteStatus(status == NFA_STATUS_OK);
+  /*Format Semaphore will be waiting*/
+  nativeNfcTag_formatStatus(status == NFA_STATUS_OK);
+  /*Check Ndef Semaphore will be waiting*/
+  nativeNfcTag_doCheckNdefResult(status, 0 , 0, RW_NDEF_FL_UNKNOWN);
+  /*Notify Presence check Event*/
+  nativeNfcTag_doPresenceCheckResult(status);
+  /*Read only Ndef Semaphore will be waiting*/
+  nativeNfcTag_doMakeReadonlyResult(status);
 }
 #endif
 /*****************************************************************************
