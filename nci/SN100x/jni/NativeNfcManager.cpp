@@ -85,6 +85,7 @@ using android::base::StringPrintf;
 #define CMD_HDR_SIZE_XCV (0x3)
 #define SECURE_ELEMENT_UICC_SLOT_DEFAULT (0x01)
 bool isDynamicUiccEnabled;
+bool isDisconnectNeeded;
 #endif
 extern tNFA_DM_DISC_FREQ_CFG* p_nfa_dm_rf_disc_freq_cfg;  // defined in stack
 namespace android {
@@ -1501,6 +1502,11 @@ static jboolean nfcManager_doInitialize(JNIEnv* e, jobject o) {
       isDynamicUiccEnabled = (isDynamicUiccEnabled == 0x01 ? true : false);
     } else
       isDynamicUiccEnabled = true;
+    if (NfcConfig::hasKey(NAME_NXP_DISCONNECT_TAG_IN_SCRN_OFF)) {
+      isDisconnectNeeded = NfcConfig::getUnsigned(NAME_NXP_DISCONNECT_TAG_IN_SCRN_OFF);
+      isDisconnectNeeded = (isDisconnectNeeded == 0x01 ? true : false);
+    } else
+      isDisconnectNeeded = false;
 
 #endif
   powerSwitch.initialize(PowerSwitch::FULL_POWER);
@@ -2890,13 +2896,13 @@ static void nfcManager_doSetScreenState(JNIEnv* e, jobject o,
       sNfaSetPowerSubState.wait();
     }
   }
-  if ((state == NFA_SCREEN_STATE_OFF_LOCKED ||
-       state == NFA_SCREEN_STATE_OFF_UNLOCKED) &&
+  if ((state > NFA_SCREEN_STATE_UNKNOWN &&
+       state <= NFA_SCREEN_STATE_ON_LOCKED) &&
       prevScreenState == NFA_SCREEN_STATE_ON_UNLOCKED) {
     // screen turns off, disconnect tag if connected
 #if (NXP_EXTNS == TRUE)
-    if(sReaderModeEnabled || sP2pActive){
-        nativeNfcTag_doDisconnect(NULL, NULL);
+    if(isDisconnectNeeded && !sSeRfActive && gActivated){
+        nativeNfcTag_safeDisconnect();
     }else{
       //CardEmulation: Shouldn't take an action.
     }

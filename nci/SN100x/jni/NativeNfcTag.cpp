@@ -997,6 +997,7 @@ tNFA_STATUS nativeNfcTag_safeDisconnect() {
     LOG(ERROR) << StringPrintf("%s: Nfc is Off", __func__);
   } else {
     nativeNfcTag_acquireRfInterfaceMutexLock();
+    NfcTag::getInstance().setActive(false);
     nfaStat = NFA_Deactivate(FALSE);
     nativeNfcTag_releaseRfInterfaceMutexLock();
   }

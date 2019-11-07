@@ -3189,7 +3189,9 @@ public class NfcService implements DeviceHostListener {
                             new DeviceHost.TagDisconnectedCallback() {
                                 @Override
                                 public void onTagDisconnected(long handle) {
-                                    applyRouting(false);
+                                    if((mScreenState > ScreenStateHelper.SCREEN_STATE_ON_LOCKED)) {
+                                        applyRouting(false);
+                                    }
                                 }
                             };
                     synchronized (NfcService.this) {
