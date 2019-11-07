@@ -3608,6 +3608,8 @@ public class NfcService implements DeviceHostListener {
                 Log.e(TAG, "Error in isNFCEventAllowed() " + e);
             } catch (UnsupportedEncodingException e) {
                 Log.e(TAG, "Incorrect format for Secure Element name" + e);
+            } catch (IllegalArgumentException e) {
+                Log.e(TAG, "Error " + e);
             }
         }
 
@@ -3646,6 +3648,8 @@ public class NfcService implements DeviceHostListener {
                     }
                 } catch (RemoteException e) {
                     Log.e(TAG, "Error in isNFCEventAllowed() " + e);
+                } catch (IllegalArgumentException e) {
+                    Log.e(TAG, "Error " + e);
                 }
             }
             if (nfcAccessFinal == null) {
