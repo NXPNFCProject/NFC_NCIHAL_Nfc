@@ -84,6 +84,7 @@ MposManager& MposManager::getInstance()
 **
 *******************************************************************************/
 bool MposManager::initialize(nfc_jni_native_data* native) {
+  mIsMposWaitToStart = false;
   mNativeData = native;
   mIsMposOn = false;
   mStartNfcForumPoll = false;
@@ -338,3 +339,14 @@ tNFA_STATUS MposManager::validateHCITransactionEventParams(uint8_t *aData, int32
   }
   return status;
 }
+
+/*******************************************************************************
+  **
+  ** Function:        MposManager
+  **
+  ** Description:     Constructor
+  **
+  ** Returns:         None.
+  **
+  *******************************************************************************/
+  MposManager::MposManager():mIsMposWaitToStart(false){}

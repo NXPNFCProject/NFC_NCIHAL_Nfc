@@ -910,7 +910,7 @@ static jboolean nfcManager_initNativeStruc(JNIEnv* e, jobject o) {
     return JNI_FALSE;
   }
 
-  memset(nat, 0, sizeof(*nat));
+  memset(nat, 0, sizeof(struct nfc_jni_native_data));
   e->GetJavaVM(&(nat->vm));
   nat->env_version = e->GetVersion();
   nat->manager = e->NewGlobalRef(o);

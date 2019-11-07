@@ -142,6 +142,7 @@ public:
   tNFA_STATUS validateHCITransactionEventParams(uint8_t *aData, int32_t aDatalen);
 
 private:
+  MposManager(); // Default Constructor
   nfc_jni_native_data* mNativeData = NULL;
   static const uint8_t EVENT_RF_ERROR   = 0x80;    //HCI_TRANSACTION_EVENT parameter type
   static const uint8_t EVENT_RF_VERSION = 0x00;    //HCI_TRANSACTION_EVENT parameter version
