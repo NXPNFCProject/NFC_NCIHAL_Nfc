@@ -33,6 +33,8 @@ using android::base::StringPrintf;
 
 namespace android
 {
+#define INVALID_LEN_SW1 0x64
+#define INVALID_LEN_SW2 0xFF
 static const int EE_ERROR_INIT = -3;
 extern bool nfcManager_isNfcActive();
 /*******************************************************************************
@@ -254,6 +256,15 @@ static jbyteArray nativeNfcSecureElement_doTransceive (JNIEnv* e, jobject, jint 
     int32_t recvBufferActualSize = 0;
     ScopedByteArrayRW bytes(e, data);
     LOG(INFO) << StringPrintf("%s: enter; handle=0x%X; buf len=%zu", __func__, handle, bytes.size());
+    if(bytes.size() > recvBufferMaxSize) {
+        LOG(ERROR) << StringPrintf("%s: datasize not supported", __func__);
+        uint8_t respBuf[] = {INVALID_LEN_SW1, INVALID_LEN_SW2};
+        jbyteArray resp = e->NewByteArray(sizeof(respBuf));
+        if (resp != NULL) {
+          e->SetByteArrayRegion(resp, 0, sizeof(respBuf), (jbyte *) respBuf);
+        }
+        return resp;
+    }
 
     SecureElement &se = SecureElement::getInstance();
     if(!se.mIsWiredModeOpen)
