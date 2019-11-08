@@ -37,11 +37,17 @@
 #include "JavaClassConstants.h"
 #include "NfcJniUtil.h"
 #include "nfc_config.h"
+#if(NXP_EXTNS == TRUE)
+#include "phNxpConfig.h"
+#endif
 
 extern bool nfc_debug_enabled;
 const char* APP_NAME = "NfcNci";
 uint8_t HciEventManager::sEsePipe;
 uint8_t HciEventManager::sSimPipe;
+#if(NXP_EXTNS == TRUE)
+uint8_t HciEventManager::sSim2Pipe;
+#endif
 
 using android::base::StringPrintf;
 
@@ -59,6 +65,13 @@ void HciEventManager::initialize(nfc_jni_native_data* native) {
                                         (tNFA_HCI_CBACK*)&nfaHciCallback, true);
   if (nfaStat != NFA_STATUS_OK) {
     LOG(ERROR) << "HCI registration failed; status=" << nfaStat;
+  }
+#else
+  unsigned long num = 0;
+  if ((GetNxpNumValue(NAME_OFF_HOST_SIM2_PIPE_ID, &num, sizeof(num)))) {
+    sSim2Pipe = (uint8_t)num;
+  } else {
+    sSim2Pipe = OFF_HOST_DEFAULT_PIPE_ID;
   }
 #endif
   sEsePipe = NfcConfig::getUnsigned(NAME_OFF_HOST_ESE_PIPE_ID, 0x16);
@@ -166,6 +179,10 @@ void HciEventManager::nfaHciCallback(tNFA_HCI_EVT event,
     evtSrc = "eSE1";
   } else if (eventData->rcvd_evt.pipe == sSimPipe) {
     evtSrc = "SIM1";
+#if(NXP_EXTNS == TRUE)
+  } else if (eventData->rcvd_evt.pipe == sSim2Pipe) {
+    evtSrc = "SIM2";
+#endif
   } else {
     LOG(ERROR) << "Incorrect Pipe Id";
     return;
