@@ -17,7 +17,7 @@
 | aosp-master              |  10.00.0A (SN110) |  NFC_AR_00_6000_10.00.0A_OpnSrc |
 | aosp-master              |  10.00.0B (SN100) |  NFC_AR_00_6000_10.00.0B_OpnSrc |
 | aosp-master              |  10.00.0C (SN110) |  NFC_AR_00_6000_10.00.0C_OpnSrc |
-| aosp-master              |  10.00.0D (SN110) |  NFC_AR_00_6000_10.00.0D_OpnSrc |
+| android-10.0.0_r2              |  10.00.0D (SN110) |  NFC_AR_00_6000_10.00.0D_OpnSrc |
 
 
 
