@@ -2148,6 +2148,10 @@ static jint nfcManager_getDefaultAidRoute(JNIEnv* e, jobject o) {
   unsigned long num = 0;
   if (NfcConfig::hasKey(NAME_DEFAULT_AID_ROUTE))
     num = NfcConfig::getUnsigned(NAME_DEFAULT_AID_ROUTE);
+#if (NXP_EXTNS == TRUE)
+  else
+    return NFA_HANDLE_INVALID;
+#endif
 
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: num %lx", __func__, num);
   if(num != SecureElement::DH_ID) {

@@ -373,6 +373,10 @@ bool RoutingManager::addAidRouting(const uint8_t* aid, uint8_t aidLen,
   SyncEventGuard guard(mAidAddRemoveEvent);
   if (!mSecureNfcEnabled) {
     if ((aid == nullptr) && (aidLen == 0x00)) {
+      if (mDefaultIso7816SeID == NFA_HANDLE_INVALID) {
+        LOG(ERROR) << StringPrintf("%s: Invalid routeLoc. Return.", __func__);
+        return false;
+      }
       powerState = mCeRouteStrictDisable
                        ? mDefaultIso7816Powerstate
                        : (mDefaultIso7816Powerstate & POWER_STATE_MASK);
