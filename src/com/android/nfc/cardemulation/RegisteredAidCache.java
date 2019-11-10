@@ -85,6 +85,8 @@ public class RegisteredAidCache {
     static final int SCREEN_STATE_OFF_UNLOCKED = 0x08;
     static final int SCREEN_STATE_ON_LOCKED = 0x10;
     static final int SCREEN_STATE_OFF_LOCKED = 0x20;
+    static final int SCREEN_STATE_INVALID = 0x00;
+    static final int SCREEN_STATE_DEFAULT_MASK = 0x16;
     // Represents a single AID registration of a service
     final class ServiceAidInfo {
         NfcApduServiceInfo service;
@@ -864,10 +866,10 @@ public class RegisteredAidCache {
                     {
                         if(aidType.isOnHost)
                         {
-                            powerstate = (mGsmaPwrState & 0x39);
+                            powerstate = updateRoutePowerState(mGsmaPwrState & 0x39);
                         } else
                         {
-                            powerstate = mGsmaPwrState;
+                            powerstate = updateRoutePowerState(mGsmaPwrState);
                         }
                         if (DBG) Log.d(TAG," Setting GSMA power state"+ aid  + powerstate);
                     }
@@ -876,10 +878,11 @@ public class RegisteredAidCache {
                 boolean isOnHost = resolveInfo.defaultService.isOnHost();
                 if ((powerstate & POWER_STATE_SWITCH_ON) == POWER_STATE_SWITCH_ON )
                 {
-                  screenstate |= SCREEN_STATE_ON_LOCKED;
+                  screenstate |= updateRoutePowerState(SCREEN_STATE_ON_LOCKED);
                   if (!isOnHost) {
                     if (DBG) Log.d(TAG," set screen off enable for " + aid);
-                    screenstate |= SCREEN_STATE_OFF_UNLOCKED | SCREEN_STATE_OFF_LOCKED;
+                    screenstate |= updateRoutePowerState(SCREEN_STATE_OFF_UNLOCKED) |
+                            updateRoutePowerState(SCREEN_STATE_OFF_LOCKED);
                   }
                   if(mGsmaPwrState == 0x00)
                     powerstate |= screenstate;
@@ -894,7 +897,8 @@ public class RegisteredAidCache {
                 // Only one service, but not the default, must route to host
                 // to ask the user to choose one.
                 aidType.isOnHost = true;
-                aidType.powerstate = POWER_STATE_SWITCH_ON | SCREEN_STATE_ON_LOCKED;
+                aidType.powerstate = updateRoutePowerState(POWER_STATE_SWITCH_ON) |
+                        updateRoutePowerState(SCREEN_STATE_ON_LOCKED);
                 if (DBG) Log.d(TAG," AID power state 2"+ aid  +" "+aidType.powerstate);
                 if(mGsmaPwrState > 0)
                 {
@@ -926,10 +930,11 @@ public class RegisteredAidCache {
                 }
                 aidType.isOnHost = onHost;
                 aidType.offHostSE = onHost ? null : offHostSE;
-                aidType.powerstate = POWER_STATE_SWITCH_ON | SCREEN_STATE_ON_LOCKED;
+                aidType.powerstate = updateRoutePowerState(POWER_STATE_SWITCH_ON) |
+                        updateRoutePowerState(SCREEN_STATE_ON_LOCKED);
                 if(mGsmaPwrState > 0)
                 {
-                    aidType.powerstate = (mGsmaPwrState & 0x39);
+                    aidType.powerstate = updateRoutePowerState(mGsmaPwrState & 0x39);
                     if (DBG) Log.d(TAG," Setting GSMA power state"+ aid  + " " +aidType.powerstate);
                 }
                 if (DBG) Log.d(TAG," AID power state 3"+ aid  + aidType.powerstate);
@@ -1025,5 +1030,32 @@ public class RegisteredAidCache {
         pw.println("");
         mRoutingManager.dump(fd, pw, args);
         pw.println("");
+    }
+
+    int updateRoutePowerState(int inputPwr) {
+      final int PROP_SCRN_ON_UNLOCKED = 0x20;
+      final int PROP_SCRN_OFF = 0x08;
+      Log.d(TAG, "updateRoutePowerState inputPwr "+ inputPwr);
+
+      /*If extns service present mapping proprietary pwr state
+       * to NCI2.0 pwr state*/
+      if((NfcService.getInstance().isNfcExtnsPresent()) &&
+              (inputPwr != SCREEN_STATE_INVALID)) {
+        int tempPwrState = inputPwr & SCREEN_STATE_DEFAULT_MASK;
+
+        if((inputPwr & POWER_STATE_SWITCH_ON) == POWER_STATE_SWITCH_ON) {
+          /*Mapping SWITCH_ON(0x01) to PROP_SCRN_ON_UNLOCKED(0x20)*/
+          tempPwrState |= PROP_SCRN_ON_UNLOCKED;
+        }
+        if((inputPwr & SCREEN_STATE_OFF_UNLOCKED) == SCREEN_STATE_OFF_UNLOCKED||
+                (inputPwr & SCREEN_STATE_OFF_UNLOCKED) == SCREEN_STATE_OFF_UNLOCKED) {
+          /*Mapping SCREEN_STATE_OFF_UNLOCKED or SCREEN_STATE_OFF_UNLOCKED
+           * to SCREEN_STATE_OFF_UNLOCKED*/
+          tempPwrState |= PROP_SCRN_OFF;
+        }
+        inputPwr = tempPwrState;
+      }
+      Log.d(TAG, "updateRoutePowerState outputPwr "+ inputPwr);
+      return inputPwr;
     }
 }

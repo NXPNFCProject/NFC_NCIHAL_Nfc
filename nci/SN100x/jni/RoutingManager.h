@@ -134,6 +134,15 @@ class RoutingManager {
     static const int NFA_SET_AID_ROUTING = 4;
     static const int NFA_SET_TECHNOLOGY_ROUTING = 1;
     static const int NFA_SET_PROTOCOL_ROUTING = 2;
+    // Fixed power states masks
+    static const int PWR_SWTCH_ON_SCRN_UNLCK_MASK = 0x01;
+    static const int PWR_SWTCH_OFF_MASK = 0x02;
+    static const int PWR_BATT_OFF_MASK = 0x04;
+    static const int PWR_SWTCH_ON_SCRN_LOCK_MASK = 0x10;
+    static const int PWR_SWTCH_ON_SCRN_OFF_MASK = 0x08;
+    static const int PWR_SWTCH_ON_SCRN_OFF_LOCK_MASK = 0x20;
+    static const int POWER_STATE_MASK = 0xFF;
+    static const int HOST_SCREEN_STATE_MASK = 0x09;
     void registerProtoRouteEnrty(tNFA_HANDLE ee_handle,
                                  tNFA_PROTOCOL_MASK  protocols_switch_on,
                                  tNFA_PROTOCOL_MASK  protocols_switch_off,
@@ -154,6 +163,7 @@ class RoutingManager {
     uint32_t getUicc2selected();
     bool addAidRouting(const uint8_t* aid, uint8_t aidLen,
                                    int route, int aidInfo, int power);
+    bool checkAndUpdatePowerState(int& power);
     uint16_t sRoutingBuffLen;
     uint8_t* sRoutingBuff;
     SyncEvent       sNfaGetRoutingEvent;
@@ -254,15 +264,6 @@ class RoutingManager {
     //FIX THIS:static const int ROUTE_LOC_UICC3_ID     = SecureElement::EE_HANDLE_0xF9;
     static const int ROUTE_LOC_UICC2_ID     = 0x481;
     static const int ROUTE_LOC_UICC3_ID     = 0x482;
-// Fixed power states masks
-    static const int PWR_SWTCH_ON_SCRN_UNLCK_MASK       = 0x01;
-    static const int PWR_SWTCH_OFF_MASK                 = 0x02;
-    static const int PWR_BATT_OFF_MASK                  = 0x04;
-    static const int PWR_SWTCH_ON_SCRN_LOCK_MASK        = 0x10;
-    static const int PWR_SWTCH_ON_SCRN_OFF_MASK         = 0x08;
-    static const int PWR_SWTCH_ON_SCRN_OFF_LOCK_MASK    = 0x20;
-    static const int POWER_STATE_MASK                   = 0xFF;
-    static const int HOST_SCREEN_STATE_MASK             = 0x09;
     int mHostListnTechMask;
     int mUiccListnTechMask;
     int mFwdFuntnEnable;

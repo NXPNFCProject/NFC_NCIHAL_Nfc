@@ -376,16 +376,16 @@ bool RoutingManager::addAidRouting(const uint8_t* aid, uint8_t aidLen,
       powerState = mCeRouteStrictDisable
                        ? mDefaultIso7816Powerstate
                        : (mDefaultIso7816Powerstate & POWER_STATE_MASK);
+      /*Map PWR state as per NCI2.0 if required*/
+      checkAndUpdatePowerState((int&)powerState);
     } else {
+      /*Map PWR state as per NCI2.0 if required*/
+      bool stat = checkAndUpdatePowerState(power);
+
       if (route == SecureElement::DH_ID) {
-        NativeJniExtns& jniExtns = NativeJniExtns::getInstance();
-        if(jniExtns.isExtensionPresent()) {
-          power &= (PWR_SWTCH_ON_SCRN_LOCK_MASK | PWR_SWTCH_ON_SCRN_UNLCK_MASK |
-                  PWR_SWTCH_ON_SCRN_OFF_LOCK_MASK | PWR_SWTCH_ON_SCRN_OFF_MASK);;
-        } else {
-          power = HOST_PWR_STATE;
-        }
-    }
+        power &= ~(PWR_SWTCH_OFF_MASK | PWR_BATT_OFF_MASK);
+        if (!stat) power &= HOST_PWR_STATE;
+      }
       powerState = power;
     }
   }
@@ -675,10 +675,15 @@ void RoutingManager::updateDefaultRoute() {
 #if (NXP_EXTNS == TRUE)
   uint16_t routeLoc = ((mDefaultSysCodeRoute == 0x00) ? ROUTE_LOC_HOST_ID :
         ((mDefaultSysCodeRoute == 0x01 ) ? ROUTE_LOC_ESE_ID : getUiccRouteLocId(mDefaultSysCodeRoute)));
-      if(mDefaultSysCodeRoute == 0)
-      {
-        mDefaultSysCodePowerstate &= 0x11;
-      }
+
+  /*Map PWR state as per NCI2.0 if required*/
+  bool stat = checkAndUpdatePowerState((int&)mDefaultSysCodePowerstate);
+
+  if (mDefaultSysCodeRoute == SecureElement::DH_ID) {
+    mDefaultSysCodePowerstate &= ~(PWR_SWTCH_OFF_MASK | PWR_BATT_OFF_MASK);
+
+    if (!stat) mDefaultSysCodePowerstate &= (HOST_PWR_STATE);
+  }
 #endif
 
   // Register System Code for routing
@@ -1419,15 +1424,14 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
         }
     }
 
-    if((ee_handle == ROUTE_LOC_HOST_ID) && (NFA_SET_PROTOCOL_ROUTING == type))
-    {
-      NativeJniExtns& jniExtns = NativeJniExtns::getInstance();
-      if(jniExtns.isExtensionPresent()) {
-        power &= (PWR_SWTCH_ON_SCRN_LOCK_MASK | PWR_SWTCH_ON_SCRN_UNLCK_MASK |
-                PWR_SWTCH_ON_SCRN_OFF_LOCK_MASK | PWR_SWTCH_ON_SCRN_OFF_MASK);
-      } else {
-        power &= (PWR_SWTCH_ON_SCRN_LOCK_MASK | PWR_SWTCH_ON_SCRN_UNLCK_MASK);
-      }
+    /*Map PWR state as per NCI2.0 if required*/
+    bool stat = checkAndUpdatePowerState(power);
+
+    if ((ee_handle == ROUTE_LOC_HOST_ID) &&
+        (NFA_SET_PROTOCOL_ROUTING == type)) {
+      power &= ~(PWR_SWTCH_OFF_MASK | PWR_BATT_OFF_MASK);
+
+      if (!stat) power &= (HOST_PWR_STATE);
       isSeIDPresent = 1;
     }
 
@@ -1747,18 +1751,22 @@ void RoutingManager::setEmptyAidEntry(int route) {
       }
     }
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: route %x",__func__,routeLoc);
+
+    /*Map PWR state as per NCI2.0 if required*/
+    bool stat = checkAndUpdatePowerState((int&)power);
+
     if(routeLoc == ROUTE_LOC_HOST_ID) {
-      NativeJniExtns& jniExtns = NativeJniExtns::getInstance();
-      if(jniExtns.isExtensionPresent()) {
-        power &= (PWR_SWTCH_ON_SCRN_LOCK_MASK | PWR_SWTCH_ON_SCRN_UNLCK_MASK |
-                PWR_SWTCH_ON_SCRN_OFF_LOCK_MASK | PWR_SWTCH_ON_SCRN_OFF_MASK);
-      } else {
-        power &= (PWR_SWTCH_ON_SCRN_LOCK_MASK | PWR_SWTCH_ON_SCRN_UNLCK_MASK);
-      }
+      power &= ~(PWR_SWTCH_OFF_MASK | PWR_BATT_OFF_MASK);
+      if (!stat) power &= (HOST_PWR_STATE);
     }
+
     if(mDefaultGsmaPowerState) {
+      /*Map PWR state as per NCI2.0 if required*/
+      checkAndUpdatePowerState((int&)mDefaultGsmaPowerState);
+
       if(routeLoc == ROUTE_LOC_HOST_ID)
-        power = (mDefaultGsmaPowerState & 0x39);
+        power = (mDefaultGsmaPowerState &
+                 (~(PWR_SWTCH_OFF_MASK | PWR_BATT_OFF_MASK)));
       else
         power = mDefaultGsmaPowerState;
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: gsma  %x",__func__,power);
@@ -1766,8 +1774,11 @@ void RoutingManager::setEmptyAidEntry(int route) {
 
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: power %x",__func__,power);
     if(power){
-        tNFA_STATUS nfaStat = NFA_EeAddAidRouting(routeLoc, 0, NULL, mSecureNfcEnabled ? 0x01 : power, AID_ROUTE_QUAL_PREFIX);
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Status :0x%2x", __func__, nfaStat);
+      tNFA_STATUS nfaStat = NFA_EeAddAidRouting(
+          routeLoc, 0, NULL, mSecureNfcEnabled ? 0x01 : power,
+          AID_ROUTE_QUAL_PREFIX);
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("%s: Status :0x%2x", __func__, nfaStat);
     }else{
         LOG(ERROR) << StringPrintf("%s:Invalid Power State" ,__func__);
     }
@@ -2050,5 +2061,31 @@ void RoutingManager::processGetRoutingRsp(tNFA_DM_CBACK_DATA* eventData) {
     SyncEventGuard guard(sNfaGetRoutingEvent);
     sNfaGetRoutingEvent.notifyOne();
   }
+}
+
+/*******************************************************************************
+**
+** Function:        checkAndUpdatePowerState
+**
+** Description:     Maps the proprietary power states to NCI2.0 power state
+**                  Input power : Proprietary power input
+**
+** Returns:         If JNI_EXTNS present(true), otherwise (false)
+**
+*******************************************************************************/
+bool RoutingManager::checkAndUpdatePowerState(int& power) {
+  bool status = false;
+  uint8_t tempPower = (uint8_t)(power & POWER_STATE_MASK);
+  NativeJniExtns& jniExtns = NativeJniExtns::getInstance();
+
+  if (jniExtns.isExtensionPresent()) {
+    NativeJniExtns::getInstance().notifyNfcEvent("updateRoutingPowerState",
+                                                 (void*)&tempPower);
+    status = true;
+  } else {
+    status = false;
+  }
+  power = tempPower;
+  return status;
 }
 #endif
