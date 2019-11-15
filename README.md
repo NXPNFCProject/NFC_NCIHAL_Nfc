@@ -31,7 +31,7 @@
 | Android Version        | NXP Release          | NXP Tag  |
 | :-------------: |:---------------------:| :-----:|
 | android-p-preview 2               |  9.00.08 (SN100x) |  NFC_AR_00_2000_09.00.08_OpnSrc  |
-
+| android-p-preview 2               |  9.00.09 (SN100x) |  NFC_AR_00_2000_09.00.09_OpnSrc  |
 
 
 
