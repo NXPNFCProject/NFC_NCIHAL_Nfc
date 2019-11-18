@@ -68,16 +68,14 @@ extern uint8_t current_key[];
 
 #define NDEF_SENDRCV_BUF_LEN 252U /* Send receive buffer length */
 
-#define NXP_NUMBER_OF_MFC_KEYS (0x04U)
+#define NXP_NUMBER_OF_MFC_KEYS (0x03U)
 #define NXP_MFC_KEY_SIZE (0x06U)
 
 #define NXP_MFC_KEYS                            \
   {                                             \
     {0xA0, 0XA1, 0xA2, 0XA3, 0xA4, 0XA5},       \
-        {0xD3, 0XF7, 0xD3, 0XF7, 0xD3, 0XF7},   \
-        {0xFF, 0XFF, 0xFF, 0XFF, 0xFF, 0XFF}, { \
-      0x00, 0x00, 0x00, 0x00, 0x00, 0x00        \
-    }                                           \
+    {0xD3, 0XF7, 0xD3, 0XF7, 0xD3, 0XF7},       \
+    {0xFF, 0XFF, 0xFF, 0XFF, 0xFF, 0XFF}        \
   } /* Key used during NDEF format */
 
 #ifndef NCI_MAX_DATA_LEN
