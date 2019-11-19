@@ -1527,6 +1527,7 @@ static jboolean nfcManager_doInitialize(JNIEnv* e, jobject o) {
       NFA_Init(halFuncEntries);
 #if (NXP_EXTNS == TRUE)
       NativeJniExtns::getInstance().initializeNativeData(getNative(e, o));
+      NativeJniExtns::getInstance().notifyNfcEvent("nfcManager_setPropertyInfo");
       stat = theInstance.DownloadFirmware(nfcFwUpdateStatusCallback, true);
 #endif
       stat = NFA_Enable(nfaDeviceManagementCallback, nfaConnectionCallback);
@@ -2726,6 +2727,7 @@ static jboolean nfcManager_doDownload(JNIEnv* e, jobject o) {
   theInstance.Initialize();  // start GKI, NCI task, NFC task
 #if (NXP_EXTNS == TRUE)
   NativeJniExtns::getInstance().initializeNativeData(getNative(e, o));
+  NativeJniExtns::getInstance().notifyNfcEvent("nfcManager_setPropertyInfo");
   result = theInstance.DownloadFirmware(nfcFwUpdateStatusCallback, false);
 #else
   result = theInstance.DownloadFirmware();
@@ -3514,6 +3516,7 @@ static jint nfcManager_getFwVersion(JNIEnv * e, jobject o) {
     temp = nfc_native_fw_version.major_version;
     version |= temp << 8;
     version |= nfc_native_fw_version.minor_version;
+    NativeJniExtns::getInstance().notifyNfcEvent("nfcManager_updateRfRegInfo");
 
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: exit; version =0x%X", __func__, version);
