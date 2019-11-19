@@ -158,6 +158,34 @@ class NativeT4tNfcee {
   void t4tClearComplete(tNFA_STATUS status);
   /*******************************************************************************
   **
+  ** Function:        doChangeT4tFileWritePerm
+  **
+  ** Description:     Set/Reset the lock bit for contact or/and contact less NDEF files.
+  **
+  ** Parameter:       param_val: Reference to a value which shall be modified by this API
+  **                  const bool& lock : Informs about how to modify the param_val
+  **
+  ** Returns:         boolean : "True" if param_val is modified else "False"
+  **
+  *******************************************************************************/
+  bool doChangeT4tFileWritePerm(uint8_t& param_val, const bool& lock);
+  /*******************************************************************************
+  **
+  ** Function:        doGetT4tConfVals
+  **
+  ** Description:     This function gets the T4T config values from NFCC.
+  **
+  ** Parameter:       uint8_t& clNdefFileValue: reference variable to hold value of
+  **                                        contactless (A095) tag
+  **                  uint8_t& cNdefFileValue : reference variable to hold value of
+  **                                        contact (A110) tag
+  ** Returns:         "TRUE" if value is successfully retrieved
+  **                  "FALSE" if error occurred or T4T feature is disabled
+  **
+  *******************************************************************************/
+  bool doGetT4tConfVals(uint8_t& clNdefFileValue, uint8_t& cNdefFileValue);
+  /*******************************************************************************
+  **
   ** Function:        doLockT4tData
   **
   ** Description:     Lock/Unlock the data in the T4T NDEF file.
@@ -220,13 +248,16 @@ class NativeT4tNfcee {
   void eventHandler(uint8_t event, tNFA_CONN_EVT_DATA* eventData);
  private:
   bool mBusy;
-  static const int NXP_NFC_PARAM_ID_T4T_NFCEE = 0x95;
+  static const int NXP_NFC_CLPARAM_ID_T4T_NFCEE = 0x95;
+  static const int NXP_NFC_CPARAM_ID_T4T_NFCEE = 0x10;
+  static const int NXP_NFC_NUM_PARAM_T4T_NFCEE = 0x02;
   static const int NXP_PARAM_LEN_T4T_NFCEE = 0x01;
   static const int MASK_T4T_FEATURE_BIT = 1;
   static const int MASK_LOCK_BIT = 6;
   static const int MASK_PROP_NDEF_FILE_BIT = 7;
   static const int MAX_CONFIG_VALUE_LEN = 0x16;
   static const int NXP_PARAM_GET_CONFIG_INDEX = 4;
+  static const int NXP_PARAM_GET_CONFIG_INDEX1 = 8;
   static const int NXP_PARAM_SET_CONFIG_INDEX = 7;
   static NativeT4tNfcee sNativeT4tNfceeInstance;
   static bool sIsNfcOffTriggered;
