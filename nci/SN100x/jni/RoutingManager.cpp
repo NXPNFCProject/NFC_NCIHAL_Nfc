@@ -372,26 +372,14 @@ bool RoutingManager::addAidRouting(const uint8_t* aid, uint8_t aidLen,
   }
   SyncEventGuard guard(mAidAddRemoveEvent);
   if (!mSecureNfcEnabled) {
-    if ((aid == nullptr) && (aidLen == 0x00)) {
-      if (mDefaultIso7816SeID == NFA_HANDLE_INVALID) {
-        LOG(ERROR) << StringPrintf("%s: Invalid routeLoc. Return.", __func__);
-        return false;
-      }
-      powerState = mCeRouteStrictDisable
-                       ? mDefaultIso7816Powerstate
-                       : (mDefaultIso7816Powerstate & POWER_STATE_MASK);
-      /*Map PWR state as per NCI2.0 if required*/
-      checkAndUpdatePowerState((int&)powerState);
-    } else {
-      /*Map PWR state as per NCI2.0 if required*/
-      bool stat = checkAndUpdatePowerState(power);
+    /*Map PWR state as per NCI2.0 if required*/
+    bool stat = checkAndUpdatePowerState(power);
 
-      if (route == SecureElement::DH_ID) {
-        power &= ~(PWR_SWTCH_OFF_MASK | PWR_BATT_OFF_MASK);
-        if (!stat) power &= HOST_PWR_STATE;
-      }
-      powerState = power;
+    if (route == SecureElement::DH_ID) {
+      power &= ~(PWR_SWTCH_OFF_MASK | PWR_BATT_OFF_MASK);
+      if (!stat) power &= HOST_PWR_STATE;
     }
+    powerState = power;
   }
   tNFA_STATUS nfaStat =
       NFA_EeAddAidRouting(seId, aidLen, (uint8_t*)aid, powerState, aidInfo);
