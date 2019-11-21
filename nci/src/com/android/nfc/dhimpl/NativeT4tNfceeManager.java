@@ -23,4 +23,10 @@ public class NativeT4tNfceeManager {
   public native int doWriteT4tData(byte[] fileId, byte[] data, int length);
 
   public native byte[] doReadT4tData(byte[] fileId);
+
+  public native boolean doLockT4tData(boolean lock);
+
+  public native boolean isLockedT4tData();
+
+  public native boolean doClearNdefT4tData();
 }
