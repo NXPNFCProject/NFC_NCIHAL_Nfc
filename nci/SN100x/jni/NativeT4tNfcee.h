@@ -258,7 +258,8 @@ class NativeT4tNfcee {
   static const int MAX_CONFIG_VALUE_LEN = 0x16;
   static const int NXP_PARAM_GET_CONFIG_INDEX = 4;
   static const int NXP_PARAM_GET_CONFIG_INDEX1 = 8;
-  static const int NXP_PARAM_SET_CONFIG_INDEX = 7;
+  static const int NXP_PARAM_SET_CONFIG_LEN = 0x09;
+  static const int NXP_PARAM_SET_CONFIG_PARAM = 0x02;
   static NativeT4tNfcee sNativeT4tNfceeInstance;
   static bool sIsNfcOffTriggered;
   SyncEvent mT4tNfcOffEvent;

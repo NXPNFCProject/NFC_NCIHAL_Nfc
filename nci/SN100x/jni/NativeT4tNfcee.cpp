@@ -22,6 +22,7 @@
 #include <nativehelper/ScopedPrimitiveArray.h>
 #include "MposManager.h"
 #include "NfcJniUtil.h"
+#include "nci_defs_extns.h"
 #include "nfa_nfcee_api.h"
 #include "nfa_nfcee_int.h"
 #include "nfc_config.h"
@@ -244,6 +245,8 @@ jint NativeT4tNfcee::t4tWriteData(JNIEnv* e, jobject object, jbyteArray fileId,
           t4tWriteReturn = ERROR_NDEF_VALIDATION_FAILED;
         } else if (mT4tOpStatus == NFA_T4T_STATUS_INVALID_FILE_ID){
           t4tWriteReturn = ERROR_INVALID_FILE_ID;
+        } else if (mT4tOpStatus == NFA_STATUS_READ_ONLY) {
+          t4tWriteReturn = ERROR_WRITE_PERMISSION;
         } else {
           t4tWriteReturn = STATUS_FAILED;
         }
@@ -683,21 +686,30 @@ bool NativeT4tNfcee::doLockT4tData(JNIEnv* e, jobject o, bool lock) {
     android::startRfDiscovery(false);
   }
 
-  if(doChangeT4tFileWritePerm(cNdefFileValue, lock)) {
-    uint8_t set_config[] = {0x20, 0x02, 0x05, 0x01,
-            NXP_NFC_SET_CONFIG_PARAM_EXT_ID1, NXP_NFC_CPARAM_ID_T4T_NFCEE,
-            NXP_PARAM_LEN_T4T_NFCEE, 0xFF};
-    *(set_config + NXP_PARAM_SET_CONFIG_INDEX) = cNdefFileValue;
-    status = android::NxpNfc_Write_Cmd_Common(sizeof(set_config), set_config);
-  }
+  std::vector<uint8_t> cNdefcmd = {0x20,
+                                   0x02,
+                                   0x05,
+                                   0x01,
+                                   NXP_NFC_SET_CONFIG_PARAM_EXT_ID1,
+                                   NXP_NFC_CPARAM_ID_T4T_NFCEE,
+                                   NXP_PARAM_LEN_T4T_NFCEE};
 
-  if ((NfcConfig::getUnsigned(NAME_NXP_T4T_NFCEE_ENABLE, 0x00) & (1 << MASK_LOCK_BIT)) &&
-          doChangeT4tFileWritePerm(clNdefFileValue, lock)) {
-    uint8_t set_config[] = {0x20, 0x02, 0x05, 0x01,
-            NXP_NFC_SET_CONFIG_PARAM_EXT, NXP_NFC_CLPARAM_ID_T4T_NFCEE,
-            NXP_PARAM_LEN_T4T_NFCEE, 0xFF};
-    *(set_config + NXP_PARAM_SET_CONFIG_INDEX) = clNdefFileValue;
-    status = android::NxpNfc_Write_Cmd_Common(sizeof(set_config), set_config);
+  if (doChangeT4tFileWritePerm(cNdefFileValue, lock)) {
+    cNdefcmd.push_back(cNdefFileValue);
+    if ((NfcConfig::getUnsigned(NAME_NXP_T4T_NFCEE_ENABLE, 0x00) &
+         (1 << MASK_LOCK_BIT)) &&
+        doChangeT4tFileWritePerm(clNdefFileValue, lock)) {
+      std::vector<uint8_t> clNdefcmd = {NXP_NFC_SET_CONFIG_PARAM_EXT,
+                                        NXP_NFC_CLPARAM_ID_T4T_NFCEE,
+                                        NXP_PARAM_LEN_T4T_NFCEE};
+      int setConfigindex = 2;
+      cNdefcmd.at(setConfigindex) = NXP_PARAM_SET_CONFIG_LEN;
+      cNdefcmd.at(++setConfigindex) = NXP_PARAM_SET_CONFIG_PARAM;
+      clNdefcmd.push_back(clNdefFileValue);
+      cNdefcmd.insert(cNdefcmd.end(), &clNdefcmd[0],
+                      &clNdefcmd[0] + clNdefcmd.size());
+    }
+    status = android::NxpNfc_Write_Cmd_Common(cNdefcmd.size(), &cNdefcmd[0]);
   }
 
   if (!android::isDiscoveryStarted()) android::startRfDiscovery(true);
@@ -706,6 +718,7 @@ bool NativeT4tNfcee::doLockT4tData(JNIEnv* e, jobject o, bool lock) {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Exit", __func__);
   return true;
 }
+
 /*******************************************************************************
 **
 ** Function:        isLockedT4tData
