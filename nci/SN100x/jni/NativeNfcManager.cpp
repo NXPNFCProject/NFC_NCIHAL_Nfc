@@ -224,6 +224,7 @@ static SyncEvent sNfaEnableDisablePollingEvent;  // event for
 static SyncEvent sNfaGetConfigEvent;             // event for Get_Config....
 #if(NXP_EXTNS == TRUE)
 static SyncEvent sNfaTransitConfigEvent;  // event for NFA_SetTransitConfig()
+bool suppressLogs = true;
 #endif
 static bool sIsNfaEnabled = false;
 static bool sDiscoveryEnabled = false;  // is polling or listening
@@ -1599,6 +1600,9 @@ static jboolean nfcManager_doInitialize(JNIEnv* e, jobject o) {
         }
 
 #if (NXP_EXTNS==TRUE)
+        if (NfcConfig::hasKey(NAME_NXP_ENABLE_DISABLE_LOGS))
+          suppressLogs =
+              NfcConfig::getUnsigned(NAME_NXP_ENABLE_DISABLE_LOGS, 1);
         prevScreenState = NFA_SCREEN_STATE_UNKNOWN;
 #else
         prevScreenState = NFA_SCREEN_STATE_OFF_LOCKED;

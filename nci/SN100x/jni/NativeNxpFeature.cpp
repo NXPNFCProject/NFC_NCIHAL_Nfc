@@ -67,7 +67,7 @@ static void NxpResponse_Cb(uint8_t event, uint16_t param_len, uint8_t* p_param);
 }  // namespace android
 
 namespace android {
-
+extern bool suppressLogs;
 void SetCbStatus(tNFA_STATUS status) { gnxpfeature_conf.wstatus = status; }
 
 tNFA_STATUS GetCbStatus(void) { return gnxpfeature_conf.wstatus; }
@@ -226,6 +226,36 @@ tNFA_STATUS send_flush_ram_to_flash() {
   }
   return status;
 }
+/*******************************************************************************
+ **
+ ** Function:        enableDisableLog(bool type)
+ **
+ ** Description:     This function is used to enable/disable the
+ **                  logging module for cmd/data exchanges.
+ **
+ ** Returns:         None
+ **
+ *******************************************************************************/
+void enableDisableLog(bool type) {
+  static bool prev_trace_level = nfc_debug_enabled;
+
+  NfcAdaptation& theInstance = NfcAdaptation::GetInstance();
+
+  if (android::suppressLogs) {
+    if (true == type) {
+      if (nfc_debug_enabled != prev_trace_level) {
+        nfc_debug_enabled = prev_trace_level;
+        theInstance.HalSetProperty("nfc.debug_enabled", "1");
+      }
+    } else if (false == type) {
+      if (0 != nfc_debug_enabled) {
+        nfc_debug_enabled = 0;
+        theInstance.HalSetProperty("nfc.debug_enabled", "0");
+      }
+    }
+  }
+}
+
 } /*namespace android*/
 
 #endif
