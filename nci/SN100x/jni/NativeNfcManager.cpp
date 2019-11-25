@@ -134,6 +134,7 @@ extern bool nativeNfcTag_checkActivatedProtoParameters(
 extern bool gIsWaiting4Deact2SleepNtf;
 extern bool gGotDeact2IdleNtf;
 extern void nativeNfcTag_abortTagOperations(tNFA_STATUS status);
+extern void nativeNfcTag_setRfProtocol(tNFA_INTF_TYPE rfProtocol);
 #endif
 }  // namespace android
 
@@ -543,7 +544,10 @@ static void nfaConnectionCallback(uint8_t connEvent,
            NFA_PROTOCOL_NFC_DEP) &&
           (!isListenMode(eventData->activated))) {
         nativeNfcTag_setRfInterface(
-            (tNFA_INTF_TYPE)eventData->activated.activate_ntf.intf_param.type);
+                (tNFA_INTF_TYPE)eventData->activated.activate_ntf.intf_param.type);
+#if (NXP_EXTNS == TRUE)
+        nativeNfcTag_setRfProtocol((tNFA_INTF_TYPE)eventData->activated.activate_ntf.protocol);
+#endif
       }
       if (EXTNS_GetConnectFlag() == TRUE) {
         NfcTag::getInstance().setActivationState();

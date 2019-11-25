@@ -117,6 +117,9 @@ static tNFA_STATUS sCheckNdefStatus =
 static bool sCheckNdefCapable = false;  // whether tag has NDEF capability
 static tNFA_HANDLE sNdefTypeHandlerHandle = NFA_HANDLE_INVALID;
 static tNFA_INTF_TYPE sCurrentRfInterface = NFA_INTERFACE_ISO_DEP;
+#if (NXP_EXTNS == TRUE)
+static tNFA_INTF_TYPE sCurrentActivatedProtocl = NFC_PROTOCOL_UNKNOWN;
+#endif
 static std::basic_string<uint8_t> sRxDataBuffer;
 static tNFA_STATUS sRxDataStatus = NFA_STATUS_OK;
 static bool sWaitingForTransceive = false;
@@ -238,7 +241,20 @@ void nativeNfcTag_doReadCompleted(tNFA_STATUS status) {
 void nativeNfcTag_setRfInterface(tNFA_INTF_TYPE rfInterface) {
   sCurrentRfInterface = rfInterface;
 }
-
+#if (NXP_EXTNS == TRUE)
+/*******************************************************************************
+ **
+ ** Function:        nativeNfcTag_setRfProtocol
+ **
+ ** Description:     Set rf Activated Protocol.
+ **
+ ** Returns:         void
+ **
+ *******************************************************************************/
+void nativeNfcTag_setRfProtocol(tNFA_INTF_TYPE rfProtocol) {
+  sCurrentActivatedProtocl = rfProtocol;
+}
+#endif
 /*******************************************************************************
 **
 ** Function:        ndefHandlerCallback
@@ -704,12 +720,21 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
         (NFC_GetNCIVersion() >= NCI_VERSION_2_0)) {
       {
         SyncEventGuard g3(sReconnectEvent);
+#if (NXP_EXTNS == TRUE)
+        if(sCurrentActivatedProtocl == NFA_PROTOCOL_T2T) {
+          status = NFA_SendRawFrame(RW_TAG_SLP_REQ, sizeof(RW_TAG_SLP_REQ), 0);
+        } else if (sCurrentActivatedProtocl == NFA_PROTOCOL_ISO_DEP) {
+          status = NFA_SendRawFrame(RW_DESELECT_REQ,
+                                    sizeof(RW_DESELECT_REQ), 0);
+        }
+#else
         if(sCurrentConnectedTargetProtocol == NFA_PROTOCOL_T2T) {
           status = NFA_SendRawFrame(RW_TAG_SLP_REQ, sizeof(RW_TAG_SLP_REQ), 0);
         } else if (sCurrentConnectedTargetProtocol == NFA_PROTOCOL_ISO_DEP) {
           status = NFA_SendRawFrame(RW_DESELECT_REQ,
                                     sizeof(RW_DESELECT_REQ), 0);
         }
+#endif
         sReconnectEvent.wait(4);
         if (status != NFA_STATUS_OK) {
           LOG(ERROR) << StringPrintf("%s: send error=%d", __func__, status);
