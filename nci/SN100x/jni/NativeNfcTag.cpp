@@ -156,6 +156,7 @@ static int sCurrentConnectedTargetType = TARGET_TYPE_UNKNOWN;
 static int sCurrentConnectedTargetProtocol = NFC_PROTOCOL_UNKNOWN;
 #if (NXP_EXTNS == TRUE)
 static int sCurrentConnectedHandle = 0;
+void nativeNfcTag_doPresenceCheckResult(tNFA_STATUS status);
 #endif
 static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded);
 static bool switchRfInterface(tNFA_INTF_TYPE rfInterface);
@@ -187,10 +188,14 @@ void nativeNfcTag_abortWaits() {
   }
 
   sem_post(&sCheckNdefSem);
+#if (NXP_EXTNS == TRUE)
+  nativeNfcTag_doPresenceCheckResult(NFA_STATUS_FAILED);
+#else
   {
     SyncEventGuard guard(sPresenceCheckEvent);
     sPresenceCheckEvent.notifyOne();
   }
+#endif
   sem_post(&sMakeReadonlySem);
   sCurrentRfInterface = NFA_INTERFACE_ISO_DEP;
   sCurrentConnectedTargetType = TARGET_TYPE_UNKNOWN;
