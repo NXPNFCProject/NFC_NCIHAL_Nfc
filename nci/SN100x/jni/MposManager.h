@@ -28,7 +28,7 @@
 class MposManager
 {
 public:
-  bool mIsMposWaitToStart;
+  bool mIsMposWaitToStart = false;
   static jmethodID gCachedMposManagerNotifyEvents;
 
   /*******************************************************************************
