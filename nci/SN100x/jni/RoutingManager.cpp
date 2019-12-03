@@ -1682,7 +1682,7 @@ void RoutingManager::setEmptyAidEntry(int route) {
 
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter",__func__);
     uint16_t routeLoc = NFA_HANDLE_INVALID;
-    uint8_t power;
+    uint32_t power;
     uint8_t count,seId=0;
     uint8_t isDefaultAidRoutePresent = 0;
     unsigned long     check_default_proto_se_id_req = 0;
@@ -1767,7 +1767,7 @@ void RoutingManager::setEmptyAidEntry(int route) {
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: power %x",__func__,power);
     if(power){
       tNFA_STATUS nfaStat = NFA_EeAddAidRouting(
-          routeLoc, 0, NULL, mSecureNfcEnabled ? 0x01 : power,
+          routeLoc, 0, NULL, mSecureNfcEnabled ? 0x01 : (uint8_t)power,
           AID_ROUTE_QUAL_PREFIX);
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: Status :0x%2x", __func__, nfaStat);
