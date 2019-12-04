@@ -1152,7 +1152,11 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: Tag is not Active", __func__);
       rVal = STATUS_CODE_TARGET_LOST;
+
 #if (NFC_NXP_NON_STD_CARD == TRUE)
+      if ((sCurrentActivatedProtocl & (NFC_PROTOCOL_MIFARE | NFC_PROTOCOL_ISO_DEP)) &&
+          !natTag.mIsMultiProtocolTag)
+        break;
       if (!retry_cnt)
 #endif
         break;
