@@ -2491,6 +2491,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
           RoutingManager::getInstance().setCeRouteStrictDisable(num);
 #if (NXP_EXTNS==TRUE)
           prevScreenState = NFA_SCREEN_STATE_UNKNOWN;
+          StoreScreenState(NFA_SCREEN_STATE_ON_UNLOCKED);
 #else
           prevScreenState = NFA_SCREEN_STATE_OFF_LOCKED;
 #endif
