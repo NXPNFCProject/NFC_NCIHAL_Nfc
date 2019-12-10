@@ -886,7 +886,7 @@ public class RegisteredAidCache {
                 }
 
                int route = isOnHost ? 0 : seInfo.getSeId();
-               if (DBG) Log.d(TAG," AID power state"+ aid  + powerstate  +"route"+route);
+               if (DBG) Log.d(TAG," AID power state "+ aid  + " "+ powerstate  +" route "+route);
                aidType.route = route;
                aidType.powerstate = powerstate;
                routingEntries.put(aid, aidType);
@@ -894,8 +894,8 @@ public class RegisteredAidCache {
                 // Only one service, but not the default, must route to host
                 // to ask the user to choose one.
                 aidType.isOnHost = true;
-                aidType.powerstate = POWER_STATE_SWITCH_ON | SCREEN_STATE_ON_LOCKED;
-                if (DBG) Log.d(TAG," AID power state 2"+ aid  +" "+aidType.powerstate);
+                aidType.powerstate = (POWER_STATE_SWITCH_ON | SCREEN_STATE_ON_LOCKED);
+                if (DBG) Log.d(TAG," AID power state 2 "+ aid  +" "+aidType.powerstate);
                 if(mGsmaPwrState > 0)
                 {
                     aidType.powerstate = (mGsmaPwrState & 0x39);
@@ -926,13 +926,13 @@ public class RegisteredAidCache {
                 }
                 aidType.isOnHost = onHost;
                 aidType.offHostSE = onHost ? null : offHostSE;
-                aidType.powerstate = POWER_STATE_SWITCH_ON | SCREEN_STATE_ON_LOCKED;
+                aidType.powerstate = (POWER_STATE_SWITCH_ON | SCREEN_STATE_ON_LOCKED);
                 if(mGsmaPwrState > 0)
                 {
                     aidType.powerstate = (mGsmaPwrState & 0x39);
                     if (DBG) Log.d(TAG," Setting GSMA power state"+ aid  + " " +aidType.powerstate);
                 }
-                if (DBG) Log.d(TAG," AID power state 3"+ aid  + aidType.powerstate);
+                if (DBG) Log.d(TAG," AID power state 3 "+ aid  + aidType.powerstate);
                 routingEntries.put(aid, aidType);
             }
         }
