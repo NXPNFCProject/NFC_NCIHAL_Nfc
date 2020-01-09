@@ -573,7 +573,7 @@ public class BluetoothPeripheralHandover implements BluetoothProfile.ServiceList
     boolean hasA2dpCapability(ParcelUuid[] uuids, BluetoothClass btClass) {
         if (uuids != null) {
             for (ParcelUuid uuid : uuids) {
-                if (BluetoothUuid.isAudioSink(uuid) || BluetoothUuid.isAdvAudioDist(uuid)) {
+                if (uuid.equals(BluetoothUuid.A2DP_SINK) || uuid.equals(BluetoothUuid.ADV_AUDIO_DIST)) {
                     return true;
                 }
             }
@@ -587,7 +587,7 @@ public class BluetoothPeripheralHandover implements BluetoothProfile.ServiceList
     boolean hasHeadsetCapability(ParcelUuid[] uuids, BluetoothClass btClass) {
         if (uuids != null) {
             for (ParcelUuid uuid : uuids) {
-                if (BluetoothUuid.isHandsfree(uuid) || BluetoothUuid.isHeadset(uuid)) {
+                if (uuid.equals(BluetoothUuid.HFP) || uuid.equals(BluetoothUuid.HSP)) {
                     return true;
                 }
             }
