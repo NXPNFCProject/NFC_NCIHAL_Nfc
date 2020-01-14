@@ -1295,21 +1295,9 @@ static jboolean nfcManager_routeAid(JNIEnv* e, jobject, jbyteArray aid,
 #endif
   uint8_t* buf;
   size_t bufLen;
-  ScopedByteArrayRO bytes(e);
-  if (aid == NULL) {
-    buf = NULL;
-    bufLen = 0;
-    DLOG_IF(INFO, nfc_debug_enabled)
-        << StringPrintf("nfcManager_routeAid:  NULL");
 #if (NXP_EXTNS == TRUE)
+  if (aid == NULL)
     RoutingManager::getInstance().checkAndUpdateAltRoute(route);
-#endif
-  } else {
-    bytes.reset(aid);
-    buf = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
-    bufLen = bytes.size();
-  }
-#if (NXP_EXTNS == TRUE)
   SecureElement& se = SecureElement::getInstance();
   if ((!isDynamicUiccEnabled) &&
       (route == se.UICC_ID || route == se.UICC2_ID)) {  // UICC or UICC2 HANDLE
@@ -1322,7 +1310,26 @@ static jboolean nfcManager_routeAid(JNIEnv* e, jobject, jbyteArray aid,
      */
     route = (sCurrentSelectedUICCSlot != se.UICC_ID) ? se.UICC_ID : se.UICC2_ID;
   }
+#endif
+  if (aid == NULL) {
+    buf = NULL;
+    bufLen = 0;
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("nfcManager_routeAid:  NULL");
+#if (NXP_EXTNS == TRUE)
     return RoutingManager::getInstance().addAidRouting(buf, bufLen, route,
+        aidInfo, power);
+#else
+    return RoutingManager::getInstance().addAidRouting(buf, bufLen, route,
+                                                     aidInfo);
+#endif
+  }
+  ScopedByteArrayRO bytes(e);
+  bytes.reset(aid);
+  buf = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
+  bufLen = bytes.size();
+#if (NXP_EXTNS == TRUE)
+  return RoutingManager::getInstance().addAidRouting(buf, bufLen, route,
                                                      aidInfo, power);
 #else
   return RoutingManager::getInstance().addAidRouting(buf, bufLen, route,
@@ -1344,18 +1351,17 @@ static jboolean nfcManager_routeAid(JNIEnv* e, jobject, jbyteArray aid,
 static jboolean nfcManager_unrouteAid(JNIEnv* e, jobject, jbyteArray aid) {
   uint8_t* buf;
   size_t bufLen;
-  ScopedByteArrayRO bytes(e);
 
   if (aid == NULL) {
     buf = NULL;
     bufLen = 0;
-  } else {
-    bytes.reset(aid);
-    buf = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
-    bufLen = bytes.size();
+    return RoutingManager::getInstance().removeAidRouting(buf, bufLen);
   }
-  bool result = RoutingManager::getInstance().removeAidRouting(buf, bufLen);
-  return result;
+  ScopedByteArrayRO bytes(e);
+  bytes.reset(aid);
+  buf = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
+  bufLen = bytes.size();
+  return RoutingManager::getInstance().removeAidRouting(buf, bufLen);
 }
 
 /*******************************************************************************
