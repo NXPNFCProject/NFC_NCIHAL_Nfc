@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2019 NXP
+*  Copyright 2018-2020 NXP
 *
 ******************************************************************************/
 
@@ -1483,8 +1483,10 @@ static jint nativeNfcTag_doCheckNdef(JNIEnv* e, jobject o, jintArray ndefInfo) {
 
 #if (NXP_EXTNS == TRUE)
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-          "%s: NfcTag::getInstance ().mTechLibNfcTypes[%d]=%d", __func__,
-          handle, NfcTag::getInstance ().mTechLibNfcTypes[handle]);
+          "%s: NfcTag::getInstance ().mTechLibNfcTypes[%d]=%d"
+          "sCurrentConnectedTargetProtocol = 0x%x", __func__,
+          handle, NfcTag::getInstance ().mTechLibNfcTypes[handle],
+          sCurrentConnectedTargetProtocol);
 #endif
 
   if (sCurrentConnectedTargetProtocol == NFC_PROTOCOL_MIFARE && legacy_mfc_reader) {
