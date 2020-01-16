@@ -233,6 +233,8 @@ public interface DeviceHost {
 
     public int getDefaultDesfireRoute();
 
+    public int getT4TNfceePowerState();
+
     public int getDefaultMifareCLTRoute();
 
     public int getDefaultFelicaCLTRoute();

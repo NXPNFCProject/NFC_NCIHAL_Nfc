@@ -1507,9 +1507,13 @@ tNFA_HANDLE SecureElement::getEseHandleFromGenericId(jint eseId)
     {
       handle = rm.getUiccRouteLocId(eseId);
     }
+    else if(eseId == T4T_NFCEE_ID) //T4T NFCEE
+    {
+      handle = SecureElement::getInstance().EE_HANDLE_0xFE;  // 0x410;
+    }
     else if(eseId == EE_APP_HANLDE_UICC) //UICC
     {
-        handle = SecureElement::getInstance().EE_HANDLE_0xF4; //0x402;
+      handle = SecureElement::getInstance().EE_HANDLE_0xF4;  // 0x402;
     }
     else if(eseId == EE_APP_HANLDE_UICC2) //UICC
     {

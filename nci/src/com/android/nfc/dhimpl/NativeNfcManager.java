@@ -196,6 +196,9 @@ public class NativeNfcManager implements DeviceHost {
     public native int   getDefaultDesfireRoute();
 
     @Override
+    public native int   getT4TNfceePowerState();
+
+    @Override
     public native int   getDefaultMifareCLTRoute();
 
     @Override
