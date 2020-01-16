@@ -140,6 +140,7 @@ static IntervalTimer sSwitchBackTimer;  // timer used to tell us to switch back
                                         // to ISO_DEP frame interface
 uint8_t RW_TAG_SLP_REQ[] = {0x50, 0x00};
 uint8_t RW_DESELECT_REQ[] = {0xC2};
+uint8_t RW_REQ_ATS[] = {0xE0,0x80};
 static jboolean sWriteOk = JNI_FALSE;
 static jboolean sWriteWaitingForComplete = JNI_FALSE;
 static bool sFormatOk = false;
@@ -729,8 +730,25 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
         if(sCurrentActivatedProtocl == NFA_PROTOCOL_T2T) {
           status = NFA_SendRawFrame(RW_TAG_SLP_REQ, sizeof(RW_TAG_SLP_REQ), 0);
         } else if (sCurrentActivatedProtocl == NFA_PROTOCOL_ISO_DEP) {
+          bool waitOk = false;
+          sWaitingForTransceive = true;
+          SyncEventGuard g (sTransceiveEvent);
+          status = NFA_SendRawFrame(RW_REQ_ATS,
+                                    sizeof(RW_REQ_ATS), 0);
+          if (status != NFA_STATUS_OK) {
+            DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf("%s: fail send; error=%d", __func__, status);
+          } else {
+            waitOk = sTransceiveEvent.wait (1000);
+          }
+
           status = NFA_SendRawFrame(RW_DESELECT_REQ,
                                     sizeof(RW_DESELECT_REQ), 0);
+          if (status != NFA_STATUS_OK) {
+            DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf("%s: fail send; error=%d", __func__, status);
+          } else {
+            waitOk = sTransceiveEvent.wait (1000);
+          }
+          sWaitingForTransceive = false;
         }
 #else
         if(sCurrentConnectedTargetProtocol == NFA_PROTOCOL_T2T) {
@@ -1086,8 +1104,14 @@ void nativeNfcTag_doTransceiveStatus(tNFA_STATUS status, uint8_t* buf,
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: data len=%d", __func__, bufLen);
 
+#if(NXP_EXTNS == TRUE)
+  if (  sCurrentActivatedProtocl == NFC_PROTOCOL_MIFARE && legacy_mfc_reader) {
+#else
   if (sCurrentConnectedTargetProtocol == NFC_PROTOCOL_MIFARE && legacy_mfc_reader) {
+#endif
+
     if (EXTNS_GetCallBackFlag() == FALSE) {
+
       EXTNS_MfcCallBack(buf, bufLen);
       return;
     }
@@ -1102,6 +1126,7 @@ void nativeNfcTag_doTransceiveStatus(tNFA_STATUS status, uint8_t* buf,
     sRxDataBuffer.append(buf, bufLen);
 
   if (sRxDataStatus == NFA_STATUS_OK) sTransceiveEvent.notifyOne();
+
 }
 
 void nativeNfcTag_notifyRfTimeout() {
