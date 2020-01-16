@@ -58,6 +58,7 @@ static void deleteglobaldata(JNIEnv* e);
 static jobjectArray techActBytes1;
 int selectedId = 0;
 static jobjectArray techPollBytes2;
+static bool isP2pDetected = false;
 namespace android {
   extern bool nfcManager_isReaderModeEnabled();
 }
@@ -139,6 +140,7 @@ void NfcTag::initialize(nfc_jni_native_data* native) {
   mNumDiscNtf = 0;
   mNumDiscTechList = 0;
   mTechListIndex = 0;
+  isP2pDetected = false;
 #endif
   mtT1tMaxMessageSize = 0;
   mReadCompletedStatus = NFA_STATUS_OK;
@@ -724,8 +726,12 @@ bool NfcTag::isCashBeeActivated() { return mCashbeeDetected; }
 **
 *******************************************************************************/
 bool NfcTag::isNfcCombiCard() {
-  return (android::nfcManager_isReaderModeEnabled() &&
-          isP2pDiscovered() && mNumDiscNtf == 1);
+  if ((android::nfcManager_isReaderModeEnabled() && isP2pDetected &&
+       mNumDiscNtf == 1)) {
+    isP2pDetected = false;
+    return true;
+  } else
+    return false;
 }
 
 /*******************************************************************************
@@ -1254,6 +1260,10 @@ bool NfcTag::isP2pDiscovered() {
       break;
     }
   }
+#if (NXP_EXTNS == TRUE)
+  if (!isP2pDetected) isP2pDetected = retval;
+#endif
+
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: return=%u", fn, retval);
   return retval;
 }
@@ -1316,6 +1326,7 @@ void NfcTag::resetTechnologies() {
   mNumTechList = 0;
 #if (NXP_EXTNS == TRUE)
   mTechListIndex = 0;
+  isP2pDetected = false;
 #endif
   memset(mTechList, 0, sizeof(mTechList));
   memset(mTechHandles, 0, sizeof(mTechHandles));
