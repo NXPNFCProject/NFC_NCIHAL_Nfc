@@ -1754,7 +1754,10 @@ void RoutingManager::setEmptyAidEntry(int route) {
 
     if(mDefaultGsmaPowerState) {
       /*Map PWR state as per NCI2.0 if required*/
-      checkAndUpdatePowerState((int&)mDefaultGsmaPowerState);
+      if(checkAndUpdatePowerState((int&)mDefaultGsmaPowerState)) {
+        DLOG_IF(INFO, nfc_debug_enabled)
+              << StringPrintf("%s: No update required", __func__);
+      }
 
       if(routeLoc == ROUTE_LOC_HOST_ID)
         power = (mDefaultGsmaPowerState &
