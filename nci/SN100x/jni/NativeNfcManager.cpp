@@ -2209,6 +2209,27 @@ static jint nfcManager_getDefaultAidRoute(JNIEnv* e, jobject o) {
   }
 
 /*******************************************************************************
+**
+** Function:        nfcManager_getT4TNfceePowerState
+**
+** Description:     Get the T4T Nfcee power state supported.
+**                  e: JVM environment.
+**                  o: Java object.
+**                  mode: Not used.
+**
+** Returns:         None
+**
+*******************************************************************************/
+static jint nfcManager_getT4TNfceePowerState(JNIEnv* e, jobject o) {
+  RoutingManager& routingManager = RoutingManager::getInstance();
+  int defaultPowerState = ~(routingManager.PWR_SWTCH_OFF_MASK |
+          routingManager.PWR_BATT_OFF_MASK);
+
+  return NfcConfig::getUnsigned(NAME_DEFAULT_T4TNFCEE_AID_POWER_STATE,
+          defaultPowerState);
+}
+
+/*******************************************************************************
  **
  ** Function:        getConfig
  **
@@ -3145,6 +3166,8 @@ static JNINativeMethod gMethods[] = {
     {"getDefaultMifareCLTPowerState", "()I",
             (void*) nfcManager_getDefaultMifareCLTPowerState},
 #if(NXP_EXTNS == TRUE)
+    {"getT4TNfceePowerState", "()I",
+            (void*) nfcManager_getT4TNfceePowerState},
     {"getGsmaPwrState", "()I",
             (void*) nfcManager_getDefaulGsmaPowerState}
      ,{"getDefaultFelicaCLTPowerState", "()I",
