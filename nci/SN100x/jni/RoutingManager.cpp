@@ -371,7 +371,8 @@ bool RoutingManager::addAidRouting(const uint8_t* aid, uint8_t aidLen,
     return false;
   }
   SyncEventGuard guard(mAidAddRemoveEvent);
-  if (!mSecureNfcEnabled) {
+  /* Do not change power state for T4T NFCEE, in case of secure nfc feature is enabled*/
+  if (!mSecureNfcEnabled || route == SecureElement::getInstance().T4T_NFCEE_ID) {
     /*Map PWR state as per NCI2.0 if required*/
     bool stat = checkAndUpdatePowerState(power);
 
