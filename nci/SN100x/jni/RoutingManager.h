@@ -159,11 +159,13 @@ class RoutingManager {
     void configureOffHostNfceeTechMask(void);
     void configureEeRegister(bool eeReg);
     void dumpTables(int);
+    tNFA_HANDLE checkAndUpdateAltRoute(int& routeLoc);
 
     uint32_t getUicc2selected();
     bool addAidRouting(const uint8_t* aid, uint8_t aidLen,
                                    int route, int aidInfo, int power);
     bool checkAndUpdatePowerState(int& power);
+    bool isNfceeActive(int routeLoc, tNFA_HANDLE& ActDevHandle);
     uint16_t sRoutingBuffLen;
     uint8_t* sRoutingBuff;
     SyncEvent       sNfaGetRoutingEvent;
