@@ -1692,6 +1692,10 @@ struct timespec SecureElement::getLastRfFiledToggleTime(void)
 void SecureElement::finalize() {
   mIsInit     = false;
   mNativeData = NULL;
+#if(NXP_EXTNS == TRUE)
+  mRfFieldIsOn = false;
+  memset (&mLastRfFieldToggle, 0, sizeof(mLastRfFieldToggle));
+#endif
 }
 
 /*******************************************************************************
