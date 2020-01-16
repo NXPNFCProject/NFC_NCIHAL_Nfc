@@ -58,6 +58,9 @@ static void deleteglobaldata(JNIEnv* e);
 static jobjectArray techActBytes1;
 int selectedId = 0;
 static jobjectArray techPollBytes2;
+namespace android {
+  extern bool nfcManager_isReaderModeEnabled();
+}
 #endif
 
 /*******************************************************************************
@@ -671,7 +674,7 @@ void NfcTag::createNativeNfcTag(tNFA_ACTIVATED& activationData) {
   // notify NFC service about this new tag
 #if (NXP_EXTNS == TRUE)
   DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf("%s; mNumDiscNtf=%x", fn,mNumDiscNtf);
-  if(!mNumDiscNtf || NfcTag::getInstance().checkNextValidProtocol() == -1) {
+  if(isNfcCombiCard() || !mNumDiscNtf || NfcTag::getInstance().checkNextValidProtocol() == -1) {
     mNumDiscNtf = 0;
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: try notify nfc service", fn);
@@ -710,6 +713,20 @@ void NfcTag::createNativeNfcTag(tNFA_ACTIVATED& activationData) {
 **
 *******************************************************************************/
 bool NfcTag::isCashBeeActivated() { return mCashbeeDetected; }
+
+/*******************************************************************************
+**
+** Function:        isNfcCombiCard
+**
+** Description:     checks if NFCDEP combi card detected
+**
+** Returns:         True if tag is activated.
+**
+*******************************************************************************/
+bool NfcTag::isNfcCombiCard() {
+  return (android::nfcManager_isReaderModeEnabled() &&
+          isP2pDiscovered() && mNumDiscNtf == 1);
+}
 
 /*******************************************************************************
 **
