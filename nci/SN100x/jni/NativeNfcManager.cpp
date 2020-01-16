@@ -1767,6 +1767,13 @@ static void nfcManager_enableDiscovery(JNIEnv* e, jobject o,
       }
     }
   } else {
+#if (NXP_EXTNS == TRUE)
+    if (!enable_p2p && sP2pEnabled) {
+      sP2pEnabled = false;
+      PeerToPeer::getInstance().enableP2pListening(false);
+      NFA_PauseP2p();
+    }
+#endif
     // No technologies configured, stop polling
     stopPolling_rfDiscoveryDisabled();
   }
