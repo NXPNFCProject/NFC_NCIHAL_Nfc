@@ -3363,6 +3363,18 @@ static bool nfcManager_deactivateOnPollDisabled(tNFA_ACTIVATED& activated) {
   }
   return false;
 }
+
+/*******************************************************************************
+**
+** Function:        nfcManager_isReaderModeEnabled
+**
+** Description:     Used externally to determine if reader mode is Enabled.
+**
+** Returns:         'true' if reader mode enabled, else 'false'.
+**
+*******************************************************************************/
+bool nfcManager_isReaderModeEnabled() { return sReaderModeEnabled; }
+
 #endif
 /*******************************************************************************
 **
