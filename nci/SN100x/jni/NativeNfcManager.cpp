@@ -1301,6 +1301,9 @@ static jboolean nfcManager_routeAid(JNIEnv* e, jobject, jbyteArray aid,
     bufLen = 0;
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("nfcManager_routeAid:  NULL");
+#if (NXP_EXTNS == TRUE)
+    RoutingManager::getInstance().checkAndUpdateAltRoute(route);
+#endif
   } else {
     bytes.reset(aid);
     buf = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
@@ -2148,6 +2151,7 @@ static jobject nfcManager_doCreateLlcpConnectionlessSocket(JNIEnv*, jobject,
       << StringPrintf("%s: nSap=0x%X", __func__, nSap);
   return NULL;
 }
+#if (NXP_EXTNS == TRUE)
 /*******************************************************************************
 **
 ** Function:        nfcManager_getDefaultAidRoute
@@ -2161,41 +2165,21 @@ static jobject nfcManager_doCreateLlcpConnectionlessSocket(JNIEnv*, jobject,
 **
 *******************************************************************************/
 static jint nfcManager_getDefaultAidRoute(JNIEnv* e, jobject o) {
-  unsigned long num = 0;
+  int num = 0;
   if (NfcConfig::hasKey(NAME_DEFAULT_AID_ROUTE))
-    num = NfcConfig::getUnsigned(NAME_DEFAULT_AID_ROUTE);
-#if (NXP_EXTNS == TRUE)
+    num = (int)NfcConfig::getUnsigned(NAME_DEFAULT_AID_ROUTE);
   else
     return NFA_HANDLE_INVALID;
-#endif
 
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: num %lx", __func__, num);
-  if(num != SecureElement::DH_ID) {
-    tNFA_HANDLE defaultRouteHandle = SecureElement::getInstance().getEseHandleFromGenericId(num) & ~NFA_HANDLE_GROUP_EE;
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: defaultRouteHandle %hx", __func__, defaultRouteHandle);
-    bool  found = false;
-    tNFA_HANDLE ee_handleList[nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED];
-    uint8_t count = 0;
-    SecureElement::getInstance().getEeHandleList(ee_handleList, &count);
-    for (int  i = 0; i < count; i++) {
-      if(ee_handleList[i] == defaultRouteHandle) {
-        DLOG_IF(INFO, nfc_debug_enabled)
-          << StringPrintf("%s: Default AID Route handle found 0x %hx", __func__, defaultRouteHandle);
-        found = true;
-        break;
-      }
-    }
-    if(!found) {
-      DLOG_IF(INFO, nfc_debug_enabled)
-        << StringPrintf(" Default AID Route handle not found , DH ");
-      num = SecureElement::DH_ID;
-    }
-  }
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: num %x", __func__, num);
 
+  RoutingManager::getInstance().checkAndUpdateAltRoute(num);
   DLOG_IF(INFO, nfc_debug_enabled)
-    << StringPrintf("%s route = %lx",__func__, num);
+    << StringPrintf("%s route = %x",__func__, num);
   return num;
 }
+#endif
+
 /*******************************************************************************
 **
 ** Function:        nfcManager_getDefaultDesfireRoute
