@@ -266,6 +266,9 @@ class RoutingManager {
     //FIX THIS:static const int ROUTE_LOC_UICC3_ID     = SecureElement::EE_HANDLE_0xF9;
     static const int ROUTE_LOC_UICC2_ID     = 0x481;
     static const int ROUTE_LOC_UICC3_ID     = 0x482;
+    static const int ROUTE_DISABLE          = 0x00;
+    static const int ROUTE_DH               = 0x01;
+    static const int ROUTE_ESE              = 0x02;
     int mHostListnTechMask;
     int mUiccListnTechMask;
     int mFwdFuntnEnable;

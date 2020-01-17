@@ -1723,19 +1723,19 @@ void RoutingManager::setEmptyAidEntry(int route) {
 tNFA_HANDLE RoutingManager::checkAndUpdateAltRoute(int& routeLoc) {
   tNFA_HANDLE ActDevHandle = NFA_HANDLE_INVALID;
   bool isSeActive = false;
-  unsigned long isFallBackEnabled = 0;
+  unsigned long fallBackOption = ROUTE_DISABLE;
 
   if (routeLoc != SecureElement::DH_ID) {
     isSeActive = isNfceeActive(routeLoc, ActDevHandle);
 
     if (!isSeActive) {
-      isFallBackEnabled =
-          NfcConfig::getUnsigned(NAME_CHECK_DEFAULT_PROTO_SE_ID, 0);
+      fallBackOption =
+          NfcConfig::getUnsigned(NAME_CHECK_DEFAULT_PROTO_SE_ID, ROUTE_DISABLE);
         DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-            "%s: isFallbackEnabled - 0x%lX  routeLoc = 0x%X",
-            __func__, isFallBackEnabled, routeLoc);
+            "%s: fallBackOption - 0x%lX  routeLoc = 0x%X",
+            __func__, fallBackOption, routeLoc);
     }
-    if ((isFallBackEnabled == 1) && ((routeLoc == ROUTE_LOC_UICC1_ID_IDX)
+    if ((fallBackOption == ROUTE_ESE) && ((routeLoc == ROUTE_LOC_UICC1_ID_IDX)
             || (routeLoc == ROUTE_LOC_UICC2_ID_IDX))) {
       DLOG_IF(INFO, nfc_debug_enabled)
             << StringPrintf("Default route not available");
@@ -1746,7 +1746,7 @@ tNFA_HANDLE RoutingManager::checkAndUpdateAltRoute(int& routeLoc) {
       }
     }
 
-    if (!isSeActive) {
+    if (!isSeActive && (fallBackOption == ROUTE_ESE || fallBackOption == ROUTE_DH)) {
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: changing the destination to DH", __func__);
       routeLoc = SecureElement::DH_ID;
