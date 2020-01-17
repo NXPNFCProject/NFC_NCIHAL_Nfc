@@ -1048,7 +1048,7 @@ void nfaDeviceManagementCallback(uint8_t dmEvent,
 #if(NXP_EXTNS == TRUE)
       SecureElement::getInstance().notifyRfFieldEvent (
                     eventData->rf_field.rf_field_status == NFA_DM_RF_FIELD_ON);
-#endif
+#else
 if (!sP2pActive && eventData->rf_field.status == NFA_STATUS_OK) {
         struct nfc_jni_native_data* nat = getNative(NULL, NULL);
         JNIEnv* e = NULL;
@@ -1064,6 +1064,7 @@ if (!sP2pActive && eventData->rf_field.status == NFA_STATUS_OK) {
           e->CallVoidMethod(nat->manager,
                             android::gCachedNfcManagerNotifyRfFieldDeactivated);
       }
+#endif
       break;
 
     case NFA_DM_NFCC_TRANSPORT_ERR_EVT:
