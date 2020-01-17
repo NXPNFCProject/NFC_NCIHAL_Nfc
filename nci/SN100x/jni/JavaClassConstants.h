@@ -59,6 +59,8 @@ extern const char* gNativeNfcManagerClassName;
 extern const char* gNativeNfcSecureElementClassName;
 extern jmethodID gCachedNfcManagerNotifySeListenDeactivated;
 extern jmethodID gCachedNfcManagerNotifySeListenActivated;
+extern jmethodID gCachedNfcManagerNotifyRfFieldDeactivated;
+extern jmethodID gCachedNfcManagerNotifyRfFieldActivated;
 extern jmethodID gCachedNfcManagerNotifySeInitialized;
 extern const char* gNativeNfcMposManagerClassName;
 extern const char* gNativeT4tNfceeClassName;

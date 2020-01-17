@@ -435,19 +435,31 @@ void SecureElement::notifyRfFieldEvent (bool isActive)
 
 
     mMutex.lock();
+    JNIEnv* e = NULL;
+    if (mNativeData == NULL) {
+        DLOG_IF(ERROR, nfc_debug_enabled)
+                << StringPrintf("%s: mNativeData is null", fn);
+        return;
+    }
+    ScopedAttach attach(mNativeData->vm, &e);
+    if (e == NULL) {
+      LOG(ERROR) << StringPrintf("jni env is null");
+      return;
+    }
     int ret = clock_gettime (CLOCK_MONOTONIC, &mLastRfFieldToggle);
     if (ret == -1) {
         DLOG_IF(ERROR, nfc_debug_enabled)
                 << StringPrintf("%s: clock_gettime failed", fn);
         // There is no good choice here...
     }
-    if (isActive)
-    {
+    if (isActive) {
         mRfFieldIsOn = true;
-    }
-    else
-    {
+        e->CallVoidMethod(mNativeData->manager,
+                                android::gCachedNfcManagerNotifyRfFieldActivated);
+    } else {
         mRfFieldIsOn = false;
+        e->CallVoidMethod(mNativeData->manager,
+                          android::gCachedNfcManagerNotifyRfFieldDeactivated);
     }
     mMutex.unlock();
     DLOG_IF(ERROR, nfc_debug_enabled)
