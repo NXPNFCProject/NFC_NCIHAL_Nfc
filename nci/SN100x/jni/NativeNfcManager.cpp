@@ -3351,6 +3351,28 @@ bool nfcManager_isNfcDisabling() { return sIsDisabling; }
 
 /*******************************************************************************
 **
+** Function:        nfcManager_isReaderModeEnabled
+**
+** Description:     Used externally to determine if reader mode is Enabled.
+**
+** Returns:         'true' if reader mode enabled, else 'false'.
+**
+*******************************************************************************/
+bool nfcManager_isReaderModeEnabled() { return sReaderModeEnabled; }
+
+/*******************************************************************************
+**
+** Function:        nfcManager_isNfcPartialEnabled
+**
+** Description:     Used externally to determine if NFC is being Enabled partially.
+**
+** Returns:         'true' if the NFC Partially enabled, else 'false'.
+**
+*******************************************************************************/
+bool nfcManager_isNfcPartialEnabled() { return gsNfaPartialEnabled; }
+
+/*******************************************************************************
+**
 ** Function:        nfcManager_deactivateOnPollDisabled
 **
 ** Description:     Perform deactivate when not in listen mode & polling is
@@ -3370,18 +3392,6 @@ static bool nfcManager_deactivateOnPollDisabled(tNFA_ACTIVATED& activated) {
   }
   return false;
 }
-
-/*******************************************************************************
-**
-** Function:        nfcManager_isReaderModeEnabled
-**
-** Description:     Used externally to determine if reader mode is Enabled.
-**
-** Returns:         'true' if reader mode enabled, else 'false'.
-**
-*******************************************************************************/
-bool nfcManager_isReaderModeEnabled() { return sReaderModeEnabled; }
-
 #endif
 /*******************************************************************************
 **
