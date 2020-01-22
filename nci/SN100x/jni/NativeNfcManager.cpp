@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2019 NXP
+*  Copyright 2018-2020 NXP
 *
 ******************************************************************************/
 #include <android-base/stringprintf.h>
@@ -134,7 +134,8 @@ extern bool nativeNfcTag_checkActivatedProtoParameters(
 extern bool gIsWaiting4Deact2SleepNtf;
 extern bool gGotDeact2IdleNtf;
 extern void nativeNfcTag_abortTagOperations(tNFA_STATUS status);
-extern void nativeNfcTag_setRfProtocol(tNFA_INTF_TYPE rfProtocol);
+extern void nativeNfcTag_setRfProtocol(tNFA_INTF_TYPE rfProtocol, uint8_t mode);
+extern uint8_t nativeNfcTag_getActivatedMode();
 #endif
 }  // namespace android
 
@@ -547,7 +548,15 @@ static void nfaConnectionCallback(uint8_t connEvent,
         nativeNfcTag_setRfInterface(
                 (tNFA_INTF_TYPE)eventData->activated.activate_ntf.intf_param.type);
 #if (NXP_EXTNS == TRUE)
-        nativeNfcTag_setRfProtocol((tNFA_INTF_TYPE)eventData->activated.activate_ntf.protocol);
+        nativeNfcTag_setRfProtocol(
+            (tNFA_INTF_TYPE)eventData->activated.activate_ntf.protocol,
+            eventData->activated.activate_ntf.rf_tech_param.mode);
+        if (nativeNfcTag_getActivatedMode() == TARGET_TYPE_ISO14443_3B) {
+          DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+              "%s: NFA_ACTIVATED_EVT: received typeB NFCID0", __func__);
+          NfcTag::getInstance().updateNfcID0Param(
+              eventData->activated.activate_ntf.rf_tech_param.param.pb.nfcid0);
+        }
 #endif
       }
       if (EXTNS_GetConnectFlag() == TRUE) {

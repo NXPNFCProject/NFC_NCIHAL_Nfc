@@ -119,6 +119,7 @@ static tNFA_HANDLE sNdefTypeHandlerHandle = NFA_HANDLE_INVALID;
 static tNFA_INTF_TYPE sCurrentRfInterface = NFA_INTERFACE_ISO_DEP;
 #if (NXP_EXTNS == TRUE)
 static tNFA_INTF_TYPE sCurrentActivatedProtocl = NFC_PROTOCOL_UNKNOWN;
+static uint8_t sCurrentActivatedMode = TARGET_TYPE_UNKNOWN;
 #endif
 static std::basic_string<uint8_t> sRxDataBuffer;
 static tNFA_STATUS sRxDataStatus = NFA_STATUS_OK;
@@ -257,9 +258,28 @@ void nativeNfcTag_setRfInterface(tNFA_INTF_TYPE rfInterface) {
  ** Returns:         void
  **
  *******************************************************************************/
-void nativeNfcTag_setRfProtocol(tNFA_INTF_TYPE rfProtocol) {
+void nativeNfcTag_setRfProtocol(tNFA_INTF_TYPE rfProtocol, uint8_t mode) {
   sCurrentActivatedProtocl = rfProtocol;
+  if (mode == NFC_DISCOVERY_TYPE_POLL_A ||
+      mode == NFC_DISCOVERY_TYPE_POLL_A_ACTIVE)
+    sCurrentActivatedMode = TARGET_TYPE_ISO14443_3A;
+  else if (mode == NFC_DISCOVERY_TYPE_POLL_B ||
+           mode == NFC_DISCOVERY_TYPE_POLL_B_PRIME)
+    sCurrentActivatedMode = TARGET_TYPE_ISO14443_3B;
+  else
+    sCurrentActivatedMode = sCurrentConnectedTargetType;
 }
+
+/*******************************************************************************
+ **
+ ** Function:        nativeNfcTag_getActivatedMode
+ **
+ ** Description:     Get rf Activated Mode.
+ **
+ ** Returns:         Returns Tech and mode parameter
+ **
+ *******************************************************************************/
+uint8_t nativeNfcTag_getActivatedMode() { return sCurrentActivatedMode; }
 #endif
 /*******************************************************************************
 **
@@ -732,21 +752,40 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
         } else if (sCurrentActivatedProtocl == NFA_PROTOCOL_ISO_DEP) {
           bool waitOk = false;
           sWaitingForTransceive = true;
-          SyncEventGuard g (sTransceiveEvent);
-          status = NFA_SendRawFrame(RW_REQ_ATS,
-                                    sizeof(RW_REQ_ATS), 0);
-          if (status != NFA_STATUS_OK) {
-            DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf("%s: fail send; error=%d", __func__, status);
-          } else {
-            waitOk = sTransceiveEvent.wait (1000);
-          }
-
-          status = NFA_SendRawFrame(RW_DESELECT_REQ,
-                                    sizeof(RW_DESELECT_REQ), 0);
-          if (status != NFA_STATUS_OK) {
-            DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf("%s: fail send; error=%d", __func__, status);
-          } else {
-            waitOk = sTransceiveEvent.wait (1000);
+          if (sCurrentActivatedMode == TARGET_TYPE_ISO14443_3A) {
+            {
+              SyncEventGuard g(sTransceiveEvent);
+              status = NFA_SendRawFrame(RW_REQ_ATS, sizeof(RW_REQ_ATS), 0);
+              if (status != NFA_STATUS_OK) {
+                DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf(
+                    "%s: fail send; error=%d", __func__, status);
+              } else {
+                waitOk = sTransceiveEvent.wait(1000);
+              }
+            }
+            {
+              SyncEventGuard g(sTransceiveEvent);
+              status =
+                  NFA_SendRawFrame(RW_DESELECT_REQ, sizeof(RW_DESELECT_REQ), 0);
+              if (status != NFA_STATUS_OK) {
+                DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf(
+                    "%s: fail send; error=%d", __func__, status);
+              } else {
+                waitOk = sTransceiveEvent.wait(1000);
+              }
+            }
+          } else if (sCurrentActivatedMode == TARGET_TYPE_ISO14443_3B) {
+            uint8_t halt_b[5] = {0x50, 0, 0, 0, 0};
+            memcpy(&halt_b[1], NfcTag::getInstance().mNfcID0, 4);
+            waitOk = false;
+            SyncEventGuard g(sTransceiveEvent);
+            status = NFA_SendRawFrame(halt_b, sizeof(halt_b), 0);
+            if (status != NFA_STATUS_OK) {
+              DLOG_IF(ERROR, nfc_debug_enabled)
+                  << StringPrintf("%s: fail send; error=%d", __func__, status);
+            } else {
+              waitOk = sTransceiveEvent.wait(1000);
+            }
           }
           sWaitingForTransceive = false;
         }
