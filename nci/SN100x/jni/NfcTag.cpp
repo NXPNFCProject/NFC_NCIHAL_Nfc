@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2019 NXP
+*  Copyright 2018-2020 NXP
 *
 ******************************************************************************/
 
@@ -228,6 +228,22 @@ void NfcTag::resetActivationState() {
   mActivationState = InActive;
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: state=%u", fn, mActivationState);
+}
+
+/******************************************************************************
+**
+** Function:        updateNfcID0Param
+**
+** Description:     Update TypeB NCIID0 from interface activated ntf.
+**
+** Returns:         None.
+**
+*******************************************************************************/
+void NfcTag::updateNfcID0Param(uint8_t* nfcID0) {
+  static const char fn[] = "NfcTag::updateNfcID0Param";
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+      "%s: nfcID0 =%x%x%x%x", fn, nfcID0[0], nfcID0[1], nfcID0[2], nfcID0[3]);
+  memcpy(&mNfcID0[0], nfcID0, 4);
 }
 #endif
 /*******************************************************************************
