@@ -2686,7 +2686,7 @@ int nfcManager_doPartialInitialize(JNIEnv* e, jobject o, jint mode) {
   NFA_Init(halFuncEntries);
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: calling enable", __func__);
-
+  NativeJniExtns::getInstance().notifyNfcEvent("nfcManager_setPropertyInfo");
   stat = NFA_Enable(nfaDeviceManagementCallback, nfaConnectionCallback);
   if (stat == NFA_STATUS_OK) {
     SyncEventGuard guard(sNfaEnableEvent);
