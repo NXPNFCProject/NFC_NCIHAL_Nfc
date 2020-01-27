@@ -240,10 +240,10 @@ void NfcTag::resetActivationState() {
 **
 *******************************************************************************/
 void NfcTag::updateNfcID0Param(uint8_t* nfcID0) {
-  static const char fn[] = "NfcTag::updateNfcID0Param";
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-      "%s: nfcID0 =%x%x%x%x", fn, nfcID0[0], nfcID0[1], nfcID0[2], nfcID0[3]);
-  memcpy(&mNfcID0[0], nfcID0, 4);
+  DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("%s: nfcID0 =%X%X%X%X", __func__, nfcID0[0], nfcID0[1],
+                      nfcID0[2], nfcID0[3]);
+  memcpy(mNfcID0, nfcID0, 4);
 }
 #endif
 /*******************************************************************************
