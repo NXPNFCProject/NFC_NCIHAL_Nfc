@@ -2862,7 +2862,14 @@ static void nfcManager_doSetScreenState(JNIEnv* e, jobject o,
     return;
   }
   scrnOnLockedPollDisabled = false;
-  NativeJniExtns::getInstance().notifyNfcEvent(__func__);
+
+  if (gsNfaPartialEnabled == false) {
+    NativeJniExtns::getInstance().notifyNfcEvent(__func__);
+  } else {
+    LOG(ERROR) << StringPrintf(
+        "%s: PartialInit mode Screen state change not required", __FUNCTION__);
+    return;
+  }
 #endif
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: state = %d prevScreenState= %d, discovry_param = %d",
