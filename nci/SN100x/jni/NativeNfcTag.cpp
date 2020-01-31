@@ -139,6 +139,7 @@ static sem_t sMakeReadonlySem;
 static IntervalTimer sSwitchBackTimer;  // timer used to tell us to switch back
                                         // to ISO_DEP frame interface
 uint8_t RW_TAG_SLP_REQ[] = {0x50, 0x00};
+uint8_t RW_DESELECT_REQ[] = {0xC2};
 static jboolean sWriteOk = JNI_FALSE;
 static jboolean sWriteWaitingForComplete = JNI_FALSE;
 static bool sFormatOk = false;
