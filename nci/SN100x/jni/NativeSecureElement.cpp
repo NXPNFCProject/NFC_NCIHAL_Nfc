@@ -12,7 +12,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2019 NXP
+*  Copyright 2018-2020 NXP
 *
 ******************************************************************************/
 
@@ -185,15 +185,14 @@ static jboolean nativeNfcSecureElement_doResetForEseCosUpdate(JNIEnv*, jobject,
   int ret = -1;
   NfcAdaptation& theInstance = NfcAdaptation::GetInstance();
   tHAL_NFC_ENTRY* halFuncEntries = theInstance.GetHalEntryFuncs ();
-  nfc_nci_IoctlInOutData_t inpOutData;
-  inpOutData.inp.level = NCI_ESE_HARD_RESET_IOCTL;
+
   LOG(INFO) << StringPrintf("%s: Entry", __func__);
   if(NULL == halFuncEntries) {
     LOG(INFO) << StringPrintf("%s: halFuncEntries is NULL", __func__);
   } else {
-    ret = halFuncEntries->ioctl(HAL_NFC_IOCTL_ESE_HARD_RESET, (void*)&inpOutData);
-    if(ret < 0) {
-      LOG(INFO) << StringPrintf("%s: IOCTL failed", __func__);
+    ret = theInstance.resetEse((uint64_t)NFA_ESE_HARD_RESET);
+    if(ret == 0) {
+      LOG(INFO) << StringPrintf("%s: reset IOCTL failed", __func__);
     } else {
       stat = true;
     }
