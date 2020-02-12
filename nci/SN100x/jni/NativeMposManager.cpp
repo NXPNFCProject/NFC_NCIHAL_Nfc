@@ -12,7 +12,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  Copyright 2018 NXP
+ *  Copyright 2018-2020 NXP
  *
  ******************************************************************************/
 #include "MposManager.h"
@@ -34,6 +34,7 @@ static const char* covertToString(POWER_MODE mode);
 extern void enableLastRfDiscovery();
 extern void startRfDiscovery(bool isStart);
 extern void nfcManager_disableDiscovery(JNIEnv* e, jobject o);
+extern std::string ConvertJavaStrToStdString(JNIEnv* env, jstring s);
 
 /*******************************************************************************
 **
@@ -43,7 +44,7 @@ extern void nfcManager_disableDiscovery(JNIEnv* e, jobject o);
 **                  e: JVM environment.
 **                  o: Java object.
 **
-** Returns:         STATUS_OK/FAILED.
+** Returns:         SUCCESS/FAILED/BUSY/REJECTED.
 **
 *******************************************************************************/
 static int nativeNfcMposManage_doMposSetReaderMode(JNIEnv*, jobject, bool on)
@@ -82,6 +83,31 @@ static bool nativeNfcMposManager_doMposGetReaderMode(JNIEnv*, jobject)
   }
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("isEnabled =%x", isEnabled);
   return isEnabled;
+}
+
+/*******************************************************************************
+**
+** Function:        nativeNfcMcrManage_doConfigureSecureReaderMode
+**
+** Description:     e: JVM environment.
+**                  o: Java object.
+**                  on: Set/Reset the MPOS reader mode
+**                  rdrType: Requested Reader Type. e.g. "MFC"
+**
+** Returns:         SUCCESS/FAILED/BUSY/REJECTED.
+**
+*******************************************************************************/
+static int nativeNfcMcrManage_doConfigureSecureReaderMode(JNIEnv* e, jobject, bool on,
+                                                    jstring rdrType) {
+  tNFA_STATUS status = NFA_STATUS_REJECTED;
+  std::string readertype = ConvertJavaStrToStdString(e, rdrType);
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:enter", __func__);
+#ifdef FEATURE_SECURE_READER
+  /* The functionality of Mifare Classic reader over eSE is some what same as
+   * MPOS. Hence, reusing the existing code */
+  status = MposManager::getInstance().setMposReaderMode(on, readertype);
+#endif
+  return status;
 }
 
 /*******************************************************************************
@@ -167,19 +193,18 @@ static const char* covertToString(POWER_MODE mode)
 ** Description:     JNI functions
 **
 *****************************************************************************/
-static JNINativeMethod gMethods[] =
-{
+static JNINativeMethod gMethods[] = {
     {"doMposSetReaderMode", "(Z)I",
-            (void *)nativeNfcMposManage_doMposSetReaderMode},
-
+     (void*)nativeNfcMposManage_doMposSetReaderMode},
     {"doMposGetReaderMode", "()Z",
-            (void *)nativeNfcMposManager_doMposGetReaderMode},
+     (void*)nativeNfcMposManager_doMposGetReaderMode},
+    {"doConfigureSecureReaderMode", "(ZLjava/lang/String;)I",
+     (void*)nativeNfcMcrManage_doConfigureSecureReaderMode},
 
-    {"doStopPoll", "(I)V", (void *)nativeNfcMposManage_doStopPoll},
+    {"doStopPoll", "(I)V", (void*)nativeNfcMposManage_doStopPoll},
 
-    {"doStartPoll", "()V", (void *)nativeNfcMposManage_doStartPoll},
+    {"doStartPoll", "()V", (void*)nativeNfcMposManage_doStartPoll},
 };
-
 
 /*******************************************************************************
 **

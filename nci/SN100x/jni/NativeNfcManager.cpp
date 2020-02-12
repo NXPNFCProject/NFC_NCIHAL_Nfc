@@ -297,7 +297,7 @@ static jbyteArray nfcManager_transceiveAppData(JNIEnv *e, jobject o,
                                                jbyteArray data);
 static bool nfcManager_isNfccBusy(JNIEnv*, jobject);
 static int nfcManager_setTransitConfig(JNIEnv* e, jobject o, jstring config);
-static std::string ConvertJavaStrToStdString(JNIEnv * env, jstring s);
+std::string ConvertJavaStrToStdString(JNIEnv* env, jstring s);
 static jint nfcManager_getAidTableSize (JNIEnv*, jobject );
 static jint nfcManager_getRemainingAidTableSize (JNIEnv* , jobject );
 static int nfcManager_doSelectUicc(JNIEnv* e, jobject o, jint uiccSlot);
@@ -4035,24 +4035,24 @@ static int nfcManager_setTransitConfig(JNIEnv * e, jobject o,
 ** Returns:         std::string
 **
 *******************************************************************************/
-static std::string ConvertJavaStrToStdString(JNIEnv * env, jstring s) {
-    if (!s) return "";
+std::string ConvertJavaStrToStdString(JNIEnv* env, jstring s) {
+  if (!s) return "";
 
-    const jclass strClass = env->GetObjectClass(s);
-    const jmethodID getBytes =
-        env->GetMethodID(strClass, "getBytes", "(Ljava/lang/String;)[B");
-    const jbyteArray strJbytes = (jbyteArray)env->CallObjectMethod(
-        s, getBytes, env->NewStringUTF("UTF-8"));
+  const jclass strClass = env->GetObjectClass(s);
+  const jmethodID getBytes =
+      env->GetMethodID(strClass, "getBytes", "(Ljava/lang/String;)[B");
+  const jbyteArray strJbytes = (jbyteArray)env->CallObjectMethod(
+      s, getBytes, env->NewStringUTF("UTF-8"));
 
-    size_t length = (size_t)env->GetArrayLength(strJbytes);
-    jbyte* pBytes = env->GetByteArrayElements(strJbytes, NULL);
+  size_t length = (size_t)env->GetArrayLength(strJbytes);
+  jbyte* pBytes = env->GetByteArrayElements(strJbytes, NULL);
 
-    std::string ret = std::string((char*)pBytes, length);
-    env->ReleaseByteArrayElements(strJbytes, pBytes, JNI_ABORT);
+  std::string ret = std::string((char*)pBytes, length);
+  env->ReleaseByteArrayElements(strJbytes, pBytes, JNI_ABORT);
 
-    env->DeleteLocalRef(strJbytes);
-    env->DeleteLocalRef(strClass);
-    return ret;
+  env->DeleteLocalRef(strJbytes);
+  env->DeleteLocalRef(strClass);
+  return ret;
 }
 
 /*******************************************************************************
