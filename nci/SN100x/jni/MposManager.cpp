@@ -152,8 +152,8 @@ tNFA_STATUS MposManager::setMposReaderMode(bool on, std::string readerType) {
   }
   {
     tNFA_SCR_CBACK* scr_cback = nullptr;
-    if(on) {
-      if(isDiscoveryStarted()) startRfDiscovery(false);
+    if (on) {
+      if (isDiscoveryStarted()) { startRfDiscovery(false); }
       scr_cback = mMposMgr.notifyEEReaderEvent;
     }
     SyncEventGuard guard(mNfaScrApiEvent);
