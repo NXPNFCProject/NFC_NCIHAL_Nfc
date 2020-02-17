@@ -130,7 +130,7 @@ public class BluetoothPeripheralHandover implements BluetoothProfile.ServiceList
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
         ContentResolver contentResolver = mContext.getContentResolver();
-        mProvisioning = Settings.Secure.getInt(contentResolver,
+        mProvisioning = Settings.Global.getInt(contentResolver,
                 Settings.Global.DEVICE_PROVISIONED, 0) == 0;
 
         mIsHeadsetAvailable = hasHeadsetCapability(uuids, btClass);
