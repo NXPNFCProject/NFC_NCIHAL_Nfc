@@ -153,8 +153,6 @@ public class BeamSendService extends Service implements BeamTransferManager.Call
                     mTransferManager.mDataLinkType == BeamTransferRecord.DATA_LINK_TYPE_BLUETOOTH) {
                 mTransferManager.start();
             }
-        } else if (state == BluetoothAdapter.STATE_OFF) {
-            mBluetoothEnabledByNfc = false;
         }
     }
 
