@@ -10,9 +10,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
+import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Process;
 import android.view.View;
 import android.widget.Toast;
 
@@ -88,7 +88,7 @@ public class ConfirmConnectToWifiNetworkActivity extends Activity
     private boolean isChangeWifiStateGranted() {
         AppOpsManager appOps = (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
         int modeChangeWifiState = appOps.checkOpNoThrow(AppOpsManager.OP_CHANGE_WIFI_STATE,
-                                                        Process.NFC_UID, getPackageName());
+                                                        Binder.getCallingUid(), getPackageName());
         return modeChangeWifiState == AppOpsManager.MODE_ALLOWED;
     }
 
