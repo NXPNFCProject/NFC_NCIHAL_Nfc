@@ -125,7 +125,7 @@ public class ConfirmConnectToWifiNetworkActivity extends Activity
 
     @Override
     public void onDismiss(DialogInterface dialog) {
-        if (!mEnableWifiInProgress) {
+        if (!mEnableWifiInProgress && !isChangingConfigurations()) {
             finish();
         }
     }
