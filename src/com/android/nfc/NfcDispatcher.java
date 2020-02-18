@@ -210,6 +210,11 @@ class NfcDispatcher {
             return intent;
         }
 
+        public boolean hasIntentReceiver() {
+            return packageManager.queryIntentActivitiesAsUser(intent, 0,
+                    ActivityManager.getCurrentUser()).size() > 0;
+        }
+
         public boolean isWebIntent() {
             return ndefUri != null && ndefUri.normalizeScheme().getScheme() != null &&
                 ndefUri.normalizeScheme().getScheme().startsWith("http");
@@ -554,7 +559,7 @@ class NfcDispatcher {
         // regular launch
         dispatch.intent.setPackage(null);
 
-        if (dispatch.isWebIntent()) {
+        if (dispatch.isWebIntent() && dispatch.hasIntentReceiver()) {
             if (DBG) Log.i(TAG, "matched Web link - prompting user");
             showWebLinkConfirmation(dispatch);
             StatsLog.write(StatsLog.NFC_TAG_OCCURRED, StatsLog.NFC_TAG_OCCURRED__TYPE__URL);
