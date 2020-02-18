@@ -22,7 +22,6 @@
 #include <phFriNfc_MifareStdTimer.h>
 #include <phNfcCompId.h>
 #include <phNxpExtns_MifareStd.h>
-#include <phNxpLog.h>
 #include <rw_api.h>
 #include <signal.h>
 
@@ -365,7 +364,7 @@ STATIC void Mfc_CheckNdef_Completion_Routine(void* NdefCtxt, NFCSTATUS status) {
     NdefInfo.is_ndef = 1;
     NdefInfo.NdefActualSize = conn_evt_data.ndef_detect.cur_size;
     if (PH_NDEFMAP_CARD_STATE_READ_ONLY == NdefMap->CardState) {
-      DLOG_IF(INFO, gLog_level.extns_log_level >= NXPLOG_LOG_DEBUG_LOGLEVEL)
+      DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("Mfc_CheckNdef_Completion_Routine : READ_ONLY_CARD");
       conn_evt_data.ndef_detect.flags = RW_NDEF_FL_READ_ONLY;
     } else {
@@ -566,7 +565,7 @@ STATIC void Mfc_SetRdOnly_Completion_Routine(void* NdefCtxt, NFCSTATUS status) {
 **
 *******************************************************************************/
 NFCSTATUS Mfc_SetReadOnly(uint8_t* secrtkey, uint8_t len) {
-  DLOG_IF(INFO, gLog_level.extns_log_level >= NXPLOG_LOG_DEBUG_LOGLEVEL)
+  DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s Entering ", __func__);
   NFCSTATUS status = NFCSTATUS_FAILED;
   uint8_t mif_secrete_key[6] = {0};
@@ -720,7 +719,7 @@ NFCSTATUS Mfc_PresenceCheck(void) {
   } else {
     status = NFCSTATUS_NOT_ALLOWED;
   }
-  DLOG_IF(INFO, gLog_level.extns_log_level >= NXPLOG_LOG_DEBUG_LOGLEVEL)
+  DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s status = 0x%x", __func__, status);
   return status;
 }

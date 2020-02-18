@@ -21,7 +21,6 @@
 #include <phNciNfcTypes.h>
 #include <phNfcStatus.h>
 #include <phNfcTypes.h>
-#include <phNxpLog.h>
 
 using android::base::StringPrintf;
 

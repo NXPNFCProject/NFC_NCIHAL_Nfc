@@ -21,9 +21,7 @@
 #include <android-base/stringprintf.h>
 #include <base/logging.h>
 
-//#include <phNxpConfig.h>
 #include <phNxpExtns_MifareStd.h>
-#include <phNxpLog.h>
 
 using android::base::StringPrintf;
 
@@ -48,9 +46,6 @@ static NFCSTATUS phNxpExtns_SendMsg(phLibNfc_Message_t* sysmsg);
 NFCSTATUS EXTNS_Init(tNFA_DM_CBACK* p_nfa_dm_cback,
                      tNFA_CONN_CBACK* p_nfa_conn_cback) {
   NFCSTATUS status = NFCSTATUS_FAILED;
-
-  /* Initialize Log level */
-  phNxpLog_InitializeLogLevel();
 
   /* Validate parameters */
   if ((!p_nfa_dm_cback) || (!p_nfa_conn_cback)) {
