@@ -2621,6 +2621,10 @@ public class NfcService implements DeviceHostListener {
                 Log.w(TAG, "Watchdog thread interruped.");
                 interrupt();
             }
+            if(mRoutingWakeLock.isHeld()){
+                Log.e(TAG, "Watchdog triggered, release lock before aborting.");
+                mRoutingWakeLock.release();
+            }
             Log.e(TAG, "Watchdog triggered, aborting.");
             StatsLog.write(StatsLog.NFC_STATE_CHANGED, StatsLog.NFC_STATE_CHANGED__STATE__CRASH_RESTART);
             storeNativeCrashLogs();
