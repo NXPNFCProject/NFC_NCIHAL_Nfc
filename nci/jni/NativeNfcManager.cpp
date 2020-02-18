@@ -50,7 +50,6 @@
 #include "NfcSelfTest.h"
 #include "NfcTag.h"
 #include "PeerToPeer.h"
-#include "Pn544Interop.h"
 #include "PowerSwitch.h"
 #include "RoutingManager.h"
 #include "SecureElement.h"
@@ -1112,7 +1111,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
                 false, NFCC_ACTIVATED_NTF);
           }
 #endif
-        } else if (pn544InteropIsBusy() == false) {
+        } else {
 #if (NXP_EXTNS == TRUE && NFC_NXP_NON_STD_CARD == TRUE)
           nativeNfcTag_handleNonNciMultiCardDetection(connEvent, eventData);
           DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
@@ -3070,7 +3069,6 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
       return;
     }
 #endif
-    pn544InteropAbortNow();
 
     if (sDiscoveryEnabled == false) {
       DLOG_IF(INFO, nfc_debug_enabled)
@@ -3446,7 +3444,6 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
       pJcopMgr->JcopDeInitialize();
       pJcopMgr->deleteInstance();
     }
-    pn544InteropAbortNow();
 
     RoutingManager::getInstance().onNfccShutdown();
     SecureElement::getInstance().finalize();
