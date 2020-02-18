@@ -16,6 +16,8 @@
 
 package com.android.nfc.beam;
 
+import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
+
 import com.android.nfc.R;
 import com.android.nfc.beam.FireflyRenderer;
 
@@ -240,6 +242,7 @@ public class SendUi implements Animator.AnimatorListener, View.OnTouchListener,
                 PixelFormat.OPAQUE);
         mWindowLayoutParams.privateFlags |=
                 WindowManager.LayoutParams.PRIVATE_FLAG_SHOW_FOR_ALL_USERS;
+        mWindowLayoutParams.layoutInDisplayCutoutMode = LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
         mWindowLayoutParams.token = new Binder();
 
         mFrameCounterAnimator = new TimeAnimator();
