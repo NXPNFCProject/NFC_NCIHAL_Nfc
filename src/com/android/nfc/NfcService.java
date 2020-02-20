@@ -3236,9 +3236,8 @@ public class NfcService implements DeviceHostListener {
                         if (!tag.reconnect()) {
                             tag.disconnect();
                             if (mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED) {
-                                if (mToast == null) {
-                                  mToast = Toast.makeText(mContext,
-                                      R.string.tag_read_error, Toast.LENGTH_SHORT);
+                                if (mToast != null) {
+                                    if (mToast.getView().isShown()) mToast.cancel();
                                 }
                                 mToast.setText(R.string.tag_read_error);
                                 mToast.show();
@@ -3792,11 +3791,11 @@ public class NfcService implements DeviceHostListener {
             if (dispatchResult == NfcDispatcher.DISPATCH_FAIL && !mInProvisionMode) {
                 unregisterObject(tagEndpoint.getHandle());
                 if (mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED) {
-                  if (mToast == null) {
-                    mToast = Toast.makeText(mContext,
-                        R.string.tag_dispatch_failed, Toast.LENGTH_SHORT);
+                  if (mToast != null) {
+                    if (mToast.getView().isShown()) mToast.cancel();
                   }
-                  mToast.setText(R.string.tag_dispatch_failed);
+                  mToast = Toast.makeText(mContext, R.string.tag_dispatch_failed,
+                                            Toast.LENGTH_SHORT);
                   mToast.show();
                 }
                 playSound(SOUND_ERROR);
