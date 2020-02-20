@@ -284,6 +284,7 @@ class RoutingManager {
     uint32_t mTechSupportedByUicc1;
     uint32_t mTechSupportedByUicc2;
     uint8_t mOffHostAidRoutingPowerState;
+    uint8_t mHostListenTechMask;
 
 #endif
 };
