@@ -148,7 +148,6 @@ bool gActivated = false;
 SyncEvent gDeactivatedEvent;
 SyncEvent sNfaSetPowerSubState;
 bool legacy_mfc_reader = true;
-bool gNfccConfigControlStatus = false;
 SyncEvent sChangeDiscTechEvent;
 SyncEvent sNfaSetConfigEvent;  // event for Set_Config....
 #if(NXP_EXTNS == TRUE)
@@ -1678,7 +1677,6 @@ static void nfcManager_configNfccConfigControl(bool flag) {
   if (NFC_GetNCIVersion() != NCI_VERSION_1_0) {
     uint8_t nfa_set_config[] = { 0x00 };
     nfa_set_config[0] = (flag == true ? 1 : 0);
-    gNfccConfigControlStatus = flag;
 
     tNFA_STATUS status = NFA_SetConfig(NCI_PARAM_ID_NFCC_CONFIG_CONTROL, sizeof(nfa_set_config),
             &nfa_set_config[0]);
@@ -1776,12 +1774,10 @@ static void nfcManager_enableDiscovery(JNIEnv* e, jobject o,
         struct nfc_jni_native_data* nat = getNative(e, o);
         sReaderModeEnabled = false;
         NFA_EnableListening();
-#if (NXP_EXTNS == FALSE)
+
         // configure NFCC_CONFIG_CONTROL- NFCC allowed to manage RF configuration.
-        if(gNfccConfigControlStatus == false){
-            nfcManager_configNfccConfigControl(true);
-       }
-#endif
+        nfcManager_configNfccConfigControl(true);
+
         NFA_SetRfDiscoveryDuration(nat->discovery_duration);
       }
     }
@@ -3328,12 +3324,11 @@ void doStartupConfig() {
   }
 
   // configure NFCC_CONFIG_CONTROL- NFCC allowed to manage RF configuration.
-  if(gNfccConfigControlStatus == false){
-     nfcManager_configNfccConfigControl(true);
+  nfcManager_configNfccConfigControl(true);
 #if (NXP_EXTNS == TRUE)
     send_flush_ram_to_flash();
 #endif
-  }
+
 }
 
 /*******************************************************************************
