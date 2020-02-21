@@ -972,6 +972,16 @@ public class RegisteredAidCache {
         }
     }
 
+    public ComponentName getPreferredService() {
+        if (mPreferredForegroundService != null) {
+            // return current foreground service
+            return mPreferredForegroundService;
+        } else {
+            // return current preferred service
+            return mPreferredPaymentService;
+        }
+    }
+
     public void onRoutingTableChanged() {
       if (DBG)
         Log.d(TAG, "onRoutingTableChanged");

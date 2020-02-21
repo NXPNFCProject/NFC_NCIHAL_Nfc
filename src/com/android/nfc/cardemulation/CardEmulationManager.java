@@ -39,11 +39,13 @@ import java.io.PrintWriter;
 import java.util.List;
 import java.util.ArrayList;
 import android.app.ActivityManager;
+import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.nfc.INfcCardEmulation;
 import android.nfc.INfcFCardEmulation;
+import android.nfc.NfcAdapter;
 import android.nfc.cardemulation.AidGroup;
 import android.nfc.cardemulation.NfcAidGroup;
 import android.nfc.cardemulation.ApduServiceInfo;
@@ -227,6 +229,8 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         mAidCache.onServicesUpdated(userId, services);
         // Update the preferred services list
         mPreferredServices.onServicesUpdated();
+
+        NfcService.getInstance().onPreferredPaymentChanged(NfcAdapter.PREFERRED_PAYMENT_UPDATED);
     }
 
     @Override
@@ -239,7 +243,7 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
 
     void verifyDefaults(int userId, List<NfcApduServiceInfo> services) {
         ComponentName defaultPaymentService =
-                getDefaultServiceForCategory(userId, CardEmulation.CATEGORY_PAYMENT, false);
+                getDefaultServiceForCategory(userId, CardEmulation.CATEGORY_PAYMENT, true);
         if (DBG) Log.d(TAG, "Current default: " + defaultPaymentService);
         if (defaultPaymentService == null) {
             // A payment service may have been removed, leaving only one;
@@ -404,8 +408,13 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
             if (!isServiceRegistered(userId, service)) {
                 return false;
             }
-            return mServiceCache.registerAidGroupForService(userId, Binder.getCallingUid(), service,
-                    new NfcAidGroup(aidGroup));
+            if (!mServiceCache.registerAidGroupForService(userId, Binder.getCallingUid(), service,
+                    new NfcAidGroup(aidGroup))) {
+                return false;
+            }
+            NfcService.getInstance().onPreferredPaymentChanged(
+                    NfcAdapter.PREFERRED_PAYMENT_UPDATED);
+            return true;
         }
 
         @Override
@@ -415,8 +424,13 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
             if (!isServiceRegistered(userId, service)) {
                 return false;
             }
-            return mServiceCache.setOffHostSecureElement(userId, Binder.getCallingUid(), service,
-                    offHostSE);
+            if (!mServiceCache.setOffHostSecureElement(userId, Binder.getCallingUid(), service,
+                    offHostSE)) {
+                return false;
+            }
+            NfcService.getInstance().onPreferredPaymentChanged(
+                    NfcAdapter.PREFERRED_PAYMENT_UPDATED);
+            return true;
         }
 
         @Override
@@ -426,7 +440,12 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
             if (!isServiceRegistered(userId, service)) {
                 return false;
             }
-            return mServiceCache.unsetOffHostSecureElement(userId, Binder.getCallingUid(), service);
+            if (!mServiceCache.unsetOffHostSecureElement(userId, Binder.getCallingUid(), service)) {
+                return false;
+            }
+            NfcService.getInstance().onPreferredPaymentChanged(
+                    NfcAdapter.PREFERRED_PAYMENT_UPDATED);
+            return true;
         }
 
         @Override
@@ -449,8 +468,13 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
             if (!isServiceRegistered(userId, service)) {
                 return false;
             }
-            return mServiceCache.removeAidGroupForService(userId, Binder.getCallingUid(), service,
-                    category);
+            if (!mServiceCache.removeAidGroupForService(userId, Binder.getCallingUid(), service,
+                    category)) {
+                return false;
+            }
+            NfcService.getInstance().onPreferredPaymentChanged(
+                    NfcAdapter.PREFERRED_PAYMENT_UPDATED);
+            return true;
         }
 
         @Override
@@ -490,6 +514,14 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         @Override
         public boolean supportsAidPrefixRegistration() throws RemoteException {
             return mAidCache.supportsAidPrefixRegistration();
+        }
+
+        @Override
+        public ApduServiceInfo getPreferredPaymentService(int userId) throws RemoteException {
+            NfcPermissions.validateUserId(userId);
+            NfcPermissions.enforceUserPermissions(mContext);
+            NfcPermissions.enforcePreferredPaymentInfoPermissions(mContext);
+            return mServiceCache.getService(userId, mAidCache.getPreferredService());
         }
     }
 
@@ -597,12 +629,18 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
     public void onPreferredPaymentServiceChanged(ComponentName service) {
         mAidCache.onPreferredPaymentServiceChanged(service);
         mHostEmulationManager.onPreferredPaymentServiceChanged(service);
+
+        NfcService.getInstance().onPreferredPaymentChanged(
+                NfcAdapter.PREFERRED_PAYMENT_CHANGED);
     }
 
     @Override
     public void onPreferredForegroundServiceChanged(ComponentName service) {
         mAidCache.onPreferredForegroundServiceChanged(service);
         mHostEmulationManager.onPreferredForegroundServiceChanged(service);
+
+        NfcService.getInstance().onPreferredPaymentChanged(
+                NfcAdapter.PREFERRED_PAYMENT_CHANGED);
     }
 
     public void onRoutingTableChanged() {
