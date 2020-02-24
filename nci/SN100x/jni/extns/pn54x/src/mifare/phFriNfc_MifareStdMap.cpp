@@ -3531,7 +3531,7 @@ static NFCSTATUS phFriNfc_MifStd_H_ProBytesToWr(phFriNfc_NdefMap_t* NdefMap) {
   uint8_t TempLength = PH_FRINFC_MIFARESTD_VAL0;
 
   if (*NdefMap->SendRecvLength == PH_FRINFC_MIFARESTD_BYTES_READ) {
-    memmove(&NdefMap->SendRecvBuf[PH_FRINFC_MIFARESTD_VAL1],
+    memcpy(&NdefMap->SendRecvBuf[PH_FRINFC_MIFARESTD_VAL1],
            NdefMap->SendRecvBuf, PH_FRINFC_MIFARESTD_BLOCK_BYTES);
 
     /* Write to Ndef TLV Block */

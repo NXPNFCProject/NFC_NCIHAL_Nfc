@@ -104,7 +104,7 @@ static void NxpResponse_SelfTest_Cb(uint8_t event, uint16_t param_len,
 
   if (NFA_STATUS_OK == p_param[3]) {
     if (gselfTestData.copyData) {
-      memmove((void*)gselfTestData.prestorerftxcfg, (void*)(p_param + 5),
+      memcpy((void*)gselfTestData.prestorerftxcfg, (void*)(p_param + 5),
               (size_t)p_param[4]);
       gselfTestData.copyData = false;
     }
@@ -247,7 +247,7 @@ uint8_t NfcSelfTest::GetCmdBuffer(uint8_t* aCmdBuf, uint8_t aType) {
         uint8_t* temp = CMD_CORE_SET_CONFIG_RFTXCFG;
         for (int i = 0x00; i < RF_TXCFG_MAX_NUM_FLAGS; i++) {
           temp += MAX_RF_TX_CFG_OFFSET_VALUE;
-          memmove((void*)(temp), (void*)rf_tx_cfg_restore[i],
+          memcpy((void*)(temp), (void*)rf_tx_cfg_restore[i],
                   sizeof(rf_tx_cfg_restore[i]));
         }
         gselfTestData.prestorerftxcfg = NULL;
