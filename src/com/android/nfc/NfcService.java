@@ -177,6 +177,7 @@ public class NfcService implements DeviceHostListener {
     static final String TRON_NFC_TAG = "nfc_tag";
     static final String T4T_NFCEE_AID = "D2760000850101";
     static final int TECH_TYPE_A= 0x01;
+    static final int TECH_TYPE_F= 0x04;
     static final int MSG_NDEF_TAG = 0;
     static final int MSG_LLCP_LINK_ACTIVATION = 1;
     static final int MSG_LLCP_LINK_DEACTIVATED = 2;
@@ -1660,6 +1661,29 @@ public class NfcService implements DeviceHostListener {
           Log.i(TAG, "MifareCLTRouteSet : " + techRouteEntry);
           mNxpPrefsEditor = mNxpPrefs.edit();
           mNxpPrefsEditor.putInt("PREF_MIFARE_CLT_ROUTE_ID", techRouteEntry);
+          mNxpPrefsEditor.commit();
+          commitRouting();
+        }
+        @Override
+        public void NfcFRouteSet(int routeLoc, boolean fullPower, boolean lowPower,
+            boolean noPower) throws RemoteException {
+          if (routeLoc == UICC2_ID_TYPE) {
+            throw new RemoteException("UICC2 is not supported");
+          }
+
+          int techRouteEntry = 0;
+          techRouteEntry =  ((routeLoc & 0x07) == 0x04) ? (0x03 << ROUTE_LOC_MASK) : /*UICC2*/
+                            ((routeLoc & 0x07) == 0x02) ? (0x02 << ROUTE_LOC_MASK) : /*UICC1*/
+                            ((routeLoc & 0x07) == 0x01) ? (0x01 << ROUTE_LOC_MASK) : /*eSE*/
+                            0x00;
+          techRouteEntry |=
+              ((fullPower ? (mDeviceHost.getDefaultMifareCLTPowerState() & 0x1F) | 0x01 : 0)
+                  | (lowPower ? 0x01 << 1 : 0) | (noPower ? 0x01 << 2 : 0));
+          techRouteEntry |= (TECH_TYPE_F << TECH_TYPE_MASK);
+
+          Log.i(TAG, "NfcFRouteSet : " + techRouteEntry);
+          mNxpPrefsEditor = mNxpPrefs.edit();
+          mNxpPrefsEditor.putInt("PREF_FELICA_CLT_ROUTE_ID", techRouteEntry);
           mNxpPrefsEditor.commit();
           commitRouting();
         }
