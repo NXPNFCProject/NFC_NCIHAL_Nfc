@@ -36,7 +36,6 @@ cc_library_shared {
         "extns/pn54x/inc",
         "extns/pn54x/src/common",
         "extns/pn54x/src/mifare",
-        "extns/pn54x/src/log",
         "extns/pn54x/src/utils",
     ],
 
