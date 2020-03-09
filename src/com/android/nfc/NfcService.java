@@ -1667,6 +1667,7 @@ public class NfcService implements DeviceHostListener {
         @Override
         public void NfcFRouteSet(int routeLoc, boolean fullPower, boolean lowPower,
             boolean noPower) throws RemoteException {
+          NfcPermissions.enforceUserPermissions(mContext);
           if (routeLoc == UICC2_ID_TYPE) {
             throw new RemoteException("UICC2 is not supported");
           }
