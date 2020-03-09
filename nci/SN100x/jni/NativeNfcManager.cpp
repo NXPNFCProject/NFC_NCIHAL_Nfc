@@ -93,7 +93,11 @@ extern bool gIsTagDeactivating;
 extern bool gIsSelectingRfInterface;
 extern void nativeNfcTag_doTransceiveStatus(tNFA_STATUS status, uint8_t* buf,
                                             uint32_t buflen);
+#if(NXP_EXTNS == TRUE)
+extern void nativeNfcTag_notifyRfTimeout(tNFA_STATUS status);
+#else
 extern void nativeNfcTag_notifyRfTimeout();
+#endif
 extern void nativeNfcTag_doConnectStatus(jboolean is_connect_ok);
 extern void nativeNfcTag_doDeactivateStatus(int status);
 extern void nativeNfcTag_doWriteStatus(jboolean is_write_ok);
@@ -774,7 +778,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: NFC_RW_INTF_ERROR_EVT", __func__);
 #if(NXP_EXTNS == TRUE)
-      nativeNfcTag_abortTagOperations(NFA_STATUS_TIMEOUT);
+      nativeNfcTag_abortTagOperations(eventData->status);
 #else
       nativeNfcTag_notifyRfTimeout();
       nativeNfcTag_doReadCompleted(NFA_STATUS_TIMEOUT);

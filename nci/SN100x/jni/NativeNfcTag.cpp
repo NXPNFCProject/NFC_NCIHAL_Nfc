@@ -1166,14 +1166,21 @@ void nativeNfcTag_doTransceiveStatus(tNFA_STATUS status, uint8_t* buf,
   if (sRxDataStatus == NFA_STATUS_OK) sTransceiveEvent.notifyOne();
 
 }
-
+#if(NXP_EXTNS == TRUE)
+void nativeNfcTag_notifyRfTimeout(tNFA_STATUS status) {
+#else
 void nativeNfcTag_notifyRfTimeout() {
+#endif
   SyncEventGuard g(sTransceiveEvent);
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
       "%s: waiting for transceive: %d", __func__, sWaitingForTransceive);
   if (!sWaitingForTransceive) return;
 
+#if(NXP_EXTNS == TRUE)
+  if(status != NFC_STATUS_RF_PROTOCOL_ERR) sTransceiveRfTimeout = true;
+#else
   sTransceiveRfTimeout = true;
+#endif
 
   sTransceiveEvent.notifyOne();
 }
@@ -2207,7 +2214,7 @@ bool nativeNfcTag_checkActivatedProtoParameters(
 void nativeNfcTag_abortTagOperations(tNFA_STATUS status) {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s, status : 0x%x", __func__,status);
   /*Transcieve timeout will be notify*/
-  nativeNfcTag_notifyRfTimeout();
+  nativeNfcTag_notifyRfTimeout(status);
   /*Read Event will be notify*/
   nativeNfcTag_doReadCompleted(status);
   /*Write Semaphore will be waiting*/
