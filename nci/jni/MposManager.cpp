@@ -18,7 +18,7 @@
 #include <android-base/stringprintf.h>
 #include <base/logging.h>
 #include "MposManager.h"
-#include <ScopedLocalRef.h>
+#include <nativehelper/ScopedLocalRef.h>
 #include "SecureElement.h"
 //#include "TransactionController.h"
 #include "nfa_scr_api.h"

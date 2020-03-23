@@ -37,7 +37,7 @@
  *  controller.
  */
 #include "SecureElement.h"
-#include <ScopedLocalRef.h>
+#include <nativehelper/ScopedLocalRef.h>
 #include <android-base/stringprintf.h>
 #include <base/logging.h>
 #include <errno.h>
