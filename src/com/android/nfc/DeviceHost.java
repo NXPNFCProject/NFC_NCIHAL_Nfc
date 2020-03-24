@@ -81,6 +81,8 @@ public interface DeviceHost {
         public void onScrNotifyEvents(int event);
 
         public void onNfcTransactionEvent(byte[] aid, byte[] data, String seName);
+
+        public void onLxDebugConfigData(int len, byte[] data);
     }
 
     public interface TagEndpoint {
