@@ -1122,12 +1122,11 @@ tNFA_STATUS NxpNfc_Write_Cmd_Common(uint8_t retlen, uint8_t* buffer) {
  *******************************************************************************/
 tNFA_STATUS NxpNfc_Send_CoreResetInit_Cmd(void) {
   tNFA_STATUS status = NFA_STATUS_FAILED;
-  uint8_t* p;
 
   status = (tNFA_STATUS)NFA_Send_Core_Reset();
 
   if (status == NFA_STATUS_OK) {
-    NFA_Send_Core_Init(&p);
+    NFA_Send_Core_Init();
   }
   return status;
 }
