@@ -1679,12 +1679,6 @@ bool SecureElement::transceive(uint8_t* xmitBuffer, int32_t xmitBufferSize,
 
       if (nfcFL.nfcNxpEse) {
         active_ese_reset_control |= TRANS_WIRED_ONGOING;
-        if ((((nfcFL.eseFL._NXP_ESE_VER == JCOP_VER_3_1) ||
-              (nfcFL.eseFL._NXP_ESE_VER == JCOP_VER_3_2))) &&
-            (NFC_GetEseAccess((void*)&timeoutMillisec) != 0)) {
-          LOG(ERROR) << StringPrintf("%s: NFC_ReqWiredAccess timeout", fn);
-          goto TheEnd;
-        }
         isEseAccessSuccess = true;
       }
 #endif
@@ -1709,12 +1703,6 @@ bool SecureElement::transceive(uint8_t* xmitBuffer, int32_t xmitBufferSize,
     {
       if (nfcFL.nfcNxpEse) {
         active_ese_reset_control |= TRANS_WIRED_ONGOING;
-        if (((nfcFL.eseFL._NXP_ESE_VER == JCOP_VER_3_1) ||
-             (nfcFL.eseFL._NXP_ESE_VER == JCOP_VER_3_2)) &&
-            (NFC_GetEseAccess((void*)&timeoutMillisec) != 0)) {
-          LOG(ERROR) << StringPrintf("%s: NFC_ReqWiredAccess timeout", fn);
-          goto TheEnd;
-        }
         isEseAccessSuccess = true;
       }
 #endif
@@ -1784,13 +1772,6 @@ bool SecureElement::transceive(uint8_t* xmitBuffer, int32_t xmitBufferSize,
 TheEnd:
 #if (NXP_EXTNS == TRUE)
   if (nfcFL.nfcNxpEse) {
-    if ((((nfcFL.eseFL._NXP_ESE_VER == JCOP_VER_3_1) ||
-          (nfcFL.eseFL._NXP_ESE_VER == JCOP_VER_3_2))) &&
-        isEseAccessSuccess == true) {
-      if (NFC_RelEseAccess((void*)&nfaStat) != 0) {
-        LOG(ERROR) << StringPrintf("%s: NFC_RelEseAccess failed", fn);
-      }
-    }
     if ((nfcFL.eseFL._JCOP_WA_ENABLE) &&
         (active_ese_reset_control & TRANS_WIRED_ONGOING))
       active_ese_reset_control ^= TRANS_WIRED_ONGOING;
@@ -2822,12 +2803,6 @@ bool SecureElement::getAtr(jint seID, uint8_t* recvBuffer,
           << StringPrintf("Denying /atr in SE listen mode active");
       return false;
     }
-    if ((((nfcFL.eseFL._NXP_ESE_VER == JCOP_VER_3_1) ||
-          (nfcFL.eseFL._NXP_ESE_VER == JCOP_VER_3_2))) &&
-        NFC_GetEseAccess((void*)&timeoutMillisec) != 0) {
-      LOG(ERROR) << StringPrintf("%s: NFC_ReqWiredAccess timeout", fn);
-      return false;
-    }
     NfccStandByOperation(STANDBY_MODE_OFF);
 
     gateInfo = getApduGateInfo();
@@ -2864,11 +2839,6 @@ bool SecureElement::getAtr(jint seID, uint8_t* recvBuffer,
     if ((nfcFL.eseFL._JCOP_WA_ENABLE) && (mAtrStatus == NFA_HCI_ANY_E_NOK))
       reconfigureEseHciInit();
 
-    if (((nfcFL.eseFL._NXP_ESE_VER == JCOP_VER_3_1) ||
-         (nfcFL.eseFL._NXP_ESE_VER == JCOP_VER_3_2)) &&
-        NFC_RelEseAccess((void*)&nfaStat) != 0) {
-      LOG(ERROR) << StringPrintf("%s: NFC_ReqWiredAccess timeout", fn);
-    }
 #endif
   }
   return (nfaStat == NFA_STATUS_OK) ? true : false;
@@ -3441,60 +3411,6 @@ void SecureElement::NfccStandByOperation(nfcc_standby_operation_t value) {
         if (nfcFL.eseFL._ESE_DWP_SPI_SYNC_ENABLE &&
             nfcFL.eseFL._WIRED_MODE_STANDBY_PROP)
           spiDwpSyncState = STATE_IDLE;
-      }
-    } break;
-    case STANDBY_GPIO_HIGH: {
-      jint ret_val = -1;
-      NFCSTATUS status = NFCSTATUS_FAILED;
-
-      /* Set the ESE VDD gpio to high to make sure P61 is powered, even if NFCC
-       * is in standby
-       */
-      ret_val = NFC_EnableWired((void*)&status);
-      if (ret_val < 0) {
-        DLOG_IF(INFO, nfc_debug_enabled)
-            << StringPrintf("NFC_EnableWired failed");
-      } else {
-        if (status != NFCSTATUS_SUCCESS) {
-          DLOG_IF(INFO, nfc_debug_enabled)
-              << StringPrintf("SE is being used by SPI");
-        }
-      }
-    } break;
-    case STANDBY_GPIO_LOW: {
-      jint ret_val = -1;
-      NFCSTATUS status = NFCSTATUS_FAILED;
-      /* Set the ESE VDD gpio to low to make sure P61 is reset. */
-      ret_val = NFC_DisableWired((void*)&status);
-      if (ret_val < 0) {
-        DLOG_IF(INFO, nfc_debug_enabled)
-            << StringPrintf("NFC_DisableWired failed");
-      } else {
-        if (status != NFCSTATUS_SUCCESS) {
-          DLOG_IF(INFO, nfc_debug_enabled)
-              << StringPrintf("SE is not being released by Pn54x driver");
-        }
-      }
-    } break;
-    case STANDBY_ESE_PWR_RELEASE: {
-      int ret_val = -1;
-      tNFA_STATUS status = NFCSTATUS_FAILED;
-      /* Set the ESE VDD gpio to HIGH. */
-      ret_val = NFC_ReleaseEsePwr((void*)&status);
-      if (ret_val < 0) {
-        DLOG_IF(INFO, nfc_debug_enabled)
-            << StringPrintf("NFC_ReleaseEsePwr: Failed");
-      }
-    } break;
-
-    case STANDBY_ESE_PWR_ACQUIRE: {
-      int ret_val = -1;
-      tNFA_STATUS status = NFCSTATUS_FAILED;
-      /* Set the ESE VDD gpio to low. */
-      ret_val = NFC_AcquireEsePwr((void*)&status);
-      if (ret_val < 0) {
-        DLOG_IF(INFO, nfc_debug_enabled)
-            << StringPrintf("NFC_AcquireEsePwr: Failed");
       }
     } break;
     default:

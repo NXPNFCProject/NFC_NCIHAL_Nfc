@@ -3425,11 +3425,6 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
       }
     }
 
-    if (isLowRamDevice()) {
-      SecureElement::getInstance().NfccStandByOperation(
-          STANDBY_ESE_PWR_RELEASE);
-    }
-
     if (nfcFL.eseFL._JCOP_WA_ENABLE) {
       rfActivation = false;
     }

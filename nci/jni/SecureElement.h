@@ -129,13 +129,10 @@ typedef enum operation {
   STANDBY_TIMER_START,
   STANDBY_TIMER_STOP,
   STANDBY_TIMER_TIMEOUT,
-  STANDBY_GPIO_HIGH,
-  STANDBY_GPIO_LOW,
   STANDBY_MODE_ON,       /* standby mode is on */
   STANDBY_MODE_OFF,      /* standby mode is off */
   STANDBY_MODE_SUSPEND,  /* standby timer timed out */
   STANDBY_MODE_TIMER_ON, /* standby timer running */
-  STANDBY_ESE_PWR_RELEASE,
   STANDBY_ESE_PWR_ACQUIRE
 
 } nfcc_standby_operation_t;

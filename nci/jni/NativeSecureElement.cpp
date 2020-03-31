@@ -303,9 +303,6 @@ static jboolean nativeNfcSecureElement_doDisconnectSecureElementConnection(
 
   SecureElement& se = SecureElement::getInstance();
   se.NfccStandByOperation(STANDBY_TIMER_STOP);
-  if (isLowRamDevice()) {
-    se.NfccStandByOperation(STANDBY_ESE_PWR_RELEASE);
-  }
 #endif
 
 #if (NXP_EXTNS == TRUE)
@@ -453,14 +450,6 @@ static jboolean nativeNfcSecureElement_doResetForEseCosUpdate(JNIEnv*, jobject,
     }
     {
       stat = se.SecEle_Modeset(0x00);
-      if (handle == SecureElement::EE_HANDLE_0xF3) {
-        if (checkP61Status()) se.NfccStandByOperation(STANDBY_GPIO_LOW);
-      }
-      usleep(100 * 1000);
-      if (handle == SecureElement::EE_HANDLE_0xF3) {
-        if (checkP61Status() && (se.mIsWiredModeOpen == true))
-          se.NfccStandByOperation(STANDBY_GPIO_HIGH);
-      }
 
       if (nfcFL.eseFL._WIRED_MODE_STANDBY && (se.mNfccPowerMode == 1)) {
         uint8_t status = se.setNfccPwrConfig(se.POWER_ALWAYS_ON | se.COMM_LINK_ACTIVE);

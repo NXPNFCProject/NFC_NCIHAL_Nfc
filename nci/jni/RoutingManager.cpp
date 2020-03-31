@@ -2478,9 +2478,6 @@ void* ee_removed_ntf_handler_thread(void* data) {
     }
   }
   if (nfcFL.nfcNxpEse) {
-    se.NfccStandByOperation(STANDBY_GPIO_LOW);
-    usleep(10 * 1000);
-    se.NfccStandByOperation(STANDBY_GPIO_HIGH);
     if (nfcFL.eseFL._WIRED_MODE_STANDBY && se.mIsWiredModeOpen) {
       stat = se.setNfccPwrConfig(se.POWER_ALWAYS_ON | se.COMM_LINK_ACTIVE);
       if (stat != NFA_STATUS_OK) {
