@@ -3681,7 +3681,6 @@ void* spiEventHandlerThread(void* arg) {
   uint16_t usEvent = 0, usEvtLen = 0;
   tNFC_STATUS stat = NFA_STATUS_FAILED;
 
-  NFCSTATUS ese_status = NFA_STATUS_FAILED;
 
   struct sigaction actions;
   static sigset_t mask;
@@ -3788,24 +3787,7 @@ void* spiEventHandlerThread(void* arg) {
       nfaVSC_ForceDwpOnOff(false);
     }
 
-    if (nfcFL.eseFL._ESE_JCOP_DWNLD_PROTECTION) {
-      if (usEvent == JCP_DWNLD_INIT) {
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-            "%s: JCOP OS download  init request....=%d\n", __func__, usEvent);
-        if (android::nfcManager_checkNfcStateBusy() == false) {
-          if (android::isDiscoveryStarted() == true) {
-            android::startRfDiscovery(false);
-          }
-          NFC_SetP61Status((void*)&ese_status, JCP_DWNLD_START);
-        }
-      } else if (usEvent == JCP_DWP_DWNLD_COMPLETE) {
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-            "%s: JCOP OS download  end request...=%d\n", __func__, usEvent);
-        if (android::isDiscoveryStarted() == false) {
-          android::startRfDiscovery(true);
-        }
-      }
-    } else if (nfcFL.nfccFL._NFCC_SPI_FW_DOWNLOAD_SYNC &&
+    if (nfcFL.nfccFL._NFCC_SPI_FW_DOWNLOAD_SYNC &&
                ((usEvent & P61_STATE_SPI_PRIO_END) ||
                 (usEvent & P61_STATE_SPI_END))) {
       if (android::nfcManager_isNfcActive() &&
