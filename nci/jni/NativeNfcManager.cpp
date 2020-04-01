@@ -4923,7 +4923,6 @@ static void restartUiccListen(jint uiccSlot) {
       DWP->close = close;
       DWP->transceive = transceive;
       DWP->doeSE_Reset = doeSE_Reset;
-      DWP->doeSE_JcopDownLoadReset = doeSE_JcopDownLoadReset;
     }
   }
 

@@ -469,42 +469,6 @@ static jboolean nativeNfcSecureElement_doResetForEseCosUpdate(JNIEnv*, jobject,
 }
 
 /*******************************************************************************
- **
- ** Function:        nativeNfcSecureElement_doeSEChipResetSecureElement
- **
- ** Description:     Reset the secure element.
- **                  e: JVM environment.
- **                  o: Java object.
- **                  handle: Handle of secure element.
- **
- ** Returns:         True if ok.
- **
- *******************************************************************************/
-__attribute__((unused)) static jboolean
-nativeNfcSecureElement_doeSEChipResetSecureElement(JNIEnv*, jobject) {
-  bool stat = false;
-  NFCSTATUS status = NFCSTATUS_FAILED;
-  unsigned long num = 0x01;
-#if (NXP_EXTNS == TRUE)
-  SecureElement& se = SecureElement::getInstance();
-  if (nfcFL.nfcNxpEse) {
-    if (NfcConfig::hasKey("NXP_ESE_POWER_DH_CONTROL")) {
-      num = NfcConfig::getUnsigned("NXP_ESE_POWER_DH_CONTROL");
-      DLOG_IF(INFO, nfc_debug_enabled)
-          << StringPrintf("Power schemes enabled in config file is %ld", num);
-    }
-    if (num == 0x02) {
-      status = se.eSE_Chip_Reset();
-      if (status == NFCSTATUS_SUCCESS) {
-        stat = true;
-      }
-    }
-  }
-#endif
-  return stat ? JNI_TRUE : JNI_FALSE;
-}
-
-/*******************************************************************************
 **
 ** Function:        nativeNfcSecureElement_doGetAtr
 **

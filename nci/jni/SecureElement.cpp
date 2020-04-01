@@ -3419,33 +3419,6 @@ void SecureElement::NfccStandByOperation(nfcc_standby_operation_t value) {
   }
   mNfccStandbyMutex.unlock();
 }
-/*******************************************************************************
-**
-** Function         eSE_Chip_Reset
-**
-** Description      Performs Chip Reset on eSE using ISO_RST pin.
-**
-** Returns          Returns Status SUCCESS or FAILED.
-**
-*******************************************************************************/
-NFCSTATUS SecureElement::eSE_Chip_Reset(void) {
-  jint ret_val = -1;
-  NFCSTATUS status = NFCSTATUS_FAILED;
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("eSE_Chip_Reset");
-  SecureElement::getInstance().SecEle_Modeset(0x00);
-  /* Reset P73 using ISO Reset Pin. */
-  ret_val = NFC_eSEChipReset((void*)&status);
-  if (ret_val < 0) {
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Reset eSE failed");
-  } else {
-    if (status != NFCSTATUS_SUCCESS) {
-      DLOG_IF(INFO, nfc_debug_enabled)
-          << StringPrintf("SE is not being released by Pn54x driver");
-    }
-  }
-  SecureElement::getInstance().SecEle_Modeset(0x01);
-  return status;
-}
 
 /*******************************************************************************
 **
