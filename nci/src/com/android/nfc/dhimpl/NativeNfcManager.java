@@ -329,6 +329,9 @@ public class NativeNfcManager implements DeviceHost {
     }
 
     @Override
+    public native int doEnableDebugNtf (byte fieldValue);
+
+    @Override
     public int doWriteT4tData(byte[] fileId, byte[] data, int length) {
       return mT4tNfceeMgr.doWriteT4tData(fileId, data, length);
     }
