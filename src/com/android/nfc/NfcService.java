@@ -1622,6 +1622,12 @@ public class NfcService implements DeviceHostListener {
         @Override
         public void MifareDesfireRouteSet(int routeLoc, boolean fullPower, boolean lowPower,
             boolean noPower) throws RemoteException {
+
+          NfcPermissions.enforceUserPermissions(mContext);
+          if (!isNfcEnabled()) {
+            throw new RemoteException("API is not supported in NFC OFF state");
+          }
+
           if (routeLoc == UICC2_ID_TYPE) {
             throw new RemoteException("UICC2 is not supported");
           }
@@ -1655,6 +1661,12 @@ public class NfcService implements DeviceHostListener {
         @Override
         public void MifareCLTRouteSet(int routeLoc, boolean fullPower, boolean lowPower,
             boolean noPower) throws RemoteException {
+
+          NfcPermissions.enforceUserPermissions(mContext);
+          if (!isNfcEnabled()) {
+            throw new RemoteException("API is not supported in NFC OFF state");
+          }
+
           if (routeLoc == UICC2_ID_TYPE) {
             throw new RemoteException("UICC2 is not supported");
           }
@@ -1679,6 +1691,11 @@ public class NfcService implements DeviceHostListener {
         public void NfcFRouteSet(int routeLoc, boolean fullPower, boolean lowPower,
             boolean noPower) throws RemoteException {
           NfcPermissions.enforceUserPermissions(mContext);
+
+          if (!isNfcEnabled()) {
+              throw new RemoteException("API is not supported in NFC OFF state");
+          }
+
           if (routeLoc == UICC2_ID_TYPE) {
             throw new RemoteException("UICC2 is not supported");
           }
@@ -1878,6 +1895,11 @@ public class NfcService implements DeviceHostListener {
         public void DefaultRouteSet(int routeLoc, boolean fullPower, boolean lowPower, boolean noPower)
                 throws RemoteException
         {
+            NfcPermissions.enforceUserPermissions(mContext);
+            if (!isNfcEnabled()) {
+                throw new RemoteException("API is not supported in NFC OFF state");
+            }
+
             if(routeLoc == UICC2_ID_TYPE) {
                 throw new RemoteException("UICC2 is not supported");
             }
