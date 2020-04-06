@@ -1728,6 +1728,11 @@ static void nfcManager_enableDiscovery(JNIEnv* e, jobject o,
   tNFA_TECHNOLOGY_MASK tech_mask = DEFAULT_TECH_MASK;
   struct nfc_jni_native_data* nat = getNative(e, o);
 #if(NXP_EXTNS == TRUE)
+  SecureElement& se = SecureElement::getInstance();
+  if (se.isRfFieldOn() || se.mActivatedInListenMode) {
+    /* Delay is required if CE is ongoing */
+    usleep(1000 * 1000);
+  }
   storeLastDiscoveryParams(technologies_mask, enable_lptd,
         reader_mode, enable_host_routing ,enable_p2p, restart);
 #endif
