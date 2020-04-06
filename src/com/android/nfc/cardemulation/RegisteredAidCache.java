@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2019 NXP
+*  Copyright 2018-2020 NXP
 *
 ******************************************************************************/
 package com.android.nfc.cardemulation;
@@ -830,6 +830,7 @@ public class RegisteredAidCache {
         }
         final HashMap<String, AidRoutingManager.AidEntry> routingEntries = Maps.newHashMap();
         int mGsmaPwrState = NfcService.getInstance().getGsmaPwrState();
+        boolean isNxpExtnEnabled = NfcService.getInstance().isNfcExtnsPresent();
         // For each AID, find interested services
         for (Map.Entry<String, AidResolveInfo> aidEntry:
                 mAidCache.entrySet()) {
@@ -879,7 +880,7 @@ public class RegisteredAidCache {
                 if ((powerstate & POWER_STATE_SWITCH_ON) == POWER_STATE_SWITCH_ON )
                 {
                   screenstate |= SCREEN_STATE_ON_LOCKED;
-                  if (!isOnHost) {
+                  if (!isOnHost || isNxpExtnEnabled) {
                     if (DBG) Log.d(TAG," set screen off enable for " + aid);
                     screenstate |= SCREEN_STATE_OFF_UNLOCKED | SCREEN_STATE_OFF_LOCKED;
                   }
@@ -897,6 +898,11 @@ public class RegisteredAidCache {
                 // to ask the user to choose one.
                 aidType.isOnHost = true;
                 aidType.powerstate = (POWER_STATE_SWITCH_ON | SCREEN_STATE_ON_LOCKED);
+
+                if(isNxpExtnEnabled) {
+                  aidType.powerstate |= SCREEN_STATE_OFF_UNLOCKED | SCREEN_STATE_OFF_LOCKED;
+                }
+
                 if (DBG) Log.d(TAG," AID power state 2 "+ aid  +" "+aidType.powerstate);
                 if(mGsmaPwrState > 0)
                 {
@@ -930,6 +936,11 @@ public class RegisteredAidCache {
                 aidType.isOnHost = onHost;
                 aidType.offHostSE = onHost ? null : offHostSE;
                 aidType.powerstate = (POWER_STATE_SWITCH_ON | SCREEN_STATE_ON_LOCKED);
+
+                if(isNxpExtnEnabled) {
+                    aidType.powerstate |= SCREEN_STATE_OFF_UNLOCKED | SCREEN_STATE_OFF_LOCKED;
+                }
+
                 if(mGsmaPwrState > 0)
                 {
                     aidType.powerstate = (mGsmaPwrState & 0x39);
