@@ -2636,6 +2636,10 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
     tNFA_HANDLE handle = NFA_HANDLE_INVALID;
     struct nfc_jni_native_data* nat = NULL;
 
+    if (sIsDisabling || !sIsNfaEnabled) {
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFC is not enabled", __func__);
+      return;
+    }
 #if (NXP_EXTNS == TRUE)
     p61_access_state_t p61_current_state = P61_STATE_INVALID;
     long ret_val = -1;
