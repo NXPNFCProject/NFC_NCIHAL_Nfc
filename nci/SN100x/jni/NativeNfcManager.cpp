@@ -4217,7 +4217,7 @@ static int nfcManager_staticDualUicc_Precondition(int uiccSlot) {
 ** Byte 1: Reserved for future use, shall always be 0x00.
 **
 ** Returns:        returns 0x00 in success case, 0x03 in failure case,
-**                 0x01 is Nfc is off, 0x09 invalid param(fieldValue is null)
+**                 0x01 is Nfc is off
 **********************************************************************************/
 static jint nfcManager_enableDebugNtf(JNIEnv* e, jobject o, jbyte fieldValue) {
   uint8_t cmd_lxdebug[] = { 0x20, 0x02, 0x06, 0x01, 0xA0, 0x1D, 0x02, 0x00, 0x00 };
