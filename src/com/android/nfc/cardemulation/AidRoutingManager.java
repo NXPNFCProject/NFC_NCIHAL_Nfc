@@ -251,6 +251,9 @@ public class AidRoutingManager {
         Log.e(TAG, "Size of routing table"+mAidRoutingTableSize);
         mLastCommitStatus = false;
         seList.add(mDefaultAidRoute);
+        if (mDefaultRoute != ROUTE_HOST) {
+            seList.add(ROUTE_HOST);
+        }
         // Then, populate internal data structures first
         for (Map.Entry<String, AidEntry> aidEntry : aidMap.entrySet())  {
             int route = ROUTE_HOST;
