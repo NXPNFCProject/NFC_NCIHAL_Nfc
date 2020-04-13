@@ -756,7 +756,7 @@ class NfcDispatcher {
         }
         AlertDialog.Builder builder = new AlertDialog.Builder(
                 mContext.getApplicationContext(),
-                android.R.style.Theme_DeviceDefault_Light_Dialog_Alert);
+                R.style.DiagAlertDayNight);
         builder.setTitle(R.string.title_confirm_url_open);
         LayoutInflater inflater = LayoutInflater.from(mContext);
         View view = inflater.inflate(R.layout.url_open_confirmation, null);
