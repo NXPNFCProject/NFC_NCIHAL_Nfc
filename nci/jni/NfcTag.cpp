@@ -434,6 +434,17 @@ void NfcTag::discoverTechnologies(tNFA_ACTIVATED& activationData) {
     // type-4 tag uses technology ISO-DEP and technology A or B
     mTechList[mNumTechList] =
         TARGET_TYPE_ISO14443_4;  // is TagTechnology.ISO_DEP by Java API
+    if ((NFC_DISCOVERY_TYPE_POLL_A == rfDetail.rf_tech_param.mode) ||
+        (NFC_DISCOVERY_TYPE_POLL_A_ACTIVE == rfDetail.rf_tech_param.mode)) {
+      double fc = 13560000;
+      uint8_t fwi = rfDetail.intf_param.intf_param.pa_iso.fwi;
+      if (fwi >= MIN_FWI && fwi <= MAX_FWI) {
+        double fwt = (((1 << fwi) * 256 * 16 * 1000) / fc);
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+            "Setting the Xceive timeout = %f, fwi = %0#x", fwt, fwi);
+        setTransceiveTimeout(mTechList[mNumTechList], fwt);
+      }
+    }
 #if (NXP_EXTNS == TRUE)
     if (((rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_POLL_A) ||
          (rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_POLL_A_ACTIVE) ||
