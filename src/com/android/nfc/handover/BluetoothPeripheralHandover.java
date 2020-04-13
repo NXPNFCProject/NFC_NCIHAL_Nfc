@@ -234,10 +234,12 @@ public class BluetoothPeripheralHandover implements BluetoothProfile.ServiceList
                             mAction = ACTION_DISCONNECT;
                         } else {
                             // Check if each profile of the device is disabled or not
-                            if (mHeadset.getPriority(mDevice) == BluetoothProfile.PRIORITY_OFF) {
+                            if (mHeadset.getConnectionPolicy(mDevice) ==
+                                BluetoothProfile.CONNECTION_POLICY_FORBIDDEN) {
                                 mIsHeadsetAvailable = false;
                             }
-                            if (mA2dp.getPriority(mDevice) == BluetoothProfile.PRIORITY_OFF) {
+                            if (mA2dp.getConnectionPolicy(mDevice) ==
+                                BluetoothProfile.CONNECTION_POLICY_FORBIDDEN) {
                                 mIsA2dpAvailable = false;
                             }
                             if (!mIsHeadsetAvailable && !mIsA2dpAvailable) {
