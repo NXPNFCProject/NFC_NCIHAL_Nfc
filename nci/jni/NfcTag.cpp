@@ -436,12 +436,12 @@ void NfcTag::discoverTechnologies(tNFA_ACTIVATED& activationData) {
         TARGET_TYPE_ISO14443_4;  // is TagTechnology.ISO_DEP by Java API
     if ((NFC_DISCOVERY_TYPE_POLL_A == rfDetail.rf_tech_param.mode) ||
         (NFC_DISCOVERY_TYPE_POLL_A_ACTIVE == rfDetail.rf_tech_param.mode)) {
-      double fc = 13560000;
       uint8_t fwi = rfDetail.intf_param.intf_param.pa_iso.fwi;
       if (fwi >= MIN_FWI && fwi <= MAX_FWI) {
-        double fwt = (((1 << fwi) * 256 * 16 * 1000) / fc);
+        //2^MIN_FWI * 256 * 16 * 1000 / 13560000 is approximately 618
+        int fwt = (1 << (fwi - MIN_FWI)) * 618;
         DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-            "Setting the Xceive timeout = %f, fwi = %0#x", fwt, fwi);
+            "Setting the transceive timeout = %d, fwi = %0#x", fwt, fwi);
         setTransceiveTimeout(mTechList[mNumTechList], fwt);
       }
     }
