@@ -80,7 +80,7 @@ public class AppChooserActivity extends AlertActivity
     protected void onCreate(Bundle savedInstanceState, String category,
             ArrayList<ApduServiceInfo> options, ComponentName failedComponent) {
         super.onCreate(savedInstanceState);
-        setTheme(R.style.Theme_DeviceDefault_Light_Dialog_Alert);
+        setTheme(com.android.nfc.R.style.DiagAlertDayNight);
 
         IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_OFF);
         registerReceiver(mReceiver, filter);

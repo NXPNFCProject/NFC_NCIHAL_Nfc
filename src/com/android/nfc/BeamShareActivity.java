@@ -98,7 +98,7 @@ public class BeamShareActivity extends Activity {
         registerReceiverAsUser(mReceiver, UserHandle.ALL, filter, null, null);
 
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this,
-                AlertDialog.THEME_DEVICE_DEFAULT_LIGHT);
+                com.android.nfc.R.style.DiagAlertDayNight);
         dialogBuilder.setMessage(msgId);
         dialogBuilder.setOnCancelListener(new DialogInterface.OnCancelListener() {
             @Override

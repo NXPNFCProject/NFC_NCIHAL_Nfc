@@ -33,7 +33,7 @@ public class ConfirmConnectToWifiNetworkActivity extends Activity
                 intent.getParcelableExtra(NfcWifiProtectedSetup.EXTRA_WIFI_CONFIG);
 
         String printableSsid = mCurrentWifiConfiguration.getPrintableSsid();
-        mAlertDialog = new AlertDialog.Builder(this,  AlertDialog.THEME_DEVICE_DEFAULT_LIGHT)
+        mAlertDialog = new AlertDialog.Builder(this,  R.style.DiagAlertDayNight)
                 .setTitle(R.string.title_connect_to_network)
                 .setMessage(
                         String.format(getResources().getString(R.string.prompt_connect_to_network),
