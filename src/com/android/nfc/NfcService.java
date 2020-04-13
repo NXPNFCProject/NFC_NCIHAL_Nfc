@@ -3813,7 +3813,8 @@ public class NfcService implements DeviceHostListener {
                 int dispatchResult = mNfcDispatcher.dispatchTag(tag);
                 if (dispatchResult == NfcDispatcher.DISPATCH_FAIL && !mInProvisionMode) {
                     unregisterObject(tagEndpoint.getHandle());
-                    if (mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED) {
+                    if (mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED &&
+                        mContext.getResources().getBoolean(R.bool.enable_notify_dispatch_failed)) {
                         if (mToast != null) {
                             if (mToast.getView().isShown()) mToast.cancel();
                         }
