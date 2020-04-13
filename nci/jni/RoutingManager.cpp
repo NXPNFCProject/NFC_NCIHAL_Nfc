@@ -360,6 +360,11 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
   mSeTechMask = updateEeTechRouteSetting();
 #endif
 
+  // Tell the host-routing to only listen on Nfc-A
+  nfaStat = NFA_CeSetIsoDepListenTech(NFA_TECHNOLOGY_MASK_A);
+  if (nfaStat != NFA_STATUS_OK)
+    LOG(ERROR) << StringPrintf("Failed to configure CE IsoDep technologies");
+
   // Tell the host-routing to only listen on Nfc-A/Nfc-B
   nfaStat = NFA_CeRegisterAidOnDH(NULL, 0, stackCallback);
   if (nfaStat != NFA_STATUS_OK)
@@ -2350,7 +2355,7 @@ void RoutingManager::nfcFCeCallback(uint8_t event,
 
 bool RoutingManager::setNfcSecure(bool enable) {
   mSecureNfcEnabled = enable;
-  DLOG_IF(INFO, true) << "chi setNfcSecure NfcService " << enable;
+  DLOG_IF(INFO, true) << "setNfcSecure NfcService " << enable;
   return true;
 }
 
@@ -2672,7 +2677,7 @@ tNFA_TECHNOLOGY_MASK RoutingManager::updateEeTechRouteSetting() {
     return allSeTechMask;
 
   DLOG_IF(INFO, nfc_debug_enabled)
-      << fn << ": Number of EE is " << mEeInfo.num_ee;
+      << fn << ": Number of EE is " << (int)mEeInfo.num_ee;
 
   tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
   for (uint8_t i = 0; i < mEeInfo.num_ee; i++) {
