@@ -2390,9 +2390,14 @@ public class NfcService implements DeviceHostListener {
                 tag.removeTechnology(TagTechnology.NDEF_FORMATABLE);
                 tag.findAndReadNdef();
                 // Build a new Tag object to return
-                Tag newTag = new Tag(tag.getUid(), tag.getTechList(),
-                        tag.getTechExtras(), tag.getHandle(), this);
-                return newTag;
+                try {
+                    Tag newTag = new Tag(tag.getUid(), tag.getTechList(),
+                            tag.getTechExtras(), tag.getHandle(), this);
+                    return newTag;
+                } catch (Exception e) {
+                    Log.e(TAG, "Tag creation exception.", e);
+                    return null;
+                }
             }
             return null;
         }
@@ -3780,45 +3785,50 @@ public class NfcService implements DeviceHostListener {
         }
 
         private void dispatchTagEndpoint(TagEndpoint tagEndpoint, ReaderModeParams readerParams) {
-            Tag tag = new Tag(tagEndpoint.getUid(), tagEndpoint.getTechList(),
-                    tagEndpoint.getTechExtras(), tagEndpoint.getHandle(), mNfcTagService);
-            registerTagObject(tagEndpoint);
-            if (readerParams != null) {
-                try {
-                    if ((readerParams.flags & NfcAdapter.FLAG_READER_NO_PLATFORM_SOUNDS) == 0) {
-                        mVibrator.vibrate(mVibrationEffect);
-                        playSound(SOUND_END);
-                    }
-                    if (readerParams.callback != null) {
-                        readerParams.callback.onTagDiscovered(tag);
+            try {
+                Tag tag = new Tag(tagEndpoint.getUid(), tagEndpoint.getTechList(),
+                        tagEndpoint.getTechExtras(), tagEndpoint.getHandle(), mNfcTagService);
+                registerTagObject(tagEndpoint);
+                if (readerParams != null) {
+                    try {
+                        if ((readerParams.flags & NfcAdapter.FLAG_READER_NO_PLATFORM_SOUNDS) == 0) {
+                            mVibrator.vibrate(mVibrationEffect);
+                            playSound(SOUND_END);
+                        }
+                        if (readerParams.callback != null) {
+                            readerParams.callback.onTagDiscovered(tag);
+                            return;
+                        } else {
+                            // Follow normal dispatch below
+                        }
+                    } catch (RemoteException e) {
+                        Log.e(TAG, "Reader mode remote has died, falling back.", e);
+                        // Intentional fall-through
+                    } catch (Exception e) {
+                        // Catch any other exception
+                        Log.e(TAG, "App exception, not dispatching.", e);
                         return;
-                    } else {
-                        // Follow normal dispatch below
                     }
-                } catch (RemoteException e) {
-                    Log.e(TAG, "Reader mode remote has died, falling back.", e);
-                    // Intentional fall-through
-                } catch (Exception e) {
-                    // Catch any other exception
-                    Log.e(TAG, "App exception, not dispatching.", e);
-                    return;
                 }
-            }
-            int dispatchResult = mNfcDispatcher.dispatchTag(tag);
-            if (dispatchResult == NfcDispatcher.DISPATCH_FAIL && !mInProvisionMode) {
-                unregisterObject(tagEndpoint.getHandle());
-                if (mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED) {
-                    if (mToast != null) {
-                        if (mToast.getView().isShown()) mToast.cancel();
+                int dispatchResult = mNfcDispatcher.dispatchTag(tag);
+                if (dispatchResult == NfcDispatcher.DISPATCH_FAIL && !mInProvisionMode) {
+                    unregisterObject(tagEndpoint.getHandle());
+                    if (mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED) {
+                        if (mToast != null) {
+                            if (mToast.getView().isShown()) mToast.cancel();
+                        }
+                        mToast = Toast.makeText(mContext, R.string.tag_dispatch_failed,
+                                                Toast.LENGTH_SHORT);
+                        mToast.show();
                     }
-                    mToast = Toast.makeText(mContext, R.string.tag_dispatch_failed,
-                                            Toast.LENGTH_SHORT);
-                    mToast.show();
+                    playSound(SOUND_ERROR);
+                } else if (dispatchResult == NfcDispatcher.DISPATCH_SUCCESS) {
+                    mVibrator.vibrate(mVibrationEffect);
+                    playSound(SOUND_END);
                 }
-                playSound(SOUND_ERROR);
-            } else if (dispatchResult == NfcDispatcher.DISPATCH_SUCCESS) {
-                mVibrator.vibrate(mVibrationEffect);
-                playSound(SOUND_END);
+            } catch (Exception e) {
+                Log.e(TAG, "Tag creation exception, not dispatching.", e);
+                return;
             }
         }
     }
