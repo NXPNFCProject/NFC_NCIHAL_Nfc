@@ -46,6 +46,7 @@
 #include "nfc_brcm_defs.h"
 #include "phNxpExtns.h"
 #include "rw_int.h"
+#include <log/log.h>
 
 using android::base::StringPrintf;
 
@@ -917,16 +918,18 @@ void NfcTag::fillNativeNfcTagMembers3(JNIEnv* e, jclass tag_cls, jobject tag,
         DLOG_IF(INFO, nfc_debug_enabled)
             << StringPrintf("%s: tech B; TARGET_TYPE_ISO14443_3B", fn);
         len = mTechParams[i].param.pb.sensb_res_len;
-        len = len - 4;  // subtract 4 bytes for NFCID0 at byte 2 through 5
-        if (len > 0) {
-          pollBytes.reset(e->NewByteArray(len));
-          e->SetByteArrayRegion(
+        if (len >= NFC_NFCID0_MAX_LEN) {
+          // subtract 4 bytes for NFCID0 at byte 2 through 5
+          len = len - NFC_NFCID0_MAX_LEN;
+        } else {
+          android_errorWriteLog(0x534e4554, "124940143");
+          LOG(ERROR) << StringPrintf("%s: sensb_res_len error", fn);
+          len = 0;
+        }
+        pollBytes.reset(e->NewByteArray(len));
+        e->SetByteArrayRegion(
               pollBytes.get(), 0, len,
               (jbyte*)(mTechParams[i].param.pb.sensb_res + 4));
-        } else {
-          DLOG_IF(INFO, nfc_debug_enabled)
-              << StringPrintf("%s: tech B; Activation param missing", fn);
-        }
       } else {
         pollBytes.reset(e->NewByteArray(0));
       }
