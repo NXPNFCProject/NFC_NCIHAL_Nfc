@@ -329,6 +329,7 @@ class RoutingManager {
   uint16_t mDefaultSysCodeRoute;
   uint8_t mDefaultSysCodePowerstate;
   uint8_t mOffHostAidRoutingPowerState;
+  uint8_t mHostListenTechMask;
   tNFA_EE_CBACK_DATA mCbEventData;
   tNFA_EE_DISCOVER_REQ mEeInfo;
   int mAidMatchingPlatform;
