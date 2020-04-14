@@ -3742,6 +3742,7 @@ public class NfcService implements DeviceHostListener {
                                 ((info.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0 ||
                                 (info.applicationInfo.privateFlags & ApplicationInfo.PRIVATE_FLAG_PRIVILEGED) != 0)) {
                             intent.setPackage(packageName);
+                            intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
                             mContext.sendBroadcast(intent);
                         }
                     } catch (Exception e) {
