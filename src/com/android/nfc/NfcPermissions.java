@@ -18,6 +18,14 @@ public class NfcPermissions {
     static final String NFC_PERMISSION = android.Manifest.permission.NFC;
     private static final String NFC_PERM_ERROR = "NFC permission required";
 
+    /**
+     * NFC PREFERRED PAYMENT INFO permission
+     */
+    static final String NFC_PREFERRED_PAYMENT_INFO_PERMISSION =
+            android.Manifest.permission.NFC_PREFERRED_PAYMENT_INFO;
+    private static final String NFC_PREFERRED_PAYMENT_INFO_PERM_ERROR =
+            "NFC_PREFERRED_PAYMENT_INFO permission required";
+
     public static void validateUserId(int userId) {
         if (userId != UserHandle.getCallingUserId()) {
             throw new SecurityException("userId passed in is not the calling user.");
@@ -31,5 +39,10 @@ public class NfcPermissions {
 
     public static void enforceUserPermissions(Context context) {
         context.enforceCallingOrSelfPermission(NFC_PERMISSION, NFC_PERM_ERROR);
+    }
+
+    public static void enforcePreferredPaymentInfoPermissions(Context context) {
+        context.enforceCallingOrSelfPermission(NFC_PREFERRED_PAYMENT_INFO_PERMISSION,
+                NFC_PREFERRED_PAYMENT_INFO_PERM_ERROR);
     }
 }

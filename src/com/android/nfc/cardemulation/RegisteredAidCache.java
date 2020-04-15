@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2019 NXP
+*  Copyright 2018-2020 NXP
 *
 ******************************************************************************/
 package com.android.nfc.cardemulation;
@@ -974,6 +974,16 @@ public class RegisteredAidCache {
       synchronized (mLock) {
         generateAidCacheLocked();
       }
+    }
+
+    public ComponentName getPreferredService() {
+        if (mPreferredForegroundService != null) {
+            // return current foreground service
+            return mPreferredForegroundService;
+        } else {
+            // return current preferred service
+            return mPreferredPaymentService;
+        }
     }
 
     public void onNfcDisabled() {

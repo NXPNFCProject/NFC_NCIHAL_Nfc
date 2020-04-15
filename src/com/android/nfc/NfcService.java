@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2019 NXP
+*  Copyright 2018-2020 NXP
 *
 ******************************************************************************/
 package com.android.nfc;
@@ -75,6 +75,7 @@ import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.nfc.TechListParcel;
 import android.nfc.TransceiveResult;
+import android.nfc.cardemulation.ApduServiceInfo;
 import android.nfc.tech.Ndef;
 import android.nfc.tech.TagTechnology;
 import android.os.AsyncTask;
@@ -198,6 +199,7 @@ public class NfcService implements DeviceHostListener {
     static final int MSG_UPDATE_STATS = 15;
     static final int MSG_APPLY_SCREEN_STATE = 16;
     static final int MSG_TRANSACTION_EVENT = 17;
+    static final int MSG_PREFERRED_PAYMENT_CHANGED = 18;
     static final int MSG_TOAST_DEBOUNCE_EVENT = 19;
     static final int MSG_SE_INIT = 59;
     static final int MSG_CLEAR_ROUTING = 62;
@@ -366,6 +368,10 @@ public class NfcService implements DeviceHostListener {
     private final BackupManager mBackupManager;
     // cached version of installed packages requesting Android.permission.NFC_TRANSACTION_EVENTS
     List<String> mNfcEventInstalledPackages = new ArrayList<String>();
+
+    // cached version of installed packages requesting
+    // Android.permission.NFC_PREFERRED_PAYMENT_INFO
+    List<String> mNfcPreferredPaymentChangedInstalledPackages = new ArrayList<String>();
 
     // fields below are used in multiple threads and protected by synchronized(this)
     final HashMap<Integer, Object> mObjectMap = new HashMap<Integer, Object>();
@@ -820,10 +826,18 @@ public class NfcService implements DeviceHostListener {
         List<PackageInfo> packagesNfcEvents = pm.getPackagesHoldingPermissions(
                 new String[] {android.Manifest.permission.NFC_TRANSACTION_EVENT},
                 PackageManager.GET_ACTIVITIES);
+        List<PackageInfo> packagesNfcPreferredPaymentChanged = pm.getPackagesHoldingPermissions(
+                new String[] {android.Manifest.permission.NFC_PREFERRED_PAYMENT_INFO},
+                PackageManager.GET_ACTIVITIES);
         synchronized (this) {
             mNfcEventInstalledPackages.clear();
             for (int i = 0; i < packagesNfcEvents.size(); i++) {
                 mNfcEventInstalledPackages.add(packagesNfcEvents.get(i).packageName);
+            }
+            mNfcPreferredPaymentChangedInstalledPackages.clear();
+            for (int i = 0; i < packagesNfcPreferredPaymentChanged.size(); i++) {
+                mNfcPreferredPaymentChangedInstalledPackages.add(
+                        packagesNfcPreferredPaymentChanged.get(i).packageName);
             }
         }
     }
@@ -987,6 +1001,8 @@ public class NfcService implements DeviceHostListener {
                     mP2pLinkManager.enableDisable(mIsNdefPushEnabled, true);
                 }
                 updateState(NfcAdapter.STATE_ON);
+
+                onPreferredPaymentChanged(NfcAdapter.PREFERRED_PAYMENT_LOADED);
             }
 
             initSoundPool();
@@ -3113,6 +3129,10 @@ public class NfcService implements DeviceHostListener {
         return mDeviceHost.sendRawFrame(data);
     }
 
+    public void onPreferredPaymentChanged(int reason) {
+        sendMessage(MSG_PREFERRED_PAYMENT_CHANGED, reason);
+    }
+
     void sendMessage(int what, Object obj) {
         Message msg = mHandler.obtainMessage();
         msg.what = what;
@@ -3511,6 +3531,14 @@ public class NfcService implements DeviceHostListener {
                     sToast_debounce = false;
                     break;
 
+                case MSG_PREFERRED_PAYMENT_CHANGED:
+                    Intent preferredPaymentChangedIntent =
+                            new Intent(NfcAdapter.ACTION_PREFERRED_PAYMENT_CHANGED);
+                    preferredPaymentChangedIntent.putExtra(
+                            NfcAdapter.EXTRA_PREFERRED_PAYMENT_CHANGED_REASON, (int)msg.obj);
+                    sendPreferredPaymentChangedEvent(preferredPaymentChangedIntent);
+                    break;
+
                 default:
                     Log.e(TAG, "Unknown message received");
                     break;
@@ -3739,6 +3767,92 @@ public class NfcService implements DeviceHostListener {
                                 (info.applicationInfo.privateFlags & ApplicationInfo.PRIVATE_FLAG_PRIVILEGED) != 0)) {
                             intent.setPackage(packageName);
                             intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
+                            mContext.sendBroadcast(intent);
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Exception in getPackageInfo " + e);
+                    }
+                }
+            }
+        }
+
+        /* Returns the list of packages request for nfc preferred payment service changed and
+         * have access to NFC Events on any SE */
+        private ArrayList<String> getNfcPreferredPaymentChangedSEAccessAllowedPackages() {
+            if (!isSEServiceAvailable() || mNfcPreferredPaymentChangedInstalledPackages.isEmpty()) {
+                return null;
+            }
+            String[] readers = null;
+            try {
+                readers = mSEService.getReaders();
+            } catch (RemoteException e) {
+                Log.e(TAG, "Error in getReaders() " + e);
+                return null;
+            }
+
+            if (readers == null || readers.length == 0) {
+                return null;
+            }
+            boolean[] nfcAccessFinal = null;
+            String[] installedPackages =
+                    new String[mNfcPreferredPaymentChangedInstalledPackages.size()];
+            for (String reader : readers) {
+                try {
+                    boolean[] accessList = mSEService.isNFCEventAllowed(reader, null,
+                            mNfcPreferredPaymentChangedInstalledPackages.toArray(installedPackages)
+                            );
+                    if (accessList == null) {
+                        continue;
+                    }
+                    if (nfcAccessFinal == null) {
+                        nfcAccessFinal = accessList;
+                    }
+                    for (int i = 0; i < accessList.length; i++) {
+                        if (accessList[i]) {
+                            nfcAccessFinal[i] = true;
+                        }
+                    }
+                } catch (RemoteException e) {
+                    Log.e(TAG, "Error in isNFCEventAllowed() " + e);
+                }
+            }
+            if (nfcAccessFinal == null) {
+                return null;
+            }
+            ArrayList<String> packages = new ArrayList<String>();
+            for (int i = 0; i < nfcAccessFinal.length; i++) {
+                if (nfcAccessFinal[i]) {
+                    packages.add(mNfcPreferredPaymentChangedInstalledPackages.get(i));
+                }
+            }
+            return packages;
+        }
+
+        private void sendPreferredPaymentChangedEvent(Intent intent) {
+            intent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
+            // Resume app switches so the receivers can start activities without delay
+            mNfcDispatcher.resumeAppSwitches();
+            synchronized (this) {
+                ArrayList<String> SEPackages =
+                        getNfcPreferredPaymentChangedSEAccessAllowedPackages();
+                if (SEPackages!= null && !SEPackages.isEmpty()) {
+                    for (String packageName : SEPackages) {
+                        intent.setPackage(packageName);
+                        mContext.sendBroadcast(intent);
+                    }
+                }
+                PackageManager pm = mContext.getPackageManager();
+                for (String packageName : mNfcPreferredPaymentChangedInstalledPackages) {
+                    try {
+                        PackageInfo info = pm.getPackageInfo(packageName, 0);
+                        if (SEPackages != null && SEPackages.contains(packageName)) {
+                            continue;
+                        }
+                        if (info.applicationInfo != null &&
+                                ((info.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0 ||
+                                (info.applicationInfo.privateFlags &
+                                ApplicationInfo.PRIVATE_FLAG_PRIVILEGED) != 0)) {
+                            intent.setPackage(packageName);
                             mContext.sendBroadcast(intent);
                         }
                     } catch (Exception e) {
