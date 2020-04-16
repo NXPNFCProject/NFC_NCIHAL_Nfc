@@ -245,6 +245,19 @@ void NfcTag::updateNfcID0Param(uint8_t* nfcID0) {
                       nfcID0[2], nfcID0[3]);
   memcpy(mNfcID0, nfcID0, 4);
 }
+
+/******************************************************************************
+**
+** Function:        clearActivationParams
+**
+** Description:     Clears the current activation parameters value.
+**
+** Returns:         None.
+**
+*******************************************************************************/
+void NfcTag::clearActivationParams() {
+  memset(&mActivationParams_t, 0, sizeof(activationParams_t));
+}
 #endif
 /*******************************************************************************
 **
@@ -1696,6 +1709,16 @@ void NfcTag::connectionEventHandler(uint8_t event, tNFA_CONN_EVT_DATA* data) {
     case NFA_DEACTIVATED_EVT:
       mIsActivated = false;
       mProtocol = NFC_PROTOCOL_UNKNOWN;
+#if (NXP_EXTNS == TRUE)
+      // resetTechnologies does'nt clears mActivationParams_t
+      // In multi protocol tag this parameter contains previous technology Info
+      // So In case of Deactivate to discovery it will be required to clear the same
+      // Since resetTechnologies don't have deactivate type info.
+      // Required to clear as part of new method. In future if required can clear other
+      // required flags also.
+      if(data->deactivated.type == NFA_DEACTIVATE_TYPE_DISCOVERY)
+        clearActivationParams();
+#endif
       resetTechnologies();
       break;
 
