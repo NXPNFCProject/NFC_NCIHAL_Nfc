@@ -49,7 +49,6 @@
 #include "Mutex.h"
 #include "NfcJniUtil.h"
 #include "NfcTag.h"
-#include "Pn544Interop.h"
 #include "ndef_utils.h"
 #include "nfa_api.h"
 #include "nfa_rw_api.h"
@@ -1580,12 +1579,6 @@ static jint nativeNfcTag_doCheckNdef(JNIEnv* e, jobject o, jintArray ndefInfo) {
       ndef[1] = NDEF_MODE_READ_WRITE;
     e->ReleaseIntArrayElements(ndefInfo, ndef, 0);
     status = NFA_STATUS_FAILED;
-  } else if ((sCheckNdefStatus == NFA_STATUS_TIMEOUT) &&
-             (NfcTag::getInstance().getProtocol() == NFC_PROTOCOL_ISO_DEP)) {
-#if(NXP_EXTNS != TRUE)
-    pn544InteropStopPolling();
-#endif
-    status = sCheckNdefStatus;
   } else {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: unknown status 0x%X", __func__, sCheckNdefStatus);
