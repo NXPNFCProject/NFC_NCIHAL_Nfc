@@ -46,6 +46,7 @@ import android.nfc.cardemulation.HostApduService;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
@@ -127,14 +128,16 @@ public class HostEmulationManager {
         mKeyguard = (KeyguardManager) context.getSystemService(Context.KEYGUARD_SERVICE);
     }
 
-    public void onPreferredPaymentServiceChanged(ComponentName service) {
-        synchronized (mLock) {
-            if (service != null) {
-                bindPaymentServiceLocked(ActivityManager.getCurrentUser(), service);
-            } else {
-                unbindPaymentServiceLocked();
+    public void onPreferredPaymentServiceChanged(final ComponentName service) {
+        new Handler(Looper.getMainLooper()).post(() -> {
+            synchronized (mLock) {
+                if (service != null) {
+                    bindPaymentServiceLocked(ActivityManager.getCurrentUser(), service);
+                } else {
+                    unbindPaymentServiceLocked();
+                }
             }
-        }
+        });
      }
 
      public void onPreferredForegroundServiceChanged(ComponentName service) {
