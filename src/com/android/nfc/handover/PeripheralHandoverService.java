@@ -211,9 +211,6 @@ public class PeripheralHandoverService extends Service implements BluetoothPerip
                     mNfcAdapter.resumePolling();
                 }
             }
-        } else if (state == BluetoothAdapter.STATE_OFF) {
-            mBluetoothEnabledByNfc = false;
-            mBluetoothHeadsetConnected = false;
         }
     }
 
