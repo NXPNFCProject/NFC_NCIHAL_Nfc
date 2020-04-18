@@ -347,7 +347,7 @@ static tNFA_STATUS stopPolling_rfDiscoveryDisabled();
 static tNFA_STATUS startPolling_rfDiscoveryDisabled(
     tNFA_TECHNOLOGY_MASK tech_mask);
 
-static std::string ConvertJavaStrToStdString(JNIEnv* env, jstring s);
+std::string ConvertJavaStrToStdString(JNIEnv* env, jstring s);
 static jboolean nfcManager_doCommitRouting(JNIEnv* e, jobject o);
 static void notifyPollingEventwhileNfcOff();
 
@@ -4885,7 +4885,7 @@ static void restartUiccListen(jint uiccSlot) {
   ** Returns:         std::string
   **
   *******************************************************************************/
-  static std::string ConvertJavaStrToStdString(JNIEnv * env, jstring s) {
+  std::string ConvertJavaStrToStdString(JNIEnv* env, jstring s) {
     if (!s) return "";
 
     const jclass strClass = env->GetObjectClass(s);

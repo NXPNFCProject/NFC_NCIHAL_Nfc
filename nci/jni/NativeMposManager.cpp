@@ -12,7 +12,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  Copyright 2018 NXP
+ *  Copyright 2018-2020 NXP
  *
  ******************************************************************************/
 #include <android-base/stringprintf.h>
@@ -43,7 +43,7 @@ extern void disableRfDiscovery();
 **                  e: JVM environment.
 **                  o: Java object.
 **
-** Returns:         STATUS_OK/FAILED.
+** Returns:         SUCCESS/FAILED/BUSY/REJECTED.
 **
 *******************************************************************************/
 static int nativeNfcMposManage_doMposSetReaderMode(JNIEnv*, jobject, bool on) {
@@ -55,6 +55,33 @@ static int nativeNfcMposManage_doMposSetReaderMode(JNIEnv*, jobject, bool on) {
     LOG(ERROR) << StringPrintf("%s: ETSI_READER not available. Returning",
                                __func__);
   }
+  return status;
+}
+
+/*******************************************************************************
+**
+** Function:        nativeNfcMcrManage_doConfigureSecureReaderMode
+**
+** Description:     e: JVM environment.
+**                  o: Java object.
+**                  on: Set/Reset the MPOS reader mode
+**                  rdrType: Requested Reader Type. e.g. "MFC"
+**
+** Returns:         SUCCESS/FAILED/BUSY/REJECTED.
+**
+*******************************************************************************/
+static int nativeNfcMcrManage_doConfigureSecureReaderMode(JNIEnv* e, jobject, bool on,
+                                                    jstring rdrType) {
+  tNFA_STATUS status = NFA_STATUS_REJECTED;
+#if 0
+  std::string readertype = ConvertJavaStrToStdString(e, rdrType);
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:enter", __func__);
+#ifdef FEATURE_SECURE_READER
+  /* The functionality of Mifare Classic reader over eSE is some what same as
+   * MPOS. Hence, reusing the existing code */
+  status = MposManager::getInstance().setMposReaderMode(on, readertype);
+#endif
+#endif
   return status;
 }
 
@@ -168,6 +195,8 @@ static JNINativeMethod gMethods[] = {
 
     {"doMposGetReaderMode", "()Z",
      (void*)nativeNfcMposManager_doMposGetReaderMode},
+    {"doConfigureSecureReaderMode", "(ZLjava/lang/String;)I",
+     (void*)nativeNfcMcrManage_doConfigureSecureReaderMode},
 
     {"doStopPoll", "(I)V", (void*)nativeNfcMposManage_doStopPoll},
 

@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2019 NXP
+*  Copyright 2018-2020 NXP
 *
 ******************************************************************************/
 package com.android.nfc.dhimpl;
@@ -313,6 +313,11 @@ public class NativeNfcManager implements DeviceHost {
     @Override
     public int mposSetReaderMode(boolean on) {
         return mMposMgr.doMposSetReaderMode(on);
+    }
+
+    @Override
+    public int configureSecureReaderMode(boolean on, String readerType) {
+        return mMposMgr.doConfigureSecureReaderMode(on, readerType);
     }
 
     @Override
