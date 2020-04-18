@@ -30,6 +30,7 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.media.AudioManager;
 import android.media.session.MediaSessionLegacyHelper;
 import android.os.Handler;
 import android.os.Looper;
@@ -94,6 +95,7 @@ public class BluetoothPeripheralHandover implements BluetoothProfile.ServiceList
     final BluetoothAdapter mBluetoothAdapter;
     final int mTransport;
     final boolean mProvisioning;
+    final AudioManager mAudioManager;
 
     final Object mLock = new Object();
 
@@ -107,6 +109,7 @@ public class BluetoothPeripheralHandover implements BluetoothProfile.ServiceList
     OobData mOobData;
     boolean mIsHeadsetAvailable;
     boolean mIsA2dpAvailable;
+    boolean mIsMusicActive;
 
     // protected by mLock
     BluetoothA2dp mA2dp;
@@ -142,6 +145,8 @@ public class BluetoothPeripheralHandover implements BluetoothProfile.ServiceList
             mIsHeadsetAvailable = true;
             mIsA2dpAvailable = true;
         }
+
+        mAudioManager = (AudioManager)mContext.getSystemService(Context.AUDIO_SERVICE);
 
         mState = STATE_INIT;
     }
@@ -242,6 +247,10 @@ public class BluetoothPeripheralHandover implements BluetoothProfile.ServiceList
                             }
                             Log.i(TAG, "ACTION_CONNECT addr=" + mDevice + " name=" + mName);
                             mAction = ACTION_CONNECT;
+
+                            if (mIsA2dpAvailable) {
+                                mIsMusicActive = mAudioManager.isMusicActive();
+                            }
                         }
                     }
                 }
@@ -550,6 +559,10 @@ public class BluetoothPeripheralHandover implements BluetoothProfile.ServiceList
     }
 
     void startTheMusic() {
+        if (!mContext.getResources().getBoolean(R.bool.enable_auto_play) && !mIsMusicActive) {
+            return;
+        }
+
         MediaSessionLegacyHelper helper = MediaSessionLegacyHelper.getHelper(mContext);
         if (helper != null) {
             KeyEvent keyEvent = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PLAY);
