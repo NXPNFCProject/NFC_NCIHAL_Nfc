@@ -874,6 +874,10 @@ public class SendUi implements Animator.AnimatorListener, View.OnTouchListener,
     public void onActionModeFinished(ActionMode mode) {
     }
 
+    public boolean isSendUiInIdleState() {
+        return mState == STATE_IDLE;
+    }
+
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {

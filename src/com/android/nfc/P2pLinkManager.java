@@ -152,6 +152,11 @@ interface P2pEventListener {
      */
     public void onP2pOutOfRange();
 
+    /**
+     * Indicates the P2P Beam UI is in idle mode.
+     */
+    public boolean isP2pIdle();
+
     public interface Callback {
         public void onP2pSendConfirmed();
         public void onP2pCanceled();
@@ -462,6 +467,10 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
             mPeerLlcpVersion = peerLlcpVersion;
             switch (mLinkState) {
                 case LINK_STATE_DOWN:
+                    if (!mEventListener.isP2pIdle() && mSendState != SEND_STATE_PENDING) {
+                        break;
+                    }
+
                     if (DBG) Log.d(TAG, "onP2pInRange()");
                     // Start taking a screenshot
                     mEventListener.onP2pInRange();
