@@ -1879,10 +1879,25 @@ public class NfcService implements DeviceHostListener {
         public int nfcSelfTest(int type) {
             NfcPermissions.enforceUserPermissions(mContext);
             NfcPermissions.enforceAdminPermissions(mContext);
-            int status = 0xFF;
+            int status = 0xFF, prbs_test = 0x06, swpSelf_test = 0x07;
+            Method mNfcSelfTestMethod;
+            Log.i(TAG,"doNfcSelfTest type ENter : " + type);
 
             synchronized(NfcService.this) {
-                status = mDeviceHost.doNfcSelfTest(type);
+              try {
+                 if(mNfcExtnsObj!=null && (type == prbs_test || type == swpSelf_test)){
+                    mNfcSelfTestMethod = mNfcExtnsClass.getDeclaredMethod("doNfcSelfTest", int.class);
+                    mNfcSelfTestMethod.invoke(mNfcExtnsObj,type);
+                 }else {
+                    status = mDeviceHost.doNfcSelfTest(type);
+                 }
+              } catch (NoSuchMethodException e ) {
+                  Log.e(TAG, " NoSuchMethodException");
+              } catch (InvocationTargetException e) {
+                  Log.e(TAG, " InvocationTargetException");
+              }catch (IllegalAccessException e) {
+                  Log.e(TAG, " IllegalAccessException");
+              }
             }
             return status;
         }
