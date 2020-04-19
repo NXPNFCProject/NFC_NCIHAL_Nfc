@@ -178,6 +178,7 @@ public class NfcService implements DeviceHostListener {
     static final String TRON_NFC_CE = "nfc_ce";
     static final String TRON_NFC_P2P = "nfc_p2p";
     static final String TRON_NFC_TAG = "nfc_tag";
+    static final String T4T_NFCEE_AID = "D2760000850101";
     static final String NATIVE_LOG_FILE_NAME = "native_logs";
     static final int TECH_TYPE_A= 0x01;
     static final int TECH_TYPE_F= 0x04;
@@ -474,7 +475,9 @@ public class NfcService implements DeviceHostListener {
     private int ROUTE_ID_SMX   = 0x01;
     private int ROUTE_ID_UICC  = 0x02;
     private int ROUTE_ID_UICC2 = 0x04;
+    private int ROUTE_ID_T4T_NFCEE = 0x7F;
     private int DEFAULT_ROUTE_ID_DEFAULT = 0x00;
+    private int AID_MATCHING_EXACT_ONLY = 0x02;
 
     public static final int T4TNFCEE_STATUS_FAILED = -1;
     private Object mT4tNfcEeObj = new Object();
@@ -3163,6 +3166,14 @@ public class NfcService implements DeviceHostListener {
         return mDeviceHost.getGsmaPwrState();
     }
 
+    /**
+     * get default T4TNfcee power state supported
+     */
+    public int GetT4TNfceePowerState() {
+        int powerState = mDeviceHost.getT4TNfceePowerState();
+        if (DBG) Log.d(TAG, "T4TNfceePowerState : " + powerState);
+        return powerState;
+    }
     public int getAidRoutingTableStatus() {
         int aidTableStatus = 0x00;
         aidTableStatus = mNxpPrefs.getInt("PREF_SET_AID_ROUTING_TABLE_FULL",0x00);
@@ -4351,5 +4362,12 @@ public class NfcService implements DeviceHostListener {
       int defaultRoute = mNxpPrefs.getInt("PREF_SET_DEFAULT_ROUTE_ID", 0xFF);
       Log.d(TAG, "Reading updated preference  :" + defaultRoute);
       mHandler.sendEmptyMessage(MSG_RESET_AND_UPDATE_ROUTING_PARAMS);
+    }
+    public void addT4TNfceeAid() {
+      Log.i(TAG, "Add T4T Nfcee AID");
+
+      routeAids(T4T_NFCEE_AID, ROUTE_ID_T4T_NFCEE,
+              AID_MATCHING_EXACT_ONLY,
+              GetT4TNfceePowerState());
     }
 }

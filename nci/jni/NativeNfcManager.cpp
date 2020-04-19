@@ -4442,6 +4442,21 @@ static void restartUiccListen(jint uiccSlot) {
     }
     return true;
   }
+  /*******************************************************************************
+   **
+   ** Function:        nfcManager_getT4TNfceePowerState
+   **
+   ** Description:     Get the T4T Nfcee power state supported.
+   **                  e: JVM environment.
+   **                  o: Java object.
+   **                  mode: Not used.
+   **
+   ** Returns:         None
+   **
+   *******************************************************************************/
+  static jint nfcManager_getT4TNfceePowerState(JNIEnv* e, jobject o) {
+    return 0;
+  }
   /*****************************************************************************
   **
   ** JNI functions for android-4.0.1_r1
@@ -4493,6 +4508,8 @@ static void restartUiccListen(jint uiccSlot) {
 
     {"getDefaultMifareCLTPowerState", "()I",
      (void*)nfcManager_getDefaultMifareCLTPowerState},
+    {"getT4TNfceePowerState", "()I",
+     (void*) nfcManager_getT4TNfceePowerState},
     {"doChangeDiscoveryTech", "(II)V", (void*)nfcManager_changeDiscoveryTech},
     {"doPartialInitForEseCosUpdate", "()Z",
      (void*)nfcManager_doPartialInitForEseCosUpdate},
