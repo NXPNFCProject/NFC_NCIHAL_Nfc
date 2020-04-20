@@ -178,8 +178,8 @@ public class NfcService implements DeviceHostListener {
     static final String TRON_NFC_CE = "nfc_ce";
     static final String TRON_NFC_P2P = "nfc_p2p";
     static final String TRON_NFC_TAG = "nfc_tag";
-    static final String T4T_NFCEE_AID = "D2760000850101";
     static final String NATIVE_LOG_FILE_NAME = "native_logs";
+    static final String T4T_NFCEE_AID = "D2760000850101";
     static final int TECH_TYPE_A= 0x01;
     static final int TECH_TYPE_F= 0x04;
     static final int MSG_NDEF_TAG = 0;
@@ -202,6 +202,7 @@ public class NfcService implements DeviceHostListener {
     static final int MSG_TRANSACTION_EVENT = 17;
     static final int MSG_PREFERRED_PAYMENT_CHANGED = 18;
     static final int MSG_TOAST_DEBOUNCE_EVENT = 19;
+    static final int MSG_CARD_EMULATION = 21;
     static final int MSG_SE_INIT = 59;
     static final int MSG_CLEAR_ROUTING = 62;
     static final int MSG_INIT_WIREDSE = 63;
@@ -211,9 +212,9 @@ public class NfcService implements DeviceHostListener {
     static final int MSG_READ_T4TNFCEE = 67;
     static final int MSG_WRITE_T4TNFCEE = 68;
     // SCR/MPOS constants
-    static final int SE_READER_TYPE_INAVLID           = 0;
-    static final int SE_READER_TYPE_MPOS              = 1;
-    static final int SE_READER_TYPE_MFC               = 2;
+    static final int SE_READER_TYPE_INAVLID   = 0;
+    static final int SE_READER_TYPE_MPOS      = 1;
+    static final int SE_READER_TYPE_MFC       = 2;
     static final int MSG_SCR_START_SUCCESS            = 70;
     static final int MSG_SCR_START_FAIL               = 71;
     static final int MSG_SCR_RESTART                  = 72;
