@@ -3516,6 +3516,19 @@ public class NfcService implements DeviceHostListener {
                     byte[][] data = (byte[][]) msg.obj;
                     sendOffHostTransactionEvent(data[0], data[1], data[2]);
                     break;
+
+                case MSG_PREFERRED_PAYMENT_CHANGED:
+                    Intent preferredPaymentChangedIntent =
+                            new Intent(NfcAdapter.ACTION_PREFERRED_PAYMENT_CHANGED);
+                    preferredPaymentChangedIntent.putExtra(
+                            NfcAdapter.EXTRA_PREFERRED_PAYMENT_CHANGED_REASON, (int)msg.obj);
+                    sendPreferredPaymentChangedEvent(preferredPaymentChangedIntent);
+                    break;
+
+                case MSG_TOAST_DEBOUNCE_EVENT:
+                    sToast_debounce = false;
+                    break;
+
                 case MSG_SE_INIT:
                     Log.e(TAG, "msg se init");
 
@@ -3595,21 +3608,9 @@ public class NfcService implements DeviceHostListener {
                  sendScrEvent(msg.what);
                  break;
 
-                case MSG_TOAST_DEBOUNCE_EVENT:
-                    sToast_debounce = false;
-                    break;
-
-                case MSG_PREFERRED_PAYMENT_CHANGED:
-                    Intent preferredPaymentChangedIntent =
-                            new Intent(NfcAdapter.ACTION_PREFERRED_PAYMENT_CHANGED);
-                    preferredPaymentChangedIntent.putExtra(
-                            NfcAdapter.EXTRA_PREFERRED_PAYMENT_CHANGED_REASON, (int)msg.obj);
-                    sendPreferredPaymentChangedEvent(preferredPaymentChangedIntent);
-                    break;
-
-                default:
-                    Log.e(TAG, "Unknown message received");
-                    break;
+              default:
+                Log.e(TAG, "Unknown message received");
+                break;
             }
         }
 
@@ -3650,6 +3651,7 @@ public class NfcService implements DeviceHostListener {
                 case MSG_SCR_RESTART: {
                     /* Send broadcast ordered */
                     Intent scrRestartIntent = new Intent();
+
                     if(SE_READER_TYPE == SE_READER_TYPE_MPOS) {
                         scrRestartIntent.setAction(
                                 NfcConstants.ACTION_NFC_MPOS_READER_MODE_RESTART);
@@ -3682,6 +3684,7 @@ public class NfcService implements DeviceHostListener {
                 case MSG_SCR_STOP_SUCCESS: {
                     /* Send broadcast ordered */
                     Intent scrStopSuccessIntent = new Intent();
+
                     if(SE_READER_TYPE == SE_READER_TYPE_MPOS) {
                         scrStopSuccessIntent.setAction(
                                 NfcConstants.ACTION_NFC_MPOS_READER_MODE_STOP_SUCCESS);
@@ -3839,7 +3842,7 @@ public class NfcService implements DeviceHostListener {
                     }
                 } catch (RemoteException e) {
                     Log.e(TAG, "Error in isNFCEventAllowed() " + e);
-                }catch (IllegalArgumentException e) {
+                } catch (IllegalArgumentException e) {
                     Log.e(TAG, "Error " + e);
                 }
             }
@@ -3881,7 +3884,6 @@ public class NfcService implements DeviceHostListener {
                                 ((info.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0 ||
                                 (info.applicationInfo.privateFlags & ApplicationInfo.PRIVATE_FLAG_PRIVILEGED) != 0)) {
                             intent.setPackage(packageName);
-                            intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
                             mContext.sendBroadcast(intent);
                         }
                     } catch (Exception e) {
@@ -3968,6 +3970,7 @@ public class NfcService implements DeviceHostListener {
                                 (info.applicationInfo.privateFlags &
                                 ApplicationInfo.PRIVATE_FLAG_PRIVILEGED) != 0)) {
                             intent.setPackage(packageName);
+                            intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
                             mContext.sendBroadcast(intent);
                         }
                     } catch (Exception e) {
@@ -3976,6 +3979,7 @@ public class NfcService implements DeviceHostListener {
                 }
             }
         }
+
 
         private boolean llcpActivated(NfcDepEndpoint device) {
             Log.d(TAG, "LLCP Activation message");
@@ -4260,7 +4264,8 @@ public class NfcService implements DeviceHostListener {
         public void onReceive(Context context, Intent intent){
             String action = intent.getAction();
             if (DevicePolicyManager.ACTION_DEVICE_POLICY_MANAGER_STATE_CHANGED
-                        .equals(action)) {
+                        .equals(action) &&
+                        mIsBeamCapable) {
                 enforceBeamShareActivityPolicy(
                     context, new UserHandle(getSendingUserId()));
             }

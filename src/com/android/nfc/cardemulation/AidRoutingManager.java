@@ -304,11 +304,11 @@ public class AidRoutingManager {
             if (DBG) Log.d(TAG, "mMaxAidRoutingTableSize: " + mMaxAidRoutingTableSize);
             mDefaultRoute = NfcService.getInstance().GetDefaultRouteLoc();
             for(int index=0; index < seList.size(); index++) {
-                mDefaultRoute = seList.get(index);
-                if(index != 0)
-                    if (DBG) Log.d(TAG, "AidRoutingTable is full, try to switch mDefaultRoute to 0x" + Integer.toHexString(mDefaultRoute));
-                aidRoutingTableCache.clear();
-                if (mAidMatchingSupport == AID_MATCHING_PREFIX_ONLY) {
+              mDefaultRoute = seList.get(index);
+              if(index != 0)
+                if (DBG) Log.d(TAG, "AidRoutingTable is full, try to switch mDefaultRoute to 0x" + Integer.toHexString(mDefaultRoute));
+            aidRoutingTableCache.clear();
+            if (mAidMatchingSupport == AID_MATCHING_PREFIX_ONLY) {
                 /* If a non-default route registers an exact AID which is shorter
                  * than this exact AID, this will create a problem with controllers
                  * that treat every AID in the routing table as a prefix.
@@ -391,9 +391,9 @@ public class AidRoutingManager {
               }
             }
             if(aidRouteResolved == true) {
+              commit(aidRoutingTableCache);
               NfcService.getInstance().updateDefaultAidRoute(mDefaultRoute);
               mLastCommitStatus = true;
-              commit(aidRoutingTableCache);
           } else {
               StatsLog.write(StatsLog.NFC_ERROR_OCCURRED, StatsLog.NFC_ERROR_OCCURRED__TYPE__AID_OVERFLOW, 0, 0);
               Log.e(TAG, "RoutingTable unchanged because it's full, not updating");
