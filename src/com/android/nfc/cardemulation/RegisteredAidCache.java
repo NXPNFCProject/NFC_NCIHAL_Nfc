@@ -972,6 +972,14 @@ public class RegisteredAidCache {
         }
     }
 
+    public void onRoutingTableChanged() {
+      if (DBG)
+        Log.d(TAG, "onRoutingTableChanged");
+      synchronized (mLock) {
+        generateAidCacheLocked();
+      }
+    }
+
     public ComponentName getPreferredService() {
         if (mPreferredForegroundService != null) {
             // return current foreground service
@@ -980,14 +988,6 @@ public class RegisteredAidCache {
             // return current preferred service
             return mPreferredPaymentService;
         }
-    }
-
-    public void onRoutingTableChanged() {
-      if (DBG)
-        Log.d(TAG, "onRoutingTableChanged");
-      synchronized (mLock) {
-        generateAidCacheLocked();
-      }
     }
 
     public void onNfcDisabled() {
