@@ -3062,6 +3062,18 @@ static jint nfcManager_getIsoDepMaxTransceiveLength(JNIEnv*, jobject) {
    */
   return NfcConfig::getUnsigned(NAME_ISO_DEP_MAX_TRANSCEIVE, 261);
 }
+/*******************************************************************************
+**
+** Function:        nfcManager_getAidTableSize
+** Description:     Get the maximum supported size for AID routing table.
+**
+**                  e: JVM environment.
+**                  o: Java object.
+**
+*******************************************************************************/
+static jint nfcManager_getAidTableSize(JNIEnv*, jobject) {
+  return NFA_GetAidTableSize();
+}
 
 static jboolean nfcManager_doSetNfcSecure(JNIEnv* e, jobject o,
                                           jboolean enable) {
@@ -3177,7 +3189,10 @@ static JNINativeMethod gMethods[] = {
     {"getIsoDepMaxTransceiveLength", "()I",
      (void*)nfcManager_getIsoDepMaxTransceiveLength},
 
-    {"getDefaultAidRoute", "()I",
+     {"getAidTableSize", "()I",
+             (void*) nfcManager_getAidTableSize},
+
+     {"getDefaultAidRoute", "()I",
             (void*) nfcManager_getDefaultAidRoute},
 
     {"getDefaultDesfireRoute", "()I",
@@ -3225,8 +3240,6 @@ static JNINativeMethod gMethods[] = {
     {"isNfccBusy", "()Z", (void*)nfcManager_isNfccBusy},
     {"setTransitConfig", "(Ljava/lang/String;)I",
                   (void*)nfcManager_setTransitConfig},
-    {"getAidTableSize", "()I",
-            (void*) nfcManager_getAidTableSize},
     {"getRemainingAidTableSize", "()I",
             (void*) nfcManager_getRemainingAidTableSize},
     {"doselectUicc", "(I)I", (void*)nfcManager_doSelectUicc},
@@ -4069,20 +4082,6 @@ std::string ConvertJavaStrToStdString(JNIEnv* env, jstring s) {
   env->DeleteLocalRef(strJbytes);
   env->DeleteLocalRef(strClass);
   return ret;
-}
-
-/*******************************************************************************
-**
-** Function:        nfcManager_getAidTableSize
-** Description:     Get the maximum supported size for AID routing table.
-**
-**                  e: JVM environment.
-**                  o: Java object.
-**
-*******************************************************************************/
-static jint nfcManager_getAidTableSize (JNIEnv*, jobject )
-{
-    return NFA_GetAidTableSize();
 }
 
 /*******************************************************************************
