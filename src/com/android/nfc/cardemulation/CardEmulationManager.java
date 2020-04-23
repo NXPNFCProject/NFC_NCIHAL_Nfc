@@ -407,8 +407,13 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
             if (!isServiceRegistered(userId, service)) {
                 return false;
             }
-            return mServiceCache.registerAidGroupForService(userId, Binder.getCallingUid(), service,
-                    new NfcAidGroup(aidGroup));
+            if (!mServiceCache.registerAidGroupForService(userId, Binder.getCallingUid(), service,
+                    new NfcAidGroup(aidGroup))) {
+                return false;
+            }
+            NfcService.getInstance().onPreferredPaymentChanged(
+                    NfcAdapter.PREFERRED_PAYMENT_UPDATED);
+            return true;
         }
 
         @Override
