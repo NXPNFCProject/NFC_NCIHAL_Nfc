@@ -326,6 +326,7 @@ class NfcDispatcher {
         }
 
         if (provisioningOnly) {
+            StatsLog.write(StatsLog.NFC_TAG_OCCURRED, StatsLog.NFC_TAG_OCCURRED__TYPE__PROVISION);
             if (message == null) {
                 // We only allow NDEF-message dispatch in provisioning mode
                 return DISPATCH_FAIL;
@@ -337,7 +338,6 @@ class NfcDispatcher {
                 Log.e(TAG, "Dropping NFC intent in provisioning mode.");
                 return DISPATCH_FAIL;
             }
-            StatsLog.write(StatsLog.NFC_TAG_OCCURRED, StatsLog.NFC_TAG_OCCURRED__TYPE__PROVISION);
         }
 
         if (tryNdef(dispatch, message)) {
