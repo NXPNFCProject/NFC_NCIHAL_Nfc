@@ -3216,6 +3216,10 @@ public class NfcService implements DeviceHostListener {
         mDeviceHost.doSetScreenState(screen_state_mask);
     }
 
+    public boolean isNfcExtnsPresent() {
+       return (mNfcExtnsObj != null);
+    }
+
     final class NfcServiceHandler extends Handler {
         @Override
         public void handleMessage(Message msg) {
