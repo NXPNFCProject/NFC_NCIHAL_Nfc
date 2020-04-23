@@ -394,13 +394,20 @@ bool RoutingManager::addAidRouting(const uint8_t* aid, uint8_t aidLen,
   if (!mSecureNfcEnabled) {
     powerState = (route != 0x00) ? mOffHostAidRoutingPowerState : 0x11;
   }
+  SyncEventGuard guard(mRoutingEvent);
+  mAidRoutingConfigured = false;
   tNFA_STATUS nfaStat =
       NFA_EeAddAidRouting(route, aidLen, (uint8_t*)aid, powerState, aidInfo);
    #endif
   if (nfaStat == NFA_STATUS_OK) {
-    DLOG_IF(INFO, nfc_debug_enabled) << fn << ": routed AID";
 #if(NXP_EXTNS == TRUE)
+    DLOG_IF(INFO, nfc_debug_enabled) << fn << ": routed AID";
     mAidAddRemoveEvent.wait();
+#else
+    mRoutingEvent.wait();
+  }
+  if (mAidRoutingConfigured) {
+    DLOG_IF(INFO, nfc_debug_enabled) << fn << ": routed AID";
 #endif
     return true;
   } else {
@@ -445,7 +452,7 @@ bool RoutingManager::commitRouting() {
 
 void RoutingManager::onNfccShutdown() {
   static const char fn[] = "RoutingManager:onNfccShutdown";
-  if (mDefaultOffHostRoute == 0x00) return;
+  if (mDefaultOffHostRoute == 0x00 && mDefaultFelicaRoute == 0x00) return;
 
   tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
   uint8_t actualNumEe = MAX_NUM_EE;
