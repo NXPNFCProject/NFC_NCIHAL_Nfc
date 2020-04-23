@@ -39,7 +39,6 @@ import java.io.PrintWriter;
 import java.util.List;
 import java.util.ArrayList;
 import android.app.ActivityManager;
-import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
