@@ -4162,8 +4162,7 @@ public class NfcService implements DeviceHostListener {
         public void onReceive(Context context, Intent intent){
             String action = intent.getAction();
             if (DevicePolicyManager.ACTION_DEVICE_POLICY_MANAGER_STATE_CHANGED
-                        .equals(action) &&
-                    mIsBeamCapable) {
+                        .equals(action)) {
                 enforceBeamShareActivityPolicy(
                     context, new UserHandle(getSendingUserId()));
             }
