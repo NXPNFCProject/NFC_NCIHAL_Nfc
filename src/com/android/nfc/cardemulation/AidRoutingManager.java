@@ -250,7 +250,6 @@ public class AidRoutingManager {
         mDefaultAidRoute =   NfcService.getInstance().GetDefaultRouteEntry() >> 0x08;
         mDefaultOffHostRoute = doGetDefaultOffHostRouteDestination();
         Log.e(TAG, "Size of routing table"+mAidRoutingTableSize);
-        mLastCommitStatus = false;
         seList.add(mDefaultAidRoute);
         if (mDefaultRoute != ROUTE_HOST) {
             seList.add(ROUTE_HOST);
@@ -289,6 +288,7 @@ public class AidRoutingManager {
           seList.add(ROUTE_HOST);
 
         synchronized (mLock) {
+            mLastCommitStatus = false;
             if (routeForAid.equals(mRouteForAid) && !force) {
                 NfcService.getInstance().addT4TNfceeAid();
                 if (DBG) Log.d(TAG, "Routing table unchanged, not updating");
