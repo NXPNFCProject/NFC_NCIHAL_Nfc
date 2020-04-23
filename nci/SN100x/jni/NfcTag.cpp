@@ -973,6 +973,7 @@ void NfcTag::fillNativeNfcTagMembers3(JNIEnv* e, jclass tag_cls, jobject tag,
         DLOG_IF(INFO, nfc_debug_enabled)
             << StringPrintf("%s: tech B; TARGET_TYPE_ISO14443_3B", fn);
         len = mTechParams[i].param.pb.sensb_res_len;
+#if(NXP_EXTNS == TRUE)
         if (len >= NFC_NFCID0_MAX_LEN) {
           // subtract 4 bytes for NFCID0 at byte 2 through 5
           len = len - NFC_NFCID0_MAX_LEN;
@@ -981,6 +982,9 @@ void NfcTag::fillNativeNfcTagMembers3(JNIEnv* e, jclass tag_cls, jobject tag,
           LOG(ERROR) << StringPrintf("%s: sensb_res_len error", fn);
           len = 0;
         }
+#else
+        len = len - 4;  // subtract 4 bytes for NFCID0 at byte 2 through 5
+#endif
         pollBytes.reset(e->NewByteArray(len));
         e->SetByteArrayRegion(pollBytes.get(), 0, len,
                               (jbyte*)(mTechParams[i].param.pb.sensb_res + 4));
