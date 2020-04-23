@@ -2647,10 +2647,7 @@ public class NfcService implements DeviceHostListener {
 
     boolean _nfcEeReset() throws IOException {
         synchronized (NfcService.this) {
-            if (!isNfcEnabledOrShuttingDown()) {
-               throw new IOException("NFC adapter is disabled");
-            }
-            return mSecureElement.doReset(EE_HANDLE_0xF3);
+          return mSecureElement.doReset(EE_HANDLE_0xF3);
         }
      }
 
