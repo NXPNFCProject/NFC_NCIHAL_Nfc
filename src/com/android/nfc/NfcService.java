@@ -211,6 +211,7 @@ public class NfcService implements DeviceHostListener {
     static final int MSG_DEINIT_WIREDSE = 66;
     static final int MSG_READ_T4TNFCEE = 67;
     static final int MSG_WRITE_T4TNFCEE = 68;
+
     // SCR/MPOS constants
     static final int SE_READER_TYPE_INAVLID   = 0;
     static final int SE_READER_TYPE_MPOS      = 1;
@@ -1760,7 +1761,6 @@ public class NfcService implements DeviceHostListener {
             if (!isNfcEnabled()) {
               return status;
             }
-
             synchronized(NfcService.this) {
               int reader = SE_READER_TYPE_INAVLID;
               reader = getReaderMode(readerType);
@@ -1768,7 +1768,6 @@ public class NfcService implements DeviceHostListener {
               case SE_READER_TYPE_MPOS:
                 status = mDeviceHost.mposSetReaderMode(on);
               break;
-
               case SE_READER_TYPE_MFC:
                 status = mDeviceHost.configureSecureReaderMode(on, readerType);
               break;
@@ -1864,7 +1863,6 @@ public class NfcService implements DeviceHostListener {
                 mDeviceHost.stopPoll(mode);
             }
         }
-
         @Override
         public void startPoll(String pkg) {
            // Check if NFC is enabled
@@ -1884,7 +1882,6 @@ public class NfcService implements DeviceHostListener {
             int status = 0xFF, prbs_test = 0x06, swpSelf_test = 0x07;
             Method mNfcSelfTestMethod;
             Log.i(TAG,"doNfcSelfTest type ENter : " + type);
-
             synchronized(NfcService.this) {
               try {
                  if(mNfcExtnsObj!=null && (type == prbs_test || type == swpSelf_test)){
@@ -2045,7 +2042,6 @@ public class NfcService implements DeviceHostListener {
             }
             return TRANSIT_SETCONFIG_STAT_SUCCESS;
         }
-
         @Override
         public int selectUicc(int uiccSlot) throws RemoteException {
             synchronized(NfcService.this) {
@@ -2083,7 +2079,6 @@ public class NfcService implements DeviceHostListener {
                 return status;
             }
         }
-
         @Override
         public List<NfcAidServiceInfo> getServicesAidInfo(int userId, String category){
             return mCardEmulationManager.getServicesAidInfo(userId, category);
@@ -3179,7 +3174,6 @@ public class NfcService implements DeviceHostListener {
     {
         return mDeviceHost.getGsmaPwrState();
     }
-
     /**
      * get default T4TNfcee power state supported
      */
@@ -3346,7 +3340,6 @@ public class NfcService implements DeviceHostListener {
                             break;
                         }
                     }
-
                     if (tag.getConnectedTechnology() == TagTechnology.NFC_BARCODE) {
                         // When these tags start containing NDEF, they will require
                         // the stack to deal with them in a different way, since
@@ -3358,7 +3351,6 @@ public class NfcService implements DeviceHostListener {
                         break;
                     }
                     NdefMessage ndefMsg = tag.findAndReadNdef();
-
                     if (ndefMsg == null) {
                         // First try to see if this was a bad tag read
                         if (!tag.reconnect()) {
@@ -3512,7 +3504,6 @@ public class NfcService implements DeviceHostListener {
 
                     mDeviceHost.doSetScreenState(screen_state_mask);
                     break;
-
                 case MSG_TRANSACTION_EVENT:
                     if (mCardEmulationManager != null) {
                         mCardEmulationManager.onOffHostAidSelected();
@@ -3550,6 +3541,7 @@ public class NfcService implements DeviceHostListener {
                     }
 
                     break;
+
                 case MSG_INIT_WIREDSE: {
                      try {
                        mWiredSeInitMethod = mWiredSeClass.getDeclaredMethod("wiredSeInitialize");
@@ -3611,10 +3603,9 @@ public class NfcService implements DeviceHostListener {
                case MSG_SCR_MULTIPLE_TARGET_DETECTED:
                  sendScrEvent(msg.what);
                  break;
-
-              default:
-                Log.e(TAG, "Unknown message received");
-                break;
+               default:
+                 Log.e(TAG, "Unknown message received");
+                 break;
             }
         }
 
@@ -4269,7 +4260,7 @@ public class NfcService implements DeviceHostListener {
             String action = intent.getAction();
             if (DevicePolicyManager.ACTION_DEVICE_POLICY_MANAGER_STATE_CHANGED
                         .equals(action) &&
-                        mIsBeamCapable) {
+                    mIsBeamCapable) {
                 enforceBeamShareActivityPolicy(
                     context, new UserHandle(getSendingUserId()));
             }
