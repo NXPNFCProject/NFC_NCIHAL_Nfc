@@ -391,9 +391,9 @@ public class AidRoutingManager {
               }
             }
             if(aidRouteResolved == true) {
-              commit(aidRoutingTableCache);
               NfcService.getInstance().updateDefaultAidRoute(mDefaultRoute);
               mLastCommitStatus = true;
+              commit(aidRoutingTableCache);
           } else {
               StatsLog.write(StatsLog.NFC_ERROR_OCCURRED, StatsLog.NFC_ERROR_OCCURRED__TYPE__AID_OVERFLOW, 0, 0);
               Log.e(TAG, "RoutingTable unchanged because it's full, not updating");
