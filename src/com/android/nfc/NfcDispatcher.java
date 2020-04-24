@@ -210,8 +210,14 @@ class NfcDispatcher {
             return intent;
         }
 
+        public boolean hasIntentReceiver() {
+            return packageManager.queryIntentActivitiesAsUser(intent, 0,
+                    ActivityManager.getCurrentUser()).size() > 0;
+        }
+
         public boolean isWebIntent() {
-            return ndefUri != null && ndefUri.normalizeScheme().getScheme().startsWith("http");
+            return ndefUri != null && ndefUri.normalizeScheme().getScheme() != null &&
+                ndefUri.normalizeScheme().getScheme().startsWith("http");
         }
 
         public String getUri() {
@@ -534,9 +540,13 @@ class NfcDispatcher {
                 return false;
             }
             Intent appLaunchIntent = pm.getLaunchIntentForPackage(firstPackage);
-            if (appLaunchIntent != null && dispatch.tryStartActivity(appLaunchIntent)) {
-                if (DBG) Log.i(TAG, "matched AAR to application launch");
-                return true;
+            if (appLaunchIntent != null) {
+                ResolveInfo ri = pm.resolveActivity(appLaunchIntent, 0);
+                if (ri != null && ri.activityInfo != null && ri.activityInfo.exported &&
+                        dispatch.tryStartActivity(appLaunchIntent)) {
+                    if (DBG) Log.i(TAG, "matched AAR to application launch");
+                    return true;
+                }
             }
             // Find the package in Market:
             Intent marketIntent = getAppSearchIntent(firstPackage);
@@ -549,16 +559,25 @@ class NfcDispatcher {
         // regular launch
         dispatch.intent.setPackage(null);
 
-        if (dispatch.isWebIntent()) {
+        if (dispatch.isWebIntent() && dispatch.hasIntentReceiver()) {
             if (DBG) Log.i(TAG, "matched Web link - prompting user");
             showWebLinkConfirmation(dispatch);
             StatsLog.write(StatsLog.NFC_TAG_OCCURRED, StatsLog.NFC_TAG_OCCURRED__TYPE__URL);
             return true;
         }
 
-        if (dispatch.tryStartActivity()) {
-            if (DBG) Log.i(TAG, "matched NDEF");
-            return true;
+        try {
+            UserHandle currentUser = new UserHandle(ActivityManager.getCurrentUser());
+            PackageManager pm = mContext.createPackageContextAsUser("android", 0,
+                        currentUser).getPackageManager();
+            ResolveInfo ri = pm.resolveActivity(intent, 0);
+
+            if (ri != null && ri.activityInfo != null && ri.activityInfo.exported && dispatch.tryStartActivity()) {
+                if (DBG) Log.i(TAG, "matched NDEF");
+                return true;
+            }
+        } catch (NameNotFoundException ignore) {
+            Log.e(TAG, "Could not create user package context");
         }
 
         return false;
@@ -600,7 +619,9 @@ class NfcDispatcher {
             if (filterMatch(tagTechs, info.techs) &&
                     isComponentEnabled(pm, info.resolveInfo)) {
                 // Add the activity as a match if it's not already in the list
-                if (!matches.contains(info.resolveInfo)) {
+                // Check if exported flag is not explicitly set to false to prevent
+                // SecurityExceptions.
+                if (!matches.contains(info.resolveInfo) && info.resolveInfo.activityInfo.exported) {
                     matches.add(info.resolveInfo);
                 }
             }

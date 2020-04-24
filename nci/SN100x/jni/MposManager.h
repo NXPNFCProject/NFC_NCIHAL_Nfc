@@ -12,7 +12,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  Copyright 2018-2019 NXP
+ *  Copyright 2018-2020 NXP
  *
  ******************************************************************************/
 #pragma once
@@ -77,15 +77,30 @@ public:
 
   /*******************************************************************************
   **
+  ** Function:        getReaderType
+  **
+  ** Description:     This API shall be called to get a valid Reader Type based
+  *on i/p.
+  **
+  ** Parameters:      readerType: a string "MPOS" or "MFC"
+  **
+  ** Returns:         Equivalent integer value to requested readerType
+  **
+  *******************************************************************************/
+  uint8_t getReaderType(std::string readerType);
+
+  /*******************************************************************************
+  **
   ** Function:        setMposReaderMode
   **
-  ** Description:     Set/reset mPOS mode.
+  ** Description:     on: Set/reset requested Reader mode.
+  **                  readerType: Requested Reader e.g. "MFC", "MPOS"
+  **                             If not provided default value is "MPOS"
   **
   ** Returns:         SUCCESS/FAILED/BUSY
   **
   *******************************************************************************/
-  tNFA_STATUS setMposReaderMode(bool on);
-
+  tNFA_STATUS setMposReaderMode(bool on, std::string readerType = "MPOS");
   /*******************************************************************************
   **
   ** Function:        getMposReaderMode
@@ -110,9 +125,26 @@ public:
 
   /*******************************************************************************
   **
+  ** Function:        isReaderModeAllowed
+  **
+  ** Description:     This API shall be called to check whether the requested
+  **                  reader operation is allowed or not.
+  **
+  ** Parameters:     on : TRUE: reader mode start is requested
+  **                      FALSE: reader mode stop is requested
+  **                 rdrType: Requested Reader Type
+  **
+  ** Returns:         OK/FAILED/REJECTED
+  **
+  *******************************************************************************/
+  uint8_t isReaderModeAllowed(const bool on, uint8_t rdrType);
+
+  /*******************************************************************************
+  **
   ** Function:        notifyScrApiEvent
   **
-  ** Description:     This API shall be called to notify the mNfaScrApiEvent event.
+  ** Description:     This API shall be called to notify the mNfaScrApiEvent
+  *event.
   **
   ** Returns:         None
   **
@@ -164,4 +196,5 @@ private:
   static bool        mStartNfcForumPoll; /* It shall be used only in reader stop case */
   SyncEvent          mNfaScrApiEvent;
   static MposManager mMposMgr;
+  static uint8_t     mReaderType;
 };

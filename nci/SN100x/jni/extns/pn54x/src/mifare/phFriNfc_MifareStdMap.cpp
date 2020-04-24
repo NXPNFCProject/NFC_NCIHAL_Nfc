@@ -17,7 +17,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2019 NXP Semiconductors
+ *  Copyright (C) 2019-2020 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -3531,8 +3531,8 @@ static NFCSTATUS phFriNfc_MifStd_H_ProBytesToWr(phFriNfc_NdefMap_t* NdefMap) {
   uint8_t TempLength = PH_FRINFC_MIFARESTD_VAL0;
 
   if (*NdefMap->SendRecvLength == PH_FRINFC_MIFARESTD_BYTES_READ) {
-    memcpy(&NdefMap->SendRecvBuf[PH_FRINFC_MIFARESTD_VAL1],
-           NdefMap->SendRecvBuf, PH_FRINFC_MIFARESTD_BLOCK_BYTES);
+    memmove(&NdefMap->SendRecvBuf[PH_FRINFC_MIFARESTD_VAL1],
+            NdefMap->SendRecvBuf, PH_FRINFC_MIFARESTD_BLOCK_BYTES);
 
     /* Write to Ndef TLV Block */
     NdefMap->SendRecvBuf[PH_FRINFC_MIFARESTD_VAL0] =

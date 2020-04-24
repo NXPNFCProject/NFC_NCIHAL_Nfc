@@ -2,6 +2,9 @@
 <resources>
     <string name="bluetooth_package" translatable="false">com.android.bluetooth</string>
     <bool name="enable_nfc_url_open_dialog">false</bool>
+    <bool name="enable_auto_play">true</bool>
+    <bool name="enable_notify_dispatch_failed">false</bool>
+    <integer name="toast_debounce_time_ms">3000</integer>
     <!-- List of SKUs where Secure NFC functionality is supported -->
     <string-array name="config_skuSupportsSecureNfc" translatable="false">
     <item>hikey960</item>

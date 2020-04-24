@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2019 NXP
+*  Copyright 2018-2020 NXP
 *
 ******************************************************************************/
 package com.android.nfc;
@@ -135,6 +135,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Scanner;
 import java.util.TimerTask;
 import java.util.Timer;
 import java.io.IOException;
@@ -177,8 +178,10 @@ public class NfcService implements DeviceHostListener {
     static final String TRON_NFC_CE = "nfc_ce";
     static final String TRON_NFC_P2P = "nfc_p2p";
     static final String TRON_NFC_TAG = "nfc_tag";
+    static final String NATIVE_LOG_FILE_NAME = "native_logs";
     static final String T4T_NFCEE_AID = "D2760000850101";
     static final int TECH_TYPE_A= 0x01;
+    static final int TECH_TYPE_F= 0x04;
     static final int MSG_NDEF_TAG = 0;
     static final int MSG_LLCP_LINK_ACTIVATION = 1;
     static final int MSG_LLCP_LINK_DEACTIVATED = 2;
@@ -198,6 +201,7 @@ public class NfcService implements DeviceHostListener {
     static final int MSG_APPLY_SCREEN_STATE = 16;
     static final int MSG_TRANSACTION_EVENT = 17;
     static final int MSG_PREFERRED_PAYMENT_CHANGED = 18;
+    static final int MSG_TOAST_DEBOUNCE_EVENT = 19;
     static final int MSG_CARD_EMULATION = 21;
     static final int MSG_SE_INIT = 59;
     static final int MSG_CLEAR_ROUTING = 62;
@@ -209,6 +213,9 @@ public class NfcService implements DeviceHostListener {
     static final int MSG_WRITE_T4TNFCEE = 68;
 
     // SCR/MPOS constants
+    static final int SE_READER_TYPE_INAVLID   = 0;
+    static final int SE_READER_TYPE_MPOS      = 1;
+    static final int SE_READER_TYPE_MFC       = 2;
     static final int MSG_SCR_START_SUCCESS            = 70;
     static final int MSG_SCR_START_FAIL               = 71;
     static final int MSG_SCR_RESTART                  = 72;
@@ -218,13 +225,13 @@ public class NfcService implements DeviceHostListener {
     static final int MSG_SCR_TIMEOUT                  = 76;
     static final int MSG_SCR_REMOVE_CARD              = 77;
     static final int MSG_SCR_MULTIPLE_TARGET_DETECTED = 78;
-
-
-
+    private int SE_READER_TYPE = SE_READER_TYPE_INAVLID;
 
     // Update stats every 4 hours
     static final long STATS_UPDATE_INTERVAL_MS = 4 * 60 * 60 * 1000;
     static final long MAX_POLLING_PAUSE_TIMEOUT = 40000;
+
+    static final int MAX_TOAST_DEBOUNCE_TIME = 10000;
 
     static final int TASK_ENABLE = 1;
     static final int TASK_DISABLE = 2;
@@ -450,7 +457,8 @@ public class NfcService implements DeviceHostListener {
     private ForegroundUtils mForegroundUtils;
 
     private static NfcService sService;
-    private static Toast mToast;
+    private static boolean sToast_debounce = false;
+    private static int sToast_debounce_time_ms = 3000;
     public  static boolean sIsDtaMode = false;
 
     private IVrManager vrManager;
@@ -668,7 +676,7 @@ public class NfcService implements DeviceHostListener {
         }
 
         if (isNfcProvisioningEnabled) {
-            mInProvisionMode = Settings.Secure.getInt(mContentResolver,
+            mInProvisionMode = Settings.Global.getInt(mContentResolver,
                     Settings.Global.DEVICE_PROVISIONED, 0) == 0;
         } else {
             mInProvisionMode = false;
@@ -760,6 +768,12 @@ public class NfcService implements DeviceHostListener {
             //mIsSecureNfcCapable;
             mPrefs.getBoolean(PREF_SECURE_NFC_ON, SECURE_NFC_ON_DEFAULT);
         mDeviceHost.setNfcSecure(mIsSecureNfcEnabled);
+
+        sToast_debounce_time_ms =
+                mContext.getResources().getInteger(R.integer.toast_debounce_time_ms);
+        if(sToast_debounce_time_ms > MAX_TOAST_DEBOUNCE_TIME) {
+            sToast_debounce_time_ms = MAX_TOAST_DEBOUNCE_TIME;
+        }
 
         // Make sure this is only called when object construction is complete.
         ServiceManager.addService(SERVICE_NAME, mNfcAdapter);
@@ -1010,6 +1024,8 @@ public class NfcService implements DeviceHostListener {
                 applyRouting(false);
 
             mDeviceHost.doSetScreenState(screen_state_mask);
+
+            sToast_debounce = false;
 
             /* Start polling loop */
             applyRouting(true);
@@ -1686,6 +1702,30 @@ public class NfcService implements DeviceHostListener {
           mNxpPrefsEditor.commit();
           commitRouting();
         }
+        @Override
+        public void NfcFRouteSet(int routeLoc, boolean fullPower, boolean lowPower,
+            boolean noPower) throws RemoteException {
+          NfcPermissions.enforceUserPermissions(mContext);
+          if (routeLoc == UICC2_ID_TYPE) {
+            throw new RemoteException("UICC2 is not supported");
+          }
+
+          int techRouteEntry = 0;
+          techRouteEntry =  ((routeLoc & 0x07) == 0x04) ? (0x03 << ROUTE_LOC_MASK) : /*UICC2*/
+                            ((routeLoc & 0x07) == 0x02) ? (0x02 << ROUTE_LOC_MASK) : /*UICC1*/
+                            ((routeLoc & 0x07) == 0x01) ? (0x01 << ROUTE_LOC_MASK) : /*eSE*/
+                            0x00;
+          techRouteEntry |=
+              ((fullPower ? (mDeviceHost.getDefaultMifareCLTPowerState() & 0x1F) | 0x01 : 0)
+                  | (lowPower ? 0x01 << 1 : 0) | (noPower ? 0x01 << 2 : 0));
+          techRouteEntry |= (TECH_TYPE_F << TECH_TYPE_MASK);
+
+          Log.i(TAG, "NfcFRouteSet : " + techRouteEntry);
+          mNxpPrefsEditor = mNxpPrefs.edit();
+          mNxpPrefsEditor.putInt("PREF_FELICA_CLT_ROUTE_ID", techRouteEntry);
+          mNxpPrefsEditor.commit();
+          commitRouting();
+        }
 
         @Override
         public int[] getActiveSecureElementList(String pkg) throws RemoteException {
@@ -1703,25 +1743,62 @@ public class NfcService implements DeviceHostListener {
           return list;
         }
 
-        @Override
-        public int mPOSSetReaderMode (String pkg, boolean on) {
+        public int getReaderMode (String readerType) {
+          int reader = SE_READER_TYPE_INAVLID;
+          if(readerType.equals("MPOS")) {
+            reader =  SE_READER_TYPE_MPOS;
+          } else if (readerType.equals("MFC")) {
+            reader = SE_READER_TYPE_MFC;
+          } else {
+             /* Invalid Secure Reader Type received. */
+          }
+          return reader;
+        }
+
+        public int setReaderMode (boolean on, String readerType) {
+            int status = NfcConstants.SCR_STATUS_REJECTED;
             // Check if NFC is enabled
             if (!isNfcEnabled()) {
-                return NfcConstants.MPOS_STATUS_REJECTED;
+              return status;
             }
-
             synchronized(NfcService.this) {
-                int status = mDeviceHost.mposSetReaderMode(on);
-                if(!on) {
-                    if(nci_version != NCI_VERSION_2_0) {
-                        applyRouting(true);
-                    } else if(mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED
-                            || mNfcUnlockManager.isLockscreenPollingEnabled()) {
-                        applyRouting(false);
-                    }
-                }
-                return status;
-            }
+              int reader = SE_READER_TYPE_INAVLID;
+              reader = getReaderMode(readerType);
+              switch(reader) {
+              case SE_READER_TYPE_MPOS:
+                status = mDeviceHost.mposSetReaderMode(on);
+              break;
+              case SE_READER_TYPE_MFC:
+                status = mDeviceHost.configureSecureReaderMode(on, readerType);
+              break;
+              default :
+                Log.e(TAG, "Invalid Secure Reader Type received.");
+              }
+              if (status == NfcConstants.SCR_STATUS_SUCCESS) {
+                if(on) {
+                  SE_READER_TYPE = reader;
+                } else {
+                  SE_READER_TYPE = SE_READER_TYPE_INAVLID;
+                  if(nci_version != NCI_VERSION_2_0) {
+                    applyRouting(true);
+                  } else if (mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED
+                          || mNfcUnlockManager.isLockscreenPollingEnabled()) {
+                    applyRouting(false);
+                  }
+               }
+             }
+             return status;
+          }
+        }
+
+        @Override
+        public int mPOSSetReaderMode (String pkg, boolean on) {
+          return setReaderMode(on, "MPOS");
+        }
+
+        @Override
+        public int configureSecureReader (boolean on, String readerType) {
+            return setReaderMode(on, readerType);
         }
 
         @Override
@@ -2632,8 +2709,13 @@ public class NfcService implements DeviceHostListener {
                 Log.w(TAG, "Watchdog thread interruped.");
                 interrupt();
             }
+            if(mRoutingWakeLock.isHeld()){
+                Log.e(TAG, "Watchdog triggered, release lock before aborting.");
+                mRoutingWakeLock.release();
+            }
             Log.e(TAG, "Watchdog triggered, aborting.");
             StatsLog.write(StatsLog.NFC_STATE_CHANGED, StatsLog.NFC_STATE_CHANGED__STATE__CRASH_RESTART);
+            storeNativeCrashLogs();
             mDeviceHost.doAbort(getName());
         }
 
@@ -2671,7 +2753,7 @@ public class NfcService implements DeviceHostListener {
         synchronized (this) {
             WatchDogThread watchDog = new WatchDogThread("applyRouting", ROUTING_WATCHDOG_MS);
             if (mInProvisionMode) {
-                mInProvisionMode = Settings.Secure.getInt(mContentResolver,
+                mInProvisionMode = Settings.Global.getInt(mContentResolver,
                         Settings.Global.DEVICE_PROVISIONED, 0) == 0;
                 if (!mInProvisionMode) {
                     // Notify dispatcher it's fine to dispatch to any package now
@@ -3222,8 +3304,10 @@ public class NfcService implements DeviceHostListener {
 
                 case MSG_NDEF_TAG:
                     if (DBG) Log.d(TAG, "Tag detected, notifying applications");
-                    mPowerManager.userActivity(SystemClock.uptimeMillis(),
-                            PowerManager.USER_ACTIVITY_EVENT_OTHER, 0);
+                    if (mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED) {
+                        mPowerManager.userActivity(SystemClock.uptimeMillis(),
+                                PowerManager.USER_ACTIVITY_EVENT_OTHER, 0);
+                    }
                     mNumTagsDetected.incrementAndGet();
                     TagEndpoint tag = (TagEndpoint) msg.obj;
                     byte[] debounceTagUid;
@@ -3273,11 +3357,13 @@ public class NfcService implements DeviceHostListener {
                         if (!tag.reconnect()) {
                             tag.disconnect();
                             if (mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED) {
-                                if (mToast != null) {
-                                    if (mToast.getView().isShown()) mToast.cancel();
+                                if (!sToast_debounce) {
+                                    Toast.makeText(mContext, R.string.tag_read_error,
+                                                   Toast.LENGTH_SHORT).show();
+                                    sToast_debounce = true;
+                                    mHandler.sendEmptyMessageDelayed(MSG_TOAST_DEBOUNCE_EVENT,
+                                                                     sToast_debounce_time_ms);
                                 }
-                                mToast.setText(R.string.tag_read_error);
-                                mToast.show();
                             }
                             break;
                         }
@@ -3435,6 +3521,10 @@ public class NfcService implements DeviceHostListener {
                     sendPreferredPaymentChangedEvent(preferredPaymentChangedIntent);
                     break;
 
+                case MSG_TOAST_DEBOUNCE_EVENT:
+                    sToast_debounce = false;
+                    break;
+
                 case MSG_SE_INIT:
                     Log.e(TAG, "msg se init");
 
@@ -3525,8 +3615,13 @@ public class NfcService implements DeviceHostListener {
                 case MSG_SCR_START_SUCCESS: {
                     /* Send broadcast ordered */
                     Intent scrStartSuccessIntent = new Intent();
-                    scrStartSuccessIntent
-                            .setAction(NfcConstants.ACTION_NFC_MPOS_READER_MODE_START_SUCCESS);
+                    if(SE_READER_TYPE == SE_READER_TYPE_MPOS) {
+                        scrStartSuccessIntent.setAction(
+                                NfcConstants.ACTION_NFC_MPOS_READER_MODE_START_SUCCESS);
+                    } else {
+                        scrStartSuccessIntent.setAction(
+                                NfcConstants.ACTION_NFC_SECURE_READER_MODE_START_SUCCESS);
+                    }
                     if (DBG) {
                         Log.d(TAG, "SWP READER - START SUCCESS");
                     }
@@ -3536,8 +3631,13 @@ public class NfcService implements DeviceHostListener {
                 case MSG_SCR_START_FAIL: {
                     /* Send broadcast ordered */
                     Intent scrStartFailIntent = new Intent();
-                    scrStartFailIntent
-                            .setAction(NfcConstants.ACTION_NFC_MPOS_READER_MODE_START_FAIL);
+                    if(SE_READER_TYPE == SE_READER_TYPE_MPOS) {
+                        scrStartFailIntent.setAction(
+                                NfcConstants.ACTION_NFC_MPOS_READER_MODE_START_FAIL);
+                    } else {
+                        scrStartFailIntent.setAction(
+                                NfcConstants.ACTION_NFC_SECURE_READER_MODE_START_FAIL);
+                    }
                     if (DBG) {
                         Log.d(TAG, "SWP READER - START_FAIL");
                     }
@@ -3547,8 +3647,14 @@ public class NfcService implements DeviceHostListener {
                 case MSG_SCR_RESTART: {
                     /* Send broadcast ordered */
                     Intent scrRestartIntent = new Intent();
-                    scrRestartIntent
-                            .setAction(NfcConstants.ACTION_NFC_MPOS_READER_MODE_RESTART);
+
+                    if(SE_READER_TYPE == SE_READER_TYPE_MPOS) {
+                        scrRestartIntent.setAction(
+                                NfcConstants.ACTION_NFC_MPOS_READER_MODE_RESTART);
+                    } else {
+                        scrRestartIntent.setAction(
+                                NfcConstants.ACTION_NFC_SECURE_READER_MODE_RESTART);
+                    }
                     if (DBG) {
                         Log.d(TAG, "SWP READER - RESTART");
                     }
@@ -3557,64 +3663,93 @@ public class NfcService implements DeviceHostListener {
                 }
                 case MSG_SCR_ACTIVATED: {
                     /* Send broadcast ordered */
-                    Intent swpActivateIntent = new Intent();
-                    swpActivateIntent.setAction(NfcConstants.ACTION_NFC_MPOS_READER_MODE_ACTIVATED);
+                    Intent scrActivateIntent = new Intent();
+                    if(SE_READER_TYPE == SE_READER_TYPE_MPOS) {
+                        scrActivateIntent.setAction(
+                                NfcConstants.ACTION_NFC_MPOS_READER_MODE_ACTIVATED);
+                    } else {
+                        scrActivateIntent.setAction(
+                                NfcConstants.ACTION_NFC_SECURE_READER_MODE_TARGET_ACTIVATED);
+                    }
                     if (DBG) {
                         Log.d(TAG, "SWP READER - ACTIVATED");
                     }
-                    mContext.sendBroadcast(swpActivateIntent);
+                    mContext.sendBroadcast(scrActivateIntent);
                     break;
                 }
                 case MSG_SCR_STOP_SUCCESS: {
                     /* Send broadcast ordered */
-                    Intent swpStopSuccessIntent = new Intent();
-                    swpStopSuccessIntent
-                            .setAction(NfcConstants.ACTION_NFC_MPOS_READER_MODE_STOP_SUCCESS);
+                    Intent scrStopSuccessIntent = new Intent();
+
+                    if(SE_READER_TYPE == SE_READER_TYPE_MPOS) {
+                        scrStopSuccessIntent.setAction(
+                                NfcConstants.ACTION_NFC_MPOS_READER_MODE_STOP_SUCCESS);
+                    } else {
+                        scrStopSuccessIntent.setAction(
+                                NfcConstants.ACTION_NFC_SECURE_READER_MODE_STOP_SUCCESS);
+                    }
                     if (DBG) {
                         Log.d(TAG, "SWP READER - STOP_SUCCESS");
                     }
-                    mContext.sendBroadcast(swpStopSuccessIntent);
+                    mContext.sendBroadcast(scrStopSuccessIntent);
                     break;
                 }
                 case MSG_SCR_STOP_FAIL: {
                     /* Send broadcast ordered */
-                    Intent swpStopFailIntent = new Intent();
-                    swpStopFailIntent.setAction(NfcConstants.ACTION_NFC_MPOS_READER_MODE_STOP_FAIL);
+                    Intent scrStopFailIntent = new Intent();
+                    if(SE_READER_TYPE == SE_READER_TYPE_MPOS) {
+                        scrStopFailIntent.setAction(
+                                NfcConstants.ACTION_NFC_MPOS_READER_MODE_STOP_FAIL);
+                    } else {
+                        scrStopFailIntent.setAction(
+                                NfcConstants.ACTION_NFC_SECURE_READER_MODE_STOP_FAIL);
+                    }
                     if (DBG) {
                         Log.d(TAG, "SWP READER - REQUESTED_FAIL");
                     }
-                    mContext.sendBroadcast(swpStopFailIntent);
+                    mContext.sendBroadcast(scrStopFailIntent);
                     break;
                 }
                 case MSG_SCR_TIMEOUT: {
                     /* Send broadcast ordered */
-                    Intent swpRdrTimeoutIntent = new Intent();
-                    swpRdrTimeoutIntent.setAction(NfcConstants.ACTION_NFC_MPOS_READER_MODE_TIMEOUT);
+                    Intent scrRdrTimeoutIntent = new Intent();
+                    if(SE_READER_TYPE == SE_READER_TYPE_MPOS) {
+                        scrRdrTimeoutIntent.setAction(
+                            NfcConstants.ACTION_NFC_MPOS_READER_MODE_TIMEOUT);
+                    } else {
+                        scrRdrTimeoutIntent.setAction(
+                            NfcConstants.ACTION_NFC_SECURE_READER_MODE_TIMEOUT);
+                    }
                     if (DBG) {
                         Log.d(TAG, "SWP READER - Timeout");
                     }
-                    mContext.sendBroadcast(swpRdrTimeoutIntent);
+                    mContext.sendBroadcast(scrRdrTimeoutIntent);
                     break;
                 }
                 case MSG_SCR_REMOVE_CARD: {
                     /* Send broadcast ordered */
-                    Intent swpRmCardIntent = new Intent();
-                    swpRmCardIntent.setAction(NfcConstants.ACTION_NFC_MPOS_READER_MODE_REMOVE_CARD);
+                    Intent scrRmCardIntent = new Intent();
+                    if(SE_READER_TYPE == SE_READER_TYPE_MPOS) {
+                        scrRmCardIntent.setAction(
+                            NfcConstants.ACTION_NFC_MPOS_READER_MODE_REMOVE_CARD);
+                    }
                     if (DBG) {
                         Log.d(TAG, "SWP READER - REMOVE_CARD");
                     }
-                    mContext.sendBroadcast(swpRmCardIntent);
+                    mContext.sendBroadcast(scrRmCardIntent);
                     break;
                 }
                 case MSG_SCR_MULTIPLE_TARGET_DETECTED: {
                     /* Send broadcast ordered */
-                    Intent swpMultiTargetDetectIntent = new Intent();
-                    swpMultiTargetDetectIntent.setAction(
+                    Intent scrMultiTargetDetectIntent = new Intent();
+                    if(SE_READER_TYPE == SE_READER_TYPE_MPOS) {
+                        scrMultiTargetDetectIntent.setAction(
                             NfcConstants.ACTION_NFC_MPOS_READER_MODE_MULTIPLE_TARGET_DETECTED);
+                    }
                     if (DBG) {
                         Log.d(TAG, "SWP READER - MULTIPLE_TARGET_DETECTED");
                     }
-                    mContext.sendBroadcast(swpMultiTargetDetectIntent);
+                    mContext.sendBroadcast(scrMultiTargetDetectIntent);
                     break;
                 }
                 default: {
@@ -3744,7 +3879,6 @@ public class NfcService implements DeviceHostListener {
                                 ((info.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0 ||
                                 (info.applicationInfo.privateFlags & ApplicationInfo.PRIVATE_FLAG_PRIVILEGED) != 0)) {
                             intent.setPackage(packageName);
-                            intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
                             mContext.sendBroadcast(intent);
                         }
                     } catch (Exception e) {
@@ -3816,6 +3950,7 @@ public class NfcService implements DeviceHostListener {
                 if (SEPackages!= null && !SEPackages.isEmpty()) {
                     for (String packageName : SEPackages) {
                         intent.setPackage(packageName);
+                        intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
                         mContext.sendBroadcast(intent);
                     }
                 }
@@ -3831,6 +3966,7 @@ public class NfcService implements DeviceHostListener {
                                 (info.applicationInfo.privateFlags &
                                 ApplicationInfo.PRIVATE_FLAG_PRIVILEGED) != 0)) {
                             intent.setPackage(packageName);
+                            intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
                             mContext.sendBroadcast(intent);
                         }
                     } catch (Exception e) {
@@ -3925,13 +4061,15 @@ public class NfcService implements DeviceHostListener {
                 int dispatchResult = mNfcDispatcher.dispatchTag(tag);
                 if (dispatchResult == NfcDispatcher.DISPATCH_FAIL && !mInProvisionMode) {
                     unregisterObject(tagEndpoint.getHandle());
-                    if (mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED) {
-                        if (mToast != null) {
-                            if (mToast.getView().isShown()) mToast.cancel();
+                    if (mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED &&
+                        mContext.getResources().getBoolean(R.bool.enable_notify_dispatch_failed)) {
+                        if (!sToast_debounce) {
+                            Toast.makeText(mContext, R.string.tag_dispatch_failed,
+                                           Toast.LENGTH_SHORT).show();
+                            sToast_debounce = true;
+                            mHandler.sendEmptyMessageDelayed(MSG_TOAST_DEBOUNCE_EVENT,
+                                                             sToast_debounce_time_ms);
                         }
-                        mToast = Toast.makeText(mContext, R.string.tag_dispatch_failed,
-                                                Toast.LENGTH_SHORT);
-                        mToast.show();
                     }
                     playSound(SOUND_ERROR);
                 } else if (dispatchResult == NfcDispatcher.DISPATCH_SUCCESS) {
@@ -4157,6 +4295,41 @@ public class NfcService implements DeviceHostListener {
         }
     }
 
+    private void copyNativeCrashLogsIfAny(PrintWriter pw) {
+      try {
+          File file = new File(mContext.getFilesDir(), NATIVE_LOG_FILE_NAME);
+          if (!file.exists()) {
+            return;
+          }
+          pw.println("---BEGIN: NATIVE CRASH LOG----");
+          Scanner sc = new Scanner(file);
+          while(sc.hasNextLine()) {
+              String s = sc.nextLine();
+              pw.println(s);
+          }
+          pw.println("---END: NATIVE CRASH LOG----");
+          sc.close();
+      } catch (IOException e) {
+          Log.e(TAG, "Exception in copyNativeCrashLogsIfAny " + e);
+      }
+    }
+
+    private void storeNativeCrashLogs() {
+      try {
+          File file = new File(mContext.getFilesDir(), NATIVE_LOG_FILE_NAME);
+          if (!file.exists()) {
+              file.createNewFile();
+          }
+
+          FileOutputStream fos = new FileOutputStream(file);
+          mDeviceHost.dump(fos.getFD());
+          fos.flush();
+          fos.close();
+      } catch (IOException e) {
+          Log.e(TAG, "Exception in storeNativeCrashLogs " + e);
+      }
+    }
+
     void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
         if (mContext.checkCallingOrSelfPermission(android.Manifest.permission.DUMP)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -4178,6 +4351,7 @@ public class NfcService implements DeviceHostListener {
                 mCardEmulationManager.dump(fd, pw, args);
             }
             mNfcDispatcher.dump(fd, pw, args);
+            copyNativeCrashLogsIfAny(pw);
             pw.flush();
             mDeviceHost.dump(fd);
         }

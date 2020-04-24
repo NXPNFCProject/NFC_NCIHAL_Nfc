@@ -50,7 +50,6 @@
 #include "NfcJniUtil.h"
 #include "NfcTag.h"
 #include "Pn544Interop.h"
-
 #include "ndef_utils.h"
 #include "nfa_api.h"
 #include "nfa_rw_api.h"
@@ -141,7 +140,6 @@ static IntervalTimer sSwitchBackTimer;  // timer used to tell us to switch back
                                         // to ISO_DEP frame interface
 uint8_t RW_TAG_SLP_REQ[] = {0x50, 0x00};
 uint8_t RW_DESELECT_REQ[] = {0xC2};
-uint8_t RW_REQ_ATS[] = {0xE0,0x80};
 static jboolean sWriteOk = JNI_FALSE;
 static jboolean sWriteWaitingForComplete = JNI_FALSE;
 static bool sFormatOk = false;
@@ -159,6 +157,7 @@ static int sCurrentConnectedTargetProtocol = NFC_PROTOCOL_UNKNOWN;
 #if (NXP_EXTNS == TRUE)
 static int sCurrentConnectedHandle = 0;
 void nativeNfcTag_doPresenceCheckResult(tNFA_STATUS status);
+static tNFA_STATUS nativeNfcTag_performHaltPICC();
 #endif
 static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded);
 static bool switchRfInterface(tNFA_INTF_TYPE rfInterface);
@@ -747,47 +746,9 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
       {
         SyncEventGuard g3(sReconnectEvent);
 #if (NXP_EXTNS == TRUE)
-        if(sCurrentActivatedProtocl == NFA_PROTOCOL_T2T) {
-          status = NFA_SendRawFrame(RW_TAG_SLP_REQ, sizeof(RW_TAG_SLP_REQ), 0);
-        } else if (sCurrentActivatedProtocl == NFA_PROTOCOL_ISO_DEP) {
-          bool waitOk = false;
-          sWaitingForTransceive = true;
-          if (sCurrentActivatedMode == TARGET_TYPE_ISO14443_3A) {
-            {
-              SyncEventGuard g(sTransceiveEvent);
-              status = NFA_SendRawFrame(RW_REQ_ATS, sizeof(RW_REQ_ATS), 0);
-              if (status != NFA_STATUS_OK) {
-                DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf(
-                    "%s: fail send; error=%d", __func__, status);
-              } else {
-                waitOk = sTransceiveEvent.wait(1000);
-              }
-            }
-            {
-              SyncEventGuard g(sTransceiveEvent);
-              status =
-                  NFA_SendRawFrame(RW_DESELECT_REQ, sizeof(RW_DESELECT_REQ), 0);
-              if (status != NFA_STATUS_OK) {
-                DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf(
-                    "%s: fail send; error=%d", __func__, status);
-              } else {
-                waitOk = sTransceiveEvent.wait(1000);
-              }
-            }
-          } else if (sCurrentActivatedMode == TARGET_TYPE_ISO14443_3B) {
-            uint8_t halt_b[5] = {0x50, 0, 0, 0, 0};
-            memcpy(&halt_b[1], NfcTag::getInstance().mNfcID0, 4);
-            waitOk = false;
-            SyncEventGuard g(sTransceiveEvent);
-            status = NFA_SendRawFrame(halt_b, sizeof(halt_b), 0);
-            if (status != NFA_STATUS_OK) {
-              DLOG_IF(ERROR, nfc_debug_enabled)
-                  << StringPrintf("%s: fail send; error=%d", __func__, status);
-            } else {
-              waitOk = sTransceiveEvent.wait(1000);
-            }
-          }
-          sWaitingForTransceive = false;
+        if ((status = nativeNfcTag_performHaltPICC()) != NFA_STATUS_OK) {
+          LOG(ERROR) << StringPrintf("%s: performHaltPICC error = %d", __func__,
+                                     status);
         }
 #else
         if(sCurrentConnectedTargetProtocol == NFA_PROTOCOL_T2T) {
@@ -1090,6 +1051,44 @@ tNFA_STATUS nativeNfcTag_safeDisconnect() {
   }
   return nfaStat;
 }
+
+/*******************************************************************************
+**
+** Function:        nativeNfcTag_performHaltPICC()
+**
+** Description:     Issue HALT as per the current activated protocol & mode
+**
+** Returns:         True if ok.
+**
+*******************************************************************************/
+static tNFA_STATUS nativeNfcTag_performHaltPICC() {
+  tNFA_STATUS status = NFA_STATUS_OK;
+  if (sCurrentActivatedProtocl == NFA_PROTOCOL_T2T ||
+      (sCurrentActivatedProtocl == NFA_PROTOCOL_ISO_DEP &&
+       sCurrentActivatedMode == TARGET_TYPE_ISO14443_3A)) {
+    status = NFA_SendRawFrame(RW_TAG_SLP_REQ, sizeof(RW_TAG_SLP_REQ), 0);
+    usleep(10*1000);
+  } else if (sCurrentActivatedProtocl == NFA_PROTOCOL_ISO_DEP &&
+             sCurrentActivatedMode == TARGET_TYPE_ISO14443_3B) {
+    uint8_t halt_b[5] = {0x50, 0, 0, 0, 0};
+    memcpy(&halt_b[1], NfcTag::getInstance().mNfcID0, 4);
+    sWaitingForTransceive = true;
+    SyncEventGuard g(sTransceiveEvent);
+    status = NFA_SendRawFrame(halt_b, sizeof(halt_b), 0);
+    if (status != NFA_STATUS_OK) {
+      DLOG_IF(ERROR, nfc_debug_enabled)
+          << StringPrintf("%s: fail send; error=%d", __func__, status);
+    } else {
+      if(sTransceiveEvent.wait(100) == false) {
+        status = NFA_STATUS_FAILED;
+        DLOG_IF(ERROR, nfc_debug_enabled)
+                << StringPrintf("%s: timeout on HALTB", __func__);
+      }
+    }
+    sWaitingForTransceive = false;
+  }
+  return status;
+}
 #endif
 /*******************************************************************************
 **
@@ -1167,14 +1166,21 @@ void nativeNfcTag_doTransceiveStatus(tNFA_STATUS status, uint8_t* buf,
   if (sRxDataStatus == NFA_STATUS_OK) sTransceiveEvent.notifyOne();
 
 }
-
+#if(NXP_EXTNS == TRUE)
+void nativeNfcTag_notifyRfTimeout(tNFA_STATUS status) {
+#else
 void nativeNfcTag_notifyRfTimeout() {
+#endif
   SyncEventGuard g(sTransceiveEvent);
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
       "%s: waiting for transceive: %d", __func__, sWaitingForTransceive);
   if (!sWaitingForTransceive) return;
 
+#if(NXP_EXTNS == TRUE)
+  if(status != NFC_STATUS_RF_PROTOCOL_ERR) sTransceiveRfTimeout = true;
+#else
   sTransceiveRfTimeout = true;
+#endif
 
   sTransceiveEvent.notifyOne();
 }
@@ -2208,7 +2214,7 @@ bool nativeNfcTag_checkActivatedProtoParameters(
 void nativeNfcTag_abortTagOperations(tNFA_STATUS status) {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s, status : 0x%x", __func__,status);
   /*Transcieve timeout will be notify*/
-  nativeNfcTag_notifyRfTimeout();
+  nativeNfcTag_notifyRfTimeout(status);
   /*Read Event will be notify*/
   nativeNfcTag_doReadCompleted(status);
   /*Write Semaphore will be waiting*/

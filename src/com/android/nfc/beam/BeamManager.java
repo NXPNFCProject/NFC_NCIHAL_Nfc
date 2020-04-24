@@ -138,6 +138,7 @@ public class BeamManager implements Handler.Callback {
         Intent intent = new Intent(ACTION_WHITELIST_DEVICE);
         intent.setPackage(context.getString(R.string.bluetooth_package));
         intent.putExtra(BluetoothDevice.EXTRA_DEVICE, device);
+        intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         context.sendBroadcastAsUser(intent, UserHandle.CURRENT);
     }
 

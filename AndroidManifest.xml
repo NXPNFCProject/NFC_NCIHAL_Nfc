@@ -28,7 +28,7 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 
-     Copyright 2019 NXP
+     Copyright 2019-2020 NXP
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
@@ -84,6 +84,14 @@
     <protected-broadcast android:name="com.nxp.nfc_extras.action.NFC_MPOS_READER_MODE_STOP_FAIL" />
     <protected-broadcast android:name="com.nxp.nfc_extras.action.NFC_MPOS_READER_MODE_REMOVE_CARD" />
     <protected-broadcast android:name="com.nxp.nfc_extras.action.NFC_MPOS_READER_MODE_MULTIPLE_TARGET_DETECTED" />
+    <protected-broadcast android:name="com.nxp.nfc_extras.action.NFC_SECURE_READER_MODE_START_SUCCESS" />
+    <protected-broadcast android:name="com.nxp.nfc_extras.action.NFC_SECURE_READER_MODE_START_FAIL" />
+    <protected-broadcast android:name="com.nxp.nfc_extras.action.NFC_SECURE_READER_MODE_RESTART" />
+    <protected-broadcast android:name="com.nxp.nfc_extras.action.NFC_SECURE_READER_MODE_TIMEOUT" />
+    <protected-broadcast android:name="com.nxp.nfc_extras.action.NFC_SECURE_READER_MODE_ACTIVATED" />
+    <protected-broadcast android:name="com.nxp.nfc_extras.action.NFC_SECURE_READER_MODE_STOP_SUCCESS" />
+    <protected-broadcast android:name="com.nxp.nfc_extras.action.NFC_SECURE_READER_MODE_STOP_FAIL" />
+
     <protected-broadcast android:name="nfc.intent.action.AID_ROUTING_TABLE_FULL" />
     <application android:name=".NfcApplication"
                  android:icon="@drawable/icon"

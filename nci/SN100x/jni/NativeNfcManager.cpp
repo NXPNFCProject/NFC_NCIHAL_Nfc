@@ -93,7 +93,11 @@ extern bool gIsTagDeactivating;
 extern bool gIsSelectingRfInterface;
 extern void nativeNfcTag_doTransceiveStatus(tNFA_STATUS status, uint8_t* buf,
                                             uint32_t buflen);
+#if(NXP_EXTNS == TRUE)
+extern void nativeNfcTag_notifyRfTimeout(tNFA_STATUS status);
+#else
 extern void nativeNfcTag_notifyRfTimeout();
+#endif
 extern void nativeNfcTag_doConnectStatus(jboolean is_connect_ok);
 extern void nativeNfcTag_doDeactivateStatus(int status);
 extern void nativeNfcTag_doWriteStatus(jboolean is_write_ok);
@@ -296,7 +300,7 @@ static jbyteArray nfcManager_transceiveAppData(JNIEnv *e, jobject o,
                                                jbyteArray data);
 static bool nfcManager_isNfccBusy(JNIEnv*, jobject);
 static int nfcManager_setTransitConfig(JNIEnv* e, jobject o, jstring config);
-static std::string ConvertJavaStrToStdString(JNIEnv * env, jstring s);
+std::string ConvertJavaStrToStdString(JNIEnv* env, jstring s);
 static jint nfcManager_getAidTableSize (JNIEnv*, jobject );
 static jint nfcManager_getRemainingAidTableSize (JNIEnv* , jobject );
 static int nfcManager_doSelectUicc(JNIEnv* e, jobject o, jint uiccSlot);
@@ -344,7 +348,7 @@ void initializeGlobalDebugEnabledFlag() {
 }
 void initializeMfcReaderOption() {
   legacy_mfc_reader =
-      (NfcConfig::getUnsigned(NAME_LEGACY_MIFARE_READER, 1) != 0) ? true : false;
+      (NfcConfig::getUnsigned(NAME_LEGACY_MIFARE_READER, 0) != 0) ? true : false;
 
   DLOG_IF(INFO, nfc_debug_enabled)
       << __func__ <<": mifare reader option=" << legacy_mfc_reader;
@@ -773,7 +777,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: NFC_RW_INTF_ERROR_EVT", __func__);
 #if(NXP_EXTNS == TRUE)
-      nativeNfcTag_abortTagOperations(NFA_STATUS_TIMEOUT);
+      nativeNfcTag_abortTagOperations(eventData->status);
 #else
       nativeNfcTag_notifyRfTimeout();
       nativeNfcTag_doReadCompleted(NFA_STATUS_TIMEOUT);
@@ -1640,7 +1644,9 @@ static jboolean nfcManager_doInitialize(JNIEnv* e, jobject o) {
       stat = NFA_Disable(FALSE /* ungraceful */);
     }
 
-    theInstance.Finalize();
+    #if (NXP_EXTNS !=TRUE)
+      theInstance.Finalize();
+    #endif
   }
 
 TheEnd:
@@ -2682,7 +2688,7 @@ int nfcManager_doPartialInitialize(JNIEnv* e, jobject o, jint mode) {
   NFA_Init(halFuncEntries);
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: calling enable", __func__);
-
+  NativeJniExtns::getInstance().notifyNfcEvent("nfcManager_setPropertyInfo");
   stat = NFA_Enable(nfaDeviceManagementCallback, nfaConnectionCallback);
   if (stat == NFA_STATUS_OK) {
     SyncEventGuard guard(sNfaEnableEvent);
@@ -2858,7 +2864,14 @@ static void nfcManager_doSetScreenState(JNIEnv* e, jobject o,
     return;
   }
   scrnOnLockedPollDisabled = false;
-  NativeJniExtns::getInstance().notifyNfcEvent(__func__);
+
+  if (gsNfaPartialEnabled == false) {
+    NativeJniExtns::getInstance().notifyNfcEvent(__func__);
+  } else {
+    LOG(ERROR) << StringPrintf(
+        "%s: PartialInit mode Screen state change not required", __FUNCTION__);
+    return;
+  }
 #endif
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: state = %d prevScreenState= %d, discovry_param = %d",
@@ -4023,24 +4036,24 @@ static int nfcManager_setTransitConfig(JNIEnv * e, jobject o,
 ** Returns:         std::string
 **
 *******************************************************************************/
-static std::string ConvertJavaStrToStdString(JNIEnv * env, jstring s) {
-    if (!s) return "";
+std::string ConvertJavaStrToStdString(JNIEnv* env, jstring s) {
+  if (!s) return "";
 
-    const jclass strClass = env->GetObjectClass(s);
-    const jmethodID getBytes =
-        env->GetMethodID(strClass, "getBytes", "(Ljava/lang/String;)[B");
-    const jbyteArray strJbytes = (jbyteArray)env->CallObjectMethod(
-        s, getBytes, env->NewStringUTF("UTF-8"));
+  const jclass strClass = env->GetObjectClass(s);
+  const jmethodID getBytes =
+      env->GetMethodID(strClass, "getBytes", "(Ljava/lang/String;)[B");
+  const jbyteArray strJbytes = (jbyteArray)env->CallObjectMethod(
+      s, getBytes, env->NewStringUTF("UTF-8"));
 
-    size_t length = (size_t)env->GetArrayLength(strJbytes);
-    jbyte* pBytes = env->GetByteArrayElements(strJbytes, NULL);
+  size_t length = (size_t)env->GetArrayLength(strJbytes);
+  jbyte* pBytes = env->GetByteArrayElements(strJbytes, NULL);
 
-    std::string ret = std::string((char*)pBytes, length);
-    env->ReleaseByteArrayElements(strJbytes, pBytes, JNI_ABORT);
+  std::string ret = std::string((char*)pBytes, length);
+  env->ReleaseByteArrayElements(strJbytes, pBytes, JNI_ABORT);
 
-    env->DeleteLocalRef(strJbytes);
-    env->DeleteLocalRef(strClass);
-    return ret;
+  env->DeleteLocalRef(strJbytes);
+  env->DeleteLocalRef(strClass);
+  return ret;
 }
 
 /*******************************************************************************

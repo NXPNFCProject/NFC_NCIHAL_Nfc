@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018 NXP
+*  Copyright 2018-2020 NXP
 *
 ******************************************************************************/
 package com.android.nfc.cardemulation;
@@ -46,6 +46,7 @@ import android.nfc.cardemulation.HostApduService;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
@@ -128,13 +129,15 @@ public class HostEmulationManager {
     }
 
     public void onPreferredPaymentServiceChanged(ComponentName service) {
-        synchronized (mLock) {
-            if (service != null) {
-                bindPaymentServiceLocked(ActivityManager.getCurrentUser(), service);
-            } else {
-                unbindPaymentServiceLocked();
+        new Handler(Looper.getMainLooper()).post(() -> {
+            synchronized (mLock) {
+                if (service != null) {
+                    bindPaymentServiceLocked(ActivityManager.getCurrentUser(), service);
+                } else {
+                    unbindPaymentServiceLocked();
+                }
             }
-        }
+        });
      }
 
      public void onPreferredForegroundServiceChanged(ComponentName service) {

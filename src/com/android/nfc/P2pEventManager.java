@@ -207,4 +207,12 @@ public class P2pEventManager implements P2pEventListener, SendUi.Callback {
         mInDebounce = false;
     }
 
+    @Override
+    public boolean isP2pIdle() {
+        if (mSendUi != null && !mSendUi.isSendUiInIdleState()) {
+            return false;
+        }
+        return true;
+    }
+
 }

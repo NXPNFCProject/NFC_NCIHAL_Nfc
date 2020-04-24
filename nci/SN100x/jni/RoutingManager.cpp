@@ -18,24 +18,24 @@
  *  Manage the listen-mode routing table.
  */
 /******************************************************************************
-*
-*  The original Work has been changed by NXP.
-*
-*  Licensed under the Apache License, Version 2.0 (the "License");
-*  you may not use this file except in compliance with the License.
-*  You may obtain a copy of the License at
-*
-*  http://www.apache.org/licenses/LICENSE-2.0
-*
-*  Unless required by applicable law or agreed to in writing, software
-*  distributed under the License is distributed on an "AS IS" BASIS,
-*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-*  See the License for the specific language governing permissions and
-*  limitations under the License.
-*
-*  Copyright 2018-2019 NXP
-*
-******************************************************************************/
+ *
+ *  The original Work has been changed by NXP.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ *  Copyright 2018-2020 NXP
+ *
+ ******************************************************************************/
 #include <android-base/stringprintf.h>
 #include <base/logging.h>
 #include <nativehelper/JNIHelp.h>
@@ -216,6 +216,11 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
     mDefaultFelicaRoute = NfcConfig::getUnsigned(NAME_DEFAULT_FELICA_CLT_ROUTE, 0x00);
 
     mDefaultOffHostRoute = NfcConfig::getUnsigned(NAME_DEFAULT_OFFHOST_ROUTE, 0x00);
+
+    mDefaultSysCodePowerstate = NfcConfig::getUnsigned(
+        NAME_DEFAULT_SYS_CODE_PWR_STATE,
+        (PWR_SWTCH_ON_SCRN_UNLCK_MASK | PWR_SWTCH_ON_SCRN_LOCK_MASK |
+         PWR_SWTCH_ON_SCRN_OFF_MASK));
 
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: mDefaultGsmaPowerState %02x)", fn, mDefaultGsmaPowerState);

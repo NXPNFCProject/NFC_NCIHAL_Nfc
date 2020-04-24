@@ -2,7 +2,6 @@ package com.android.nfc.beam;
 
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -33,19 +32,6 @@ public class BeamReceiveService extends Service implements BeamTransferManager.C
     private Messenger mCompleteCallback;
 
     private final BluetoothAdapter mBluetoothAdapter;
-    private final BroadcastReceiver mBluetoothStateReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(action)) {
-                int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE,
-                        BluetoothAdapter.ERROR);
-                if (state == BluetoothAdapter.STATE_OFF) {
-                    mBluetoothEnabledByNfc = false;
-                }
-            }
-        }
-    };
 
     public BeamReceiveService() {
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -75,23 +61,12 @@ public class BeamReceiveService extends Service implements BeamTransferManager.C
         }
     }
 
-    // TODO: figure out a way to not duplicate this code
-    @Override
-    public void onCreate() {
-        super.onCreate();
-
-        // register BT state receiver
-        IntentFilter filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
-        registerReceiver(mBluetoothStateReceiver, filter);
-    }
-
     @Override
     public void onDestroy() {
         super.onDestroy();
         if (mBeamStatusReceiver != null) {
             unregisterReceiver(mBeamStatusReceiver);
         }
-        unregisterReceiver(mBluetoothStateReceiver);
     }
 
     boolean prepareToReceive(BeamTransferRecord transferRecord) {

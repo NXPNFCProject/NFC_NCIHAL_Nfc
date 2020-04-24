@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2019 NXP
+*  Copyright 2019-2020 NXP
 *
 ******************************************************************************/
 
@@ -151,6 +151,11 @@ interface P2pEventListener {
      * Indicates the P2P device went out of range.
      */
     public void onP2pOutOfRange();
+
+    /**
+     * Indicates the P2P Beam UI is in idle mode.
+     */
+    public boolean isP2pIdle();
 
     public interface Callback {
         public void onP2pSendConfirmed();
@@ -462,6 +467,10 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
             mPeerLlcpVersion = peerLlcpVersion;
             switch (mLinkState) {
                 case LINK_STATE_DOWN:
+                    if (!mEventListener.isP2pIdle() && mSendState != SEND_STATE_PENDING) {
+                        break;
+                    }
+
                     if (DBG) Log.d(TAG, "onP2pInRange()");
                     // Start taking a screenshot
                     mEventListener.onP2pInRange();
