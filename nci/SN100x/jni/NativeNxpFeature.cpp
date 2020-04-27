@@ -17,7 +17,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2015-2019 NXP Semiconductors
+ *  Copyright (C) 2015-2020 NXP
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -310,9 +310,8 @@ void nfaVSCNtfCallback(uint8_t event, uint16_t param_len, uint8_t *p_param) {
         e->DeleteLocalRef(retArray);
         retArray = e->NewByteArray(len);
       }
+      e->SetByteArrayRegion(retArray, 0, len, (jbyte*)(p_param + nciHdrLen));
 
-      void *data = e->GetPrimitiveArrayCritical((jarray)retArray, 0);
-      memcpy(data, p_param + nciHdrLen, len);
       e->CallVoidMethod(mNativeData->manager,
                       android::gCachedNfcManagerNotifyLxDebugInfo,
                       (int)len, retArray);
@@ -331,6 +330,7 @@ void nfaVSCNtfCallback(uint8_t event, uint16_t param_len, uint8_t *p_param) {
           << StringPrintf("%s: unknown event ????", __func__);
     break;
   }
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Exit", __func__);
 }
 
 
