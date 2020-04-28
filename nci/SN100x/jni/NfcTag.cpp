@@ -1753,7 +1753,7 @@ void NfcTag::connectionEventHandler(uint8_t event, tNFA_CONN_EVT_DATA* data) {
       // Since resetTechnologies don't have deactivate type info.
       // Required to clear as part of new method. In future if required can clear other
       // required flags also.
-      if(data->deactivated.type == NFA_DEACTIVATE_TYPE_DISCOVERY)
+      if((data != NULL) && (data->deactivated.type == NFA_DEACTIVATE_TYPE_DISCOVERY))
         clearActivationParams();
 #endif
       resetTechnologies();
