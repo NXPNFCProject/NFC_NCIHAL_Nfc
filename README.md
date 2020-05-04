@@ -54,7 +54,7 @@
 | android-10.0.0_r2              |  10.00.0D (SN110) |  NFC_AR_00_6000_10.00.0D_OpnSrc |
 | android-10.0.0_r2              |  10.00.0F (SN110) |  NFC_AR_00_6000_10.00.0F_OpnSrc || android-10.0.0_r2              |  10.00.0F (SN110) |  NFC_AR_00_6000_10.00.0F_OpnSrc |
 | android-10.0.0_r2              |  10.00.14 (SN1xx) |  NFC_AR_00_6000_10.00.14_OpnSrc |
-
+| android-10.0.0_r2              |  10.00.15 (SN1xx) |  NFC_AR_00_6000_10.00.15_OpnSrc |
 
 
 
