@@ -10,7 +10,7 @@
 | Android Version        | NXP Release          | NXP Tag  |
 | :-------------: |:---------------------:| :-----:|
 | aosp-master                |  11.01.00 (PN80T/PN81T/PN553/PN557) |  NFC_AR_00_18C0_11.01.00_OpnSrc  |
-
+| aosp-master              |  11.01.01 (PN80T/PN81T/PN553/PN557) |  NFC_AR_00_18C0_11.01.01 |
 
 
 
