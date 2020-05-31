@@ -590,6 +590,10 @@ public class NativeNfcManager implements DeviceHost {
         mListener.onHostCardEmulationData(technology, data);
     }
 
+    private void notifyNfcDebugInfo(int len, byte[] data) {
+        mListener.onLxDebugConfigData(len, data);
+    }
+
     private void notifyHostEmuDeactivated(int technology) {
         mListener.onHostCardEmulationDeactivated(technology);
     }

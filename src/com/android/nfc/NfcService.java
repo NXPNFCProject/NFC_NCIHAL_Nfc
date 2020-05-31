@@ -225,6 +225,7 @@ public class NfcService implements DeviceHostListener {
     static final int MSG_SCR_TIMEOUT                  = 76;
     static final int MSG_SCR_REMOVE_CARD              = 77;
     static final int MSG_SCR_MULTIPLE_TARGET_DETECTED = 78;
+    static final int MSG_LX_DATA_RECEIVED             = 79;
     private int SE_READER_TYPE = SE_READER_TYPE_INAVLID;
 
     // Update stats every 4 hours
@@ -308,6 +309,8 @@ public class NfcService implements DeviceHostListener {
 
     public static final String ACTION_LLCP_UP =
             "com.android.nfc.action.LLCP_UP";
+    public static final String ACTION_LX_DATA_RECVD =
+            "com.android.nfc.action.LX_DATA";
 
     public static final String ACTION_LLCP_DOWN =
             "com.android.nfc.action.LLCP_DOWN";
@@ -561,6 +564,14 @@ public class NfcService implements DeviceHostListener {
     public void onLlcpLinkDeactivated(NfcDepEndpoint device) {
         if (!mIsBeamCapable) return;
         sendMessage(NfcService.MSG_LLCP_LINK_DEACTIVATED, device);
+    }
+
+    @Override
+    public void onLxDebugConfigData(int len, byte[] data) {
+        Bundle writeBundle = new Bundle();
+        writeBundle.putByteArray("LxDbgData", data);
+        writeBundle.putInt("length", len);
+        sendMessage(NfcService.MSG_LX_DATA_RECEIVED, writeBundle);
     }
 
     /**
@@ -3627,6 +3638,18 @@ public class NfcService implements DeviceHostListener {
                case MSG_SCR_MULTIPLE_TARGET_DETECTED:
                  sendScrEvent(msg.what);
                  break;
+               case MSG_LX_DATA_RECEIVED: {
+                 /* Send broadcast ordered */
+                 Bundle writeBundle = (Bundle) msg.obj;
+                 byte[] lxDbgCfgsData = writeBundle.getByteArray("LxDbgData");
+                 int lxDbgDataLen = writeBundle.getInt("length");
+                 Intent lxDataRecvdIntent = new Intent();
+                 lxDataRecvdIntent.putExtra("LxDebugCfgs",lxDbgCfgsData);
+                 lxDataRecvdIntent.putExtra("lxDbgDataLen",lxDbgDataLen);
+                 lxDataRecvdIntent.setAction(ACTION_LX_DATA_RECVD);
+                 mContext.sendBroadcast(lxDataRecvdIntent);
+                 break;
+               }
                default:
                  Log.e(TAG, "Unknown message received");
                  break;

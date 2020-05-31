@@ -17,7 +17,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2015-2019 NXP Semiconductors
+ *  Copyright (C) 2015-2020 NXP Semiconductors
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -59,7 +59,14 @@ typedef struct nxp_feature_data {
   uint8_t rsp_len;
 } Nxp_Feature_Data_t;
 
+typedef enum {
+  NCI_OID_SYSTEM_DEBUG_STATE_L1_MESSAGE = 0x35,
+  NCI_OID_SYSTEM_DEBUG_STATE_L2_MESSAGE,
+  NCI_OID_SYSTEM_DEBUG_STATE_L3_MESSAGE,
+} eNciSystemPropOpcodeIdentifier_t;
+
 namespace android {
+extern nfc_jni_native_data* getNative(JNIEnv* e, jobject o);
 static Nxp_Feature_Data_t gnxpfeature_conf;
 void SetCbStatus(tNFA_STATUS status);
 tNFA_STATUS GetCbStatus(void);
@@ -255,6 +262,77 @@ void enableDisableLog(bool type) {
     }
   }
 }
+
+/*******************************************************************************
+**
+** Function:        nfaVSCNtfCallback
+**
+** Description:     Receives LxDebug events from stack.
+**                  Event: for which the callback is invoked
+**                  param_len: Len of the Parameters passed
+**                  p_param: Pointer to the event param
+**
+** Returns:         None
+**
+*******************************************************************************/
+void nfaVSCNtfCallback(uint8_t event, uint16_t param_len, uint8_t *p_param) {
+  (void)event;
+  DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("%s: event = 0x%02X", __func__, event);
+  uint8_t op_code = (event & ~NCI_NTF_BIT);
+  uint32_t len;
+  uint8_t nciHdrLen = 3;
+
+  if(!p_param || param_len <= nciHdrLen) {
+    LOG(ERROR) << "Invalid Params. returning...";
+    return;
+  }
+
+  switch(op_code) {
+    case NCI_OID_SYSTEM_DEBUG_STATE_L1_MESSAGE:
+    break;
+
+    case NCI_OID_SYSTEM_DEBUG_STATE_L2_MESSAGE:
+      len = param_len - nciHdrLen;
+    {
+      struct nfc_jni_native_data* mNativeData = getNative(NULL, NULL);
+      JNIEnv* e = NULL;
+      ScopedAttach attach(mNativeData->vm, &e);
+      if (e == NULL) {
+        LOG(ERROR) << "jni env is null";
+        return;
+      }
+
+      jbyteArray retArray = e->NewByteArray(len);
+
+      if((uint32_t)e->GetArrayLength(retArray) != len)
+      {
+        e->DeleteLocalRef(retArray);
+        retArray = e->NewByteArray(len);
+      }
+
+      void *data = e->GetPrimitiveArrayCritical((jarray)retArray, 0);
+      memcpy(data, p_param + nciHdrLen, len);
+      e->CallVoidMethod(mNativeData->manager,
+                      android::gCachedNfcManagerNotifyLxDebugInfo,
+                      (int)len, retArray);
+      if (e->ExceptionCheck()) {
+        e->ExceptionClear();
+        LOG(ERROR) << "fail notify";
+      }
+    }
+    break;
+
+    case NCI_OID_SYSTEM_DEBUG_STATE_L3_MESSAGE:
+    break;
+
+    default:
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("%s: unknown event ????", __func__);
+    break;
+  }
+}
+
 
 } /*namespace android*/
 

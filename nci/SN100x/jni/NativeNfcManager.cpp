@@ -140,6 +140,7 @@ extern bool gGotDeact2IdleNtf;
 extern void nativeNfcTag_abortTagOperations(tNFA_STATUS status);
 extern void nativeNfcTag_setRfProtocol(tNFA_INTF_TYPE rfProtocol, uint8_t mode);
 extern uint8_t nativeNfcTag_getActivatedMode();
+extern void nfaVSCNtfCallback(uint8_t event, uint16_t param_len, uint8_t *p_param);
 #endif
 }  // namespace android
 
@@ -181,6 +182,8 @@ jmethodID gCachedNfcManagerNotifyHostEmuData;
 jmethodID gCachedNfcManagerNotifyHostEmuDeactivated;
 jmethodID gCachedNfcManagerNotifyRfFieldActivated;
 jmethodID gCachedNfcManagerNotifyRfFieldDeactivated;
+jmethodID gCachedNfcManagerNotifyLxDebugInfo;
+
 const char* gNativeP2pDeviceClassName =
     "com/android/nfc/dhimpl/NativeP2pDevice";
 const char* gNativeLlcpServiceSocketClassName =
@@ -904,6 +907,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
   }
 }
 
+
 /*******************************************************************************
 **
 ** Function:        nfcManager_initNativeStruc
@@ -965,6 +969,9 @@ static jboolean nfcManager_initNativeStruc(JNIEnv* e, jobject o) {
       e->GetMethodID(cls.get(), "notifyRfFieldActivated", "()V");
   gCachedNfcManagerNotifyRfFieldDeactivated =
       e->GetMethodID(cls.get(), "notifyRfFieldDeactivated", "()V");
+
+  gCachedNfcManagerNotifyLxDebugInfo =
+      e->GetMethodID(cls.get(), "notifyNfcDebugInfo", "(I[B)V");
 
   gCachedNfcManagerNotifySeListenActivated =
       e->GetMethodID(cls.get(),"notifySeListenActivated", "()V");
@@ -1576,6 +1583,9 @@ static jboolean nfcManager_doInitialize(JNIEnv* e, jobject o) {
 #if(NXP_EXTNS == TRUE)
         MposManager::getInstance().initialize(getNative(e, o));
         NativeT4tNfcee::getInstance().initialize();
+        if(NFA_STATUS_OK != NFA_RegVSCback (true,nfaVSCNtfCallback)) { //Register CallBack for Lx Debug notifications
+          LOG(ERROR) << StringPrintf("%s:  nfaVSCNtfCallback resgister failed..!", __func__);
+        }
 #endif
         /////////////////////////////////////////////////////////////////////////////////
         // Add extra configuration here (work-arounds, etc.)
@@ -2038,6 +2048,9 @@ static jboolean nfcManager_doDeinitialize(JNIEnv*, jobject) {
   sIsDisabling = true;
 
 #if (NXP_EXTNS == TRUE)
+  if(NFA_STATUS_OK != NFA_RegVSCback (false,nfaVSCNtfCallback)) { //De-Register Lx Debug CallBack
+    LOG(ERROR) << StringPrintf("%s:  nfaVSCNtfCallback Deresgister failed..!", __func__);
+  }
   NativeT4tNfcee::getInstance().onNfccShutdown();
 #endif
   RoutingManager::getInstance().onNfccShutdown();
