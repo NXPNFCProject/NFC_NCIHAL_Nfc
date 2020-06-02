@@ -575,9 +575,13 @@ tNFA_STATUS NfcSelfTest::PerformResonantFreq(bool on) {
  *******************************************************************************/
 static void nfaVSCNtfCallback(uint8_t event, uint16_t param_len, uint8_t *p_param) {
   (void)event;
-  if((param_len == 0x09) && (p_param[0]==0x6F) && (p_param[1]==0x3D) && (p_param[2]==0x06)){
-    uint16_t trim_val = (p_param[7]<<8) + p_param[8];
-    uint16_t spc_rssi = (p_param[6]<<8) + p_param[5];
+  if ((p_param[0] == 0x6F) && (p_param[1] == 0x3D) &&
+      ((p_param[2] == 0x06) || (p_param[2] == 0x07))) {
+    /*If status byte is included offset shifts accordingly*/
+    uint8_t offset = p_param[2] - 6;
+
+    uint16_t trim_val = (p_param[7 + offset] << 8) + p_param[8 + offset];
+    uint16_t spc_rssi = (p_param[6 + offset] << 8) + p_param[5 + offset];
     LOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s MIN_RSSI[%X] at Customer phase"
             "trim value[%X]. min RSSI start index is %X & end index is %X", __func__,
             spc_rssi, trim_val, p_param[3], p_param[4]);
