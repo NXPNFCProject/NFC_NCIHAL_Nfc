@@ -84,6 +84,7 @@ using android::base::StringPrintf;
 #define RDR_PASS_THRU_MOD_TYPE_LIMIT (0x3)
 #define CMD_HDR_SIZE_XCV (0x3)
 #define SECURE_ELEMENT_UICC_SLOT_DEFAULT (0x01)
+
 bool isDynamicUiccEnabled;
 bool isDisconnectNeeded;
 #endif
@@ -312,6 +313,7 @@ static jint nfcManager_nfcSelfTest(JNIEnv* e, jobject o, jint aType);
 static int nfcManager_staticDualUicc_Precondition(int uiccSlot);
 static int nfcManager_setPreferredSimSlot(JNIEnv* e, jobject o, jint uiccSlot);
 static bool nfcManager_deactivateOnPollDisabled(tNFA_ACTIVATED& activated);
+static jint nfcManager_enableDebugNtf(JNIEnv* e, jobject o, jbyte fieldValue);
 #endif
 static uint16_t sCurrentConfigLen;
 static uint8_t sConfig[256];
@@ -3238,6 +3240,7 @@ static JNINativeMethod gMethods[] = {
     {"doGetSelectedUicc", "()I", (void*)nfcManager_doGetSelectedUicc},
     {"setPreferredSimSlot", "(I)I", (void*)nfcManager_setPreferredSimSlot},
     {"doNfcSelfTest", "(I)I", (void*) nfcManager_nfcSelfTest},
+    {"doEnableDebugNtf", "(B)I", (void*) nfcManager_enableDebugNtf},
 #endif
     {"doSetNfcSecure", "(Z)Z", (void*)nfcManager_doSetNfcSecure},
 };
@@ -4200,6 +4203,41 @@ static int nfcManager_staticDualUicc_Precondition(int uiccSlot) {
   return retStat;
 }
 
+/**********************************************************************************
+**
+** Function:       nfcManager_enableDebugNtf
+**
+** Description:    Enable & disable the Lx debug notifications
+** Byte 0:
+**  b7|b6|b5|b4|b3|b2|b1|b0|
+**    |  |x |  |  |  |  |  |    Modulation Detected
+**    |  |  |X |  |  |  |  |    Enable L1 Events (ISO14443-4, ISO18092)
+**    |  |  |  |X |  |  |  |    Enable L2 Reader Events(ROW specific)
+**    |  |  |  |  |X |  |  |    Enable Felica SystemCode
+**    |  |  |  |  |  |X |  |    Enable Felica RF (all Felica CM events)
+**    |  |  |  |  |  |  |X |    Enable L2 Events CE (ISO14443-3, RF Field ON/OFF)
+** Byte 1: Reserved for future use, shall always be 0x00.
+**
+** Returns:        returns 0x00 in success case, 0x03 in failure case,
+**                 0x01 is Nfc is off
+**********************************************************************************/
+static jint nfcManager_enableDebugNtf(JNIEnv* e, jobject o, jbyte fieldValue) {
+  uint8_t cmd_lxdebug[] = { 0x20, 0x02, 0x06, 0x01, 0xA0, 0x1D, 0x02, 0x00, 0x00 };
+  tNFA_STATUS status = NFA_STATUS_REJECTED;
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s : enter", __func__);
+
+  if (!sIsNfaEnabled || sIsDisabling) { return status; }
+
+  if (sRfEnabled) { startRfDiscovery(false); }
+  /* As of now, bit0, bit4 and bit5 is allowed by this API */
+  cmd_lxdebug[7] = (uint8_t)(fieldValue & L2_DEBUG_BYTE0_MASK); /* Lx debug ntfs */
+  status = android::NxpNfc_Write_Cmd_Common(sizeof(cmd_lxdebug),cmd_lxdebug);
+
+  if (status) { status = NFA_STATUS_FAILED; }
+
+  startRfDiscovery(true);
+  return status;
+}
 /*******************************************************************************
 **
 ** Function:        nfcManager_setPreferredSimSlot()

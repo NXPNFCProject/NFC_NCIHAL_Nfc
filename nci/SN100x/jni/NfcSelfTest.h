@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- *  Copyright 2019 NXP
+ *  Copyright 2019-2020 NXP
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@
 /**************************************************
  ** MACRO declarations                           **
  *************************************************/
+#define L2_DEBUG_BYTE0_MASK   (0x31)
 #define NCI_MAX_CMD_BUFFER 258
 #define RF_TXCFG_MAX_NUM_FLAGS 0x06
 #define RF_TXCFG_MAX_VAL_LEN 0x04

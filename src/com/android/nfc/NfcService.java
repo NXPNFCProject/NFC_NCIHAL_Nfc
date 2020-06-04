@@ -2217,6 +2217,11 @@ public class NfcService implements DeviceHostListener {
           mT4tNfceeReturnBundle.clear();
           return readData;
         }
+
+        public int enableDebugNtf(byte fieldValue) {
+          NfcPermissions.enforceUserPermissions(mContext);
+          return mDeviceHost.doEnableDebugNtf(fieldValue);
+        }
 }
 
     final class ReaderModeDeathRecipient implements IBinder.DeathRecipient {
