@@ -567,7 +567,6 @@ void NfcTag::discoverTechnologies(tNFA_DISC_RESULT& discoveryData) {
           TARGET_TYPE_MIFARE_UL;  // is TagTechnology.MIFARE_ULTRALIGHT by Java
                                   // API
     }
-
     // save the stack's data structure for interpretation later
     memcpy(&(mTechParams[mNumTechList]), &(discovery_ntf.rf_tech_param),
            sizeof(discovery_ntf.rf_tech_param));
@@ -630,7 +629,9 @@ void NfcTag::discoverTechnologies(tNFA_DISC_RESULT& discoveryData) {
     LOG(ERROR) << StringPrintf("%s: unknown protocol ????", fn);
     mTechList[mNumTechList] = TARGET_TYPE_UNKNOWN;
   }
-
+#if (NXP_EXTNS == TRUE)
+  processNonStandardTag(discoveryData);
+#endif
   mNumTechList++;
   if (discovery_ntf.more != NCI_DISCOVER_NTF_MORE) {
     for (int i = 0; i < mNumTechList; i++) {
@@ -800,6 +801,38 @@ void NfcTag::storeActivationParams() {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s", fn);
   mActivationParams_t.mTechParams = mTechParams[0].mode;
   mActivationParams_t.mTechLibNfcTypes = mTechLibNfcTypes [0];
+}
+
+/*******************************************************************************
+**
+** Function:        processNonStandardTag
+**
+** Description:     Handle Non standard Tag
+*
+**                  discoveryData: reference to Discovery data.
+**
+** Returns:         None
+**
+*******************************************************************************/
+void NfcTag::processNonStandardTag(tNFA_DISC_RESULT& discoveryData) {
+  bool isNonStdCardSupported =
+      (NfcConfig::getUnsigned(NAME_NXP_SUPPORT_NON_STD_CARD, 0) != 0) ? true
+                                                                      : false;
+
+  if (isNonStdCardSupported) {
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s:Non standard support enabled", __func__);
+    tNFC_RESULT_DEVT& discovery_ntf = discoveryData.discovery_ntf;
+    if (discovery_ntf.rf_tech_param.param.pa.sel_rsp == NON_STD_CARD_SAK) {
+      // Non Standard Transit => ISO-DEP
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+          "%s:Non standard Transit => change to ISO-DEP", __func__);
+      mTechList[mNumTechList] =
+          TARGET_TYPE_ISO14443_4;  // is TagTechnology.ISO_DEP by Java API
+      mTechHandles[mNumTechList] = discovery_ntf.rf_disc_id;
+      mTechLibNfcTypes[mNumTechList] = NFC_PROTOCOL_ISO_DEP;
+    }
+  }
 }
 #endif
 
