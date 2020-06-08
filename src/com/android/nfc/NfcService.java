@@ -347,6 +347,11 @@ public class NfcService implements DeviceHostListener {
     public static final int EE_HANDLE_0xF3 = 0x4C0;
 
     /**
+     * HOST ID to be able to select it as the default Secure Element
+     */
+    public static final int HOST_ID_TYPE = 0;
+
+    /**
      * SMART MX ID to be able to select it as the default Secure Element
      */
     public static final int SMART_MX_ID_TYPE = 1;
@@ -361,7 +366,7 @@ public class NfcService implements DeviceHostListener {
      */
     public static final int UICC2_ID_TYPE = 4;
 
-    public boolean mIsRouteForced;
+    public boolean mIsRouteForced = false;
 
     private final UserManager mUserManager;
 
@@ -1660,11 +1665,21 @@ public class NfcService implements DeviceHostListener {
         @Override
         public void MifareDesfireRouteSet(int routeLoc, boolean fullPower, boolean lowPower,
             boolean noPower) throws RemoteException {
+          /*
+           * Bit position for power configuration and route location
+           * bit pos 1 (Full power) = Phone ON
+           * bit pos 2 (Low poewer) = Phone off
+           * bit pos 3 (No Power)   = Battery Off
+           * bit pos 4              = Screen Off
+           * bit pos 5              = Screen ON Lock
+           * bit pos 6              = Screen ON UnLock
+           * bit pos 7 & 8          = RFU
+           * bit pos 9  (Route Loc) = eSE
+           * bit pos 10 (Route Loc) = UICC
+           * bit pos 11 (Route Loc) = UICC2
+           * If bit position 9,10 & 11 set to 0 means route location is host*/
 
           NfcPermissions.enforceUserPermissions(mContext);
-          if (!isNfcEnabled()) {
-            throw new RemoteException("API is not supported in NFC OFF state");
-          }
 
           if (routeLoc == UICC2_ID_TYPE) {
             throw new RemoteException("UICC2 is not supported");
@@ -1676,26 +1691,26 @@ public class NfcService implements DeviceHostListener {
                             ((routeLoc & 0x07) == 0x01) ? (0x01 << ROUTE_LOC_MASK) : /*eSE*/
                             0x00;
           {
-            int powerState = 0x39; /*Default set it to NCI 2.0*/
-            int routEntry = 0x11; /*Default set it to NCI 2.0*/
-            if(nci_version == NCI_VERSION_1_0) {
-              powerState = 0x1F;
-              routEntry = 0xE9;
-            }
+              int powerState = 0x39; /*Default set it to NCI 2.0*/
+              int routEntry = 0x11; /*Default set it to NCI 2.0*/
+              if(nci_version == NCI_VERSION_1_0) {
+                  powerState = 0x1F;
+                  routEntry = 0xE9;
+              }
 
-            protoRouteEntry |=
-                ((fullPower ? (mDeviceHost.getDefaultDesfirePowerState() & powerState) | 0x01 : 0)
-                    | (lowPower ? 0x01 << 1 : 0) | (noPower ? 0x01 << 2 : 0));
+              protoRouteEntry |=
+                  ((fullPower ? (mDeviceHost.getDefaultDesfirePowerState() & powerState) | 0x01 : 0)
+                      | (lowPower ? 0x01 << 1 : 0) | (noPower ? 0x01 << 2 : 0));
 
-            if (routeLoc == 0x00) {
-              /*
-              bit pos 1 = Power Off
-              bit pos 2 = Battery Off
-              bit pos 4 = Screen Off
-              Set these bits to 0 because in case routeLoc = HOST it can not work on POWER_OFF,
-              BATTERY_OFF and SCREEN_OFF*/
-              protoRouteEntry &= routEntry;
-            }
+              if (routeLoc == 0x00) {
+                  /*
+                  bit pos 1 = Power Off
+                  bit pos 2 = Battery Off
+                  bit pos 4 = Screen Off
+                  Set these bits to 0 because in case routeLoc = HOST it can not work on POWER_OFF,
+                  BATTERY_OFF and SCREEN_OFF*/
+                  protoRouteEntry &= routEntry;
+              }
           }
 
           Log.i(TAG, "MifareDesfireRouteSet : " + protoRouteEntry);
@@ -1703,16 +1718,25 @@ public class NfcService implements DeviceHostListener {
           mNxpPrefsEditor.putInt("PREF_MIFARE_DESFIRE_PROTO_ROUTE_ID", protoRouteEntry);
           mNxpPrefsEditor.commit();
           Log.i(TAG, "MifareDesfireRouteSet function in");
-          commitRouting();
         }
         @Override
         public void MifareCLTRouteSet(int routeLoc, boolean fullPower, boolean lowPower,
             boolean noPower) throws RemoteException {
+           /*
+           * Bit position for power configuration and route location
+           * bit pos 1 (Full power) = Phone ON
+           * bit pos 2 (Low poewer) = Phone off
+           * bit pos 3 (No Power)   = Battery Off
+           * bit pos 4              = Screen Off
+           * bit pos 5              = Screen ON Lock
+           * bit pos 6              = Screen ON UnLock
+           * bit pos 7 & 8          = RFU
+           * bit pos 9  (Route Loc) = eSE
+           * bit pos 10 (Route Loc) = UICC
+           * bit pos 11 (Route Loc) = UICC2
+           * If bit position 9,10 & 11 set to 0 means route location is host*/
 
           NfcPermissions.enforceUserPermissions(mContext);
-          if (!isNfcEnabled()) {
-            throw new RemoteException("API is not supported in NFC OFF state");
-          }
 
           if (routeLoc == UICC2_ID_TYPE) {
             throw new RemoteException("UICC2 is not supported");
@@ -1732,22 +1756,30 @@ public class NfcService implements DeviceHostListener {
                 ((fullPower ? (mDeviceHost.getDefaultMifareCLTPowerState() & powerState) | 0x01 : 0)
                     | (lowPower ? 0x01 << 1 : 0) | (noPower ? 0x01 << 2 : 0));
           }
-          techRouteEntry |= (TECH_TYPE_A << TECH_TYPE_MASK);
 
           Log.i(TAG, "MifareCLTRouteSet : " + techRouteEntry);
           mNxpPrefsEditor = mNxpPrefs.edit();
           mNxpPrefsEditor.putInt("PREF_MIFARE_CLT_ROUTE_ID", techRouteEntry);
           mNxpPrefsEditor.commit();
-          commitRouting();
         }
         @Override
         public void NfcFRouteSet(int routeLoc, boolean fullPower, boolean lowPower,
             boolean noPower) throws RemoteException {
-          NfcPermissions.enforceUserPermissions(mContext);
+          /*
+           * Bit position for power configuration and route location
+           * bit pos 1 (Full power) = Phone ON
+           * bit pos 2 (Low poewer) = Phone off
+           * bit pos 3 (No Power)   = Battery Off
+           * bit pos 4              = Screen Off
+           * bit pos 5              = Screen ON Lock
+           * bit pos 6              = Screen ON UnLock
+           * bit pos 7 & 8          = RFU
+           * bit pos 9  (Route Loc) = eSE
+           * bit pos 10 (Route Loc) = UICC
+           * bit pos 11 (Route Loc) = UICC2
+           * If bit position 9,10 & 11 set to 0 means route location is host*/
 
-          if (!isNfcEnabled()) {
-              throw new RemoteException("API is not supported in NFC OFF state");
-          }
+          NfcPermissions.enforceUserPermissions(mContext);
 
           if (routeLoc == UICC2_ID_TYPE) {
             throw new RemoteException("UICC2 is not supported");
@@ -1758,16 +1790,20 @@ public class NfcService implements DeviceHostListener {
                             ((routeLoc & 0x07) == 0x02) ? (0x02 << ROUTE_LOC_MASK) : /*UICC1*/
                             ((routeLoc & 0x07) == 0x01) ? (0x01 << ROUTE_LOC_MASK) : /*eSE*/
                             0x00;
-          techRouteEntry |=
-              ((fullPower ? (mDeviceHost.getDefaultMifareCLTPowerState() & 0x1F) | 0x01 : 0)
-                  | (lowPower ? 0x01 << 1 : 0) | (noPower ? 0x01 << 2 : 0));
-          techRouteEntry |= (TECH_TYPE_F << TECH_TYPE_MASK);
+          {
+             int powerState = 0x39; /*Default set it to NCI 2.0*/
+             if(nci_version == NCI_VERSION_1_0) {
+               powerState = 0x1F;
+             }
+             techRouteEntry |=
+                ((fullPower ? (mDeviceHost.getDefaultMifareCLTPowerState() & powerState) | 0x01 : 0)
+                    | (lowPower ? 0x01 << 1 : 0) | (noPower ? 0x01 << 2 : 0));
+          }
 
           Log.i(TAG, "NfcFRouteSet : " + techRouteEntry);
           mNxpPrefsEditor = mNxpPrefs.edit();
           mNxpPrefsEditor.putInt("PREF_FELICA_CLT_ROUTE_ID", techRouteEntry);
           mNxpPrefsEditor.commit();
-          commitRouting();
         }
 
         @Override
@@ -1948,58 +1984,67 @@ public class NfcService implements DeviceHostListener {
         public void DefaultRouteSet(int routeLoc, boolean fullPower, boolean lowPower, boolean noPower)
                 throws RemoteException
         {
+            /*
+             * Bit position for power configuration and route location
+             * bit pos 1 (Full power) = Phone ON
+             * bit pos 2 (Low poewer) = Phone off
+             * bit pos 3 (No Power)   = Battery Off
+             * bit pos 4              = Screen Off
+             * bit pos 5              = Screen ON Lock
+             * bit pos 6              = Screen ON UnLock
+             * bit pos 7 & 8          = RFU
+             * bit pos 9  (Route Loc) = eSE
+             * bit pos 10 (Route Loc) = UICC
+             * bit pos 11 (Route Loc) = UICC2
+             * If bit position 9,10 & 11 set to 0 means route location is host*/
+
             NfcPermissions.enforceUserPermissions(mContext);
-            if (!isNfcEnabled()) {
-                throw new RemoteException("API is not supported in NFC OFF state");
-            }
 
             if(routeLoc == UICC2_ID_TYPE) {
                 throw new RemoteException("UICC2 is not supported");
+            } else if (routeLoc == HOST_ID_TYPE && !mIsHceCapable) {
+                throw new RemoteException("HCE is not supported");
             }
-            if (mIsHceCapable) {
-                int protoRouteEntry = 0;
-                protoRouteEntry=((routeLoc & 0x07) == 0x04) ? (0x03 << ROUTE_LOC_MASK) : /*UICC2*/
-                                ((routeLoc & 0x07) == 0x02) ? (0x02 << ROUTE_LOC_MASK) : /*UICC1*/
-                                ((routeLoc & 0x07) == 0x01) ? (0x01 << ROUTE_LOC_MASK) : /*eSE*/
-                                0x00;
-                {
-                    int powerState = 0x39; /*Default set it to NCI 2.0*/
-                    int routEntry = 0x11; /*Default set it to NCI 2.0*/
-                    if(nci_version == NCI_VERSION_1_0) {
-                        powerState = 0x1F;
-                        routEntry = 0xE9;
-                    }
-                    protoRouteEntry |=
-                        ((fullPower ? (mDeviceHost.getDefaultAidPowerState() & powerState) | 0x01 : 0)
-                            | (lowPower ? 0x01 << 1 : 0) | (noPower ? 0x01 << 2 : 0));
 
-                    if(routeLoc == 0x00)
-                    {
-                        /*
-                        bit pos 1 = Power Off
-                        bit pos 2 = Battery Off
-                        bit pos 4 = Screen Off
-                        Set these bits to 0 because in case routeLoc = HOST it can not work on
-                        POWER_OFF, BATTERY_OFF and SCREEN_OFF*/
-                        protoRouteEntry &= routEntry;
-                    }
-                }
-                Log.i(TAG,"DefaultRouteSet : " + protoRouteEntry);
-                if(GetDefaultRouteLoc() != routeLoc)
-                {
-                    mNxpPrefsEditor = mNxpPrefs.edit();
-                    mNxpPrefsEditor.putInt("PREF_SET_DEFAULT_ROUTE_ID", protoRouteEntry );
-                    mNxpPrefsEditor.commit();
-                    mIsRouteForced = true;
-                    if (mIsHceCapable) {
-                        mAidRoutingManager.onNfccRoutingTableCleared();
-                        mCardEmulationManager.onRoutingTableChanged();
-                    }
-                    mIsRouteForced = false;
-                }
+            int protoRouteEntry = 0;
+            protoRouteEntry=((routeLoc & 0x07) == 0x04) ? (0x03 << ROUTE_LOC_MASK) : /*UICC2*/
+                             ((routeLoc & 0x07) == 0x02) ? (0x02 << ROUTE_LOC_MASK) : /*UICC1*/
+                             ((routeLoc & 0x07) == 0x01) ? (0x01 << ROUTE_LOC_MASK) : /*eSE*/
+                             0x00;
+            {
+              int powerState = 0x39; /*Default set it to NCI 2.0*/
+              int routEntry = 0x11; /*Default set it to NCI 2.0*/
+              if(nci_version == NCI_VERSION_1_0) {
+                powerState = 0x1F;
+                routEntry = 0xE9;
+              }
+              protoRouteEntry |=
+                ((fullPower ? (mDeviceHost.getDefaultAidPowerState() & powerState) | 0x01 : 0)
+                 | (lowPower ? 0x01 << 1 : 0) | (noPower ? 0x01 << 2 : 0));
+
+              if(routeLoc == HOST_ID_TYPE)
+              {
+                /*
+                   Set these bits to 0 because in case routeLoc = HOST it can not work on
+                   POWER_OFF, BATTERY_OFF and SCREEN_OFF*/
+                protoRouteEntry &= routEntry;
+              }
             }
-            else{
-                Log.i(TAG,"DefaultRoute can not be set. mIsHceCapable = flase");
+            Log.i(TAG,"DefaultRouteSet : " + protoRouteEntry);
+            int defaultRoute = mNxpPrefs.getInt("PREF_SET_DEFAULT_ROUTE_ID", GetDefaultRouteEntry());
+            if(defaultRoute != protoRouteEntry)
+            {
+                mNxpPrefsEditor = mNxpPrefs.edit();
+                mNxpPrefsEditor.putInt("PREF_SET_DEFAULT_ROUTE_ID", protoRouteEntry );
+                mNxpPrefsEditor.commit();
+                if (!isNfcEnabled()) {
+                  return;
+                }
+                mIsRouteForced = true;
+                mAidRoutingManager.onNfccRoutingTableCleared();
+                mDeviceHost.clearRoutingEntry(AID_ENTRY);
+                mCardEmulationManager.onRoutingTableChanged();
+                mIsRouteForced = false;
             }
         }
 
@@ -4451,8 +4496,6 @@ public class NfcService implements DeviceHostListener {
       }
       mNxpPrefsEditor.putInt("PREF_SET_DEFAULT_ROUTE_ID", defaultAidRoute);
       mNxpPrefsEditor.commit();
-      int defaultRoute = mNxpPrefs.getInt("PREF_SET_DEFAULT_ROUTE_ID", 0xFF);
-      Log.d(TAG, "Reading updated preference  :" + defaultRoute);
       mHandler.sendEmptyMessage(MSG_RESET_AND_UPDATE_ROUTING_PARAMS);
     }
     public void addT4TNfceeAid() {
