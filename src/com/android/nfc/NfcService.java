@@ -1184,6 +1184,7 @@ public class NfcService implements DeviceHostListener {
     final class NfcAdapterService extends INfcAdapter.Stub {
         @Override
         public boolean enable() throws RemoteException {
+            NfcPermissions.enforceAdminPermissions(mContext);
             synchronized (NfcService.this) {
                 if (mNxpNfcState != NXP_NFC_STATE_OFF) {
                     Log.e(TAG, "mNxpNfcStateis not equal to NXP_NFC_STATE_OFF."
@@ -1192,7 +1193,6 @@ public class NfcService implements DeviceHostListener {
                 }
                 mNxpNfcState = NXP_NFC_STATE_TURNING_ON;
             }
-            NfcPermissions.enforceAdminPermissions(mContext);
 
             saveNfcOnSetting(true);
 
@@ -1211,23 +1211,23 @@ public class NfcService implements DeviceHostListener {
        }
         @Override
         public boolean disable(boolean saveState) throws RemoteException {
-          synchronized (NfcService.this) {
-            if (mNxpNfcState != NXP_NFC_STATE_ON) {
-              Log.e(TAG, "mNxpNfcStateis not equal to NXP_NFC_STATE_ON."
-                + " Disable NFC Rejected.");
-              return false;
+            NfcPermissions.enforceAdminPermissions(mContext);
+            synchronized (NfcService.this) {
+                if (mNxpNfcState != NXP_NFC_STATE_ON) {
+                    Log.e(TAG, "mNxpNfcStateis not equal to NXP_NFC_STATE_ON."
+                    + " Disable NFC Rejected.");
+                    return false;
+                }
+                mNxpNfcState = NXP_NFC_STATE_TURNING_OFF;
             }
-            mNxpNfcState = NXP_NFC_STATE_TURNING_OFF;
-          }
-          NfcPermissions.enforceAdminPermissions(mContext);
 
-          if (saveState) {
-            saveNfcOnSetting(false);
-          }
+            if (saveState) {
+                saveNfcOnSetting(false);
+            }
 
-          new EnableDisableTask().execute(TASK_DISABLE);
+            new EnableDisableTask().execute(TASK_DISABLE);
 
-          return true;
+            return true;
         }
 
         @Override
