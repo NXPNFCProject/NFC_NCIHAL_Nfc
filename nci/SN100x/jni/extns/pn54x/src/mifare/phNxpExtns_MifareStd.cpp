@@ -165,10 +165,6 @@ NFCSTATUS phNxpExtns_MfcModuleDeInit(void) {
   pthread_mutex_lock(&SharedDataMutex);
 #endif
   if (NULL != NdefInfo.psUpperNdefMsg) {
-    if (NdefInfo.psUpperNdefMsg->buffer != NULL) {
-      free(NdefInfo.psUpperNdefMsg->buffer);
-      NdefInfo.psUpperNdefMsg->buffer = NULL;
-    }
     free(NdefInfo.psUpperNdefMsg);
     NdefInfo.psUpperNdefMsg = NULL;
   }
