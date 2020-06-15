@@ -21,7 +21,6 @@
 #include <phFriNfc_MifStdFormat.h>
 #include <phNfcCompId.h>
 #include <phNxpExtns_MifareStd.h>
-#include <phNxpLog.h>
 
 #include <android-base/stringprintf.h>
 #include <base/logging.h>
