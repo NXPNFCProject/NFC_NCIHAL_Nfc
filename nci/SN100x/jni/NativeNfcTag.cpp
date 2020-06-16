@@ -648,9 +648,9 @@ static jint nativeNfcTag_doConnect(JNIEnv*, jobject, jint targetHandle) {
 
   sCurrentConnectedTargetType = natTag.mTechList[i];
   sCurrentConnectedTargetProtocol = natTag.mTechLibNfcTypes[i];
+#if (NXP_EXTNS == TRUE)
   LOG(ERROR)<< StringPrintf("%s:  doConnect sCurrentConnectedTargetProtocol %x sCurrentConnectedTargetType %x",
             __func__,sCurrentConnectedTargetProtocol,sCurrentConnectedTargetType);
-#if (NXP_EXTNS == TRUE)
   natTag.mCurrentRequestedProtocol = sCurrentConnectedTargetProtocol;
   sCurrentConnectedHandle = targetHandle;
   if(sCurrentConnectedTargetProtocol == NFC_PROTOCOL_T3BT) {
@@ -1869,9 +1869,13 @@ static jboolean nativeNfcTag_makeMifareNdefFormat(JNIEnv* e, jobject o,
   if (status == NFA_STATUS_OK) {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: wait for completion", __func__);
+#if(NXP_EXTNS == TRUE)
     if (-1 == sem_wait(&sFormatSem)) {
       LOG(ERROR) << StringPrintf("%s: sem_wait failed \n", __func__);
     }
+#else
+    sem_wait(&sFormatSem);
+#endif
     status = sFormatOk ? NFA_STATUS_OK : NFA_STATUS_FAILED;
   } else {
     LOG(ERROR) << StringPrintf("%s: error status=%u", __func__, status);
@@ -1925,9 +1929,14 @@ static jboolean nativeNfcTag_doNdefFormat(JNIEnv* e, jobject o, jbyteArray) {
   if (status == NFA_STATUS_OK) {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: wait for completion", __func__);
+#if(NXP_EXTNS == TRUE)
     if (-1 == sem_wait(&sFormatSem)) {
       LOG(ERROR) << StringPrintf("%s: sem_wait failed \n", __func__);
     }
+#else
+    sem_wait(&sFormatSem);
+#endif
+
     status = sFormatOk ? NFA_STATUS_OK : NFA_STATUS_FAILED;
   } else
     LOG(ERROR) << StringPrintf("%s: error status=%u", __func__, status);
@@ -2002,10 +2011,13 @@ static jboolean nativeNfcTag_makeMifareReadonly(JNIEnv* e, jobject o,
   if (status != NFA_STATUS_OK) {
     goto TheEnd;
   }
+#if(NXP_EXTNS == TRUE)
   if (-1 == sem_wait(&sMakeReadonlySem)) {
     LOG(ERROR) << StringPrintf("%s: sem_wait failed \n", __func__);
   }
-
+#else
+  sem_wait(&sMakeReadonlySem);
+#endif
   if (sMakeReadonlyStatus == NFA_STATUS_OK) {
     result = JNI_TRUE;
   }

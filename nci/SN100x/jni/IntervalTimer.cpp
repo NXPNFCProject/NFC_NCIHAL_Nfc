@@ -95,7 +95,9 @@ bool IntervalTimer::create(TIMER_FUNC cb) {
   se.sigev_value.sival_ptr = &mTimerId;
   se.sigev_notify_function = cb;
   se.sigev_notify_attributes = NULL;
+#if(NXP_EXTNS == TRUE)
   se.sigev_signo = 0;
+#endif
   mCb = cb;
   stat = timer_create(CLOCK_MONOTONIC, &se, &mTimerId);
   if (stat == -1) LOG(ERROR) << StringPrintf("fail create timer");
