@@ -1660,10 +1660,7 @@ static jboolean nfcManager_doInitialize(JNIEnv* e, jobject o) {
       EXTNS_Close();
       stat = NFA_Disable(FALSE /* ungraceful */);
     }
-
-    #if (NXP_EXTNS !=TRUE)
-      theInstance.Finalize();
-    #endif
+    theInstance.Finalize();
   }
 
 TheEnd:
