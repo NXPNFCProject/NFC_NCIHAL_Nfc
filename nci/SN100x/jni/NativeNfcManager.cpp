@@ -2099,6 +2099,7 @@ static jboolean nfcManager_doDeinitialize(JNIEnv*, jobject) {
   /*Disable Field Detect Mode if enabled*/
   if (NFA_IsFieldDetectEnabled()) NFA_SetFieldDetectMode(false);
   SecureElement::getInstance().finalize ();
+  MposManager::getInstance().finalize();
 #endif
   NfcAdaptation& theInstance = NfcAdaptation::GetInstance();
   theInstance.Finalize();

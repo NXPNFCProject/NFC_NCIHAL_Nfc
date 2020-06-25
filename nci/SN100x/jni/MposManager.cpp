@@ -102,7 +102,7 @@ bool MposManager::initialize(nfc_jni_native_data* native) {
 *******************************************************************************/
 void MposManager::finalize()
 {
-
+  mNativeData = nullptr;
 }
 
 /*******************************************************************************
