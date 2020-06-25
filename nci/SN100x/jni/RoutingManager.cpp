@@ -1471,7 +1471,7 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
         screen_lock_mask  = (power & 0x10) ? value : 0;
         screen_off_lock_mask = (power & 0x20) ? value : 0;
 
-        if((max_tech_mask != 0x01) && (max_tech_mask == 0x02)) // type B only
+        if((max_tech_mask != 0x01) && (max_tech_mask == 0x02) && value) // type B only
         {
             switch_on_mask    &= ~NFA_TECHNOLOGY_MASK_A;
             switch_off_mask   &= ~NFA_TECHNOLOGY_MASK_A;
@@ -1480,7 +1480,7 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
             screen_lock_mask  &= ~NFA_TECHNOLOGY_MASK_A;
             screen_off_lock_mask &= ~NFA_TECHNOLOGY_MASK_A;
         }
-        else if((max_tech_mask == 0x01) && (max_tech_mask != 0x02)) // type A only
+        else if((max_tech_mask == 0x01) && (max_tech_mask != 0x02) && value) // type A only
         {
             switch_on_mask    &= ~NFA_TECHNOLOGY_MASK_B;
             switch_off_mask   &= ~NFA_TECHNOLOGY_MASK_B;
@@ -1492,7 +1492,7 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
 
         if((mHostListnTechMask) && (mFwdFuntnEnable == true))
         {
-            if((max_tech_mask != 0x01) && (max_tech_mask == 0x02))
+            if((max_tech_mask != 0x01) && (max_tech_mask == 0x02) && value)
             {
                 {
                     SyncEventGuard guard (mRoutingEvent);
@@ -1518,7 +1518,7 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
                     }
                 }
             }
-            else if((max_tech_mask == 0x01) && (max_tech_mask != 0x02))
+            else if((max_tech_mask == 0x01) && (max_tech_mask != 0x02) && value)
             {
                 {
                     SyncEventGuard guard (mRoutingEvent);
