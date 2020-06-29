@@ -1824,12 +1824,14 @@ public class NfcService implements DeviceHostListener {
 
         public int getReaderMode (String readerType) {
           int reader = SE_READER_TYPE_INAVLID;
-          if(readerType.equals("MPOS")) {
+          if((readerType == null) || (readerType.isEmpty())) {
+            /* Invalid Secure Reader Type received. */
+          } else if(readerType.equals("MPOS")) {
             reader =  SE_READER_TYPE_MPOS;
           } else if (readerType.equals("MFC")) {
             reader = SE_READER_TYPE_MFC;
           } else {
-             /* Invalid Secure Reader Type received. */
+            /* Invalid Secure Reader Type received. */
           }
           return reader;
         }
