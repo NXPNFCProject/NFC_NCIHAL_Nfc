@@ -157,6 +157,7 @@ bool gNfccConfigControlStatus = false;
 SyncEvent sChangeDiscTechEvent;
 SyncEvent sNfaSetConfigEvent;  // event for Set_Config....
 #if(NXP_EXTNS == TRUE)
+bool sSeRfActive = false;  // whether RF with SE is likely active
 /*Structure to store  discovery parameters*/
 typedef struct discovery_Parameters
 {
@@ -241,7 +242,9 @@ static bool sDiscoveryEnabled = false;  // is polling or listening
 static bool sPollingEnabled = false;    // is polling for tag?
 static bool sIsDisabling = false;
 static bool sRfEnabled = false;   // whether RF discovery is enabled
+#if(NXP_EXTNS != TRUE)
 static bool sSeRfActive = false;  // whether RF with SE is likely active
+#endif
 static bool sReaderModeEnabled =
     false;  // whether we're only reading tags, not allowing P2p/card emu
 static bool sP2pEnabled = false;
@@ -2092,6 +2095,7 @@ static jboolean nfcManager_doDeinitialize(JNIEnv*, jobject) {
     sNfaEnableDisablePollingEvent.notifyOne();
   }
 #if (NXP_EXTNS == TRUE)
+  sSeRfActive = false;
   /*Disable Field Detect Mode if enabled*/
   if (NFA_IsFieldDetectEnabled()) NFA_SetFieldDetectMode(false);
   SecureElement::getInstance().finalize ();
