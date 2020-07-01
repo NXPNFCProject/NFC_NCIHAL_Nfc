@@ -44,7 +44,6 @@
 #include "JavaClassConstants.h"
 #include "NfcAdaptation.h"
 #include "NfcJniUtil.h"
-#include "NfcSelfTest.h"
 #include "NfcTag.h"
 #include "PeerToPeer.h"
 #include "PowerSwitch.h"
@@ -58,6 +57,7 @@
 #include "NativeJniExtns.h"
 #include "NativeT4tNfcee.h"
 #include "nfa_nfcee_int.h"
+#include "NfcSelfTest.h"
 #endif
 
 #include "ce_api.h"
@@ -182,7 +182,9 @@ jmethodID gCachedNfcManagerNotifyHostEmuData;
 jmethodID gCachedNfcManagerNotifyHostEmuDeactivated;
 jmethodID gCachedNfcManagerNotifyRfFieldActivated;
 jmethodID gCachedNfcManagerNotifyRfFieldDeactivated;
+#if(NXP_EXTNS == TRUE)
 jmethodID gCachedNfcManagerNotifyLxDebugInfo;
+#endif
 
 const char* gNativeP2pDeviceClassName =
     "com/android/nfc/dhimpl/NativeP2pDevice";
@@ -931,8 +933,11 @@ static jboolean nfcManager_initNativeStruc(JNIEnv* e, jobject o) {
     LOG(ERROR) << StringPrintf("%s: fail allocate native data", __func__);
     return JNI_FALSE;
   }
-
+#if(NXP_EXTNS == TRUE)
   memset(nat, 0, sizeof(struct nfc_jni_native_data));
+#else
+  memset(nat, 0, sizeof(*nat));
+#endif
   e->GetJavaVM(&(nat->vm));
   nat->env_version = e->GetVersion();
   nat->manager = e->NewGlobalRef(o);
@@ -970,7 +975,7 @@ static jboolean nfcManager_initNativeStruc(JNIEnv* e, jobject o) {
       e->GetMethodID(cls.get(), "notifyRfFieldActivated", "()V");
   gCachedNfcManagerNotifyRfFieldDeactivated =
       e->GetMethodID(cls.get(), "notifyRfFieldDeactivated", "()V");
-
+#if(NXP_EXTNS == TRUE)
   gCachedNfcManagerNotifyLxDebugInfo =
       e->GetMethodID(cls.get(), "notifyNfcDebugInfo", "(I[B)V");
 
@@ -978,10 +983,11 @@ static jboolean nfcManager_initNativeStruc(JNIEnv* e, jobject o) {
       e->GetMethodID(cls.get(),"notifySeListenActivated", "()V");
   gCachedNfcManagerNotifySeListenDeactivated =
       e->GetMethodID(cls.get(),"notifySeListenDeactivated", "()V");
-  gCachedNfcManagerNotifyTransactionListeners = e->GetMethodID(
-      cls.get(), "notifyTransactionListeners", "([B[BLjava/lang/String;)V");
   gCachedNfcManagerNotifySeInitialized =
       e->GetMethodID(cls.get(),"notifySeInitialized", "()V");
+#endif
+  gCachedNfcManagerNotifyTransactionListeners = e->GetMethodID(
+      cls.get(), "notifyTransactionListeners", "([B[BLjava/lang/String;)V");
   if (nfc_jni_cache_object(e, gNativeNfcTagClassName, &(nat->cached_NfcTag)) ==
       -1) {
     LOG(ERROR) << StringPrintf("%s: fail cache NativeNfcTag", __func__);

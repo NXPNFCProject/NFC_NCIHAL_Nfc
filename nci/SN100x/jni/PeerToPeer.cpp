@@ -778,6 +778,7 @@ sp<P2pClient> PeerToPeer::findClient(tJNI_HANDLE jniHandle) {
   }
   return (NULL);
 }
+#if(NXP_EXTNS == TRUE)
 /*******************************************************************************
 **
 ** Function:        checkClientHandle
@@ -791,6 +792,7 @@ sp<P2pClient> PeerToPeer::findClient(tJNI_HANDLE jniHandle) {
 sp<P2pClient> PeerToPeer::checkClientHandle(tJNI_HANDLE jniHandle) {
   return findClient(jniHandle);
 }
+#endif
 /*******************************************************************************
 **
 ** Function:        findClientCon
