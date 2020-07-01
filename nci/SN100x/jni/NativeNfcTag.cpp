@@ -137,8 +137,7 @@ static SyncEvent sPresenceCheckEvent;
 static sem_t sMakeReadonlySem;
 static IntervalTimer sSwitchBackTimer;  // timer used to tell us to switch back
                                         // to ISO_DEP frame interface
-uint8_t RW_TAG_SLP_REQ[] = {0x50, 0x00};
-uint8_t RW_DESELECT_REQ[] = {0xC2};
+
 static jboolean sWriteOk = JNI_FALSE;
 static jboolean sWriteWaitingForComplete = JNI_FALSE;
 static bool sFormatOk = false;
@@ -154,6 +153,8 @@ static jboolean sMakeReadonlyWaitingForComplete = JNI_FALSE;
 static int sCurrentConnectedTargetType = TARGET_TYPE_UNKNOWN;
 static int sCurrentConnectedTargetProtocol = NFC_PROTOCOL_UNKNOWN;
 #if (NXP_EXTNS == TRUE)
+uint8_t RW_TAG_SLP_REQ[] = {0x50, 0x00};
+uint8_t RW_DESELECT_REQ[] = {0xC2};
 static int sCurrentConnectedHandle = 0;
 void nativeNfcTag_doPresenceCheckResult(tNFA_STATUS status);
 static tNFA_STATUS nativeNfcTag_performHaltPICC();

@@ -228,6 +228,12 @@ class RoutingManager {
   uint16_t mDefaultSysCode;
   uint16_t mDefaultSysCodeRoute;
   uint8_t mDefaultSysCodePowerstate;
+  uint8_t mOffHostAidRoutingPowerState;
+#if(NXP_EXTNS != TRUE)
+  bool mDeinitializing;
+  bool mEeInfoChanged;
+  bool mAidRoutingConfigured;
+#endif
   bool mReceivedEeInfo;
   tNFA_EE_CBACK_DATA mCbEventData;
   tNFA_EE_DISCOVER_REQ mEeInfo;
@@ -283,7 +289,6 @@ class RoutingManager {
     uint32_t mTechSupportedByEse;
     uint32_t mTechSupportedByUicc1;
     uint32_t mTechSupportedByUicc2;
-    uint8_t mOffHostAidRoutingPowerState;
     uint8_t mHostListenTechMask;
 
 #endif
