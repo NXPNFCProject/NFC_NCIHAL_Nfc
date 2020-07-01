@@ -127,6 +127,7 @@ void handleWiredmode(bool isShutdown);
 int nfcManager_doPartialInitialize(JNIEnv* e, jobject o, jint mode);
 int nfcManager_doPartialDeInitialize(JNIEnv* e, jobject o);
 extern tNFA_STATUS NxpNfc_Write_Cmd_Common(uint8_t retlen, uint8_t* buffer);
+extern void NxpNfc_GetHwInfo(void);
 extern void NxpPropCmd_OnResponseCallback(uint8_t event, uint16_t param_len,
                                             uint8_t * p_param);
 extern tNFA_STATUS NxpPropCmd_send(uint8_t * pData4Tx, uint8_t dataLen,
@@ -1664,8 +1665,12 @@ static jboolean nfcManager_doInitialize(JNIEnv* e, jobject o) {
   }
 
 TheEnd:
-  if (sIsNfaEnabled)
+  if (sIsNfaEnabled) {
     PowerSwitch::getInstance().setLevel(PowerSwitch::LOW_POWER);
+#if (NXP_EXTNS == TRUE)
+  NxpNfc_GetHwInfo();
+#endif
+  }
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
   return sIsNfaEnabled ? JNI_TRUE : JNI_FALSE;
 }
