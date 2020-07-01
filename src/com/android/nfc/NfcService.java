@@ -464,6 +464,8 @@ public class NfcService implements DeviceHostListener {
     private ScreenStateHelper mScreenStateHelper;
     private ForegroundUtils mForegroundUtils;
 
+    private FileOutputStream fos = null;
+
     private static NfcService sService;
     private static boolean sToast_debounce = false;
     private static int sToast_debounce_time_ms = 3000;
@@ -4441,10 +4443,11 @@ public class NfcService implements DeviceHostListener {
               file.createNewFile();
           }
 
-          FileOutputStream fos = new FileOutputStream(file);
+          fos = new FileOutputStream(file);
           mDeviceHost.dump(fos.getFD());
           fos.flush();
           fos.close();
+          fos = null;
       } catch (IOException e) {
           Log.e(TAG, "Exception in storeNativeCrashLogs " + e);
       }
