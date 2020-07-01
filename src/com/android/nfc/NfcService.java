@@ -3134,8 +3134,9 @@ public class NfcService implements DeviceHostListener {
 
     public int getAidRoutingTableSize ()
     {
-        //return 18;
-        return mDeviceHost.getAidTableSize();
+        int aidTableSize = 0x00;
+        aidTableSize =  mDeviceHost.getAidTableSize();
+        return aidTableSize;
     }
 
     /**
