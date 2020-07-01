@@ -13,6 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/******************************************************************************
+*
+*  The original Work has been changed by NXP.
+*
+*  Licensed under the Apache License, Version 2.0 (the "License");
+*  you may not use this file except in compliance with the License.
+*  You may obtain a copy of the License at
+*
+*  http://www.apache.org/licenses/LICENSE-2.0
+*
+*  Unless required by applicable law or agreed to in writing, software
+*  distributed under the License is distributed on an "AS IS" BASIS,
+*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*  See the License for the specific language governing permissions and
+*  limitations under the License.
+*
+*  Copyright 2020 NXP
+*
+******************************************************************************/
 package com.android.nfc.cardemulation;
 
 import java.io.FileDescriptor;
@@ -35,6 +54,7 @@ import android.os.UserHandle;
 import android.provider.Settings;
 import android.provider.Settings.SettingNotFoundException;
 import android.util.Log;
+import android.os.SystemProperties;
 
 /**
  * This class keeps track of what HCE/SE-based services are
@@ -54,6 +74,7 @@ import android.util.Log;
  */
 public class PreferredServices implements com.android.nfc.ForegroundUtils.Callback {
     static final String TAG = "PreferredCardEmulationServices";
+    static final boolean DBG = ((SystemProperties.get("persist.nfc.ce_debug").equals("1")) ? true : false);
     static final Uri paymentDefaultUri = Settings.Secure.getUriFor(
             Settings.Secure.NFC_PAYMENT_DEFAULT_COMPONENT);
     static final Uri paymentForegroundUri = Settings.Secure.getUriFor(
@@ -255,7 +276,7 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
                     RegisteredAidCache.AidResolveInfo resolveInfo = mAidCache.resolveAid(aid);
                     if (CardEmulation.CATEGORY_PAYMENT.equals(resolveInfo.category) &&
                             paymentServiceInfo.equals(resolveInfo.defaultService)) {
-                        Log.d(TAG, "AID " + aid + " is handled by the default payment app, " +
+                            if (DBG) Log.d(TAG, "AID " + aid + " is handled by the default payment app, " +
                                 "and the user has not allowed payments to be overridden.");
                         return false;
                     }
