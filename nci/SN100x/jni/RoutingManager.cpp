@@ -1307,10 +1307,10 @@ void RoutingManager::registerProtoRouteEnrty(tNFA_HANDLE     ee_handle,
         mSecureNfcEnabled ? 0 :protocols_screen_off_lock);
     if (nfaStat == NFA_STATUS_OK) {
       mRoutingEvent.wait();
-      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("tech routing SUCCESS");
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("proto routing SUCCESS");
     } else {
       DLOG_IF(ERROR, nfc_debug_enabled)
-          << StringPrintf("Fail to set default tech routing");
+          << StringPrintf("Fail to set proto tech routing");
     }
   }
 }
@@ -1587,6 +1587,18 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
                 value &= ~(0x08);
             }
 
+            /*if NFCEE doesn't support tech A/B don't configure ISO-DEP/ISO7816 proto
+             * route */
+            if ((protocol_mask &
+                 (NFA_PROTOCOL_MASK_ISO_DEP | NFC_PROTOCOL_MASK_ISO7816)) &&
+                (ee_handle != NFA_EE_HANDLE_DH) && ((max_tech_mask & 0x03) == 0)) {
+              DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+                  "%s: Proto Entry rejected. ee_handle 0x%x doesn't support proto "
+                  "mask 0x%x.",
+                  fn, ee_handle, protocol_mask);
+              return nfaStat;
+            }
+
             if(protocol_mask)
             {
                 switch_on_mask     = (power & 0x01) ? protocol_mask : 0;
@@ -1713,6 +1725,7 @@ void RoutingManager::setEmptyAidEntry(int route) {
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter",__func__);
     uint16_t routeLoc = NFA_HANDLE_INVALID;
     uint32_t power;
+    int max_tech_mask = 0;
     mDefaultIso7816SeID = route;
     if (mDefaultIso7816SeID  == NFA_HANDLE_INVALID)
     {
@@ -1722,6 +1735,12 @@ void RoutingManager::setEmptyAidEntry(int route) {
     routeLoc = ((mDefaultIso7816SeID == 0x00) ? ROUTE_LOC_HOST_ID : ((mDefaultIso7816SeID == 0x01 ) ? ROUTE_LOC_ESE_ID : getUiccRouteLocId(mDefaultIso7816SeID)));
     power    = mCeRouteStrictDisable ? mDefaultIso7816Powerstate : (mDefaultIso7816Powerstate & POWER_STATE_MASK);
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: route %x",__func__,routeLoc);
+
+    max_tech_mask = SecureElement::getInstance().getSETechnology(routeLoc);
+    /* If Route Location Doesn't support Tech A / Tech B, Don't add empty AID route*/
+    if ((routeLoc != ROUTE_LOC_HOST_ID) && ((max_tech_mask & 0x03) == 0)) {
+      return;
+    }
 
     /*Map PWR state as per NCI2.0 if required*/
     bool stat = checkAndUpdatePowerState((int&)power);
