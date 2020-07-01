@@ -47,7 +47,6 @@
 #include "NfcSelfTest.h"
 #include "NfcTag.h"
 #include "PeerToPeer.h"
-#include "Pn544Interop.h"
 #include "PowerSwitch.h"
 #include "RoutingManager.h"
 #include "SyncEvent.h"
@@ -628,7 +627,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
                                        __func__);
           }
         }
-      } else if (pn544InteropIsBusy() == false) {
+      } else {
         NfcTag::getInstance().connectionEventHandler(connEvent, eventData);
 #if (NXP_EXTNS == TRUE)
         if(NfcTag::getInstance ().mNumDiscNtf) {
@@ -1855,11 +1854,6 @@ void nfcManager_disableDiscovery(JNIEnv* e, jobject o) {
   tNFA_STATUS status = NFA_STATUS_OK;
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter;", __func__);
 
-#if (NXP_EXTNS == TRUE)
-  pn544InteropAbortNow(true);
-#else
-  pn544InteropAbortNow();
-#endif
   if (sDiscoveryEnabled == false) {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: already disabled", __func__);
@@ -2047,9 +2041,6 @@ static jboolean nfcManager_doDeinitialize(JNIEnv*, jobject) {
 #if (NXP_EXTNS == TRUE)
   NativeJniExtns::getInstance().notifyNfcEvent(__func__);
   handleWiredmode(false); /* Nfc Off*/
-  pn544InteropAbortNow(true);
-#else
-  pn544InteropAbortNow();
 #endif
   sIsDisabling = true;
 
