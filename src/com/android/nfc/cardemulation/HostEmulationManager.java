@@ -128,7 +128,7 @@ public class HostEmulationManager {
         mKeyguard = (KeyguardManager) context.getSystemService(Context.KEYGUARD_SERVICE);
     }
 
-    public void onPreferredPaymentServiceChanged(ComponentName service) {
+    public void onPreferredPaymentServiceChanged(final ComponentName service) {
         new Handler(Looper.getMainLooper()).post(() -> {
             synchronized (mLock) {
                 if (service != null) {
