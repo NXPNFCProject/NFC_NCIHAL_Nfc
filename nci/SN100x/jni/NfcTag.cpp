@@ -49,7 +49,9 @@
 #include "nfc_config.h"
 #include "phNxpExtns.h"
 #include "rw_int.h"
-
+#if (NXP_EXTNS == TRUE)
+#include "NativeWlcManager.h"
+#endif
 using android::base::StringPrintf;
 
 extern bool nfc_debug_enabled;
@@ -952,7 +954,11 @@ void NfcTag::fillNativeNfcTagMembers3(JNIEnv* e, jclass tag_cls, jobject tag,
     if (NFC_DISCOVERY_TYPE_POLL_A == mTechParams[i].mode ||
         NFC_DISCOVERY_TYPE_POLL_A_ACTIVE == mTechParams[i].mode ||
         NFC_DISCOVERY_TYPE_LISTEN_A == mTechParams[i].mode ||
-        NFC_DISCOVERY_TYPE_LISTEN_A_ACTIVE == mTechParams[i].mode) {
+        NFC_DISCOVERY_TYPE_LISTEN_A_ACTIVE == mTechParams[i].mode
+#if (NXP_EXTNS == TRUE)
+        || NFC_DISCOVERY_TYPE_POLL_WLC == mTechParams[i].mode
+#endif
+    ) {
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: tech A", fn);
       pollBytes.reset(e->NewByteArray(2));
       e->SetByteArrayRegion(pollBytes.get(), 0, 2,
@@ -1041,6 +1047,10 @@ void NfcTag::fillNativeNfcTagMembers3(JNIEnv* e, jclass tag_cls, jobject tag,
       LOG(ERROR) << StringPrintf("%s: tech unknown ????", fn);
       pollBytes.reset(e->NewByteArray(0));
     }  // switch: every type of technology
+#if (NXP_EXTNS == TRUE)
+    if (NFC_DISCOVERY_TYPE_POLL_WLC == mTechParams[i].mode)
+      wlcManager.notifyTagDetectedOnWlcAntenna();
+#endif
     e->SetObjectArrayElement(techPollBytes.get(), i, pollBytes.get());
   }  // for: every technology in the array
 #if (NXP_EXTNS == TRUE)

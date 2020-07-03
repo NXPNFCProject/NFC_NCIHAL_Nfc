@@ -226,6 +226,10 @@ public class NfcService implements DeviceHostListener {
     static final int MSG_SCR_REMOVE_CARD              = 77;
     static final int MSG_SCR_MULTIPLE_TARGET_DETECTED = 78;
     static final int MSG_LX_DATA_RECEIVED             = 79;
+    static final int MSG_WLC_ENABLE                   = 80;
+    static final int MSG_WLC_DISABLE                  = 81;
+    static final int MSG_WLC_START_WPT                = 82;
+    static final int MSG_WLC_STOP_WPT                 = 83;
     private int SE_READER_TYPE = SE_READER_TYPE_INAVLID;
 
     // Update stats every 4 hours
@@ -494,7 +498,7 @@ public class NfcService implements DeviceHostListener {
     public static final int T4TNFCEE_STATUS_FAILED = -1;
     private Object mT4tNfcEeObj = new Object();
     private Bundle mT4tNfceeReturnBundle = new Bundle();
-
+    private WlcServiceProxy mWlc = null;
     public static NfcService getInstance() {
         return sService;
     }
@@ -811,6 +815,11 @@ public class NfcService implements DeviceHostListener {
         }
         mSEService = ISecureElementService.Stub.asInterface(ServiceManager.getService(
                 Context.SECURE_ELEMENT_SERVICE));
+        try {
+          mWlc = new WlcServiceProxy(mContext, mNxpPrefs);
+        } catch (Exception e) {
+          Log.e(TAG, "Error Initializing WLC service module");
+        }
     }
 
     private boolean isSEServiceAvailable() {
@@ -1010,6 +1019,14 @@ public class NfcService implements DeviceHostListener {
             } finally {
                 watchDog.cancel();
             }
+
+            try {
+              if (mWlc.isToBeEnabled())
+                mWlc.enable();
+            } catch (Exception e) {
+              Log.e(TAG, "Error enabling WlcService");
+            }
+
             int uiccSlot = 0;
             uiccSlot = mPrefs.getInt(PREF_CUR_SELECTED_UICC_ID, SECURE_ELEMENT_UICC_SLOT_DEFAULT);
             mDeviceHost.setPreferredSimSlot(uiccSlot);
@@ -1067,6 +1084,12 @@ public class NfcService implements DeviceHostListener {
             Log.i(TAG, "Disabling NFC");
             StatsLog.write(StatsLog.NFC_STATE_CHANGED, StatsLog.NFC_STATE_CHANGED__STATE__OFF);
             updateState(NfcAdapter.STATE_TURNING_OFF);
+            try {
+              mWlc.disable();
+            } catch (Exception e) {
+              Log.e(TAG, "Error disabling WlcService");
+            }
+
             deInitWiredSe();
             /* Sometimes mDeviceHost.deinitialize() hangs, use a watch-dog.
              * Implemented with a new thread (instead of a Handler or AsyncTask),
@@ -2293,6 +2316,46 @@ public class NfcService implements DeviceHostListener {
           NfcPermissions.enforceUserPermissions(mContext);
           return mDeviceHost.doEnableDebugNtf(fieldValue);
         }
+
+        @Override
+        public int enableWlc() throws RemoteException{
+          NfcPermissions.enforceUserPermissions(mContext);
+          if (!isNfcEnabled())
+            throw new RemoteException("NFC is not enabled");
+          if (mWlc == null)
+            throw new RemoteException("Wlc feature is not available ");
+          try {
+            int status = mWlc.enable();
+            if (status == ErrorCodes.SUCCESS) {
+              mNxpPrefsEditor = mNxpPrefs.edit();
+              mNxpPrefsEditor.putBoolean("PREF_WLC_ENABLE_STATUS", true);
+              mNxpPrefsEditor.commit();
+            }
+            return status;
+          } catch (Exception e) {
+            throw new RemoteException();
+          }
+        }
+
+        @Override
+        public int disableWlc() throws RemoteException {
+          NfcPermissions.enforceUserPermissions(mContext);
+          if (!isNfcEnabled())
+            throw new RemoteException("NFC is not enabled");
+          if (mWlc == null)
+            throw new RemoteException("Wlc feature is not available ");
+          try {
+            int status = mWlc.disable();
+            if (status == ErrorCodes.SUCCESS) {
+              mNxpPrefsEditor = mNxpPrefs.edit();
+              mNxpPrefsEditor.putBoolean("PREF_WLC_ENABLE_STATUS", false);
+              mNxpPrefsEditor.commit();
+            }
+            return status;
+          } catch (Exception e) {
+            throw new RemoteException();
+          }
+        }
 }
 
     final class ReaderModeDeathRecipient implements IBinder.DeathRecipient {
@@ -3479,8 +3542,10 @@ public class NfcService implements DeviceHostListener {
                             break;
                         }
                     }
-
-                    if (debounceTagUid != null) {
+                    if (mWlc.isWlcListenerDetected(ndefMsg)) {
+                        break;
+                    }
+                      if (debounceTagUid != null) {
                         // If we're debouncing and the UID or the NDEF message of the tag match,
                         // don't dispatch but drop it.
                         if (Arrays.equals(debounceTagUid, tag.getUid()) ||
@@ -3727,6 +3792,12 @@ public class NfcService implements DeviceHostListener {
                  mContext.sendBroadcast(lxDataRecvdIntent);
                  break;
                }
+               case MSG_WLC_ENABLE:
+               case MSG_WLC_DISABLE:
+               case MSG_WLC_START_WPT:
+               case MSG_WLC_STOP_WPT:
+                    mWlc.handleEvent(msg);
+                break;
                default:
                  Log.e(TAG, "Unknown message received");
                  break;
