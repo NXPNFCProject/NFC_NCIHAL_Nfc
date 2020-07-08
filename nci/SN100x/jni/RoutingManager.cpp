@@ -55,6 +55,9 @@
 using android::base::StringPrintf;
 
 extern bool gActivated;
+#if (NXP_EXTNS == TRUE)
+extern bool sSeRfActive;
+#endif
 extern SyncEvent gDeactivatedEvent;
 extern bool nfc_debug_enabled;
 
@@ -673,6 +676,11 @@ void RoutingManager::stackCallback(uint8_t event,
       routingManager.notifyDeactivated(NFA_TECHNOLOGY_MASK_A);
       SyncEventGuard g(gDeactivatedEvent);
       gActivated = false;  // guard this variable from multi-threaded access
+#if (NXP_EXTNS == TRUE)
+      if (sSeRfActive) {
+        sSeRfActive = false;
+      }
+#endif
       gDeactivatedEvent.notifyOne();
     } break;
 
