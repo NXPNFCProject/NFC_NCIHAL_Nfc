@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- *  Copyright 2019 NXP
+ *  Copyright 2019-2020 NXP
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -246,6 +246,17 @@ class NativeT4tNfcee {
   **
   *******************************************************************************/
   void eventHandler(uint8_t event, tNFA_CONN_EVT_DATA* eventData);
+  /*******************************************************************************
+  **
+  ** Function:        checkAndUpdateT4TAid
+  **
+  ** Description:     Check and update T4T Ndef Nfcee AID.
+  **
+  ** Returns:         void
+  **
+  *******************************************************************************/
+  void checkAndUpdateT4TAid(uint8_t* t4tAid, uint8_t* t4tNdefAidLen);
+
  private:
   bool mBusy;
   static const int NXP_NFC_CLPARAM_ID_T4T_NFCEE = 0x95;
@@ -351,5 +362,26 @@ tNFA_STATUS setup(void);
    **
    *******************************************************************************/
   void resetBusy();
+  /*******************************************************************************
+  **
+  ** Function:        getT4TNfceeAid
+  **
+  ** Description:     Get the T4T Nfcee AID.
+  **
+  ** Returns:         T4T AID: vector<uint8_t>
+  **
+  *******************************************************************************/
+  vector<uint8_t> getT4TNfceeAid();
+  /*******************************************************************************
+  **
+  ** Function:        isFwSupportNonStdT4TAid
+  **
+  ** Description:     Check FW supports Non-standard AID or not.
+  **
+  ** Returns:         true: FW support NON-STD AID
+  **                  false: FW not support NON-STD AID
+  **
+  *******************************************************************************/
+  bool isFwSupportNonStdT4TAid();
 };
 #endif
