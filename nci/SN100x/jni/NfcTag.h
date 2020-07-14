@@ -82,6 +82,11 @@ class NfcTag {
   bool mCashbeeDetected;
   int  mCurrentRequestedProtocol;
   uint8_t mNfcID0[4];
+  bool mIsNonStdMFCTag;
+  bool mIsSkipNdef;
+  struct timespec LastDetectedTime;
+  uint32_t mNonStdCardTimeDiff;
+  bool isNonStdCardSupported;
 #endif
 
   /*******************************************************************************
@@ -218,6 +223,41 @@ class NfcTag {
    **
    *******************************************************************************/
   void clearActivationParams();
+
+  /*******************************************************************************
+  **
+  ** Function         isNonStdMFCTag
+  **
+  ** Description      Computes time difference in milliseconds and set skipNdef
+  **                  flag to true if timediff is less the configured time set.
+  **
+  ** Returns          TRUE(time diff less than reference)/FALSE(Otherwise)
+  **
+  *******************************************************************************/
+  bool isNonStdMFCTag();
+
+  /*******************************************************************************
+  **
+  ** Function         updateNdefState
+  **
+  ** Description      Update Non standatd MFC state based on RF_DISC_NTF or
+  **                  INTF_ACTIVATED_NTF
+  **
+  ** Returns          TRUE(time diff less than reference)/FALSE(Otherwise)
+  **
+  *******************************************************************************/
+  void updateNdefState(uint8_t protocol, uint8_t more_disc_ntf);
+
+  /*******************************************************************************
+  **
+  ** Function         clearNonStdMfcState
+  **
+  ** Description      Clear Non standard MFC states
+  **
+  ** Returns          None
+  **
+  *******************************************************************************/
+  void clearNonStdMfcState();
 #endif
   /*******************************************************************************
   **

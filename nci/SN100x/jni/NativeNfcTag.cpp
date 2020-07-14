@@ -116,6 +116,9 @@ static bool sCheckNdefCapable = false;  // whether tag has NDEF capability
 static tNFA_HANDLE sNdefTypeHandlerHandle = NFA_HANDLE_INVALID;
 static tNFA_INTF_TYPE sCurrentRfInterface = NFA_INTERFACE_ISO_DEP;
 #if (NXP_EXTNS == TRUE)
+#define IS_MULTIPROTO_MFC_TAG()                 \
+  (NfcTag::getInstance().mIsMultiProtocolTag && \
+   sCurrentConnectedTargetProtocol == NFC_PROTOCOL_MIFARE)
 static tNFA_INTF_TYPE sCurrentActivatedProtocl = NFC_PROTOCOL_UNKNOWN;
 static uint8_t sCurrentActivatedMode = TARGET_TYPE_UNKNOWN;
 #endif
@@ -279,6 +282,29 @@ void nativeNfcTag_setRfProtocol(tNFA_INTF_TYPE rfProtocol, uint8_t mode) {
  **
  *******************************************************************************/
 uint8_t nativeNfcTag_getActivatedMode() { return sCurrentActivatedMode; }
+
+/*******************************************************************************
+ **
+ ** Function:        nativeNfcTag_updateMFCActivationFailTime
+ **
+ ** Description:     Update Time in case Mifare activation failed.
+ **
+ ** Returns:         None
+ **
+ *******************************************************************************/
+void nativeNfcTag_updateMFCActivationFailTime() {
+  if (IS_MULTIPROTO_MFC_TAG()) {
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s: Non STD MFC sequence1", __func__);
+    int ret = clock_gettime(CLOCK_MONOTONIC,
+                            &(NfcTag::getInstance().LastDetectedTime));
+    if (ret == -1) {
+      DLOG_IF(ERROR, nfc_debug_enabled)
+          << StringPrintf("Log : clock_gettime failed");
+    }
+  }
+}
+
 #endif
 /*******************************************************************************
 **
@@ -891,14 +917,21 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
       LOG(ERROR) << StringPrintf("%s: waiting for Card to be activated", __func__);
       int retry = 0;
       sConnectWaitingForComplete = JNI_TRUE;
-      do {
-         SyncEventGuard reselectEvent(sReconnectEvent);
-         if (sReconnectEvent.wait(500) == false) { // if timeout occured
+      if (IS_MULTIPROTO_MFC_TAG() &&
+              NfcTag::getInstance().isNonStdCardSupported) {
+        natTag.mIsNonStdMFCTag = true;
+      } else {
+        do {
+          SyncEventGuard reselectEvent(sReconnectEvent);
+          if (sReconnectEvent.wait(500) == false) {  // if timeout occured
             LOG(ERROR) << StringPrintf("%s: timeout ", __func__);
-         }
-         retry++;
-        LOG(ERROR) << StringPrintf("%s: waiting for Card to be activated %x %x", __func__,retry,sConnectOk);
-      } while(sConnectOk == false && retry < 3);
+          }
+          retry++;
+          LOG(ERROR) << StringPrintf(
+              "%s: waiting for Card to be activated %x %x", __func__, retry,
+              sConnectOk);
+        } while (sConnectOk == false && retry < 3);
+      }
       if(NfcTag::getInstance ().mNumDiscNtf)
         NfcTag::getInstance ().mNumDiscNtf = 0;
     }
@@ -1483,11 +1516,15 @@ static jint nativeNfcTag_doCheckNdef(JNIEnv* e, jobject o, jintArray ndefInfo) {
   jint* ndef = NULL;
 #if (NXP_EXTNS == TRUE)
   int handle = sCurrentConnectedHandle;
+#define SKIP_NDEF_NONSTD_MFC() \
+  (IS_MULTIPROTO_MFC_TAG() && NfcTag::getInstance().mIsSkipNdef)
 #endif
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter ", __func__);
 
 #if (NXP_EXTNS == TRUE)
-  if (sCurrentConnectedTargetProtocol == NFA_PROTOCOL_T3BT) {
+  if (sCurrentConnectedTargetProtocol == NFA_PROTOCOL_T3BT ||
+      SKIP_NDEF_NONSTD_MFC()) {
+    NfcTag::getInstance().clearNonStdMfcState();
     ndef = e->GetIntArrayElements (ndefInfo, 0);
     ndef[0] = 0;
     ndef[1] = NDEF_MODE_READ_ONLY;

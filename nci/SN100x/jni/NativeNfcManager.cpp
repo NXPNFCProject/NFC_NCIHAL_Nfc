@@ -142,6 +142,7 @@ extern void nativeNfcTag_abortTagOperations(tNFA_STATUS status);
 extern void nativeNfcTag_setRfProtocol(tNFA_INTF_TYPE rfProtocol, uint8_t mode);
 extern uint8_t nativeNfcTag_getActivatedMode();
 extern void nfaVSCNtfCallback(uint8_t event, uint16_t param_len, uint8_t *p_param);
+extern void nativeNfcTag_updateMFCActivationFailTime();
 #endif
 }  // namespace android
 
@@ -526,6 +527,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
         }
 #if (NXP_EXTNS == TRUE)
         NfcTag::getInstance().mTechListIndex = 0;
+        nativeNfcTag_updateMFCActivationFailTime();
 #endif
         LOG(ERROR) << StringPrintf(
             "%s: NFA_SELECT_RESULT_EVT error: status = %d", __func__,
@@ -572,6 +574,13 @@ static void nfaConnectionCallback(uint8_t connEvent,
         }
 #endif
       }
+#if (NXP_EXTNS == TRUE)
+      /*clear NonStdMfcTag state if a non-multiprotocol tag is activated*/
+      if (!NfcTag::getInstance().mIsMultiProtocolTag &&
+          NfcTag::getInstance().mIsNonStdMFCTag) {
+        NfcTag::getInstance().clearNonStdMfcState();
+      }
+#endif
       if (EXTNS_GetConnectFlag() == TRUE) {
         NfcTag::getInstance().setActivationState();
         nativeNfcTag_doConnectStatus(true);
