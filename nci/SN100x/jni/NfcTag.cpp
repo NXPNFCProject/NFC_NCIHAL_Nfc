@@ -84,6 +84,9 @@ NfcTag::NfcTag()
       mIsMultiProtocolTag(false),
       mCashbeeDetected(false),
       mCurrentRequestedProtocol(NFC_PROTOCOL_UNKNOWN),
+      mIsNonStdMFCTag(false),
+      mIsSkipNdef(false),
+      isNonStdCardSupported(false),
 #endif
       mTechnologyTimeoutsTable(MAX_NUM_TECHNOLOGY),
       mNativeData(NULL),
@@ -104,6 +107,7 @@ NfcTag::NfcTag()
   memset(mLastKovioUid, 0, NFC_KOVIO_MAX_LEN);
 #if (NXP_EXTNS == TRUE)
   memset(&mActivationParams_t, 0, sizeof(activationParams_t));
+  memset(&LastDetectedTime, 0, sizeof(timespec));
 #endif
   memset (&mLastKovioTime, 0, sizeof(timespec));
 }
