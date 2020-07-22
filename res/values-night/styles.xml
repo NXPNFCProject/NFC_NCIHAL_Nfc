@@ -15,5 +15,5 @@
 -->
 
 <resources>
-    <style name="DiagAlertDayNight" parent="@android:style/Theme.DeviceDefault.Dialog.Alert"/>
+    <style name="DialogAlertDayNight" parent="@android:style/Theme.DeviceDefault.Dialog.Alert"/>
 </resources>
