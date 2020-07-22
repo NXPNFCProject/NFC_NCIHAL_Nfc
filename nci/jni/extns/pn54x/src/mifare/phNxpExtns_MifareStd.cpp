@@ -1193,7 +1193,11 @@ STATIC NFCSTATUS phNciNfc_RecvMfResp(phNciNfc_Buff_t* RspBuffInfo,
             }
             gAuthCmdBuf.auth_status = true;
             status = NFCSTATUS_SUCCESS;
-
+            if ((PHNCINFC_EXTNID_SIZE + PHNCINFC_EXTNSTATUS_SIZE) >
+                RspBuffInfo->wLen) {
+              android_errorWriteLog(0x534e4554, "126204073");
+              return NFCSTATUS_FAILED;
+            }
             /* DataLen = TotalRecvdLen - (sizeof(RspId) + sizeof(Status)) */
             wPldDataSize = ((RspBuffInfo->wLen) -
                             (PHNCINFC_EXTNID_SIZE + PHNCINFC_EXTNSTATUS_SIZE));
