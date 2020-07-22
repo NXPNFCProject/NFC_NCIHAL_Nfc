@@ -93,18 +93,8 @@ public class ForegroundUtils extends IProcessObserver.Stub {
      */
     public boolean isInForeground(int uid) {
         synchronized (mLock) {
-            if (isInForegroundLocked(uid))
-                return true;
+            return isInForegroundLocked(uid);
         }
-        if (DBG) Log.d(TAG, "Checking UID:" + Integer.toString(uid));
-        try {
-            // If the onForegroundActivitiesChanged() has not yet been called,
-            // check whether the UID is in an active state to use the NFC.
-            return mIActivityManager.isUidActive(uid, NfcApplication.NFC_PROCESS);
-        } catch (RemoteException e) {
-            Log.e(TAG, "ForegroundUtils: could not get isUidActive");
-        }
-        return false;
     }
 
     /**
@@ -122,7 +112,17 @@ public class ForegroundUtils extends IProcessObserver.Stub {
     }
 
     private boolean isInForegroundLocked(int uid) {
-        return mForegroundUidPids.get(uid) != null;
+        if (mForegroundUidPids.get(uid) != null)
+            return true;
+        if (DBG) Log.d(TAG, "Checking UID:" + Integer.toString(uid));
+        try {
+            // If the onForegroundActivitiesChanged() has not yet been called,
+            // check whether the UID is in an active state to use the NFC.
+            return mIActivityManager.isUidActive(uid, NfcApplication.NFC_PROCESS);
+        } catch (RemoteException e) {
+            Log.e(TAG, "ForegroundUtils: could not get isUidActive");
+        }
+        return false;
     }
 
     private void handleUidToBackground(int uid) {
