@@ -853,6 +853,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: NFA_RF_DISCOVERY_STOPPED_EVT: status = 0x%0X",
                           __func__, eventData->status);
+      gActivated = false;
       notifyPollingEventwhileNfcOff();
       if (getReconnectState() == true) {
         eventData->deactivated.type = NFA_DEACTIVATE_TYPE_SLEEP;
