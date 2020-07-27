@@ -655,16 +655,21 @@ static void handleRfDiscoveryEvent(tNFC_RESULT_DEVT* discoveredDevice) {
     return;
   }
 
-  if (natTag.getNumDiscNtf() > 1) {
-    natTag.setMultiProtocolTagSupport(true);
-  }
-
   bool isP2p = natTag.isP2pDiscovered();
 
-  if (!sReaderModeEnabled && isP2p) {
+  if (natTag.getNumDiscNtf() > 1) {
+    natTag.setMultiProtocolTagSupport(true);
+    if (isP2p) {
+      // Remove NFC_DEP NTF count
+      // Skip NFC_DEP protocol in MultiProtocolTag select.
+      natTag.setNumDiscNtf(natTag.getNumDiscNtf() - 1);
+    }
+  }
+
+  if (sP2pEnabled && !sReaderModeEnabled && isP2p) {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: Select peer device", __FUNCTION__);
-    NfcTag::getInstance().selectP2p();
+    natTag.selectP2p();
   }
   else {
     natTag.setNumDiscNtf(natTag.getNumDiscNtf() - 1);
