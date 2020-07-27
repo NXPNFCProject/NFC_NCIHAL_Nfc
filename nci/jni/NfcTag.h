@@ -58,21 +58,22 @@ class NfcTag {
       11;  // max number of technologies supported by one or more tags
   int mTechList[MAX_NUM_TECHNOLOGY];  // array of NFC technologies according to
                                       // NFC service
-  int mTechHandles[MAX_NUM_TECHNOLOGY];  // array of tag handles according to
-                                         // NFC service
-  int mTechLibNfcTypes[MAX_NUM_TECHNOLOGY];  // array of detailed tag types
-                                             // according to NFC service
+  int mTechHandles[MAX_NUM_TECHNOLOGY];  // array of tag handles (RF DISC ID)
+                                         // according to NFC service received
+                                         // from RF_INTF_ACTIVATED NTF
+  int mTechLibNfcTypes[MAX_NUM_TECHNOLOGY];  // array of detailed tag types (RF
+                                             // Protocol) according to NFC
+                                             // service received from
+                                             // RF_INTF_ACTIVATED NTF
   int mNumTechList;  // current number of NFC technologies in the list
-  int mNumDiscNtf;
-  int mNumDiscTechList;
   int mTechListIndex;
   bool mNfcDisableinProgress;
   bool mCashbeeDetected;
   bool mEzLinkTypeTag;
   activationParams_t mActivationParams_t;
+  bool mIsMultiProtocolTag;
 #if (NXP_EXTNS == TRUE)
   bool mWaitingForSelect;
-  bool mIsMultiProtocolTag;
 #endif
   /*******************************************************************************
    **
@@ -223,15 +224,15 @@ class NfcTag {
 
   /*******************************************************************************
   **
-  ** Function:        selectNextTag
+  ** Function:        selectNextTagIfExists
   **
-  ** Description:     When multiple tags are discovered, selects the Nex one to
-  *activate.
+  ** Description:     When multiple tags are discovered, selects the Next one to
+  **                  activate.
   **
   ** Returns:         None
   **
   *******************************************************************************/
-  void selectNextTag();
+  void selectNextTagIfExists();
 
   /*******************************************************************************
   **
@@ -357,7 +358,7 @@ class NfcTag {
   **
   ** Description:     Get the timeout value for one technology.
   **                  techId: one of the values in TARGET_TYPE_* defined in
-  *NfcJniUtil.h
+  *                   NfcJniUtil.h
   **
   ** Returns:         Timeout value in millisecond.
   **
@@ -411,6 +412,40 @@ class NfcTag {
   **
   *******************************************************************************/
   bool isKovioType2Tag();
+
+  /*******************************************************************************
+  **
+  ** Function:        setMultiProtocolTagSupport
+  **
+  ** Description:     Update mIsMultiProtocolTag
+  **
+  ** Returns:         None
+  **
+  *******************************************************************************/
+  void setMultiProtocolTagSupport(bool isMultiProtocolSupported);
+
+  /*******************************************************************************
+  **
+  ** Function:        setNumDiscNtf
+  **
+  ** Description:     Update mNumDiscNtf
+  **
+  ** Returns:         None
+  **
+  *******************************************************************************/
+  void setNumDiscNtf(int numDiscNtfValue);
+
+  /*******************************************************************************
+  **
+  ** Function:        getNumDiscNtf
+  **
+  ** Description:     number of discovery notifications received from NFCC after
+  **                  last RF DISCOVERY state
+  **
+  ** Returns:         number of discovery notifications received from NFCC
+  **
+  *******************************************************************************/
+  int getNumDiscNtf();
 
   /*******************************************************************************
   **
@@ -507,6 +542,16 @@ class NfcTag {
   uint8_t mLastKovioUid[NFC_KOVIO_MAX_LEN];  // uid of last Kovio tag activated
   bool mIsDynamicTagId;  // whether the tag has dynamic tag ID
   bool mIsFelicaLite;
+  int mTechHandlesDiscData[MAX_NUM_TECHNOLOGY];      // array of tag handles (RF
+                                                     // DISC ID) received from
+                                                     // RF_DISC_NTF
+  int mTechLibNfcTypesDiscData[MAX_NUM_TECHNOLOGY];  // array of detailed tag
+                                                     // types ( RF Protocol)
+                                                     // received from
+                                                     // RF_DISC_NTF
+  int mNumDiscNtf;
+  int mNumDiscTechList;
+  int mTechListTail;  // Index of Last added entry in mTechList
   tNFA_RW_PRES_CHK_OPTION mPresenceCheckAlgorithm;
 
   /*******************************************************************************

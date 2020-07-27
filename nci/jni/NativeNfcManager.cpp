@@ -152,7 +152,7 @@ extern void nativeNfcTag_formatStatus(bool is_ok);
 extern void nativeNfcTag_resetPresenceCheck();
 extern void nativeNfcTag_doReadCompleted(tNFA_STATUS status);
 extern void nativeNfcTag_setRfInterface(tNFA_INTF_TYPE rfInterface);
-extern void nativeNfcTag_setRfProtocol(tNFA_INTF_TYPE rfProtocol);
+extern void nativeNfcTag_setActivatedRfProtocol(tNFA_INTF_TYPE rfProtocol);
 extern void nativeNfcTag_abortWaits();
 extern void doDwpChannel_ForceExit();
 extern void nativeLlcpConnectionlessSocket_abortWait();
@@ -531,8 +531,6 @@ static struct nfc_jni_native_data* gNativeData = NULL;
 static bool sRfFieldOff = true;
 static bool gsRouteUpdated = false;
 /***P2P-Prio Logic for Multiprotocol***/
-static uint8_t multiprotocol_flag = 1;
-static uint8_t multiprotocol_detected = 0;
 void* p2p_prio_logic_multiprotocol(void* arg);
 static IntervalTimer multiprotocol_timer;
 pthread_t multiprotocol_thread;
@@ -649,160 +647,33 @@ static void nfcManager_configNfccConfigControl(bool flag) {
 **
 *******************************************************************************/
 static void handleRfDiscoveryEvent(tNFC_RESULT_DEVT* discoveredDevice) {
-  int thread_ret;
+  NfcTag& natTag = NfcTag::getInstance();
+  natTag.setNumDiscNtf(natTag.getNumDiscNtf() + 1);
 
   if (discoveredDevice->more == NCI_DISCOVER_NTF_MORE) {
     // there is more discovery notification coming
-    NfcTag::getInstance().mNumDiscNtf++;
     return;
   }
 
-  NfcTag::getInstance().mNumDiscNtf++;
-  DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: Total Notifications - %d ", __FUNCTION__,
-                      NfcTag::getInstance().mNumDiscNtf);
-
-  if (NfcTag::getInstance().mNumDiscNtf > 1) {
-    NfcTag::getInstance().mIsMultiProtocolTag = true;
+  if (natTag.getNumDiscNtf() > 1) {
+    natTag.setMultiProtocolTagSupport(true);
   }
 
-  bool isP2p = NfcTag::getInstance().isP2pDiscovered();
+  bool isP2p = natTag.isP2pDiscovered();
 
   if (!sReaderModeEnabled && isP2p) {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: Select peer device", __FUNCTION__);
-#if (NXP_EXTNS == TRUE)
-    if (multiprotocol_detected == 1) {
-      multiprotocol_timer.kill();
-    }
-#endif
     NfcTag::getInstance().selectP2p();
   }
-#if (NXP_EXTNS == TRUE)
-  else if (!sReaderModeEnabled && multiprotocol_flag) {
-    NfcTag::getInstance().mNumDiscNtf = 0x00;
-    multiprotocol_flag = 0;
-    multiprotocol_detected = 1;
-    pthread_attr_t attr;
-    pthread_attr_init(&attr);
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-        "%s: starting p2p prio logic for multiprotocol tags", __FUNCTION__);
-    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-    thread_ret = pthread_create(&multiprotocol_thread, &attr,
-                                p2p_prio_logic_multiprotocol, NULL);
-    if (thread_ret != 0)
-      LOG(ERROR) << StringPrintf("%s: unable to create the thread",
-                                 __FUNCTION__);
-    pthread_attr_destroy(&attr);
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-        "%s: starting timer for reconfigure default polling callback",
-        __FUNCTION__);
-    multiprotocol_timer.set(300, reconfigure_poll_cb);
-  }
-#endif
   else {
-    multiprotocol_flag = 1;
-#if (NXP_EXTNS == TRUE)
-    NfcTag::getInstance().mNumDiscNtf--;
-#endif
-    NfcTag::getInstance().selectFirstTag();
+    natTag.setNumDiscNtf(natTag.getNumDiscNtf() - 1);
+    natTag.selectFirstTag();
   }
 
   // configure NFCC_CONFIG_CONTROL- NFCC allowed to manage RF configuration.
   nfcManager_configNfccConfigControl(true);
-
 }
-
-#if (NXP_EXTNS == TRUE)
-void* p2p_prio_logic_multiprotocol(void* arg) {
-  tNFA_STATUS status = NFA_STATUS_FAILED;
-  tNFA_TECHNOLOGY_MASK tech_mask = 0x00;
-
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __FUNCTION__);
-  /* Do not need if it is already in screen off state */
-  if (!(getScreenState() &
-        (NFA_SCREEN_STATE_OFF_LOCKED | NFA_SCREEN_STATE_OFF_UNLOCKED))) {
-    /* Stop polling */
-    if (sRfEnabled) {
-      startRfDiscovery(false);
-    }
-
-    {
-      SyncEventGuard guard(sNfaEnableDisablePollingEvent);
-      status = NFA_DisablePolling();
-      if (status == NFA_STATUS_OK) {
-        sNfaEnableDisablePollingEvent.wait();
-      } else
-        LOG(ERROR) << StringPrintf("%s: Failed to disable polling; error=0x%X",
-                                   __FUNCTION__, status);
-    }
-
-    if (multiprotocol_detected) {
-      DLOG_IF(INFO, nfc_debug_enabled)
-          << StringPrintf("%s: configure polling to tech F only", __FUNCTION__);
-      tech_mask = NFA_TECHNOLOGY_MASK_F;
-    } else {
-      DLOG_IF(INFO, nfc_debug_enabled)
-          << StringPrintf("%s: re-configure polling to default", __FUNCTION__);
-      if (NfcConfig::hasKey(NAME_POLLING_TECH_MASK)) {
-        tech_mask = NfcConfig::getUnsigned(NAME_POLLING_TECH_MASK);
-      } else {
-        tech_mask = DEFAULT_TECH_MASK;
-      }
-    }
-
-    {
-      SyncEventGuard guard(sNfaEnableDisablePollingEvent);
-      status = NFA_EnablePolling(tech_mask);
-      if (status == NFA_STATUS_OK) {
-        DLOG_IF(INFO, nfc_debug_enabled)
-            << StringPrintf("%s: wait for enable event", __FUNCTION__);
-        sNfaEnableDisablePollingEvent.wait();
-      } else {
-        LOG(ERROR) << StringPrintf("%s: fail enable polling; error=0x%X",
-                                   __FUNCTION__, status);
-      }
-    }
-
-    /* start polling */
-    if (!sRfEnabled) {
-      startRfDiscovery(true);
-    }
-  }
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __FUNCTION__);
-  return NULL;
-}
-
-void reconfigure_poll_cb(union sigval) {
-  DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("Prio_Logic_multiprotocol timer expire");
-  DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("CallBack Reconfiguring the POLL to Default");
-  clear_multiprotocol();
-  multiprotocol_timer.set(300, multiprotocol_clear_flag);
-}
-
-void clear_multiprotocol() {
-  int thread_ret;
-
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("clear_multiprotocol");
-  multiprotocol_detected = 0;
-  pthread_attr_t attr;
-  pthread_attr_init(&attr);
-  pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-  thread_ret = pthread_create(&multiprotocol_thread, &attr,
-                              p2p_prio_logic_multiprotocol, NULL);
-  if (thread_ret != 0)
-    DLOG_IF(INFO, nfc_debug_enabled)
-        << StringPrintf("unable to create the thread");
-  pthread_attr_destroy(&attr);
-}
-
-void multiprotocol_clear_flag(union sigval) {
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("multiprotocol_clear_flag");
-  multiprotocol_flag = 1;
-}
-#endif
 
 /*******************************************************************************
 **
@@ -893,15 +764,14 @@ static void nfaConnectionCallback(uint8_t connEvent,
         if (cur_more_val == 0x00) {
           LOG(ERROR) << StringPrintf(
               "%s: NFA_DISC_RESULT_EVT: error, select any one tag", __func__);
-          multiprotocol_flag = 0;
         }
       }
 #endif
 #endif
       if (status != NFA_STATUS_OK) {
+        NfcTag::getInstance().setNumDiscNtf(0);
         LOG(ERROR) << StringPrintf(
             "%s: NFA_DISC_RESULT_EVT: error, status = 0x%0X", __func__, status);
-        NfcTag::getInstance().mNumDiscNtf = 0;
       } else {
         NfcTag::getInstance().connectionEventHandler(connEvent, eventData);
         handleRfDiscoveryEvent(&eventData->disc_result.discovery_ntf);
@@ -927,7 +797,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
         }
 #if (NXP_EXTNS == TRUE)
         NfcTag::getInstance().selectCompleteStatus(false);
-        NfcTag::getInstance().mNumDiscNtf = 0x00;
+        NfcTag::getInstance().setNumDiscNtf(0);
 #endif
         NfcTag::getInstance().mTechListIndex = 0;
         LOG(ERROR) << StringPrintf(
@@ -968,12 +838,14 @@ static void nfaConnectionCallback(uint8_t connEvent,
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
           "%s: NFA_ACTIVATED_EVT: gIsSelectingRfInterface=%d, sIsDisabling=%d",
           __func__, gIsSelectingRfInterface, sIsDisabling);
-#if (NXP_EXTNS == TRUE)
-      if (NFC_PROTOCOL_T5T == NfcTag::getInstance().mTechLibNfcTypes[0x00]
-            && NfcTag::getInstance().mNumDiscNtf) {
-        /*T5T doesn't support multiproto detection logic*/
-        NfcTag::getInstance().mNumDiscNtf = 0x00;
+      uint8_t activatedProtocol =
+          (tNFA_INTF_TYPE)eventData->activated.activate_ntf.protocol;
+      if (NFC_PROTOCOL_T5T == activatedProtocol &&
+          NfcTag::getInstance().getNumDiscNtf()) {
+        /* T5T doesn't support multiproto detection logic */
+        NfcTag::getInstance().setNumDiscNtf(0);
       }
+#if (NXP_EXTNS == TRUE)
       if (gSelfTestType != NFC_CMD_TYPE_TYPE_NONE) {
         activatedNtf_Cb();
         break;
@@ -988,30 +860,13 @@ static void nfaConnectionCallback(uint8_t connEvent,
 
       NfcTag::getInstance().selectCompleteStatus(true);
 
-      /***P2P-Prio Logic for Multiprotocol***/
-      if ((eventData->activated.activate_ntf.protocol ==
-           NFA_PROTOCOL_NFC_DEP) &&
-          (multiprotocol_detected == 1)) {
-        DLOG_IF(INFO, nfc_debug_enabled)
-            << StringPrintf("Prio_Logic_multiprotocol stop timer");
-        multiprotocol_timer.kill();
-      }
-
-      if ((eventData->activated.activate_ntf.protocol == NFA_PROTOCOL_T3T) &&
-          (multiprotocol_detected == 1)) {
-        DLOG_IF(INFO, nfc_debug_enabled)
-            << StringPrintf("Prio_Logic_multiprotocol stop timer");
-        multiprotocol_timer.kill();
-        clear_multiprotocol();
-      }
 #endif
       if ((eventData->activated.activate_ntf.protocol !=
            NFA_PROTOCOL_NFC_DEP) &&
           (!isListenMode(eventData->activated))) {
         nativeNfcTag_setRfInterface(
             (tNFA_INTF_TYPE)eventData->activated.activate_ntf.intf_param.type);
-        nativeNfcTag_setRfProtocol(
-            (tNFA_INTF_TYPE)eventData->activated.activate_ntf.protocol);
+        nativeNfcTag_setActivatedRfProtocol(activatedProtocol);
       }
 
       if (EXTNS_GetConnectFlag() == true) {
@@ -1129,7 +984,10 @@ static void nfaConnectionCallback(uint8_t connEvent,
 #else
         NfcTag::getInstance().connectionEventHandler(connEvent, eventData);
 
-        if (NfcTag::getInstance().mNumDiscNtf) {
+        if (NfcTag::getInstance().getNumDiscNtf()) {
+          /*If its multiprotocol tag, deactivate tag with current selected
+          protocol to sleep . Select tag with next supported protocol after
+          deactivation event is received*/
           NFA_Deactivate(true);
         }
 #endif
@@ -1183,12 +1041,6 @@ static void nfaConnectionCallback(uint8_t connEvent,
         }
 
 #if (NXP_EXTNS == TRUE)
-        /* P2P-priority logic for multiprotocol tags */
-        if ((multiprotocol_detected == 1) && (sP2pActive == 1)) {
-          NfcTag::getInstance().mNumDiscNtf = 0;
-          clear_multiprotocol();
-          multiprotocol_flag = 1;
-        }
         if (gIsWaiting4Deact2SleepNtf) {
           if (eventData->deactivated.type == NFA_DEACTIVATE_TYPE_IDLE) {
             gGotDeact2IdleNtf = true;
@@ -1198,11 +1050,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
         }
 #endif
         NfcTag::getInstance().setDeactivationState(eventData->deactivated);
-
-        if (NfcTag::getInstance().mNumDiscNtf) {
-          NfcTag::getInstance().mNumDiscNtf--;
-          NfcTag::getInstance().selectNextTag();
-        }
+        NfcTag::getInstance().selectNextTagIfExists();
 
         if (eventData->deactivated.type != NFA_DEACTIVATE_TYPE_SLEEP) {
           {
@@ -1218,13 +1066,13 @@ static void nfaConnectionCallback(uint8_t connEvent,
             SecureElement::getInstance().startThread(0x00);
           }
 #endif
-          NfcTag::getInstance().mNumDiscNtf = 0;
+          NfcTag::getInstance().setNumDiscNtf(0);
           NfcTag::getInstance().mTechListIndex = 0;
           nativeNfcTag_resetPresenceCheck();
           NfcTag::getInstance().connectionEventHandler(connEvent, eventData);
           nativeNfcTag_abortWaits();
           NfcTag::getInstance().abort();
-          NfcTag::getInstance().mIsMultiProtocolTag = false;
+          NfcTag::getInstance().setMultiProtocolTagSupport(false);
         } else if (gIsTagDeactivating) {
           NfcTag::getInstance().setActive(false);
           nativeNfcTag_doDeactivateStatus(0);
