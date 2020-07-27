@@ -1375,7 +1375,10 @@ void NfcTag::selectNextTagIfExists() {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: nfa target idx=%dh=0x%X; protocol=0x%X", fn, i,
                         mTechHandlesDiscData[i], mTechLibNfcTypesDiscData[i]);
-    if ((mTechHandlesDiscData[sLastSelectedTagId] != mTechHandlesDiscData[i]) &&
+    if (((mTechHandlesDiscData[sLastSelectedTagId] !=
+          mTechHandlesDiscData[i]) ||
+         (mTechLibNfcTypesDiscData[sLastSelectedTagId] !=
+          mTechLibNfcTypesDiscData[i])) &&
         (mTechLibNfcTypesDiscData[i] != NFA_PROTOCOL_NFC_DEP)) {
       sLastSelectedTagId = i;
       foundIdx = i;
