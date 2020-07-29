@@ -770,9 +770,10 @@ bool SecureElement::setEseListenTechMask(uint8_t tech_mask) {
     nfaStat = NFA_CeConfigureEseListenTech(EE_HANDLE_0xF3, (0x00));
     if (nfaStat == NFA_STATUS_OK) {
       SecureElement::getInstance().mEseListenEvent.wait();
-      return true;
-    } else
+    } else {
       LOG(ERROR) << StringPrintf("fail to stop ESE listen");
+      return false;
+    }
   }
 
   {

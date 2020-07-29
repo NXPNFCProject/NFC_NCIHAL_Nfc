@@ -2806,6 +2806,12 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
             } else
               LOG(ERROR) << StringPrintf("fail to start UICC listen");
           }
+          {
+            unsigned long eseListenTech = NfcConfig::getUnsigned("NAME_NXP_ESE_LISTEN_TECH_MASK", 0x07);
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+                "%s: ESE listen mode (%02lX)", __func__, eseListenTech);
+             SecureElement::getInstance().setEseListenTechMask((uint8_t)eseListenTech);
+          }
         }
       }
       NFC_SetNfcServicePid();
@@ -2909,6 +2915,7 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
     (void)o;
     tNFA_STATUS status = NFA_STATUS_OK;
     unsigned long num = 0;
+    unsigned long eseListenTech = 0;
     unsigned long p2p_listen_mask = 0;
     tNFA_HANDLE handle = NFA_HANDLE_INVALID;
 #if (NXP_EXTNS == TRUE)
@@ -2984,7 +2991,8 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
 
         if (handle == 0x4C0) {
           SyncEventGuard guard(SecureElement::getInstance().mEseListenEvent);
-          status = NFA_CeConfigureEseListenTech(handle, (num & 0x07));
+          eseListenTech = NfcConfig::getUnsigned("NAME_NXP_ESE_LISTEN_TECH_MASK", 0x07);
+          status = NFA_CeConfigureEseListenTech(handle, (eseListenTech & 0x07));
           if (status == NFA_STATUS_OK)
             SecureElement::getInstance().mEseListenEvent.wait();
         } else {
