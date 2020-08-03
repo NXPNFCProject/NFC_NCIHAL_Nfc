@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- *  Copyright 2019 NXP
+ *  Copyright 2019-2020 NXP
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -175,7 +175,18 @@ void NativeJniExtns::initializeNativeData(nfc_jni_native_data* native) {
  ** Returns:         None
  **
  *******************************************************************************/
-NativeJniExtns::~NativeJniExtns() { unloadExtnsLibrary(); };
+NativeJniExtns::~NativeJniExtns() {
+  try {
+    if (!unloadExtnsLibrary()) {
+      DLOG_IF(ERROR, true) << StringPrintf("%s: Failed to unload the library",
+                                           __func__);
+      throw false;
+    }
+  } catch (bool) {
+    DLOG_IF(ERROR, true) << StringPrintf("%s: Exception to unload the library",
+                                         __func__);
+  }
+};
 
 /*******************************************************************************
 **
