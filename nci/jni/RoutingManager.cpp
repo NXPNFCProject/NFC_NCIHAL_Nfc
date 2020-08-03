@@ -2197,11 +2197,6 @@ int RoutingManager::registerT3tIdentifier(uint8_t* t3tId, uint8_t t3tIdLen) {
         << StringPrintf("%s: Busy in nfcManager_getTransanctionRequest", fn);
     return NFA_HANDLE_INVALID;
   }
-
-  if (android::isDiscoveryStarted()) {
-    // Stop RF discovery to reconfigure
-    android::startRfDiscovery(false);
-  }
 #endif
 
   mNfcFOnDhHandle = NFA_HANDLE_INVALID;
@@ -2257,15 +2252,10 @@ void RoutingManager::deregisterT3tIdentifier(int handle) {
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: Start to deregister NFC-F system on DH", fn);
 #if (NXP_EXTNS == TRUE && NXP_NFCC_HCE_F == TRUE)
-  bool enable = false;
   if (android::nfcManager_getTransanctionRequest(handle, false)) {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: Busy in nfcManager_getTransanctionRequest", fn);
     return;
-  } else if (android::isDiscoveryStarted()) {
-    // Stop RF discovery to reconfigure
-    android::startRfDiscovery(false);
-    enable = true;
   }
 #endif
    {
@@ -2300,12 +2290,6 @@ void RoutingManager::deregisterT3tIdentifier(int handle) {
       }
     }
    }
-#if (NXP_EXTNS == TRUE && NXP_NFCC_HCE_F == TRUE)
-  if (enable) {
-    // Stop RF discovery to reconfigure
-    android::startRfDiscovery(true);
-  }
-#endif
 }
 
 #if (NXP_EXTNS == TRUE)

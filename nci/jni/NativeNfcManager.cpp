@@ -3007,7 +3007,6 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
       }
 
       PeerToPeer::getInstance().enableP2pListening(false);
-      startRfDiscovery(true);
     }
 
     sP2pEnabled = false;
