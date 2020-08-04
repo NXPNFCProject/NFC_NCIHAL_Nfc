@@ -520,7 +520,11 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
             NfcPermissions.validateUserId(userId);
             NfcPermissions.enforceUserPermissions(mContext);
             NfcPermissions.enforcePreferredPaymentInfoPermissions(mContext);
-            return ((mServiceCache.getService(userId, mAidCache.getPreferredService())).createApduServiceInfo());
+            if((mServiceCache.getService(userId, mAidCache.getPreferredService())) != null) {
+                return ((mServiceCache.getService(userId, mAidCache.getPreferredService())).createApduServiceInfo());
+            } else {
+                return null;
+            }
         }
     }
 
