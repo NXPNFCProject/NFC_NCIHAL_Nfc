@@ -1725,14 +1725,13 @@ static void nfaConnectionCallback(uint8_t connEvent,
         }
       }
 #endif
-      DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("nfcManager_sendRawFrame(): bufLen:%zu", bufLen);
-      status = NFA_SendRawFrame(buf, bufLen, 0);
     } else {
-      DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("data is NULL ..Returning..");
-      status = NFA_STATUS_FAILED;
+      /*Empty NCI packet handling*/
+      bufLen = 0x00;
     }
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("nfcManager_sendRawFrame(): bufLen:%zu", bufLen);
+    status = NFA_SendRawFrame(buf, bufLen, 0);
     return (status == NFA_STATUS_OK);
   }
 
