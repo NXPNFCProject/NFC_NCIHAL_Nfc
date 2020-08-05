@@ -675,9 +675,6 @@ static void handleRfDiscoveryEvent(tNFC_RESULT_DEVT* discoveredDevice) {
     natTag.setNumDiscNtf(natTag.getNumDiscNtf() - 1);
     natTag.selectFirstTag();
   }
-
-  // configure NFCC_CONFIG_CONTROL- NFCC allowed to manage RF configuration.
-  nfcManager_configNfccConfigControl(true);
 }
 
 /*******************************************************************************
@@ -4611,6 +4608,8 @@ static void restartUiccListen(jint uiccSlot) {
       nfa_dm_disc_freq_cfg.pfa = polling_frequency[7];
       p_nfa_dm_rf_disc_freq_cfg = &nfa_dm_disc_freq_cfg;
     }
+  // configure NFCC_CONFIG_CONTROL- NFCC allowed to manage RF configuration.
+  nfcManager_configNfccConfigControl(true);
   }
 
   /*******************************************************************************

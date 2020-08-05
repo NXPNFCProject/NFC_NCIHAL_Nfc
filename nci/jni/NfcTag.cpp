@@ -1286,11 +1286,11 @@ void NfcTag::selectFirstTag() {
   int foundIdx = -1;
   tNFA_INTF_TYPE rf_intf = NFA_INTERFACE_FRAME;
 
-  for (int i = 0; i < mNumTechList; i++) {
+  for (int i = 0; i < mNumDiscTechList; i++) {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: nfa target idx=%d h=0x%X; protocol=0x%X", fn, i,
-                        mTechHandles[i], mTechLibNfcTypes[i]);
-    if (mTechLibNfcTypes[i] != NFA_PROTOCOL_NFC_DEP) {
+                        mTechHandlesDiscData[i], mTechLibNfcTypesDiscData[i]);
+    if (mTechLibNfcTypesDiscData[i] != NFA_PROTOCOL_NFC_DEP) {
       foundIdx = i;
       selectedId = i;
       break;
@@ -1298,15 +1298,15 @@ void NfcTag::selectFirstTag() {
   }
 
   if (foundIdx != -1) {
-    if (mTechLibNfcTypes[foundIdx] == NFA_PROTOCOL_ISO_DEP) {
+    if (mTechLibNfcTypesDiscData[foundIdx] == NFA_PROTOCOL_ISO_DEP) {
       rf_intf = NFA_INTERFACE_ISO_DEP;
-    } else if (mTechLibNfcTypes[foundIdx] == NFC_PROTOCOL_MIFARE) {
+    } else if (mTechLibNfcTypesDiscData[foundIdx] == NFC_PROTOCOL_MIFARE) {
       rf_intf = NFA_INTERFACE_MIFARE;
     } else
       rf_intf = NFA_INTERFACE_FRAME;
 
     tNFA_STATUS stat =
-        NFA_Select(mTechHandles[foundIdx], mTechLibNfcTypes[foundIdx], rf_intf);
+        NFA_Select(mTechHandlesDiscData[foundIdx], mTechLibNfcTypesDiscData[foundIdx], rf_intf);
     if (stat != NFA_STATUS_OK)
       LOG(ERROR) << StringPrintf("%s: fail select; error=0x%X", fn, stat);
 #if (NXP_EXTNS == TRUE)
