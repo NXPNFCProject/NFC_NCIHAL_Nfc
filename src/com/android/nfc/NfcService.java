@@ -3531,7 +3531,14 @@ public class NfcService implements DeviceHostListener {
                         if (mState == NfcAdapter.STATE_TURNING_OFF)
                             return;
                     }
-
+                    if (nci_version == NCI_VERSION_1_0) {
+                        if (mScreenState < ScreenStateHelper.SCREEN_STATE_ON_LOCKED)
+                            applyRouting(false);
+                        mDeviceHost.doSetScreenState(mScreenState);
+                        if (mScreenState >= ScreenStateHelper.SCREEN_STATE_ON_LOCKED)
+                            applyRouting(false);
+                        break;
+                    }
                     if (mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED) {
                       applyRouting(false);
                     }
@@ -4245,9 +4252,6 @@ public class NfcService implements DeviceHostListener {
                             : ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED;
                 } else if (action.equals(Intent.ACTION_USER_PRESENT)) {
                     screenState = ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED;
-                }
-                if (nci_version != NCI_VERSION_2_0) {
-                    new ApplyRoutingTask().execute(Integer.valueOf(screenState));
                 }
                 sendMessage(NfcService.MSG_APPLY_SCREEN_STATE, screenState);
             } else if (action.equals(Intent.ACTION_USER_SWITCHED)) {
