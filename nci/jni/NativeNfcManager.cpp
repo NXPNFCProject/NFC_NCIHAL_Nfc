@@ -2832,6 +2832,17 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
             << StringPrintf("%s: Disable p2pListening", __func__);
         PeerToPeer::getInstance().enableP2pListening(false);
       }
+
+      /* enable_p2p=> request to enable p2p, P2pEnabled=> current state of p2p */
+      if (enable_p2p && !sP2pEnabled) {
+          sP2pEnabled = true;
+          PeerToPeer::getInstance().enableP2pListening(true);
+          NFA_ResumeP2p();
+        } else if (!enable_p2p && sP2pEnabled) {
+          sP2pEnabled = false;
+          PeerToPeer::getInstance().enableP2pListening(false);
+          NFA_PauseP2p();
+        }
 #endif
 
       {
