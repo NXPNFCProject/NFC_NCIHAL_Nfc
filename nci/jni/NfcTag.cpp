@@ -1208,20 +1208,20 @@ void NfcTag::selectP2p() {
   static const char fn[] = "NfcTag::selectP2p";
   uint8_t rfDiscoveryId = 0;
 
-  for (int i = 0; i < mNumTechList; i++) {
+  for (int i = 0; i < mNumDiscTechList; i++) {
     // if remote device does not support P2P, just skip it
-    if (mTechLibNfcTypes[i] != NFA_PROTOCOL_NFC_DEP) continue;
+    if (mTechLibNfcTypesDiscData[i] != NFA_PROTOCOL_NFC_DEP) continue;
 
     // if remote device supports tech F;
     // tech F is preferred because it is faster than tech A
     if ((mTechParams[i].mode == NFC_DISCOVERY_TYPE_POLL_F) ||
         (mTechParams[i].mode == NFC_DISCOVERY_TYPE_POLL_F_ACTIVE)) {
-      rfDiscoveryId = mTechHandles[i];
+      rfDiscoveryId = mTechHandlesDiscData[i];
       break;  // no need to search further
     } else if ((mTechParams[i].mode == NFC_DISCOVERY_TYPE_POLL_A) ||
                (mTechParams[i].mode == NFC_DISCOVERY_TYPE_POLL_A_ACTIVE)) {
       // only choose tech A if tech F is unavailable
-      if (rfDiscoveryId == 0) rfDiscoveryId = mTechHandles[i];
+      if (rfDiscoveryId == 0) rfDiscoveryId = mTechHandlesDiscData[i];
     }
   }
 
