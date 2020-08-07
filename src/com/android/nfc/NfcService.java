@@ -1733,8 +1733,6 @@ public class NfcService implements DeviceHostListener {
                 ((fullPower ? (mDeviceHost.getDefaultMifareCLTPowerState() & powerState) | 0x01 : 0)
                     | (lowPower ? 0x01 << 1 : 0) | (noPower ? 0x01 << 2 : 0));
           }
-          techRouteEntry |= (TECH_TYPE_A << TECH_TYPE_MASK);
-
           Log.i(TAG, "MifareCLTRouteSet : " + techRouteEntry);
           mNxpPrefsEditor = mNxpPrefs.edit();
           mNxpPrefsEditor.putInt("PREF_MIFARE_CLT_ROUTE_ID", techRouteEntry);
@@ -1757,7 +1755,6 @@ public class NfcService implements DeviceHostListener {
           techRouteEntry |=
               ((fullPower ? (mDeviceHost.getDefaultMifareCLTPowerState() & 0x1F) | 0x01 : 0)
                   | (lowPower ? 0x01 << 1 : 0) | (noPower ? 0x01 << 2 : 0));
-          techRouteEntry |= (TECH_TYPE_F << TECH_TYPE_MASK);
 
           Log.i(TAG, "NfcFRouteSet : " + techRouteEntry);
           mNxpPrefsEditor = mNxpPrefs.edit();
@@ -2901,10 +2898,9 @@ public class NfcService implements DeviceHostListener {
           mDeviceHost.setRoutingEntry(PROTOCOL_ENTRY, NFC_LISTEN_PROTO_T3T, 0x00, 0x01);
         }
         mDeviceHost.setRoutingEntry(PROTOCOL_ENTRY, NFC_LISTEN_PROTO_ISO_DEP, ((protoRoute >> ROUTE_LOC_MASK) & 0x07), protoRoute & 0x3F);
-
         /* Routing for Technology */
-        TechSeId = (techRoute >> ROUTE_LOC_MASK);
-        TechFSeId = (techfRoute >> ROUTE_LOC_MASK);
+        TechSeId = ((techRoute >> ROUTE_LOC_MASK) & 0x07);
+        TechFSeId = ((techfRoute >> ROUTE_LOC_MASK) & 0x07);
         /* Technology types are masked internally depending on the capability of SE */
         if(techRoute == techfRoute)
         {
