@@ -1704,31 +1704,35 @@ static void nfaConnectionCallback(uint8_t connEvent,
   ** Returns:         True if ok.
   **
   *******************************************************************************/
-  static jboolean nfcManager_sendRawFrame(JNIEnv * e, jobject,
-                                          jbyteArray data) {
-    size_t bufLen = 0x00;
+  static jboolean nfcManager_sendRawFrame(JNIEnv* e, jobject, jbyteArray data) {
+    size_t bufLen = 0;
     uint8_t* buf = NULL;
-    tNFA_STATUS status;
+    ScopedByteArrayRO bytes(e);
+
+  #if (NXP_EXTNS == TRUE)
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s: nfcManager_sendRawFrame", __func__);
     if (data != NULL) {
-      ScopedByteArrayRO bytes(e, data);
+      bytes.reset(data);
       buf = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
       bufLen = bytes.size();
-
-#if (NXP_EXTNS == TRUE)
       if (nfcFL.nfccFL._NXP_NFCC_EMPTY_DATA_PACKET) {
         RoutingManager::getInstance().mNfcFRspTimer.kill();
         if (bufLen == 0) {
           gIsEmptyRspSentByHceFApk = true;
         }
       }
-#endif
     } else {
-      /*Empty NCI packet handling*/
+      /*Fix for Felica on Host for Empty NCI packet handling*/
       bufLen = 0x00;
     }
-    DLOG_IF(INFO, nfc_debug_enabled)
-        << StringPrintf("nfcManager_sendRawFrame(): bufLen:%zu", bufLen);
-    status = NFA_SendRawFrame(buf, bufLen, 0);
+  #else
+    bytes.reset(data);
+    buf = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
+    bufLen = bytes.size();
+  #endif
+    tNFA_STATUS status = NFA_SendRawFrame(buf, bufLen, 0);
+
     return (status == NFA_STATUS_OK);
   }
 
