@@ -514,9 +514,11 @@ bool PeerToPeer::deregisterServer(tJNI_HANDLE jniHandle) {
    * conditional check is added to avoid multiple dicovery cmds
    * at the time of NFC OFF in progress
    */
-  if ((gGeneralPowershutDown != NFC_MODE_OFF) && isPollingTempStopped == true) {
+  #if (NXP_EXTNS == FALSE)
+  if (isPollingTempStopped == true) {
     startRfDiscovery(true);
   }
+  #endif
 
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", fn);
   return true;
