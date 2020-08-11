@@ -5,6 +5,7 @@
     <bool name="enable_auto_play">true</bool>
     <bool name="enable_notify_dispatch_failed">false</bool>
     <bool name="enable_nfc_blocking_alert">false</bool>
+    <integer name="nfc_blocking_count">10</integer>
     <integer name="toast_debounce_time_ms">3000</integer>
     <integer name="unknown_tag_polling_delay">2000</integer>
 
