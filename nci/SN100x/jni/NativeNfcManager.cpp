@@ -476,6 +476,8 @@ static void nfaConnectionCallback(uint8_t connEvent,
           << StringPrintf("%s: NFA_RF_DISCOVERY_STOPPED_EVT: status = %u",
                           __func__, eventData->status);
 
+      gActivated = false;
+
       SyncEventGuard guard(sNfaEnableDisablePollingEvent);
       sNfaEnableDisablePollingEvent.notifyOne();
     } break;
