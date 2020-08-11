@@ -93,11 +93,13 @@ extern bool isDynamicUiccEnabled;
 
 static const uint8_t AID_ROUTE_QUAL_PREFIX = 0x10;
 RoutingManager::RoutingManager()
-#if(NXP_EXTNS == TRUE)
-      : mNativeData(NULL) {
-#else
-      : mAidRoutingConfigured(false) {
+    : mSecureNfcEnabled(false),
+      mNativeData(NULL)
+#if (NXP_EXTNS != TRUE)
+      ,
+      mAidRoutingConfigured(false)
 #endif
+{
   static const char fn[] = "RoutingManager::RoutingManager()";
 
   mDefaultOffHostRoute =
