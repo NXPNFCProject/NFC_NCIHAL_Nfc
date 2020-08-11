@@ -1226,8 +1226,8 @@ bool NfcTag::isP2pDiscovered() {
   static const char fn[] = "NfcTag::isP2pDiscovered";
   bool retval = false;
 
-  for (int i = 0; i < mNumTechList; i++) {
-    if (mTechLibNfcTypes[i] == NFA_PROTOCOL_NFC_DEP) {
+  for (int i = 0; i < mNumDiscTechList; i++) {
+    if (mTechLibNfcTypesDiscData[i] == NFA_PROTOCOL_NFC_DEP) {
       // if remote device supports P2P
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: discovered P2P", fn);
