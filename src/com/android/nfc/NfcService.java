@@ -377,6 +377,9 @@ public class NfcService implements DeviceHostListener {
      */
     public static final int UICC2_ID_TYPE = 4;
 
+    static final int ROUTE_INVALID = 0xFF;
+    static int mOverflowDefaultRoute = ROUTE_INVALID;
+
     public boolean mIsRouteForced = false;
 
     private final UserManager mUserManager;
@@ -1063,7 +1066,7 @@ public class NfcService implements DeviceHostListener {
             mDeviceHost.setPreferredSimSlot(uiccSlot);
             nci_version = getNciVersion();
             Log.d(TAG, "NCI_Version: " + nci_version);
-            mNxpPrefsEditor.remove("PREF_SET_DEFAULT_ROUTE_ID").commit();
+            mOverflowDefaultRoute = ROUTE_INVALID;
             if (mIsHceCapable) {
                 // Generate the initial card emulation routing table
                 mCardEmulationManager.onNfcEnabled();
@@ -3046,7 +3049,7 @@ public class NfcService implements DeviceHostListener {
     private void computeAndSetRoutingParameters()
     {
         int protoRoute = mNxpPrefs.getInt("PREF_MIFARE_DESFIRE_PROTO_ROUTE_ID", GetDefaultMifareDesfireRouteEntry());
-        int defaultRoute=mNxpPrefs.getInt("PREF_SET_DEFAULT_ROUTE_ID", GetDefaultRouteEntry());
+        int defaultRoute = getConfiguredDefaultRouteEntry();
         int techRoute=mNxpPrefs.getInt("PREF_MIFARE_CLT_ROUTE_ID", GetDefaultMifateCLTRouteEntry());
         int techfRoute=mNxpPrefs.getInt("PREF_FELICA_CLT_ROUTE_ID", GetDefaultFelicaCLTRouteEntry());
         int TechSeId,TechFSeId;
@@ -3234,22 +3237,6 @@ public class NfcService implements DeviceHostListener {
         return aidTableSize;
     }
 
-    /**
-     * set default  Aid route entry in case application does not configure this route entry
-     */
-    public void setDefaultAidRouteLoc( int routeLoc)
-    {
-        mNxpPrefsEditor = mNxpPrefs.edit();
-        Log.d(TAG, "writing to preferences setDefaultAidRouteLoc  :" + routeLoc);
-
-        int defaultAidRoute = ((mDeviceHost.getDefaultAidPowerState() & 0x3F) | (routeLoc << ROUTE_LOC_MASK));
-
-        mNxpPrefsEditor.putInt("PREF_SET_DEFAULT_ROUTE_ID", defaultAidRoute);
-        mNxpPrefsEditor.commit();
-        int defaultRoute=mNxpPrefs.getInt("PREF_SET_DEFAULT_ROUTE_ID",0xFF);
-        Log.d(TAG, "reading preferences from user  :" + defaultRoute);
-    }
-
     public void unrouteAids(String aid) {
         sendMessage(MSG_UNROUTE_AID, aid);
     }
@@ -3306,13 +3293,14 @@ public class NfcService implements DeviceHostListener {
         mHandler.sendEmptyMessage(MSG_DEINIT_WIREDSE);
     }
     /**
-     * get default Aid route entry in case application does not configure this route entry
+     * get default Aid route entry from shared preference
      */
-    public int GetDefaultRouteLoc()
-    {
-        int defaultRouteLoc = mNxpPrefs.getInt("PREF_SET_DEFAULT_ROUTE_ID", GetDefaultRouteEntry()) >> ROUTE_LOC_MASK;
-        Log.d(TAG, "GetDefaultRouteLoc  :" + defaultRouteLoc);
-        return defaultRouteLoc ;
+    public int GetDefaultRouteLocSharedPref() {
+        int defaultRouteLocSharedPref = mNxpPrefs.getInt("PREF_SET_DEFAULT_ROUTE_ID", ROUTE_INVALID);
+        if (defaultRouteLocSharedPref != ROUTE_INVALID)
+            defaultRouteLocSharedPref = (defaultRouteLocSharedPref >> ROUTE_LOC_MASK);
+        Log.d(TAG, "defaultRouteLocSharedPref  :" + defaultRouteLocSharedPref);
+        return defaultRouteLocSharedPref;
     }
     /**
      * get default MifareDesfireRoute route entry in case application does not configure this route entry
@@ -3333,16 +3321,21 @@ public class NfcService implements DeviceHostListener {
         if (DBG) Log.d(TAG, "defaultMifareDesfireRoute : " + defaultMifareDesfireRoute);
         return defaultMifareDesfireRoute;
     }
-    /**
-     * set default Aid route entry in case application does not configure this route entry
-     */
+
+    /*Returns Default Route based on priority. OverFlow > Shared_Pref > conf file*/
+    public int getConfiguredDefaultRouteEntry() {
+        return (mOverflowDefaultRoute != ROUTE_INVALID) ? mOverflowDefaultRoute
+                                                     : GetDefaultRouteEntry();
+    }
 
     public int GetDefaultRouteEntry()
     {
+        int route = mNxpPrefs.getInt("PREF_SET_DEFAULT_ROUTE_ID", ROUTE_INVALID);
+        if (route != ROUTE_INVALID)
+            return route;
         int routeLoc = mDeviceHost.getDefaultAidRoute();
         int defaultAidRoute = ((mDeviceHost.getDefaultAidPowerState() & 0x3F) | (routeLoc << ROUTE_LOC_MASK));
-        if(routeLoc == 0x00)
-        {
+        if(routeLoc == 0x00) {
             /*
             bit pos 1 = Power Off
             bit pos 2 = Battery Off
@@ -3470,7 +3463,7 @@ public class NfcService implements DeviceHostListener {
                 }
                 case MSG_COMMIT_ROUTING: {
                     Log.d(TAG, "commitRouting >>>");
-                    int defaultRoute=mNxpPrefs.getInt("PREF_SET_DEFAULT_ROUTE_ID", GetDefaultRouteEntry());
+                    int defaultRoute = getConfiguredDefaultRouteEntry();
                     mDeviceHost.setEmptyAidRoute(defaultRoute >> ROUTE_LOC_MASK);
                     mDeviceHost.commitRouting();
                     break;
@@ -4603,28 +4596,27 @@ public class NfcService implements DeviceHostListener {
     }
 
     public void updateDefaultAidRoute(int routeLoc) {
-      mNxpPrefsEditor = mNxpPrefs.edit();
-      Log.d(TAG, "writing to preferences setDefaultAidRouteLoc  :" + routeLoc);
-      if (mNxpPrefs.getInt("PREF_SET_DEFAULT_ROUTE_ID", 0xFF) == routeLoc) {
-        Log.d(TAG, "DefaultRoute :" + routeLoc + " is not changed. Returning.");
-        return;
-      }
-      int defaultAidRoute =
-          ((mDeviceHost.getDefaultAidPowerState() & 0x3F) | (routeLoc << ROUTE_LOC_MASK));
-      if (routeLoc == 0x00) {
-        /*
-        bit pos 1 = Power Off
-        bit pos 2 = Battery Off
-        bit pos 3 = Screen Off
-        Set these bits to 0 because in case routeLoc = HOST it can not work on POWER_OFF,
-        BATTERY_OFF and SCREEN_OFF*/
+        Log.d(TAG, "updateDefaultAidRoute routeLoc:" + routeLoc);
+        boolean isOverflow = (routeLoc != (GetDefaultRouteEntry() >> ROUTE_LOC_MASK));
 
-        defaultAidRoute &= 0x11;
-      }
-      mNxpPrefsEditor.putInt("PREF_SET_DEFAULT_ROUTE_ID", defaultAidRoute);
-      mNxpPrefsEditor.commit();
-      mHandler.sendEmptyMessage(MSG_RESET_AND_UPDATE_ROUTING_PARAMS);
+        if (!isOverflow)
+            mOverflowDefaultRoute = ROUTE_INVALID;
+        else {
+            mOverflowDefaultRoute =
+                ((mDeviceHost.getDefaultAidPowerState() & 0x3F) | (routeLoc << ROUTE_LOC_MASK));
+            if (routeLoc == 0x00) {
+                /*
+                bit pos 1 = Power Off
+                bit pos 2 = Battery Off
+                bit pos 4 = Screen Off
+                Set these bits to 0 because in case routeLoc = HOST it can not work on POWER_OFF,
+                BATTERY_OFF and SCREEN_OFF*/
+                mOverflowDefaultRoute &= 0xF9;
+            }
+        }
+        mHandler.sendEmptyMessage(MSG_RESET_AND_UPDATE_ROUTING_PARAMS);
     }
+
     public void addT4TNfceeAid() {
       Log.i(TAG, "Add T4T Nfcee AID");
 

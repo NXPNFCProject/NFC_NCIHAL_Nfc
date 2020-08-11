@@ -820,7 +820,11 @@ public class RegisteredAidCache {
             resolvedAids.clear();
         }
 
-        updateRoutingLocked(false);
+        if (NfcService.getInstance().mIsRouteForced) {
+            updateRoutingLocked(true);
+        } else {
+            updateRoutingLocked(false);
+        }
     }
 
     void updateRoutingLocked(boolean force) {

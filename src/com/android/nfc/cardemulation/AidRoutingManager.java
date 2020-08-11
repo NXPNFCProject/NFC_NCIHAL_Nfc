@@ -302,7 +302,7 @@ public class AidRoutingManager {
             mAidRoutingTable = aidRoutingTable;
             mMaxAidRoutingTableSize = NfcService.getInstance().getAidRoutingTableSize();
             if (DBG) Log.d(TAG, "mMaxAidRoutingTableSize: " + mMaxAidRoutingTableSize);
-            mDefaultRoute = NfcService.getInstance().GetDefaultRouteLoc();
+            mDefaultRoute = mDefaultAidRoute;
             for(int index=0; index < seList.size(); index++) {
               mDefaultRoute = seList.get(index);
               if(index != 0)
