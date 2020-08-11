@@ -4,9 +4,11 @@
     <bool name="enable_nfc_url_open_dialog">false</bool>
     <bool name="enable_auto_play">true</bool>
     <bool name="enable_notify_dispatch_failed">false</bool>
+    <bool name="enable_nfc_blocking_alert">false</bool>
     <integer name="toast_debounce_time_ms">3000</integer>
+
     <!-- List of SKUs where Secure NFC functionality is supported -->
-    <string-array name="config_skuSupportsSecureNfc" translatable="false">
-    <item>hikey960</item>
-    </string-array>
+    <string-array name="config_skuSupportsSecureNfc" translatable="false" />
+    <!-- NFC blocking alert notification link uri string -->
+    <string name="nfc_blocking_alert_link" translatable="false" />
 </resources>
