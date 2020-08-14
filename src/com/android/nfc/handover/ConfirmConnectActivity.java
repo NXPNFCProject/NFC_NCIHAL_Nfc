@@ -36,7 +36,7 @@ public class ConfirmConnectActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         AlertDialog.Builder builder = new AlertDialog.Builder(this,
-                R.style.DiagAlertDayNight);
+                R.style.DialogAlertDayNight);
         Intent launchIntent = getIntent();
         mDevice = launchIntent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
         if (mDevice == null) finish();
