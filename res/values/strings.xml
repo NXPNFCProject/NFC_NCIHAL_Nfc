@@ -97,4 +97,8 @@
     <string name="tag_read_error">NFC read error. Try again.</string>
     <!-- Toast string informing the user that no application can handle the NFC tag -->
     <string name="tag_dispatch_failed">No supported application for this NFC Tag</string>
+    <!-- Notification title string informing the user that NFC may be blocked -->
+    <string name="nfc_blocking_alert_title">NFC may be blocked</string>
+    <!-- Notification message string informing the user that NFC may be blocked -->
+    <string name="nfc_blocking_alert_message">Tap to learn how to fix.</string>
 </resources>
