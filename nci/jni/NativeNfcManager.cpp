@@ -7275,7 +7275,8 @@ static void nfcManager_doResonantFrequency(JNIEnv* e, jobject o,
       return NxpPropCmd_send(pData4Tx, dataLen, rsp_len, rsp_buf, rspTimeout,
                              halMgr);
     }
-    virtual tNFA_STATUS postProcessor(uint8_t rsp_len, uint8_t *rsp_buf) {
+    virtual tNFA_STATUS postProcessor(uint8_t rsp_len, uint8_t* rsp_buf,
+                                      tNFA_STATUS status) {
       return NFA_STATUS_OK;
     }
     virtual ~Command() {}
@@ -7344,6 +7345,15 @@ static void nfcManager_doResonantFrequency(JNIEnv* e, jobject o,
       }
       return status;
     }
+
+    tNFA_STATUS postProcessor(uint8_t rsp_len, uint8_t* rsp_buf,
+                              tNFA_STATUS status) {
+      /*Start RF discovery in case enable passthrough fails*/
+      if ((status != NFA_STATUS_OK) && !android::sRfEnabled &&
+          android::sIsNfaEnabled)
+        android::startRfDiscovery(true);
+      return NFA_STATUS_OK;
+    }
   };
   /*******************************************************************************
    **
@@ -7391,8 +7401,8 @@ static void nfcManager_doResonantFrequency(JNIEnv* e, jobject o,
       return NFA_STATUS_OK;
     }
 
-    tNFA_STATUS postProcessor(uint8_t rsp_len, uint8_t *rsp_buf) {
-
+    tNFA_STATUS postProcessor(uint8_t rsp_len, uint8_t* rsp_buf,
+                                      tNFA_STATUS status) {
       /*Start RF discovery in case RF is enabled*/
       if (!android::sRfEnabled && android::sIsNfaEnabled)
         android::startRfDiscovery(true);
@@ -7549,8 +7559,7 @@ static void nfcManager_doResonantFrequency(JNIEnv* e, jobject o,
         } while (ret_stat != NFA_STATUS_OK && pCommand->retryCount-- > 0);
 
         /*1.2.3. Invoke command post processor*/
-        if (ret_stat == NFA_STATUS_OK)
-          ret_stat = pCommand->postProcessor(rsp_len, rsp_buf);
+        ret_stat = pCommand->postProcessor(rsp_len, rsp_buf, ret_stat);
 
         /*1.2.4. Delete the command instance*/
         rdrPassThruMgr.destroy(rqst, pCommand);
@@ -7614,7 +7623,7 @@ static void nfcManager_doResonantFrequency(JNIEnv* e, jobject o,
 
         /*1.2.4. Invoke command post processor*/
         if (ret_stat == NFA_STATUS_OK)
-          ret_stat = pCommand->postProcessor(rsp_len, rsp_buf);
+          ret_stat = pCommand->postProcessor(rsp_len, rsp_buf, ret_stat);
 
         /*1.2.5. Delete the command instance*/
         rdrPassThruMgr.destroy(pCommand);
