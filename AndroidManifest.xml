@@ -72,8 +72,9 @@
     <uses-permission android:name="android.permission.USER_ACTIVITY" />
     <uses-permission android:name="android.permission.BIND_RESOLVER_RANKER_SERVICE" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
-    <uses-permission android:name="android.permission.NETWORK_SETTINGS" />
     <uses-permission android:name="android.permission.START_ACTIVITIES_FROM_BACKGROUND" />
+    <uses-permission android:name="android.permission.NETWORK_SETTINGS" />
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
 
     <protected-broadcast android:name="com.nxp.nfc_extras.action.NFC_MPOS_READER_MODE_START_SUCCESS" />
     <protected-broadcast android:name="com.nxp.nfc_extras.action.NFC_MPOS_READER_MODE_START_FAIL" />
