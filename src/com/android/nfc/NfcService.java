@@ -4368,6 +4368,7 @@ public class NfcService implements DeviceHostListener {
                 sendMessage(NfcService.MSG_APPLY_SCREEN_STATE, screenState);
             } else if (action.equals(Intent.ACTION_USER_SWITCHED)) {
                 int userId = intent.getIntExtra(Intent.EXTRA_USER_HANDLE, 0);
+                mUserId = userId;
                 if (mIsBeamCapable) {
                     int beamSetting =
                         PackageManager.COMPONENT_ENABLED_STATE_DEFAULT;
@@ -4382,7 +4383,6 @@ public class NfcService implements DeviceHostListener {
                         Log.e(TAG, "Error int getComponentEnabledSetting for BeamShareActivity");
                     }
                     synchronized (this) {
-                        mUserId = userId;
                         if (beamSetting == PackageManager.COMPONENT_ENABLED_STATE_DISABLED) {
                            mIsNdefPushEnabled = false;
                         } else {
