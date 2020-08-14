@@ -1262,6 +1262,7 @@ public class NfcService implements DeviceHostListener {
                 mPollingPaused = false;
                 new ApplyRoutingTask().execute();
             }
+            if (DBG) Log.d(TAG, "Polling is resumed");
         }
 
         @Override
@@ -4181,7 +4182,18 @@ public class NfcService implements DeviceHostListener {
                 }
                 int dispatchResult = mNfcDispatcher.dispatchTag(tag);
                 if (dispatchResult == NfcDispatcher.DISPATCH_FAIL && !mInProvisionMode) {
+                    if (DBG) Log.d(TAG, "Tag dispatch failed");
                     unregisterObject(tagEndpoint.getHandle());
+                    int pollDelay = -1;
+                    try {
+                        pollDelay = mContext.getResources().getInteger(R.integer.unknown_tag_polling_delay);
+                    } catch (NotFoundException e) {
+                        Log.e(TAG, "Keep presence checking.", e);
+                    }
+                    if (pollDelay >= 0) {
+                        tagEndpoint.stopPresenceChecking();
+                        mNfcAdapter.pausePolling(pollDelay);
+                    }
                     if (mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED &&
                         mContext.getResources().getBoolean(R.bool.enable_notify_dispatch_failed)) {
                         if (!sToast_debounce) {
@@ -4191,8 +4203,8 @@ public class NfcService implements DeviceHostListener {
                             mHandler.sendEmptyMessageDelayed(MSG_TOAST_DEBOUNCE_EVENT,
                                                              sToast_debounce_time_ms);
                         }
+                        playSound(SOUND_ERROR);
                     }
-                    playSound(SOUND_ERROR);
                 } else if (dispatchResult == NfcDispatcher.DISPATCH_SUCCESS) {
                     mVibrator.vibrate(mVibrationEffect);
                     playSound(SOUND_END);
