@@ -115,11 +115,11 @@ static tNFA_STATUS sCheckNdefStatus =
 static bool sCheckNdefCapable = false;  // whether tag has NDEF capability
 static tNFA_HANDLE sNdefTypeHandlerHandle = NFA_HANDLE_INVALID;
 static tNFA_INTF_TYPE sCurrentRfInterface = NFA_INTERFACE_ISO_DEP;
+static tNFA_INTF_TYPE sCurrentActivatedProtocl = NFA_INTERFACE_ISO_DEP;
 #if (NXP_EXTNS == TRUE)
 #define IS_MULTIPROTO_MFC_TAG()                 \
   (NfcTag::getInstance().mIsMultiProtocolTag && \
    sCurrentConnectedTargetProtocol == NFC_PROTOCOL_MIFARE)
-static tNFA_INTF_TYPE sCurrentActivatedProtocl = NFC_PROTOCOL_UNKNOWN;
 static uint8_t sCurrentActivatedMode = TARGET_TYPE_UNKNOWN;
 #endif
 static std::basic_string<uint8_t> sRxDataBuffer;
@@ -155,10 +155,10 @@ static tNFA_STATUS sMakeReadonlyStatus = NFA_STATUS_FAILED;
 static jboolean sMakeReadonlyWaitingForComplete = JNI_FALSE;
 static int sCurrentConnectedTargetType = TARGET_TYPE_UNKNOWN;
 static int sCurrentConnectedTargetProtocol = NFC_PROTOCOL_UNKNOWN;
+static int sCurrentConnectedHandle = 0;
 #if (NXP_EXTNS == TRUE)
 uint8_t RW_TAG_SLP_REQ[] = {0x50, 0x00};
 uint8_t RW_DESELECT_REQ[] = {0xC2};
-static int sCurrentConnectedHandle = 0;
 void nativeNfcTag_doPresenceCheckResult(tNFA_STATUS status);
 static tNFA_STATUS nativeNfcTag_performHaltPICC();
 #endif
@@ -202,6 +202,7 @@ void nativeNfcTag_abortWaits() {
 #endif
   sem_post(&sMakeReadonlySem);
   sCurrentRfInterface = NFA_INTERFACE_ISO_DEP;
+  sCurrentActivatedProtocl = NFA_INTERFACE_ISO_DEP;
   sCurrentConnectedTargetType = TARGET_TYPE_UNKNOWN;
   sCurrentConnectedTargetProtocol = NFC_PROTOCOL_UNKNOWN;
 #if (NXP_EXTNS == TRUE)
@@ -236,6 +237,19 @@ void nativeNfcTag_doReadCompleted(tNFA_STATUS status) {
   }
   SyncEventGuard g(sReadEvent);
   sReadEvent.notifyOne();
+}
+
+/*******************************************************************************
+ **
+ ** Function:        nativeNfcTag_setActivatedRfProtocol
+ **
+ ** Description:     Set rf Activated Protocol.
+ **
+ ** Returns:         void
+ **
+ *******************************************************************************/
+void nativeNfcTag_setActivatedRfProtocol(tNFA_INTF_TYPE rfProtocol) {
+  sCurrentActivatedProtocl = rfProtocol;
 }
 
 /*******************************************************************************
@@ -675,20 +689,18 @@ static jint nativeNfcTag_doConnect(JNIEnv*, jobject, jint targetHandle) {
 
   sCurrentConnectedTargetType = natTag.mTechList[i];
   sCurrentConnectedTargetProtocol = natTag.mTechLibNfcTypes[i];
+  sCurrentConnectedHandle = targetHandle;
 #if (NXP_EXTNS == TRUE)
   LOG(ERROR)<< StringPrintf("%s:  doConnect sCurrentConnectedTargetProtocol %x sCurrentConnectedTargetType %x",
             __func__,sCurrentConnectedTargetProtocol,sCurrentConnectedTargetType);
   natTag.mCurrentRequestedProtocol = sCurrentConnectedTargetProtocol;
-  sCurrentConnectedHandle = targetHandle;
   if(sCurrentConnectedTargetProtocol == NFC_PROTOCOL_T3BT) {
     goto TheEnd;
   }
 #endif
 
-  if (sCurrentConnectedTargetProtocol != NFC_PROTOCOL_ISO_DEP
-#if (NXP_EXTNS == TRUE)
-    && sCurrentConnectedTargetProtocol != NFC_PROTOCOL_MIFARE
-#endif
+  if (sCurrentConnectedTargetProtocol != NFC_PROTOCOL_ISO_DEP &&
+      sCurrentConnectedTargetProtocol != NFC_PROTOCOL_MIFARE
     ) {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s() Nfc type = %d, do nothing for non ISO_DEP here",
@@ -704,16 +716,10 @@ static jint nativeNfcTag_doConnect(JNIEnv*, jobject, jint targetHandle) {
         sCurrentConnectedTargetType);
     retCode = switchRfInterface(NFA_INTERFACE_FRAME) ? NFA_STATUS_OK
                                                      : NFA_STATUS_FAILED;
-  }
-#if (NXP_EXTNS == TRUE)
-  /*MIFARE switching for multiprotocol support.
-  We need to switch to MIFARE protocol to read the tag*/
-   else if(sCurrentConnectedTargetType == TARGET_TYPE_MIFARE_CLASSIC){
+  } else if(sCurrentConnectedTargetType == TARGET_TYPE_MIFARE_CLASSIC){
     retCode = switchRfInterface(NFA_INTERFACE_MIFARE) ? NFA_STATUS_OK
                                                      : NFA_STATUS_FAILED;
-  }
-#endif
-  else {
+  } else {
     retCode = switchRfInterface(NFA_INTERFACE_ISO_DEP) ? NFA_STATUS_OK
                                                        : NFA_STATUS_FAILED;
   }
@@ -739,9 +745,6 @@ TheEnd:
 **
 *******************************************************************************/
 static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
-#if (NXP_EXTNS == TRUE)
-  int handle = sCurrentConnectedHandle;
-#endif
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: enter; rf intf = %d, current intf = %d", __func__,
                       rfInterface, sCurrentRfInterface);
@@ -867,8 +870,8 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
     {
       SyncEventGuard g2(sReconnectEvent);
       sConnectWaitingForComplete = JNI_TRUE;
-#if (NXP_EXTNS == TRUE)
       gIsSelectingRfInterface = true;
+#if (NXP_EXTNS == TRUE)
       if (natTag.isCashBeeActivated() == true) {
         DLOG_IF(INFO, nfc_debug_enabled)
             << StringPrintf("%s: Start RF discovery", __func__);
@@ -881,15 +884,10 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
 #endif
         DLOG_IF(INFO, nfc_debug_enabled)
             << StringPrintf("%s: select interface %u", __func__, rfInterface);
-#if (NXP_EXTNS == TRUE)
-        if (NFA_STATUS_OK !=
-            (status = NFA_Select(natTag.mTechHandles[handle],
-                               natTag.mTechLibNfcTypes[handle], rfInterface))) {
-#else
       if (NFA_STATUS_OK !=
-          (status = NFA_Select(natTag.mTechHandles[0],
-                               natTag.mTechLibNfcTypes[0], rfInterface))) //{
-#endif
+          (status = NFA_Select(natTag.mTechHandles[sCurrentConnectedHandle],
+                               natTag.mTechLibNfcTypes[sCurrentConnectedHandle],
+                               rfInterface))) {
         LOG(ERROR) << StringPrintf("%s: NFA_Select failed, status = %d",
                                    __func__, status);
         break;
@@ -910,21 +908,23 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
         break;
       }
     }
-#if (NXP_EXTNS == TRUE)
-    /*During reselect ,when select command is sent, tag gives core generic error.
-      Therefore we have to wait for tag to be activated again.*/
+    /*Retry logic in case of core Generic error while selecting a tag*/
     if(sConnectOk == false) {
       LOG(ERROR) << StringPrintf("%s: waiting for Card to be activated", __func__);
       int retry = 0;
       sConnectWaitingForComplete = JNI_TRUE;
+#if(NXP_EXTN==TRUE)
       if (IS_MULTIPROTO_MFC_TAG() &&
               NfcTag::getInstance().isNonStdCardSupported) {
         natTag.mIsNonStdMFCTag = true;
-      } else {
+      } else
+#endif
+      {
         do {
           SyncEventGuard reselectEvent(sReconnectEvent);
           if (sReconnectEvent.wait(500) == false) {  // if timeout occured
             LOG(ERROR) << StringPrintf("%s: timeout ", __func__);
+
           }
           retry++;
           LOG(ERROR) << StringPrintf(
@@ -932,10 +932,7 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
               sConnectOk);
         } while (sConnectOk == false && retry < 3);
       }
-      if(NfcTag::getInstance ().mNumDiscNtf)
-        NfcTag::getInstance ().mNumDiscNtf = 0;
     }
-#endif
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
         "%s: select completed; sConnectOk=%d", __func__, sConnectOk);
     if (NfcTag::getInstance().getActivationState() != NfcTag::Active) {
@@ -983,11 +980,8 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
 static bool switchRfInterface(tNFA_INTF_TYPE rfInterface) {
   NfcTag& natTag = NfcTag::getInstance();
 
-  if (sCurrentConnectedTargetProtocol != NFC_PROTOCOL_ISO_DEP
-#if (NXP_EXTNS == TRUE)
-    && sCurrentConnectedTargetProtocol != NFC_PROTOCOL_MIFARE
-#endif
-    ) {
+  if (sCurrentConnectedTargetProtocol != NFC_PROTOCOL_ISO_DEP &&
+      sCurrentConnectedTargetProtocol != NFC_PROTOCOL_MIFARE) {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: protocol: %d not ISO_DEP, do nothing", __func__,
                         natTag.mTechLibNfcTypes[0]);
