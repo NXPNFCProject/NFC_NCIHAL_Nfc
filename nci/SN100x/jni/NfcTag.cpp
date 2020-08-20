@@ -442,22 +442,17 @@ void NfcTag::discoverTechnologies(tNFA_ACTIVATED& activationData) {
     // type-4 tag uses technology ISO-DEP and technology A or B
     mTechList[mNumTechList] =
         TARGET_TYPE_ISO14443_4;  // is TagTechnology.ISO_DEP by Java API
-#if (NXP_EXTNS == TRUE)
-        if((rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_POLL_A) ||
-           (rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_POLL_A_ACTIVE)) {
-          double fc = 13560000;
-          uint8_t fwi = rfDetail.intf_param.intf_param.pa_iso.fwi;
-          if ((int8_t)fwi >= MIN_FWI && fwi <= MAX_FWI) {
-            double fwt = (((1 << fwi) * 256 * 16) / fc) * 1000;
-            double iso_timeout = RETRY_COUNT*fwt;
-              if (iso_timeout < MIN_TRANSCEIVE_TIMEOUT_IN_MILLISEC)
-                iso_timeout = MIN_TRANSCEIVE_TIMEOUT_IN_MILLISEC;
-            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-              "Setting the Xceive timeout = %f, fwi = %0#x, fwt = %f", iso_timeout, fwi, fwt);
-            setTransceiveTimeout(mTechList[mNumTechList], iso_timeout);
-          }
-        }
-#endif
+    if ((NFC_DISCOVERY_TYPE_POLL_A == rfDetail.rf_tech_param.mode) ||
+        (NFC_DISCOVERY_TYPE_POLL_A_ACTIVE == rfDetail.rf_tech_param.mode)) {
+      uint8_t fwi = rfDetail.intf_param.intf_param.pa_iso.fwi;
+      if (fwi >= MIN_FWI && fwi <= MAX_FWI) {
+        //2^MIN_FWI * 256 * 16 * 1000 / 13560000 is approximately 618
+        int fwt = (1 << (fwi - MIN_FWI)) * 618;
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+            "Setting the transceive timeout = %d, fwi = %0#x", fwt, fwi);
+        setTransceiveTimeout(mTechList[mNumTechList], fwt);
+      }
+    }
     if ((rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_POLL_A) ||
         (rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_POLL_A_ACTIVE) ||
         (rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_LISTEN_A) ||
