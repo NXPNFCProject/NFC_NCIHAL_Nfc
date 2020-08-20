@@ -43,10 +43,8 @@
 
 #include "nfa_rw_api.h"
 #if (NXP_EXTNS == TRUE)
-#define RETRY_COUNT 5
 #define MIN_FWI (0)
 #define MAX_FWI (14)
-#define MIN_TRANSCEIVE_TIMEOUT_IN_MILLISEC (500.0)
 #define NON_STD_CARD_SAK (0x13)
 
 typedef struct activationParams {
