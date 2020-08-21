@@ -1376,6 +1376,7 @@ static jboolean nfcManager_routeAid(JNIEnv* e, jobject, jbyteArray aid,
 #if (NXP_EXTNS == TRUE)
   if (route == SecureElement::getInstance().T4T_NFCEE_ID) {
     NativeT4tNfcee::getInstance().checkAndUpdateT4TAid(buf, (uint8_t*)&bufLen);
+    RoutingManager::getInstance().removeAidRouting(buf, bufLen);
   }
   return RoutingManager::getInstance().addAidRouting(buf, bufLen, route,
                                                      aidInfo, power);
