@@ -225,8 +225,6 @@ public interface DeviceHost {
 
     public boolean unrouteAid(byte[] aid);
 
-    public int getAidTableSize();
-
     public boolean setRoutingEntry(int type, int value, int route, int power);
 
     public boolean clearRoutingEntry(int type);
@@ -287,6 +285,8 @@ public interface DeviceHost {
     boolean canMakeReadOnly(int technology);
 
     int getMaxTransceiveLength(int technology);
+
+    public int getAidTableSize();
 
     void setP2pInitiatorModes(int modes);
 

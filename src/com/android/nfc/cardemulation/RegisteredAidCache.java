@@ -373,7 +373,7 @@ public class RegisteredAidCache {
             // and ignore children
             resolveinfo = resolveAidConflictLocked(aidServices, true);
             //If the AID is subsetAID check for prefix in same service.
-            if(isSubset(aidServices.get(0).aid)) {
+            if (isSubset(aidServices.get(0).aid)) {
                 resolveinfo.prefixInfo = findPrefixConflictForSubsetAid(aidServices.get(0).aid ,
                         new ArrayList<NfcApduServiceInfo>(){{add(resolveinfo.defaultService);}},true);
             }
@@ -392,7 +392,7 @@ public class RegisteredAidCache {
                         " default, ignoring conflicting AIDs.");
                 resolveinfo = resolveAidConflictLocked(aidServices, true);
                 //If the AID is subsetAID check for prefix in same service.
-                if(isSubset(aidServices.get(0).aid)) {
+                if (isSubset(aidServices.get(0).aid)) {
                     resolveinfo.prefixInfo = findPrefixConflictForSubsetAid(aidServices.get(0).aid ,
                             new ArrayList<NfcApduServiceInfo>(){{add(resolveinfo.defaultService);}},true);
                 }
@@ -413,9 +413,9 @@ public class RegisteredAidCache {
                 //conflciting services and root services.
                 if (isSubset(aidServices.get(0).aid)) {
                     ArrayList <NfcApduServiceInfo> apduServiceList = new  ArrayList <NfcApduServiceInfo>();
-                    for(ServiceAidInfo serviceInfo : conflictingServices)
+                    for (ServiceAidInfo serviceInfo : conflictingServices)
                         apduServiceList.add(serviceInfo.service);
-                    for(ServiceAidInfo serviceInfo : aidServices)
+                    for (ServiceAidInfo serviceInfo : aidServices)
                         apduServiceList.add(serviceInfo.service);
                     resolveinfo.prefixInfo =
                          findPrefixConflictForSubsetAid(aidServices.get(0).aid ,apduServiceList,false);
@@ -851,7 +851,7 @@ public class RegisteredAidCache {
             if (resolveInfo.services.size() == 0) {
                 // No interested services
             } else if (resolveInfo.defaultService != null) {
-                // There is a default service set, route to where that service resides
+                // There is a default service set, route to where that service resides -
                 // either on the host (HCE) or on an SE.
                 NfcApduServiceInfo.ESeInfo seInfo = resolveInfo.defaultService.getSEInfo();
                 aidType.isOnHost = resolveInfo.defaultService.isOnHost();

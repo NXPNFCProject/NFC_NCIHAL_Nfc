@@ -221,9 +221,9 @@ public class SnepMessenger {
         }
 
         if (NfcService.sIsDtaMode) {
-            if (!mIsClient && (requestField == SnepMessage.RESPONSE_CONTINUE ||  // added for TC_S_BIT_B1_01_X
+            if (!mIsClient && (requestField == SnepMessage.RESPONSE_CONTINUE)||  // added for TC_S_BIT_B1_01_X
                               requestField == SnepMessage.RESPONSE_SUCCESS ||
-                              requestField == SnepMessage.RESPONSE_NOT_FOUND)) {
+                              requestField == SnepMessage.RESPONSE_NOT_FOUND) {
                 if (DBG) Log.d(TAG, "errorneous response received, disconnecting client");
                 close();
             }
