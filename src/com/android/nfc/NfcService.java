@@ -2226,6 +2226,7 @@ public class NfcService implements DeviceHostListener {
           return readData;
         }
 
+        @Override
         public int enableDebugNtf(byte fieldValue) {
           NfcPermissions.enforceUserPermissions(mContext);
           return mDeviceHost.doEnableDebugNtf(fieldValue);
