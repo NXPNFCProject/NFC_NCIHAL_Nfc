@@ -393,6 +393,7 @@ public class NfcService implements DeviceHostListener {
     final HashMap<Integer, Object> mObjectMap = new HashMap<Integer, Object>();
     HashSet<String> mSePackages = new HashSet<String>();
     int mScreenState;
+    int mPreviousScreenState;
     boolean mInProvisionMode; // whether we're in setup wizard and enabled NFC provisioning
     boolean mIsNdefPushEnabled;
     boolean mIsSecureNfcEnabled;
@@ -723,6 +724,7 @@ public class NfcService implements DeviceHostListener {
         mVibrationEffect = VibrationEffect.createOneShot(200, VibrationEffect.DEFAULT_AMPLITUDE);
 
         mScreenState = mScreenStateHelper.checkScreenState();
+        mPreviousScreenState = mScreenState;
 
         mNumTagsDetected = new AtomicInteger();
         mNumP2pDetected = new AtomicInteger();
@@ -1061,6 +1063,7 @@ public class NfcService implements DeviceHostListener {
                 applyRouting(false);
 
             mDeviceHost.doSetScreenState(screen_state_mask);
+            mPreviousScreenState = mScreenState;
 
             sToast_debounce = false;
 
@@ -3528,11 +3531,18 @@ public class NfcService implements DeviceHostListener {
                             return;
                     }
                     if (nci_version == NCI_VERSION_1_0) {
-                        if (mScreenState < ScreenStateHelper.SCREEN_STATE_ON_LOCKED)
-                            applyRouting(false);
+                        if (mScreenState == mPreviousScreenState) {
+                            Log.d(TAG,
+                                "Current:" + mScreenState + " and previous:" + mPreviousScreenState
+                                    + " screen states are same. No need to update");
+                            break;
+                        }
+                        mDeviceHost.disableDiscovery();
                         mDeviceHost.doSetScreenState(mScreenState);
-                        if (mScreenState >= ScreenStateHelper.SCREEN_STATE_ON_LOCKED)
-                            applyRouting(false);
+                        NfcDiscoveryParameters params = computeDiscoveryParameters(mScreenState);
+                        boolean shouldRestart = mCurrentDiscoveryParameters.shouldEnableDiscovery();
+                        mDeviceHost.enableDiscovery(params, shouldRestart);
+                        mPreviousScreenState = mScreenState;
                         break;
                     }
                     if (mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED) {
