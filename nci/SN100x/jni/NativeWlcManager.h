@@ -24,7 +24,7 @@
 
 class NativeWlcManager {
  private:
-  tNFA_STATUS evtStatus;
+  tNFA_STATUS evtStatus = NFA_STATUS_FAILED;
   const char* gNativeWlcJavaClassName =
       "com/android/nfc/dhimpl/NativeWlcManager";
   bool mIsFeatureSupported = false;
