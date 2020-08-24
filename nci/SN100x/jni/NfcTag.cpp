@@ -84,6 +84,7 @@ NfcTag::NfcTag()
       mCurrentRequestedProtocol(NFC_PROTOCOL_UNKNOWN),
       mIsNonStdMFCTag(false),
       mIsSkipNdef(false),
+      mNonStdCardTimeDiff(100),
       isNonStdCardSupported(false),
 #endif
       mTechnologyTimeoutsTable(MAX_NUM_TECHNOLOGY),

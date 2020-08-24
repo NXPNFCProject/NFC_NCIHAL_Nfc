@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2019 NXP
+*  Copyright 2019-2020 NXP
 *
 ******************************************************************************/
 
@@ -440,21 +440,15 @@ public class RegisteredNfcFServicesCache {
                                     parser.getAttributeValue(null, "component");
                             String uidString =
                                     parser.getAttributeValue(null, "uid");
-                            String systemCodeString =
-                                    parser.getAttributeValue(null, "system-code");
-                            String descriptionString =
-                                    parser.getAttributeValue(null, "description");
-                            String nfcid2String =
-                                    parser.getAttributeValue(null, "nfcid2");
                             if (compString == null || uidString == null) {
                                 Log.e(TAG, "Invalid service attributes");
                             } else {
                                 try {
                                     componentName = ComponentName.unflattenFromString(compString);
                                     currentUid = Integer.parseInt(uidString);
-                                    systemCode = systemCodeString;
-                                    description = descriptionString;
-                                    nfcid2 = nfcid2String;
+                                    systemCode = parser.getAttributeValue(null, "system-code");
+                                    description = parser.getAttributeValue(null, "description");
+                                    nfcid2 = parser.getAttributeValue(null, "nfcid2");
                                 } catch (NumberFormatException e) {
                                     Log.e(TAG, "Could not parse service uid");
                                 }
