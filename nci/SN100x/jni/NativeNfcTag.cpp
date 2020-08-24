@@ -208,6 +208,7 @@ void nativeNfcTag_abortWaits() {
 #if (NXP_EXTNS == TRUE)
   NfcTag& natTag = NfcTag::getInstance();
   natTag.mCurrentRequestedProtocol = NFC_PROTOCOL_UNKNOWN;
+  natTag.isNonStdTagDetected = false;
 #endif
 }
 

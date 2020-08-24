@@ -86,6 +86,7 @@ class NfcTag {
   struct timespec LastDetectedTime;
   uint32_t mNonStdCardTimeDiff;
   bool isNonStdCardSupported;
+  bool isNonStdTagDetected;
 #endif
 
   /*******************************************************************************
