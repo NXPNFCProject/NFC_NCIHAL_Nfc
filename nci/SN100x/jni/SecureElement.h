@@ -37,7 +37,7 @@
 #define CONNECTIVITY_PIPE_ID_UICC3 0x31
 #define NFA_EE_TAG_HCI_HOST_ID 0xA0 /* HCI host ID */
 #define SMX_PIPE_ID 0x19
-#define NFA_ESE_HARD_RESET  0x05
+#define NFA_ESE_HARD_RESET  0x03
 #if (NXP_EXTNS == TRUE)
 typedef enum {
   UICC_01_SELECTED_ENABLED = 0x01,

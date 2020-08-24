@@ -37,6 +37,9 @@ namespace android
 {
 #define INVALID_LEN_SW1 0x64
 #define INVALID_LEN_SW2 0xFF
+
+#define ESE_RESET_PROTECTION_ENABLE  0x07
+#define ESE_RESET_PROTECTION_DISABLE  0x08
 static const int EE_ERROR_INIT = -3;
 static void NxpNfc_ParsePlatformID(const uint8_t*);
 extern bool nfcManager_isNfcActive();
@@ -193,7 +196,11 @@ static jboolean nativeNfcSecureElement_doResetForEseCosUpdate(JNIEnv*, jobject,
   if(NULL == halFuncEntries) {
     LOG(INFO) << StringPrintf("%s: halFuncEntries is NULL", __func__);
   } else {
-    ret = theInstance.resetEse((uint64_t)NFA_ESE_HARD_RESET);
+    if(handle == ESE_RESET_PROTECTION_ENABLE ||
+        handle == ESE_RESET_PROTECTION_DISABLE)
+      ret = theInstance.resetEse((uint64_t)handle);
+    else
+      ret = theInstance.resetEse((uint64_t)NFA_ESE_HARD_RESET);
     if(ret == 0) {
       LOG(INFO) << StringPrintf("%s: reset IOCTL failed", __func__);
     } else {
