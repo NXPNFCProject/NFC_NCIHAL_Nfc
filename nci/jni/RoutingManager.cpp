@@ -1570,7 +1570,7 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route,
     }
   }
 
-  uiccListenTech = NfcConfig::getUnsigned("NAME_UICC_LISTEN_TECH_MASK", 0x07);
+  uiccListenTech = NfcConfig::getUnsigned(NAME_UICC_LISTEN_TECH_MASK, 0x07);
   if ((ActDevHandle != NFA_HANDLE_INVALID) && (0 != uiccListenTech)) {
     if ((ActDevHandle != SecureElement::EE_HANDLE_0xF3) &&
         (ActDevHandle != 0x00)) {
@@ -1595,7 +1595,7 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route,
       }
     }
   }
-  eseListenTech = NfcConfig::getUnsigned("NAME_NXP_ESE_LISTEN_TECH_MASK", 0x07);
+  eseListenTech = NfcConfig::getUnsigned(NAME_NXP_ESE_LISTEN_TECH_MASK, 0x07);
   if ((ActDevHandle != NFA_HANDLE_INVALID) && (0 != eseListenTech)) {
     if (ActDevHandle == SecureElement::EE_HANDLE_0xF3) {
       {
