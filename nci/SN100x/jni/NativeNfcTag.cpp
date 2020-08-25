@@ -481,7 +481,10 @@ static jboolean nativeNfcTag_doWrite(JNIEnv* e, jobject, jbyteArray buf) {
     if (sCheckNdefCapable) {
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: try format", __func__);
-      sem_init(&sFormatSem, 0, 0);
+      if (sem_init(&sFormatSem, 0, 0) == -1) {
+        LOG(ERROR) << StringPrintf("%s: semaphore creation failed (errno=0x%08x)",
+                                   __func__, errno);
+      }
       sFormatOk = false;
       if (sCurrentConnectedTargetProtocol == NFC_PROTOCOL_MIFARE && legacy_mfc_reader) {
         static uint8_t mfc_key1[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
@@ -501,7 +504,10 @@ static jboolean nativeNfcTag_doWrite(JNIEnv* e, jobject, jbyteArray buf) {
             LOG(ERROR) << StringPrintf("%s: sem_wait failed \n", __func__);
           }
           sem_destroy(&sFormatSem);
-          sem_init(&sFormatSem, 0, 0);
+          if (sem_init(&sFormatSem, 0, 0) == -1) {
+            LOG(ERROR) << StringPrintf("%s: semaphore creation failed (errno=0x%08x)",
+                                   __func__, errno);
+          }
           status = EXTNS_MfcFormatTag(mfc_key2, sizeof(mfc_key2));
           if (status != NFA_STATUS_OK) {
             LOG(ERROR) << StringPrintf("%s: can't format mifare classic tag",
@@ -1852,7 +1858,10 @@ static jboolean nativeNfcTag_makeMifareNdefFormat(JNIEnv* e, jobject o,
     return JNI_FALSE;
   }
 
-  sem_init(&sFormatSem, 0, 0);
+  if (sem_init(&sFormatSem, 0, 0) == -1) {
+    LOG(ERROR) << StringPrintf("%s: semaphore creation failed (errno=0x%08x)",
+                                   __func__, errno);
+  }
   sFormatOk = false;
 
   status = EXTNS_MfcFormatTag(key, keySize);
@@ -1914,7 +1923,10 @@ static jboolean nativeNfcTag_doNdefFormat(JNIEnv* e, jobject o, jbyteArray) {
     return result;
   }
 
-  sem_init(&sFormatSem, 0, 0);
+  if (sem_init(&sFormatSem, 0, 0) == -1) {
+    LOG(ERROR) << StringPrintf("%s: semaphore creation failed (errno=0x%08x)",
+                               __func__, errno);
+  }
   sFormatOk = false;
   status = NFA_RwFormatTag();
   if (status == NFA_STATUS_OK) {
