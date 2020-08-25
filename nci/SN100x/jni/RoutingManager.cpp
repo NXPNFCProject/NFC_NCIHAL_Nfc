@@ -132,7 +132,6 @@ RoutingManager::RoutingManager()
 #if (NXP_EXTNS != TRUE)
   mDefaultSysCode = DEFAULT_SYS_CODE;
 #else
-  mDefaultGsmaPowerState = 0;
   sRoutingBuffLen = 0;
   sRoutingBuff = NULL;
   mDefaultSysCode = 0x00;
@@ -225,8 +224,6 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
 
     mDefaultIso7816Powerstate = NfcConfig::getUnsigned(NAME_DEFAULT_AID_PWR_STATE, 0xFF);
 
-    mDefaultGsmaPowerState = NfcConfig::getUnsigned(NAME_DEFUALT_GSMA_PWR_STATE, 0x00);
-
     mDefaultFelicaRoute = NfcConfig::getUnsigned(NAME_DEFAULT_FELICA_CLT_ROUTE, 0x00);
 
     mDefaultOffHostRoute = NfcConfig::getUnsigned(NAME_DEFAULT_OFFHOST_ROUTE, 0x00);
@@ -236,8 +233,6 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
         (PWR_SWTCH_ON_SCRN_UNLCK_MASK | PWR_SWTCH_ON_SCRN_LOCK_MASK |
          PWR_SWTCH_ON_SCRN_OFF_MASK));
 
-    DLOG_IF(INFO, nfc_debug_enabled)
-        << StringPrintf("%s: mDefaultGsmaPowerState %02x)", fn, mDefaultGsmaPowerState);
     LOG(INFO) << StringPrintf("%s: >>>> mDefaultIso7816SeID=0x%X", fn, mDefaultIso7816SeID);
     LOG(INFO) << StringPrintf("%s: >>>> mDefaultIso7816Powerstate=0x%X", fn, mDefaultIso7816Powerstate);
     LOG(INFO) << StringPrintf("%s: >>>> mDefaultFelicaRoute=0x%X", fn, mDefaultFelicaRoute);
@@ -1802,21 +1797,6 @@ void RoutingManager::setEmptyAidEntry(int route) {
     if(routeLoc == ROUTE_LOC_HOST_ID) {
       power &= ~(PWR_SWTCH_OFF_MASK | PWR_BATT_OFF_MASK);
       if (!stat) power &= (HOST_PWR_STATE);
-    }
-
-    if(mDefaultGsmaPowerState) {
-      /*Map PWR state as per NCI2.0 if required*/
-      if(checkAndUpdatePowerState((int&)mDefaultGsmaPowerState)) {
-        DLOG_IF(INFO, nfc_debug_enabled)
-              << StringPrintf("%s: No update required", __func__);
-      }
-
-      if(routeLoc == ROUTE_LOC_HOST_ID)
-        power = (mDefaultGsmaPowerState &
-                 (~(PWR_SWTCH_OFF_MASK | PWR_BATT_OFF_MASK)));
-      else
-        power = mDefaultGsmaPowerState;
-      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: gsma  %x",__func__,power);
     }
 
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: power %x",__func__,power);

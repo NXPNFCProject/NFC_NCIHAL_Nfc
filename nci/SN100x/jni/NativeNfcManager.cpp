@@ -2454,10 +2454,6 @@ tNFA_STATUS getConfig(uint16_t* rspLen, uint8_t* configValue, uint8_t numParam,
     return num;
   }
 
-static int nfcManager_getDefaulGsmaPowerState(JNIEnv* e, jobject o)
-{
-  return RoutingManager::getInstance().mDefaultGsmaPowerState;
-}
 /*******************************************************************************
 **
 ** Function:        nfcManager_getDefaultMifareCLTPowerState
@@ -3228,15 +3224,13 @@ static JNINativeMethod gMethods[] = {
 #if(NXP_EXTNS == TRUE)
     {"getT4TNfceePowerState", "()I",
             (void*) nfcManager_getT4TNfceePowerState},
-    {"getGsmaPwrState", "()I",
-            (void*) nfcManager_getDefaulGsmaPowerState}
-     ,{"getDefaultFelicaCLTPowerState", "()I",
+    {"getDefaultFelicaCLTPowerState", "()I",
             (void*) nfcManager_getDefaultFelicaCLTPowerState},
-      {"getDefaultFelicaCLTRoute", "()I",
+    {"getDefaultFelicaCLTRoute", "()I",
             (void*) nfcManager_getDefaultFelicaCLTRoute},
-     {"doGetActiveSecureElementList", "()[I",
+    {"doGetActiveSecureElementList", "()[I",
             (void *)nfcManager_getActiveSecureElementList},
-     {"doChangeDiscoveryTech", "(II)V",
+    {"doChangeDiscoveryTech", "(II)V",
              (void *)nfcManager_changeDiscoveryTech},
     {"doPartialInitForEseCosUpdate", "()Z",
              (void*)nfcManager_doPartialInitForEseCosUpdate},
@@ -3245,10 +3239,10 @@ static JNINativeMethod gMethods[] = {
 
     {"doResonantFrequency", "(Z)V",
               (void *)nfcManager_doResonantFrequency},
-     {"doSetFieldDetectMode", "(Z)I",
-     (void*)nfcManager_SetFieldDetectMode},
-     {"isFieldDetectEnabled", "()Z",
-     (void*)nfcManager_IsFieldDetectEnabled},
+    {"doSetFieldDetectMode", "(Z)I",
+              (void*)nfcManager_SetFieldDetectMode},
+    {"isFieldDetectEnabled", "()Z",
+              (void*)nfcManager_IsFieldDetectEnabled},
     // check firmware version
     {"getFWVersion", "()I", (void*)nfcManager_getFwVersion},
     {"readerPassThruMode", "(BB)[B", (void*)nfcManager_readerPassThruMode},
