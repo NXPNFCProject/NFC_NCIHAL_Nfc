@@ -3610,11 +3610,6 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
     return num;
   }
 
-  static int nfcManager_getDefaulGsmaPowerState(JNIEnv * e, jobject o) {
-    return 0;
-    // Commented as part of QSSI
-    // return RoutingManager::getInstance().mDefaultGsmaPowerState;
-  }
   /*******************************************************************************
   **
   ** Function:        nfcManager_getDefaultMifareCLTPowerState
@@ -4371,8 +4366,6 @@ static void restartUiccListen(jint uiccSlot) {
     {"readerPassThruMode", "(BB)[B", (void*)nfcManager_readerPassThruMode},
     {"transceiveAppData", "([B)[B", (void*)nfcManager_transceiveAppData},
 #if (NXP_EXTNS == TRUE)
-    {"getGsmaPwrState", "()I", (void*)nfcManager_getDefaulGsmaPowerState},
-
     {"getDefaultAidPowerState", "()I",
      (void*)nfcManager_getDefaultAidPowerState},
 

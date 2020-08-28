@@ -3210,10 +3210,6 @@ public class NfcService implements DeviceHostListener {
         return defaultFelicaCLTRoute;
     }
 
-    public int getGsmaPwrState()
-    {
-        return mDeviceHost.getGsmaPwrState();
-    }
     /**
      * get default T4TNfcee power state supported
      */
