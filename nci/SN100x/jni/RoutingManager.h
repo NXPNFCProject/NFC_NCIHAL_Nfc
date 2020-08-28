@@ -277,8 +277,6 @@ class RoutingManager {
     int mHostListnTechMask;
     int mUiccListnTechMask;
     int mFwdFuntnEnable;
-    uint32_t mDefaultIso7816SeID;
-    uint32_t mDefaultIso7816Powerstate;
     uint32_t mDefaultTechASeID;
     uint32_t mDefaultTechFPowerstate;
     protoEntry_t mProtoTableEntries[MAX_PROTO_ENTRIES];

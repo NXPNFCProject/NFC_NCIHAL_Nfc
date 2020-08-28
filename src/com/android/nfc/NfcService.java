@@ -3450,7 +3450,7 @@ public class NfcService implements DeviceHostListener {
                 case MSG_COMMIT_ROUTING: {
                     Log.d(TAG, "commitRouting >>>");
                     int defaultRoute = getConfiguredDefaultRouteEntry();
-                    mDeviceHost.setEmptyAidRoute(defaultRoute >> ROUTE_LOC_MASK);
+                    mDeviceHost.setEmptyAidRoute(defaultRoute);
                     mDeviceHost.commitRouting();
                     break;
                 }

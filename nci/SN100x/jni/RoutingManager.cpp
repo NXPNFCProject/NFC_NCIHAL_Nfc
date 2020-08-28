@@ -138,8 +138,6 @@ RoutingManager::RoutingManager()
   mHostListnTechMask = 0;
   mUiccListnTechMask = 0;
   mFwdFuntnEnable = 0;
-  mDefaultIso7816SeID = 0;
-  mDefaultIso7816Powerstate = 0;
   mDefaultTechASeID = 0;
   mCeRouteStrictDisable = 0;
   mTechSupportedByEse = 0;
@@ -220,10 +218,6 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
 
     mUiccListnTechMask = NfcConfig::getUnsigned(NAME_UICC_LISTEN_TECH_MASK, 0x07);
 
-    mDefaultIso7816SeID = NfcConfig::getUnsigned(NAME_DEFAULT_AID_ROUTE, NFA_HANDLE_INVALID);
-
-    mDefaultIso7816Powerstate = NfcConfig::getUnsigned(NAME_DEFAULT_AID_PWR_STATE, 0xFF);
-
     mDefaultFelicaRoute = NfcConfig::getUnsigned(NAME_DEFAULT_FELICA_CLT_ROUTE, 0x00);
 
     mDefaultOffHostRoute = NfcConfig::getUnsigned(NAME_DEFAULT_OFFHOST_ROUTE, 0x00);
@@ -233,8 +227,6 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
         (PWR_SWTCH_ON_SCRN_UNLCK_MASK | PWR_SWTCH_ON_SCRN_LOCK_MASK |
          PWR_SWTCH_ON_SCRN_OFF_MASK));
 
-    LOG(INFO) << StringPrintf("%s: >>>> mDefaultIso7816SeID=0x%X", fn, mDefaultIso7816SeID);
-    LOG(INFO) << StringPrintf("%s: >>>> mDefaultIso7816Powerstate=0x%X", fn, mDefaultIso7816Powerstate);
     LOG(INFO) << StringPrintf("%s: >>>> mDefaultFelicaRoute=0x%X", fn, mDefaultFelicaRoute);
     LOG(INFO) << StringPrintf("%s: >>>> mDefaultEe=0x%X", fn, mDefaultEe);
     LOG(INFO) << StringPrintf("%s: >>>> mDefaultOffHostRoute=0x%X", fn, mDefaultOffHostRoute);
@@ -1769,20 +1761,20 @@ bool RoutingManager::clearRoutingEntry(int type)
  *  Length = 2 [0x02]
  *  Value  = [Route_loc, Power_state]
  * */
-void RoutingManager::setEmptyAidEntry(int route) {
+void RoutingManager::setEmptyAidEntry(int routeAndPowerState) {
 
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter",__func__);
-    uint16_t routeLoc = NFA_HANDLE_INVALID;
-    uint32_t power;
+    /* uint32_t routeAndPowerState = (uint16_t)routeLoc : (uint16_t)power state */
+    uint32_t routeLoc = ((routeAndPowerState >> 8) & 0xFF);
+    uint32_t power = (routeAndPowerState & 0xFF);
     int max_tech_mask = 0;
-    mDefaultIso7816SeID = route;
-    if (mDefaultIso7816SeID  == NFA_HANDLE_INVALID)
+    if (routeLoc  == NFA_HANDLE_INVALID)
     {
         LOG(ERROR) << StringPrintf("%s: Invalid routeLoc. Return.", __func__);
         return;
     }
-    routeLoc = ((mDefaultIso7816SeID == 0x00) ? ROUTE_LOC_HOST_ID : ((mDefaultIso7816SeID == 0x01 ) ? ROUTE_LOC_ESE_ID : getUiccRouteLocId(mDefaultIso7816SeID)));
-    power    = mCeRouteStrictDisable ? mDefaultIso7816Powerstate : (mDefaultIso7816Powerstate & POWER_STATE_MASK);
+    routeLoc = ((routeLoc == 0x00) ? ROUTE_LOC_HOST_ID : ((routeLoc == 0x01 ) ? ROUTE_LOC_ESE_ID : getUiccRouteLocId(routeLoc)));
+    power    = mCeRouteStrictDisable ? power : (power & POWER_STATE_MASK);
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: route %x",__func__,routeLoc);
 
     max_tech_mask = SecureElement::getInstance().getSETechnology(routeLoc);
