@@ -3630,6 +3630,20 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
   }
 
   /*******************************************************************************
+  **
+  ** Function:       nfcManager_enableDebugNtf
+  **
+  ** Description:    Enable & disable the Lx debug notifications
+  **
+  ** Returns:        returns 0x00 in success case, 0x03 in failure case,
+  **                 0x01 is Nfc is off
+  *******************************************************************************/
+  static jint nfcManager_enableDebugNtf(JNIEnv * e, jobject o,
+                                        jbyte fieldValue) {
+    // QSSI.
+    return NFA_STATUS_OK;
+  }
+  /*******************************************************************************
    **
    ** Function:        nfcManager_setPreferredSimSlot()
    **
@@ -4470,6 +4484,7 @@ static void restartUiccListen(jint uiccSlot) {
     {"doGetSelectedUicc", "()I", (void*)nfcManager_doGetSelectedUicc},
     {"setPreferredSimSlot", "(I)I", (void*)nfcManager_setPreferredSimSlot},
     {"doNfcSelfTest", "(I)I", (void*)nfcManager_nfcSelfTest},
+    {"doEnableDebugNtf", "(B)I", (void*) nfcManager_enableDebugNtf},
 #endif
     {"doSetNfcSecure", "(Z)Z", (void*)nfcManager_doSetNfcSecure},
   };

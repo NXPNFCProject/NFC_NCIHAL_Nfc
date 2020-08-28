@@ -820,7 +820,11 @@ public class RegisteredAidCache {
             resolvedAids.clear();
         }
 
-        updateRoutingLocked(false);
+        if (NfcService.getInstance().mIsRouteForced) {
+            updateRoutingLocked(true);
+        } else {
+            updateRoutingLocked(false);
+        }
     }
 
     void updateRoutingLocked(boolean force) {
@@ -829,6 +833,7 @@ public class RegisteredAidCache {
             return;
         }
         final HashMap<String, AidRoutingManager.AidEntry> routingEntries = Maps.newHashMap();
+        boolean isNxpExtnEnabled = NfcService.getInstance().isNfcExtnsPresent();
         // For each AID, find interested services
         for (Map.Entry<String, AidResolveInfo> aidEntry:
                 mAidCache.entrySet()) {
@@ -872,7 +877,7 @@ public class RegisteredAidCache {
                   } else {
                       screenstate |= SCREEN_STATE_ON_LOCKED;
                   }
-                  if (!isOnHost) {
+                  if (!isOnHost || isNxpExtnEnabled) {
                     if (DBG) Log.d(TAG," set screen off enable for " + aid);
                     if(NfcService.getInstance().getNciVersion() ==
                                         NfcService.getInstance().NCI_VERSION_1_0){
@@ -906,6 +911,11 @@ public class RegisteredAidCache {
                 } else {
                     aidType.powerstate = POWER_STATE_SWITCH_ON | SCREEN_STATE_ON_LOCKED;
                 }
+
+                if(isNxpExtnEnabled) {
+                    aidType.powerstate |= SCREEN_STATE_OFF_UNLOCKED | SCREEN_STATE_OFF_LOCKED;
+                  }
+
                 if (DBG) Log.d(TAG," AID power state 2 "+ aid  +" "+aidType.powerstate);
                 if(NfcService.getInstance().getNciVersion() >=
                                         NfcService.getInstance().NCI_VERSION_2_0){
@@ -943,6 +953,11 @@ public class RegisteredAidCache {
                 } else {
                     aidType.powerstate = POWER_STATE_SWITCH_ON | SCREEN_STATE_ON_LOCKED;
                 }
+
+                if(isNxpExtnEnabled) {
+                    aidType.powerstate |= SCREEN_STATE_OFF_UNLOCKED | SCREEN_STATE_OFF_LOCKED;
+                }
+
                 if(NfcService.getInstance().getNciVersion() >=
                                         NfcService.getInstance().NCI_VERSION_2_0){
                     aidType.powerstate = updateRoutePowerState(aidType.powerstate);

@@ -326,6 +326,9 @@ public class NativeNfcManager implements DeviceHost {
     }
 
     @Override
+    public native int doEnableDebugNtf (byte fieldValue);
+
+    @Override
     public int doWriteT4tData(byte[] fileId, byte[] data, int length) {
       return mT4tNfceeMgr.doWriteT4tData(fileId, data, length);
     }
@@ -585,6 +588,10 @@ public class NativeNfcManager implements DeviceHost {
 
     private void notifyHostEmuData(int technology, byte[] data) {
         mListener.onHostCardEmulationData(technology, data);
+    }
+
+    private void notifyNfcDebugInfo(int len, byte[] data) {
+        mListener.onLxDebugConfigData(len, data);
     }
 
     private void notifyHostEmuDeactivated(int technology) {

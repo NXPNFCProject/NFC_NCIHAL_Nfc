@@ -81,6 +81,8 @@ public interface DeviceHost {
         public void onScrNotifyEvents(int event);
 
         public void onNfcTransactionEvent(byte[] aid, byte[] data, String seName);
+
+        public void onLxDebugConfigData(int len, byte[] data);
     }
 
     public interface TagEndpoint {
@@ -348,4 +350,5 @@ public interface DeviceHost {
     public boolean doLockT4tData(boolean lock);
     public boolean isLockedT4tData();
     public boolean doClearNdefT4tData();
+    public int doEnableDebugNtf(byte fieldValue);
 }

@@ -227,6 +227,7 @@ public class NfcService implements DeviceHostListener {
     static final int MSG_SCR_TIMEOUT                  = 76;
     static final int MSG_SCR_REMOVE_CARD              = 77;
     static final int MSG_SCR_MULTIPLE_TARGET_DETECTED = 78;
+    static final int MSG_LX_DATA_RECEIVED             = 79;
     private int SE_READER_TYPE = SE_READER_TYPE_INAVLID;
 
     // Negative value for NO polling delay
@@ -313,6 +314,8 @@ public class NfcService implements DeviceHostListener {
 
     public static final String ACTION_LLCP_UP =
             "com.android.nfc.action.LLCP_UP";
+    public static final String ACTION_LX_DATA_RECVD =
+            "com.android.nfc.action.LX_DATA";
 
     public static final String ACTION_LLCP_DOWN =
             "com.android.nfc.action.LLCP_DOWN";
@@ -578,6 +581,14 @@ public class NfcService implements DeviceHostListener {
     public void onLlcpLinkDeactivated(NfcDepEndpoint device) {
         if (!mIsBeamCapable) return;
         sendMessage(NfcService.MSG_LLCP_LINK_DEACTIVATED, device);
+    }
+
+    @Override
+    public void onLxDebugConfigData(int len, byte[] data) {
+        Bundle writeBundle = new Bundle();
+        writeBundle.putByteArray("LxDbgData", data);
+        writeBundle.putInt("length", len);
+        sendMessage(NfcService.MSG_LX_DATA_RECEIVED, writeBundle);
     }
 
     /**
@@ -1788,12 +1799,14 @@ public class NfcService implements DeviceHostListener {
 
         public int getReaderMode (String readerType) {
           int reader = SE_READER_TYPE_INAVLID;
-          if(readerType.equals("MPOS")) {
+          if((readerType == null) || (readerType.isEmpty())) {
+            /* Invalid Secure Reader Type received. */
+          } else if(readerType.equals("MPOS")) {
             reader =  SE_READER_TYPE_MPOS;
           } else if (readerType.equals("MFC")) {
             reader = SE_READER_TYPE_MFC;
           } else {
-             /* Invalid Secure Reader Type received. */
+            /* Invalid Secure Reader Type received. */
           }
           return reader;
         }
@@ -2233,6 +2246,11 @@ public class NfcService implements DeviceHostListener {
           byte[] readData = mT4tNfceeReturnBundle.getByteArray("readData");
           mT4tNfceeReturnBundle.clear();
           return readData;
+        }
+
+        public int enableDebugNtf(byte fieldValue) {
+            NfcPermissions.enforceUserPermissions(mContext);
+            return mDeviceHost.doEnableDebugNtf(fieldValue);
         }
     }
 
@@ -3074,7 +3092,6 @@ public class NfcService implements DeviceHostListener {
 
     public int getAidRoutingTableSize ()
     {
-        //return 18;
         return mDeviceHost.getAidTableSize();
     }
 
@@ -3137,11 +3154,11 @@ public class NfcService implements DeviceHostListener {
      * get default Aid route entry from shared preference
      */
     public int GetDefaultRouteLocSharedPref() {
-      int defaultRouteLocSharedPref = mNxpPrefs.getInt("PREF_SET_DEFAULT_ROUTE_ID", ROUTE_INVALID);
-      if (defaultRouteLocSharedPref != ROUTE_INVALID)
-        defaultRouteLocSharedPref = (defaultRouteLocSharedPref >> ROUTE_LOC_MASK);
-      Log.d(TAG, "defaultRouteLocSharedPref  :" + defaultRouteLocSharedPref);
-      return defaultRouteLocSharedPref;
+        int defaultRouteLocSharedPref = mNxpPrefs.getInt("PREF_SET_DEFAULT_ROUTE_ID", ROUTE_INVALID);
+        if (defaultRouteLocSharedPref != ROUTE_INVALID)
+            defaultRouteLocSharedPref = (defaultRouteLocSharedPref >> ROUTE_LOC_MASK);
+        Log.d(TAG, "defaultRouteLocSharedPref  :" + defaultRouteLocSharedPref);
+        return defaultRouteLocSharedPref;
     }
     /**
      * get default MifareDesfireRoute route entry in case application does not configure this route entry
@@ -3165,7 +3182,7 @@ public class NfcService implements DeviceHostListener {
 
     /*Returns Default Route based on priority. OverFlow > Shared_Pref > conf file*/
     public int getConfiguredDefaultRouteEntry() {
-      return (mOverflowDefaultRoute != ROUTE_INVALID) ? mOverflowDefaultRoute
+        return (mOverflowDefaultRoute != ROUTE_INVALID) ? mOverflowDefaultRoute
                                                      : GetDefaultRouteEntry();
     }
 
@@ -3173,11 +3190,10 @@ public class NfcService implements DeviceHostListener {
     {
         int route = mNxpPrefs.getInt("PREF_SET_DEFAULT_ROUTE_ID", ROUTE_INVALID);
         if (route != ROUTE_INVALID)
-          return route;
+            return route;
         int routeLoc = mDeviceHost.getDefaultAidRoute();
         int defaultAidRoute = ((mDeviceHost.getDefaultAidPowerState() & 0x3F) | (routeLoc << ROUTE_LOC_MASK));
-        if(routeLoc == 0x00)
-        {
+        if(routeLoc == 0x00) {
             /*
             bit pos 1 = Power Off
             bit pos 2 = Battery Off
@@ -3659,6 +3675,18 @@ public class NfcService implements DeviceHostListener {
                case MSG_SCR_MULTIPLE_TARGET_DETECTED:
                  sendScrEvent(msg.what);
                  break;
+               case MSG_LX_DATA_RECEIVED: {
+                 /* Send broadcast ordered */
+                 Bundle writeBundle = (Bundle) msg.obj;
+                 byte[] lxDbgCfgsData = writeBundle.getByteArray("LxDbgData");
+                 int lxDbgDataLen = writeBundle.getInt("length");
+                 Intent lxDataRecvdIntent = new Intent();
+                 lxDataRecvdIntent.putExtra("LxDebugCfgs",lxDbgCfgsData);
+                 lxDataRecvdIntent.putExtra("lxDbgDataLen",lxDbgDataLen);
+                 lxDataRecvdIntent.setAction(ACTION_LX_DATA_RECVD);
+                 mContext.sendBroadcast(lxDataRecvdIntent);
+                 break;
+               }
                default:
                  Log.e(TAG, "Unknown message received");
                  break;
@@ -4114,6 +4142,7 @@ public class NfcService implements DeviceHostListener {
                 }
                 int dispatchResult = mNfcDispatcher.dispatchTag(tag);
                 if (dispatchResult == NfcDispatcher.DISPATCH_FAIL && !mInProvisionMode) {
+                    if (DBG) Log.d(TAG, "Tag dispatch failed");
                     unregisterObject(tagEndpoint.getHandle());
                     if (mPollDelay > NO_POLL_DELAY) {
                         tagEndpoint.stopPresenceChecking();
@@ -4129,6 +4158,7 @@ public class NfcService implements DeviceHostListener {
                             mHandler.sendEmptyMessageDelayed(MSG_TOAST_DEBOUNCE_EVENT,
                                                              sToast_debounce_time_ms);
                         }
+                        playSound(SOUND_ERROR);
                     }
                     playSound(SOUND_ERROR);
                     if (!mAntennaBlockedMessageShown && mDispatchFailedCount++ > mDispatchFailedMax) {
@@ -4330,8 +4360,7 @@ public class NfcService implements DeviceHostListener {
         public void onReceive(Context context, Intent intent){
             String action = intent.getAction();
             if (DevicePolicyManager.ACTION_DEVICE_POLICY_MANAGER_STATE_CHANGED
-                        .equals(action) &&
-                    mIsBeamCapable) {
+                        .equals(action)) {
                 enforceBeamShareActivityPolicy(
                     context, new UserHandle(getSendingUserId()));
             }
@@ -4428,25 +4457,27 @@ public class NfcService implements DeviceHostListener {
     }
 
     public void updateDefaultAidRoute(int routeLoc) {
-      Log.d(TAG, "updateDefaultAidRoute routeLoc:" + routeLoc);
-      boolean isOverflow = (routeLoc != (GetDefaultRouteEntry() >> ROUTE_LOC_MASK));
-      if (!isOverflow)
-        mOverflowDefaultRoute = ROUTE_INVALID;
-      else {
-        mOverflowDefaultRoute =
-            ((mDeviceHost.getDefaultAidPowerState() & 0x3F) | (routeLoc << ROUTE_LOC_MASK));
-        if (routeLoc == 0x00) {
-          /*
-          bit pos 1 = Power Off
-          bit pos 2 = Battery Off
-          bit pos 4 = Screen Off
-          Set these bits to 0 because in case routeLoc = HOST it can not work on POWER_OFF,
-          BATTERY_OFF and SCREEN_OFF*/
-          mOverflowDefaultRoute &= 0xF9;
+        Log.d(TAG, "updateDefaultAidRoute routeLoc:" + routeLoc);
+        boolean isOverflow = (routeLoc != (GetDefaultRouteEntry() >> ROUTE_LOC_MASK));
+
+        if (!isOverflow)
+            mOverflowDefaultRoute = ROUTE_INVALID;
+        else {
+            mOverflowDefaultRoute =
+                ((mDeviceHost.getDefaultAidPowerState() & 0x3F) | (routeLoc << ROUTE_LOC_MASK));
+            if (routeLoc == 0x00) {
+                /*
+                bit pos 1 = Power Off
+                bit pos 2 = Battery Off
+                bit pos 4 = Screen Off
+                Set these bits to 0 because in case routeLoc = HOST it can not work on POWER_OFF,
+                BATTERY_OFF and SCREEN_OFF*/
+                mOverflowDefaultRoute &= 0xF9;
+            }
         }
-      }
-      mHandler.sendEmptyMessage(MSG_RESET_AND_UPDATE_ROUTING_PARAMS);
+        mHandler.sendEmptyMessage(MSG_RESET_AND_UPDATE_ROUTING_PARAMS);
     }
+
     public void addT4TNfceeAid() {
       Log.i(TAG, "Add T4T Nfcee AID");
 
