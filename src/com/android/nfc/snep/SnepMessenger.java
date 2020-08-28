@@ -30,7 +30,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018 NXP
+*  Copyright 2018-2020 NXP
 *
 ******************************************************************************/
 package com.android.nfc.snep;
@@ -221,9 +221,9 @@ public class SnepMessenger {
         }
 
         if (NfcService.sIsDtaMode) {
-            if (!mIsClient && (requestField == SnepMessage.RESPONSE_CONTINUE ||  // added for TC_S_BIT_B1_01_X
+            if (!mIsClient && (requestField == SnepMessage.RESPONSE_CONTINUE)||  // added for TC_S_BIT_B1_01_X
                               requestField == SnepMessage.RESPONSE_SUCCESS ||
-                              requestField == SnepMessage.RESPONSE_NOT_FOUND)) {
+                              requestField == SnepMessage.RESPONSE_NOT_FOUND) {
                 if (DBG) Log.d(TAG, "errorneous response received, disconnecting client");
                 close();
             }
