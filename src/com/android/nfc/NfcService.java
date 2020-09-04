@@ -2157,6 +2157,7 @@ public class NfcService implements DeviceHostListener {
             }
             /*check if format of configs is fine*/
             /*Save configurations to file*/
+            FileWriter fw = null;
             try {
                 File newTextFile = new File("/data/nfc/libnfc-nxpTransit.conf");
                 if(configs == null)
@@ -2169,10 +2170,8 @@ public class NfcService implements DeviceHostListener {
                 }
                 else
                 {
-                    FileWriter fw = new FileWriter(newTextFile);
+                    fw = new FileWriter(newTextFile);
                     fw.write(configs);
-                    fw.close();
-                    fw = null;
                     Log.e(TAG, "File Written to libnfc-nxpTransit.conf successfully" );
                 }
                 newTextFile = null;
@@ -2180,6 +2179,15 @@ public class NfcService implements DeviceHostListener {
             } catch (Exception e) {
                 e.printStackTrace();
                 return TRANSIT_SETCONFIG_STAT_FAILED;
+            } finally {
+              if (fw != null) {
+                try {
+                  fw.close();
+                } catch (Exception e) {
+                  e.printStackTrace();
+                  return TRANSIT_SETCONFIG_STAT_FAILED;
+                }
+              }
             }
 
             /*restart NFC service*/
@@ -4542,18 +4550,26 @@ public class NfcService implements DeviceHostListener {
     }
 
     private void storeNativeCrashLogs() {
+      FileOutputStream fos = null;
       try {
-          File file = new File(mContext.getFilesDir(), NATIVE_LOG_FILE_NAME);
-          if (!file.exists()) {
-              file.createNewFile();
-          }
+        File file = new File(mContext.getFilesDir(), NATIVE_LOG_FILE_NAME);
+        if (!file.exists()) {
+          file.createNewFile();
+        }
 
-          FileOutputStream fos = new FileOutputStream(file);
-          mDeviceHost.dump(fos.getFD());
-          fos.flush();
-          fos.close();
+        fos = new FileOutputStream(file);
+        mDeviceHost.dump(fos.getFD());
+        fos.flush();
       } catch (IOException e) {
-          Log.e(TAG, "Exception in storeNativeCrashLogs " + e);
+        Log.e(TAG, "Exception in storeNativeCrashLogs " + e);
+      } finally {
+        if (fos != null) {
+          try {
+            fos.close();
+          } catch (IOException e) {
+            Log.e(TAG, "Exception in storeNativeCrashLogs " + e);
+          }
+        }
       }
     }
 
