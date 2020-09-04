@@ -809,8 +809,6 @@ class SecureElement {
   uint8_t mVerInfo[3];
   uint8_t mAtrInfo[40];
   bool mGetAtrRspwait;
-  RouteDataSet mRouteDataSet;          // routing data
-  std::vector<std::string> mUsedAids;  // AID's that are used in current routes
   uint8_t mAidForEmptySelect[NCI_MAX_AID_LEN + 1];
   Mutex mMutex;                        // protects fields below
   bool mRfFieldIsOn;                   // last known RF field state

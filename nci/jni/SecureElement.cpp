@@ -397,7 +397,6 @@ bool SecureElement::initialize(nfc_jni_native_data* native) {
   memset(mEeInfo, 0, sizeof(mEeInfo));
   memset(&mUiccInfo, 0, sizeof(mUiccInfo));
   memset(&mHciCfg, 0, sizeof(mHciCfg));
-  mUsedAids.clear();
   memset(mAidForEmptySelect, 0, sizeof(mAidForEmptySelect));
 #if (NXP_EXTNS == TRUE)
   mIsWiredModeBlocked = false;

@@ -130,6 +130,9 @@ RoutingManager::RoutingManager()
       mDefaultHCEFRspTimeout(5000) {
   static const char fn[] = "RoutingManager::RoutingManager()";
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:enter", fn);
+  mRxDataBuffer.clear();
+  mOffHostRouteUicc.clear();
+  mOffHostRouteEse.clear();
   if (NfcConfig::hasKey(NAME_OFFHOST_ROUTE_UICC)) {
     mOffHostRouteUicc = NfcConfig::getBytes(NAME_OFFHOST_ROUTE_UICC);
   }
