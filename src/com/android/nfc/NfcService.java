@@ -2068,6 +2068,7 @@ public class NfcService implements DeviceHostListener {
             }
             /*check if format of configs is fine*/
             /*Save configurations to file*/
+            FileWriter fw = null;
             try {
                 File newTextFile = new File("/data/nfc/libnfc-nxpTransit.conf");
                 if(configs == null)
@@ -2080,10 +2081,8 @@ public class NfcService implements DeviceHostListener {
                 }
                 else
                 {
-                    FileWriter fw = new FileWriter(newTextFile);
+                    fw = new FileWriter(newTextFile);
                     fw.write(configs);
-                    fw.close();
-                    fw = null;
                     Log.e(TAG, "File Written to libnfc-nxpTransit.conf successfully" );
                 }
                 newTextFile = null;
@@ -2091,6 +2090,14 @@ public class NfcService implements DeviceHostListener {
             } catch (Exception e) {
                 e.printStackTrace();
                 return TRANSIT_SETCONFIG_STAT_FAILED;
+            } finally {
+                if (fw != null) {
+                    try { fw.close(); }
+                    catch (Exception e) {
+                        e.printStackTrace();
+                        return TRANSIT_SETCONFIG_STAT_FAILED;
+                    }
+                }
             }
 
             /*restart NFC service*/
@@ -4162,16 +4169,18 @@ public class NfcService implements DeviceHostListener {
                     }
                     playSound(SOUND_ERROR);
                     if (!mAntennaBlockedMessageShown && mDispatchFailedCount++ > mDispatchFailedMax) {
-                        Intent dialogIntent = new Intent(mContext, NfcBlockedNotification.class);
-                        dialogIntent.setFlags(
-                            Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                        mContext.startActivity(dialogIntent);
-                        mPrefsEditor.putBoolean(PREF_ANTENNA_BLOCKED_MESSAGE_SHOWN, true);
-                        mPrefsEditor.apply();
-                        mBackupManager.dataChanged();
-                        mAntennaBlockedMessageShown = true;
-                        mDispatchFailedCount = 0;
-                        if (DBG) Log.d(TAG, "Tag dispatch failed notification");
+                        synchronized (NfcService.this) {
+                            Intent dialogIntent = new Intent(mContext, NfcBlockedNotification.class);
+                            dialogIntent.setFlags(
+                                Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                            mContext.startActivity(dialogIntent);
+                            mPrefsEditor.putBoolean(PREF_ANTENNA_BLOCKED_MESSAGE_SHOWN, true);
+                            mPrefsEditor.apply();
+                            mBackupManager.dataChanged();
+                            mAntennaBlockedMessageShown = true;
+                            mDispatchFailedCount = 0;
+                            if (DBG) Log.d(TAG, "Tag dispatch failed notification");
+                        }
                     }
                 } else if (dispatchResult == NfcDispatcher.DISPATCH_SUCCESS) {
                     mDispatchFailedCount = 0;
@@ -4414,19 +4423,27 @@ public class NfcService implements DeviceHostListener {
     }
 
     private void storeNativeCrashLogs() {
-      try {
-          File file = new File(mContext.getFilesDir(), NATIVE_LOG_FILE_NAME);
-          if (!file.exists()) {
-              file.createNewFile();
-          }
+        FileOutputStream fos = null;
+        try {
+            File file = new File(mContext.getFilesDir(), NATIVE_LOG_FILE_NAME);
+            if (!file.exists()) {
+                file.createNewFile();
+            }
 
-          FileOutputStream fos = new FileOutputStream(file);
-          mDeviceHost.dump(fos.getFD());
-          fos.flush();
-          fos.close();
-      } catch (IOException e) {
-          Log.e(TAG, "Exception in storeNativeCrashLogs " + e);
-      }
+            fos = new FileOutputStream(file);
+            mDeviceHost.dump(fos.getFD());
+            fos.flush();
+        } catch (IOException e) {
+            Log.e(TAG, "Exception in storeNativeCrashLogs " + e);
+        } finally {
+            if (fos != null) {
+                try {
+                    fos.close();
+                } catch (IOException e) {
+                    Log.e(TAG, "Exception in storeNativeCrashLogs " + e);
+                }
+            }
+        }
     }
 
     void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
