@@ -332,6 +332,8 @@ public interface DeviceHost {
 
     public boolean setNfcSecure(boolean enable);
 
+    public String getNfaStorageDir();
+
 /* NXP extension are here */
     public void doChangeDiscoveryTech(int pollTech, int listenTech);
     public boolean accessControlForCOSU (int mode);
