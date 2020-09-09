@@ -39,8 +39,8 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.nfc.cardemulation.NfcFServiceInfo;
 import android.nfc.cardemulation.HostNfcFService;
+import android.nfc.cardemulation.NfcFServiceInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -51,12 +51,11 @@ import android.os.UserHandle;
 import android.util.Log;
 
 import com.android.nfc.NfcService;
-
+import com.android.nfc.NfcStatsLog;
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import android.os.SystemProperties;
 
-import android.util.StatsLog;
 
 public class HostNfcFEmulationManager {
     static final String TAG = "HostNfcFEmulationManager";
@@ -155,8 +154,8 @@ public class HostNfcFEmulationManager {
                     mPendingPacket = data;
                     mState = STATE_W4_SERVICE;
                 }
-                StatsLog.write(StatsLog.NFC_CARDEMULATION_OCCURRED,
-                               StatsLog.NFC_CARDEMULATION_OCCURRED__CATEGORY__HCE_PAYMENT,
+                NfcStatsLog.write(NfcStatsLog.NFC_CARDEMULATION_OCCURRED,
+                               NfcStatsLog.NFC_CARDEMULATION_OCCURRED__CATEGORY__HCE_PAYMENT,
                                "HCEF");
                 break;
             case STATE_W4_SERVICE:
