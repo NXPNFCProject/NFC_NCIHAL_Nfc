@@ -41,11 +41,11 @@ import android.app.ActivityThread;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningTaskInfo;
 import com.android.nfc.NfcService;
+import com.android.nfc.NfcStatsLog;
 import android.util.SparseArray;
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.util.Collections;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -53,9 +53,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import android.util.StatsLog;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Hashtable;
 import android.os.SystemProperties;
 public class AidRoutingManager {
@@ -397,7 +397,8 @@ public class AidRoutingManager {
               mLastCommitStatus = true;
               commit(aidRoutingTableCache);
           } else {
-              StatsLog.write(StatsLog.NFC_ERROR_OCCURRED, StatsLog.NFC_ERROR_OCCURRED__TYPE__AID_OVERFLOW, 0, 0);
+              NfcStatsLog.write(NfcStatsLog.NFC_ERROR_OCCURRED,
+                      NfcStatsLog.NFC_ERROR_OCCURRED__TYPE__AID_OVERFLOW, 0, 0);
               Log.e(TAG, "RoutingTable unchanged because it's full, not updating");
               NfcService.getInstance().notifyRoutingTableFull();
               mLastCommitStatus = false;

@@ -102,7 +102,6 @@ import android.service.vr.IVrManager;
 import android.service.vr.IVrStateCallbacks;
 import android.text.TextUtils;
 import android.util.Log;
-import android.util.StatsLog;
 import android.widget.Toast;
 
 import com.android.internal.logging.MetricsLogger;
@@ -620,7 +619,7 @@ public class NfcService implements DeviceHostListener {
     public void onNfcTransactionEvent(byte[] aid, byte[] data, String seName) {
         byte[][] dataObj = {aid, data, seName.getBytes()};
         sendMessage(NfcService.MSG_TRANSACTION_EVENT, dataObj);
-        StatsLog.write(StatsLog.NFC_CARDEMULATION_OCCURRED, StatsLog.NFC_CARDEMULATION_OCCURRED__CATEGORY__OFFHOST, seName);
+        NfcStatsLog.write(NfcStatsLog.NFC_CARDEMULATION_OCCURRED, NfcStatsLog.NFC_CARDEMULATION_OCCURRED__CATEGORY__OFFHOST, seName);
     }
 
     @Override
@@ -1023,7 +1022,7 @@ public class NfcService implements DeviceHostListener {
                     return false;
                 }
                 Log.i(TAG, "Enabling NFC");
-                StatsLog.write(StatsLog.NFC_STATE_CHANGED, StatsLog.NFC_STATE_CHANGED__STATE__ON);
+                NfcStatsLog.write(NfcStatsLog.NFC_STATE_CHANGED, NfcStatsLog.NFC_STATE_CHANGED__STATE__ON);
                 updateState(NfcAdapter.STATE_TURNING_ON);
             }
 
@@ -1101,7 +1100,7 @@ public class NfcService implements DeviceHostListener {
                     return false;
                 }
                 Log.i(TAG, "Disabling NFC ");
-                StatsLog.write(StatsLog.NFC_STATE_CHANGED, StatsLog.NFC_STATE_CHANGED__STATE__OFF);
+                NfcStatsLog.write(NfcStatsLog.NFC_STATE_CHANGED, NfcStatsLog.NFC_STATE_CHANGED__STATE__OFF);
                 updateState(NfcAdapter.STATE_TURNING_OFF);
           }
             deInitWiredSe();
@@ -1349,9 +1348,9 @@ public class NfcService implements DeviceHostListener {
                 mCardEmulationManager.onSecureNfcToggled();
             }
             if (enable)
-                StatsLog.write(StatsLog.NFC_STATE_CHANGED, StatsLog.NFC_STATE_CHANGED__STATE__ON_LOCKED);
+                NfcStatsLog.write(NfcStatsLog.NFC_STATE_CHANGED, NfcStatsLog.NFC_STATE_CHANGED__STATE__ON_LOCKED);
             else
-                StatsLog.write(StatsLog.NFC_STATE_CHANGED, StatsLog.NFC_STATE_CHANGED__STATE__ON);
+                NfcStatsLog.write(NfcStatsLog.NFC_STATE_CHANGED, NfcStatsLog.NFC_STATE_CHANGED__STATE__ON);
             return true;
         }
 
@@ -2790,7 +2789,7 @@ public class NfcService implements DeviceHostListener {
                 mRoutingWakeLock.release();
             }
             Log.e(TAG, "Watchdog triggered, aborting.");
-            StatsLog.write(StatsLog.NFC_STATE_CHANGED, StatsLog.NFC_STATE_CHANGED__STATE__CRASH_RESTART);
+            NfcStatsLog.write(NfcStatsLog.NFC_STATE_CHANGED, NfcStatsLog.NFC_STATE_CHANGED__STATE__CRASH_RESTART);
             storeNativeCrashLogs();
             mDeviceHost.doAbort(getName());
         }
