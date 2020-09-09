@@ -4248,7 +4248,6 @@ public class NfcService implements DeviceHostListener {
                     }
                     if (!mAntennaBlockedMessageShown && mDispatchFailedCount++ > mDispatchFailedMax) {
                         new NfcBlockedNotification(mContext).startNotification();
-                        mContext.startActivity(dialogIntent);
                         mPrefsEditor.putBoolean(PREF_ANTENNA_BLOCKED_MESSAGE_SHOWN, true);
                         mPrefsEditor.apply();
                         mBackupManager.dataChanged();
@@ -4514,7 +4513,7 @@ public class NfcService implements DeviceHostListener {
               file.createNewFile();
           }
 
-          fos = new FileOutputStream(file, true);
+          FileOutputStream fos = new FileOutputStream(file, true);
           mDeviceHost.dump(fos.getFD());
           fos.flush();
           fos.close();
