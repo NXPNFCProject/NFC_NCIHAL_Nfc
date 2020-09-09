@@ -3125,6 +3125,11 @@ static jboolean nfcManager_doSetNfcSecure(JNIEnv* e, jobject o,
   return true;
 }
 
+static jstring nfcManager_doGetNfaStorageDir(JNIEnv* e, jobject o) {
+  string nfaStorageDir = NfcConfig::getString(NAME_NFA_STORAGE, "/data/nfc");
+  return e->NewStringUTF(nfaStorageDir.c_str());
+}
+
 /*****************************************************************************
 **
 ** JNI functions for android-4.0.1_r1
@@ -3277,6 +3282,9 @@ static JNINativeMethod gMethods[] = {
     {"doEnableDebugNtf", "(B)I", (void*) nfcManager_enableDebugNtf},
 #endif
     {"doSetNfcSecure", "(Z)Z", (void*)nfcManager_doSetNfcSecure},
+
+    {"getNfaStorageDir", "()Ljava/lang/String;",
+    (void*)nfcManager_doGetNfaStorageDir},
 };
 
 /*******************************************************************************
