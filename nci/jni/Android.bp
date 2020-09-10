@@ -28,7 +28,6 @@ cc_library_shared {
         "system/nfc/src/gki/ulinux",
         "system/nfc/src/gki/common",
         "system/nfc/utils/include",
-
     ],
 
     local_include_dirs: [
@@ -58,5 +57,9 @@ cc_library_shared {
         debuggable: {
             cflags: ["-DDCHECK_ALWAYS_ON"],
         },
+    },
+    sanitize: {
+        integer_overflow: true,
+        misc_undefined: ["bounds"],
     },
 }
