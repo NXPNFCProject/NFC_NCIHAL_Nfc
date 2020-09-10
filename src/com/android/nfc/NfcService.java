@@ -36,11 +36,11 @@ package com.android.nfc;
 
 import android.app.ActivityManager;
 import android.app.Application;
-import android.app.backup.BackupManager;
+import android.app.BroadcastOptions;
 import android.app.KeyguardManager;
 import android.app.PendingIntent;
 import android.app.admin.DevicePolicyManager;
-import android.app.BroadcastOptions;
+import android.app.backup.BackupManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentResolver;
@@ -55,7 +55,6 @@ import android.content.pm.PackageManager;
 import android.content.pm.UserInfo;
 import android.content.res.Resources.NotFoundException;
 import android.media.AudioAttributes;
-import android.media.AudioManager;
 import android.media.SoundPool;
 import android.net.Uri;
 import android.nfc.BeamShareData;
@@ -75,7 +74,6 @@ import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.nfc.TechListParcel;
 import android.nfc.TransceiveResult;
-import android.nfc.cardemulation.ApduServiceInfo;
 import android.nfc.tech.Ndef;
 import android.nfc.tech.TagTechnology;
 import android.os.AsyncTask;
@@ -102,6 +100,7 @@ import android.service.vr.IVrManager;
 import android.service.vr.IVrStateCallbacks;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.proto.ProtoOutputStream;
 import android.widget.Toast;
 
 import com.android.internal.logging.MetricsLogger;
@@ -141,6 +140,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.Arrays;
 import java.util.ArrayList;
@@ -150,6 +150,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 import java.util.TimerTask;
 import java.util.Timer;
 
@@ -4410,6 +4411,21 @@ public class NfcService implements DeviceHostListener {
         return mDeviceHost.getNfaStorageDir();
     }
 
+    static int stateToProtoEnum(int state) {
+        switch (state) {
+            case NfcAdapter.STATE_OFF:
+                return NfcServiceDumpProto.STATE_OFF;
+            case NfcAdapter.STATE_TURNING_ON:
+                return NfcServiceDumpProto.STATE_TURNING_ON;
+            case NfcAdapter.STATE_ON:
+                return NfcServiceDumpProto.STATE_ON;
+            case NfcAdapter.STATE_TURNING_OFF:
+                return NfcServiceDumpProto.STATE_TURNING_OFF;
+            default:
+                return NfcServiceDumpProto.STATE_UNKNOWN;
+        }
+    }
+
     private void copyNativeCrashLogsIfAny(PrintWriter pw) {
       try {
           File file = new File(getNfaStorageDir(), NATIVE_LOG_FILE_NAME);
@@ -4462,14 +4478,26 @@ public class NfcService implements DeviceHostListener {
             return;
         }
 
+        for (String arg : args) {
+            if ("--proto".equals(arg)) {
+                ProtoOutputStream proto = new ProtoOutputStream(new FileOutputStream(fd));
+                synchronized (this) {
+                    dumpDebug(proto);
+                }
+                proto.flush();
+                return;
+            }
+        }
+
         synchronized (this) {
             pw.println("mState=" + stateToString(mState));
             pw.println("mIsZeroClickRequested=" + mIsNdefPushEnabled);
             pw.println("mScreenState=" + ScreenStateHelper.screenStateToString(mScreenState));
             pw.println("mIsSecureNfcEnabled=" + mIsSecureNfcEnabled);
             pw.println(mCurrentDiscoveryParameters);
-            if (mIsBeamCapable)
+            if (mIsBeamCapable) {
                 mP2pLinkManager.dump(fd, pw, args);
+            }
             if (mIsHceCapable) {
                 mCardEmulationManager.dump(fd, pw, args);
             }
@@ -4508,5 +4536,64 @@ public class NfcService implements DeviceHostListener {
       routeAids(T4T_NFCEE_AID, ROUTE_ID_T4T_NFCEE,
               AID_MATCHING_EXACT_ONLY,
               GetT4TNfceePowerState());
+    }
+
+    /**
+     * Dump debugging information as a NfcServiceDumpProto
+     *
+     * Note:
+     * See proto definition in frameworks/base/core/proto/android/nfc/nfc_service.proto
+     * When writing a nested message, must call {@link ProtoOutputStream#start(long)} before and
+     * {@link ProtoOutputStream#end(long)} after.
+     * Never reuse a proto field number. When removing a field, mark it as reserved.
+     */
+    private void dumpDebug(ProtoOutputStream proto) {
+        proto.write(NfcServiceDumpProto.STATE, stateToProtoEnum(mState));
+        proto.write(NfcServiceDumpProto.IN_PROVISION_MODE, mInProvisionMode);
+        proto.write(NfcServiceDumpProto.NDEF_PUSH_ENABLED, mIsNdefPushEnabled);
+        proto.write(NfcServiceDumpProto.SCREEN_STATE,
+                ScreenStateHelper.screenStateToProtoEnum(mScreenState));
+        proto.write(NfcServiceDumpProto.SECURE_NFC_ENABLED, mIsSecureNfcEnabled);
+        proto.write(NfcServiceDumpProto.POLLING_PAUSED, mPollingPaused);
+        proto.write(NfcServiceDumpProto.NUM_TAGS_DETECTED, mNumTagsDetected.get());
+        proto.write(NfcServiceDumpProto.NUM_P2P_DETECTED, mNumP2pDetected.get());
+        proto.write(NfcServiceDumpProto.NUM_HCE_DETECTED, mNumHceDetected.get());
+        proto.write(NfcServiceDumpProto.HCE_CAPABLE, mIsHceCapable);
+        proto.write(NfcServiceDumpProto.HCE_F_CAPABLE, mIsHceFCapable);
+        proto.write(NfcServiceDumpProto.BEAM_CAPABLE, mIsBeamCapable);
+        proto.write(NfcServiceDumpProto.SECURE_NFC_CAPABLE, mIsSecureNfcCapable);
+        proto.write(NfcServiceDumpProto.VR_MODE_ENABLED, mIsVrModeEnabled);
+
+        long token = proto.start(NfcServiceDumpProto.DISCOVERY_PARAMS);
+        mCurrentDiscoveryParameters.dumpDebug(proto);
+        proto.end(token);
+
+        if (mIsBeamCapable) {
+            token = proto.start(NfcServiceDumpProto.P2P_LINK_MANAGER);
+            mP2pLinkManager.dumpDebug(proto);
+            proto.end(token);
+        }
+
+        if (mIsHceCapable) {
+            token = proto.start(NfcServiceDumpProto.CARD_EMULATION_MANAGER);
+            mCardEmulationManager.dumpDebug(proto);
+            proto.end(token);
+        }
+
+        token = proto.start(NfcServiceDumpProto.NFC_DISPATCHER);
+        mNfcDispatcher.dumpDebug(proto);
+        proto.end(token);
+
+        // Dump native crash logs if any
+        File file = new File(mContext.getFilesDir(), NATIVE_LOG_FILE_NAME);
+        if (!file.exists()) {
+            return;
+        }
+        try {
+            String logs = Files.lines(file.toPath()).collect(Collectors.joining("\n"));
+            proto.write(NfcServiceDumpProto.NATIVE_CRASH_LOGS, logs);
+        } catch (IOException e) {
+            Log.e(TAG, "IOException in dumpDebug(ProtoOutputStream): " + e);
+        }
     }
 }

@@ -16,6 +16,8 @@
 
 package com.android.nfc;
 
+import android.util.proto.ProtoOutputStream;
+
 /**
  * Parameters for enabling NFC tag discovery and polling,
  * and host card emulation.
@@ -135,6 +137,15 @@ public final class NfcDiscoveryParameters {
         sb.append("mEnableHostRouting: " + Boolean.toString(mEnableHostRouting) + "\n");
         sb.append("mEnableP2p: " + Boolean.toString(mEnableP2p));
         return sb.toString();
+    }
+
+    /** Dumps DiscoveryParamsProto for debugging. */
+    void dumpDebug(ProtoOutputStream proto) {
+        proto.write(DiscoveryParamsProto.TECH_MASK, mTechMask);
+        proto.write(DiscoveryParamsProto.ENABLE_LPD, mEnableLowPowerDiscovery);
+        proto.write(DiscoveryParamsProto.ENABLE_READER, mEnableReaderMode);
+        proto.write(DiscoveryParamsProto.ENABLE_HOST_ROUTING, mEnableHostRouting);
+        proto.write(DiscoveryParamsProto.ENABLE_P2P, mEnableP2p);
     }
 
     public static NfcDiscoveryParameters.Builder newBuilder() {

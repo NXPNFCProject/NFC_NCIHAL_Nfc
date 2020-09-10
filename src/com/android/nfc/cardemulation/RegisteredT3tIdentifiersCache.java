@@ -40,6 +40,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.nfc.cardemulation.NfcFServiceInfo;
 import android.util.Log;
+import android.util.proto.ProtoOutputStream;
 
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
@@ -240,5 +241,26 @@ public class RegisteredT3tIdentifiersCache {
         pw.println("");
         mRoutingManager.dump(fd, pw, args);
         pw.println("");
+    }
+
+    /**
+     * Dump debugging information as a RegisteredT3tIdentifiersCacheProto
+     *
+     * Note:
+     * See proto definition in frameworks/base/core/proto/android/nfc/card_emulation.proto
+     * When writing a nested message, must call {@link ProtoOutputStream#start(long)} before and
+     * {@link ProtoOutputStream#end(long)} after.
+     * Never reuse a proto field number. When removing a field, mark it as reserved.
+     */
+    void dumpDebug(ProtoOutputStream proto) {
+        for (NfcFServiceInfo serviceInfo : mForegroundT3tIdentifiersCache.values()) {
+            long token = proto.start(
+                    RegisteredT3tIdentifiersCacheProto.T3T_IDENTIFIER_CACHE_ENTRIES);
+            serviceInfo.dumpDebug(proto);
+            proto.end(token);
+        }
+        long token = proto.start(RegisteredT3tIdentifiersCacheProto.ROUTING_MANAGER);
+        mRoutingManager.dumpDebug(proto);
+        proto.end(token);
     }
 }

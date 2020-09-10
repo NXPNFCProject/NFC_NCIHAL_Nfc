@@ -47,6 +47,7 @@ import android.nfc.cardemulation.NfcFServiceInfo;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.util.proto.ProtoOutputStream;
 import android.os.SystemProperties;
 
 public class EnabledNfcFServices implements com.android.nfc.ForegroundUtils.Callback {
@@ -237,5 +238,26 @@ public class EnabledNfcFServices implements com.android.nfc.ForegroundUtils.Call
     }
 
     public void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
+    }
+
+    /**
+     * Dump debugging information as a EnabledNfcFServicesProto
+     *
+     * Note:
+     * See proto definition in frameworks/base/core/proto/android/nfc/card_emulation.proto
+     * When writing a nested message, must call {@link ProtoOutputStream#start(long)} before and
+     * {@link ProtoOutputStream#end(long)} after.
+     * Never reuse a proto field number. When removing a field, mark it as reserved.
+     */
+    void dumpDebug(ProtoOutputStream proto) {
+        if (mForegroundComponent != null) {
+            mForegroundComponent.dumpDebug(proto, EnabledNfcFServicesProto.FOREGROUND_COMPONENT);
+        }
+        if (mForegroundRequested != null) {
+            mForegroundRequested.dumpDebug(proto, EnabledNfcFServicesProto.FOREGROUND_REQUESTED);
+        }
+        proto.write(EnabledNfcFServicesProto.ACTIVATED, mActivated);
+        proto.write(EnabledNfcFServicesProto.COMPUTE_FG_REQUESTED, mComputeFgRequested);
+        proto.write(EnabledNfcFServicesProto.FOREGROUND_UID, mForegroundUid);
     }
 }
