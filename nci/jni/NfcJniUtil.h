@@ -33,7 +33,6 @@
  *
  ******************************************************************************/
 #pragma once
-#include <nativehelper/JNIHelp.h>
 #include <jni.h>
 #include <pthread.h>
 #include <semaphore.h>

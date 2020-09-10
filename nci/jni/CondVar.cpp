@@ -19,12 +19,16 @@
  */
 
 #include "CondVar.h"
-#include <android-base/stringprintf.h>
-#include <base/logging.h>
-#include <errno.h>
 #include "NfcJniUtil.h"
 
+#include <errno.h>
+#include <string.h>
+
+#include <android-base/stringprintf.h>
+#include <base/logging.h>
+
 using android::base::StringPrintf;
+
 /*******************************************************************************
 **
 ** Function:        CondVar

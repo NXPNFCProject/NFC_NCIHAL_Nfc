@@ -31,10 +31,8 @@
 /*  NDEF Mapping Component
  *
  *  This component implements the read/write/check NDEF functions for remote
- *devices.
- *  NDEF data, as defined by the NFC Forum NDEF specification are written to or
- *read from
- *  a remote device that can be a smart- or memory card.
+ * devices. NDEF data, as defined by the NFC Forum NDEF specification are
+ * written to or read from a remote device that can be a smart- or memory card.
  *  Please notice that the NDEF mapping command sequence must
  *  be contiguous (after correct initialization)
  *
@@ -63,7 +61,7 @@ typedef enum {
 
 /*
  * NDEF Mapping - specifies the Compliant Blocks in the Mifare 1k and 4k card
- *types
+ * types
  *
  */
 #define PH_FRINFC_NDEFMAP_MIFARESTD_1KNDEF_COMPBLOCK \
@@ -83,8 +81,7 @@ typedef enum {
  * Completion Routine Indices
  *
  * These are the indices of the completion routine pointers within the component
- *context.
- * Completion routines belong to upper components.
+ * context. Completion routines belong to upper components.
  *
  */
 #define PH_FRINFC_NDEFMAP_CR_CHK_NDEF 0    /* */
@@ -98,9 +95,8 @@ typedef enum {
  * File Offset Attributes
  *
  * Following values are used to determine the offset value for Read/Write. This
- *specifies whether
- * the Read/Write operation needs to be restarted/continued from the last offset
- *set.
+ * specifies whether the Read/Write operation needs to be restarted/continued
+ * from the last offset set.
  *
  */
 /* Read/Write operation shall start from the last offset set */
@@ -330,7 +326,7 @@ typedef struct phFriNfc_ResMemCntrlTLVCont {
  *  NFC NDEF Mapping Component Context Structure
  *
  *  This structure is used to store the current context information of the
- *instance.
+ * instance.
  *
  */
 typedef struct phFriNfc_NdefMap {
@@ -459,8 +455,7 @@ typedef struct phFriNfc_NdefMap {
 #define PH_FRINFC_NDEFMAP_STATE_EOF_CARD 2      /* EOF card reached */
 
 /* Following values specify the previous operation on the card. This value is
-   assigned to
-   the context structure variable: PrevOperation. */
+   assigned to the context structure variable: PrevOperation. */
 
 /* Previous operation is check */
 #define PH_FRINFC_NDEFMAP_CHECK_OPE 1

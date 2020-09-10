@@ -20,8 +20,7 @@ android_app {
     jni_libs: ["libnfc_nci_jni"],
     libs: ["com.nxp.nfc"],
     static_libs: [
-        "android-support-v4",
-        "android-support-core-utils",
+        "androidx.appcompat_appcompat",
         "android.hardware.secure_element-V1.0-java",
         "vendor.nxp.nxpwiredse-V1.0-java",
         ],

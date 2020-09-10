@@ -28,12 +28,9 @@
 
 /* NFC Device Major and Minor Version numbers */
 /* !!CAUTION!! these needs to be updated periodically.Major and Minor version
-   numbers
-   should be compatible to the version number of currently implemented mapping
-   document.
-   Example : NFC Device version Number : 1.0 , specifies
-              Major VNo is 1,
-              Minor VNo is 0 */
+   numbers should be compatible to the version number of currently implemented
+   mapping document. Example : NFC Device version Number : 1.0 , specifies Major
+   VNo is 1, Minor VNo is 0 */
 #define PH_NFCFRI_NDEFMAP_NFCDEV_MAJOR_VER_NUM 0x01
 #define PH_NFCFRI_NDEFMAP_NFCDEV_MINOR_VER_NUM 0x00
 #define PH_NFCFRI_MFSTDMAP_NFCDEV_MAJOR_VER_NUM 0x40
@@ -116,11 +113,11 @@
   0x07 /* Access Bit for Byte 7 in              \
           NFC forum sector trailer              \
           Read Only State */
-#define PH_FRINFC_MIFARESTD_NFCSECT_RDACS_BYTE8 \
-  0x8F /* Access Bit for Byte 8 in              \
-          NFC forum sector trailer              \
-          Read Only State */
-/* Mifare Standard constants */
+#define PH_FRINFC_MIFARESTD_NFCSECT_RDACS_BYTE8                     \
+  0x8F                                  /* Access Bit for Byte 8 in \
+                                           NFC forum sector trailer \
+                                           Read Only State */
+                                        /* Mifare Standard constants */
 #define MIFARE_MAX_SEND_BUF_TO_READ 1   /* Send Length for Reading a Block */
 #define MIFARE_MAX_SEND_BUF_TO_WRITE 17 /* Send Length for writing a Block */
 #define MIFARE_AUTHENTICATE_CMD_LENGTH \

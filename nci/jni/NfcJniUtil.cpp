@@ -42,6 +42,7 @@
 #include <log/log.h>
 #include <nativehelper/JNIHelp.h>
 #include <nativehelper/ScopedLocalRef.h>
+
 #include "RoutingManager.h"
 
 using android::base::StringPrintf;

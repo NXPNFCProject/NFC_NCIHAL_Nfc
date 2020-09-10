@@ -116,10 +116,11 @@ typedef struct phFriNfc_sNdefSmtCrdFmt {
                 [8]; /* Stores NDEF message TLV */
 } phFriNfc_sNdefSmtCrdFmt_t;
 
-NFCSTATUS phFriNfc_NdefSmtCrd_Reset(
-    phFriNfc_sNdefSmtCrdFmt_t* NdefSmtCrdFmt, void* LowerDevice,
-    phHal_sRemoteDevInformation_t* psRemoteDevInfo, uint8_t* SendRecvBuffer,
-    uint16_t* SendRecvBuffLen);
+NFCSTATUS
+phFriNfc_NdefSmtCrd_Reset(phFriNfc_sNdefSmtCrdFmt_t* NdefSmtCrdFmt,
+                          void* LowerDevice,
+                          phHal_sRemoteDevInformation_t* psRemoteDevInfo,
+                          uint8_t* SendRecvBuffer, uint16_t* SendRecvBuffLen);
 
 NFCSTATUS phFriNfc_NdefSmtCrd_SetCR(phFriNfc_sNdefSmtCrdFmt_t* NdefSmtCrdFmt,
                                     uint8_t FunctionID,

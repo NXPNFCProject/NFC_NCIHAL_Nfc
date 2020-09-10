@@ -33,8 +33,8 @@ NFCSTATUS EXTNS_MfcFormatTag(uint8_t* key, uint8_t len);
 NFCSTATUS EXTNS_MfcDisconnect(void);
 NFCSTATUS EXTNS_MfcActivated(void);
 NFCSTATUS EXTNS_MfcTransceive(uint8_t* p_data, uint32_t len);
-NFCSTATUS EXTNS_MfcRegisterNDefTypeHandler(
-    tNFA_NDEF_CBACK* ndefHandlerCallback);
+NFCSTATUS
+EXTNS_MfcRegisterNDefTypeHandler(tNFA_NDEF_CBACK* ndefHandlerCallback);
 NFCSTATUS EXTNS_MfcCallBack(uint8_t* buf, uint32_t buflen);
 NFCSTATUS EXTNS_MfcSetReadOnly(uint8_t* key, uint8_t len);
 void EXTNS_SetConnectFlag(bool_t flagval);

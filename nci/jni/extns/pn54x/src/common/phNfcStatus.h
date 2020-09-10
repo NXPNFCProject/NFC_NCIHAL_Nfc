@@ -39,9 +39,8 @@
  *  The macro is not required for the NFCSTATUS_SUCCESS value.
  *  This is the only return value to be used directly.
  *  For all other values it shall be used in assignment and conditional
- *statements, e.g.:
- *     NFCSTATUS status = PHNFCSTVAL(phNfcCompID, phNfcStatus); ...
- *     if (status == PHNFCSTVAL(phNfcCompID, phNfcStatus)) ...
+ * statements, e.g.: NFCSTATUS status = PHNFCSTVAL(phNfcCompID, phNfcStatus);
+ * ... if (status == PHNFCSTVAL(phNfcCompID, phNfcStatus)) ...
  */
 #define PHNFCSTVAL(phNfcCompID, phNfcStatus)               \
   (((phNfcStatus) == (NFCSTATUS_SUCCESS))                  \
@@ -146,8 +145,7 @@
 #define NFCSTATUS_FEATURE_NOT_SUPPORTED (0x0033)
 
 /*  The Unregistration command has failed because the user wants to unregister
- * on
- * an element for which he was not registered
+ * on an element for which he was not registered
  */
 #define NFCSTATUS_NOT_REGISTERED (0x0034)
 
@@ -295,8 +293,7 @@
 #define NFCSTATUS_ABORT_FAILED (0x00F2)
 
 /* The Registration command has failed because the user wants to register as
- * target
- * on a operating mode not supported
+ * target on a operating mode not supported
  */
 #define NFCSTATUS_REG_OPMODE_NOT_SUPPORTED (0x00F5)
 

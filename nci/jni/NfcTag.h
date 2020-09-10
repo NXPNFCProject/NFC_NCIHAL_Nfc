@@ -40,6 +40,7 @@
 #include <vector>
 #include "NfcJniUtil.h"
 #include "SyncEvent.h"
+
 #include "nfa_rw_api.h"
 
 #define MIN_FWI (11)
@@ -76,14 +77,14 @@ class NfcTag {
   bool mWaitingForSelect;
 #endif
   /*******************************************************************************
-   **
-   ** Function:        NfcTag
-   **
-   ** Description:     Initialize member variables.
-   **
-   ** Returns:         None
-   **
-   *******************************************************************************/
+  **
+  ** Function:        NfcTag
+  **
+  ** Description:     Initialize member variables.
+  **
+  ** Returns:         None
+  **
+  *******************************************************************************/
   NfcTag();
 
   /*******************************************************************************
@@ -260,9 +261,9 @@ class NfcTag {
   **
   ** Function:        isMifareDESFire
   **
-  ** Description:     Whether the currently activated tag is Mifare Ultralight.
+  ** Description:     Whether the currently activated tag is Mifare DESFire.
   **
-  ** Returns:         True if tag is Mifare Ultralight.
+  ** Returns:         True if tag is Mifare DESFire.
   **
   *******************************************************************************/
   bool isMifareDESFire();
@@ -358,7 +359,7 @@ class NfcTag {
   **
   ** Description:     Get the timeout value for one technology.
   **                  techId: one of the values in TARGET_TYPE_* defined in
-  *                   NfcJniUtil.h
+  **                  NfcJniUtil.h
   **
   ** Returns:         Timeout value in millisecond.
   **

@@ -241,8 +241,7 @@ NFCSTATUS phFriNfc_MifareStdMap_H_Reset(phFriNfc_NdefMap_t* NdefMap) {
     NdefMap->StdMifareContainer.RemainingBufFlag = PH_FRINFC_MIFARESTD_FLAG0;
 
     /* Flag to find that the read/write operation has reached the end of the
-       card.
-        Further reading/writing is not possible */
+       card. Further reading/writing is not possible */
     NdefMap->StdMifareContainer.ReadWriteCompleteFlag =
         PH_FRINFC_MIFARESTD_FLAG0;
 
@@ -703,13 +702,6 @@ void phFriNfc_MifareStdMap_Process(void* Context, NFCSTATUS Status) {
                   : NdefMap->CardState);
           CRFlag = (uint8_t)PH_FRINFC_MIFARESTD_FLAG1;
         }
-        /*NdefMap->StdMifareContainer.remainingSize -=
-        (((NdefMap->ApduBufferSize) > (PH_FRINFC_MIFARESTD_NDEFTLV_L -
-                                    PH_FRINFC_MIFARESTD_VAL1))?
-                                    ((uint16_t)(*NdefMap->WrNdefPacketLength +
-                                    PH_FRINFC_MIFARESTD_VAL4)):
-                                    ((uint16_t)(*NdefMap->WrNdefPacketLength +
-                                    PH_FRINFC_MIFARESTD_VAL2)));*/
         break;
 
       case PH_FRINFC_NDEFMAP_STATE_RD_TO_WR_NDEF_LEN:
@@ -914,10 +906,6 @@ void phFriNfc_MifareStdMap_Process(void* Context, NFCSTATUS Status) {
       CRFlag = PH_FRINFC_MIFARESTD_FLAG1;
     } else {
       /* Authentication has failed */
-      /* Status = phFriNfc_MifStd_H_CallDisCon(NdefMap);
-      CRFlag = (uint8_t)((Status != NFCSTATUS_PENDING)?
-                  PH_FRINFC_MIFARESTD_FLAG1:
-                  PH_FRINFC_MIFARESTD_FLAG0); */
       CRFlag = PH_FRINFC_MIFARESTD_FLAG1; /* Call Completion Routine */
       Status = NFCSTATUS_FAILED;          /* Update Status Flag */
     }
@@ -1461,8 +1449,8 @@ static NFCSTATUS phFriNfc_MifStd_H_BlkChk(phFriNfc_NdefMap_t* NdefMap) {
                 or not. Because once Authentication is done for the sector again
                 we should not authenticate it again */
             /* In this case 32 sectors contains 4 blocks and next remaining 8
-               sectors
-                contains 16 blocks that is why (32 * 4) + (sectorID - 32) *16*/
+               sectors contains 16 blocks that is why (32 * 4) + (sectorID - 32)
+               *16*/
             if ((NdefMap->StdMifareContainer.currentBlock ==
                  ((PH_FRINFC_MIFARESTD_SECTOR_NO32 * PH_FRINFC_MIFARESTD_BLK4) +
                   ((SectorID - PH_FRINFC_MIFARESTD_SECTOR_NO32) *
@@ -1666,19 +1654,6 @@ static NFCSTATUS phFriNfc_MifStd_H_ChkRdWr(phFriNfc_NdefMap_t* NdefMap) {
                   PH_FRINFC_MIFARESTD_MAD_BLK65) &&
                  (NdefMap->StdMifareContainer.currentBlock !=
                   PH_FRINFC_MIFARESTD_MAD_BLK66)) {
-        /* NdefMap->StdMifareContainer.currentBlock =
-             ((NdefMap->StdMifareContainer.ReadCompleteFlag ==
-                 PH_FRINFC_MIFARESTD_FLAG1)?
-                 NdefMap->StdMifareContainer.currentBlock:
-                 (NdefMap->StdMifareContainer.currentBlock +
-                 PH_FRINFC_MIFARESTD_VAL4));
-         NdefMap->StdMifareContainer.currentBlock =
-             ((NdefMap->StdMifareContainer.currentBlock ==
-                 PH_FRINFC_MIFARESTD_MAD_BLK64)?
-             (NdefMap->StdMifareContainer.currentBlock +
-             PH_FRINFC_MIFARESTD_VAL4):
-             NdefMap->StdMifareContainer.currentBlock);*/
-
         Result = ((NdefMap->StdMifareContainer.ReadAcsBitFlag ==
                    PH_FRINFC_MIFARESTD_FLAG0)
                       ? phFriNfc_MifStd_H_RdAcsBit(NdefMap)
@@ -2697,12 +2672,10 @@ static NFCSTATUS phFriNfc_MifStd_H_GetNxtTLV(phFriNfc_NdefMap_t* NdefMap,
 
   if (*TL4bytesFlag == PH_FRINFC_MIFARESTD_FLAG0) {
     (*TempLength) += (NdefMap->SendRecvBuf[TempLen] + PH_FRINFC_MIFARESTD_VAL1);
-
-      LengthRemaining =
-          (((*TempLength) < PH_FRINFC_MIFARESTD_BYTES_READ)
-               ? PH_FRINFC_MIFARESTD_VAL0
-               : (NdefMap->SendRecvBuf[TempLen] - LengthRemaining));
-    } else {
+    LengthRemaining = (((*TempLength) < PH_FRINFC_MIFARESTD_BYTES_READ)
+                           ? PH_FRINFC_MIFARESTD_VAL0
+                           : (NdefMap->SendRecvBuf[TempLen] - LengthRemaining));
+  } else {
     *TL4bytesFlag = PH_FRINFC_MIFARESTD_FLAG0;
     if (NdefMap->TLVStruct.NoLbytesinTLV == PH_FRINFC_MIFARESTD_VAL1) {
       ShiftLength = NdefMap->TLVStruct.prevLenByteValue;
@@ -4147,8 +4120,7 @@ static void phFriNfc_MifStd_H_fillTLV2(phFriNfc_NdefMap_t* NdefMap) {
  * Function         phFriNfc_MifStd_H_CallWrNdefLen
  *
  * Description      This function is used to increment/decrement the ndef tlv
- *block
- *                  and read the block.
+ *block and read the block.
  *
  * Returns          This function return NFCSTATUS_SUCCESS in case of success
  *                  In case of failure returns other failure value.
@@ -4713,9 +4685,10 @@ static void phFriNfc_MifStd1k_H_BlkChk(phFriNfc_NdefMap_t* NdefMap,
  *                  In case of failure returns other failure value.
  *
  ******************************************************************************/
-NFCSTATUS phFrinfc_MifareClassic_GetContainerSize(
-    const phFriNfc_NdefMap_t* NdefMap, uint32_t* maxSize,
-    uint32_t* actualSize) {
+NFCSTATUS
+phFrinfc_MifareClassic_GetContainerSize(const phFriNfc_NdefMap_t* NdefMap,
+                                        uint32_t* maxSize,
+                                        uint32_t* actualSize) {
   NFCSTATUS result = NFCSTATUS_SUCCESS;
   uint16_t valid_no_of_bytes = 0;
   uint8_t sect_aid_index = 0;

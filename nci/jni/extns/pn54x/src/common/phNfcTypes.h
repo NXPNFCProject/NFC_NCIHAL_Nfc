@@ -77,8 +77,7 @@ typedef enum {
 
 /*
  * Deferred message. This message type will be posted to the client application
- * thread
- * to notify that a deferred call must be invoked.
+ * thread to notify that a deferred call must be invoked.
  */
 #define PH_LIBNFC_DEFERREDCALL_MSG (0x311)
 
@@ -92,8 +91,7 @@ typedef void (*pphLibNfc_DeferredCallback_t)(void*);
 /*
  * Deferred parameter declaration.
  * This type of data is passed as parameter from ClientApplication (main thread)
- * to the
- * callback.
+ * to the callback.
  */
 typedef void* pphLibNfc_DeferredParameter_t;
 
@@ -123,8 +121,7 @@ typedef struct phLibNfc_Message {
 /*
  * Deferred message specific info declaration.
  * This type of information is packed as message data when
- * PH_LIBNFC_DEFERREDCALL_MSG
- * type message is posted to message handler thread.
+ * PH_LIBNFC_DEFERREDCALL_MSG type message is posted to message handler thread.
  */
 typedef struct phLibNfc_DeferredCall {
   pphLibNfc_DeferredCallback_t pCallback;   /* pointer to Deferred callback */
@@ -144,13 +141,13 @@ typedef struct phNfc_sSupProtocol {
   unsigned int Felica : 1;      /* Protocol Felica. */
   unsigned int NFC : 1;         /* Protocol NFC. */
   unsigned int Jewel : 1;       /* Protocol Innovision Jewel Tag. or Any T1T*/
-  unsigned int Desfire : 1;     /* true indicates specified feature (mapping
-                                   or formatting)for DESFire tag supported else not
-                                   supported.*/
-  unsigned int Kovio : 1;       /* Protocol Kovio Tag*/
-  unsigned int HID : 1;         /* Protocol HID(Picopass) Tag*/
-  unsigned int Bprime : 1;      /* Protocol BPrime Tag*/
-  unsigned int EPCGEN2 : 1;     /* Protocol EPCGEN2 Tag*/
+  unsigned int
+      Desfire : 1;          /*TRUE indicates specified feature (mapping
+                            or formatting)for DESFire tag supported else not supported.*/
+  unsigned int Kovio : 1;   /* Protocol Kovio Tag*/
+  unsigned int HID : 1;     /* Protocol HID(Picopass) Tag*/
+  unsigned int Bprime : 1;  /* Protocol BPrime Tag*/
+  unsigned int EPCGEN2 : 1; /* Protocol EPCGEN2 Tag*/
 } phNfc_sSupProtocol_t;
 
 /*
@@ -261,8 +258,7 @@ typedef union phNfc_uCommand {
 
 /*
  *  The Remote Device Information Structure holds information about one single
- * Remote
- *  Device detected.
+ * Remote Device detected.
  */
 typedef struct phNfc_sRemoteDevInformation {
   uint8_t SessionOpened;                /* Flag indicating the validity of
@@ -290,10 +286,10 @@ typedef struct phNfc_sTransceiveInfo {
   /* For EPC-GEN */
   uint32_t dwWordPtr;  /* Word address for the memory write */
   uint8_t bWordPtrLen; /* Specifies the length of word pointer
-                          00: 8  bits
-                          01: 16 bits
-                          10: 24 bits
-                          11: 32 bits
+                       00: 8  bits
+                       01: 16 bits
+                       10: 24 bits
+                       11: 32 bits
                        */
   uint8_t bWordCount;  /* Number of words to be read or written */
 } phNfc_sTransceiveInfo_t;

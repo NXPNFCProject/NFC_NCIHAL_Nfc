@@ -17,6 +17,7 @@
 #include <base/logging.h>
 #include <nativehelper/ScopedPrimitiveArray.h>
 #include <nativehelper/ScopedUtfChars.h>
+
 #include "JavaClassConstants.h"
 #include "PeerToPeer.h"
 
@@ -120,8 +121,8 @@ static jboolean nativeLlcpSocket_doSend(JNIEnv* e, jobject o, jbyteArray data) {
 
   PeerToPeer::tJNI_HANDLE jniHandle =
       (PeerToPeer::tJNI_HANDLE)nfc_jni_get_nfc_socket_handle(e, o);
-  uint8_t* raw_ptr =
-      const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
+  uint8_t* raw_ptr = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(
+      &bytes[0]));  // TODO: API bug: send should take const*!
   bool stat = PeerToPeer::getInstance().send(jniHandle, raw_ptr, bytes.size());
 
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);

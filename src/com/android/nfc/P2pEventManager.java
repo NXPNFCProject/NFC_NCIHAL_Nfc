@@ -214,5 +214,4 @@ public class P2pEventManager implements P2pEventListener, SendUi.Callback {
         }
         return true;
     }
-
 }

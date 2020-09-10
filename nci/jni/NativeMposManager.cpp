@@ -17,6 +17,7 @@
  ******************************************************************************/
 #include <android-base/stringprintf.h>
 #include <base/logging.h>
+#include <nativehelper/JNIHelp.h>
 #include "JavaClassConstants.h"
 #include "MposManager.h"
 

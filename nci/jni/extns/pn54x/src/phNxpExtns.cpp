@@ -542,8 +542,8 @@ static NFCSTATUS phNxpExtns_SendMsg(phLibNfc_Message_t* sysmsg) {
 ** Returns          NFCSTATUS_SUCCESS
 **
 *******************************************************************************/
-NFCSTATUS EXTNS_MfcRegisterNDefTypeHandler(
-    tNFA_NDEF_CBACK* ndefHandlerCallback) {
+NFCSTATUS
+EXTNS_MfcRegisterNDefTypeHandler(tNFA_NDEF_CBACK* ndefHandlerCallback) {
   NFCSTATUS status = NFCSTATUS_FAILED;
   if (NULL != ndefHandlerCallback) {
     gphNxpExtns_Context.p_ndef_cback = ndefHandlerCallback;
@@ -559,18 +559,23 @@ NFCSTATUS EXTNS_MfcRegisterNDefTypeHandler(
 *******************************************************************************/
 
 bool_t EXTNS_GetConnectFlag(void) { return (gphNxpExtns_Context.ExtnsConnect); }
+
 void EXTNS_SetConnectFlag(bool_t flagval) {
   gphNxpExtns_Context.ExtnsConnect = flagval;
 }
+
 bool_t EXTNS_GetDeactivateFlag(void) {
   return (gphNxpExtns_Context.ExtnsDeactivate);
 }
+
 void EXTNS_SetDeactivateFlag(bool_t flagval) {
   gphNxpExtns_Context.ExtnsDeactivate = flagval;
 }
+
 bool_t EXTNS_GetCallBackFlag(void) {
   return (gphNxpExtns_Context.ExtnsCallBack);
 }
+
 void EXTNS_SetCallBackFlag(bool_t flagval) {
   gphNxpExtns_Context.ExtnsCallBack = flagval;
 }
@@ -579,7 +584,7 @@ NFCSTATUS EXTNS_GetPresenceCheckStatus(void) {
 
   clock_gettime(CLOCK_REALTIME, &ts);
   ts.tv_sec += 0;
-  ts.tv_nsec += 100 * 1000 * 1000;  // 100 milliseconds
+  ts.tv_nsec += 100 * 1000 * 1000;  // 100 milisec
   if (ts.tv_nsec >= 1000 * 1000 * 1000) {
     ts.tv_sec += 1;
     ts.tv_nsec = ts.tv_nsec - (1000 * 1000 * 1000);
