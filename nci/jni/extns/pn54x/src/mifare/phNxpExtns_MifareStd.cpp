@@ -58,7 +58,7 @@ phLibNfc_NdefInfo_t NdefInfo;
 #if (NXP_EXTNS == TRUE)
 pthread_mutex_t SharedDataMutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
-uint8_t current_key[6] = {0};
+uint8_t current_key[PHLIBNFC_MFC_AUTHKEYLEN] = {0};
 phNci_mfc_auth_cmd_t gAuthCmdBuf;
 phFriNfc_MifareStdTimer_t mTimerInfo;
 
@@ -888,12 +888,14 @@ STATIC NFCSTATUS phFriNfc_NdefSmtCrd_Reset__(
 *******************************************************************************/
 NFCSTATUS Mfc_FormatNdef(uint8_t* secretkey, uint8_t len) {
   NFCSTATUS status = NFCSTATUS_FAILED;
-  uint8_t mif_std_key[6] = {0};
+  uint8_t mif_std_key[PHLIBNFC_MFC_AUTHKEYLEN] = {0};
   //    static uint8_t   Index;
   //    /*commented to eliminate unused variable warning*/
   uint8_t sak = 0;
 
   EXTNS_SetCallBackFlag(false);
+
+  if (len != PHLIBNFC_MFC_AUTHKEYLEN) return NFCSTATUS_FAILED;
 
   memcpy(mif_std_key, secretkey, len);
   memcpy(current_key, secretkey, len);
