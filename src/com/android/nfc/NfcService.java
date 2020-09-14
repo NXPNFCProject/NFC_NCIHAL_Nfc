@@ -4168,16 +4168,18 @@ public class NfcService implements DeviceHostListener {
                         playSound(SOUND_ERROR);
                     }
                     playSound(SOUND_ERROR);
-                    if (!mAntennaBlockedMessageShown && mDispatchFailedCount++ > mDispatchFailedMax) {
-                        synchronized (NfcService.this) {
-                            new NfcBlockedNotification(mContext).startNotification();
-                            mPrefsEditor.putBoolean(PREF_ANTENNA_BLOCKED_MESSAGE_SHOWN, true);
-                            mPrefsEditor.apply();
-                            mBackupManager.dataChanged();
-                            mAntennaBlockedMessageShown = true;
-                            mDispatchFailedCount = 0;
-                            if (DBG) Log.d(TAG, "Tag dispatch failed notification");
-                        }
+                    if (!mAntennaBlockedMessageShown
+                        && mDispatchFailedCount++ > mDispatchFailedMax) {
+                      new NfcBlockedNotification(mContext).startNotification();
+                      synchronized (NfcService.this) {
+                        mPrefsEditor.putBoolean(PREF_ANTENNA_BLOCKED_MESSAGE_SHOWN, true);
+                        mPrefsEditor.apply();
+                      }
+                      mBackupManager.dataChanged();
+                      mAntennaBlockedMessageShown = true;
+                      mDispatchFailedCount = 0;
+                      if (DBG)
+                        Log.d(TAG, "Tag dispatch failed notification");
                     }
                 } else if (dispatchResult == NfcDispatcher.DISPATCH_SUCCESS) {
                     if (mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED) {
