@@ -63,7 +63,6 @@
 #endif
 #include <fcntl.h>
 #include "DwpChannel.h"
-#include "JcopManager.h"
 #include "TransactionController.h"
 #include "ce_api.h"
 #include "nfa_api.h"
@@ -352,8 +351,6 @@ static jboolean nfcManager_doCommitRouting(JNIEnv* e, jobject o);
 static void notifyPollingEventwhileNfcOff();
 
 static uint8_t getJCOPOS_UpdaterState();
-void DWPChannel_init(IChannel_t* DWP);
-IChannel_t Dwp;
 static uint16_t sCurrentConfigLen;
 static uint8_t sConfig[256];
 #if (NXP_EXTNS==TRUE)
@@ -2135,12 +2132,6 @@ static void nfaConnectionCallback(uint8_t connEvent,
 #endif
       stat = nfcManagerEnableNfc(theInstance);
       nfcManager_getFeatureList();
-      if (nfcFL.nfcNxpEse) {
-        DLOG_IF(INFO, nfc_debug_enabled)
-            << StringPrintf("ESE Present Loading p61-jcop-lib");
-        pJcopMgr->JcopInitialize();
-      } else
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("ESE Not Present");
       EXTNS_Init(nfaDeviceManagementCallback, nfaConnectionCallback);
 
       if (stat == NFA_STATUS_OK) {
@@ -3307,13 +3298,6 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
     if (nfcFL.eseFL._JCOP_WA_ENABLE) {
       NFA_HciW4eSETransaction_Complete(Wait);
     }
-    if (nfcFL.nfcNxpEse) {
-      DLOG_IF(INFO, nfc_debug_enabled)
-          << StringPrintf("De-Initializing p61-jcop-lib library");
-      pJcopMgr->JcopDeInitialize();
-      pJcopMgr->deleteInstance();
-    }
-
     RoutingManager::getInstance().onNfccShutdown();
     SecureElement::getInstance().finalize();
     PowerSwitch::getInstance().initialize(PowerSwitch::UNKNOWN_LEVEL);
@@ -4820,25 +4804,6 @@ static jstring nfcManager_doGetNfaStorageDir(JNIEnv* e, jobject o) {
     env->DeleteLocalRef(strJbytes);
     env->DeleteLocalRef(strClass);
     return ret;
-  }
-
-  /*******************************************************************************
-  **
-  ** Function:        DWPChannel_init
-  **
-  ** Description:     Initializes the DWP channel functions.
-  **
-  ** Returns:         True if ok.
-  **
-  *******************************************************************************/
-  void DWPChannel_init(IChannel_t * DWP) {
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
-    if (nfcFL.nfcNxpEse) {
-      DWP->open = open;
-      DWP->close = close;
-      DWP->transceive = transceive;
-      DWP->doeSE_Reset = doeSE_Reset;
-    }
   }
 
 #if (NXP_EXTNS == TRUE)
