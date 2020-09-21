@@ -1592,11 +1592,17 @@ public class NfcService implements DeviceHostListener {
         @Override
         public void setReaderMode(IBinder binder, IAppCallback callback, int flags, Bundle extras)
                 throws RemoteException {
+            boolean privilegedCaller = false;
             int callingUid = Binder.getCallingUid();
             int callingPid = Binder.getCallingPid();
             // Allow non-foreground callers with system uid or systemui
-            boolean privilegedCaller = (callingUid == Process.SYSTEM_UID
-                    || getPackageNameFromUid(callingUid).equals("com.android.systemui"));
+            String packageName = getPackageNameFromUid(callingUid);
+            if (packageName != null) {
+                privilegedCaller = (callingUid == Process.SYSTEM_UID
+                       || packageName.equals("com.android.systemui"));
+            } else {
+                privilegedCaller = (callingUid == Process.SYSTEM_UID);
+            }
             if (!privilegedCaller && !mForegroundUtils.isInForeground(callingUid)) {
                 Log.e(TAG, "setReaderMode: Caller is not in foreground and is not system process.");
                 return;
@@ -4647,11 +4653,18 @@ public class NfcService implements DeviceHostListener {
 
         for (String arg : args) {
             if ("--proto".equals(arg)) {
-                ProtoOutputStream proto = new ProtoOutputStream(new FileOutputStream(fd));
+                FileOutputStream fos = new FileOutputStream(fd);
+                ProtoOutputStream proto = new ProtoOutputStream(fos);
                 synchronized (this) {
                     dumpDebug(proto);
                 }
                 proto.flush();
+                if (fos != null) {
+                    try { fos.close(); }
+                    catch(IOException e) {
+                    Log.e(TAG, "Exception in storeNativeCrashLogs " + e);
+                    }
+                }
                 return;
             }
         }

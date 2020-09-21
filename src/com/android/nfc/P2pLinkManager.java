@@ -1333,22 +1333,24 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
      * Never reuse a proto field number. When removing a field, mark it as reserved.
      */
     void dumpDebug(ProtoOutputStream proto) {
-        proto.write(P2pLinkManagerProto.DEFAULT_MIU, mDefaultMiu);
-        proto.write(P2pLinkManagerProto.DEFAULT_RW_SIZE, mDefaultRwSize);
-        proto.write(P2pLinkManagerProto.LINK_STATE, linkStateToProtoEnum(mLinkState));
-        proto.write(P2pLinkManagerProto.SEND_STATE, sendStateToProtoEnum(mSendState));
-        proto.write(P2pLinkManagerProto.SEND_FLAGS, mSendFlags);
-        proto.write(P2pLinkManagerProto.SEND_ENABLED, mIsSendEnabled);
-        proto.write(P2pLinkManagerProto.RECEIVE_ENABLED, mIsReceiveEnabled);
-        proto.write(P2pLinkManagerProto.CALLBACK_NDEF, String.valueOf(mCallbackNdef));
-        if (mMessageToSend != null) {
-            long token = proto.start(P2pLinkManagerProto.MESSAGE_TO_SEND);
-            mMessageToSend.dumpDebug(proto);
-            proto.end(token);
-        }
-        if (mUrisToSend != null && mUrisToSend.length > 0) {
-            for (Uri uri : mUrisToSend) {
-                proto.write(P2pLinkManagerProto.URIS_TO_SEND, uri.toString());
+        synchronized (P2pLinkManager.this) {
+            proto.write(P2pLinkManagerProto.DEFAULT_MIU, mDefaultMiu);
+            proto.write(P2pLinkManagerProto.DEFAULT_RW_SIZE, mDefaultRwSize);
+            proto.write(P2pLinkManagerProto.LINK_STATE, linkStateToProtoEnum(mLinkState));
+            proto.write(P2pLinkManagerProto.SEND_STATE, sendStateToProtoEnum(mSendState));
+            proto.write(P2pLinkManagerProto.SEND_FLAGS, mSendFlags);
+            proto.write(P2pLinkManagerProto.SEND_ENABLED, mIsSendEnabled);
+            proto.write(P2pLinkManagerProto.RECEIVE_ENABLED, mIsReceiveEnabled);
+            proto.write(P2pLinkManagerProto.CALLBACK_NDEF, String.valueOf(mCallbackNdef));
+            if (mMessageToSend != null) {
+                long token = proto.start(P2pLinkManagerProto.MESSAGE_TO_SEND);
+                mMessageToSend.dumpDebug(proto);
+                proto.end(token);
+            }
+            if (mUrisToSend != null && mUrisToSend.length > 0) {
+                for (Uri uri : mUrisToSend) {
+                    proto.write(P2pLinkManagerProto.URIS_TO_SEND, uri.toString());
+                }
             }
         }
     }

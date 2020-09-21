@@ -498,8 +498,8 @@ public class AidRoutingManager {
      * Never reuse a proto field number. When removing a field, mark it as reserved.
      */
     void dumpDebug(ProtoOutputStream proto) {
-        proto.write(AidRoutingManagerProto.DEFAULT_ROUTE, mDefaultRoute);
         synchronized (mLock) {
+            proto.write(AidRoutingManagerProto.DEFAULT_ROUTE, mDefaultRoute);
             for (int i = 0; i < mAidRoutingTable.size(); i++) {
                 long token = proto.start(AidRoutingManagerProto.ROUTES);
                 proto.write(AidRoutingManagerProto.Route.ID, mAidRoutingTable.keyAt(i));
