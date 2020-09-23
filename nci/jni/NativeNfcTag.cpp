@@ -947,7 +947,7 @@ bool getReconnectState(void) {
 *******************************************************************************/
 static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
   int rVal = 1;
-  tNFA_STATUS status = NFA_STATUS_FAILED;
+  tNFA_STATUS status = NFA_STATUS_OK;
 
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
       "%s: enter; Requested RF Intf = 0x%0X, Current RF Intf = 0x%0X", __func__,
