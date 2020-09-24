@@ -4653,16 +4653,22 @@ public class NfcService implements DeviceHostListener {
 
         for (String arg : args) {
             if ("--proto".equals(arg)) {
-                FileOutputStream fos = new FileOutputStream(fd);
-                ProtoOutputStream proto = new ProtoOutputStream(fos);
-                synchronized (this) {
-                    dumpDebug(proto);
-                }
-                proto.flush();
-                if (fos != null) {
-                    try { fos.close(); }
-                    catch(IOException e) {
-                    Log.e(TAG, "Exception in storeNativeCrashLogs " + e);
+                FileOutputStream fos = null;
+                try {
+                    fos = new FileOutputStream(fd);
+                    ProtoOutputStream proto = new ProtoOutputStream(fos);
+                    synchronized (this) {
+                        dumpDebug(proto);
+                    }
+                    proto.flush();
+                } catch (Exception e) {
+                    Log.e(TAG, "Exception in dump nfc --proto " + e);
+                } finally {
+                    if (fos != null) {
+                        try { fos.close(); }
+                        catch(IOException e) {
+                        Log.e(TAG, "Exception in storeNativeCrashLogs " + e);
+                        }
                     }
                 }
                 return;
