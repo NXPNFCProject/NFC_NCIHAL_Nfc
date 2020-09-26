@@ -212,6 +212,7 @@ void enableLastRfDiscovery();
 void storeLastDiscoveryParams(int technologies_mask, bool enable_lptd,
                               bool reader_mode, bool enable_host_routing,
                               bool enable_p2p, bool restart);
+jmethodID  gCachedNfcManagerNotifyMdtEvt;
 #endif
 jmethodID  gCachedNfcManagerNotifySeListenActivated;
 jmethodID  gCachedNfcManagerNotifySeListenDeactivated;
@@ -1003,6 +1004,8 @@ static jboolean nfcManager_initNativeStruc(JNIEnv* e, jobject o) {
       e->GetMethodID(cls.get(),"notifySeListenDeactivated", "()V");
   gCachedNfcManagerNotifySeInitialized =
       e->GetMethodID(cls.get(),"notifySeInitialized", "()V");
+  gCachedNfcManagerNotifyMdtEvt =
+      e->GetMethodID(cls.get(),"notifyMdtEvt", "(I)V");
 #endif
   gCachedNfcManagerNotifyTransactionListeners = e->GetMethodID(
       cls.get(), "notifyTransactionListeners", "([B[BLjava/lang/String;)V");
