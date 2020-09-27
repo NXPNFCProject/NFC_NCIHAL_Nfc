@@ -57,6 +57,7 @@
 #include "rw_api.h"
 #if (NXP_EXTNS == TRUE)
 #include "NativeJniExtns.h"
+#include "nfa_mdt_int.h"
 #endif
 
 using android::base::StringPrintf;
@@ -1003,7 +1004,20 @@ static bool switchRfInterface(tNFA_INTF_TYPE rfInterface) {
 
   return (0 == reSelect(rfInterface, true));
 }
-
+#if(NXP_EXTNS == TRUE)
+/*******************************************************************************
+**
+** Function:        nativeNfcTag_getMdtState
+**
+** Description:     Get MDT state.
+**
+** Returns:         MDT state.
+**
+*******************************************************************************/
+static jint nativeNfcTag_getMdtState(JNIEnv*, jobject) {
+return nfa_mdt_get_state();
+}
+#endif
 /*******************************************************************************
 **
 ** Function:        nativeNfcTag_doReconnect
@@ -1099,6 +1113,9 @@ tNFA_STATUS nativeNfcTag_safeDisconnect() {
 *******************************************************************************/
 static tNFA_STATUS nativeNfcTag_performHaltPICC() {
   tNFA_STATUS status = NFA_STATUS_OK;
+  if(nativeNfcTag_getMdtState(NULL, NULL) == ENABLE) {
+    return status;
+  }
   if (sCurrentActivatedProtocl == NFA_PROTOCOL_T2T ||
       (sCurrentActivatedProtocl == NFA_PROTOCOL_ISO_DEP &&
        sCurrentActivatedMode == TARGET_TYPE_ISO14443_3A)) {
@@ -2303,6 +2320,9 @@ static JNINativeMethod gMethods[] = {
      (void*)nativeNfcTag_doIsIsoDepNdefFormatable},
     {"doNdefFormat", "([B)Z", (void*)nativeNfcTag_doNdefFormat},
     {"doMakeReadonly", "([B)Z", (void*)nativeNfcTag_doMakeReadonly},
+#if(NXP_EXTNS == TRUE)
+    {"doGetMdtState", "()I", (void*)nativeNfcTag_getMdtState},
+#endif
 };
 
 /*******************************************************************************
