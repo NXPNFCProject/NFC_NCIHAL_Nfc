@@ -43,4 +43,8 @@ cc_library_shared {
         },
     },
     static_libs: ["libxml2"],
+    sanitize: {
+        integer_overflow: true,
+        misc_undefined: ["bounds"],
+    },
 }
