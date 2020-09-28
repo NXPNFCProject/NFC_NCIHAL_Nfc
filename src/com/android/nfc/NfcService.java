@@ -3497,10 +3497,6 @@ public class NfcService implements DeviceHostListener {
 
                 case MSG_NDEF_TAG:
                     if (DBG) Log.d(TAG, "Tag detected, notifying applications");
-                    if (mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED) {
-                        mPowerManager.userActivity(SystemClock.uptimeMillis(),
-                                PowerManager.USER_ACTIVITY_EVENT_OTHER, 0);
-                    }
                     mNumTagsDetected.incrementAndGet();
                     TagEndpoint tag = (TagEndpoint) msg.obj;
                     byte[] debounceTagUid;
@@ -4260,6 +4256,10 @@ public class NfcService implements DeviceHostListener {
                             playSound(SOUND_END);
                         }
                         if (readerParams.callback != null) {
+                            if (mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED) {
+                                mPowerManager.userActivity(SystemClock.uptimeMillis(),
+                                        PowerManager.USER_ACTIVITY_EVENT_OTHER, 0);
+                            }
                             readerParams.callback.onTagDiscovered(tag);
                             return;
                         } else {
@@ -4304,6 +4304,10 @@ public class NfcService implements DeviceHostListener {
                         if (DBG) Log.d(TAG, "Tag dispatch failed notification");
                     }
                 } else if (dispatchResult == NfcDispatcher.DISPATCH_SUCCESS) {
+                    if (mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED) {
+                        mPowerManager.userActivity(SystemClock.uptimeMillis(),
+                                PowerManager.USER_ACTIVITY_EVENT_OTHER, 0);
+                    }
                     mDispatchFailedCount = 0;
                     mVibrator.vibrate(mVibrationEffect);
                     playSound(SOUND_END);
