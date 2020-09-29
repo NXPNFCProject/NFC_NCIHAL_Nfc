@@ -350,7 +350,7 @@ static jint nfcManager_doactivateSeInterface(JNIEnv* e, jobject o) {
 **                  Failure = 0x03
 **
 *******************************************************************************/
-static jint nfcManager_dodeactivateSeInterface(JNIEnv* e, jobject o) {
+jint nfcManager_dodeactivateSeInterface(JNIEnv* e, jobject o) {
   jint ret = NFA_STATUS_FAILED;
   tNFA_STATUS status = NFA_STATUS_FAILED;
   SecureElement& se = SecureElement::getInstance();

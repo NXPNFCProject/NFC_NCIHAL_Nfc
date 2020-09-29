@@ -95,6 +95,7 @@ extern void nativeNfcTag_doTransceiveStatus(tNFA_STATUS status, uint8_t* buf,
                                             uint32_t buflen);
 #if(NXP_EXTNS == TRUE)
 extern void nativeNfcTag_notifyRfTimeout(tNFA_STATUS status);
+extern jint nfcManager_dodeactivateSeInterface(JNIEnv* e, jobject o);
 #else
 extern void nativeNfcTag_notifyRfTimeout();
 #endif
@@ -2070,6 +2071,9 @@ static jboolean nfcManager_doDeinitialize(JNIEnv*, jobject) {
 
 #if (NXP_EXTNS == TRUE)
   NativeJniExtns::getInstance().notifyNfcEvent(__func__);
+  if (SecureElement::getInstance().mIsSeIntfActivated) {
+    nfcManager_dodeactivateSeInterface(NULL, NULL);
+  }
   handleWiredmode(false); /* Nfc Off*/
 #endif
   sIsDisabling = true;
