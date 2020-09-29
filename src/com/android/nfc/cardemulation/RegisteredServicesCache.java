@@ -60,6 +60,7 @@ import android.util.AtomicFile;
 import android.util.Log;
 import android.util.SparseArray;
 import android.util.Xml;
+import android.util.proto.ProtoOutputStream;
 import com.nxp.nfc.NfcConstants;
 
 import com.android.internal.util.FastXmlSerializer;
@@ -931,5 +932,23 @@ public class RegisteredServicesCache {
             pw.println("");
         }
         pw.println("");
+    }
+
+    /**
+     * Dump debugging information as a RegisteredServicesCacheProto
+     *
+     * Note:
+     * See proto definition in frameworks/base/core/proto/android/nfc/card_emulation.proto
+     * When writing a nested message, must call {@link ProtoOutputStream#start(long)} before and
+     * {@link ProtoOutputStream#end(long)} after.
+     * Never reuse a proto field number. When removing a field, mark it as reserved.
+     */
+    void dumpDebug(ProtoOutputStream proto) {
+        UserServices userServices = findOrCreateUserLocked(ActivityManager.getCurrentUser());
+        for (NfcApduServiceInfo service : userServices.services.values()) {
+            long token = proto.start(RegisteredServicesCacheProto.APDU_SERVICE_INFOS);
+            service.dumpDebug(proto);
+            proto.end(token);
+        }
     }
 }

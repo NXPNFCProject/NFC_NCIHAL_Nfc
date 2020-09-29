@@ -61,4 +61,19 @@ class ScreenStateHelper {
                 return "UNKNOWN";
         }
     }
+
+    static int screenStateToProtoEnum(int screenState) {
+        switch (screenState) {
+            case SCREEN_STATE_OFF_LOCKED:
+                return NfcServiceDumpProto.SCREEN_STATE_OFF_LOCKED;
+            case SCREEN_STATE_ON_LOCKED:
+                return NfcServiceDumpProto.SCREEN_STATE_ON_LOCKED;
+            case SCREEN_STATE_ON_UNLOCKED:
+                return NfcServiceDumpProto.SCREEN_STATE_ON_UNLOCKED;
+            case SCREEN_STATE_OFF_UNLOCKED:
+                return NfcServiceDumpProto.SCREEN_STATE_OFF_UNLOCKED;
+            default:
+                return NfcServiceDumpProto.SCREEN_STATE_UNKNOWN;
+        }
+    }
 }
