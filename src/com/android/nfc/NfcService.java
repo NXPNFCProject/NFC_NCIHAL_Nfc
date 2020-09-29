@@ -1162,6 +1162,9 @@ public class NfcService implements DeviceHostListener {
 
             synchronized (NfcService.this) {
                 mCurrentDiscoveryParameters = NfcDiscoveryParameters.getNfcOffParameters();
+                if (mReaderModeParams != null) {
+                    mReaderModeParams = null;
+                }
                 updateState(NfcAdapter.STATE_OFF);
                 mNxpNfcState = NXP_NFC_STATE_OFF;
             }
