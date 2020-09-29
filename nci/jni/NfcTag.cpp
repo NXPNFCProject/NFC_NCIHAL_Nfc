@@ -1150,10 +1150,10 @@ void NfcTag::fillNativeNfcTagMembers5(JNIEnv* e, jclass tag_cls, jobject tag,
   }
   jfieldID f = e->GetFieldID(tag_cls, "mUid", "[B");
   e->SetObjectField(tag, f, uid.get());
-  mTechListIndex = mNumTechList;
-  if (!mNumDiscNtf) mTechListIndex = 0;
+  mTechListTail = mNumTechList;
+  if (!mNumDiscNtf) mTechListTail = 0;
   DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s;mTechListIndex=%x", fn, mTechListIndex);
+      << StringPrintf("%s;mTechListTail=%x", fn, mTechListTail);
 }
 
 /*******************************************************************************
@@ -1258,10 +1258,13 @@ void NfcTag::resetTechnologies() {
   static const char fn[] = "NfcTag::resetTechnologies";
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s", fn);
   mNumTechList = 0;
+  mNumDiscTechList = 0;
   mTechListIndex = 0;
   memset(mTechList, 0, sizeof(mTechList));
   memset(mTechHandles, 0, sizeof(mTechHandles));
+  memset(mTechHandlesDiscData, 0, sizeof(mTechHandlesDiscData));
   memset(mTechLibNfcTypes, 0, sizeof(mTechLibNfcTypes));
+  memset(mTechLibNfcTypesDiscData, 0, sizeof(mTechLibNfcTypesDiscData));
   memset(mTechParams, 0, sizeof(mTechParams));
   mIsDynamicTagId = false;
   mIsFelicaLite = false;
@@ -1291,6 +1294,7 @@ void NfcTag::selectFirstTag() {
         << StringPrintf("%s: nfa target idx=%d h=0x%X; protocol=0x%X", fn, i,
                         mTechHandlesDiscData[i], mTechLibNfcTypesDiscData[i]);
     if (mTechLibNfcTypesDiscData[i] != NFA_PROTOCOL_NFC_DEP) {
+      sLastSelectedTagId = i;
       foundIdx = i;
       selectedId = i;
       break;
@@ -1339,9 +1343,9 @@ int NfcTag::checkNextValidProtocol(void) {
   for (int i = 0; i < mNumDiscTechList; i++) {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: nfa target idx=%d h=0x%X; protocol=0x%X", fn, i,
-                        mTechHandles[i], mTechLibNfcTypes[i]);
-    if ((mTechHandles[selectedId] != mTechHandles[i]) &&
-        (mTechLibNfcTypes[i] != NFA_PROTOCOL_NFC_DEP)) {
+                        mTechHandlesDiscData[i], mTechLibNfcTypesDiscData[i]);
+    if ((mTechHandlesDiscData[selectedId] != mTechHandlesDiscData[i]) &&
+        (mTechLibNfcTypesDiscData[i] != NFA_PROTOCOL_NFC_DEP)) {
       foundIdx = i;
       break;
     }

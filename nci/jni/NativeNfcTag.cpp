@@ -573,7 +573,7 @@ void nativeNfcTag_handleNonNciCardDetection(tNFA_CONN_EVT_DATA* eventData) {
 void nativeNfcTag_handleNonNciMultiCardDetection(
     uint8_t connEvent, tNFA_CONN_EVT_DATA* eventData) {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter ", __func__);
-  if (NfcTag::getInstance().mNumDiscNtf) {
+  if (NfcTag::getInstance().getNumDiscNtf()) {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: check_tag_ntf = %d, check_cmd_sent = %d", __func__,
                         checkTagNtf, checkCmdSent);
@@ -584,7 +584,7 @@ void nativeNfcTag_handleNonNciMultiCardDetection(
       sNonNciMultiCardDetectionTimer.set(NON_NCI_CARD_TIMER_OFFSET,
                                          nonNciCardTimerProc);
     } else if (checkTagNtf == 1) {
-      NfcTag::getInstance().mNumDiscNtf = 0;
+      NfcTag::getInstance().setNumDiscNtf(0);
       checkTagNtf = 0;
       checkCmdSent = 0;
       NfcTag::getInstance().connectionEventHandler(connEvent, eventData);
@@ -994,7 +994,7 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
 
 #if (NFC_NXP_NON_STD_CARD == TRUE)
     if (!retry_cnt &&
-        (natTag.mTechLibNfcTypes[handle] != NFC_PROTOCOL_MIFARE)) {
+        (natTag.mTechLibNfcTypes[sCurrentConnectedHandle] != NFC_PROTOCOL_MIFARE)) {
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: Cashbee detected", __func__);
       natTag.mCashbeeDetected = true;
