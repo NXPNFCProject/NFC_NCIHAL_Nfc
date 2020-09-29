@@ -250,14 +250,16 @@ public class EnabledNfcFServices implements com.android.nfc.ForegroundUtils.Call
      * Never reuse a proto field number. When removing a field, mark it as reserved.
      */
     void dumpDebug(ProtoOutputStream proto) {
-        if (mForegroundComponent != null) {
-            mForegroundComponent.dumpDebug(proto, EnabledNfcFServicesProto.FOREGROUND_COMPONENT);
+        synchronized (mLock) {
+            if (mForegroundComponent != null) {
+                 mForegroundComponent.dumpDebug(proto, EnabledNfcFServicesProto.FOREGROUND_COMPONENT);
+            }
+            if (mForegroundRequested != null) {
+                 mForegroundRequested.dumpDebug(proto, EnabledNfcFServicesProto.FOREGROUND_REQUESTED);
+            }
+            proto.write(EnabledNfcFServicesProto.ACTIVATED, mActivated);
+            proto.write(EnabledNfcFServicesProto.COMPUTE_FG_REQUESTED, mComputeFgRequested);
+            proto.write(EnabledNfcFServicesProto.FOREGROUND_UID, mForegroundUid);
         }
-        if (mForegroundRequested != null) {
-            mForegroundRequested.dumpDebug(proto, EnabledNfcFServicesProto.FOREGROUND_REQUESTED);
-        }
-        proto.write(EnabledNfcFServicesProto.ACTIVATED, mActivated);
-        proto.write(EnabledNfcFServicesProto.COMPUTE_FG_REQUESTED, mComputeFgRequested);
-        proto.write(EnabledNfcFServicesProto.FOREGROUND_UID, mForegroundUid);
     }
 }
