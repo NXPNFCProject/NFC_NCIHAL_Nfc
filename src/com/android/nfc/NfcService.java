@@ -390,6 +390,9 @@ public class NfcService implements DeviceHostListener {
     // fields below are protected by this
     public NativeNfcSecureElement mSecureElement;
     public boolean isWiredOpen = false;
+    private final boolean mPollingDisableAllowed;
+    private HashMap<Integer, ReaderModeDeathRecipient> mPollingDisableDeathRecipients =
+            new HashMap<Integer, ReaderModeDeathRecipient>();
     private final ReaderModeDeathRecipient mReaderModeDeathRecipient =
             new ReaderModeDeathRecipient();
     private final NfcUnlockManager mNfcUnlockManager;
@@ -827,6 +830,8 @@ public class NfcService implements DeviceHostListener {
         // Polling delay variables
         mPollDelay = mContext.getResources().getInteger(R.integer.unknown_tag_polling_delay);
         mNotifyDispatchFailed = mContext.getResources().getBoolean(R.bool.enable_notify_dispatch_failed);
+
+        mPollingDisableAllowed = mContext.getResources().getBoolean(R.bool.polling_disable_allowed);
 
         // Make sure this is only called when object construction is complete.
         ServiceManager.addService(SERVICE_NAME, mNfcAdapter);
@@ -1593,39 +1598,68 @@ public class NfcService implements DeviceHostListener {
         public void setReaderMode(IBinder binder, IAppCallback callback, int flags, Bundle extras)
                 throws RemoteException {
             int callingUid = Binder.getCallingUid();
-            if (callingUid != Process.SYSTEM_UID && !mForegroundUtils.isInForeground(callingUid)) {
+            int callingPid = Binder.getCallingPid();
+            // Allow non-foreground callers with system uid or systemui
+            boolean privilegedCaller = (callingUid == Process.SYSTEM_UID
+                    || getPackageNameFromUid(callingUid).equals("com.android.systemui"));
+            if (!privilegedCaller && !mForegroundUtils.isInForeground(callingUid)) {
                 Log.e(TAG, "setReaderMode: Caller is not in foreground and is not system process.");
                 return;
             }
+            boolean disablePolling = flags != 0 && getReaderModeTechMask(flags) == 0;
+            // Only allow to disable polling for specific callers
+            if (disablePolling && !(privilegedCaller && mPollingDisableAllowed)) {
+                Log.e(TAG, "setReaderMode() called with invalid flag parameter.");
+                return;
+            }
             synchronized (NfcService.this) {
-                if (!isNfcEnabled()) {
+                if (!isNfcEnabled() && !privilegedCaller) {
                     Log.e(TAG, "setReaderMode() called while NFC is not enabled.");
                     return;
                 }
                 if (flags != 0) {
                     try {
-                        mReaderModeParams = new ReaderModeParams();
-                        mReaderModeParams.callback = callback;
-                        mReaderModeParams.flags = flags;
-                        mReaderModeParams.presenceCheckDelay = extras != null
-                                ? (extras.getInt(NfcAdapter.EXTRA_READER_PRESENCE_CHECK_DELAY,
-                                        DEFAULT_PRESENCE_CHECK_DELAY))
-                                : DEFAULT_PRESENCE_CHECK_DELAY;
-                        binder.linkToDeath(mReaderModeDeathRecipient, 0);
+                        if (disablePolling) {
+                            ReaderModeDeathRecipient pollingDisableDeathRecipient =
+                                    new ReaderModeDeathRecipient();
+                            binder.linkToDeath(pollingDisableDeathRecipient, 0);
+                            mPollingDisableDeathRecipients.put(
+                                    callingPid, pollingDisableDeathRecipient);
+                        } else {
+                            if (mPollingDisableDeathRecipients.size() != 0) {
+                                Log.e(TAG, "active polling is forced to disable now.");
+                                return;
+                            }
+                            binder.linkToDeath(mReaderModeDeathRecipient, 0);
+                        }
+                        updateReaderModeParams(callback, flags, extras);
                     } catch (RemoteException e) {
                         Log.e(TAG, "Remote binder has already died.");
                         return;
                     }
                 } else {
                     try {
-                        mReaderModeParams = null;
-                        StopPresenceChecking();
-                        binder.unlinkToDeath(mReaderModeDeathRecipient, 0);
+                        ReaderModeDeathRecipient pollingDisableDeathRecipient =
+                                mPollingDisableDeathRecipients.get(callingPid);
+                        mPollingDisableDeathRecipients.remove(callingPid);
+
+                        if (mPollingDisableDeathRecipients.size() == 0) {
+                            mReaderModeParams = null;
+                            StopPresenceChecking();
+                        }
+
+                        if (pollingDisableDeathRecipient != null) {
+                            binder.unlinkToDeath(pollingDisableDeathRecipient, 0);
+                        } else {
+                            binder.unlinkToDeath(mReaderModeDeathRecipient, 0);
+                        }
                     } catch (NoSuchElementException e) {
                         Log.e(TAG, "Reader mode Binder was never registered.");
                     }
                 }
-                applyRouting(false);
+                if (isNfcEnabled()) {
+                    applyRouting(false);
+                }
             }
         }
 
@@ -1704,6 +1738,50 @@ public class NfcService implements DeviceHostListener {
                 return (IBinder) mNxpNfcAdapter;
             } else {
                 return null;
+            }
+        }
+
+        private int getReaderModeTechMask(int flags) {
+            int techMask = 0;
+            if ((flags & NfcAdapter.FLAG_READER_NFC_A) != 0) {
+                techMask |= NFC_POLL_A;
+            }
+            if ((flags & NfcAdapter.FLAG_READER_NFC_B) != 0) {
+                techMask |= NFC_POLL_B;
+            }
+            if ((flags & NfcAdapter.FLAG_READER_NFC_F) != 0) {
+                techMask |= NFC_POLL_F;
+            }
+            if ((flags & NfcAdapter.FLAG_READER_NFC_V) != 0) {
+                techMask |= NFC_POLL_V;
+            }
+            if ((flags & NfcAdapter.FLAG_READER_NFC_BARCODE) != 0) {
+                techMask |= NFC_POLL_KOVIO;
+            }
+
+            return techMask;
+        }
+
+        private String getPackageNameFromUid(int uid) {
+            PackageManager packageManager = mContext.getPackageManager();
+            if (packageManager != null) {
+                String[] packageName = packageManager.getPackagesForUid(uid);
+                if (packageName != null && packageName.length > 0) {
+                    return packageName[0];
+                }
+            }
+            return null;
+        }
+
+        private void updateReaderModeParams(IAppCallback callback, int flags, Bundle extras) {
+            synchronized (NfcService.this) {
+                mReaderModeParams = new ReaderModeParams();
+                mReaderModeParams.callback = callback;
+                mReaderModeParams.flags = flags;
+                mReaderModeParams.presenceCheckDelay = extras != null
+                        ? (extras.getInt(NfcAdapter.EXTRA_READER_PRESENCE_CHECK_DELAY,
+                                DEFAULT_PRESENCE_CHECK_DELAY))
+                        : DEFAULT_PRESENCE_CHECK_DELAY;
             }
         }
     }
@@ -2397,8 +2475,11 @@ public class NfcService implements DeviceHostListener {
         public void binderDied() {
             synchronized (NfcService.this) {
                 if (mReaderModeParams != null) {
-                    mReaderModeParams = null;
-                    applyRouting(false);
+                    mPollingDisableDeathRecipients.values().remove(this);
+                    if (mPollingDisableDeathRecipients.size() == 0) {
+                        mReaderModeParams = null;
+                        applyRouting(false);
+                    }
                 }
             }
         }
@@ -3019,6 +3100,9 @@ public class NfcService implements DeviceHostListener {
 
                 paramsBuilder.setTechMask(techMask);
                 paramsBuilder.setEnableReaderMode(true);
+                if (mReaderModeParams.flags != 0 && techMask == 0) {
+                    paramsBuilder.setEnableHostRouting(true);
+                }
             } else {
                 paramsBuilder.setTechMask(NfcDiscoveryParameters.NFC_POLL_DEFAULT);
                 paramsBuilder.setEnableP2p(mIsBeamCapable);
