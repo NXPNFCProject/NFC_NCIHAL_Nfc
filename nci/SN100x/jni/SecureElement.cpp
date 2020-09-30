@@ -744,16 +744,16 @@ void SecureElement::nfaHciCallback(tNFA_HCI_EVT event,
           break;
         }
 #if(NXP_EXTNS == TRUE)
-    case NFA_MDT_EVT_TIMEOUT:
+    case NFA_SRD_EVT_TIMEOUT:
         {
-          LOG(INFO) << StringPrintf("%s: NFA_MDT_EVT_TIMEOUT; received", fn);
-          SecureElement::getInstance().notifyMdtEvt(NFA_MDT_EVT_TIMEOUT);
+          LOG(INFO) << StringPrintf("%s: NFA_SRD_EVT_TIMEOUT; received", fn);
+          SecureElement::getInstance().notifySrdEvt(NFA_SRD_EVT_TIMEOUT);
           break;
         }
-    case NFA_MDT_FEATURE_NOT_SUPPORT_EVT:
+    case NFA_SRD_FEATURE_NOT_SUPPORT_EVT:
        {
-           LOG(INFO) << StringPrintf("%s: NFA_MDT_FEATURE_NOT_SUPPORT_EVT; received", fn);
-           SecureElement::getInstance().notifyMdtEvt(NFA_MDT_FEATURE_NOT_SUPPORT_EVT);
+           LOG(INFO) << StringPrintf("%s: NFA_SRD_FEATURE_NOT_SUPPORT_EVT; received", fn);
+           SecureElement::getInstance().notifySrdEvt(NFA_SRD_FEATURE_NOT_SUPPORT_EVT);
            break;
        }
 #endif
@@ -783,14 +783,14 @@ bool SecureElement::notifySeInitialized() {
 #if(NXP_EXTNS == TRUE)
 /*******************************************************************************
 **
-** Function:        notifyMdtEvt
+** Function:        notifySrdEvt
 **
-** Description:     Notify MDT events to application.
+** Description:     Notify SRD events to application.
 **
 ** Returns:         Void
 **
 *******************************************************************************/
-void SecureElement::notifyMdtEvt(int event) {
+void SecureElement::notifySrdEvt(int event) {
     JNIEnv* e = NULL;
 
     if (NULL == mNativeData) {
@@ -803,7 +803,7 @@ void SecureElement::notifyMdtEvt(int event) {
             << StringPrintf("%s: jni env is null", __func__);
         return;
     }
-    e->CallVoidMethod (mNativeData->manager, android::gCachedNfcManagerNotifyMdtEvt, (int)event);
+    e->CallVoidMethod (mNativeData->manager, android::gCachedNfcManagerNotifySrdEvt, (int)event);
     CHECK(!e->ExceptionCheck());
 }
 #endif

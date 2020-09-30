@@ -64,6 +64,6 @@ extern jmethodID gCachedNfcManagerNotifySeInitialized;
 extern const char* gNativeNfcMposManagerClassName;
 extern const char* gNativeT4tNfceeClassName;
 extern jmethodID gCachedNfcManagerNotifyLxDebugInfo;
-extern jmethodID  gCachedNfcManagerNotifyMdtEvt;
+extern jmethodID  gCachedNfcManagerNotifySrdEvt;
 #endif
 }  // namespace android

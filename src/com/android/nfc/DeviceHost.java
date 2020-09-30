@@ -60,7 +60,7 @@ public interface DeviceHost {
         public void onSeListenDeactivated();
 
         public void onSeInitialized();
-        public void onNotifyMdtEvt(int event);
+        public void onNotifySrdEvt(int event);
         /**
          * Notifies P2P Device detected, to activate LLCP link
          */

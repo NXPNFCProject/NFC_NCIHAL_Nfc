@@ -57,7 +57,7 @@
 #include "rw_api.h"
 #if (NXP_EXTNS == TRUE)
 #include "NativeJniExtns.h"
-#include "nfa_mdt_int.h"
+#include "nfa_srd_int.h"
 #endif
 
 using android::base::StringPrintf;
@@ -1007,15 +1007,15 @@ static bool switchRfInterface(tNFA_INTF_TYPE rfInterface) {
 #if(NXP_EXTNS == TRUE)
 /*******************************************************************************
 **
-** Function:        nativeNfcTag_getMdtState
+** Function:        nativeNfcTag_getSrdState
 **
-** Description:     Get MDT state.
+** Description:     Get SRD state.
 **
-** Returns:         MDT state.
+** Returns:         SRD state.
 **
 *******************************************************************************/
-static jint nativeNfcTag_getMdtState(JNIEnv*, jobject) {
-return nfa_mdt_get_state();
+static jint nativeNfcTag_getSrdState(JNIEnv*, jobject) {
+return nfa_srd_get_state();
 }
 #endif
 /*******************************************************************************
@@ -1113,7 +1113,7 @@ tNFA_STATUS nativeNfcTag_safeDisconnect() {
 *******************************************************************************/
 static tNFA_STATUS nativeNfcTag_performHaltPICC() {
   tNFA_STATUS status = NFA_STATUS_OK;
-  if(nativeNfcTag_getMdtState(NULL, NULL) == ENABLE) {
+  if(nativeNfcTag_getSrdState(NULL, NULL) == ENABLE) {
     return status;
   }
   if (sCurrentActivatedProtocl == NFA_PROTOCOL_T2T ||
@@ -2321,7 +2321,7 @@ static JNINativeMethod gMethods[] = {
     {"doNdefFormat", "([B)Z", (void*)nativeNfcTag_doNdefFormat},
     {"doMakeReadonly", "([B)Z", (void*)nativeNfcTag_doMakeReadonly},
 #if(NXP_EXTNS == TRUE)
-    {"doGetMdtState", "()I", (void*)nativeNfcTag_getMdtState},
+    {"doGetSrdState", "()I", (void*)nativeNfcTag_getSrdState},
 #endif
 };
 
