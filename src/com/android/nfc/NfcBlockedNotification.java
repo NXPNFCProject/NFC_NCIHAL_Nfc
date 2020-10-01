@@ -38,7 +38,6 @@ public class NfcBlockedNotification extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        PendingIntent pIntent;
         Intent infoIntent;
         if (TextUtils.isEmpty(getString(R.string.antenna_blocked_alert_link))) {
             // Do nothing after user click the notification if antenna_blocked_alert_link is empty
@@ -54,7 +53,8 @@ public class NfcBlockedNotification extends Activity {
                .setSmallIcon(android.R.drawable.stat_sys_warning)
                .setPriority(NotificationManager.IMPORTANCE_DEFAULT)
                .setAutoCancel(true)
-               .setContentIntent(PendingIntent.getActivity(getApplicationContext(), 0, infoIntent, 0));
+               .setContentIntent(PendingIntent.getActivity(getApplicationContext(), 0, infoIntent,
+                       PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE));
         mNotificationChannel = new NotificationChannel(NFC_NOTIFICATION_CHANNEL,
             getString(R.string.nfcUserLabel), NotificationManager.IMPORTANCE_DEFAULT);
         NotificationManager notificationManager =
