@@ -40,7 +40,6 @@
 #include <vector>
 #include "NfcJniUtil.h"
 #include "SyncEvent.h"
-
 #include "nfa_rw_api.h"
 #if (NXP_EXTNS == TRUE)
 #define MIN_FWI (0)
@@ -223,6 +222,17 @@ class NfcTag {
    **
    *******************************************************************************/
   void clearActivationParams();
+
+  /*******************************************************************************
+   **
+   ** Function:        notifyNfcAbortTagops()
+   **
+   ** Description:     Notify service to abort TAG ops.
+   **
+   ** Returns:         None
+   **
+   *******************************************************************************/
+  static void notifyNfcAbortTagops(union sigval);
 
   /*******************************************************************************
   **

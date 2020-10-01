@@ -189,6 +189,7 @@ jmethodID gCachedNfcManagerNotifyRfFieldActivated;
 jmethodID gCachedNfcManagerNotifyRfFieldDeactivated;
 #if(NXP_EXTNS == TRUE)
 jmethodID gCachedNfcManagerNotifyLxDebugInfo;
+jmethodID gCachedNfcManagerNotifyTagAbortListeners;
 #endif
 
 const char* gNativeP2pDeviceClassName =
@@ -1007,6 +1008,8 @@ static jboolean nfcManager_initNativeStruc(JNIEnv* e, jobject o) {
       e->GetMethodID(cls.get(),"notifySeInitialized", "()V");
   gCachedNfcManagerNotifySrdEvt =
       e->GetMethodID(cls.get(),"notifySrdEvt", "(I)V");
+  gCachedNfcManagerNotifyTagAbortListeners =
+      e->GetMethodID(cls.get(), "notifyTagAbort", "()V");
 #endif
   gCachedNfcManagerNotifyTransactionListeners = e->GetMethodID(
       cls.get(), "notifyTransactionListeners", "([B[BLjava/lang/String;)V");

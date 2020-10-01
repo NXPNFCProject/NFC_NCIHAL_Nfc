@@ -961,7 +961,9 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
 
     if (sConnectOk) {
       rVal = 0;  // success
+#if (NXP_EXTNS != TRUE)
       sCurrentRfInterface = rfInterface;
+#endif
     } else {
       rVal = 1;
     }
