@@ -4295,10 +4295,7 @@ public class NfcService implements DeviceHostListener {
                         playSound(SOUND_ERROR);
                     }
                     if (!mAntennaBlockedMessageShown && mDispatchFailedCount++ > mDispatchFailedMax) {
-                        Intent dialogIntent = new Intent(mContext, NfcBlockedNotification.class);
-                        dialogIntent.setFlags(
-                            Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                        mContext.startActivity(dialogIntent);
+                        new NfcBlockedNotification(mContext).startNotification();
                         mPrefsEditor.putBoolean(PREF_ANTENNA_BLOCKED_MESSAGE_SHOWN, true);
                         mPrefsEditor.apply();
                         mBackupManager.dataChanged();
