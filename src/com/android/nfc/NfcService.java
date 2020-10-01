@@ -181,7 +181,8 @@ public class NfcService implements DeviceHostListener {
     static final String TRON_NFC_CE = "nfc_ce";
     static final String TRON_NFC_P2P = "nfc_p2p";
     static final String TRON_NFC_TAG = "nfc_tag";
-    static final String NATIVE_LOG_FILE_NAME = "native_logs";
+    static final String NATIVE_LOG_FILE_NAME = "native_crash_logs";
+    static final int NATIVE_CRASH_FILE_SIZE = 1024 * 1024;
     static final String T4T_NFCEE_AID = "D2760000850101";
     static final int TECH_TYPE_A= 0x01;
     static final int TECH_TYPE_F= 0x04;
@@ -4529,9 +4530,13 @@ public class NfcService implements DeviceHostListener {
         }
     }
 
+    public String getNfaStorageDir() {
+        return mDeviceHost.getNfaStorageDir();
+    }
+
     private void copyNativeCrashLogsIfAny(PrintWriter pw) {
       try {
-          File file = new File(mContext.getFilesDir(), NATIVE_LOG_FILE_NAME);
+          File file = new File(getNfaStorageDir(), NATIVE_LOG_FILE_NAME);
           if (!file.exists()) {
             return;
           }
@@ -4551,12 +4556,12 @@ public class NfcService implements DeviceHostListener {
     private void storeNativeCrashLogs() {
       FileOutputStream fos = null;
       try {
-        File file = new File(mContext.getFilesDir(), NATIVE_LOG_FILE_NAME);
-        if (!file.exists()) {
+        File file = new File(getNfaStorageDir(), NATIVE_LOG_FILE_NAME);
+        if (file.length() >= NATIVE_CRASH_FILE_SIZE) {
           file.createNewFile();
         }
 
-        fos = new FileOutputStream(file);
+        fos = new FileOutputStream(file, true);
         mDeviceHost.dump(fos.getFD());
         fos.flush();
       } catch (IOException e) {

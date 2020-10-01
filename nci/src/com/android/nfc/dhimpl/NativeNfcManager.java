@@ -539,6 +539,9 @@ public class NativeNfcManager implements DeviceHost {
         return doSetNfcSecure(enable);
     }
 
+    @Override
+    public native String getNfaStorageDir();
+
     /**
      * Notifies Ndef Message (TODO: rename into notifyTargetDiscovered)
      */
