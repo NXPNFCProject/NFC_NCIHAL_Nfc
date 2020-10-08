@@ -1067,8 +1067,6 @@ public class NfcService implements DeviceHostListener {
                 if (mIsBeamCapable) {
                     mP2pLinkManager.enableDisable(mIsNdefPushEnabled, true);
                 }
-                updateState(NfcAdapter.STATE_ON);
-
                 onPreferredPaymentChanged(NfcAdapter.PREFERRED_PAYMENT_LOADED);
             }
 
@@ -1079,7 +1077,7 @@ public class NfcService implements DeviceHostListener {
                              (ScreenStateHelper.SCREEN_POLLING_TAG_MASK | mScreenState) : mScreenState;
 
             if(mNfcUnlockManager.isLockscreenPollingEnabled())
-                applyRouting(false);
+                applyRouting(false, false);
 
             mDeviceHost.doSetScreenState(screen_state_mask);
             mPreviousScreenState = mScreenState;
@@ -1087,10 +1085,13 @@ public class NfcService implements DeviceHostListener {
             sToast_debounce = false;
 
             /* Start polling loop */
-            applyRouting(true);
+            applyRouting(true, false);
             commitRouting();
             /* WiredSe Init after ESE is discovered and initialised */
             initWiredSe();
+            synchronized (NfcService.this) {
+                updateState(NfcAdapter.STATE_ON);
+            }
             return true;
         }
 
@@ -2906,13 +2907,17 @@ public class NfcService implements DeviceHostListener {
         return data;
     }
 
+    void applyRouting(boolean force) {
+        applyRouting(force, true);
+    }
+
     /**
      * Read mScreenState and apply NFC-C polling and NFC-EE routing
      */
-    void applyRouting(boolean force) {
+    void applyRouting(boolean force, boolean doNfcStateCheck) {
         Log.d(TAG, "applyRouting enter");
         synchronized (this) {
-            if (!isNfcEnabledOrShuttingDown()) {
+            if (doNfcStateCheck && !isNfcEnabledOrShuttingDown()) {
                 return;
             }
             WatchDogThread watchDog = new WatchDogThread("applyRouting", ROUTING_WATCHDOG_MS);

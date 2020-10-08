@@ -54,6 +54,8 @@ namespace android {
 extern void startRfDiscovery(bool isStart);
 extern bool isDiscoveryStarted();
 extern bool isp2pActivated();
+extern bool nfcManager_isNfcActive();
+extern bool nfcManager_isNfcDisabling();
 extern void com_android_nfc_NfcManager_disableDiscovery(JNIEnv* e, jobject o);
 extern void com_android_nfc_NfcManager_enableDiscovery(JNIEnv* e, jobject o,
                                                        jint mode);
@@ -95,7 +97,8 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection(JNIEnv*,
   android::mSPIDwpSyncMutex.lock();
 #if (NXP_EXTNS == TRUE)
   if ((!nfcFL.nfcNxpEse) ||
-      (!nfcFL.eseFL._ESE_WIRED_MODE_PRIO && se.isBusy())) {
+      (!nfcFL.eseFL._ESE_WIRED_MODE_PRIO && se.isBusy()) ||
+      (!nfcManager_isNfcActive()) || (nfcManager_isNfcDisabling())) {
     goto TheEnd;
   }
 
@@ -282,6 +285,11 @@ static jboolean nativeNfcSecureElement_doDisconnectSecureElementConnection(
   bool stat = false;
   long ret_val = -1;
   p61_access_state_t p61_current_state = P61_STATE_INVALID;
+#if (NXP_EXTNS == TRUE)
+  SecureElement& se = SecureElement::getInstance();
+  /* release any pending transceive wait */
+  se.releasePendingTransceive();
+#endif
   android::mSPIDwpSyncMutex.lock();
   ret_val = NFC_GetP61Status((void*)&p61_current_state);
   if (ret_val < 0) {
@@ -300,8 +308,6 @@ static jboolean nativeNfcSecureElement_doDisconnectSecureElementConnection(
 
 #if (NXP_EXTNS == TRUE)
   NFCSTATUS status = NFCSTATUS_FAILED;
-
-  SecureElement& se = SecureElement::getInstance();
   se.NfccStandByOperation(STANDBY_TIMER_STOP);
 #endif
 
@@ -432,6 +438,11 @@ static jboolean nativeNfcSecureElement_doResetForEseCosUpdate(JNIEnv*, jobject,
 
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: enter; handle=0x%04x", __func__, handle);
+    if ((!nfcManager_isNfcActive()) || (nfcManager_isNfcDisabling())) {
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("%s: NfC is not Enabled", __func__);
+      return stat;
+    }
     if (!se.mIsWiredModeOpen) {
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("wired mode is not open");

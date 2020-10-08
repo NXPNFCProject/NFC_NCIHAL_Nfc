@@ -3302,6 +3302,7 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
     SecureElement::getInstance().finalize();
     PowerSwitch::getInstance().initialize(PowerSwitch::UNKNOWN_LEVEL);
     HciEventManager::getInstance().finalize();
+    SecureElement::getInstance().releasePendingTransceive();
     // Stop the discovery before calling NFA_Disable.
     if (sRfEnabled) startRfDiscovery(false);
     tNFA_STATUS stat = NFA_STATUS_OK;

@@ -226,6 +226,17 @@ class SecureElement {
   *******************************************************************************/
   void finalize();
 
+/*******************************************************************************
+**
+** Function:        releasePendingTransceive
+**
+** Description:     release any pending transceive wait.
+**
+** Returns:         None.
+**
+*******************************************************************************/
+void releasePendingTransceive();
+
   /*******************************************************************************
   **
   ** Function:        getListOfEeHandles
