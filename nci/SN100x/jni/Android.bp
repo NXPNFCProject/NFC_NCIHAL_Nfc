@@ -1,8 +1,8 @@
 cc_library_shared {
     name: "libnfc_nci_jni",
-
     cflags:
-     ["-DNXP_EXTNS=TRUE"]  + [
+     ["-DNXP_EXTNS=TRUE",
+      "-DNXP_SRD=TRUE",]  + [
         "-Wall",
         "-Wextra",
         "-Wno-unused-parameter",
