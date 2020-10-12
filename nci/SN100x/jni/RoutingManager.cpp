@@ -1888,7 +1888,7 @@ bool RoutingManager::isNfceeActive(int routeLoc, tNFA_HANDLE& ActDevHandle) {
 
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: seHandle : %x", __func__, seHandle);
-  if(SecureElement::getInstance().findEeByHandle(seHandle) != NULL) {
+  if(SecureElement::getInstance().getSETechnology(seHandle) != 0) {
     ActDevHandle = seHandle;
     isSeIDPresent = true;
     DLOG_IF(INFO, nfc_debug_enabled)
