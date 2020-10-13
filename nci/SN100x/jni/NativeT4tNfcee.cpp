@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- *  Copyright 2019 NXP
+ *  Copyright 2019-2020 NXP
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -808,4 +808,79 @@ void NativeT4tNfcee::setBusy() { mBusy = true; }
  **
  *******************************************************************************/
 void NativeT4tNfcee::resetBusy() { mBusy = false; }
+/*******************************************************************************
+**
+** Function:        getT4TNfceeAid
+**
+** Description:     Get the T4T Nfcee AID.
+**
+** Returns:         T4T AID: vector<uint8_t>
+**
+*******************************************************************************/
+vector<uint8_t> NativeT4tNfcee::getT4TNfceeAid() {
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:enter", __func__);
+
+  std::vector<uint8_t> t4tNfceeAidBuf{0xD2, 0x76, 0x00, 0x00, 0x85, 0x01, 0x01};
+
+  if (NfcConfig::hasKey(NAME_NXP_T4T_NDEF_NFCEE_AID)) {
+    t4tNfceeAidBuf = NfcConfig::getBytes(NAME_NXP_T4T_NDEF_NFCEE_AID);
+  }
+
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:Exit", __func__);
+
+  return t4tNfceeAidBuf;
+}
+
+/*******************************************************************************
+**
+** Function:        isFwSupportNonStdT4TAid
+**
+** Description:     Check FW supports Non-standard AID or not.
+**
+** Returns:         true: FW support NON-STD AID
+**                  false: FW not support NON-STD AID
+**
+*******************************************************************************/
+bool NativeT4tNfcee::isFwSupportNonStdT4TAid() {
+  tNFC_FW_VERSION nfc_native_fw_version;
+  jboolean isFwSupport = false;
+  memset(&nfc_native_fw_version, 0, sizeof(nfc_native_fw_version));
+  const uint8_t FW_ROM_VERSION = 0x01;
+  const uint8_t FW_MAJOR_VERSION = 0x10;
+  const uint8_t FW_MINOR_VERSION = 0x54;
+  nfc_native_fw_version = nfc_ncif_getFWVersion();
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+      "FW Version: %x.%x.%x", nfc_native_fw_version.rom_code_version,
+      nfc_native_fw_version.major_version, nfc_native_fw_version.minor_version);
+  if (nfc_native_fw_version.rom_code_version == FW_ROM_VERSION &&
+      nfc_native_fw_version.major_version == FW_MAJOR_VERSION &&
+      nfc_native_fw_version.minor_version >= FW_MINOR_VERSION) {
+    isFwSupport = true;
+  }
+  LOG(INFO) << StringPrintf(
+      "nfcManager_isFwSupportNonStdT4TAid Enter isFwSupport = %d", isFwSupport);
+  return isFwSupport;
+}
+/*******************************************************************************
+**
+** Function:        checkAndUpdateT4TAid
+**
+** Description:     Check and update T4T Ndef Nfcee AID.
+**
+** Returns:         void
+**
+*******************************************************************************/
+void NativeT4tNfcee::checkAndUpdateT4TAid(uint8_t* t4tNdefAid,
+                                          uint8_t* t4tNdefAidLen) {
+  if (!isFwSupportNonStdT4TAid()) {
+    uint8_t stdT4tAid[] = {0xD2, 0x76, 0x00, 0x00, 0x85, 0x01, 0x01};
+    *t4tNdefAidLen = sizeof(stdT4tAid);
+    memcpy(t4tNdefAid, stdT4tAid, *t4tNdefAidLen);
+  } else {
+    vector<uint8_t> t4tNfceeAidBuf = getT4TNfceeAid();
+    uint8_t* t4tAidBuf = t4tNfceeAidBuf.data();
+    *t4tNdefAidLen = t4tNfceeAidBuf.size();
+    memcpy(t4tNdefAid, t4tAidBuf, *t4tNdefAidLen);
+  }
+}
 #endif
