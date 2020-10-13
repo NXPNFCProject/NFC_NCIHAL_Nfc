@@ -439,11 +439,13 @@ void SecureElement::notifyRfFieldEvent (bool isActive)
     if (mNativeData == NULL) {
         DLOG_IF(ERROR, nfc_debug_enabled)
                 << StringPrintf("%s: mNativeData is null", fn);
+        mMutex.unlock();
         return;
     }
     ScopedAttach attach(mNativeData->vm, &e);
     if (e == NULL) {
       LOG(ERROR) << StringPrintf("jni env is null");
+      mMutex.unlock();
       return;
     }
     int ret = clock_gettime (CLOCK_MONOTONIC, &mLastRfFieldToggle);
