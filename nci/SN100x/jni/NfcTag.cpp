@@ -556,13 +556,18 @@ void NfcTag::discoverTechnologies(tNFA_ACTIVATED& activationData) {
         setTransceiveTimeout(mTechList[mNumTechList], fwt);
       }
     }
+#if (NXP_EXTNS == TRUE)
     if (isNonStdTagDetected) {
       isNonStdTagDetected = false;
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: non std Tag", fn);
-    } else if ((rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_POLL_A) ||
-        (rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_POLL_A_ACTIVE) ||
-        (rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_LISTEN_A) ||
-        (rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_LISTEN_A_ACTIVE)) {
+    } else if
+#else
+    if
+#endif
+       ((rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_POLL_A) ||
+       (rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_POLL_A_ACTIVE) ||
+       (rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_LISTEN_A) ||
+       (rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_LISTEN_A_ACTIVE)) {
       mNumTechList++;
       mTechHandles[mNumTechList] = rfDetail.rf_disc_id;
       mTechLibNfcTypes[mNumTechList] = rfDetail.protocol;

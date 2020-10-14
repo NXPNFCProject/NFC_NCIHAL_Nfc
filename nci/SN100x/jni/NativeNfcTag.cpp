@@ -922,10 +922,12 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
       LOG(ERROR) << StringPrintf("%s: waiting for Card to be activated", __func__);
       int retry = 0;
       sConnectWaitingForComplete = JNI_TRUE;
+#if (NXP_EXTNS == TRUE)
       if (IS_MULTIPROTO_MFC_TAG() &&
               NfcTag::getInstance().isNonStdCardSupported) {
         natTag.mIsNonStdMFCTag = true;
       } else {
+#endif
         do {
           SyncEventGuard reselectEvent(sReconnectEvent);
           if (sReconnectEvent.wait(500) == false) {  // if timeout occured
@@ -936,7 +938,9 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
               "%s: waiting for Card to be activated %x %x", __func__, retry,
               sConnectOk);
         } while (sConnectOk == false && retry < 3);
+#if (NXP_EXTNS == TRUE)
       }
+#endif
     }
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
         "%s: select completed; sConnectOk=%d", __func__, sConnectOk);
