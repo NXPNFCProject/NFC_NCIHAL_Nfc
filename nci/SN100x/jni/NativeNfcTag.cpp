@@ -508,9 +508,10 @@ static jboolean nativeNfcTag_doWrite(JNIEnv* e, jobject, jbyteArray buf) {
     if (sCheckNdefCapable) {
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: try format", __func__);
-      if (sem_init(&sFormatSem, 0, 0) == -1) {
+      if (0 != sem_init(&sFormatSem, 0, 0)) {
         LOG(ERROR) << StringPrintf("%s: semaphore creation failed (errno=0x%08x)",
-                                   __func__, errno);
+                __func__, errno);
+        return JNI_FALSE;
       }
       sFormatOk = false;
       if (sCurrentConnectedTargetProtocol == NFC_PROTOCOL_MIFARE && legacy_mfc_reader) {
@@ -531,9 +532,10 @@ static jboolean nativeNfcTag_doWrite(JNIEnv* e, jobject, jbyteArray buf) {
             LOG(ERROR) << StringPrintf("%s: sem_wait failed \n", __func__);
           }
           sem_destroy(&sFormatSem);
-          if (sem_init(&sFormatSem, 0, 0) == -1) {
+          if (0 != sem_init(&sFormatSem, 0, 0)) {
             LOG(ERROR) << StringPrintf("%s: semaphore creation failed (errno=0x%08x)",
-                                   __func__, errno);
+                    __func__, errno);
+            return JNI_FALSE;
           }
           status = EXTNS_MfcFormatTag(mfc_key2, sizeof(mfc_key2));
           if (status != NFA_STATUS_OK) {
@@ -1896,9 +1898,10 @@ static jboolean nativeNfcTag_makeMifareNdefFormat(JNIEnv* e, jobject o,
     return JNI_FALSE;
   }
 
-  if (sem_init(&sFormatSem, 0, 0) == -1) {
+  if (0 != sem_init(&sFormatSem, 0, 0)) {
     LOG(ERROR) << StringPrintf("%s: semaphore creation failed (errno=0x%08x)",
-                                   __func__, errno);
+            __func__, errno);
+    return JNI_FALSE;
   }
   sFormatOk = false;
 
@@ -1961,9 +1964,10 @@ static jboolean nativeNfcTag_doNdefFormat(JNIEnv* e, jobject o, jbyteArray) {
     return result;
   }
 
-  if (sem_init(&sFormatSem, 0, 0) == -1) {
-    LOG(ERROR) << StringPrintf("%s: semaphore creation failed (errno=0x%08x)",
-                               __func__, errno);
+  if (0 != sem_init(&sFormatSem, 0, 0)) {
+   LOG(ERROR) << StringPrintf("%s: semaphore creation failed (errno=0x%08x)",
+            __func__, errno);
+    return JNI_FALSE;
   }
   sFormatOk = false;
   status = NFA_RwFormatTag();

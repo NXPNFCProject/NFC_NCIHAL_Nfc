@@ -124,7 +124,9 @@ public class AidRoutingManager {
     }
 
     public AidRoutingManager() {
-        mDefaultRoute = doGetDefaultRouteDestination();
+        synchronized (mLock) {
+            mDefaultRoute = doGetDefaultRouteDestination();
+        }
         if (DBG)
           Log.d(TAG, "mDefaultRoute=0x" + Integer.toHexString(mDefaultRoute));
         mDefaultOffHostRoute = doGetDefaultOffHostRouteDestination();
@@ -240,6 +242,7 @@ public class AidRoutingManager {
 
     public boolean configureRouting(HashMap<String, AidEntry> aidMap, boolean force) {
         boolean aidRouteResolved = false;
+        boolean isDefaultRoutNonHost = false;
         HashMap<String, AidEntry> aidRoutingTableCache = new HashMap<String, AidEntry>(aidMap.size());
         ArrayList<Integer> seList = new ArrayList<Integer>();
         mAidRoutingTableSize = NfcService.getInstance().getAidRoutingTableSize();
@@ -247,7 +250,10 @@ public class AidRoutingManager {
         mDefaultOffHostRoute = doGetDefaultOffHostRouteDestination();
         Log.e(TAG, "Size of routing table"+mAidRoutingTableSize);
         seList.add(mDefaultAidRoute);
-        if (mDefaultRoute != ROUTE_HOST) {
+        synchronized (mLock) {
+            isDefaultRoutNonHost = (mDefaultRoute != ROUTE_HOST);
+        }
+        if (isDefaultRoutNonHost) {
             seList.add(ROUTE_HOST);
         }
 
