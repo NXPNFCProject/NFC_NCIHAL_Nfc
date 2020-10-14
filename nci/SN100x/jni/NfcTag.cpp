@@ -87,6 +87,7 @@ NfcTag::NfcTag()
       mIsNonStdMFCTag(false),
       mIsSkipNdef(false),
       isNonStdCardSupported(false),
+      isNonStdTagDetected(false),
 #endif
       mTechnologyTimeoutsTable(MAX_NUM_TECHNOLOGY),
       mNativeData(NULL),
@@ -159,6 +160,7 @@ void NfcTag::initialize(nfc_jni_native_data* native) {
   isNonStdCardSupported =
       (NfcConfig::getUnsigned(NAME_NXP_SUPPORT_NON_STD_CARD, 0) != 0) ? true
                                                                       : false;
+  isNonStdTagDetected = false;
 #endif
   mtT1tMaxMessageSize = 0;
   mReadCompletedStatus = NFA_STATUS_OK;
@@ -553,7 +555,10 @@ void NfcTag::discoverTechnologies(tNFA_ACTIVATED& activationData) {
         setTransceiveTimeout(mTechList[mNumTechList], fwt);
       }
     }
-    if ((rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_POLL_A) ||
+    if (isNonStdTagDetected) {
+      isNonStdTagDetected = false;
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: non std Tag", fn);
+    } else if ((rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_POLL_A) ||
         (rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_POLL_A_ACTIVE) ||
         (rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_LISTEN_A) ||
         (rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_LISTEN_A_ACTIVE)) {
@@ -807,10 +812,8 @@ void NfcTag::processNonStandardTag(tNFA_DISC_RESULT& discoveryData) {
       // Non Standard Transit => ISO-DEP
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
           "%s:Non standard Transit => change to ISO-DEP", __func__);
-      mTechList[mNumTechList] =
-          TARGET_TYPE_ISO14443_4;  // is TagTechnology.ISO_DEP by Java API
-      mTechHandles[mNumTechList] = discovery_ntf.rf_disc_id;
-      mTechLibNfcTypes[mNumTechList] = NFC_PROTOCOL_ISO_DEP;
+      mTechLibNfcTypesDiscData[mNumDiscNtf] = NFC_PROTOCOL_ISO_DEP;
+      isNonStdTagDetected = true;
     } else {
       updateNdefState(discovery_ntf.protocol, discovery_ntf.more);
     }
