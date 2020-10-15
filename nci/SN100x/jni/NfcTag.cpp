@@ -1418,6 +1418,9 @@ void NfcTag::resetTechnologies() {
   mIsDynamicTagId = false;
   mIsFelicaLite = false;
   resetAllTransceiveTimeouts();
+#if (NXP_EXTNS == TRUE)
+  EXTNS_SetConnectFlag(false);
+#endif
 }
 
 /*******************************************************************************
