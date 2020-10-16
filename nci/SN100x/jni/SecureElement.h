@@ -204,6 +204,7 @@ static int decodeBerTlvLength(uint8_t* data, int index, int data_length);
 /*******************************************************************************/
 
 bool notifySeInitialized();
+void notifyMdtEvt(int event);
 /*******************************************************************************
 **
 ** Function:        nfaHciCallback

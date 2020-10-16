@@ -743,6 +743,20 @@ void SecureElement::nfaHciCallback(tNFA_HCI_EVT event,
           sSecElem.mEERecoveryComplete.notifyOne();
           break;
         }
+#if(NXP_EXTNS == TRUE)
+    case NFA_MDT_EVT_TIMEOUT:
+        {
+          LOG(INFO) << StringPrintf("%s: NFA_MDT_EVT_TIMEOUT; received", fn);
+          SecureElement::getInstance().notifyMdtEvt(NFA_MDT_EVT_TIMEOUT);
+          break;
+        }
+    case NFA_MDT_FEATURE_NOT_SUPPORT_EVT:
+       {
+           LOG(INFO) << StringPrintf("%s: NFA_MDT_FEATURE_NOT_SUPPORT_EVT; received", fn);
+           SecureElement::getInstance().notifyMdtEvt(NFA_MDT_FEATURE_NOT_SUPPORT_EVT);
+           break;
+       }
+#endif
     default:
         LOG(ERROR) << StringPrintf("%s: unknown event code=0x%X ????", fn, event);
         break;
@@ -766,7 +780,33 @@ bool SecureElement::notifySeInitialized() {
     CHECK(!e->ExceptionCheck());
     return true;
 }
+#if(NXP_EXTNS == TRUE)
+/*******************************************************************************
+**
+** Function:        notifyMdtEvt
+**
+** Description:     Notify MDT events to application.
+**
+** Returns:         Void
+**
+*******************************************************************************/
+void SecureElement::notifyMdtEvt(int event) {
+    JNIEnv* e = NULL;
 
+    if (NULL == mNativeData) {
+      return;
+    }
+    ScopedAttach attach(mNativeData->vm, &e);
+    if (e == NULL)
+    {
+        DLOG_IF(ERROR, nfc_debug_enabled)
+            << StringPrintf("%s: jni env is null", __func__);
+        return;
+    }
+    e->CallVoidMethod (mNativeData->manager, android::gCachedNfcManagerNotifyMdtEvt, (int)event);
+    CHECK(!e->ExceptionCheck());
+}
+#endif
 /*******************************************************************************
 **
 ** Function:        transceive
