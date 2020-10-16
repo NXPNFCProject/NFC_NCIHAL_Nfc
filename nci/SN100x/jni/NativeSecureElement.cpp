@@ -253,7 +253,7 @@ static jbyteArray nativeNfcSecureElement_doGetAtr (JNIEnv* e, jobject, jint hand
 *******************************************************************************/
 static jbyteArray nativeNfcSecureElement_doTransceive (JNIEnv* e, jobject, jint handle, jbyteArray data)
 {
-    const int32_t recvBufferMaxSize = 0x8800;//1024; 34k
+    const int32_t recvBufferMaxSize = 0x800B;//32k(8000) datasize + 10b Protocol Header Size + 1b support neg testcase
     uint8_t recvBuffer [recvBufferMaxSize];
     int32_t recvBufferActualSize = 0;
     ScopedByteArrayRW bytes(e, data);
