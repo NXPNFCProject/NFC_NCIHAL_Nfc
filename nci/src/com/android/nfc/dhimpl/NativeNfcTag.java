@@ -307,9 +307,9 @@ public class NativeNfcTag implements TagEndpoint {
         return result;
     }
 
-    native int doGetMdtState();
-    public int getMdtState() {
-      return doGetMdtState();
+    native int doGetSrdState();
+    public int getSrdState() {
+      return doGetSrdState();
     }
 
     native int doReconnect();
@@ -640,8 +640,8 @@ public class NativeNfcTag implements TagEndpoint {
          * the lock page, the OTP page and the version info.
          */
         int ENABLE = 0x01;
-        if(getMdtState() == ENABLE) {
-          /* Ignore to send read cmd incase of MDT is enabled.*/
+        if(getSrdState() == ENABLE) {
+          /* Ignore to send read cmd incase of SRD is enabled.*/
           return false;
         }
         boolean isUltralightC = false;

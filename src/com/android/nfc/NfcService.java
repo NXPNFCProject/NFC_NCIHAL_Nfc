@@ -235,8 +235,8 @@ public class NfcService implements DeviceHostListener {
     static final int MSG_WLC_DISABLE                  = 81;
     static final int MSG_WLC_START_WPT                = 82;
     static final int MSG_WLC_STOP_WPT                 = 83;
-    public static final int MSG_MDT_EVT_TIMEOUT = 84;
-    public static final int MSG_MDT_EVT_FEATURE_NOT_SUPPORT = 85;
+    public static final int MSG_SRD_EVT_TIMEOUT = 84;
+    public static final int MSG_SRD_EVT_FEATURE_NOT_SUPPORT = 85;
     private int SE_READER_TYPE = SE_READER_TYPE_INAVLID;
 
     // Negative value for NO polling delay
@@ -308,12 +308,12 @@ public class NfcService implements DeviceHostListener {
             "com.android.nfc_extras.action.RF_FIELD_ON_DETECTED";
     public static final String ACTION_RF_FIELD_OFF_DETECTED =
             "com.android.nfc_extras.action.RF_FIELD_OFF_DETECTED";
-    /*MDT EVT Timeout*/
-    public static final String ACTION_MDT_EVT_TIMEOUT =
-            "com.nxp.nfc_extras.ACTION_MDT_EVT_TIMEOUT";
-    /*MDT Feature not supported */
-    public static final String ACTION_MDT_EVT_FEATURE_NOT_SUPPORT =
-            "com.nxp.nfc_extras.ACTION_MDT_EVT_FEATURE_NOT_SUPPORT";
+    /*SRD EVT Timeout*/
+    public static final String ACTION_SRD_EVT_TIMEOUT =
+            "com.nxp.nfc_extras.ACTION_SRD_EVT_TIMEOUT";
+    /*SRD Feature not supported */
+    public static final String ACTION_SRD_EVT_FEATURE_NOT_SUPPORT =
+            "com.nxp.nfc_extras.ACTION_SRD_EVT_FEATURE_NOT_SUPPORT";
     public static boolean sIsShortRecordLayout = false;
     // Default delay used for presence checks in ETSI mode
     static final int ETSI_PRESENCE_CHECK_DELAY = 1000;
@@ -636,14 +636,14 @@ public class NfcService implements DeviceHostListener {
         sendMessage(NfcService.MSG_SE_INIT, null);
     }
 
-    public void onNotifyMdtEvt(int event) {
-      Log.e(TAG, " Broadcasting MDT evt" + event);
-      int NFA_MDT_EVT_TIMEOUT = 33;
-      int NFA_MDT_EVT_FEATURE_NOT_SUPPORT = 34;
-        if(event == NFA_MDT_EVT_TIMEOUT) {
-          sendMessage(MSG_MDT_EVT_TIMEOUT , null);
-        } else if(event == NFA_MDT_EVT_FEATURE_NOT_SUPPORT) {
-          sendMessage(MSG_MDT_EVT_FEATURE_NOT_SUPPORT , null);
+    public void onNotifySrdEvt(int event) {
+      Log.e(TAG, " Broadcasting SRD evt" + event);
+      int NFA_SRD_EVT_TIMEOUT = 33;
+      int NFA_SRD_EVT_FEATURE_NOT_SUPPORT = 34;
+        if(event == NFA_SRD_EVT_TIMEOUT) {
+          sendMessage(MSG_SRD_EVT_TIMEOUT , null);
+        } else if(event == NFA_SRD_EVT_FEATURE_NOT_SUPPORT) {
+          sendMessage(MSG_SRD_EVT_FEATURE_NOT_SUPPORT , null);
         }
     }
 
@@ -3753,13 +3753,13 @@ public class NfcService implements DeviceHostListener {
                     Intent fieldOffIntent = new Intent(ACTION_RF_FIELD_OFF_DETECTED);
                     sendNfcEeAccessProtectedBroadcast(fieldOffIntent);
                     break;
-                case MSG_MDT_EVT_TIMEOUT:
-                    Intent mdtTimeoutIntent = new Intent(ACTION_MDT_EVT_TIMEOUT);
-                    sendNfcEeAccessProtectedBroadcast(mdtTimeoutIntent);
+                case MSG_SRD_EVT_TIMEOUT:
+                    Intent srdTimeoutIntent = new Intent(ACTION_SRD_EVT_TIMEOUT);
+                    sendNfcEeAccessProtectedBroadcast(srdTimeoutIntent);
                     break;
-                case MSG_MDT_EVT_FEATURE_NOT_SUPPORT:
-                    Intent mdtFeatureNotSupported = new Intent(ACTION_MDT_EVT_FEATURE_NOT_SUPPORT);
-                    sendNfcEeAccessProtectedBroadcast(mdtFeatureNotSupported);
+                case MSG_SRD_EVT_FEATURE_NOT_SUPPORT:
+                    Intent srdFeatureNotSupported = new Intent(ACTION_SRD_EVT_FEATURE_NOT_SUPPORT);
+                    sendNfcEeAccessProtectedBroadcast(srdFeatureNotSupported);
                    break;
                 case MSG_RESUME_POLLING:
                     mNfcAdapter.resumePolling();
