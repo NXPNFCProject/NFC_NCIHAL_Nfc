@@ -969,6 +969,10 @@ public class NfcService implements DeviceHostListener {
         return mSecureElement.doTransceive(handle, cmd);
     }
 
+    boolean doReset(int handle) {
+       return mSecureElement.doReset(handle);
+    }
+
     /**
      * Manages tasks that involve turning on/off the NFC controller.
      * <p/>
