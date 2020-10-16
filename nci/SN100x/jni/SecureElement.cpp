@@ -29,6 +29,9 @@
 #include "RoutingManager.h"
 #include "HciEventManager.h"
 #include "MposManager.h"
+#if (NXP_SRD == TRUE)
+#include "SecureDigitization.h"
+#endif
 using android::base::StringPrintf;
 
 SecureElement SecureElement::sSecElem;
@@ -743,23 +746,17 @@ void SecureElement::nfaHciCallback(tNFA_HCI_EVT event,
           sSecElem.mEERecoveryComplete.notifyOne();
           break;
         }
-#if(NXP_EXTNS == TRUE)
+#if (NXP_SRD == TRUE)
     case NFA_SRD_EVT_TIMEOUT:
+    case NFA_SRD_FEATURE_NOT_SUPPORT_EVT:
         {
-          LOG(INFO) << StringPrintf("%s: NFA_SRD_EVT_TIMEOUT; received", fn);
-          SecureElement::getInstance().notifySrdEvt(NFA_SRD_EVT_TIMEOUT);
+          SecureDigitization::getInstance().notifySrdEvt(event);
           break;
         }
-    case NFA_SRD_FEATURE_NOT_SUPPORT_EVT:
-       {
-           LOG(INFO) << StringPrintf("%s: NFA_SRD_FEATURE_NOT_SUPPORT_EVT; received", fn);
-           SecureElement::getInstance().notifySrdEvt(NFA_SRD_FEATURE_NOT_SUPPORT_EVT);
-           break;
-       }
 #endif
     default:
-        LOG(ERROR) << StringPrintf("%s: unknown event code=0x%X ????", fn, event);
-        break;
+      LOG(ERROR) << StringPrintf("%s: unknown event code=0x%X ????", fn, event);
+      break;
     }
 }
 
@@ -780,33 +777,6 @@ bool SecureElement::notifySeInitialized() {
     CHECK(!e->ExceptionCheck());
     return true;
 }
-#if(NXP_EXTNS == TRUE)
-/*******************************************************************************
-**
-** Function:        notifySrdEvt
-**
-** Description:     Notify SRD events to application.
-**
-** Returns:         Void
-**
-*******************************************************************************/
-void SecureElement::notifySrdEvt(int event) {
-    JNIEnv* e = NULL;
-
-    if (NULL == mNativeData) {
-      return;
-    }
-    ScopedAttach attach(mNativeData->vm, &e);
-    if (e == NULL)
-    {
-        DLOG_IF(ERROR, nfc_debug_enabled)
-            << StringPrintf("%s: jni env is null", __func__);
-        return;
-    }
-    e->CallVoidMethod (mNativeData->manager, android::gCachedNfcManagerNotifySrdEvt, (int)event);
-    CHECK(!e->ExceptionCheck());
-}
-#endif
 /*******************************************************************************
 **
 ** Function:        transceive

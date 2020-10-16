@@ -58,6 +58,9 @@
 #include "NativeT4tNfcee.h"
 #include "nfa_nfcee_int.h"
 #include "NfcSelfTest.h"
+#if (NXP_SRD == TRUE)
+#include "SecureDigitization.h"
+#endif
 #endif
 
 #include "ce_api.h"
@@ -214,7 +217,6 @@ void enableLastRfDiscovery();
 void storeLastDiscoveryParams(int technologies_mask, bool enable_lptd,
                               bool reader_mode, bool enable_host_routing,
                               bool enable_p2p, bool restart);
-jmethodID  gCachedNfcManagerNotifySrdEvt;
 #endif
 jmethodID  gCachedNfcManagerNotifySeListenActivated;
 jmethodID  gCachedNfcManagerNotifySeListenDeactivated;
@@ -968,6 +970,9 @@ static jboolean nfcManager_initNativeStruc(JNIEnv* e, jobject o) {
   e->SetLongField(o, f, (jlong)nat);
 #if(NXP_EXTNS == TRUE)
   MposManager::initMposNativeStruct(e, o);
+#if (NXP_SRD == TRUE)
+  SecureDigitization::getInstance().initSrdNativeStruct(e, o);
+#endif
 #endif
   /* Initialize native cached references */
   gCachedNfcManagerNotifyNdefMessageListeners =
@@ -1006,8 +1011,6 @@ static jboolean nfcManager_initNativeStruc(JNIEnv* e, jobject o) {
       e->GetMethodID(cls.get(),"notifySeListenDeactivated", "()V");
   gCachedNfcManagerNotifySeInitialized =
       e->GetMethodID(cls.get(),"notifySeInitialized", "()V");
-  gCachedNfcManagerNotifySrdEvt =
-      e->GetMethodID(cls.get(),"notifySrdEvt", "(I)V");
   gCachedNfcManagerNotifyTagAbortListeners =
       e->GetMethodID(cls.get(), "notifyTagAbort", "()V");
 #endif
@@ -1619,6 +1622,9 @@ static jboolean nfcManager_doInitialize(JNIEnv* e, jobject o) {
 #if(NXP_EXTNS == TRUE)
         MposManager::getInstance().initialize(getNative(e, o));
         NativeT4tNfcee::getInstance().initialize();
+#if (NXP_SRD == TRUE)
+        SecureDigitization::getInstance().initialize(getNative(e, o));
+#endif
         if(NFA_STATUS_OK != NFA_RegVSCback (true,nfaVSCNtfCallback)) { //Register CallBack for Lx Debug notifications
           LOG(ERROR) << StringPrintf("%s:  nfaVSCNtfCallback resgister failed..!", __func__);
         }

@@ -57,7 +57,9 @@
 #include "rw_api.h"
 #if (NXP_EXTNS == TRUE)
 #include "NativeJniExtns.h"
-#include "nfa_srd_int.h"
+#if(NXP_SRD == TRUE)
+#include "SecureDigitization.h"
+#endif
 #endif
 
 using android::base::StringPrintf;
@@ -1008,7 +1010,7 @@ static bool switchRfInterface(tNFA_INTF_TYPE rfInterface) {
 
   return (0 == reSelect(rfInterface, true));
 }
-#if(NXP_EXTNS == TRUE)
+#if(NXP_EXTNS == TRUE && NXP_SRD == TRUE)
 /*******************************************************************************
 **
 ** Function:        nativeNfcTag_getSrdState
@@ -1019,7 +1021,7 @@ static bool switchRfInterface(tNFA_INTF_TYPE rfInterface) {
 **
 *******************************************************************************/
 static jint nativeNfcTag_getSrdState(JNIEnv*, jobject) {
-return nfa_srd_get_state();
+return SecureDigitization::getInstance().getSrdState();
 }
 #endif
 /*******************************************************************************
@@ -1117,9 +1119,12 @@ tNFA_STATUS nativeNfcTag_safeDisconnect() {
 *******************************************************************************/
 static tNFA_STATUS nativeNfcTag_performHaltPICC() {
   tNFA_STATUS status = NFA_STATUS_OK;
-  if(nativeNfcTag_getSrdState(NULL, NULL) == ENABLE) {
+#if(NXP_SRD == TRUE)
+  static const uint8_t ENABLE = 0x01;
+  if(SecureDigitization::getInstance().getSrdState() == ENABLE) {
     return status;
   }
+#endif
   if (sCurrentActivatedProtocl == NFA_PROTOCOL_T2T ||
       (sCurrentActivatedProtocl == NFA_PROTOCOL_ISO_DEP &&
        sCurrentActivatedMode == TARGET_TYPE_ISO14443_3A)) {
@@ -2324,7 +2329,7 @@ static JNINativeMethod gMethods[] = {
      (void*)nativeNfcTag_doIsIsoDepNdefFormatable},
     {"doNdefFormat", "([B)Z", (void*)nativeNfcTag_doNdefFormat},
     {"doMakeReadonly", "([B)Z", (void*)nativeNfcTag_doMakeReadonly},
-#if(NXP_EXTNS == TRUE)
+#if(NXP_EXTNS == TRUE && NXP_SRD == TRUE)
     {"doGetSrdState", "()I", (void*)nativeNfcTag_getSrdState},
 #endif
 };
