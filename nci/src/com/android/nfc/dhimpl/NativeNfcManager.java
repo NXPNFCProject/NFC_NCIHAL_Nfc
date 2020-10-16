@@ -615,6 +615,12 @@ public class NativeNfcManager implements DeviceHost {
     private void notifyTransactionListeners(byte[] aid, byte[] data, String evtSrc) {
         mListener.onNfcTransactionEvent(aid, data, evtSrc);
     }
+    /**
+     * Notifies Tag abort operation
+     */
+    private void notifyTagAbort() {
+        mListener.notifyTagAbort();
+    }
 /* NXP extension are here */
     @Override
     public native int getFWVersion();

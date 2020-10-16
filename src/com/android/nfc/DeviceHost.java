@@ -84,6 +84,8 @@ public interface DeviceHost {
         public void onNfcTransactionEvent(byte[] aid, byte[] data, String seName);
 
         public void onLxDebugConfigData(int len, byte[] data);
+
+        public void notifyTagAbort();
     }
 
     public interface TagEndpoint {

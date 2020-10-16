@@ -636,6 +636,11 @@ public class NfcService implements DeviceHostListener {
         sendMessage(NfcService.MSG_SE_INIT, null);
     }
 
+    @Override
+    public void notifyTagAbort() {
+        maybeDisconnectTarget();
+    }
+
     public void onNotifySrdEvt(int event) {
       Log.e(TAG, " Broadcasting SRD evt" + event);
       int NFA_SRD_EVT_TIMEOUT = 33;
