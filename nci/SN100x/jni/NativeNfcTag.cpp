@@ -943,9 +943,9 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
         } while (sConnectOk == false && retry < 3);
 #if (NXP_EXTNS == TRUE)
       }
-#endif
       if (NfcTag::getInstance().getNumDiscNtf())
         NfcTag::getInstance().setNumDiscNtf(0);
+#endif
     }
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
         "%s: select completed; sConnectOk=%d", __func__, sConnectOk);
