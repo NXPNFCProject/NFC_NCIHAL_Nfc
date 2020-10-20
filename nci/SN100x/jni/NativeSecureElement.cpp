@@ -38,8 +38,9 @@ namespace android
 #define INVALID_LEN_SW1 0x64
 #define INVALID_LEN_SW2 0xFF
 
-#define ESE_RESET_PROTECTION_ENABLE  0x07
-#define ESE_RESET_PROTECTION_DISABLE  0x08
+#define ESE_RESET_PROTECTION_ENABLE  0x14
+#define ESE_RESET_PROTECTION_DISABLE  0x15
+#define NFA_ESE_HARD_RESET  0x13
 static const int EE_ERROR_INIT = -3;
 static void NxpNfc_ParsePlatformID(const uint8_t*);
 extern bool nfcManager_isNfcActive();
