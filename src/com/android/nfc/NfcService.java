@@ -1972,12 +1972,14 @@ public class NfcService implements DeviceHostListener {
 
         public int getReaderMode (String readerType) {
           int reader = SE_READER_TYPE_INAVLID;
-          if(readerType.equals("MPOS")) {
+          if((readerType == null) || (readerType.isEmpty())) {
+            /* Invalid Secure Reader Type received. */
+          } else if(readerType.equals("MPOS")) {
             reader =  SE_READER_TYPE_MPOS;
           } else if (readerType.equals("MFC")) {
             reader = SE_READER_TYPE_MFC;
           } else {
-             /* Invalid Secure Reader Type received. */
+            /* Invalid Secure Reader Type received. */
           }
           return reader;
         }
@@ -3124,8 +3126,8 @@ public class NfcService implements DeviceHostListener {
         mDeviceHost.setRoutingEntry(PROTOCOL_ENTRY, NFC_LISTEN_PROTO_ISO_DEP, ((protoRoute >> ROUTE_LOC_MASK) & 0x07), protoRoute & 0x3F);
 
         /* Routing for Technology */
-        TechSeId = (techRoute >> ROUTE_LOC_MASK);
-        TechFSeId = (techfRoute >> ROUTE_LOC_MASK);
+        TechSeId = ((techRoute >> ROUTE_LOC_MASK) & 0x07);
+        TechFSeId = ((techfRoute >> ROUTE_LOC_MASK) & 0x07);
         /* Technology types are masked internally depending on the capability of SE */
         if(techRoute == techfRoute)
         {
@@ -3295,22 +3297,6 @@ public class NfcService implements DeviceHostListener {
         aidbundle.putInt("power",power);
         msg.setData(aidbundle);
         mHandler.sendMessage(msg);
-    }
-
-     /**
-     * set default  Aid route entry in case application does not configure this route entry
-     */
-    public void setDefaultAidRouteLoc( int routeLoc)
-    {
-        mNxpPrefsEditor = mNxpPrefs.edit();
-        Log.d(TAG, "writing to preferences setDefaultAidRouteLoc  :" + routeLoc);
-
-        int defaultAidRoute = ((mDeviceHost.getDefaultAidPowerState() & 0x3F) | (routeLoc << ROUTE_LOC_MASK));
-
-        mNxpPrefsEditor.putInt("PREF_SET_DEFAULT_ROUTE_ID", defaultAidRoute);
-        mNxpPrefsEditor.commit();
-        int defaultRoute=mNxpPrefs.getInt("PREF_SET_DEFAULT_ROUTE_ID",0xFF);
-        Log.d(TAG, "reading preferences from user  :" + defaultRoute);
     }
 
     public void unrouteAids(String aid) {
