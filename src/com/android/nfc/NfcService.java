@@ -445,7 +445,6 @@ public class NfcService implements DeviceHostListener {
     // and the default AsyncTask thread so it is read unprotected from that
     // thread
     int mState;  // one of NfcAdapter.STATE_ON, STATE_TURNING_ON, etc
-    int mNxpNfcState = NXP_NFC_STATE_OFF;
 
     // fields below are final after onCreate()
     Context mContext;
@@ -1053,13 +1052,17 @@ public class NfcService implements DeviceHostListener {
          * Does not toggle preferences.
          */
         boolean enableInternal() {
-            if (mState == NfcAdapter.STATE_ON) {
-                return true;
+            synchronized (NfcService.this) {
+                if (mState == NfcAdapter.STATE_ON || mState == NfcAdapter.STATE_TURNING_ON) {
+                    return true;
+                }
+                if(mState == NfcAdapter.STATE_TURNING_OFF) {
+                    return false;
+                }
+                Log.i(TAG, "Enabling NFC");
+                NfcStatsLog.write(NfcStatsLog.NFC_STATE_CHANGED, NfcStatsLog.NFC_STATE_CHANGED__STATE__ON);
+                updateState(NfcAdapter.STATE_TURNING_ON);
             }
-            Log.i(TAG, "Enabling NFC");
-            NfcStatsLog.write(
-                    NfcStatsLog.NFC_STATE_CHANGED, NfcStatsLog.NFC_STATE_CHANGED__STATE__ON);
-            updateState(NfcAdapter.STATE_TURNING_ON);
 
             WatchDogThread watchDog = new WatchDogThread("enableInternal", INIT_WATCHDOG_MS);
             watchDog.start();
@@ -1095,8 +1098,6 @@ public class NfcService implements DeviceHostListener {
                 if (mIsBeamCapable) {
                     mP2pLinkManager.enableDisable(mIsNdefPushEnabled, true);
                 }
-                updateState(NfcAdapter.STATE_ON);
-
                 onPreferredPaymentChanged(NfcAdapter.PREFERRED_PAYMENT_LOADED);
             }
 
@@ -1120,7 +1121,7 @@ public class NfcService implements DeviceHostListener {
             /* WiredSe Init after ESE is discovered and initialised */
             initWiredSe();
             synchronized (NfcService.this) {
-                mNxpNfcState = NXP_NFC_STATE_ON;
+                updateState(NfcAdapter.STATE_ON);
             }
             return true;
         }
@@ -1130,13 +1131,17 @@ public class NfcService implements DeviceHostListener {
          * Does not toggle preferences.
          */
         boolean disableInternal() {
-            if (mState == NfcAdapter.STATE_OFF) {
-                return true;
+            synchronized (NfcService.this) {
+                if (mState == NfcAdapter.STATE_OFF || mState == NfcAdapter.STATE_TURNING_OFF) {
+                    return true;
+                }
+                if (mState == NfcAdapter.STATE_TURNING_ON) {
+                    return false;
+                }
+                Log.i(TAG, "Disabling NFC ");
+                NfcStatsLog.write(NfcStatsLog.NFC_STATE_CHANGED, NfcStatsLog.NFC_STATE_CHANGED__STATE__OFF);
+                updateState(NfcAdapter.STATE_TURNING_OFF);
             }
-            Log.i(TAG, "Disabling NFC");
-            NfcStatsLog.write(
-                    NfcStatsLog.NFC_STATE_CHANGED, NfcStatsLog.NFC_STATE_CHANGED__STATE__OFF);
-            updateState(NfcAdapter.STATE_TURNING_OFF);
             deInitWiredSe();
             /* Sometimes mDeviceHost.deinitialize() hangs, use a watch-dog.
              * Implemented with a new thread (instead of a Handler or AsyncTask),
@@ -1174,7 +1179,6 @@ public class NfcService implements DeviceHostListener {
                     mReaderModeParams = null;
                 }
                 updateState(NfcAdapter.STATE_OFF);
-                mNxpNfcState = NXP_NFC_STATE_OFF;
             }
 
             releaseSoundPool();
@@ -1262,14 +1266,6 @@ public class NfcService implements DeviceHostListener {
         @Override
         public boolean enable() throws RemoteException {
             NfcPermissions.enforceAdminPermissions(mContext);
-            synchronized (NfcService.this) {
-                if (mNxpNfcState != NXP_NFC_STATE_OFF) {
-                    Log.e(TAG, "mNxpNfcStateis not equal to NXP_NFC_STATE_OFF."
-                                + " Enable NFC Rejected.");
-                    return false;
-                }
-                mNxpNfcState = NXP_NFC_STATE_TURNING_ON;
-            }
 
             saveNfcOnSetting(true);
 
@@ -1288,23 +1284,16 @@ public class NfcService implements DeviceHostListener {
        }
         @Override
         public boolean disable(boolean saveState) throws RemoteException {
-            NfcPermissions.enforceAdminPermissions(mContext);
-            synchronized (NfcService.this) {
-                if (mNxpNfcState != NXP_NFC_STATE_ON) {
-                    Log.e(TAG, "mNxpNfcStateis not equal to NXP_NFC_STATE_ON."
-                    + " Disable NFC Rejected.");
-                    return false;
-                }
-                mNxpNfcState = NXP_NFC_STATE_TURNING_OFF;
-            }
 
-            if (saveState) {
-                saveNfcOnSetting(false);
-            }
+          NfcPermissions.enforceAdminPermissions(mContext);
 
-            new EnableDisableTask().execute(TASK_DISABLE);
+          if (saveState) {
+            saveNfcOnSetting(false);
+          }
 
-            return true;
+          new EnableDisableTask().execute(TASK_DISABLE);
+
+          return true;
         }
 
         @Override
