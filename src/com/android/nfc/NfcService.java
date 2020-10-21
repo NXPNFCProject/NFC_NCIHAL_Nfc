@@ -4397,8 +4397,10 @@ public class NfcService implements DeviceHostListener {
                     }
                     if (!mAntennaBlockedMessageShown && mDispatchFailedCount++ > mDispatchFailedMax) {
                         new NfcBlockedNotification(mContext).startNotification();
-                        mPrefsEditor.putBoolean(PREF_ANTENNA_BLOCKED_MESSAGE_SHOWN, true);
-                        mPrefsEditor.apply();
+                        synchronized (NfcService.this) {
+                            mPrefsEditor.putBoolean(PREF_ANTENNA_BLOCKED_MESSAGE_SHOWN, true);
+                            mPrefsEditor.apply();
+                        }
                         mBackupManager.dataChanged();
                         mAntennaBlockedMessageShown = true;
                         mDispatchFailedCount = 0;
