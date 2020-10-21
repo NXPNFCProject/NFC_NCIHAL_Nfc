@@ -41,13 +41,12 @@ import android.app.ActivityThread;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningTaskInfo;
 import com.android.nfc.NfcService;
+import com.android.nfc.NfcStatsLog;
 import android.util.SparseArray;
 import android.util.proto.ProtoOutputStream;
-import com.android.nfc.NfcStatsLog;
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.util.Collections;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -55,9 +54,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Hashtable;
 import android.os.SystemProperties;
 public class AidRoutingManager {
