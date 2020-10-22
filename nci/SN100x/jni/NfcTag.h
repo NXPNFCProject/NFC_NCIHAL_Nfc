@@ -45,6 +45,7 @@
 #define MIN_FWI (0)
 #define MAX_FWI (14)
 #define NON_STD_CARD_SAK (0x13)
+#define TIME_MUL_100MS 100
 
 typedef struct activationParams {
   int mTechParams;
@@ -56,6 +57,12 @@ class NfcTag {
  public:
 #if (NXP_EXTNS == TRUE)
   enum ActivationState { Idle, Sleep, Active, InActive };
+  enum ProcessNonStdTagState { Activated, Discovery };
+  enum NonStdTagRefTimeIndx { MFC, ISO_DEP };
+  typedef struct NonStdTagProcParams {
+    tNFC_ACTIVATE_DEVT activate_ntf; /* RF discovery activation details */
+    tNFC_RESULT_DEVT discovery_ntf;  /* RF discovery notification details */
+  } nonStdTagProcParams_t;
 #else
   enum ActivationState { Idle, Sleep, Active };
 #endif
@@ -83,9 +90,11 @@ class NfcTag {
   bool mIsNonStdMFCTag;
   bool mIsSkipNdef;
   struct timespec LastDetectedTime;
-  uint32_t mNonStdCardTimeDiff;
+  vector<uint32_t> mNonStdCardTimeDiff;
+  nonStdTagProcParams_t mNonStdTagdata;
   bool isNonStdCardSupported;
   bool isNonStdTagDetected;
+  bool isIsoDepDhReqFailed;
 #endif
 
   /*******************************************************************************
@@ -234,17 +243,17 @@ class NfcTag {
    *******************************************************************************/
   static void notifyNfcAbortTagops(union sigval);
 
-  /*******************************************************************************
-  **
-  ** Function         isNonStdMFCTag
-  **
-  ** Description      Computes time difference in milliseconds and set skipNdef
-  **                  flag to true if timediff is less the configured time set.
-  **
-  ** Returns          TRUE(time diff less than reference)/FALSE(Otherwise)
-  **
-  *******************************************************************************/
-  bool isNonStdMFCTag();
+/*******************************************************************************
+**
+** Function         isTagDetectedInRefTime
+**
+** Description      Computes time difference in milliseconds and compare it
+**                  with the reference provided.
+**
+** Returns          TRUE(time diff less than reference)/FALSE(Otherwise)
+**
+*******************************************************************************/
+bool isTagDetectedInRefTime(uint32_t nonStdCardRefTime);
 
   /*******************************************************************************
   **
@@ -662,18 +671,19 @@ class NfcTag {
   *******************************************************************************/
   void storeActivationParams();
 
-  /*******************************************************************************
-  **
-  ** Function:        processNonStandardTag
-  **
-  ** Description:     Handle Non standard Tag
-  *
-  **                  discoveryData: reference to Discovery data.
-  **
-  ** Returns:         None
-  **
-  *******************************************************************************/
-  void processNonStandardTag(tNFA_DISC_RESULT& discoveryData);
+ /*******************************************************************************
+**
+** Function:        processNonStandardTag
+**
+** Description:     Handle Non standard Tag
+*
+**                  state: Tag Activated or discovery state
+**                  Data: The Discovery and Activated ntf information.
+**
+** Returns:         None
+**
+*******************************************************************************/
+void processNonStandardTag(ProcessNonStdTagState state, nonStdTagProcParams_t data);
 #endif
 
   /*******************************************************************************

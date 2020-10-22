@@ -148,6 +148,7 @@ extern void nativeNfcTag_setRfProtocol(tNFA_INTF_TYPE rfProtocol, uint8_t mode);
 extern uint8_t nativeNfcTag_getActivatedMode();
 extern void nfaVSCNtfCallback(uint8_t event, uint16_t param_len, uint8_t *p_param);
 extern void nativeNfcTag_updateMFCActivationFailTime();
+extern void nativeNfcTag_updateDhReqFailTime();
 #endif
 }  // namespace android
 
@@ -552,6 +553,11 @@ static void nfaConnectionCallback(uint8_t connEvent,
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: NFA_DEACTIVATE_FAIL_EVT: status = %d", __func__,
                           eventData->status);
+#if (NXP_EXTNS == TRUE)
+      if (eventData->status == NFC_DEACTIVATE_REASON_DH_REQ_FAILED) {
+        nativeNfcTag_updateDhReqFailTime();
+      }
+#endif
       break;
 
     case NFA_ACTIVATED_EVT:  // NFC link/protocol activated

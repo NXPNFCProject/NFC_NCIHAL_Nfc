@@ -323,6 +323,28 @@ void nativeNfcTag_updateMFCActivationFailTime() {
   }
 }
 
+/*******************************************************************************
+ **
+ ** Function:        nativeNfcTag_updateDhReqFailTime
+ **
+ ** Description:     Update Time in case ISO DEP Deact Sleep failed.
+ **
+ ** Returns:         None
+ **
+ *******************************************************************************/
+void nativeNfcTag_updateDhReqFailTime() {
+  DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s: Enter", __func__);
+  int ret = clock_gettime(CLOCK_MONOTONIC,
+                            &(NfcTag::getInstance().LastDetectedTime));
+  if (ret == -1) {
+    DLOG_IF(ERROR, nfc_debug_enabled)
+          << StringPrintf("Log : clock_gettime failed");
+    NfcTag::getInstance().isIsoDepDhReqFailed = false;
+  } else {
+    NfcTag::getInstance().isIsoDepDhReqFailed = true;
+  }
+}
 #endif
 /*******************************************************************************
 **
