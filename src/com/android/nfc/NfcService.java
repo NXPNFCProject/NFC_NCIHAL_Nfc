@@ -119,6 +119,8 @@ import com.android.nfc.dhimpl.NativeNfcSecureElement;
 import com.android.nfc.handover.HandoverDataParser;
 import com.nxp.nfc.INxpNfcAdapter;
 import com.nxp.nfc.INxpNfcAdapterExtras;
+import com.nxp.nfc.INxpWlcAdapter;
+import com.nxp.nfc.INxpWlcCallBack;
 import com.nxp.nfc.NfcAidServiceInfo;
 import com.nxp.nfc.NfcConstants;
 
@@ -233,8 +235,7 @@ public class NfcService implements DeviceHostListener {
     static final int MSG_LX_DATA_RECEIVED             = 79;
     static final int MSG_WLC_ENABLE                   = 80;
     static final int MSG_WLC_DISABLE                  = 81;
-    static final int MSG_WLC_START_WPT                = 82;
-    static final int MSG_WLC_STOP_WPT                 = 83;
+    static final int MSG_WLC_IS_LISTENER_DETECTED     = 82;
     public static final int MSG_SRD_EVT_TIMEOUT = 84;
     public static final int MSG_SRD_EVT_FEATURE_NOT_SUPPORT = 85;
     private int SE_READER_TYPE = SE_READER_TYPE_INAVLID;
@@ -473,6 +474,7 @@ public class NfcService implements DeviceHostListener {
     NfcDtaService mNfcDtaService;
     NxpNfcAdapterExtrasService mNxpExtrasService;
     NxpNfcAdapterService mNxpNfcAdapter;
+    NxpWlcAdapterService mNxpWlcAdapter;
     boolean mIsDebugBuild;
     boolean mIsHceCapable;
     boolean mIsHceFCapable;
@@ -877,6 +879,7 @@ public class NfcService implements DeviceHostListener {
                 Context.SECURE_ELEMENT_SERVICE));
         try {
           mWlc = new WlcServiceProxy(mContext, mNxpPrefs);
+          mNxpWlcAdapter = new NxpWlcAdapterService(mContext,mWlc);
         } catch (Exception e) {
           Log.e(TAG, "Error Initializing WLC service module");
         }
@@ -1091,7 +1094,7 @@ public class NfcService implements DeviceHostListener {
 
             try {
               if (mWlc.isToBeEnabled())
-                mWlc.enable();
+                mWlc.enable(WlcServiceProxy.PersistStatus.IGNORE);
             } catch (Exception e) {
               Log.e(TAG, "Error enabling WlcService");
             }
@@ -1157,7 +1160,8 @@ public class NfcService implements DeviceHostListener {
                 updateState(NfcAdapter.STATE_TURNING_OFF);
             }
             try {
-              mWlc.disable();
+              mWlc.disable(WlcServiceProxy.PersistStatus.IGNORE);
+              mWlc.deRegisterCallBack();
             } catch (Exception e) {
               Log.e(TAG, "Error disabling WlcService");
             }
@@ -1740,7 +1744,7 @@ public class NfcService implements DeviceHostListener {
                 R.array.config_skuSupportsSecureNfc);
             String sku = SystemProperties.get("ro.boot.hardware.sku");
             if (TextUtils.isEmpty(sku) || !ArrayUtils.contains(skuList, sku)) {
-                return false;
+                return true;
             }
             return true;
         }
@@ -1772,6 +1776,8 @@ public class NfcService implements DeviceHostListener {
         public IBinder getNfcAdapterVendorInterface(String vendor) {
             if(vendor.equalsIgnoreCase("nxp")) {
                 return (IBinder) mNxpNfcAdapter;
+            } else if (vendor.equalsIgnoreCase("wlc")){
+                return (IBinder) mNxpWlcAdapter;
             } else {
                 return null;
             }
@@ -2460,49 +2466,10 @@ public class NfcService implements DeviceHostListener {
           return readData;
         }
 
+        @Override
         public int enableDebugNtf(byte fieldValue) {
           NfcPermissions.enforceUserPermissions(mContext);
           return mDeviceHost.doEnableDebugNtf(fieldValue);
-        }
-
-        @Override
-        public int enableWlc() throws RemoteException{
-          NfcPermissions.enforceUserPermissions(mContext);
-          if (!isNfcEnabled())
-            throw new RemoteException("NFC is not enabled");
-          if (mWlc == null)
-            throw new RemoteException("Wlc feature is not available ");
-          try {
-            int status = mWlc.enable();
-            if (status == ErrorCodes.SUCCESS) {
-              mNxpPrefsEditor = mNxpPrefs.edit();
-              mNxpPrefsEditor.putBoolean("PREF_WLC_ENABLE_STATUS", true);
-              mNxpPrefsEditor.commit();
-            }
-            return status;
-          } catch (Exception e) {
-            throw new RemoteException();
-          }
-        }
-
-        @Override
-        public int disableWlc() throws RemoteException {
-          NfcPermissions.enforceUserPermissions(mContext);
-          if (!isNfcEnabled())
-            throw new RemoteException("NFC is not enabled");
-          if (mWlc == null)
-            throw new RemoteException("Wlc feature is not available ");
-          try {
-            int status = mWlc.disable();
-            if (status == ErrorCodes.SUCCESS) {
-              mNxpPrefsEditor = mNxpPrefs.edit();
-              mNxpPrefsEditor.putBoolean("PREF_WLC_ENABLE_STATUS", false);
-              mNxpPrefsEditor.commit();
-            }
-            return status;
-          } catch (Exception e) {
-            throw new RemoteException();
-          }
         }
     }
 
@@ -3941,10 +3908,10 @@ public class NfcService implements DeviceHostListener {
                  break;
                }
                case MSG_WLC_ENABLE:
+                 mWlc.enable(WlcServiceProxy.PersistStatus.UPDATE);
+                 break;
                case MSG_WLC_DISABLE:
-               case MSG_WLC_START_WPT:
-               case MSG_WLC_STOP_WPT:
-                    mWlc.handleEvent(msg);
+                mWlc.disable(WlcServiceProxy.PersistStatus.UPDATE);
                 break;
                default:
                  Log.e(TAG, "Unknown message received");

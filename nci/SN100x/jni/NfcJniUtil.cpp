@@ -44,7 +44,6 @@
 #include "RoutingManager.h"
 #if (NXP_EXTNS == TRUE)
 #include "NativeJniExtns.h"
-#include "NativeWlcManager.h"
 #endif
 using android::base::StringPrintf;
 
@@ -91,7 +90,6 @@ jint JNI_OnLoad(JavaVM* jvm, void*) {
   if (android::register_com_android_nfc_NativeT4tNfcee(e) == -1)
     return JNI_ERR;
   NativeJniExtns::getInstance().initialize(e);
-  if (wlcManager.registerNatives(e) == -1) return JNI_ERR;
 #endif
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
   return JNI_VERSION_1_6;

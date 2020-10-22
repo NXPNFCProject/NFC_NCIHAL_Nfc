@@ -50,7 +50,6 @@
 #include "phNxpExtns.h"
 #include "rw_int.h"
 #if (NXP_EXTNS == TRUE)
-#include "NativeWlcManager.h"
 #include "IntervalTimer.h"
 #endif
 
@@ -1079,10 +1078,6 @@ void NfcTag::fillNativeNfcTagMembers3(JNIEnv* e, jclass tag_cls, jobject tag,
       LOG(ERROR) << StringPrintf("%s: tech unknown ????", fn);
       pollBytes.reset(e->NewByteArray(0));
     }  // switch: every type of technology
-#if (NXP_EXTNS == TRUE)
-    if (NFC_DISCOVERY_TYPE_POLL_WLC == mTechParams[i].mode)
-      wlcManager.notifyTagDetectedOnWlcAntenna();
-#endif
     e->SetObjectArrayElement(techPollBytes.get(), i, pollBytes.get());
   }  // for: every technology in the array
   if (sTechPollBytes != NULL && mTechListTail != 0) {
