@@ -1565,10 +1565,9 @@ static jboolean nfcManager_doInitialize(JNIEnv* e, jobject o) {
   }
 #if (NXP_EXTNS == TRUE)
     mwVer=  NFA_GetMwVersion();
-    LOG(ERROR) << StringPrintf(
-        "%s:  MW Version: NFC_AR_%02X_%04X_%02d.%02x.%02x", __func__,
-        mwVer.cust_id, mwVer.validation, mwVer.android_version,
-        mwVer.major_version, mwVer.minor_version);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+        "%s:  CBC Version: NFC_AR_%02X_%02X.%02d", __func__,
+        mwVer.cust_id,  mwVer.cbc_major_version, mwVer.cbc_minor_version);
 
     if (NfcConfig::hasKey(NAME_NXP_DUAL_UICC_ENABLE)) {
       isDynamicUiccEnabled = NfcConfig::getUnsigned(NAME_NXP_DUAL_UICC_ENABLE);
@@ -1605,6 +1604,12 @@ static jboolean nfcManager_doInitialize(JNIEnv* e, jobject o) {
       }
       EXTNS_Init(nfaDeviceManagementCallback, nfaConnectionCallback);
     }
+    mwVer=  NFA_GetMwVersion();
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+        "%s:  MW Version: NFC_AR_%02X_%02d.%02x_%04X_%02d.%02x.%02x", __func__,
+        mwVer.cust_id, mwVer.cbc_major_version, mwVer.cbc_minor_version,
+        mwVer.validation, mwVer.android_version, mwVer.major_version,
+        mwVer.minor_version);
 
     if (stat == NFA_STATUS_OK) {
       // sIsNfaEnabled indicates whether stack started successfully
