@@ -1744,7 +1744,7 @@ public class NfcService implements DeviceHostListener {
                 R.array.config_skuSupportsSecureNfc);
             String sku = SystemProperties.get("ro.boot.hardware.sku");
             if (TextUtils.isEmpty(sku) || !ArrayUtils.contains(skuList, sku)) {
-                return true;
+                return false;
             }
             return true;
         }
@@ -2466,7 +2466,6 @@ public class NfcService implements DeviceHostListener {
           return readData;
         }
 
-        @Override
         public int enableDebugNtf(byte fieldValue) {
           NfcPermissions.enforceUserPermissions(mContext);
           return mDeviceHost.doEnableDebugNtf(fieldValue);
