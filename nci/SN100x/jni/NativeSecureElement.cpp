@@ -261,7 +261,7 @@ static jbyteArray nativeNfcSecureElement_doGetAtr (JNIEnv* e, jobject, jint hand
 static jbyteArray nativeNfcSecureElement_doTransceive (JNIEnv* e, jobject, jint handle, jbyteArray data)
 {
     const int32_t recvBufferMaxSize = 0x800B;//32k(8000) datasize + 10b Protocol Header Size + 1b support neg testcase
-    uint8_t recvBuffer [recvBufferMaxSize];
+    std::unique_ptr<uint8_t> recvBuffer(new uint8_t[recvBufferMaxSize]);;
     int32_t recvBufferActualSize = 0;
     ScopedByteArrayRW bytes(e, data);
     LOG(INFO) << StringPrintf("%s: enter; handle=0x%X; buf len=%zu", __func__, handle, bytes.size());
@@ -279,13 +279,13 @@ static jbyteArray nativeNfcSecureElement_doTransceive (JNIEnv* e, jobject, jint 
     if(!se.mIsWiredModeOpen)
         return NULL;
 
-    se.transceive(reinterpret_cast<uint8_t*>(&bytes[0]), bytes.size(), recvBuffer, recvBufferMaxSize, recvBufferActualSize, se.SmbTransceiveTimeOutVal);
+    se.transceive(reinterpret_cast<uint8_t*>(&bytes[0]), bytes.size(), recvBuffer.get(), recvBufferMaxSize, recvBufferActualSize, se.SmbTransceiveTimeOutVal);
 
     //copy results back to java
     jbyteArray result = e->NewByteArray(recvBufferActualSize);
     if (result != NULL)
     {
-        e->SetByteArrayRegion(result, 0, recvBufferActualSize, (jbyte *) recvBuffer);
+        e->SetByteArrayRegion(result, 0, recvBufferActualSize, (jbyte *) recvBuffer.get());
     }
 
     LOG(INFO) << StringPrintf("%s: exit: recv len=%d", __func__, recvBufferActualSize);
