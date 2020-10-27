@@ -947,11 +947,11 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
       LOG(ERROR) << StringPrintf("%s: waiting for Card to be activated", __func__);
       int retry = 0;
       sConnectWaitingForComplete = JNI_TRUE;
-#if(NXP_EXTN==TRUE)
+#if(NXP_EXTNS==TRUE)
       if (IS_MULTIPROTO_MFC_TAG() &&
               NfcTag::getInstance().isNonStdCardSupported) {
         natTag.mIsNonStdMFCTag = true;
-      } else 
+      } else
 #endif
       {
         do {
