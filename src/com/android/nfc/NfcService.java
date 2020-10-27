@@ -1098,6 +1098,7 @@ public class NfcService implements DeviceHostListener {
                 if (mIsBeamCapable) {
                     mP2pLinkManager.enableDisable(mIsNdefPushEnabled, true);
                 }
+                updateState(NfcAdapter.STATE_ON);
                 onPreferredPaymentChanged(NfcAdapter.PREFERRED_PAYMENT_LOADED);
             }
 
@@ -1120,9 +1121,6 @@ public class NfcService implements DeviceHostListener {
             commitRouting();
             /* WiredSe Init after ESE is discovered and initialised */
             initWiredSe();
-            synchronized (NfcService.this) {
-                updateState(NfcAdapter.STATE_ON);
-            }
             return true;
         }
 
