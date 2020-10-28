@@ -148,7 +148,6 @@ extern void nativeNfcTag_setRfProtocol(tNFA_INTF_TYPE rfProtocol, uint8_t mode);
 extern uint8_t nativeNfcTag_getActivatedMode();
 extern void nfaVSCNtfCallback(uint8_t event, uint16_t param_len, uint8_t *p_param);
 extern void nativeNfcTag_updateMFCActivationFailTime();
-extern void nativeNfcTag_updateDhReqFailTime();
 #endif
 }  // namespace android
 
@@ -555,7 +554,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
                           eventData->status);
 #if (NXP_EXTNS == TRUE)
       if (eventData->status == NFC_DEACTIVATE_REASON_DH_REQ_FAILED) {
-        nativeNfcTag_updateDhReqFailTime();
+        NfcTag::getInstance().isIsoDepDhReqFailed = true;
       }
 #endif
       break;
@@ -571,6 +570,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
         NfcTag::getInstance().setNumDiscNtf(0);
       }
 #if (NXP_EXTNS == TRUE)
+        NfcTag::getInstance().isIsoDepDhReqFailed = false;
         if (NfcSelfTest::GetInstance().SelfTestType != TEST_TYPE_NONE) {
           NfcSelfTest::GetInstance().ActivatedNtf_Cb();
           break;

@@ -322,29 +322,6 @@ void nativeNfcTag_updateMFCActivationFailTime() {
     }
   }
 }
-
-/*******************************************************************************
- **
- ** Function:        nativeNfcTag_updateDhReqFailTime
- **
- ** Description:     Update Time in case ISO DEP Deact Sleep failed.
- **
- ** Returns:         None
- **
- *******************************************************************************/
-void nativeNfcTag_updateDhReqFailTime() {
-  DLOG_IF(INFO, nfc_debug_enabled)
-        << StringPrintf("%s: Enter", __func__);
-  int ret = clock_gettime(CLOCK_MONOTONIC,
-                            &(NfcTag::getInstance().LastDetectedTime));
-  if (ret == -1) {
-    DLOG_IF(ERROR, nfc_debug_enabled)
-          << StringPrintf("Log : clock_gettime failed");
-    NfcTag::getInstance().isIsoDepDhReqFailed = false;
-  } else {
-    NfcTag::getInstance().isIsoDepDhReqFailed = true;
-  }
-}
 #endif
 /*******************************************************************************
 **
@@ -884,6 +861,8 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
         if (natTag.mActivationParams_t.mTechParams ==
               NFC_DISCOVERY_TYPE_POLL_A) {
           natTag.mCashbeeDetected = true;
+          DLOG_IF(INFO, nfc_debug_enabled)
+              << StringPrintf("%s: CashBee Detected", __func__);
         }
       }
     }
@@ -909,9 +888,10 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
       if (natTag.isCashBeeActivated() == true) {
         DLOG_IF(INFO, nfc_debug_enabled)
             << StringPrintf("%s: Start RF discovery", __func__);
-        if (NFA_STATUS_OK != (status = NFA_StartRfDiscovery())) {
+        if (!NfcTag::getInstance().isIsoDepDhReqFailed &&
+              NFA_STATUS_OK != (status = NFA_StartRfDiscovery())) {
           LOG(ERROR) << StringPrintf("%s: deactivate failed, status = 0x%0X",
-                                     __func__, status);
+                                   __func__, status);
           break;
         }
       } else {

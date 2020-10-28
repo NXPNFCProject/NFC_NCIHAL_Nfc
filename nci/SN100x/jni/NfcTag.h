@@ -57,10 +57,8 @@ class NfcTag {
  public:
 #if (NXP_EXTNS == TRUE)
   enum ActivationState { Idle, Sleep, Active, InActive };
-  enum ProcessNonStdTagState { Activated, Discovery };
   enum NonStdTagRefTimeIndx { MFC, ISO_DEP };
   typedef struct NonStdTagProcParams {
-    tNFC_ACTIVATE_DEVT activate_ntf; /* RF discovery activation details */
     tNFC_RESULT_DEVT discovery_ntf;  /* RF discovery notification details */
   } nonStdTagProcParams_t;
 #else
@@ -677,13 +675,12 @@ bool isTagDetectedInRefTime(uint32_t nonStdCardRefTime);
 **
 ** Description:     Handle Non standard Tag
 *
-**                  state: Tag Activated or discovery state
-**                  Data: The Discovery and Activated ntf information.
+**                  Data: The Discovery ntf information.
 **
 ** Returns:         None
 **
 *******************************************************************************/
-void processNonStandardTag(ProcessNonStdTagState state, nonStdTagProcParams_t data);
+void processNonStandardTag();
 #endif
 
   /*******************************************************************************

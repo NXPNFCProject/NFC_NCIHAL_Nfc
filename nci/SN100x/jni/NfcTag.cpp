@@ -493,11 +493,6 @@ void NfcTag::discoverTechnologies(tNFA_ACTIVATED& activationData) {
   memcpy(&(mTechParams[mNumTechList]), &(rfDetail.rf_tech_param),
          sizeof(rfDetail.rf_tech_param));
 
-#if (NXP_EXTNS == TRUE)
-  mNonStdTagdata.activate_ntf = activationData.activate_ntf;
-  processNonStandardTag(Activated, mNonStdTagdata);
-#endif
-
   if (NFC_PROTOCOL_T1T == rfDetail.protocol) {
     mTechList[mNumTechList] =
         TARGET_TYPE_ISO14443_3A;  // is TagTechnology.NFC_A by Java API
@@ -662,7 +657,7 @@ void NfcTag::discoverTechnologies(tNFA_DISC_RESULT& discoveryData) {
   }
 #if (NXP_EXTNS == TRUE)
   mNonStdTagdata.discovery_ntf = discoveryData.discovery_ntf;
-  processNonStandardTag(Discovery, mNonStdTagdata);
+  processNonStandardTag();
 #endif
   if (discovery_ntf.more != NCI_DISCOVER_NTF_MORE) {
     for (int i = 0; i < mNumDiscTechList; i++) {
@@ -759,13 +754,16 @@ void NfcTag::createNativeNfcTag(tNFA_ACTIVATED& activationData) {
     e->DeleteGlobalRef(mNativeData->tag);
   }
   mNativeData->tag = e->NewGlobalRef(tag.get());
-
   DLOG_IF(INFO, nfc_debug_enabled)
      << StringPrintf("%s; mNumDiscNtf=%x", fn, mNumDiscNtf);
 /*  if(isNfcCombiCard() || !mNumDiscNtf || NfcTag::getInstance().checkNextValidProtocol() == -1) {*/
 
   if (isNfcCombiCard() || !mNumDiscNtf) {
     // notify NFC service about this new tag
+#if (NXP_EXTNS == TRUE)
+    storeActivationParams();
+#endif
+
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: try notify nfc service", fn);
     e->CallVoidMethod(mNativeData->manager,
@@ -825,24 +823,24 @@ bool NfcTag::isNfcCombiCard() {
 *******************************************************************************/
 void NfcTag::storeActivationParams() {
   static const char fn [] = "NfcTag::storeActivationParams";
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s", fn);
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Mode %d Types %d", fn,
+          mTechParams[0].mode, mTechLibNfcTypes[0]);
   mActivationParams_t.mTechParams = mTechParams[0].mode;
   mActivationParams_t.mTechLibNfcTypes = mTechLibNfcTypes [0];
 }
 
-/*******************************************************************************
+ /*******************************************************************************
 **
 ** Function:        processNonStandardTag
 **
 ** Description:     Handle Non standard Tag
 *
-**                  Data: The Discovery and/or Activated ntf.
+**                  Data: The Discovery ntf information.
 **
 ** Returns:         None
 **
 *******************************************************************************/
-void NfcTag::processNonStandardTag(ProcessNonStdTagState state,
-        nonStdTagProcParams_t data) {
+void NfcTag::processNonStandardTag() {
   if (!isNonStdCardSupported) {
     DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s:Non standard support disabled", __func__);
@@ -850,30 +848,15 @@ void NfcTag::processNonStandardTag(ProcessNonStdTagState state,
   }
   DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s:Non standard support enabled", __func__);
-  switch(state) {
-    case Activated: {
-      tNFC_ACTIVATE_DEVT& rfDetail = data.activate_ntf;
-      if (NFC_PROTOCOL_ISO_DEP == rfDetail.protocol && isIsoDepDhReqFailed &&
-              isTagDetectedInRefTime(mNonStdCardTimeDiff[ISO_DEP])) {
-        isNonStdTagDetected = true;
-      }
-      isIsoDepDhReqFailed = false;
-      break;
-    }
-    case Discovery: {
-      tNFC_RESULT_DEVT& discovery_ntf = data.discovery_ntf;
-      if (discovery_ntf.rf_tech_param.param.pa.sel_rsp == NON_STD_CARD_SAK) {
-        // Non Standard Transit => ISO-DEP
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-              "%s:Non standard Transit => change to ISO-DEP", __func__);
-        mTechLibNfcTypesDiscData[mNumDiscNtf] = NFC_PROTOCOL_ISO_DEP;
-        isNonStdTagDetected = true;
-      } else {
-        updateNdefState(discovery_ntf.protocol, discovery_ntf.more);
-      }
-      break;
-    }
-    default: {};
+  tNFC_RESULT_DEVT& discovery_ntf = mNonStdTagdata.discovery_ntf;
+  if (discovery_ntf.rf_tech_param.param.pa.sel_rsp == NON_STD_CARD_SAK) {
+    // Non Standard Transit => ISO-DEP
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+            "%s:Non standard Transit => change to ISO-DEP", __func__);
+    mTechLibNfcTypesDiscData[mNumDiscNtf] = NFC_PROTOCOL_ISO_DEP;
+    isNonStdTagDetected = true;
+  } else {
+    updateNdefState(discovery_ntf.protocol, discovery_ntf.more);
   }
 }
 #endif
