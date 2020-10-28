@@ -3645,7 +3645,7 @@ public class NfcService implements DeviceHostListener {
 
                     // If NFC is turning off, we shouldn't need any changes here
                     synchronized (NfcService.this) {
-                        if (mState == NfcAdapter.STATE_TURNING_OFF)
+                        if (mState == NfcAdapter.STATE_TURNING_OFF || mState == NfcAdapter.STATE_OFF)
                             return;
                     }
                     if (nci_version == NCI_VERSION_1_0) {
