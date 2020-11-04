@@ -322,7 +322,6 @@ void nativeNfcTag_updateMFCActivationFailTime() {
     }
   }
 }
-
 #endif
 /*******************************************************************************
 **
@@ -862,6 +861,8 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
         if (natTag.mActivationParams_t.mTechParams ==
               NFC_DISCOVERY_TYPE_POLL_A) {
           natTag.mCashbeeDetected = true;
+          DLOG_IF(INFO, nfc_debug_enabled)
+              << StringPrintf("%s: CashBee Detected", __func__);
         }
       }
     }
@@ -887,9 +888,10 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
       if (natTag.isCashBeeActivated() == true) {
         DLOG_IF(INFO, nfc_debug_enabled)
             << StringPrintf("%s: Start RF discovery", __func__);
-        if (NFA_STATUS_OK != (status = NFA_StartRfDiscovery())) {
+        if (!NfcTag::getInstance().isIsoDepDhReqFailed &&
+              NFA_STATUS_OK != (status = NFA_StartRfDiscovery())) {
           LOG(ERROR) << StringPrintf("%s: deactivate failed, status = 0x%0X",
-                                     __func__, status);
+                                   __func__, status);
           break;
         }
       } else {

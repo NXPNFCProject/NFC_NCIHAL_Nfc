@@ -552,6 +552,11 @@ static void nfaConnectionCallback(uint8_t connEvent,
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: NFA_DEACTIVATE_FAIL_EVT: status = %d", __func__,
                           eventData->status);
+#if (NXP_EXTNS == TRUE)
+      if (eventData->status == NFC_DEACTIVATE_REASON_DH_REQ_FAILED) {
+        NfcTag::getInstance().isIsoDepDhReqFailed = true;
+      }
+#endif
       break;
 
     case NFA_ACTIVATED_EVT:  // NFC link/protocol activated
@@ -565,6 +570,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
         NfcTag::getInstance().setNumDiscNtf(0);
       }
 #if (NXP_EXTNS == TRUE)
+        NfcTag::getInstance().isIsoDepDhReqFailed = false;
         if (NfcSelfTest::GetInstance().SelfTestType != TEST_TYPE_NONE) {
           NfcSelfTest::GetInstance().ActivatedNtf_Cb();
           break;
