@@ -573,6 +573,7 @@ void SecureElement::nfaHciCallback(tNFA_HCI_EVT event,
                     sSecElem.mActualResponseSize = (eventData->apdu_rcvd.apdu_len > MAX_RESPONSE_SIZE) ? MAX_RESPONSE_SIZE : eventData->apdu_rcvd.apdu_len;
                 }
             sSecElem.mTransceiveStatus = eventData->apdu_rcvd.status;
+            SyncEventGuard guard(sSecElem.mTransceiveEvent);
             sSecElem.mTransceiveEvent.notifyOne ();
             break;
         }
