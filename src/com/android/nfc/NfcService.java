@@ -418,6 +418,7 @@ public class NfcService implements DeviceHostListener {
     final HashMap<Integer, Object> mObjectMap = new HashMap<Integer, Object>();
     HashSet<String> mSePackages = new HashSet<String>();
     int mScreenState;
+    int mPreviousScreenState;
     boolean mInProvisionMode; // whether we're in setup wizard and enabled NFC provisioning
     boolean mIsNdefPushEnabled;
     boolean mIsSecureNfcEnabled;
@@ -773,6 +774,7 @@ public class NfcService implements DeviceHostListener {
         mVibrationEffect = VibrationEffect.createOneShot(200, VibrationEffect.DEFAULT_AMPLITUDE);
 
         mScreenState = mScreenStateHelper.checkScreenState();
+        mPreviousScreenState = mScreenState;
 
         mNumTagsDetected = new AtomicInteger();
         mNumP2pDetected = new AtomicInteger();
@@ -1118,7 +1120,6 @@ public class NfcService implements DeviceHostListener {
                     mP2pLinkManager.enableDisable(mIsNdefPushEnabled, true);
                 }
                 updateState(NfcAdapter.STATE_ON);
-
                 onPreferredPaymentChanged(NfcAdapter.PREFERRED_PAYMENT_LOADED);
             }
 
@@ -1132,6 +1133,7 @@ public class NfcService implements DeviceHostListener {
                 applyRouting(false);
 
             mDeviceHost.doSetScreenState(screen_state_mask);
+            mPreviousScreenState = mScreenState;
 
             sToast_debounce = false;
 
@@ -3149,8 +3151,8 @@ public class NfcService implements DeviceHostListener {
         mDeviceHost.setRoutingEntry(PROTOCOL_ENTRY, NFC_LISTEN_PROTO_ISO_DEP, ((protoRoute >> ROUTE_LOC_MASK) & 0x07), protoRoute & 0x3F);
 
         /* Routing for Technology */
-        TechSeId = (techRoute >> ROUTE_LOC_MASK);
-        TechFSeId = (techfRoute >> ROUTE_LOC_MASK);
+        TechSeId = ((techRoute >> ROUTE_LOC_MASK) & 0x07);
+        TechFSeId = ((techfRoute >> ROUTE_LOC_MASK) & 0x07);
         /* Technology types are masked internally depending on the capability of SE */
         if(techRoute == techfRoute)
         {
@@ -3782,7 +3784,21 @@ public class NfcService implements DeviceHostListener {
                         if (mState == NfcAdapter.STATE_TURNING_OFF)
                             return;
                     }
-
+                    if (nci_version == NCI_VERSION_1_0) {
+                        if (mScreenState == mPreviousScreenState) {
+                            Log.d(TAG,
+                                "Current:" + mScreenState + " and previous:" + mPreviousScreenState
+                                    + " screen states are same. No need to update");
+                            break;
+                        }
+                        mDeviceHost.disableDiscovery();
+                        mDeviceHost.doSetScreenState(mScreenState);
+                        NfcDiscoveryParameters params = computeDiscoveryParameters(mScreenState);
+                        boolean shouldRestart = mCurrentDiscoveryParameters.shouldEnableDiscovery();
+                        mDeviceHost.enableDiscovery(params, shouldRestart);
+                        mPreviousScreenState = mScreenState;
+                        break;
+                    }
                     if (mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED) {
                       applyRouting(false);
                     }
