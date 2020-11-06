@@ -485,7 +485,7 @@ static void NxpNfc_ParsePlatformID(const uint8_t* data) {
   uint8_t PlatfStrings[][MAX_STRING_SIZE] = {
       "NFCC HW is SN100", "NFCC HW is SN110", "Not SN1xx NFCC"};
 
-  uint32_t count = 0;
+  size_t count = 0;
 
 #define MAX_PLATFTYPE_ELEMENTS (sizeof(PlatfType) / sizeof(PlatfType[0]))
 #define MAX_STRINGS (sizeof(PlatfStrings) / sizeof(PlatfStrings[0]))
