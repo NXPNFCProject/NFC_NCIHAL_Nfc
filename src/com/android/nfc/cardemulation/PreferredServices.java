@@ -50,12 +50,12 @@ import android.nfc.cardemulation.ApduServiceInfo;
 import android.nfc.cardemulation.CardEmulation;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.provider.Settings;
 import android.provider.Settings.SettingNotFoundException;
 import android.util.Log;
 import android.util.proto.ProtoOutputStream;
-import android.os.SystemProperties;
 
 /**
  * This class keeps track of what HCE/SE-based services are

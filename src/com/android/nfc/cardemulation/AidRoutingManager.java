@@ -124,9 +124,7 @@ public class AidRoutingManager {
     }
 
     public AidRoutingManager() {
-        synchronized (mLock) {
-            mDefaultRoute = doGetDefaultRouteDestination();
-        }
+        mDefaultRoute = doGetDefaultRouteDestination();
         if (DBG)
           Log.d(TAG, "mDefaultRoute=0x" + Integer.toHexString(mDefaultRoute));
         mDefaultOffHostRoute = doGetDefaultOffHostRouteDestination();
@@ -242,7 +240,6 @@ public class AidRoutingManager {
 
     public boolean configureRouting(HashMap<String, AidEntry> aidMap, boolean force) {
         boolean aidRouteResolved = false;
-        boolean isDefaultRoutNonHost = false;
         HashMap<String, AidEntry> aidRoutingTableCache = new HashMap<String, AidEntry>(aidMap.size());
         ArrayList<Integer> seList = new ArrayList<Integer>();
         mAidRoutingTableSize = NfcService.getInstance().getAidRoutingTableSize();
@@ -250,10 +247,7 @@ public class AidRoutingManager {
         mDefaultOffHostRoute = doGetDefaultOffHostRouteDestination();
         Log.e(TAG, "Size of routing table"+mAidRoutingTableSize);
         seList.add(mDefaultAidRoute);
-        synchronized (mLock) {
-            isDefaultRoutNonHost = (mDefaultRoute != ROUTE_HOST);
-        }
-        if (isDefaultRoutNonHost) {
+        if (mDefaultRoute != ROUTE_HOST) {
             seList.add(ROUTE_HOST);
         }
 
@@ -497,8 +491,8 @@ public class AidRoutingManager {
      * Never reuse a proto field number. When removing a field, mark it as reserved.
      */
     void dumpDebug(ProtoOutputStream proto) {
+        proto.write(AidRoutingManagerProto.DEFAULT_ROUTE, mDefaultRoute);
         synchronized (mLock) {
-            proto.write(AidRoutingManagerProto.DEFAULT_ROUTE, mDefaultRoute);
             for (int i = 0; i < mAidRoutingTable.size(); i++) {
                 long token = proto.start(AidRoutingManagerProto.ROUTES);
                 proto.write(AidRoutingManagerProto.Route.ID, mAidRoutingTable.keyAt(i));
