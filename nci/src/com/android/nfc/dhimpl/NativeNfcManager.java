@@ -217,9 +217,6 @@ public class NativeNfcManager implements DeviceHost {
     public native int   getDefaultFelicaCLTPowerState();
 
     @Override
-    public native int getGsmaPwrState();
-
-    @Override
     public native boolean commitRouting();
 
     @Override
@@ -562,6 +559,11 @@ public class NativeNfcManager implements DeviceHost {
     private void notifySeInitialized() {
         mListener.onSeInitialized();
     }
+
+    private void notifySrdEvt(int event) {
+        mListener.onNotifySrdEvt(event);
+    }
+
     /**
      * Notifies P2P Device detected, to activate LLCP link
      */
@@ -614,6 +616,12 @@ public class NativeNfcManager implements DeviceHost {
 
     private void notifyTransactionListeners(byte[] aid, byte[] data, String evtSrc) {
         mListener.onNfcTransactionEvent(aid, data, evtSrc);
+    }
+    /**
+     * Notifies Tag abort operation
+     */
+    private void notifyTagAbort() {
+        mListener.notifyTagAbort();
     }
 /* NXP extension are here */
     @Override

@@ -2602,6 +2602,19 @@ TheEnd:
 
 /*******************************************************************************
 **
+** Function:        nativeNfcTag_getSrdState
+**
+** Description:     Get SRD state.
+**
+** Returns:         SRD state.
+**
+*******************************************************************************/
+static jint nativeNfcTag_getSrdState(JNIEnv*, jobject) {
+  return 0;
+}
+
+/*******************************************************************************
+**
 ** Function:        nativeNfcTag_registerNdefTypeHandler
 **
 ** Description:     Register a callback to receive NDEF message from the tag
@@ -2733,6 +2746,7 @@ static JNINativeMethod gMethods[] = {
      (void*)nativeNfcTag_doIsIsoDepNdefFormatable},
     {"doNdefFormat", "([B)Z", (void*)nativeNfcTag_doNdefFormat},
     {"doMakeReadonly", "([B)Z", (void*)nativeNfcTag_doMakeReadonly},
+    {"doGetSrdState", "()I", (void*)nativeNfcTag_getSrdState},
 };
 
 /*******************************************************************************

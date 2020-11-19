@@ -287,6 +287,11 @@ public class NativeNfcTag implements TagEndpoint {
         return result;
     }
 
+    native int doGetSrdState();
+    public int getSrdState() {
+      return doGetSrdState();
+    }
+
     native int doReconnect();
     public synchronized int reconnectWithStatus() {
         if (mWatchdog != null) {
@@ -614,6 +619,11 @@ public class NativeNfcTag implements TagEndpoint {
          * Read four blocks from page 2, which will get us both
          * the lock page, the OTP page and the version info.
          */
+        int ENABLE = 0x01;
+        if(getSrdState() == ENABLE) {
+          /* Ignore to send read cmd incase of SRD is enabled.*/
+          return false;
+        }
         boolean isUltralightC = false;
         byte[] readCmd = { 0x30, 0x02 };
         int[] retCode = new int[2];

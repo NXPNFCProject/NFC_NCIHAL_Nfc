@@ -349,8 +349,6 @@ class RoutingManager {
   techEntry_t mTechTableEntries[MAX_TECH_ENTRIES];
   LmrtEntry_t mLmrtEntries[MAX_ROUTE_LOC_ENTRIES];
   uint32_t mCeRouteStrictDisable;
-  uint32_t mDefaultIso7816SeID;
-  uint32_t mDefaultIso7816Powerstate;
   uint32_t mDefaultTechASeID;
   uint32_t mAddAid;
   uint32_t mTechSupportedByEse;

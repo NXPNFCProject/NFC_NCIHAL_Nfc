@@ -60,6 +60,12 @@ public interface DeviceHost {
         public void onSeListenDeactivated();
 
         public void onSeInitialized();
+
+        /**
+         * Notifies SRD event
+         */
+        public void onNotifySrdEvt(int event);
+
         /**
          * Notifies P2P Device detected, to activate LLCP link
          */
@@ -83,6 +89,8 @@ public interface DeviceHost {
         public void onNfcTransactionEvent(byte[] aid, byte[] data, String seName);
 
         public void onLxDebugConfigData(int len, byte[] data);
+
+        public void notifyTagAbort();
     }
 
     public interface TagEndpoint {
@@ -246,8 +254,6 @@ public interface DeviceHost {
     public int getDefaultMifareCLTPowerState();
 
     public int getDefaultFelicaCLTPowerState();
-
-    public int getGsmaPwrState();
 
     public boolean commitRouting();
 

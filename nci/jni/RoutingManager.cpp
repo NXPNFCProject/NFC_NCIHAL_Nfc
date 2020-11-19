@@ -191,8 +191,6 @@ RoutingManager::RoutingManager()
   memset (mTechTableEntries, 0, sizeof(mTechTableEntries));
   memset (mLmrtEntries, 0, sizeof(mLmrtEntries));
   mCeRouteStrictDisable = 0;
-  mDefaultIso7816SeID = 0;
-  mDefaultIso7816Powerstate = 0;
   mDefaultTechASeID = 0;
   mTechSupportedByEse = 0;
   mTechSupportedByUicc1 = 0;
@@ -270,24 +268,6 @@ bool RoutingManager::initialize(nfc_jni_native_data* native) {
   } else {
     mUiccListnTechMask = 0x07;
   }
-
-  if (NfcConfig::hasKey(NAME_DEFAULT_AID_ROUTE)) {
-    mDefaultIso7816SeID = NfcConfig::getUnsigned(NAME_DEFAULT_AID_ROUTE);
-  } else {
-    mDefaultIso7816SeID = 0xFF;
-  }
-
-  if (NfcConfig::hasKey(NAME_DEFAULT_AID_PWR_STATE)) {
-    mDefaultIso7816Powerstate =
-        NfcConfig::getUnsigned(NAME_DEFAULT_AID_PWR_STATE);
-  } else {
-    mDefaultIso7816Powerstate = 0xFF;
-  }
-
-  LOG(ERROR) << StringPrintf("%s: >>>> mDefaultIso7816SeID=0x%X", fn,
-                             mDefaultIso7816SeID);
-  LOG(ERROR) << StringPrintf("%s: >>>> mDefaultIso7816Powerstate=0x%X", fn,
-                             mDefaultIso7816Powerstate);
 
   if (NfcConfig::hasKey(NAME_DEFAULT_ROUTE)) {
     mDefaultEe = NfcConfig::getUnsigned(NAME_DEFAULT_ROUTE);
@@ -1123,24 +1103,20 @@ bool RoutingManager::clearRoutingEntry(int type) {
  *  Length = 2 [0x02]
  *  Value  = [Route_loc, Power_state]
  * */
-void RoutingManager::setEmptyAidEntry(int route) {
+void RoutingManager::setEmptyAidEntry(int routeAndPowerState) {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
-  uint16_t routeLoc;
-  uint8_t power;
+  uint32_t routeLoc = ((routeAndPowerState >> 8) & 0xFF);
+  uint32_t power = (routeAndPowerState & 0xFF);
   int max_tech_mask = 0;
-  mDefaultIso7816SeID = route;
 
-  routeLoc = ((mDefaultIso7816SeID == 0x00)
+  routeLoc = ((routeLoc == 0x00)
                   ? ROUTE_LOC_HOST_ID
-                  : ((mDefaultIso7816SeID == 0x01)
+                  : ((routeLoc == 0x01)
                          ? ROUTE_LOC_ESE_ID
-                         : getUiccRouteLocId(mDefaultIso7816SeID)));
+                         : getUiccRouteLocId(routeLoc)));
 
-  power = mCeRouteStrictDisable
-              ? mDefaultIso7816Powerstate
-              : (mDefaultIso7816Powerstate & POWER_STATE_MASK);
-  DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: route %x", __func__, routeLoc);
+  power = mCeRouteStrictDisable ? power : (power & POWER_STATE_MASK);
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: route %x", __func__, routeLoc);
   if (routeLoc == ROUTE_LOC_HOST_ID) power &= 0x11;
   if (routeLoc == NFA_HANDLE_INVALID) {
     LOG(ERROR) << StringPrintf("%s: Invalid routeLoc. Return.", __func__);
@@ -1174,9 +1150,7 @@ bool RoutingManager::addAidRouting(const uint8_t* aid, uint8_t aidLen,
   SecureElement& se = SecureElement::getInstance();
 
   if ((aid == nullptr) && (aidLen == 0x00)) {
-    power = mCeRouteStrictDisable
-                ? mDefaultIso7816Powerstate
-                : (mDefaultIso7816Powerstate & POWER_STATE_MASK);
+    power = mCeRouteStrictDisable ? power : (power & POWER_STATE_MASK);
   }
 
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
