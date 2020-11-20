@@ -3614,11 +3614,6 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
     return num;
   }
 
-  static int nfcManager_getDefaulGsmaPowerState(JNIEnv* e, jobject o)
-  {
-    return 0;
-  }
-
   /*******************************************************************************
   **
   ** Function:       nfcManager_enableDebugNtf
@@ -4388,8 +4383,6 @@ static jstring nfcManager_doGetNfaStorageDir(JNIEnv* e, jobject o) {
      (void*)nfcManager_getDefaultMifareCLTPowerState},
     {"getT4TNfceePowerState", "()I",
      (void*) nfcManager_getT4TNfceePowerState},
-    {"getGsmaPwrState", "()I",
-           (void*) nfcManager_getDefaulGsmaPowerState},
     {"doChangeDiscoveryTech", "(II)V", (void*)nfcManager_changeDiscoveryTech},
     {"doPartialInitForEseCosUpdate", "()Z",
      (void*)nfcManager_doPartialInitForEseCosUpdate},
