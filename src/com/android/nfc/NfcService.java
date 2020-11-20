@@ -119,6 +119,8 @@ import com.android.nfc.dhimpl.NativeNfcSecureElement;
 import com.android.nfc.handover.HandoverDataParser;
 import com.nxp.nfc.INxpNfcAdapter;
 import com.nxp.nfc.INxpNfcAdapterExtras;
+import com.nxp.nfc.INxpWlcAdapter;
+import com.nxp.nfc.INxpWlcCallBack;
 import com.nxp.nfc.NfcAidServiceInfo;
 import com.nxp.nfc.NfcConstants;
 
@@ -231,6 +233,9 @@ public class NfcService implements DeviceHostListener {
     static final int MSG_SCR_REMOVE_CARD              = 77;
     static final int MSG_SCR_MULTIPLE_TARGET_DETECTED = 78;
     static final int MSG_LX_DATA_RECEIVED             = 79;
+    static final int MSG_WLC_ENABLE                   = 80;
+    static final int MSG_WLC_DISABLE                  = 81;
+    static final int MSG_WLC_IS_LISTENER_DETECTED     = 82;
     public static final int MSG_SRD_EVT_TIMEOUT = 84;
     public static final int MSG_SRD_EVT_FEATURE_NOT_SUPPORT = 85;
     private int SE_READER_TYPE = SE_READER_TYPE_INAVLID;
@@ -470,6 +475,7 @@ public class NfcService implements DeviceHostListener {
     NfcDtaService mNfcDtaService;
     NxpNfcAdapterExtrasService mNxpExtrasService;
     NxpNfcAdapterService mNxpNfcAdapter;
+    NxpWlcAdapterService mNxpWlcAdapter;
     boolean mIsDebugBuild;
     boolean mIsHceCapable;
     boolean mIsHceFCapable;
@@ -521,7 +527,7 @@ public class NfcService implements DeviceHostListener {
     public static final int T4TNFCEE_STATUS_FAILED = -1;
     private Object mT4tNfcEeObj = new Object();
     private Bundle mT4tNfceeReturnBundle = new Bundle();
-
+    private WlcServiceProxy mWlc = null;
     public static NfcService getInstance() {
         return sService;
     }
@@ -874,6 +880,12 @@ public class NfcService implements DeviceHostListener {
         }
         mSEService = ISecureElementService.Stub.asInterface(ServiceManager.getService(
                 Context.SECURE_ELEMENT_SERVICE));
+        try {
+          mWlc = new WlcServiceProxy(mContext, mNxpPrefs);
+          mNxpWlcAdapter = new NxpWlcAdapterService(mContext,mWlc);
+        } catch (Exception e) {
+          Log.e(TAG, "Error Initializing WLC service module");
+        }
     }
 
     private boolean isSEServiceAvailable() {
@@ -1082,6 +1094,14 @@ public class NfcService implements DeviceHostListener {
             } finally {
                 watchDog.cancel();
             }
+
+            try {
+              if (mWlc.isToBeEnabled())
+                mWlc.enable(WlcServiceProxy.PersistStatus.IGNORE);
+            } catch (Exception e) {
+              Log.e(TAG, "Error enabling WlcService");
+            }
+
             int uiccSlot = 0;
             uiccSlot = mPrefs.getInt(PREF_CUR_SELECTED_UICC_ID, SECURE_ELEMENT_UICC_SLOT_DEFAULT);
             mDeviceHost.setPreferredSimSlot(uiccSlot);
@@ -1152,7 +1172,14 @@ public class NfcService implements DeviceHostListener {
                 Log.i(TAG, "Disabling NFC ");
                 NfcStatsLog.write(NfcStatsLog.NFC_STATE_CHANGED, NfcStatsLog.NFC_STATE_CHANGED__STATE__OFF);
                 updateState(NfcAdapter.STATE_TURNING_OFF);
-          }
+            }
+            try {
+              mWlc.disable(WlcServiceProxy.PersistStatus.IGNORE);
+              mWlc.deRegisterCallBack();
+            } catch (Exception e) {
+              Log.e(TAG, "Error disabling WlcService");
+            }
+
             deInitWiredSe();
             /* Sometimes mDeviceHost.deinitialize() hangs, use a watch-dog.
              * Implemented with a new thread (instead of a Handler or AsyncTask),
@@ -1763,6 +1790,8 @@ public class NfcService implements DeviceHostListener {
         public IBinder getNfcAdapterVendorInterface(String vendor) {
             if(vendor.equalsIgnoreCase("nxp")) {
                 return (IBinder) mNxpNfcAdapter;
+            } else if (vendor.equalsIgnoreCase("wlc")){
+                return (IBinder) mNxpWlcAdapter;
             } else {
                 return null;
             }
@@ -3639,8 +3668,10 @@ public class NfcService implements DeviceHostListener {
                             break;
                         }
                     }
-
-                    if (debounceTagUid != null) {
+                    if (mWlc.isWlcListenerDetected(ndefMsg)) {
+                        break;
+                    }
+                      if (debounceTagUid != null) {
                         // If we're debouncing and the UID or the NDEF message of the tag match,
                         // don't dispatch but drop it.
                         if (Arrays.equals(debounceTagUid, tag.getUid()) ||
@@ -3911,6 +3942,12 @@ public class NfcService implements DeviceHostListener {
                  mContext.sendBroadcast(lxDataRecvdIntent);
                  break;
                }
+               case MSG_WLC_ENABLE:
+                 mWlc.enable(WlcServiceProxy.PersistStatus.UPDATE);
+                 break;
+               case MSG_WLC_DISABLE:
+                mWlc.disable(WlcServiceProxy.PersistStatus.UPDATE);
+                break;
                default:
                  Log.e(TAG, "Unknown message received");
                  break;
