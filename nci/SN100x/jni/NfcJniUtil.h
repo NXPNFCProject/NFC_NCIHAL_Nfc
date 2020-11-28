@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018 NXP
+*  Copyright 2018,2021 NXP
 *
 ******************************************************************************/
 #pragma once
@@ -175,5 +175,6 @@ int register_com_android_nfc_NativeLlcpSocket(JNIEnv* e);
 int register_com_android_nfc_NativeNfcSecureElement (JNIEnv *e);
 int register_com_android_nfc_NativeNfcMposManager (JNIEnv *e);
 int register_com_android_nfc_NativeT4tNfcee(JNIEnv *e);
+int register_com_android_nfc_NativeExtFieldDetect(JNIEnv* e);
 #endif
 }  // namespace android

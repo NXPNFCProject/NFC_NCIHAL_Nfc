@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2020 NXP
+*  Copyright 2018-2021 NXP
 *
 ******************************************************************************/
 package com.android.nfc;
@@ -61,6 +61,8 @@ public interface DeviceHost {
 
         public void onSeInitialized();
         public void onNotifySrdEvt(int event);
+
+        public void onNotifyEfdmEvt(int efdmEvt);
         /**
          * Notifies P2P Device detected, to activate LLCP link
          */
@@ -357,4 +359,6 @@ public interface DeviceHost {
     public boolean isLockedT4tData();
     public boolean doClearNdefT4tData();
     public int doEnableDebugNtf(byte fieldValue);
+    public int startExtendedFieldDetectMode(int detectionTimeout);
+    public int stopExtendedFieldDetectMode();
 }

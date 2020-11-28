@@ -51,13 +51,14 @@
 #include "SyncEvent.h"
 #include "nfc_config.h"
 #if(NXP_EXTNS == TRUE)
-#include "MposManager.h"
-#include "SecureElement.h"
 #include "DwpChannel.h"
+#include "MposManager.h"
+#include "NativeExtFieldDetect.h"
 #include "NativeJniExtns.h"
 #include "NativeT4tNfcee.h"
-#include "nfa_nfcee_int.h"
 #include "NfcSelfTest.h"
+#include "SecureElement.h"
+#include "nfa_nfcee_int.h"
 #if (NXP_SRD == TRUE)
 #include "SecureDigitization.h"
 #endif
@@ -213,6 +214,8 @@ const char*             gNativeNfcMposManagerClassName       =
     "com/android/nfc/dhimpl/NativeNfcMposManager";
 const char* gNativeT4tNfceeClassName =
     "com/android/nfc/dhimpl/NativeT4tNfceeManager";
+const char* gNativeExtFieldDetectClassName =
+    "com/android/nfc/dhimpl/NativeExtFieldDetectManager";
 void enableLastRfDiscovery();
 void storeLastDiscoveryParams(int technologies_mask, bool enable_lptd,
                               bool reader_mode, bool enable_host_routing,
@@ -977,6 +980,7 @@ static jboolean nfcManager_initNativeStruc(JNIEnv* e, jobject o) {
   e->SetLongField(o, f, (jlong)nat);
 #if(NXP_EXTNS == TRUE)
   MposManager::initMposNativeStruct(e, o);
+  NativeExtFieldDetect::getInstance().initEfdmNativeStruct(e, o);
 #if (NXP_SRD == TRUE)
   SecureDigitization::getInstance().initSrdNativeStruct(e, o);
 #endif
@@ -1111,6 +1115,10 @@ void nfaDeviceManagementCallback(uint8_t dmEvent,
           "%s: NFA_DM_RF_FIELD_EVT; status=0x%X; field status=%u", __func__,
           eventData->rf_field.status, eventData->rf_field.rf_field_status);
 #if(NXP_EXTNS == TRUE)
+      if (extFieldDetectMode.isextendedFieldDetectMode() &&
+          (eventData->rf_field.rf_field_status == NFA_DM_RF_FIELD_ON)) {
+        extFieldDetectMode.startEfdmTimer();
+      }
       SecureElement::getInstance().notifyRfFieldEvent (
                     eventData->rf_field.rf_field_status == NFA_DM_RF_FIELD_ON);
 #else
@@ -1633,6 +1641,7 @@ static jboolean nfcManager_doInitialize(JNIEnv* e, jobject o) {
 #if(NXP_EXTNS == TRUE)
         MposManager::getInstance().initialize(getNative(e, o));
         NativeT4tNfcee::getInstance().initialize();
+        NativeExtFieldDetect::getInstance().initialize(getNative(e, o));
 #if (NXP_SRD == TRUE)
         SecureDigitization::getInstance().initialize(getNative(e, o));
 #endif
@@ -2120,6 +2129,7 @@ static jboolean nfcManager_doDeinitialize(JNIEnv*, jobject) {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
 
 #if (NXP_EXTNS == TRUE)
+  NativeExtFieldDetect::getInstance().deinitialize();
   NativeJniExtns::getInstance().notifyNfcEvent(__func__);
   if (SecureElement::getInstance().mIsSeIntfActivated) {
     nfcManager_dodeactivateSeInterface(NULL, NULL);

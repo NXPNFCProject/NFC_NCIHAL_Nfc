@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2020 NXP
+*  Copyright 2018-2021 NXP
 *
 ******************************************************************************/
 package com.android.nfc.dhimpl;
@@ -73,6 +73,7 @@ public class NativeNfcManager implements DeviceHost {
     private final DeviceHostListener mListener;
     private final NativeNfcMposManager mMposMgr;
     private final NativeT4tNfceeManager mT4tNfceeMgr;
+    private final NativeExtFieldDetectManager mExtFieldMgr;
     private final Context mContext;
 
     private final Object mLock = new Object();
@@ -84,6 +85,7 @@ public class NativeNfcManager implements DeviceHost {
         mContext = context;
         mMposMgr = new NativeNfcMposManager();
         mT4tNfceeMgr = new NativeT4tNfceeManager();
+        mExtFieldMgr = new NativeExtFieldDetectManager();
     }
 
     public native boolean initializeNativeStructure();
@@ -341,6 +343,14 @@ public class NativeNfcManager implements DeviceHost {
       return mT4tNfceeMgr.doReadT4tData(fileId);
     }
     @Override
+    public int startExtendedFieldDetectMode(int detectionTimeout) {
+      return mExtFieldMgr.startExtendedFieldDetectMode(detectionTimeout);
+    }
+    @Override
+    public int stopExtendedFieldDetectMode() {
+      return mExtFieldMgr.stopExtendedFieldDetectMode();
+    }
+    @Override
     public boolean doLockT4tData(boolean lock) {
       return mT4tNfceeMgr.doLockT4tData(lock);
     }
@@ -564,6 +574,10 @@ public class NativeNfcManager implements DeviceHost {
     private void notifySrdEvt(int event) {
         mListener.onNotifySrdEvt(event);
     }
+    private void notifyEfdmEvt(int efdmEvt) {
+        mListener.onNotifyEfdmEvt(efdmEvt);
+    }
+
     /**
      * Notifies P2P Device detected, to activate LLCP link
      */

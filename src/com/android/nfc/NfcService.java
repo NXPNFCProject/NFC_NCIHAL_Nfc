@@ -235,6 +235,7 @@ public class NfcService implements DeviceHostListener {
     private int SE_READER_TYPE = SE_READER_TYPE_INAVLID;
     public static final int MSG_SRD_EVT_TIMEOUT = 80;
     public static final int MSG_SRD_EVT_FEATURE_NOT_SUPPORT = 81;
+    public static final int MSG_EFDM_EVT_TIMEOUT = 82;
 
     // Negative value for NO polling delay
     static final int NO_POLL_DELAY = -1;
@@ -312,6 +313,14 @@ public class NfcService implements DeviceHostListener {
     /*SRD Feature not supported */
     public static final String ACTION_SRD_EVT_FEATURE_NOT_SUPPORT =
             "com.nxp.nfc_extras.ACTION_SRD_EVT_FEATURE_NOT_SUPPORT";
+
+    public static final String ACTION_EXTENDED_FIELD_TIMEOUT =
+            "com.android.nfc.action.ACTION_EXTENDED_FIELD_TIMEOUT";
+    public static final String ACTION_EXTENDED_FIELD_ON =
+            "com.android.nfc.action.ACTION_EXTENDED_FIELD_ON";
+    public static final String ACTION_EXTENDED_FIELD_OFF =
+            "com.android.nfc.action.ACTION_EXTENDED_FIELD_OFF";
+
     public static boolean sIsShortRecordLayout = false;
     // Default delay used for presence checks in ETSI mode
     static final int ETSI_PRESENCE_CHECK_DELAY = 1000;
@@ -640,6 +649,14 @@ public class NfcService implements DeviceHostListener {
     @Override
     public void notifyTagAbort() {
         maybeDisconnectTarget();
+    }
+
+    public void onNotifyEfdmEvt(int efdmEvt) {
+      Log.e(TAG, " Broadcasting EFDM evt efdmEvt" + efdmEvt);
+      int EFDM_TIMEOUT_EVT = 242;
+      if(efdmEvt == EFDM_TIMEOUT_EVT) {
+        sendMessage(MSG_EFDM_EVT_TIMEOUT, null);
+      }
     }
 
     public void onNotifySrdEvt(int event) {
@@ -2456,6 +2473,18 @@ public class NfcService implements DeviceHostListener {
           NfcPermissions.enforceUserPermissions(mContext);
           return mDeviceHost.doEnableDebugNtf(fieldValue);
         }
+
+        @Override
+        public int startExtendedFieldDetectMode(int detectionTimeout) {
+          NfcPermissions.enforceUserPermissions(mContext);
+          return mDeviceHost.startExtendedFieldDetectMode(detectionTimeout);
+        }
+
+        @Override
+        public int stopExtendedFieldDetectMode() {
+          NfcPermissions.enforceUserPermissions(mContext);
+          return mDeviceHost.stopExtendedFieldDetectMode();
+        }
     }
 
     final class ReaderModeDeathRecipient implements IBinder.DeathRecipient {
@@ -3721,6 +3750,10 @@ public class NfcService implements DeviceHostListener {
                     Intent srdFeatureNotSupported = new Intent(ACTION_SRD_EVT_FEATURE_NOT_SUPPORT);
                     sendNfcEeAccessProtectedBroadcast(srdFeatureNotSupported);
                    break;
+                case MSG_EFDM_EVT_TIMEOUT:
+                    Intent efdmTimeoutIntent = new Intent(ACTION_EXTENDED_FIELD_TIMEOUT);
+                    sendNfcEeAccessProtectedBroadcast(efdmTimeoutIntent);
+                    break;
                 case MSG_RESUME_POLLING:
                     mNfcAdapter.resumePolling();
                     break;
