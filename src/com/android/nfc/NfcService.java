@@ -3759,32 +3759,37 @@ public class NfcService implements DeviceHostListener {
                         if (mState == NfcAdapter.STATE_TURNING_OFF)
                             return;
                     }
-                    if (nci_version == NCI_VERSION_1_0) {
-                        if (mScreenState == mPreviousScreenState) {
-                            Log.d(TAG,
-                                "Current:" + mScreenState + " and previous:" + mPreviousScreenState
-                                    + " screen states are same. No need to update");
+                    mRoutingWakeLock.acquire();
+                    try {
+                        if (nci_version == NCI_VERSION_1_0) {
+                            if (mScreenState == mPreviousScreenState) {
+                                Log.d(TAG,
+                                    "Current:" + mScreenState + " and previous:" + mPreviousScreenState
+                                        + " screen states are same. No need to update");
+                                break;
+                            }
+                            mDeviceHost.disableDiscovery();
+                            mDeviceHost.doSetScreenState(mScreenState);
+                            NfcDiscoveryParameters params = computeDiscoveryParameters(mScreenState);
+                            boolean shouldRestart = mCurrentDiscoveryParameters.shouldEnableDiscovery();
+                            mDeviceHost.enableDiscovery(params, shouldRestart);
+                            mPreviousScreenState = mScreenState;
                             break;
                         }
-                        mDeviceHost.disableDiscovery();
-                        mDeviceHost.doSetScreenState(mScreenState);
-                        NfcDiscoveryParameters params = computeDiscoveryParameters(mScreenState);
-                        boolean shouldRestart = mCurrentDiscoveryParameters.shouldEnableDiscovery();
-                        mDeviceHost.enableDiscovery(params, shouldRestart);
-                        mPreviousScreenState = mScreenState;
-                        break;
-                    }
-                    if (mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED) {
-                      applyRouting(false);
-                    }
-                    int screen_state_mask = (mNfcUnlockManager.isLockscreenPollingEnabled()) ?
+                        if (mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED) {
+                          applyRouting(false);
+                        }
+                        int screen_state_mask = (mNfcUnlockManager.isLockscreenPollingEnabled()) ?
                                 (ScreenStateHelper.SCREEN_POLLING_TAG_MASK | mScreenState) : mScreenState;
 
-                   if (mNfcUnlockManager.isLockscreenPollingEnabled())
-                        applyRouting(false);
+                       if (mNfcUnlockManager.isLockscreenPollingEnabled())
+                           applyRouting(false);
 
-                    mDeviceHost.doSetScreenState(screen_state_mask);
-                    break;
+                       mDeviceHost.doSetScreenState(screen_state_mask);
+                   } finally {
+                      mRoutingWakeLock.release();
+                   }
+                   break;
 
                 case MSG_TRANSACTION_EVENT:
                     if (mCardEmulationManager != null) {
