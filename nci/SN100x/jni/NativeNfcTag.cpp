@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2020 NXP
+*  Copyright 2018-2021 NXP
 *
 ******************************************************************************/
 
@@ -1347,7 +1347,11 @@ static jbyteArray nativeNfcTag_doTransceive(JNIEnv* e, jobject o,
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
         "%s: response %zu bytes", __func__, sRxDataBuffer.size());
 
-    if ((natTag.getProtocol() == NFA_PROTOCOL_T2T) &&
+    if (
+#if (NXP_EXTNS == TRUE && NXP_SRD == TRUE)
+        (SecureDigitization::getInstance().getSrdState() != 0x01) &&
+#endif
+        (natTag.getProtocol() == NFA_PROTOCOL_T2T) &&
         natTag.isT2tNackResponse(sRxDataBuffer.data(), sRxDataBuffer.size())) {
       isNack = true;
     }
