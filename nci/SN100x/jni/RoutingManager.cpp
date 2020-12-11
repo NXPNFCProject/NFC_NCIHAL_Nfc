@@ -787,6 +787,8 @@ void RoutingManager::updateDefaultRoute() {
         << fn << ": Succeed to register system code";
   } else {
     LOG(ERROR) << fn << ": Fail to register system code";
+    //still support SCBR routing for other NFCEEs
+    mIsScbrSupported = true;
   }
 #if (NXP_EXTNS != TRUE)
   // Register zero lengthy Aid for default Aid Routing
