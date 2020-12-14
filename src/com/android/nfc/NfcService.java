@@ -210,6 +210,7 @@ public class NfcService implements DeviceHostListener {
     static final int MSG_TRANSACTION_EVENT = 17;
     static final int MSG_PREFERRED_PAYMENT_CHANGED = 18;
     static final int MSG_TOAST_DEBOUNCE_EVENT = 19;
+    static final int MSG_DELAY_POLLING = 20;
     static final int MSG_CARD_EMULATION = 21;
     static final int MSG_SE_INIT = 59;
     static final int MSG_CLEAR_ROUTING = 62;
@@ -430,6 +431,7 @@ public class NfcService implements DeviceHostListener {
 
     private int mUserId;
     boolean mPollingPaused;
+    boolean mPollingDelayed;
     boolean mNfcStateCheck = true;
     // True if nfc notification message already shown
     boolean mAntennaBlockedMessageShown;
@@ -1197,6 +1199,10 @@ public class NfcService implements DeviceHostListener {
             if (mIsBeamCapable) {
                 mP2pLinkManager.enableDisable(false, false);
             }
+
+            // Disable delay polling when disabling
+            mPollingDelayed = false;
+            mHandler.removeMessages(MSG_DELAY_POLLING);
 
             // Stop watchdog if tag present
             // A convenient way to stop the watchdog properly consists of
@@ -3802,6 +3808,10 @@ public class NfcService implements DeviceHostListener {
                     mScreenState = (Integer)msg.obj;
                     Log.d(TAG, "MSG_APPLY_SCREEN_STATE " + mScreenState);
 
+                    // Disable delay polling when screen state changed
+                    mPollingDelayed = false;
+                    mHandler.removeMessages(MSG_DELAY_POLLING);
+
                     // If NFC is turning off, we shouldn't need any changes here
                     synchronized (NfcService.this) {
                         if (mState == NfcAdapter.STATE_TURNING_OFF || mState == NfcAdapter.STATE_OFF)
@@ -3851,13 +3861,25 @@ public class NfcService implements DeviceHostListener {
                     break;
 
                 case MSG_TOAST_DEBOUNCE_EVENT:
-                    sToast_debounce = false;
-                    break;
+                  sToast_debounce = false;
+                  break;
+
+                case MSG_DELAY_POLLING:
+                  synchronized (NfcService.this) {
+                    if (!mPollingDelayed) {
+                      return;
+                    }
+                    mPollingDelayed = false;
+                    mDeviceHost.startStopPolling(true);
+                  }
+                  if (DBG)
+                    Log.d(TAG, "Polling is started");
+                  break;
 
                 case MSG_SE_INIT:
-                    Log.e(TAG, "msg se init");
+                  Log.e(TAG, "msg se init");
 
-                    try {
+                  try {
                     if (mIsHceCapable) {
                         // Generate the initial card emulation routing table
                         computeRoutingParameters();
@@ -4414,7 +4436,11 @@ public class NfcService implements DeviceHostListener {
                     unregisterObject(tagEndpoint.getHandle());
                     if (mPollDelay > NO_POLL_DELAY) {
                         tagEndpoint.stopPresenceChecking();
-                        mNfcAdapter.pausePolling(mPollDelay);
+                        mDeviceHost.startStopPolling(false);
+                        mPollingDelayed = true;
+                        if (DBG) Log.d(TAG, "Polling delayed");
+                        mHandler.sendMessageDelayed(
+                                mHandler.obtainMessage(MSG_DELAY_POLLING), mPollDelay);
                     } else {
                         Log.e(TAG, "Keep presence checking.");
                     }

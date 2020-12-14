@@ -3140,6 +3140,23 @@ static jint nfcManager_getAidTableSize(JNIEnv*, jobject) {
   return NFA_GetAidTableSize();
 }
 
+/*******************************************************************************
+**
+** Function:        nfcManager_doStartStopPolling
+**
+** Description:     Start or stop NFC RF polling
+**                  e: JVM environment.
+**                  o: Java object.
+**                  start: start or stop RF polling
+**
+** Returns:         None
+**
+*******************************************************************************/
+static void nfcManager_doStartStopPolling(JNIEnv* e, jobject o,
+                                          jboolean start) {
+  startStopPolling(start);
+}
+
 static jboolean nfcManager_doSetNfcSecure(JNIEnv* e, jobject o,
                                           jboolean enable) {
   RoutingManager& routingManager = RoutingManager::getInstance();
@@ -3201,6 +3218,8 @@ static JNINativeMethod gMethods[] = {
     {"getLfT3tMax", "()I", (void*)nfcManager_getLfT3tMax},
 
     {"doEnableDiscovery", "(IZZZZZ)V", (void*)nfcManager_enableDiscovery},
+
+    {"doStartStopPolling", "(Z)V", (void*)nfcManager_doStartStopPolling},
 
     {"doCheckLlcp", "()Z", (void*)nfcManager_doCheckLlcp},
 
@@ -3514,16 +3533,36 @@ static bool nfcManager_deactivateOnPollDisabled(tNFA_ACTIVATED& activated) {
 **
 *******************************************************************************/
 void startStopPolling(bool isStartPolling) {
+  tNFA_STATUS status = NFA_STATUS_FAILED;
+  uint8_t discovry_param = 0;
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: enter; isStart=%u", __func__, isStartPolling);
-  startRfDiscovery(false);
 
-  if (isStartPolling)
-    startPolling_rfDiscoveryDisabled(0);
-  else
-    stopPolling_rfDiscoveryDisabled();
-
-  startRfDiscovery(true);
+  if (NFC_GetNCIVersion() >= NCI_VERSION_2_0) {
+    SyncEventGuard guard(sNfaSetConfigEvent);
+    if (isStartPolling) {
+      discovry_param =
+          NCI_LISTEN_DH_NFCEE_ENABLE_MASK | NCI_POLLING_DH_ENABLE_MASK;
+    } else {
+      discovry_param =
+          NCI_LISTEN_DH_NFCEE_ENABLE_MASK | NCI_POLLING_DH_DISABLE_MASK;
+    }
+    status = NFA_SetConfig(NCI_PARAM_ID_CON_DISCOVERY_PARAM,
+                           NCI_PARAM_LEN_CON_DISCOVERY_PARAM, &discovry_param);
+    if (status == NFA_STATUS_OK) {
+      sNfaSetConfigEvent.wait();
+    } else {
+      LOG(ERROR) << StringPrintf("%s: Failed to update CON_DISCOVER_PARAM",
+                                 __FUNCTION__);
+    }
+  } else {
+    startRfDiscovery(false);
+    if (isStartPolling)
+      startPolling_rfDiscoveryDisabled(0);
+    else
+      stopPolling_rfDiscoveryDisabled();
+    startRfDiscovery(true);
+  }
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
 }
 
