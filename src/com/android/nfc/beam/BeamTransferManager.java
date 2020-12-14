@@ -343,7 +343,8 @@ public class BeamTransferManager implements Handler.Callback,
                 notBuilder.setContentText(mContext.getString(R.string.beam_tap_to_view));
                 Intent viewIntent = buildViewIntent();
                 PendingIntent contentIntent = PendingIntent.getActivity(
-                        mContext, mTransferId, viewIntent, 0, null);
+                        mContext, mTransferId, viewIntent,
+                        PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE, null);
 
                 notBuilder.setContentIntent(contentIntent);
             }
