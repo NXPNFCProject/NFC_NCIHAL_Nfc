@@ -184,6 +184,7 @@ public class NfcService implements DeviceHostListener {
     static final String TRON_NFC_CE = "nfc_ce";
     static final String TRON_NFC_P2P = "nfc_p2p";
     static final String TRON_NFC_TAG = "nfc_tag";
+    static final String NATIVE_LOG_FILE_PATH = "/data/misc/nfc/logs";
     static final String NATIVE_LOG_FILE_NAME = "native_crash_logs";
     static final int NATIVE_CRASH_FILE_SIZE = 1024 * 1024;
     static final String T4T_NFCEE_AID = "D2760000850101";
@@ -4684,7 +4685,7 @@ public class NfcService implements DeviceHostListener {
 
     private void copyNativeCrashLogsIfAny(PrintWriter pw) {
       try {
-          File file = new File(getNfaStorageDir(), NATIVE_LOG_FILE_NAME);
+          File file = new File(NATIVE_LOG_FILE_PATH, NATIVE_LOG_FILE_NAME);
           if (!file.exists()) {
             return;
           }
@@ -4704,7 +4705,7 @@ public class NfcService implements DeviceHostListener {
     private void storeNativeCrashLogs() {
       FileOutputStream fos = null;
       try {
-        File file = new File(getNfaStorageDir(), NATIVE_LOG_FILE_NAME);
+        File file = new File(NATIVE_LOG_FILE_PATH, NATIVE_LOG_FILE_NAME);
         if (file.length() >= NATIVE_CRASH_FILE_SIZE) {
           file.createNewFile();
         }
