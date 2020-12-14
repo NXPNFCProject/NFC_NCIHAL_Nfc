@@ -1031,7 +1031,7 @@ bool PeerToPeer::disconnectConnOriented(tJNI_HANDLE jniHandle) {
     return (false);
   }
 
-  // If this is a client, he may not be connected yet, so unblock him just in
+  // If this is a client, it may not be connected yet, so unblock it just in
   // case
   if (((pClient = findClient(jniHandle)) != NULL) && (pClient->mIsConnecting)) {
     SyncEventGuard guard(pClient->mConnectingEvent);
