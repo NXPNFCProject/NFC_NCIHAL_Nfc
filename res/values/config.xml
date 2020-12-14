@@ -4,6 +4,7 @@
     <bool name="enable_nfc_url_open_dialog">false</bool>
     <bool name="enable_auto_play">true</bool>
     <bool name="enable_notify_dispatch_failed">false</bool>
+    <bool name="enable_notify_read_failed">false</bool>
     <bool name="enable_antenna_blocked_alert">false</bool>
     <bool name="polling_disable_allowed">false</bool>
     <integer name="max_antenna_blocked_failure_count">10</integer>

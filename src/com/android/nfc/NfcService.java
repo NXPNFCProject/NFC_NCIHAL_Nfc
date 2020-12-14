@@ -487,6 +487,7 @@ public class NfcService implements DeviceHostListener {
 
     int mPollDelay;
     boolean mNotifyDispatchFailed;
+    boolean mNotifyReadFailed;
 
     private NfcDispatcher mNfcDispatcher;
     private PowerManager mPowerManager;
@@ -860,7 +861,9 @@ public class NfcService implements DeviceHostListener {
 
         // Polling delay variables
         mPollDelay = mContext.getResources().getInteger(R.integer.unknown_tag_polling_delay);
-        mNotifyDispatchFailed = mContext.getResources().getBoolean(R.bool.enable_notify_dispatch_failed);
+        mNotifyDispatchFailed =
+            mContext.getResources().getBoolean(R.bool.enable_notify_dispatch_failed);
+        mNotifyReadFailed = mContext.getResources().getBoolean(R.bool.enable_notify_read_failed);
 
         mPollingDisableAllowed = mContext.getResources().getBoolean(R.bool.polling_disable_allowed);
 
@@ -3666,7 +3669,7 @@ public class NfcService implements DeviceHostListener {
                         if (!tag.reconnect()) {
                             tag.disconnect();
                             if (mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED) {
-                                if (!sToast_debounce) {
+                                if (!sToast_debounce && mNotifyReadFailed) {
                                     Toast.makeText(mContext, R.string.tag_read_error,
                                                    Toast.LENGTH_SHORT).show();
                                     sToast_debounce = true;
