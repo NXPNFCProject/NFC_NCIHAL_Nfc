@@ -340,7 +340,12 @@ public interface DeviceHost {
 
     public String getNfaStorageDir();
 
-/* NXP extension are here */
+    /**
+     * Start or stop RF polling
+     */
+    void startStopPolling(boolean enable);
+
+    /* NXP extension are here */
     public void doChangeDiscoveryTech(int pollTech, int listenTech);
     public boolean accessControlForCOSU (int mode);
 

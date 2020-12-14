@@ -542,6 +542,12 @@ public class NativeNfcManager implements DeviceHost {
     @Override
     public native String getNfaStorageDir();
 
+    private native void doStartStopPolling(boolean start);
+    @Override
+    public void startStopPolling(boolean start) {
+        doStartStopPolling(start);
+    }
+
     /**
      * Notifies Ndef Message (TODO: rename into notifyTargetDiscovered)
      */
