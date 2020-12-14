@@ -66,7 +66,7 @@
     <uses-permission android:name="android.permission.CONNECTIVITY_INTERNAL" />
     <uses-permission android:name="android.permission.NFC_HANDOVER_STATUS" />
     <uses-permission android:name="android.permission.LOCAL_MAC_ADDRESS" />
-    <uses-permission android:name="com.android.permission.WHITELIST_BLUETOOTH_DEVICE" />
+    <uses-permission android:name="com.android.permission.ALLOWLIST_BLUETOOTH_DEVICE" />
     <uses-permission android:name="android.permission.DISPATCH_NFC_MESSAGE" />
     <uses-permission android:name="android.permission.OVERRIDE_WIFI_CONFIG" />
     <uses-permission android:name="android.permission.DEVICE_POWER" />
