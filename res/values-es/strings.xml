@@ -3,7 +3,7 @@
     xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="app_name" msgid="78565911793142902">"Servicio NFC"</string>
     <string name="nfcUserLabel" msgid="7708535817084357357">"NFC"</string>
-    <string name="accessibility_nfc_enabled" msgid="7796246979948787735">"NFC habilitada"</string>
+    <string name="accessibility_nfc_enabled" msgid="7796246979948787735">"NFC habilitado"</string>
     <string name="tap_to_beam" msgid="5819197866281059878">"Toca para compartir"</string>
     <string name="beam_progress" msgid="7453634884807323920">"Transferencia entrante..."</string>
     <string name="beam_outgoing" msgid="4679536649779123495">"Compartiendo..."</string>
@@ -40,7 +40,15 @@
     <string name="status_wifi_connected" msgid="5893022897732105739">"Conectado"</string>
     <string name="title_connect_to_network" msgid="2474034615817280146">"Conectar a la red"</string>
     <string name="prompt_connect_to_network" msgid="8511683573657516114">"¿Quieres conectarte a la red <xliff:g id="NETWORK_SSID">%1$s</xliff:g>?"</string>
-    <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"Para usar Android Beam, NFC debe estar habilitado. ¿Quieres habilitarlo?"</string>
+    <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"Para usar Android Beam, el NFC debe estar habilitado. ¿Quieres habilitarlo?"</string>
     <string name="android_beam" msgid="1666446406999492763">"Android Beam"</string>
     <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"La aplicación no tiene permiso de almacenamiento externo, necesario para compartir este archivo"</string>
+    <string name="title_confirm_url_open" msgid="8069968913244794478">"¿Quieres abrir el enlace?"</string>
+    <string name="summary_confirm_url_open" product="tablet" msgid="3353502750736192055">"Has recibido un enlace en tu tablet por NFC:"</string>
+    <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"Has recibido un enlace en tu teléfono por NFC:"</string>
+    <string name="action_confirm_url_open" msgid="3458322738812921189">"Abrir enlace"</string>
+    <string name="tag_read_error" msgid="2485274498885877547">"Error de lectura de NFC. Inténtalo de nuevo."</string>
+    <string name="tag_dispatch_failed" msgid="3562984995049738400">"No hay ninguna aplicación compatible con esta etiqueta NFC"</string>
+    <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"Es posible que el NFC esté bloqueado"</string>
+    <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Toca para saber cómo solucionarlo."</string>
 </resources>

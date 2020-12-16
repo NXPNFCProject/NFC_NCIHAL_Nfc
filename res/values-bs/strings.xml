@@ -12,7 +12,7 @@
     <string name="beam_canceled" msgid="5425192751826544741">"Prijenos je otkazan."</string>
     <string name="cancel" msgid="61873902552555096">"Otkaži"</string>
     <string name="beam_tap_to_view" msgid="7430394753262448349">"Dodirnite za prikaz"</string>
-    <string name="beam_handover_not_supported" msgid="4083165921751489015">"Uređaj primaoca ne podržava prijenos velikih datoteka putem emitiranja."</string>
+    <string name="beam_handover_not_supported" msgid="4083165921751489015">"Uređaj primaoca ne podržava prijenos velikih fajlova putem emitiranja."</string>
     <string name="beam_try_again" msgid="3364677301009783455">"Opet spojite uređaje"</string>
     <string name="beam_busy" msgid="5253335587620612576">"Prijenos je trenutno zauzet. Pokušajte ponovo kada se prethodni transfer završi."</string>
     <string name="device" msgid="4459621591392478151">"uređaj"</string>
@@ -24,7 +24,7 @@
     <string name="pairing_peripheral" msgid="6983626861540899365">"Uparivanje <xliff:g id="DEVICE_NAME">%1$s</xliff:g>"</string>
     <string name="pairing_peripheral_failed" msgid="6087643307743264679">"Ne može upariti <xliff:g id="DEVICE_NAME">%1$s</xliff:g>"</string>
     <string name="failed_to_enable_bt" msgid="7229153323594758077">"Bluetooth se ne može omogućiti"</string>
-    <string name="confirm_pairing" msgid="4112568077038265363">"Da li ste sigurni da želite upariti Bluetooth uređaj <xliff:g id="DEVICE_NAME">%1$s</xliff:g>?"</string>
+    <string name="confirm_pairing" msgid="4112568077038265363">"Jeste li sigurni da želite upariti Bluetooth uređaj <xliff:g id="DEVICE_NAME">%1$s</xliff:g>?"</string>
     <string name="pair_yes" msgid="3525614878559994448">"Da"</string>
     <string name="pair_no" msgid="5022308368904055020">"Ne"</string>
     <string name="tap_again_to_pay" msgid="5754988005412859897">"Dodirnite o pet da platite pomoću <xliff:g id="APP">%1$s</xliff:g>"</string>
@@ -36,10 +36,19 @@
     <string name="default_pay_app_removed" msgid="4108250545457437360">"Vaša preferirana usluga za kucni i plati je uklonjena. Izabrati drugu?"</string>
     <string name="ask_nfc_tap" msgid="2925239870458286340">"Dodirnite još jedan uređaj da završite"</string>
     <string name="wifi_connect" msgid="6250727951843550671">"Poveži se"</string>
-    <string name="status_unable_to_connect" msgid="9183908200295307657">"Ne može se povezati na mrežu"</string>
+    <string name="status_unable_to_connect" msgid="9183908200295307657">"Nije se moguće povezati na mrežu"</string>
     <string name="status_wifi_connected" msgid="5893022897732105739">"Povezano"</string>
     <string name="title_connect_to_network" msgid="2474034615817280146">"Spoji se na mrežu"</string>
     <string name="prompt_connect_to_network" msgid="8511683573657516114">"Povezati se na mrežu <xliff:g id="NETWORK_SSID">%1$s</xliff:g>?"</string>
     <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"Android prenošnje zahtijeva da NFC bude omogućen. Da li ga želite omogućiti?"</string>
     <string name="android_beam" msgid="1666446406999492763">"Android Beam"</string>
+    <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"Aplikacija nema odobrenje za vanjsku pohranu. Ovo je potrebno kako biste ovaj fajl mogli prenijeti koristeći funkciju Beam."</string>
+    <string name="title_confirm_url_open" msgid="8069968913244794478">"Otvoriti link?"</string>
+    <string name="summary_confirm_url_open" product="tablet" msgid="3353502750736192055">"Vaš tablet je primio link preko NFC-a:"</string>
+    <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"Vaš telefon je primio link preko NFC-a:"</string>
+    <string name="action_confirm_url_open" msgid="3458322738812921189">"Otvori link"</string>
+    <string name="tag_read_error" msgid="2485274498885877547">"Greška prilikom čitanja NFC-a. Pokušajte ponovo."</string>
+    <string name="tag_dispatch_failed" msgid="3562984995049738400">"Nema podržane aplikacije za ovu NFC oznaku"</string>
+    <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"NFC je možda blokiran"</string>
+    <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Dodirnite da saznate kako ispraviti problem."</string>
 </resources>

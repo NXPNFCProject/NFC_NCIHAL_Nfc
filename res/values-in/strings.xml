@@ -4,7 +4,7 @@
     <string name="app_name" msgid="78565911793142902">"Layanan Nfc"</string>
     <string name="nfcUserLabel" msgid="7708535817084357357">"Nfc"</string>
     <string name="accessibility_nfc_enabled" msgid="7796246979948787735">"NFC diaktifkan."</string>
-    <string name="tap_to_beam" msgid="5819197866281059878">"Tap untuk beam"</string>
+    <string name="tap_to_beam" msgid="5819197866281059878">"Ketuk untuk beam"</string>
     <string name="beam_progress" msgid="7453634884807323920">"Pancaran yang masuk..."</string>
     <string name="beam_outgoing" msgid="4679536649779123495">"Memancarkan..."</string>
     <string name="beam_complete" msgid="477026736424637435">"Beam selesai"</string>
@@ -24,7 +24,7 @@
     <string name="pairing_peripheral" msgid="6983626861540899365">"Menyandingkan <xliff:g id="DEVICE_NAME">%1$s</xliff:g>"</string>
     <string name="pairing_peripheral_failed" msgid="6087643307743264679">"Tidak dapat menyandingkan <xliff:g id="DEVICE_NAME">%1$s</xliff:g>"</string>
     <string name="failed_to_enable_bt" msgid="7229153323594758077">"Tidak dapat mengaktifkan Bluetooth"</string>
-    <string name="confirm_pairing" msgid="4112568077038265363">"Yakin ingin menyandingkan perangkat Bluetooth <xliff:g id="DEVICE_NAME">%1$s</xliff:g>?"</string>
+    <string name="confirm_pairing" msgid="4112568077038265363">"Yakin ingin menyambungkan perangkat Bluetooth <xliff:g id="DEVICE_NAME">%1$s</xliff:g>?"</string>
     <string name="pair_yes" msgid="3525614878559994448">"Ya"</string>
     <string name="pair_no" msgid="5022308368904055020">"Tidak"</string>
     <string name="tap_again_to_pay" msgid="5754988005412859897">"Ketuk lagi untuk membayar dengan <xliff:g id="APP">%1$s</xliff:g>"</string>
@@ -33,7 +33,7 @@
     <string name="could_not_use_app" msgid="8137587876138569083">"Tidak dapat menggunakan <xliff:g id="APP">%1$s</xliff:g>."</string>
     <string name="pay_with" msgid="5531545488795798945">"Bayar dengan"</string>
     <string name="complete_with" msgid="6797459104103012992">"Selesaikan dengan"</string>
-    <string name="default_pay_app_removed" msgid="4108250545457437360">"Layanan pilihan Anda untuk ketuk &amp; bayar telah dihapus. Pilih yang lain?"</string>
+    <string name="default_pay_app_removed" msgid="4108250545457437360">"Layanan pilihan Anda untuk tempel &amp; bayar telah dihapus. Pilih yang lain?"</string>
     <string name="ask_nfc_tap" msgid="2925239870458286340">"Ketuk perangkat lain untuk menyelesaikan"</string>
     <string name="wifi_connect" msgid="6250727951843550671">"Sambungkan"</string>
     <string name="status_unable_to_connect" msgid="9183908200295307657">"Tidak dapat menyambung ke jaringan"</string>
@@ -43,4 +43,12 @@
     <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"Android Beam memerlukan NFC untuk diaktifkan. Ingin mengaktifkannya?"</string>
     <string name="android_beam" msgid="1666446406999492763">"Android Beam"</string>
     <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"Aplikasi tidak memiliki Izin Penyimpanan Eksternal. Diperlukan untuk melakukan beam file ini"</string>
+    <string name="title_confirm_url_open" msgid="8069968913244794478">"Buka link?"</string>
+    <string name="summary_confirm_url_open" product="tablet" msgid="3353502750736192055">"Tablet Anda menerima link melalui NFC:"</string>
+    <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"Ponsel Anda menerima link melalui NFC:"</string>
+    <string name="action_confirm_url_open" msgid="3458322738812921189">"Buka link"</string>
+    <string name="tag_read_error" msgid="2485274498885877547">"Pembacaan NFC error. Coba lagi."</string>
+    <string name="tag_dispatch_failed" msgid="3562984995049738400">"Aplikasi tidak didukung untuk Tag NFC ini"</string>
+    <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"NFC mungkin diblokir"</string>
+    <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Ketuk untuk mempelajari cara memperbaikinya."</string>
 </resources>

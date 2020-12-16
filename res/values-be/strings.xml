@@ -35,11 +35,20 @@
     <string name="complete_with" msgid="6797459104103012992">"Завяршыць з дапамогай"</string>
     <string name="default_pay_app_removed" msgid="4108250545457437360">"Ваша прыярытэтная служба аплаты доыткам была выдалена. Выбраць іншую?"</string>
     <string name="ask_nfc_tap" msgid="2925239870458286340">"Для завяршэння краніце іншую прыладу"</string>
-    <string name="wifi_connect" msgid="6250727951843550671">"Падлучыцца"</string>
-    <string name="status_unable_to_connect" msgid="9183908200295307657">"Немагчыма падлучыцца да сеткі"</string>
+    <string name="wifi_connect" msgid="6250727951843550671">"Падключыцца"</string>
+    <string name="status_unable_to_connect" msgid="9183908200295307657">"Немагчыма падключыцца да сеткі"</string>
     <string name="status_wifi_connected" msgid="5893022897732105739">"Падлучана"</string>
-    <string name="title_connect_to_network" msgid="2474034615817280146">"Падлучыцца да сеткі"</string>
-    <string name="prompt_connect_to_network" msgid="8511683573657516114">"Падлучыцца да сеткі <xliff:g id="NETWORK_SSID">%1$s</xliff:g>?"</string>
+    <string name="title_connect_to_network" msgid="2474034615817280146">"Падключыцца да сеткі"</string>
+    <string name="prompt_connect_to_network" msgid="8511683573657516114">"Падключыцца да сеткі <xliff:g id="NETWORK_SSID">%1$s</xliff:g>?"</string>
     <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"Каб выкарыстоўваць Android Beam, трэба ўключыць NFC. Уключыць?"</string>
     <string name="android_beam" msgid="1666446406999492763">"Android Beam"</string>
+    <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"У праграмы няма дазволу на доступ да знешняга сховішча. Гэты дазвол патрабуецца, каб перадаць дадзены файл"</string>
+    <string name="title_confirm_url_open" msgid="8069968913244794478">"Адкрыць спасылку?"</string>
+    <string name="summary_confirm_url_open" product="tablet" msgid="3353502750736192055">"На планшэт праз NFC прыйшла спасылка:"</string>
+    <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"На тэлефон праз NFC прыйшла спасылка:"</string>
+    <string name="action_confirm_url_open" msgid="3458322738812921189">"Адкрыць спасылку"</string>
+    <string name="tag_read_error" msgid="2485274498885877547">"Памылка чытання NFC. Паўтарыце спробу."</string>
+    <string name="tag_dispatch_failed" msgid="3562984995049738400">"Няма праграм, якія падтрымліваюцца для гэтага цэтліка NFC"</string>
+    <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"Магчыма, NFC заблакіраваны"</string>
+    <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Націсніце, каб даведацца, як вырашыць праблему."</string>
 </resources>

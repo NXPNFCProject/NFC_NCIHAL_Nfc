@@ -24,7 +24,7 @@
     <string name="pairing_peripheral" msgid="6983626861540899365">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g> ulanmoqda"</string>
     <string name="pairing_peripheral_failed" msgid="6087643307743264679">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g> ulanmadi"</string>
     <string name="failed_to_enable_bt" msgid="7229153323594758077">"Bluetooth’ni yoqib bo‘lmadi"</string>
-    <string name="confirm_pairing" msgid="4112568077038265363">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g> Bluetooth qurilmasini bo‘glashga ishonchingiz komilmi?"</string>
+    <string name="confirm_pairing" msgid="4112568077038265363">"Haqiqatan ham <xliff:g id="DEVICE_NAME">%1$s</xliff:g> Bluetooth qurilmasini ulamoqchimisiz?"</string>
     <string name="pair_yes" msgid="3525614878559994448">"Ha"</string>
     <string name="pair_no" msgid="5022308368904055020">"Yo‘q"</string>
     <string name="tap_again_to_pay" msgid="5754988005412859897">"<xliff:g id="APP">%1$s</xliff:g> orqali to‘lash uchun qaytadan bosing."</string>
@@ -43,4 +43,12 @@
     <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"Android Beam uchun NFC yoniq bo‘lishi lozim. Uni yoqishni xohlaysizmi?"</string>
     <string name="android_beam" msgid="1666446406999492763">"Android Beam"</string>
     <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"Ilovada tashqi xotira ruxsati yo‘q. Bu ruxsat mazkur faylni uzatish uchun zarur"</string>
+    <string name="title_confirm_url_open" msgid="8069968913244794478">"Havola ochilsinmi?"</string>
+    <string name="summary_confirm_url_open" product="tablet" msgid="3353502750736192055">"Planshetingizga NFC orqali havola keldi:"</string>
+    <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"Telefoningizga NFC orqali havola keldi:"</string>
+    <string name="action_confirm_url_open" msgid="3458322738812921189">"Havolani ochish"</string>
+    <string name="tag_read_error" msgid="2485274498885877547">"NFC tegni o‘qishda xato. Qaytadan urining."</string>
+    <string name="tag_dispatch_failed" msgid="3562984995049738400">"Mazkur NFC yorliq bilan ishlaydigan hech qanday ilova topilmadi"</string>
+    <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"NFC bloklangan shekilli"</string>
+    <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Muammo yechimini olish uchun bosing."</string>
 </resources>

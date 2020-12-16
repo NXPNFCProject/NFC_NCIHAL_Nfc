@@ -4,7 +4,7 @@
     <string name="app_name" msgid="78565911793142902">"Nfc सेवा"</string>
     <string name="nfcUserLabel" msgid="7708535817084357357">"Nfc"</string>
     <string name="accessibility_nfc_enabled" msgid="7796246979948787735">"NFC सक्षम"</string>
-    <string name="tap_to_beam" msgid="5819197866281059878">"बिम गर्नका लागि ट्याप गर्नुहोस्"</string>
+    <string name="tap_to_beam" msgid="5819197866281059878">"बिम गर्नाका लागि ट्याप गर्नुहोस्"</string>
     <string name="beam_progress" msgid="7453634884807323920">"आगमन बिम..."</string>
     <string name="beam_outgoing" msgid="4679536649779123495">"बिम गर्दै..."</string>
     <string name="beam_complete" msgid="477026736424637435">"बिम पुरा भयो"</string>
@@ -12,7 +12,7 @@
     <string name="beam_canceled" msgid="5425192751826544741">"बिम रद्द भयो"</string>
     <string name="cancel" msgid="61873902552555096">"रद्द गर्नुहोस्"</string>
     <string name="beam_tap_to_view" msgid="7430394753262448349">"हेर्नका लागि ट्याप गर्नुहोस्"</string>
-    <string name="beam_handover_not_supported" msgid="4083165921751489015">"प्राप्तकर्ताको उपकरणले बिम मार्फत ठूलो फाइल ट्रान्सफर गर्न समर्थन गर्दैन।"</string>
+    <string name="beam_handover_not_supported" msgid="4083165921751489015">"प्राप्तकर्ताको उपकरणले बिम मार्फत ठुलो फाइल ट्रान्सफर गर्न समर्थन गर्दैन।"</string>
     <string name="beam_try_again" msgid="3364677301009783455">"फेरि उपकरणहरू एकै साथ ल्याउनुहोस्"</string>
     <string name="beam_busy" msgid="5253335587620612576">"बीम अहिले व्यस्त छ। अघिल्लो स्थानान्तरण पूरा भएपछि फेरि प्रयास गर्नुहोस्।"</string>
     <string name="device" msgid="4459621591392478151">"यन्त्र"</string>
@@ -24,7 +24,7 @@
     <string name="pairing_peripheral" msgid="6983626861540899365">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g> जोडा गर्दै"</string>
     <string name="pairing_peripheral_failed" msgid="6087643307743264679">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g> जोडा गर्न सकेन"</string>
     <string name="failed_to_enable_bt" msgid="7229153323594758077">"ब्लुटुथ सक्षम पार्न सकेन"</string>
-    <string name="confirm_pairing" msgid="4112568077038265363">"तपाईं ब्लुटुथ उपकरण जोडी गर्न निश्चित हुनुहुन्छ <xliff:g id="DEVICE_NAME">%1$s</xliff:g>?"</string>
+    <string name="confirm_pairing" msgid="4112568077038265363">"तपाईं ब्लुटुथ <xliff:g id="DEVICE_NAME">%1$s</xliff:g> को पेयर गर्न चाहनुहुन्छ?"</string>
     <string name="pair_yes" msgid="3525614878559994448">"हो"</string>
     <string name="pair_no" msgid="5022308368904055020">"होइन"</string>
     <string name="tap_again_to_pay" msgid="5754988005412859897">"<xliff:g id="APP">%1$s</xliff:g>सँग तिर्न फेरी छुनुहोस्"</string>
@@ -42,5 +42,13 @@
     <string name="prompt_connect_to_network" msgid="8511683573657516114">"सञ्जाल <xliff:g id="NETWORK_SSID">%1$s</xliff:g>मा जडान गर्ने?"</string>
     <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"Android बीम सक्षम गर्नको लागि NFC आवश्यक छ। के तपाईं यसलाई सक्षम गर्न चाहनुहुन्छ?"</string>
     <string name="android_beam" msgid="1666446406999492763">"Android बिम"</string>
-    <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"अनुप्रयोगलाई बाह्य भण्डारणसम्बन्धी अनुमति छैन। यो फाइल बिम गर्न अनुमति अनिवार्य छ"</string>
+    <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"एपलाई बाह्य भण्डारणसम्बन्धी अनुमति छैन। यो फाइल बिम गर्न अनुमति अनिवार्य छ"</string>
+    <string name="title_confirm_url_open" msgid="8069968913244794478">"लिंक खोल्ने हो?"</string>
+    <string name="summary_confirm_url_open" product="tablet" msgid="3353502750736192055">"तपाईंको ट्याब्लेटमा NFC मार्फत एउटा लिंक आयो:"</string>
+    <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"तपाईंको फोनमा NFC मार्फत एउटा लिंक आयो:"</string>
+    <string name="action_confirm_url_open" msgid="3458322738812921189">"लिंक खोल्नुहोस्"</string>
+    <string name="tag_read_error" msgid="2485274498885877547">"NFC रिड गर्दा त्रुटि भयो। फेरि प्रयास गर्नुहोस्‌।"</string>
+    <string name="tag_dispatch_failed" msgid="3562984995049738400">"यो NFC ट्यागको कुनै पनि समर्थित एप छैन"</string>
+    <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"NFC ब्लक गरिएको हुन सक्छ"</string>
+    <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"यो ब्लक हटाउने तरिका जान्न ट्याप गर्नुहोस्।"</string>
 </resources>

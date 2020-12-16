@@ -24,7 +24,7 @@
     <string name="pairing_peripheral" msgid="6983626861540899365">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g> ની જોડી કરી રહ્યું છે"</string>
     <string name="pairing_peripheral_failed" msgid="6087643307743264679">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g> ની જોડી કરી શકાઈ નથી"</string>
     <string name="failed_to_enable_bt" msgid="7229153323594758077">"બ્લૂટૂથ સક્ષમ કરી શકાયું નથી"</string>
-    <string name="confirm_pairing" msgid="4112568077038265363">"શું તમે ખરેખર બ્લૂટૂથ ની ઉપકરણ <xliff:g id="DEVICE_NAME">%1$s</xliff:g> સાથે જોડી કરવા માંગો છો?"</string>
+    <string name="confirm_pairing" msgid="4112568077038265363">"શું તમે ખરેખર બ્લૂટૂથ ડિવાઇસ <xliff:g id="DEVICE_NAME">%1$s</xliff:g> સાથે જોડી કરવા માંગો છો?"</string>
     <string name="pair_yes" msgid="3525614878559994448">"હા"</string>
     <string name="pair_no" msgid="5022308368904055020">"નહીં"</string>
     <string name="tap_again_to_pay" msgid="5754988005412859897">"<xliff:g id="APP">%1$s</xliff:g> થી ચૂકવણી કરવા માટે ફરીથી ટેપ કરો"</string>
@@ -43,4 +43,12 @@
     <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"Android બીમને NFC સક્ષમ કરવાની જરૂર છે. શું તમે તેને સક્ષમ કરવા માંગો છો?"</string>
     <string name="android_beam" msgid="1666446406999492763">"Android બીમ"</string>
     <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"આ ઍપ્લિકેશન પાસે બાહ્ય સ્ટોરેજની પરવાનગી નથી. આ ફાઇલને બીમ કરવા માટે એ જરૂરી છે"</string>
+    <string name="title_confirm_url_open" msgid="8069968913244794478">"લિંક ખોલીએ?"</string>
+    <string name="summary_confirm_url_open" product="tablet" msgid="3353502750736192055">"તમારા ટૅબ્લેટને NFC મારફતે એક લિંક પ્રાપ્ત થઈ છે:"</string>
+    <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"તમારા ફોનને NFC મારફતે એક લિંક પ્રાપ્ત થઈ છે:"</string>
+    <string name="action_confirm_url_open" msgid="3458322738812921189">"લિંક ખોલો"</string>
+    <string name="tag_read_error" msgid="2485274498885877547">"NFC વાંચનમાં ભૂલ. ફરી પ્રયાસ કરો."</string>
+    <string name="tag_dispatch_failed" msgid="3562984995049738400">"આ NFC ટૅગ માટે કોઈ સહાયક ઍપ્લિકેશન નથી"</string>
+    <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"NFC કદાચ બ્લૉક કરવામાં આવ્યું હોય"</string>
+    <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"સુધારવાની રીતે વિશે જાણવા માટે ટૅપ કરો."</string>
 </resources>

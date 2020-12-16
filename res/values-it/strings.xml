@@ -43,4 +43,12 @@
     <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"L\'attivazione della funzione Android Beam richiede la tecnologia NFC. Vuoi attivarla?"</string>
     <string name="android_beam" msgid="1666446406999492763">"Android Beam"</string>
     <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"L\'applicazione non presenta l\'autorizzazione per lo spazio di archiviazione esterno che è obbligatoria per trasmettere questo file."</string>
+    <string name="title_confirm_url_open" msgid="8069968913244794478">"Aprire il link?"</string>
+    <string name="summary_confirm_url_open" product="tablet" msgid="3353502750736192055">"Hai ricevuto un link tramite NFC sul tablet:"</string>
+    <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"Hai ricevuto un link tramite NFC sul telefono:"</string>
+    <string name="action_confirm_url_open" msgid="3458322738812921189">"Apri il link"</string>
+    <string name="tag_read_error" msgid="2485274498885877547">"Errore durante la lettura del tag NFC. Riprova."</string>
+    <string name="tag_dispatch_failed" msgid="3562984995049738400">"Nessuna app supportata per questo tag NFC"</string>
+    <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"La tecnologia NFC potrebbe essere bloccata"</string>
+    <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Tocca per scoprire come risolvere il problema."</string>
 </resources>

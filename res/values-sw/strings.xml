@@ -41,6 +41,14 @@
     <string name="title_connect_to_network" msgid="2474034615817280146">"Unganisha kwenye mtandao"</string>
     <string name="prompt_connect_to_network" msgid="8511683573657516114">"Ungependa kuunganisha kwenye mtandao wa <xliff:g id="NETWORK_SSID">%1$s</xliff:g>?"</string>
     <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"Boriti ya Android inahitaji NFC iwe imewashwa. Je, unataka kuiwasha?"</string>
-    <string name="android_beam" msgid="1666446406999492763">"Sambaza kupitia Android"</string>
+    <string name="android_beam" msgid="1666446406999492763">"Android Beam"</string>
     <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"Programu haina Ruhusa ya kutumia Hifadhi ya Nje. Hii inahitajika ili Kusambaza faili hii."</string>
+    <string name="title_confirm_url_open" msgid="8069968913244794478">"Ungependa kufungua kiungo?"</string>
+    <string name="summary_confirm_url_open" product="tablet" msgid="3353502750736192055">"Kompyuta kibao yako imepokea kiungo kupitia NFC:"</string>
+    <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"Simu yako imepokea kiungo kupitia NFC:"</string>
+    <string name="action_confirm_url_open" msgid="3458322738812921189">"Fungua kiungo"</string>
+    <string name="tag_read_error" msgid="2485274498885877547">"Hitilafu ya kusoma NFC. Jaribu tena."</string>
+    <string name="tag_dispatch_failed" msgid="3562984995049738400">"Hakuna programu inayotumika katika Tagi hii ya NFC"</string>
+    <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"Huenda NFC imezuiwa"</string>
+    <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Gusa ili upate maelezo kuhusu jinsi ya kurekebisha."</string>
 </resources>
