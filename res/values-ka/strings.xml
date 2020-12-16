@@ -43,4 +43,12 @@
     <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"Android Beam საჭიროებს NFC ჩართვას. გსურთ მისი ჩართვა?"</string>
     <string name="android_beam" msgid="1666446406999492763">"Android სხივი"</string>
     <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"აპლიკაციისთვის გარე მეხსიერების ნებართვა მინიჭებული არაა. ამ ფაილის სხივით გადასაცემად, ეს აუცილებელია"</string>
+    <string name="title_confirm_url_open" msgid="8069968913244794478">"გსურთ ბმულის გახსნა?"</string>
+    <string name="summary_confirm_url_open" product="tablet" msgid="3353502750736192055">"თქვენმა ტაბლეტმა მიიღო ბმული NFC-ს მეშვეობით:"</string>
+    <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"თქვენმა ტელეფონმა მიიღო ბმული NFC-ს მეშვეობით:"</string>
+    <string name="action_confirm_url_open" msgid="3458322738812921189">"ბმულის გახსნა"</string>
+    <string name="tag_read_error" msgid="2485274498885877547">"NFC-ს წაკითხვის შეცდომა. ცადეთ ისევ."</string>
+    <string name="tag_dispatch_failed" msgid="3562984995049738400">"ამ NFC ტეგისთვის არცერთი მხარდაჭერილი აპლიკაცია არ მოიძებნა"</string>
+    <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"NFC შეიძლება დაბლოკილი იყოს"</string>
+    <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"შეეხეთ იმის შესატყობად, თუ როგორ უნდა მოაგვაროთ ეს."</string>
 </resources>

@@ -35,7 +35,7 @@
     <string name="complete_with" msgid="6797459104103012992">"ಇದರ ಮೂಲಕ ಪೂರ್ಣಗೊಳಿಸಿ"</string>
     <string name="default_pay_app_removed" msgid="4108250545457437360">"ನಿಮ್ಮ ಮೆಚ್ಚಿನ ಟ್ಯಾಪ್ &amp; ಪಾವತಿ ಸೇವೆಯನ್ನು ತೆಗೆದುಹಾಕಲಾಗಿದೆ. ಬೇರೊಂದು ಸೇವೆಯನ್ನು ಆರಿಸುವುದೇ?"</string>
     <string name="ask_nfc_tap" msgid="2925239870458286340">"ಪೂರ್ಣಗೊಳಿಸಲು ಇನ್ನೊಂದು ಸಾಧನವನ್ನು ಟ್ಯಾಪ್ ಮಾಡಿ"</string>
-    <string name="wifi_connect" msgid="6250727951843550671">"ಸಂಪರ್ಕಪಡಿಸು"</string>
+    <string name="wifi_connect" msgid="6250727951843550671">"ಕನೆಕ್ಟ್ ಮಾಡಿ"</string>
     <string name="status_unable_to_connect" msgid="9183908200295307657">"ನೆಟ್‌ವರ್ಕ್‌ಗೆ ಸಂಪರ್ಕಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ"</string>
     <string name="status_wifi_connected" msgid="5893022897732105739">"ಸಂಪರ್ಕಗೊಂಡಿದೆ"</string>
     <string name="title_connect_to_network" msgid="2474034615817280146">"ನೆಟ್‌ವರ್ಕ್‌ಗೆ ಸಂಪರ್ಕಿಸಿ"</string>
@@ -43,4 +43,12 @@
     <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"Android Beam ಬಳಸಲು NFC ಸಕ್ರಿಯಗೊಂಡಿರಬೇಕು. ನೀವದನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಲು ಬಯಸುವಿರಾ?"</string>
     <string name="android_beam" msgid="1666446406999492763">"Android Beam"</string>
     <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"ಅಪ್ಲಿಕೇಶನ್ ಬಾಹ್ಯ ಸಂಗ್ರಹಣಾ ಅನುಮತಿಯನ್ನು ಹೊಂದಿಲ್ಲ. ಈ ಫೈಲ್‌ ಅನ್ನು ಬೀಮ್‌ ಮಾಡಲು ಇದರ ಅಗತ್ಯವಿದೆ"</string>
+    <string name="title_confirm_url_open" msgid="8069968913244794478">"ಲಿಂಕ್ ತೆರೆಯುವುದೇ?"</string>
+    <string name="summary_confirm_url_open" product="tablet" msgid="3353502750736192055">"ನಿಮ್ಮ ಟ್ಯಾಬ್ಲೆಟ್ NFC ಮೂಲಕ ಲಿಂಕ್ ಸ್ವೀಕರಿಸಿದೆ:"</string>
+    <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"ನಿಮ್ಮ ಫೋನ್ NFC ಮೂಲಕ ಲಿಂಕ್ ಸ್ವೀಕರಿಸಿದೆ:"</string>
+    <string name="action_confirm_url_open" msgid="3458322738812921189">"ಲಿಂಕ್ ತೆರೆಯಿರಿ"</string>
+    <string name="tag_read_error" msgid="2485274498885877547">"NFC ಓದುವಾಗ ದೋಷ ಕಂಡು ಬಂದಿದೆ. ಪುನಃ ಪ್ರಯತ್ನಿಸಿ."</string>
+    <string name="tag_dispatch_failed" msgid="3562984995049738400">"ಈ NFC ಟ್ಯಾಗ್‌ಗೆ ಯಾವುದೇ ಆ್ಯಪ್‌ ಬೆಂಬಲಿಸುವುದಿಲ್ಲ"</string>
+    <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"NFC ಅನ್ನು ನಿರ್ಬಂಧಿಸಿರಬಹುದು"</string>
+    <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"ಹೇಗೆ ಸರಿಪಡಿಸುವುದು ಎಂಬುದನ್ನು ತಿಳಿಯಲು ಟ್ಯಾಪ್ ಮಾಡಿ."</string>
 </resources>

@@ -24,7 +24,7 @@
     <string name="pairing_peripheral" msgid="6983626861540899365">"Sincronizando <xliff:g id="DEVICE_NAME">%1$s</xliff:g>"</string>
     <string name="pairing_peripheral_failed" msgid="6087643307743264679">"Error al sincronizar <xliff:g id="DEVICE_NAME">%1$s</xliff:g>"</string>
     <string name="failed_to_enable_bt" msgid="7229153323594758077">"Error al activar Bluetooth"</string>
-    <string name="confirm_pairing" msgid="4112568077038265363">"¿Realmente deseas sincronizar el dispositivo Bluetooth <xliff:g id="DEVICE_NAME">%1$s</xliff:g>?"</string>
+    <string name="confirm_pairing" msgid="4112568077038265363">"¿Confirmas que deseas vincular el dispositivo Bluetooth <xliff:g id="DEVICE_NAME">%1$s</xliff:g>?"</string>
     <string name="pair_yes" msgid="3525614878559994448">"Sí"</string>
     <string name="pair_no" msgid="5022308368904055020">"No"</string>
     <string name="tap_again_to_pay" msgid="5754988005412859897">"Presionar de nuevo para pagar con <xliff:g id="APP">%1$s</xliff:g>"</string>
@@ -43,4 +43,12 @@
     <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"Para usar Android Beam, debes habilitar la función NFC. ¿Quieres habilitarla?"</string>
     <string name="android_beam" msgid="1666446406999492763">"Android Beam"</string>
     <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"La aplicación no tiene permiso de almacenamiento externo, lo que es necesario para transmitir este archivo"</string>
+    <string name="title_confirm_url_open" msgid="8069968913244794478">"¿Abrir vínculo?"</string>
+    <string name="summary_confirm_url_open" product="tablet" msgid="3353502750736192055">"Tu tablet recibió un vínculo mediante NFC:"</string>
+    <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"Tu teléfono recibió un vínculo mediante NFC:"</string>
+    <string name="action_confirm_url_open" msgid="3458322738812921189">"Abrir vínculo"</string>
+    <string name="tag_read_error" msgid="2485274498885877547">"Error de lectura de NFC. Vuelve a intentarlo."</string>
+    <string name="tag_dispatch_failed" msgid="3562984995049738400">"No hay apps compatibles con esta etiqueta NFC"</string>
+    <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"Es posible que la función NFC esté bloqueada"</string>
+    <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Presiona para ver cómo corregir el problema."</string>
 </resources>
