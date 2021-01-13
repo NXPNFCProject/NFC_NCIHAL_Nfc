@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2020 NXP
+*  Copyright 2018-2021 NXP
 *
 ******************************************************************************/
 
@@ -158,13 +158,18 @@ void NfcTag::initialize(nfc_jni_native_data* native) {
   isP2pDetected = false;
   mIsSkipNdef = false;
   mIsNonStdMFCTag = false;
-  vector<uint8_t> timeDiff = NfcConfig::getBytes(NAME_NXP_NON_STD_CARD_TIMEDIFF);
-  DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: Non std card", __func__);
-  for (uint8_t i=0; i<timeDiff.size(); i++) {
-    mNonStdCardTimeDiff.at(i) = timeDiff.at(i) * TIME_MUL_100MS;
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: timediff[%d] = %d",
+  if(NfcConfig::hasKey(NAME_NXP_NON_STD_CARD_TIMEDIFF)) {
+    vector<uint8_t> timeDiff = NfcConfig::getBytes(NAME_NXP_NON_STD_CARD_TIMEDIFF);
+    DLOG_IF(INFO, nfc_debug_enabled)
+       << StringPrintf("%s: Non std card", __func__);
+    for (uint8_t i=0; i<timeDiff.size(); i++) {
+      mNonStdCardTimeDiff.at(i) = timeDiff.at(i) * TIME_MUL_100MS;
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: timediff[%d] = %d",
           __func__, i, mNonStdCardTimeDiff.at(i));
+    }
+  } else {
+    DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("%s: timediff not defined taking default", __func__);
   }
   isNonStdCardSupported =
       (NfcConfig::getUnsigned(NAME_NXP_SUPPORT_NON_STD_CARD, 0) != 0) ? true
