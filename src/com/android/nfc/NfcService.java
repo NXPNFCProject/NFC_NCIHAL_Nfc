@@ -2234,7 +2234,8 @@ public class NfcService implements DeviceHostListener {
                     }
                 }
                 Log.i(TAG,"DefaultRouteSet : " + protoRouteEntry);
-                if(GetDefaultRouteLocSharedPref() != routeLoc) {
+                int defaultRoute = mNxpPrefs.getInt("PREF_SET_DEFAULT_ROUTE_ID", GetDefaultRouteEntry());
+                if(defaultRoute != protoRouteEntry) {
                     mNxpPrefsEditor = mNxpPrefs.edit();
                     mNxpPrefsEditor.putInt("PREF_SET_DEFAULT_ROUTE_ID", protoRouteEntry );
                     mNxpPrefsEditor.commit();
