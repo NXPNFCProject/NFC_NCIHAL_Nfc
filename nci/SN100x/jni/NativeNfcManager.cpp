@@ -217,6 +217,7 @@ void enableLastRfDiscovery();
 void storeLastDiscoveryParams(int technologies_mask, bool enable_lptd,
                               bool reader_mode, bool enable_host_routing,
                               bool enable_p2p, bool restart);
+void configureNfccConfigControl(bool flag);
 #endif
 jmethodID  gCachedNfcManagerNotifySeListenActivated;
 jmethodID  gCachedNfcManagerNotifySeListenDeactivated;
@@ -1752,6 +1753,20 @@ static void nfcManager_configNfccConfigControl(bool flag) {
     }
   }
 }
+#if(NXP_EXTNS == TRUE)
+/*******************************************************************************
+**
+** Function:        configureNfccConfigControl
+**
+** Description:     The Wrapper of nfcManager_configNfccConfigControl.
+**
+** Returns:         None
+**
+*******************************************************************************/
+void configureNfccConfigControl(bool flag) {
+   nfcManager_configNfccConfigControl(flag);
+}
+#endif
 
 /*******************************************************************************
 **
