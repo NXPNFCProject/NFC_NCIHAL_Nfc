@@ -532,6 +532,11 @@ public class NfcService implements DeviceHostListener {
     private Object mT4tNfcEeObj = new Object();
     private Bundle mT4tNfceeReturnBundle = new Bundle();
     private WlcServiceProxy mWlc = null;
+    private int SELFTEST_RESTORE_RFTXCFG = 0x00;
+    private int SELFTEST_SET_RFTXCFG = 0x01;
+    private int SELFTEST_PRBS = 0x06;
+    private int SELFTEST_SWP = 0x07;
+
     public static NfcService getInstance() {
         return sService;
     }
@@ -2155,15 +2160,17 @@ public class NfcService implements DeviceHostListener {
         public int nfcSelfTest(int type) {
             NfcPermissions.enforceUserPermissions(mContext);
             NfcPermissions.enforceAdminPermissions(mContext);
-            int status = 0xFF, prbs_test = 0x06, swpSelf_test = 0x07;
+            int status = 0xFF;
             Method mNfcSelfTestMethod;
             Log.i(TAG,"doNfcSelfTest type ENter : " + type);
             synchronized(NfcService.this) {
               try {
-                 if(mNfcExtnsObj!=null && (type == prbs_test || type == swpSelf_test)){
+                 if(mNfcExtnsObj!=null && (type == SELFTEST_PRBS || type == SELFTEST_SWP)){
                     mNfcSelfTestMethod = mNfcExtnsClass.getDeclaredMethod("doNfcSelfTest", int.class);
                     mNfcSelfTestMethod.invoke(mNfcExtnsObj,type);
-                 }else {
+                 } else if(type == SELFTEST_RESTORE_RFTXCFG || type == SELFTEST_SET_RFTXCFG) {
+                    mNfcAdapter.resonantFrequency(type);
+                 } else {
                     status = mDeviceHost.doNfcSelfTest(type);
                  }
               } catch (NoSuchMethodException e ) {
