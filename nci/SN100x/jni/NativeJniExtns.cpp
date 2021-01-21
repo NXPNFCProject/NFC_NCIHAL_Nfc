@@ -182,9 +182,9 @@ NativeJniExtns::~NativeJniExtns() {
                                            __func__);
       throw false;
     }
+  } catch (const std::length_error e) {
+  } catch (const std::__1::ios_base::failure e) {
   } catch (bool) {
-    DLOG_IF(ERROR, true) << StringPrintf("%s: Exception to unload the library",
-                                         __func__);
   }
 };
 
