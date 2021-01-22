@@ -1458,6 +1458,11 @@ void NfcTag::resetTechnologies() {
   resetAllTransceiveTimeouts();
 #if (NXP_EXTNS == TRUE)
   EXTNS_SetConnectFlag(false);
+  /* reset KOVIO uidLen on disconnect/presence
+   * check failed/DEACTIVATED_NTF to enable
+   * thus isSameKovio returns false
+   * */
+  mLastKovioUidLen = 0;
 #endif
 }
 
