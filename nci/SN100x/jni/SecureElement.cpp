@@ -12,7 +12,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2020 NXP
+*  Copyright 2018-2021 NXP
 *
 ******************************************************************************/
 
@@ -1600,7 +1600,7 @@ tNFA_STATUS SecureElement::setNfccPwrConfig(uint8_t value)
     LOG(INFO) << StringPrintf("%s: Enter: config= 0x%X", fn, value);
     cur_value = value;
     SyncEventGuard guard (mPwrLinkCtrlEvent);
-    nfaStat = NFA_SendPowerLinkCommand((uint8_t)EE_HANDLE_0xF3, value);
+    nfaStat = NFA_EePowerAndLinkCtrl((uint8_t)EE_HANDLE_0xF3, value);
     if(nfaStat ==  NFA_STATUS_OK) {
         if (mPwrLinkCtrlEvent.wait(NFC_CMD_TIMEOUT) == false) {
             LOG(ERROR) << StringPrintf("mPwrLinkCtrlEvent has terminated");

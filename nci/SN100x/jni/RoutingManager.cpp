@@ -33,7 +33,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  Copyright 2018-2020 NXP
+ *  Copyright 2018-2021 NXP
  *
  ******************************************************************************/
 #include <android-base/stringprintf.h>
@@ -950,11 +950,11 @@ void RoutingManager::nfaEeCallback(tNFA_EE_EVT event,
 #endif
     } break;
 #if (NXP_EXTNS == TRUE)
-    case NFA_EE_PWR_LINK_CTRL_EVT:
+    case NFA_EE_PWR_AND_LINK_CTRL_EVT:
     {
-      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_EE_PWR_LINK_CTRL_EVT; status: 0x%04X ", fn,
-      eventData->pwr_lnk_ctrl.status);
-      se.mPwrCmdstatus = eventData->pwr_lnk_ctrl.status;
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: NFA_EE_PWR_AND_LINK_CTRL_EVT; status: 0x%04X ", fn,
+      eventData->status);
+      se.mPwrCmdstatus = eventData->status;
       SyncEventGuard guard (se.mPwrLinkCtrlEvent);
       se.mPwrLinkCtrlEvent.notifyOne();
     }
