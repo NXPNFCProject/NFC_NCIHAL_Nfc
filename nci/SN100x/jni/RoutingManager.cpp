@@ -1540,60 +1540,63 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
             screen_off_lock_mask  &= ~NFA_TECHNOLOGY_MASK_B;
         }
 
-        if((mHostListnTechMask) && (mFwdFuntnEnable == true))
-        {
-            if((max_tech_mask != 0x01) && (max_tech_mask == 0x02) && value)
+        if ((mHostListnTechMask) && (mFwdFuntnEnable)) {
+          if ((max_tech_mask != 0x01) && (max_tech_mask == 0x02) && value) {
             {
-                {
-                    SyncEventGuard guard (mRoutingEvent);
-                    if(mCeRouteStrictDisable == 0x01)
-                    {
-                        nfaStat =  NFA_EeSetDefaultTechRouting (0x400,
-                                                                NFA_TECHNOLOGY_MASK_A,
-                                                                0,
-                                                                0,
-                                                                mSecureNfcEnabled ? 0 : NFA_TECHNOLOGY_MASK_A,
-                                                                0,
-                                                                0 );
-                    }else{
-                        nfaStat =  NFA_EeSetDefaultTechRouting (0x400,
-                                                                NFA_TECHNOLOGY_MASK_A,
-                                                                0, 0, 0, 0,0 );
-                    }
-                    if (nfaStat == NFA_STATUS_OK)
-                       mRoutingEvent.wait ();
-                    else
-                    {
-                        DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf("Fail to set tech routing");
-                    }
+              SyncEventGuard guard(mRoutingEvent);
+              if (mCeRouteStrictDisable == 0x01) {
+                nfaStat = NFA_EeSetDefaultTechRouting(
+                    0x400, NFA_TECHNOLOGY_MASK_A, 0, 0,
+                    mSecureNfcEnabled ? 0 : NFA_TECHNOLOGY_MASK_A, 0, 0);
+              } else {
+                if (mSecureNfcEnabled) {
+                  nfaStat = NFA_EeSetDefaultTechRouting(
+                      0x400, NFA_TECHNOLOGY_MASK_A, 0, 0, 0, 0, 0);
+                } else {
+                  nfaStat = NFA_EeSetDefaultTechRouting(
+                      0x400,
+                      (mFwdFuntnEnable & 0x01) ? NFA_TECHNOLOGY_MASK_A : 0, 0,
+                      0, (mFwdFuntnEnable & 0x08) ? NFA_TECHNOLOGY_MASK_A : 0,
+                      (mFwdFuntnEnable & 0x10) ? NFA_TECHNOLOGY_MASK_A : 0,
+                      (mFwdFuntnEnable & 0x20) ? NFA_TECHNOLOGY_MASK_A : 0);
                 }
+              }
+              if (nfaStat == NFA_STATUS_OK)
+                mRoutingEvent.wait();
+              else {
+                DLOG_IF(ERROR, nfc_debug_enabled)
+                    << StringPrintf("Fail to set tech routing");
+              }
             }
-            else if((max_tech_mask == 0x01) && (max_tech_mask != 0x02) && value)
+          } else if ((max_tech_mask == 0x01) && (max_tech_mask != 0x02) &&
+                     value) {
             {
-                {
-                    SyncEventGuard guard (mRoutingEvent);
-                    if(mCeRouteStrictDisable == 0x01)
-                    {
-                        nfaStat =  NFA_EeSetDefaultTechRouting (0x400,
-                                                               NFA_TECHNOLOGY_MASK_B,
-                                                               0,
-                                                               0,
-                                                               mSecureNfcEnabled ? 0 : NFA_TECHNOLOGY_MASK_B,
-                                                               0,
-                                                               0);
-                    }else{
-                        nfaStat =  NFA_EeSetDefaultTechRouting (0x400,
-                                                               NFA_TECHNOLOGY_MASK_B,
-                                                               0, 0, 0, 0, 0);
-                    }
-                    if (nfaStat == NFA_STATUS_OK)
-                       mRoutingEvent.wait ();
-                    else
-                    {
-                        DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf("Fail to set tech routing");
-                    }
+              SyncEventGuard guard(mRoutingEvent);
+              if (mCeRouteStrictDisable == 0x01) {
+                nfaStat = NFA_EeSetDefaultTechRouting(
+                    0x400, NFA_TECHNOLOGY_MASK_B, 0, 0,
+                    mSecureNfcEnabled ? 0 : NFA_TECHNOLOGY_MASK_B, 0, 0);
+              } else {
+                if (mSecureNfcEnabled) {
+                  nfaStat = NFA_EeSetDefaultTechRouting(
+                      0x400, NFA_TECHNOLOGY_MASK_B, 0, 0, 0, 0, 0);
+                } else {
+                  nfaStat = NFA_EeSetDefaultTechRouting(
+                      0x400,
+                      (mFwdFuntnEnable & 0x01) ? NFA_TECHNOLOGY_MASK_B : 0, 0,
+                      0, (mFwdFuntnEnable & 0x08) ? NFA_TECHNOLOGY_MASK_B : 0,
+                      (mFwdFuntnEnable & 0x10) ? NFA_TECHNOLOGY_MASK_B : 0,
+                      (mFwdFuntnEnable & 0x20) ? NFA_TECHNOLOGY_MASK_B : 0);
                 }
+              }
+              if (nfaStat == NFA_STATUS_OK)
+                mRoutingEvent.wait();
+              else {
+                DLOG_IF(ERROR, nfc_debug_enabled)
+                    << StringPrintf("Fail to set tech routing");
+              }
             }
+          }
         }
         {
             SyncEventGuard guard (mRoutingEvent);
