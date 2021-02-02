@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2020 NXP
+*  Copyright 2018-2021 NXP
 *
 ******************************************************************************/
 #include <android-base/stringprintf.h>
@@ -1860,17 +1860,20 @@ static void nfcManager_enableDiscovery(JNIEnv* e, jobject o,
       }
     }
   } else {
-#if (NXP_EXTNS == TRUE)
-  if (enable_p2p && !sP2pEnabled) {
+    /* enable_p2p=> request to enable p2p, P2pEnabled=> current state of p2p */
+    if (enable_p2p && !sP2pEnabled) {
       sP2pEnabled = true;
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("%s: Enable p2pListening", __func__);
       PeerToPeer::getInstance().enableP2pListening(true);
       NFA_ResumeP2p();
     } else if (!enable_p2p && sP2pEnabled) {
       sP2pEnabled = false;
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("%s: Disable p2pListening", __func__);
       PeerToPeer::getInstance().enableP2pListening(false);
       NFA_PauseP2p();
     }
-#endif
     // No technologies configured, stop polling
     stopPolling_rfDiscoveryDisabled();
   }
