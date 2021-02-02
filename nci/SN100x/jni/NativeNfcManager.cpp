@@ -3029,8 +3029,9 @@ static void nfcManager_doSetScreenState(JNIEnv* e, jobject o,
   }
   if ((state > NFA_SCREEN_STATE_UNKNOWN &&
        state <= NFA_SCREEN_STATE_ON_LOCKED) &&
-      prevScreenState == NFA_SCREEN_STATE_ON_UNLOCKED && (!sP2pActive) &&
-      (!sSeRfActive)) {
+      (prevScreenState == NFA_SCREEN_STATE_ON_UNLOCKED ||
+       prevScreenState == NFA_SCREEN_STATE_ON_LOCKED) &&
+      (!sP2pActive) && (!sSeRfActive)) {
     // screen turns off, disconnect tag if connected
 #if (NXP_EXTNS == TRUE)
     if(isDisconnectNeeded && gActivated){
