@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2020 NXP
+*  Copyright 2018-2021 NXP
 *
 ******************************************************************************/
 package com.android.nfc.cardemulation;
@@ -498,6 +498,7 @@ public class HostEmulationManager {
             synchronized (mLock) {
                 Log.d(TAG, "Service unbound");
                 mService = null;
+                mServiceName = null;
                 mServiceBound = false;
             }
         }
