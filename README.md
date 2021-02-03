@@ -28,7 +28,7 @@
 | aosp-master              |  11.02.00 (SN110) |  NFC_AR_00_6000_11.02.00_OpnSrc |
 | aosp-master              |  11.02.01 (SN110) |  NFC_AR_00_6000_11.02.01_OpnSrc |
 | android-11.0.0_r3              |  11.51.01 (SN1xx) |  NFC_AR_00_6000_11.51.01_OpnSrc |
-
+| android-11.0.0_r3              |  11.57.00 (SN1xx) |  NFC_AR_00_6000_11.57.00_OpnSrc |
 
 
 
