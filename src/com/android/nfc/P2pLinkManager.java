@@ -80,6 +80,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.io.UnsupportedEncodingException;
 
+import android.util.proto.ProtoOutputStream;
+
 /**
  * Interface to listen for P2P events.
  * All callbacks are made from the UI thread.
@@ -1265,6 +1267,23 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
         }
     }
 
+    static int sendStateToProtoEnum(int state) {
+        switch (state) {
+            case SEND_STATE_NOTHING_TO_SEND:
+                return P2pLinkManagerProto.SEND_STATE_NOTHING_TO_SEND;
+            case SEND_STATE_NEED_CONFIRMATION:
+                return P2pLinkManagerProto.SEND_STATE_NEED_CONFIRMATION;
+            case SEND_STATE_SENDING:
+                return P2pLinkManagerProto.SEND_STATE_SENDING;
+            case SEND_STATE_COMPLETE:
+                return P2pLinkManagerProto.SEND_STATE_COMPLETE;
+            case SEND_STATE_CANCELED:
+                return P2pLinkManagerProto.SEND_STATE_CANCELED;
+            default:
+                return P2pLinkManagerProto.SEND_STATE_UNKNOWN;
+        }
+    }
+
     static String linkStateToString(int state) {
         switch (state) {
             case LINK_STATE_DOWN:
@@ -1278,6 +1297,19 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
         }
     }
 
+    static int linkStateToProtoEnum(int state) {
+        switch (state) {
+            case LINK_STATE_DOWN:
+                return P2pLinkManagerProto.LINK_STATE_DOWN;
+            case LINK_STATE_DEBOUNCE:
+                return P2pLinkManagerProto.LINK_STATE_DEBOUNCE;
+            case LINK_STATE_UP:
+                return P2pLinkManagerProto.LINK_STATE_UP;
+            default:
+                return P2pLinkManagerProto.LINK_STATE_UNKNOWN;
+        }
+    }
+
     void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
         synchronized (this) {
             pw.println("mIsSendEnabled=" + mIsSendEnabled);
@@ -1288,6 +1320,36 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
             pw.println("mCallbackNdef=" + mCallbackNdef);
             pw.println("mMessageToSend=" + mMessageToSend);
             pw.println("mUrisToSend=" + mUrisToSend);
+        }
+    }
+
+    /**
+     * Dump debugging information as a P2pLinkManagerProto
+     *
+     * Note:
+     * See proto definition in frameworks/base/core/proto/android/nfc/nfc_service.proto
+     * When writing a nested message, must call {@link ProtoOutputStream#start(long)} before and
+     * {@link ProtoOutputStream#end(long)} after.
+     * Never reuse a proto field number. When removing a field, mark it as reserved.
+     */
+    void dumpDebug(ProtoOutputStream proto) {
+        proto.write(P2pLinkManagerProto.DEFAULT_MIU, mDefaultMiu);
+        proto.write(P2pLinkManagerProto.DEFAULT_RW_SIZE, mDefaultRwSize);
+        proto.write(P2pLinkManagerProto.LINK_STATE, linkStateToProtoEnum(mLinkState));
+        proto.write(P2pLinkManagerProto.SEND_STATE, sendStateToProtoEnum(mSendState));
+        proto.write(P2pLinkManagerProto.SEND_FLAGS, mSendFlags);
+        proto.write(P2pLinkManagerProto.SEND_ENABLED, mIsSendEnabled);
+        proto.write(P2pLinkManagerProto.RECEIVE_ENABLED, mIsReceiveEnabled);
+        proto.write(P2pLinkManagerProto.CALLBACK_NDEF, String.valueOf(mCallbackNdef));
+        if (mMessageToSend != null) {
+            long token = proto.start(P2pLinkManagerProto.MESSAGE_TO_SEND);
+            mMessageToSend.dumpDebug(proto);
+            proto.end(token);
+        }
+        if (mUrisToSend != null && mUrisToSend.length > 0) {
+            for (Uri uri : mUrisToSend) {
+                proto.write(P2pLinkManagerProto.URIS_TO_SEND, uri.toString());
+            }
         }
     }
 }

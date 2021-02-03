@@ -54,6 +54,7 @@ import android.os.UserHandle;
 import android.provider.Settings;
 import android.provider.Settings.SettingNotFoundException;
 import android.util.Log;
+import android.util.proto.ProtoOutputStream;
 import android.os.SystemProperties;
 
 /**
@@ -404,5 +405,36 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
         pw.println("        Default in payment settings: " + mPaymentDefaults.settingsDefault);
         pw.println("        Payment settings allows override: " + mPaymentDefaults.preferForeground);
         pw.println("");
+    }
+
+    /**
+     * Dump debugging information as a PreferredServicesProto
+     *
+     * Note:
+     * See proto definition in frameworks/base/core/proto/android/nfc/card_emulation.proto
+     * When writing a nested message, must call {@link ProtoOutputStream#start(long)} before and
+     * {@link ProtoOutputStream#end(long)} after.
+     * Never reuse a proto field number. When removing a field, mark it as reserved.
+     */
+    void dumpDebug(ProtoOutputStream proto) {
+        if (mForegroundCurrent != null) {
+            mForegroundCurrent.dumpDebug(proto, PreferredServicesProto.FOREGROUND_CURRENT);
+        }
+        if (mPaymentDefaults.currentPreferred != null) {
+            mPaymentDefaults.currentPreferred.dumpDebug(proto,
+                    PreferredServicesProto.FOREGROUND_CURRENT);
+        }
+        if (mNextTapDefault != null) {
+            mNextTapDefault.dumpDebug(proto, PreferredServicesProto.NEXT_TAP_DEFAULT);
+        }
+        proto.write(PreferredServicesProto.FOREGROUND_UID, mForegroundUid);
+        if (mForegroundRequested != null) {
+            mForegroundRequested.dumpDebug(proto, PreferredServicesProto.FOREGROUND_REQUESTED);
+        }
+        if (mPaymentDefaults.settingsDefault != null) {
+            mPaymentDefaults.settingsDefault.dumpDebug(proto,
+                    PreferredServicesProto.SETTINGS_DEFAULT);
+        }
+        proto.write(PreferredServicesProto.PREFER_FOREGROUND, mPaymentDefaults.preferForeground);
     }
 }

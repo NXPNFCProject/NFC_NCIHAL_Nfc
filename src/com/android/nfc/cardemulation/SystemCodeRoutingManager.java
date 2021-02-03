@@ -35,6 +35,7 @@
 package com.android.nfc.cardemulation;
 
 import android.util.Log;
+import android.util.proto.ProtoOutputStream;
 
 import com.android.nfc.NfcService;
 import com.android.nfc.cardemulation.RegisteredT3tIdentifiersCache.T3tIdentifier;
@@ -126,6 +127,28 @@ public class SystemCodeRoutingManager {
             for (T3tIdentifier t3tIdentifier : mConfiguredT3tIdentifiers) {
                 pw.println("    " + t3tIdentifier.systemCode +
                         "/" + t3tIdentifier.nfcid2);
+            }
+        }
+    }
+
+    /**
+     * Dump debugging information as a SystemCodeRoutingManagerProto
+     *
+     * Note:
+     * See proto definition in frameworks/base/core/proto/android/nfc/card_emulation.proto
+     * When writing a nested message, must call {@link ProtoOutputStream#start(long)} before and
+     * {@link ProtoOutputStream#end(long)} after.
+     * Never reuse a proto field number. When removing a field, mark it as reserved.
+     */
+    void dumpDebug(ProtoOutputStream proto) {
+        synchronized (mLock) {
+            for (T3tIdentifier t3tIdentifier : mConfiguredT3tIdentifiers) {
+                long token = proto.start(SystemCodeRoutingManagerProto.T3T_IDENTIFIERS);
+                proto.write(SystemCodeRoutingManagerProto.T3tIdentifier.SYSTEM_CODE,
+                        t3tIdentifier.systemCode);
+                proto.write(SystemCodeRoutingManagerProto.T3tIdentifier.NFCID2,
+                        t3tIdentifier.nfcid2);
+                proto.end(token);
             }
         }
     }

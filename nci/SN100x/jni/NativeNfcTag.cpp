@@ -926,7 +926,7 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
       if (IS_MULTIPROTO_MFC_TAG() &&
               NfcTag::getInstance().isNonStdCardSupported) {
         natTag.mIsNonStdMFCTag = true;
-      } else
+      } else 
 #endif
       {
         do {

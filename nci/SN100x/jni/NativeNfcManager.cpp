@@ -1714,6 +1714,8 @@ static void nfcManager_doShutdown(JNIEnv*, jobject) {
 #if (NXP_EXTNS == TRUE)
   NativeT4tNfcee::getInstance().onNfccShutdown();
   handleWiredmode(true); /* Device off*/
+  sIsDisabling = false;
+  sIsNfaEnabled = false;
 #endif
   theInstance.DeviceShutdown();
 }

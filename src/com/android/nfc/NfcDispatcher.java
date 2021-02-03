@@ -55,6 +55,7 @@ import android.os.Messenger;
 import android.os.RemoteException;
 import android.os.UserHandle;
 import android.util.Log;
+import android.util.proto.ProtoOutputStream;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
@@ -65,6 +66,7 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.LinkedList;
 import java.util.List;
@@ -787,6 +789,30 @@ class NfcDispatcher {
             pw.println("mOverrideIntent=" + mOverrideIntent);
             pw.println("mOverrideFilters=" + mOverrideFilters);
             pw.println("mOverrideTechLists=" + mOverrideTechLists);
+        }
+    }
+
+    void dumpDebug(ProtoOutputStream proto) {
+        proto.write(NfcDispatcherProto.DEVICE_SUPPORTS_BLUETOOTH, mDeviceSupportsBluetooth);
+        proto.write(NfcDispatcherProto.BLUETOOTH_ENABLED_BY_NFC, mBluetoothEnabledByNfc.get());
+
+        synchronized (this) {
+            proto.write(NfcDispatcherProto.PROVISIONING_ONLY, mProvisioningOnly);
+            if (mOverrideTechLists != null) {
+                StringJoiner techListsJoiner = new StringJoiner(System.lineSeparator());
+                for (String[] list : mOverrideTechLists) {
+                    techListsJoiner.add(Arrays.toString(list));
+                }
+                proto.write(NfcDispatcherProto.OVERRIDE_TECH_LISTS, techListsJoiner.toString());
+            }
+            if (mOverrideIntent != null) {
+                mOverrideIntent.dumpDebug(proto, NfcDispatcherProto.OVERRIDE_INTENT);
+            }
+            if (mOverrideFilters != null) {
+                for (IntentFilter filter : mOverrideFilters) {
+                    filter.dumpDebug(proto, NfcDispatcherProto.OVERRIDE_FILTERS);
+                }
+            }
         }
     }
 

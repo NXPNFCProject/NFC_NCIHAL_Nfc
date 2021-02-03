@@ -40,6 +40,7 @@ import android.content.Context;
 import android.nfc.cardemulation.NfcApduServiceInfo;
 import android.nfc.cardemulation.CardEmulation;
 import android.util.Log;
+import android.util.proto.ProtoOutputStream;
 
 import com.google.android.collect.Maps;
 import java.util.Collections;
@@ -1126,5 +1127,46 @@ public class RegisteredAidCache {
       }
       Log.d(TAG, "updateRoutePowerState outputPwr "+ inputPwr);
       return inputPwr;
+    }
+
+    /**
+     * Dump debugging information as a RegisteredAidCacheProto
+     *
+     * Note:
+     * See proto definition in frameworks/base/core/proto/android/nfc/card_emulation.proto
+     * When writing a nested message, must call {@link ProtoOutputStream#start(long)} before and
+     * {@link ProtoOutputStream#end(long)} after.
+     * Never reuse a proto field number. When removing a field, mark it as reserved.
+     */
+    void dumpDebug(ProtoOutputStream proto) {
+        for (Map.Entry<String, AidResolveInfo> entry : mAidCache.entrySet()) {
+            long token = proto.start(RegisteredAidCacheProto.AID_CACHE_ENTRIES);
+            proto.write(RegisteredAidCacheProto.AidCacheEntry.KEY, entry.getKey());
+            proto.write(RegisteredAidCacheProto.AidCacheEntry.CATEGORY, entry.getValue().category);
+            NfcApduServiceInfo defaultServiceInfo = entry.getValue().defaultService;
+            ComponentName defaultComponent = defaultServiceInfo != null ?
+                    defaultServiceInfo.getComponent() : null;
+            if (defaultComponent != null) {
+                defaultComponent.dumpDebug(proto,
+                        RegisteredAidCacheProto.AidCacheEntry.DEFAULT_COMPONENT);
+            }
+            for (NfcApduServiceInfo serviceInfo : entry.getValue().services) {
+                long sToken = proto.start(RegisteredAidCacheProto.AidCacheEntry.SERVICES);
+                serviceInfo.dumpDebug(proto);
+                proto.end(sToken);
+            }
+            proto.end(token);
+        }
+        if (mPreferredForegroundService != null) {
+            mPreferredForegroundService.dumpDebug(proto,
+                    RegisteredAidCacheProto.PREFERRED_FOREGROUND_SERVICE);
+        }
+        if (mPreferredPaymentService != null) {
+            mPreferredPaymentService.dumpDebug(proto,
+                    RegisteredAidCacheProto.PREFERRED_PAYMENT_SERVICE);
+        }
+        long token = proto.start(RegisteredAidCacheProto.ROUTING_MANAGER);
+        mRoutingManager.dumpDebug(proto);
+        proto.end(token);
     }
 }
