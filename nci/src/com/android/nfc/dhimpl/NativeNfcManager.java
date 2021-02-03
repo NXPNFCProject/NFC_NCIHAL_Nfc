@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2020 NXP
+*  Copyright 2018-2021 NXP
 *
 ******************************************************************************/
 package com.android.nfc.dhimpl;
@@ -618,6 +618,10 @@ public class NativeNfcManager implements DeviceHost {
 
     private void notifyRfFieldDeactivated() {
         mListener.onRemoteFieldDeactivated();
+    }
+
+    private void notifyHwErrorReported() {
+        mListener.onHwErrorReported();
     }
 
     private void notifyTransactionListeners(byte[] aid, byte[] data, String evtSrc) {
