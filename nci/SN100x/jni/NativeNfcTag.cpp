@@ -57,6 +57,7 @@
 #include "rw_api.h"
 #if (NXP_EXTNS == TRUE)
 #include "NativeJniExtns.h"
+#include "nfc_config.h"
 #if(NXP_SRD == TRUE)
 #include "SecureDigitization.h"
 #endif
@@ -124,6 +125,7 @@ static tNFA_INTF_TYPE sCurrentActivatedProtocl = NFA_INTERFACE_ISO_DEP;
   (NfcTag::getInstance().mIsMultiProtocolTag && \
    sCurrentConnectedTargetProtocol == NFC_PROTOCOL_MIFARE)
 static uint8_t sCurrentActivatedMode = TARGET_TYPE_UNKNOWN;
+#define DEFAULT_PRESENCE_CHECK_TIMEOUT 375
 #endif
 static std::basic_string<uint8_t> sRxDataBuffer;
 static tNFA_STATUS sRxDataStatus = NFA_STATUS_OK;
@@ -1804,10 +1806,22 @@ static jboolean nativeNfcTag_doPresenceCheck(JNIEnv*, jobject) {
 
   {
     SyncEventGuard guard(sPresenceCheckEvent);
+
     status =
         NFA_RwPresenceCheck(NfcTag::getInstance().getPresenceCheckAlgorithm());
     if (status == NFA_STATUS_OK) {
+#if (NXP_EXTNS == TRUE)
+      int pCtimeout = NfcConfig::getUnsigned(NAME_NXP_PRESENCE_CHECK_TIMEOUT,
+                                             DEFAULT_PRESENCE_CHECK_TIMEOUT);
+      if (sPresenceCheckEvent.wait(pCtimeout) == false)
+      {
+        LOG(ERROR) << StringPrintf("%s: timeout waiting presence check",
+                                   __func__);
+        sIsTagPresent = false;
+      }
+#else
       sPresenceCheckEvent.wait();
+#endif
       isPresent = sIsTagPresent ? JNI_TRUE : JNI_FALSE;
     }
   }
