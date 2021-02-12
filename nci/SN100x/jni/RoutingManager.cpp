@@ -1556,8 +1556,8 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
                   nfaStat = NFA_EeSetDefaultTechRouting(
                       0x400,
                       (mFwdFuntnEnable & 0x01) ? NFA_TECHNOLOGY_MASK_A : 0, 0,
-                      0, (mFwdFuntnEnable & 0x08) ? NFA_TECHNOLOGY_MASK_A : 0,
-                      (mFwdFuntnEnable & 0x10) ? NFA_TECHNOLOGY_MASK_A : 0,
+                      0, (mFwdFuntnEnable & 0x10) ? NFA_TECHNOLOGY_MASK_A : 0,
+                      (mFwdFuntnEnable & 0x08) ? NFA_TECHNOLOGY_MASK_A : 0,
                       (mFwdFuntnEnable & 0x20) ? NFA_TECHNOLOGY_MASK_A : 0);
                 }
               }
@@ -1584,8 +1584,8 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
                   nfaStat = NFA_EeSetDefaultTechRouting(
                       0x400,
                       (mFwdFuntnEnable & 0x01) ? NFA_TECHNOLOGY_MASK_B : 0, 0,
-                      0, (mFwdFuntnEnable & 0x08) ? NFA_TECHNOLOGY_MASK_B : 0,
-                      (mFwdFuntnEnable & 0x10) ? NFA_TECHNOLOGY_MASK_B : 0,
+                      0, (mFwdFuntnEnable & 0x10) ? NFA_TECHNOLOGY_MASK_B : 0,
+                      (mFwdFuntnEnable & 0x08) ? NFA_TECHNOLOGY_MASK_B : 0,
                       (mFwdFuntnEnable & 0x20) ? NFA_TECHNOLOGY_MASK_B : 0);
                 }
               }
