@@ -142,7 +142,6 @@ RoutingManager::RoutingManager()
   mUiccListnTechMask = 0;
   mFwdFuntnEnable = 0;
   mDefaultTechASeID = 0;
-  mCeRouteStrictDisable = 0;
   mTechSupportedByEse = 0;
   mTechSupportedByUicc1 = 0;
   mTechSupportedByUicc2 = 0;
@@ -1544,22 +1543,15 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
           if ((max_tech_mask != 0x01) && (max_tech_mask == 0x02) && value) {
             {
               SyncEventGuard guard(mRoutingEvent);
-              if (mCeRouteStrictDisable == 0x01) {
+              if (mSecureNfcEnabled) {
                 nfaStat = NFA_EeSetDefaultTechRouting(
-                    0x400, NFA_TECHNOLOGY_MASK_A, 0, 0,
-                    mSecureNfcEnabled ? 0 : NFA_TECHNOLOGY_MASK_A, 0, 0);
+                    0x400, NFA_TECHNOLOGY_MASK_A, 0, 0, 0, 0, 0);
               } else {
-                if (mSecureNfcEnabled) {
-                  nfaStat = NFA_EeSetDefaultTechRouting(
-                      0x400, NFA_TECHNOLOGY_MASK_A, 0, 0, 0, 0, 0);
-                } else {
-                  nfaStat = NFA_EeSetDefaultTechRouting(
-                      0x400,
-                      (mFwdFuntnEnable & 0x01) ? NFA_TECHNOLOGY_MASK_A : 0, 0,
-                      0, (mFwdFuntnEnable & 0x10) ? NFA_TECHNOLOGY_MASK_A : 0,
-                      (mFwdFuntnEnable & 0x08) ? NFA_TECHNOLOGY_MASK_A : 0,
-                      (mFwdFuntnEnable & 0x20) ? NFA_TECHNOLOGY_MASK_A : 0);
-                }
+                nfaStat = NFA_EeSetDefaultTechRouting(
+                    0x400, (mFwdFuntnEnable & 0x01) ? NFA_TECHNOLOGY_MASK_A : 0,
+                    0, 0, (mFwdFuntnEnable & 0x10) ? NFA_TECHNOLOGY_MASK_A : 0,
+                    (mFwdFuntnEnable & 0x08) ? NFA_TECHNOLOGY_MASK_A : 0,
+                    (mFwdFuntnEnable & 0x20) ? NFA_TECHNOLOGY_MASK_A : 0);
               }
               if (nfaStat == NFA_STATUS_OK)
                 mRoutingEvent.wait();
@@ -1572,22 +1564,15 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
                      value) {
             {
               SyncEventGuard guard(mRoutingEvent);
-              if (mCeRouteStrictDisable == 0x01) {
+              if (mSecureNfcEnabled) {
                 nfaStat = NFA_EeSetDefaultTechRouting(
-                    0x400, NFA_TECHNOLOGY_MASK_B, 0, 0,
-                    mSecureNfcEnabled ? 0 : NFA_TECHNOLOGY_MASK_B, 0, 0);
+                    0x400, NFA_TECHNOLOGY_MASK_B, 0, 0, 0, 0, 0);
               } else {
-                if (mSecureNfcEnabled) {
-                  nfaStat = NFA_EeSetDefaultTechRouting(
-                      0x400, NFA_TECHNOLOGY_MASK_B, 0, 0, 0, 0, 0);
-                } else {
-                  nfaStat = NFA_EeSetDefaultTechRouting(
-                      0x400,
-                      (mFwdFuntnEnable & 0x01) ? NFA_TECHNOLOGY_MASK_B : 0, 0,
-                      0, (mFwdFuntnEnable & 0x10) ? NFA_TECHNOLOGY_MASK_B : 0,
-                      (mFwdFuntnEnable & 0x08) ? NFA_TECHNOLOGY_MASK_B : 0,
-                      (mFwdFuntnEnable & 0x20) ? NFA_TECHNOLOGY_MASK_B : 0);
-                }
+                nfaStat = NFA_EeSetDefaultTechRouting(
+                    0x400, (mFwdFuntnEnable & 0x01) ? NFA_TECHNOLOGY_MASK_B : 0,
+                    0, 0, (mFwdFuntnEnable & 0x10) ? NFA_TECHNOLOGY_MASK_B : 0,
+                    (mFwdFuntnEnable & 0x08) ? NFA_TECHNOLOGY_MASK_B : 0,
+                    (mFwdFuntnEnable & 0x20) ? NFA_TECHNOLOGY_MASK_B : 0);
               }
               if (nfaStat == NFA_STATUS_OK)
                 mRoutingEvent.wait();
@@ -1786,7 +1771,6 @@ void RoutingManager::setEmptyAidEntry(int routeAndPowerState) {
         return;
     }
     routeLoc = ((routeLoc == 0x00) ? ROUTE_LOC_HOST_ID : ((routeLoc == 0x01 ) ? ROUTE_LOC_ESE_ID : getUiccRouteLocId(routeLoc)));
-    power    = mCeRouteStrictDisable ? power : (power & POWER_STATE_MASK);
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: route %x",__func__,routeLoc);
 
     max_tech_mask = SecureElement::getInstance().getSETechnology(routeLoc);

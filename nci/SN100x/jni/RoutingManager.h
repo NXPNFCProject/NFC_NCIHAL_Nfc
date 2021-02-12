@@ -33,7 +33,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2020 NXP
+*  Copyright 2018-2021 NXP
 *
 ******************************************************************************/
 #pragma once
@@ -282,7 +282,6 @@ class RoutingManager {
     protoEntry_t mProtoTableEntries[MAX_PROTO_ENTRIES];
     techEntry_t mTechTableEntries[MAX_TECH_ENTRIES];
     LmrtEntry_t mLmrtEntries[MAX_ROUTE_LOC_ENTRIES];
-    uint32_t mCeRouteStrictDisable;
     uint32_t mTechSupportedByEse;
     uint32_t mTechSupportedByUicc1;
     uint32_t mTechSupportedByUicc2;
