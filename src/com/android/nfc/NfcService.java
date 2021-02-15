@@ -2174,14 +2174,22 @@ public class NfcService implements DeviceHostListener {
             NfcPermissions.enforceAdminPermissions(mContext);
             int status = 0xFF;
             Method mNfcSelfTestMethod;
-            Log.i(TAG,"doNfcSelfTest type ENter : " + type);
+            Log.i(TAG,"doNfcSelfTest type Enter : " + type);
             synchronized(NfcService.this) {
               try {
-                 if(mNfcExtnsObj!=null && (type == SELFTEST_PRBS || type == SELFTEST_SWP)){
-                    mNfcSelfTestMethod = mNfcExtnsClass.getDeclaredMethod("doNfcSelfTest", int.class);
-                    mNfcSelfTestMethod.invoke(mNfcExtnsObj,type);
+                 if(type == SELFTEST_PRBS || type == SELFTEST_SWP){
+                     if (mNfcExtnsObj!=null) {
+                         mNfcSelfTestMethod = mNfcExtnsClass.getDeclaredMethod(
+                             "doNfcSelfTest", int.class);
+                         mNfcSelfTestMethod.invoke(mNfcExtnsObj,type);
+                         status = 0x00;
+                     } else {
+                         Log.i(TAG,"doNfcSelfTest: " + type + " isn't supported");
+                         return status;
+                     }
                  } else if(type == SELFTEST_RESTORE_RFTXCFG || type == SELFTEST_SET_RFTXCFG) {
                     mNfcAdapter.resonantFrequency(type);
+                    status = 0x00;
                  } else {
                     status = mDeviceHost.doNfcSelfTest(type);
                  }
