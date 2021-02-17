@@ -114,10 +114,8 @@ class RoutingManager {
   void deinitialize();
   void enableRoutingToHost();
   void disableRoutingToHost();
-#if(NXP_EXTNS != TRUE)
-  bool addAidRouting(const uint8_t* aid, uint8_t aidLen, int route,
-                     int aidInfo);
-#endif
+  bool addAidRouting(const uint8_t* aid, uint8_t aidLen, int route, int aidInfo,
+                     int power);
   bool removeAidRouting(const uint8_t* aid, uint8_t aidLen);
   bool commitRouting();
   int registerT3tIdentifier(uint8_t* t3tId, uint8_t t3tIdLen);
@@ -161,8 +159,6 @@ class RoutingManager {
     tNFA_HANDLE checkAndUpdateAltRoute(int& routeLoc);
 
     uint32_t getUicc2selected();
-    bool addAidRouting(const uint8_t* aid, uint8_t aidLen,
-                                   int route, int aidInfo, int power);
     bool checkAndUpdatePowerState(int& power);
     bool isNfceeActive(int routeLoc, tNFA_HANDLE& ActDevHandle);
     uint16_t sRoutingBuffLen;

@@ -1373,13 +1373,8 @@ static void nfcFwUpdateStatusCallback(uint8_t status) {
 ** Returns:         True if aid is accpted by NFA Layer.
 **
 *******************************************************************************/
-#if (NXP_EXTNS == TRUE)
 static jboolean nfcManager_routeAid(JNIEnv* e, jobject, jbyteArray aid,
                                     jint route, jint aidInfo, jint power) {
-#else
-static jboolean nfcManager_routeAid(JNIEnv* e, jobject, jbyteArray aid,
-                                    jint route, jint aidInfo) {
-#endif
   uint8_t* buf;
   size_t bufLen;
 #if (NXP_EXTNS == TRUE)
@@ -1403,13 +1398,8 @@ static jboolean nfcManager_routeAid(JNIEnv* e, jobject, jbyteArray aid,
     bufLen = 0;
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("nfcManager_routeAid:  NULL");
-#if (NXP_EXTNS == TRUE)
     return RoutingManager::getInstance().addAidRouting(buf, bufLen, route,
-        aidInfo, power);
-#else
-    return RoutingManager::getInstance().addAidRouting(buf, bufLen, route,
-                                                     aidInfo);
-#endif
+                                                       aidInfo, power);
   }
   ScopedByteArrayRO bytes(e);
   bytes.reset(aid);
@@ -1420,12 +1410,9 @@ static jboolean nfcManager_routeAid(JNIEnv* e, jobject, jbyteArray aid,
     NativeT4tNfcee::getInstance().checkAndUpdateT4TAid(buf, (uint8_t*)&bufLen);
     RoutingManager::getInstance().removeAidRouting(buf, bufLen);
   }
+#endif
   return RoutingManager::getInstance().addAidRouting(buf, bufLen, route,
                                                      aidInfo, power);
-#else
-  return RoutingManager::getInstance().addAidRouting(buf, bufLen, route,
-                                                     aidInfo);
-#endif
 }
 
 /*******************************************************************************

@@ -180,8 +180,7 @@ public class NativeNfcManager implements DeviceHost {
     }
 
     @Override
-    public native boolean routeAid(byte[] aid, int route, int aidInfo, int powerState);
-
+    public native boolean routeAid(byte[] aid, int route, int aidInfo, int power);
 
     @Override
     public native boolean unrouteAid(byte[] aid);

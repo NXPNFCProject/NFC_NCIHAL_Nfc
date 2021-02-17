@@ -243,6 +243,8 @@ public class NfcService implements DeviceHostListener {
     public static final int MSG_SRD_EVT_FEATURE_NOT_SUPPORT = 85;
     private int SE_READER_TYPE = SE_READER_TYPE_INAVLID;
 
+    static final String MSG_ROUTE_AID_PARAM_TAG = "power";
+
     // Negative value for NO polling delay
     static final int NO_POLL_DELAY = -1;
 
@@ -3378,9 +3380,11 @@ public class NfcService implements DeviceHostListener {
         msg.arg1 = route;
         msg.obj = aid;
         msg.arg2 = aidInfo;
-        Bundle aidbundle = new Bundle();
-        aidbundle.putInt("power",power);
-        msg.setData(aidbundle);
+
+        Bundle aidPowerState = new Bundle();
+        aidPowerState.putInt(MSG_ROUTE_AID_PARAM_TAG, power);
+        msg.setData(aidPowerState);
+
         mHandler.sendMessage(msg);
     }
 
@@ -3562,12 +3566,15 @@ public class NfcService implements DeviceHostListener {
                 case MSG_ROUTE_AID: {
                     int route   = msg.arg1;
                     int aidInfo = msg.arg2;
-                    int power   = 0x00;
-                    Bundle dataBundle = msg.getData();
-                    if (dataBundle != null)
-                        power = dataBundle.getInt("power");
-                    String aid  = (String) msg.obj;
-                    mDeviceHost.routeAid(hexStringToBytes(aid), route, aidInfo,power);
+                    String aid = (String) msg.obj;
+
+                    int power = 0x00;
+                    Bundle bundle = msg.getData();
+                    if (bundle != null) {
+                        power = bundle.getInt(MSG_ROUTE_AID_PARAM_TAG);
+                    }
+
+                    mDeviceHost.routeAid(hexStringToBytes(aid), route, aidInfo, power);
                     // Restart polling config
                     break;
                 }
