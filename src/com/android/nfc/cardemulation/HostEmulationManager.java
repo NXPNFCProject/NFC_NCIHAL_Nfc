@@ -40,7 +40,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.nfc.cardemulation.NfcApduServiceInfo;
+import android.nfc.cardemulation.ApduServiceInfo;
 import android.nfc.cardemulation.CardEmulation;
 import android.nfc.cardemulation.HostApduService;
 import android.os.Bundle;
@@ -195,7 +195,7 @@ public class HostEmulationManager {
                 if (resolveInfo.defaultService != null) {
                     // Resolve to default
                     // Check if resolvedService requires unlock
-                    NfcApduServiceInfo defaultServiceInfo = resolveInfo.defaultService;
+                    ApduServiceInfo defaultServiceInfo = resolveInfo.defaultService;
                     if (defaultServiceInfo.requiresUnlock() &&
                             mKeyguard.isKeyguardLocked() && mKeyguard.isKeyguardSecure()) {
                         // Just ignore all future APDUs until next tap
@@ -218,7 +218,7 @@ public class HostEmulationManager {
                     }
                     resolvedService = defaultServiceInfo.getComponent();
                 } else if (mActiveServiceName != null) {
-                    for (NfcApduServiceInfo serviceInfo : resolveInfo.services) {
+                    for (ApduServiceInfo serviceInfo : resolveInfo.services) {
                         if (mActiveServiceName.equals(serviceInfo.getComponent())) {
                             resolvedService = mActiveServiceName;
                             break;
@@ -230,7 +230,7 @@ public class HostEmulationManager {
                     // Ask the user to confirm.
                     // Just ignore all future APDUs until we resolve to only one
                     mState = STATE_W4_DEACTIVATE;
-                    launchResolver((ArrayList<NfcApduServiceInfo>)resolveInfo.services, null,
+                    launchResolver((ArrayList<ApduServiceInfo>)resolveInfo.services, null,
                             resolveInfo.category);
                     return;
                 }
@@ -414,7 +414,7 @@ public class HostEmulationManager {
         }
     }
 
-    void launchTapAgain(NfcApduServiceInfo service, String category) {
+    void launchTapAgain(ApduServiceInfo service, String category) {
         Intent dialogIntent = new Intent(mContext, TapAgainDialog.class);
         dialogIntent.putExtra(TapAgainDialog.EXTRA_CATEGORY, category);
         dialogIntent.putExtra(TapAgainDialog.EXTRA_APDU_SERVICE, service);
@@ -422,7 +422,7 @@ public class HostEmulationManager {
         mContext.startActivityAsUser(dialogIntent, UserHandle.CURRENT);
     }
 
-    void launchResolver(ArrayList<NfcApduServiceInfo> services, ComponentName failedComponent,
+    void launchResolver(ArrayList<ApduServiceInfo> services, ComponentName failedComponent,
             String category) {
         Intent intent = new Intent(mContext, AppChooserActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -550,7 +550,7 @@ public class HostEmulationManager {
                     AidResolveInfo resolveInfo = mAidCache.resolveAid(mLastSelectedAid);
                     boolean isPayment = false;
                     if (resolveInfo.services.size() > 0) {
-                        launchResolver((ArrayList<NfcApduServiceInfo>)resolveInfo.services,
+                        launchResolver((ArrayList<ApduServiceInfo>)resolveInfo.services,
                                 mActiveServiceName, resolveInfo.category);
                     }
                 }
