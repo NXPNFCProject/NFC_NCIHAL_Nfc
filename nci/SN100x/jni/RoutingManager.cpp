@@ -415,7 +415,12 @@ bool RoutingManager::addAidRouting(const uint8_t* aid, uint8_t aidLen,
       power &= ~(PWR_SWTCH_OFF_MASK | PWR_BATT_OFF_MASK);
       if (!stat) power &= HOST_PWR_STATE;
     }
-    powerState = power;
+    if (power == 0x00) {
+      powerState = (route != 0x00) ? mOffHostAidRoutingPowerState : 0x11;
+    } else {
+      powerState =
+          (route != 0x00) ? mOffHostAidRoutingPowerState & power : power;
+    }
   }
   tNFA_STATUS nfaStat =
       NFA_EeAddAidRouting(seId, aidLen, (uint8_t*)aid, powerState, aidInfo);

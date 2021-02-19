@@ -220,10 +220,10 @@ class RoutingManager {
   int mAidMatchingMode;
   int mNfcFOnDhHandle;
   bool mIsScbrSupported;
+  uint8_t mOffHostAidRoutingPowerState;
   uint16_t mDefaultSysCode;
   uint16_t mDefaultSysCodeRoute;
   uint8_t mDefaultSysCodePowerstate;
-  uint8_t mOffHostAidRoutingPowerState;
 #if(NXP_EXTNS != TRUE)
   bool mDeinitializing;
   bool mEeInfoChanged;

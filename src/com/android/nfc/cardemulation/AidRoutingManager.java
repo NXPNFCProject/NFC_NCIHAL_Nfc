@@ -414,6 +414,7 @@ public class AidRoutingManager {
               // differernt from the default route entry
               if (mDefaultRoute != ROUTE_HOST) {
                   int default_route_power_state = RegisteredAidCache.POWER_STATE_ALL;
+                  default_route_power_state &= ~RegisteredAidCache.POWER_STATE_BATTERY_OFF;
                   if (NfcService.getInstance().getNciVersion()
                           < NfcService.getInstance().NCI_VERSION_2_0) {
                       default_route_power_state =

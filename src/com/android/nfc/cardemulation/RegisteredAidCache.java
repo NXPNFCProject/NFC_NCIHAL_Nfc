@@ -829,6 +829,8 @@ public class RegisteredAidCache {
     private int computeAidPowerState(boolean isOnHost, boolean requiresScreenOn,
                                      boolean requiresUnlock) {
         int power = POWER_STATE_ALL;
+        /*By default POWER_STATE_BATTERY_OFF is not supported for AIDs*/
+        power &= ~POWER_STATE_BATTERY_OFF;
         if (NfcService.getInstance().getNciVersion() < NfcService.getInstance().NCI_VERSION_2_0) {
             power = POWER_STATE_ALL_NCI_VERSION_1_0;
         }
