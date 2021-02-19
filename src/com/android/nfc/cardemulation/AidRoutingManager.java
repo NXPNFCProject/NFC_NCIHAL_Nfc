@@ -421,10 +421,12 @@ public class AidRoutingManager {
                   }
 
                   Set<String> aidsForDefaultRoute = mAidRoutingTable.get(mDefaultRoute);
-                  for (String aid : aidsForDefaultRoute) {
+                  if (aidsForDefaultRoute != null) {
+                    for (String aid : aidsForDefaultRoute) {
                       if (aidMap.get(aid).power != default_route_power_state) {
-                          aidRoutingTableCache.put(aid, aidMap.get(aid));
+                        aidRoutingTableCache.put(aid, aidMap.get(aid));
                       }
+                    }
                   }
               }
               if (calculateAidRouteSize(aidRoutingTableCache) <= mMaxAidRoutingTableSize) {
