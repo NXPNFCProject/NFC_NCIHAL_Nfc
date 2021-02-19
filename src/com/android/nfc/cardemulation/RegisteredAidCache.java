@@ -912,10 +912,10 @@ public class RegisteredAidCache {
                     if (DBG) Log.d(TAG," set screen off enable for " + aid);
                     if(NfcService.getInstance().getNciVersion() ==
                                         NfcService.getInstance().NCI_VERSION_1_0){
-                        screenstate |= updateRoutePowerState(POWER_STATE_SCREEN_ON_LOCKED) |
+                        screenstate |= updateRoutePowerState(POWER_STATE_SCREEN_OFF_UNLOCKED) |
                               updateRoutePowerState(POWER_STATE_SCREEN_OFF_LOCKED);
                     } else{
-                        screenstate |= POWER_STATE_SCREEN_ON_LOCKED | POWER_STATE_SCREEN_OFF_LOCKED;
+                        screenstate |= POWER_STATE_SCREEN_OFF_UNLOCKED | POWER_STATE_SCREEN_OFF_LOCKED;
                     }
                   }
                   powerstate |= screenstate;
@@ -957,7 +957,7 @@ public class RegisteredAidCache {
                 }
 
                 if(isNxpExtnEnabled) {
-                    aidType.power |= POWER_STATE_SCREEN_ON_LOCKED | POWER_STATE_SCREEN_OFF_LOCKED;
+                    aidType.power |= POWER_STATE_SCREEN_OFF_UNLOCKED | POWER_STATE_SCREEN_OFF_LOCKED;
                   }
 
                 if (DBG) Log.d(TAG," AID power state 2 "+ aid  +" "+aidType.power);
@@ -1019,7 +1019,7 @@ public class RegisteredAidCache {
                 }
 
                 if(isNxpExtnEnabled) {
-                    aidType.power |= POWER_STATE_SCREEN_ON_LOCKED | POWER_STATE_SCREEN_OFF_LOCKED;
+                    aidType.power |= POWER_STATE_SCREEN_OFF_UNLOCKED | POWER_STATE_SCREEN_OFF_LOCKED;
                 }
 
                 if(NfcService.getInstance().getNciVersion() >=
@@ -1146,9 +1146,9 @@ public class RegisteredAidCache {
           /*Mapping SWITCH_ON(0x01) to PROP_SCRN_ON_UNLOCKED(0x20)*/
           tempPwrState |= PROP_SCRN_ON_UNLOCKED;
         }
-        if((inputPwr & POWER_STATE_SCREEN_ON_LOCKED) == POWER_STATE_SCREEN_ON_LOCKED ||
+        if((inputPwr & POWER_STATE_SCREEN_OFF_UNLOCKED) == POWER_STATE_SCREEN_OFF_UNLOCKED ||
                 (inputPwr & POWER_STATE_SCREEN_OFF_LOCKED) == POWER_STATE_SCREEN_OFF_LOCKED) {
-          /*Mapping POWER_STATE_SCREEN_ON_LOCKED(0x08) or POWER_STATE_SCREEN_OFF_LOCKED(0x20)
+          /*Mapping POWER_STATE_SCREEN_OFF_UNLOCKED(0x08) or POWER_STATE_SCREEN_OFF_LOCKED(0x20)
            * to PROP_SCRN_OFF(0x08)*/
           tempPwrState |= PROP_SCRN_OFF;
         }
