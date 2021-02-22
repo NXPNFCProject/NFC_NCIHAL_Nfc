@@ -159,7 +159,7 @@ class RoutingManager {
     tNFA_HANDLE checkAndUpdateAltRoute(int& routeLoc);
 
     uint32_t getUicc2selected();
-    bool checkAndUpdatePowerState(int& power);
+    bool checkAndUpdatePowerState(uint8_t& power);
     bool isNfceeActive(int routeLoc, tNFA_HANDLE& ActDevHandle);
     uint16_t sRoutingBuffLen;
     uint8_t* sRoutingBuff;
@@ -220,10 +220,10 @@ class RoutingManager {
   int mAidMatchingMode;
   int mNfcFOnDhHandle;
   bool mIsScbrSupported;
-  uint8_t mOffHostAidRoutingPowerState;
   uint16_t mDefaultSysCode;
   uint16_t mDefaultSysCodeRoute;
   uint8_t mDefaultSysCodePowerstate;
+  uint8_t mOffHostAidRoutingPowerState;
 #if(NXP_EXTNS != TRUE)
   bool mDeinitializing;
   bool mEeInfoChanged;

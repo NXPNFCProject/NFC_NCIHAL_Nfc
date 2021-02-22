@@ -408,8 +408,11 @@ bool RoutingManager::addAidRouting(const uint8_t* aid, uint8_t aidLen,
   }
   SyncEventGuard guard(mAidAddRemoveEvent);
   if (!mSecureNfcEnabled) {
+    /*masking lower 8 bits as power states will be available only in that
+     * region*/
+    power &= 0xFF;
     /*Map PWR state as per NCI2.0 if required*/
-    bool stat = checkAndUpdatePowerState(power);
+    bool stat = checkAndUpdatePowerState((uint8_t&)power);
 
     if (route == SecureElement::DH_ID) {
       power &= ~(PWR_SWTCH_OFF_MASK | PWR_BATT_OFF_MASK);
@@ -747,7 +750,7 @@ void RoutingManager::updateDefaultRoute() {
         ((mDefaultSysCodeRoute == 0x01 ) ? ROUTE_LOC_ESE_ID : getUiccRouteLocId(mDefaultSysCodeRoute)));
 
   /*Map PWR state as per NCI2.0 if required*/
-  bool stat = checkAndUpdatePowerState((int&)mDefaultSysCodePowerstate);
+  bool stat = checkAndUpdatePowerState(mDefaultSysCodePowerstate);
 
   if (mDefaultSysCodeRoute == SecureElement::DH_ID) {
     mDefaultSysCodePowerstate &= ~(PWR_SWTCH_OFF_MASK | PWR_BATT_OFF_MASK);
@@ -1503,9 +1506,11 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
     }
 
     ee_handle = checkAndUpdateAltRoute(route);
-
+    /*masking lower 8 bits as power states will be available only in that
+     * region*/
+    power &= 0xFF;
     /*Map PWR state as per NCI2.0 if required*/
-    bool stat = checkAndUpdatePowerState(power);
+    bool stat = checkAndUpdatePowerState((uint8_t&)power);
 
     if ((ee_handle == ROUTE_LOC_HOST_ID) &&
         (NFA_SET_PROTOCOL_ROUTING == type)) {
@@ -1771,7 +1776,7 @@ void RoutingManager::setEmptyAidEntry(int routeAndPowerState) {
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter",__func__);
     /* uint32_t routeAndPowerState = (uint16_t)routeLoc : (uint16_t)power state */
     uint32_t routeLoc = ((routeAndPowerState >> 8) & 0xFF);
-    uint32_t power = (routeAndPowerState & 0xFF);
+    uint8_t power = (routeAndPowerState & 0xFF);
     int max_tech_mask = 0;
     if (routeLoc  == NFA_HANDLE_INVALID)
     {
@@ -1788,7 +1793,7 @@ void RoutingManager::setEmptyAidEntry(int routeAndPowerState) {
     }
 
     /*Map PWR state as per NCI2.0 if required*/
-    bool stat = checkAndUpdatePowerState((int&)power);
+    bool stat = checkAndUpdatePowerState(power);
 
     if(routeLoc == ROUTE_LOC_HOST_ID) {
       power &= ~(PWR_SWTCH_OFF_MASK | PWR_BATT_OFF_MASK);
@@ -1798,7 +1803,7 @@ void RoutingManager::setEmptyAidEntry(int routeAndPowerState) {
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: power %x",__func__,power);
     if(power){
       tNFA_STATUS nfaStat = NFA_EeAddAidRouting(
-          routeLoc, 0, NULL, mSecureNfcEnabled ? 0x01 : (uint8_t)power,
+          routeLoc, 0, NULL, mSecureNfcEnabled ? 0x01 : power,
           AID_ROUTE_QUAL_PREFIX);
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: Status :0x%2x", __func__, nfaStat);
@@ -2171,7 +2176,7 @@ void RoutingManager::processGetRoutingRsp(tNFA_DM_CBACK_DATA* eventData) {
 ** Returns:         If JNI_EXTNS present(true), otherwise (false)
 **
 *******************************************************************************/
-bool RoutingManager::checkAndUpdatePowerState(int& power) {
+bool RoutingManager::checkAndUpdatePowerState(uint8_t& power) {
   bool status = false;
   uint8_t tempPower = (uint8_t)(power & POWER_STATE_MASK);
   NativeJniExtns& jniExtns = NativeJniExtns::getInstance();
