@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2020 NXP
+*  Copyright 2018-2021 NXP
 *
 ******************************************************************************/
 #include <android-base/stringprintf.h>
@@ -3365,6 +3365,10 @@ void startRfDiscovery(bool isStart) {
   if (status == NFA_STATUS_OK) {
     sNfaEnableDisablePollingEvent.wait (); //wait for NFA_RF_DISCOVERY_xxxx_EVT
     sRfEnabled = isStart;
+#if(NXP_EXTNS == TRUE)
+    if (isStart == false && SecureElement::getInstance().mRfFieldIsOn == true)
+      SecureElement::getInstance().mRfFieldIsOn = false;
+#endif
   } else {
     LOG(ERROR) << StringPrintf(
         "%s: Failed to start/stop RF discovery; error=0x%X", __func__, status);
