@@ -2631,6 +2631,8 @@ static void nfcManager_doAbort(JNIEnv* e, jobject, jstring msg) {
 void handleWiredmode(bool isShutdown)
 {
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter, isShutdown %d", __func__, isShutdown);
+    if(NFC_GetChipType() == pn557)
+      return;
     SecureElement &se = SecureElement::getInstance();
     if(se.mIsWiredModeOpen) {
       se.setNfccPwrConfig(SecureElement::POWER_ALWAYS_ON);
