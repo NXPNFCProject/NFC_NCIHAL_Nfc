@@ -60,6 +60,7 @@
 #if(NXP_SRD == TRUE)
 #include "SecureDigitization.h"
 #endif
+#include "SecureElement.h"
 #endif
 
 using android::base::StringPrintf;
@@ -821,6 +822,13 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
           break;
         }
       } else {
+        if (SecureElement::getInstance().isRfFieldOn()) {
+          rVal = STATUS_CODE_TARGET_LOST;
+          NfcTag::getInstance().resetActivationState();
+          DLOG_IF(INFO, nfc_debug_enabled)
+              << StringPrintf("%s: card emulation on priotiy", __func__);
+          break;
+        }
 #endif
         DLOG_IF(INFO, nfc_debug_enabled)
             << StringPrintf("%s: deactivate to sleep", __func__);
