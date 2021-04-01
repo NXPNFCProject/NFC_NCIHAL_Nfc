@@ -1065,6 +1065,10 @@ void nfaDeviceManagementCallback(uint8_t dmEvent,
                                  tNFA_DM_CBACK_DATA* eventData) {
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: enter; event=0x%X", __func__, dmEvent);
+#if (NXP_EXTNS == TRUE)
+  NativeJniExtns::getInstance().notifyNfcEvent(
+      "nfaDeviceManagementCallback", (void*)&dmEvent, (void*)eventData);
+#endif
 
   switch (dmEvent) {
     case NFA_DM_ENABLE_EVT: /* Result of NFA_Enable */
