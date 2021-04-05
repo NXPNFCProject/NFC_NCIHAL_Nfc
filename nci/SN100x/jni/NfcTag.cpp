@@ -587,12 +587,26 @@ void NfcTag::discoverTechnologies(tNFA_ACTIVATED& activationData) {
       // save the stack's data structure for interpretation later
       memcpy(&(mTechParams[mNumTechList]), &(rfDetail.rf_tech_param),
              sizeof(rfDetail.rf_tech_param));
-    } else if ((rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_POLL_B) ||
-               (rfDetail.rf_tech_param.mode ==
-                NFC_DISCOVERY_TYPE_POLL_B_PRIME) ||
-               (rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_LISTEN_B) ||
-               (rfDetail.rf_tech_param.mode ==
-                NFC_DISCOVERY_TYPE_LISTEN_B_PRIME)) {
+    }
+#if (NXP_EXTNS == TRUE)
+#if (NXP_QTAG == TRUE)
+    else if (rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_POLL_Q) {
+      mNumTechList++;
+      mTechHandles[mNumTechList] = rfDetail.rf_disc_id;
+      mTechLibNfcTypes[mNumTechList] = rfDetail.protocol;
+      mTechList[mNumTechList] =
+          TARGET_TYPE_ISO14443_3Q;  // is TagTechnology.NFC_Q by Java API
+      // save the stack's data structure for interpretation later
+      memcpy(&(mTechParams[mNumTechList]), &(rfDetail.rf_tech_param),
+             sizeof(rfDetail.rf_tech_param));
+    }
+#endif
+#endif
+    else if ((rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_POLL_B) ||
+             (rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_POLL_B_PRIME) ||
+             (rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_LISTEN_B) ||
+             (rfDetail.rf_tech_param.mode ==
+              NFC_DISCOVERY_TYPE_LISTEN_B_PRIME)) {
       mNumTechList++;
       mTechHandles[mNumTechList] = rfDetail.rf_disc_id;
       mTechLibNfcTypes[mNumTechList] = rfDetail.protocol;
@@ -1024,10 +1038,21 @@ void NfcTag::fillNativeNfcTagMembers3(JNIEnv* e, jclass tag_cls, jobject tag,
       pollBytes.reset(e->NewByteArray(2));
       e->SetByteArrayRegion(pollBytes.get(), 0, 2,
                             (jbyte*)mTechParams[i].param.pa.sens_res);
-    } else if (NFC_DISCOVERY_TYPE_POLL_B == mTechParams[i].mode ||
-               NFC_DISCOVERY_TYPE_POLL_B_PRIME == mTechParams[i].mode ||
-               NFC_DISCOVERY_TYPE_LISTEN_B == mTechParams[i].mode ||
-               NFC_DISCOVERY_TYPE_LISTEN_B_PRIME == mTechParams[i].mode) {
+    }
+#if (NXP_EXTNS == TRUE)
+#if (NXP_QTAG == TRUE)
+    else if (NFC_DISCOVERY_TYPE_POLL_Q == mTechParams[i].mode) {
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: tech Q", fn);
+      pollBytes.reset(e->NewByteArray(2));
+      e->SetByteArrayRegion(pollBytes.get(), 0, 2,
+                            (jbyte*)mTechParams[i].param.pq.sens_res);
+    }
+#endif
+#endif
+    else if (NFC_DISCOVERY_TYPE_POLL_B == mTechParams[i].mode ||
+             NFC_DISCOVERY_TYPE_POLL_B_PRIME == mTechParams[i].mode ||
+             NFC_DISCOVERY_TYPE_LISTEN_B == mTechParams[i].mode ||
+             NFC_DISCOVERY_TYPE_LISTEN_B_PRIME == mTechParams[i].mode) {
       if (mTechList[i] ==
           TARGET_TYPE_ISO14443_3B)  // is TagTechnology.NFC_B by Java API
       {
@@ -1229,10 +1254,34 @@ void NfcTag::fillNativeNfcTagMembers4(JNIEnv* e, jclass tag_cls, jobject tag,
                 activationData.activate_ntf.intf_param.type);
             actBytes.reset(e->NewByteArray(0));
           }
-        } else if ((mTechParams[i].mode == NFC_DISCOVERY_TYPE_POLL_B) ||
-                   (mTechParams[i].mode == NFC_DISCOVERY_TYPE_POLL_B_PRIME) ||
-                   (mTechParams[i].mode == NFC_DISCOVERY_TYPE_LISTEN_B) ||
-                   (mTechParams[i].mode == NFC_DISCOVERY_TYPE_LISTEN_B_PRIME)) {
+        }
+#if (NXP_EXTNS == TRUE)
+#if (NXP_QTAG == TRUE)
+        else if (mTechParams[i].mode == NFC_DISCOVERY_TYPE_POLL_Q) {
+          if (activationData.activate_ntf.intf_param.type ==
+              NFC_INTERFACE_ISO_DEP) {
+            tNFC_INTF_PQ_ISO_DEP& pq_iso =
+                activationData.activate_ntf.intf_param.intf_param.pq_iso;
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+                "%s: T4T; ISO_DEP for tech Q; copy historical bytes; len=%u",
+                fn, pq_iso.his_byte_len);
+            actBytes.reset(e->NewByteArray(pq_iso.his_byte_len));
+            if (pq_iso.his_byte_len > 0)
+              e->SetByteArrayRegion(actBytes.get(), 0, pq_iso.his_byte_len,
+                                    (jbyte*)(pq_iso.his_byte));
+          } else {
+            LOG(ERROR) << StringPrintf(
+                "%s: T4T; ISO_DEP for tech Q; wrong interface=%u", fn,
+                activationData.activate_ntf.intf_param.type);
+            actBytes.reset(e->NewByteArray(0));
+          }
+        }
+#endif
+#endif
+        else if ((mTechParams[i].mode == NFC_DISCOVERY_TYPE_POLL_B) ||
+                 (mTechParams[i].mode == NFC_DISCOVERY_TYPE_POLL_B_PRIME) ||
+                 (mTechParams[i].mode == NFC_DISCOVERY_TYPE_LISTEN_B) ||
+                 (mTechParams[i].mode == NFC_DISCOVERY_TYPE_LISTEN_B_PRIME)) {
           // see NFC Forum Digital Protocol specification, section 12.6.2,
           // "ATTRIB Response";  copy higher-layer response bytes into Java
           // object;  the public API, IsoDep.getHiLayerResponse(), returns this
@@ -1337,10 +1386,22 @@ void NfcTag::fillNativeNfcTagMembers5(JNIEnv* e, jclass tag_cls, jobject tag,
     // section 4.7.2 SDD_RES Response, Requirements 20).
     mIsDynamicTagId = (mTechParams[0].param.pa.nfcid1_len == 4) &&
                       (mTechParams[0].param.pa.nfcid1[0] == 0x08);
-  } else if (NFC_DISCOVERY_TYPE_POLL_B == mTechParams[0].mode ||
-             NFC_DISCOVERY_TYPE_POLL_B_PRIME == mTechParams[0].mode ||
-             NFC_DISCOVERY_TYPE_LISTEN_B == mTechParams[0].mode ||
-             NFC_DISCOVERY_TYPE_LISTEN_B_PRIME == mTechParams[0].mode) {
+  }
+#if (NXP_EXTNS == TRUE)
+#if (NXP_QTAG == TRUE)
+  else if (NFC_DISCOVERY_TYPE_POLL_Q == mTechParams[0].mode) {
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: tech Q", fn);
+    len = mTechParams[0].param.pq.nfcid1_len;
+    uid.reset(e->NewByteArray(len));
+    e->SetByteArrayRegion(uid.get(), 0, len,
+                          (jbyte*)&mTechParams[0].param.pq.nfcid1);
+  }
+#endif
+#endif
+  else if (NFC_DISCOVERY_TYPE_POLL_B == mTechParams[0].mode ||
+           NFC_DISCOVERY_TYPE_POLL_B_PRIME == mTechParams[0].mode ||
+           NFC_DISCOVERY_TYPE_LISTEN_B == mTechParams[0].mode ||
+           NFC_DISCOVERY_TYPE_LISTEN_B_PRIME == mTechParams[0].mode) {
 #if (NXP_EXTNS == TRUE)
     if(activationData.activate_ntf.protocol != NFA_PROTOCOL_T3BT) {
 #endif
