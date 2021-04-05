@@ -15,7 +15,7 @@
  */
  /***************************************************************************
  *
- *  Copyright 2020 NXP
+ *  Copyright 2020-2021 NXP
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -735,6 +735,8 @@ public class NativeNfcTag implements TagEndpoint {
 
                     case TagTechnology.ISO_DEP: {
                         if (hasTech(TagTechnology.NFC_A)) {
+                            extras.putByteArray(IsoDep.EXTRA_HIST_BYTES, mTechActBytes[i]);
+                        } else if (hasTech(TagTechnology.NFC_Q)) {
                             extras.putByteArray(IsoDep.EXTRA_HIST_BYTES, mTechActBytes[i]);
                         }
                         else {
