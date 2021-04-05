@@ -3,6 +3,7 @@ cc_library_shared {
     cflags:
      ["-DNXP_EXTNS=TRUE",
       "-DNXP_SRD=TRUE",]  + [
+      "-DNXP_QTAG=TRUE",]  + [
         "-Wall",
         "-Wextra",
         "-Wno-unused-parameter",

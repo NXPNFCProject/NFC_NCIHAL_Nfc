@@ -1820,8 +1820,14 @@ static void nfcManager_enableDiscovery(JNIEnv* e, jobject o,
     tech_mask = (tNFA_TECHNOLOGY_MASK)technologies_mask;
 
 #if (NXP_EXTNS == TRUE)
+#if (NXP_QTAG == TRUE)
+  uint16_t default_tech_mask =
+      NfcConfig::getUnsigned(NAME_POLLING_TECH_MASK, DEFAULT_TECH_MASK);
+  default_tech_mask |= NFA_TECHNOLOGY_MASK_Q;
+#else
   uint8_t default_tech_mask =
       NfcConfig::getUnsigned(NAME_POLLING_TECH_MASK, DEFAULT_TECH_MASK);
+#endif
   tech_mask &= default_tech_mask;
 #endif
 
