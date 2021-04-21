@@ -36,6 +36,7 @@
 #include <base/logging.h>
 #include <cutils/properties.h>
 #include <errno.h>
+#include <nativehelper/JNIPlatformHelp.h>
 #include <nativehelper/ScopedLocalRef.h>
 #include <nativehelper/ScopedPrimitiveArray.h>
 #include <nativehelper/ScopedUtfChars.h>
