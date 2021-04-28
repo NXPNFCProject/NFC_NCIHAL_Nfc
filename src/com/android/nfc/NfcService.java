@@ -161,6 +161,7 @@ public class NfcService implements DeviceHostListener {
     static final String TAG = "NfcService";
 
     public static final String SERVICE_NAME = "nfc";
+    private static final String SYSTEM_UI = "com.android.systemui";
     public static final String NXP_PREF = "NfcServiceNxpPrefs";
     public static final String PREF = "NfcServicePrefs";
     private static final String PREF_CUR_SELECTED_UICC_ID = "current_selected_uicc_id";
@@ -463,6 +464,7 @@ public class NfcService implements DeviceHostListener {
     private SharedPreferences mPrefs;
     private SharedPreferences.Editor mPrefsEditor;
     private PowerManager.WakeLock mRoutingWakeLock;
+    private PowerManager.WakeLock mRequireUnlockWakeLock;
     private PowerManager.WakeLock mEeWakeLock;
     private SharedPreferences.Editor mNxpPrefsEditor;
     private SharedPreferences mNxpPrefs;
@@ -484,6 +486,7 @@ public class NfcService implements DeviceHostListener {
     boolean mIsHceFCapable;
     boolean mIsBeamCapable;
     boolean mIsSecureNfcCapable;
+    boolean mIsRequestUnlockShowed;
 
     int mPollDelay;
     boolean mNotifyDispatchFailed;
@@ -773,6 +776,9 @@ public class NfcService implements DeviceHostListener {
                 PowerManager.PARTIAL_WAKE_LOCK, "NfcService:mRoutingWakeLock");
         mEeWakeLock = mPowerManager.newWakeLock(
                 PowerManager.PARTIAL_WAKE_LOCK, "NfcService:mEeWakeLock");
+        mRequireUnlockWakeLock = mPowerManager.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK
+                        | PowerManager.ACQUIRE_CAUSES_WAKEUP
+                        | PowerManager.ON_AFTER_RELEASE, "NfcService:mRequireUnlockWakeLock");
         mKeyguard = (KeyguardManager) mContext.getSystemService(Context.KEYGUARD_SERVICE);
         mUserManager = (UserManager) mContext.getSystemService(Context.USER_SERVICE);
         mVibrator = (Vibrator) mContext.getSystemService(Context.VIBRATOR_SERVICE);
@@ -1662,7 +1668,7 @@ public class NfcService implements DeviceHostListener {
             String packageName = getPackageNameFromUid(callingUid);
             if (packageName != null) {
                 privilegedCaller = (callingUid == Process.SYSTEM_UID
-                       || packageName.equals("com.android.systemui"));
+                       || packageName.equals(SYSTEM_UI));
             } else {
                 privilegedCaller = (callingUid == Process.SYSTEM_UID);
             }
@@ -3755,6 +3761,17 @@ public class NfcService implements DeviceHostListener {
                 case MSG_RF_FIELD_ACTIVATED:
                     Intent fieldOnIntent = new Intent(ACTION_RF_FIELD_ON_DETECTED);
                     sendNfcEeAccessProtectedBroadcast(fieldOnIntent);
+                    if (!mIsRequestUnlockShowed
+                            && mIsSecureNfcEnabled && mKeyguard.isKeyguardLocked()) {
+                        if (DBG) Log.d(TAG, "Request unlock");
+                        mIsRequestUnlockShowed = true;
+                        mRequireUnlockWakeLock.acquire();
+                        Intent requireUnlockIntent =
+                                new Intent(NfcAdapter.ACTION_REQUIRE_UNLOCK_FOR_NFC);
+                        requireUnlockIntent.setPackage(SYSTEM_UI);
+                        mContext.sendBroadcast(requireUnlockIntent);
+                        mRequireUnlockWakeLock.release();
+                    }
                     break;
                 case MSG_RF_FIELD_DEACTIVATED:
                     Intent fieldOffIntent = new Intent(ACTION_RF_FIELD_OFF_DETECTED);
@@ -3834,7 +3851,8 @@ public class NfcService implements DeviceHostListener {
                         break;
                     }
                     if (mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED) {
-                      applyRouting(false);
+                        applyRouting(false);
+                        mIsRequestUnlockShowed = false;
                     }
                     int screen_state_mask = (mNfcUnlockManager.isLockscreenPollingEnabled()) ?
                                 (ScreenStateHelper.SCREEN_POLLING_TAG_MASK | mScreenState) : mScreenState;
