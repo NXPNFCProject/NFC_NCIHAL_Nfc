@@ -211,6 +211,7 @@ SyncEvent gDeactivatedEvent;
 SyncEvent sNfaSetConfigEvent;             // event for Set_Config....
 SyncEvent sNfaEnableDisablePollingEvent;  // event for NFA_EnablePolling(),
 bool legacy_mfc_reader = true;
+int recovery_option = 0;
 
 namespace android {
 int gGeneralPowershutDown = 0;
@@ -226,6 +227,7 @@ jmethodID gCachedNfcManagerNotifyHostEmuData;
 jmethodID gCachedNfcManagerNotifyHostEmuDeactivated;
 jmethodID gCachedNfcManagerNotifyRfFieldActivated;
 jmethodID gCachedNfcManagerNotifyRfFieldDeactivated;
+jmethodID gCachedNfcManagerNotifyHwErrorReported;
 #if (NXP_EXTNS == TRUE)
 int gMaxEERecoveryTimeout = MAX_EE_RECOVERY_TIMEOUT;
 #endif
@@ -592,6 +594,12 @@ void initializeMfcReaderOption() {
 
   DLOG_IF(INFO, nfc_debug_enabled)
       << __func__ << ": mifare reader option=" << legacy_mfc_reader;
+}
+void initializeRecoveryOption() {
+  recovery_option = NfcConfig::getUnsigned(NAME_RECOVERY_OPTION, 0);
+
+  DLOG_IF(INFO, nfc_debug_enabled)
+      << __func__ << ": recovery option=" << recovery_option;
 }
 }  // namespace
 
@@ -1357,6 +1365,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
   static jboolean nfcManager_initNativeStruc(JNIEnv * e, jobject o) {
     initializeGlobalDebugEnabledFlag();
     initializeMfcReaderOption();
+    initializeRecoveryOption();
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
 #if (NXP_EXTNS == TRUE)
     nfc_jni_native_data* nat =
@@ -1414,6 +1423,8 @@ static void nfaConnectionCallback(uint8_t connEvent,
         e->GetMethodID(cls.get(), "notifyRfFieldActivated", "()V");
     gCachedNfcManagerNotifyRfFieldDeactivated =
         e->GetMethodID(cls.get(), "notifyRfFieldDeactivated", "()V");
+    gCachedNfcManagerNotifyHwErrorReported =
+      e->GetMethodID(cls.get(), "notifyHwErrorReported", "()V");
 
     gCachedNfcManagerNotifyTransactionListeners = e->GetMethodID(
         cls.get(), "notifyTransactionListeners", "([B[BLjava/lang/String;)V");
@@ -1565,57 +1576,68 @@ static void nfaConnectionCallback(uint8_t connEvent,
         else if (dmEvent == NFA_DM_NFCC_TRANSPORT_ERR_EVT)
           LOG(ERROR) << StringPrintf("%s: NFA_DM_NFCC_TRANSPORT_ERR_EVT; abort",
                                      __func__);
-        if (nfcFL.eseFL._JCOP_WA_ENABLE) {
-          NFA_HciW4eSETransaction_Complete(Wait);
-        }
-        nativeNfcTag_abortWaits();
-        NfcTag::getInstance().abort();
-        sAbortConnlessWait = true;
-        nativeLlcpConnectionlessSocket_abortWait();
-        {
-          DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-              "%s: aborting  sNfaEnableDisablePollingEvent", __func__);
-          SyncEventGuard guard(sNfaEnableDisablePollingEvent);
-          sNfaEnableDisablePollingEvent.notifyOne();
-        }
-        {
-          DLOG_IF(INFO, nfc_debug_enabled)
-              << StringPrintf("%s: aborting  sNfaEnableEvent", __func__);
-          SyncEventGuard guard(sNfaEnableEvent);
-          sNfaEnableEvent.notifyOne();
-        }
-        {
-          DLOG_IF(INFO, nfc_debug_enabled)
-              << StringPrintf("%s: aborting  sNfaDisableEvent", __func__);
-          SyncEventGuard guard(sNfaDisableEvent);
-          sNfaDisableEvent.notifyOne();
-        }
-        sDiscoveryEnabled = false;
-        sPollingEnabled = false;
-        PowerSwitch::getInstance().abort();
+        if (recovery_option) {
+          struct nfc_jni_native_data* nat = getNative(NULL, NULL);
+          JNIEnv* e = NULL;
+          ScopedAttach attach(nat->vm, &e);
+          if (e == NULL) {
+            LOG(ERROR) << StringPrintf("jni env is null");
+            return;
+          }
+          LOG(ERROR) << StringPrintf("%s: toggle NFC state to recovery nfc",
+                                     __func__);
+          e->CallVoidMethod(nat->manager,
+                            android::gCachedNfcManagerNotifyHwErrorReported);
+        } else {
+          nativeNfcTag_abortWaits();
+          NfcTag::getInstance().abort();
+          sAbortConnlessWait = true;
+          nativeLlcpConnectionlessSocket_abortWait();
+          {
+            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+                "%s: aborting  sNfaEnableDisablePollingEvent", __func__);
+            SyncEventGuard guard(sNfaEnableDisablePollingEvent);
+            sNfaEnableDisablePollingEvent.notifyOne();
+          }
+          {
+            DLOG_IF(INFO, nfc_debug_enabled)
+                << StringPrintf("%s: aborting  sNfaEnableEvent", __func__);
+            SyncEventGuard guard(sNfaEnableEvent);
+            sNfaEnableEvent.notifyOne();
+          }
+          {
+            DLOG_IF(INFO, nfc_debug_enabled)
+                << StringPrintf("%s: aborting  sNfaDisableEvent", __func__);
+            SyncEventGuard guard(sNfaDisableEvent);
+            sNfaDisableEvent.notifyOne();
+          }
+          sDiscoveryEnabled = false;
+          sPollingEnabled = false;
+          PowerSwitch::getInstance().abort();
 
-        if (!sIsDisabling && sIsNfaEnabled) {
-          EXTNS_Close();
-          NFA_Disable(false);
-          sIsDisabling = true;
-        } else {
-          sIsNfaEnabled = false;
-          sIsDisabling = false;
-        }
-        PowerSwitch::getInstance().initialize(PowerSwitch::UNKNOWN_LEVEL);
+          if (!sIsDisabling && sIsNfaEnabled) {
+            EXTNS_Close();
+            NFA_Disable(false);
+            sIsDisabling = true;
+          } else {
+            sIsNfaEnabled = false;
+            sIsDisabling = false;
+          }
+          PowerSwitch::getInstance().initialize(PowerSwitch::UNKNOWN_LEVEL);
 #if (NXP_EXTNS == TRUE)
-        if (eventData->status == NFA_STATUS_FAILED) {
-          LOG(ERROR) << StringPrintf("%s: Disabling NFC service", __func__);
-        } else {
+          if (eventData->status == NFA_STATUS_FAILED) {
+            LOG(ERROR) << StringPrintf("%s: Disabling NFC service", __func__);
+          } else {
 #endif
-          LOG(ERROR) << StringPrintf("%s: crash NFC service", __func__);
-          //////////////////////////////////////////////
-          // crash the NFC service process so it can restart automatically
-          abort();
+            LOG(ERROR) << StringPrintf("%s: crash NFC service", __func__);
+            //////////////////////////////////////////////
+            // crash the NFC service process so it can restart automatically
+            abort();
 //////////////////////////////////////////////
 #if (NXP_EXTNS == TRUE)
-        }
+          }
 #endif
+        }
       } break;
 
       case NFA_DM_PWR_MODE_CHANGE_EVT:
