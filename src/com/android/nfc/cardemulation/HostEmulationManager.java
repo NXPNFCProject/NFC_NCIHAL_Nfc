@@ -483,6 +483,7 @@ public class HostEmulationManager {
                 }
                 mService = new Messenger(service);
                 mServiceName = name;
+                mServiceBound = true;
                 Log.d(TAG, "Service bound");
                 mState = STATE_XFER;
                 // Send pending select APDU
