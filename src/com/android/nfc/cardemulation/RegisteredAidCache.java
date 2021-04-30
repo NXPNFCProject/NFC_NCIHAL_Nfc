@@ -42,6 +42,7 @@ import android.nfc.cardemulation.CardEmulation;
 import android.util.Log;
 import android.util.proto.ProtoOutputStream;
 
+import com.android.nfc.NfcService;
 import com.google.android.collect.Maps;
 import java.util.Collections;
 import java.io.FileDescriptor;
@@ -66,6 +67,20 @@ public class RegisteredAidCache {
 
     static final int AID_ROUTE_QUAL_SUBSET = 0x20;
     static final int AID_ROUTE_QUAL_PREFIX = 0x10;
+
+    static final int POWER_STATE_SWITCH_ON = 0x1;
+    static final int POWER_STATE_SWITCH_OFF = 0x2;
+    static final int POWER_STATE_BATTERY_OFF = 0x4;
+    static final int POWER_STATE_SCREEN_OFF_UNLOCKED = 0x8;
+    static final int POWER_STATE_SCREEN_ON_LOCKED = 0x10;
+    static final int POWER_STATE_SCREEN_OFF_LOCKED = 0x20;
+    static final int POWER_STATE_ALL = POWER_STATE_SWITCH_ON | POWER_STATE_SWITCH_OFF
+                                     | POWER_STATE_BATTERY_OFF | POWER_STATE_SCREEN_OFF_UNLOCKED
+                                     | POWER_STATE_SCREEN_ON_LOCKED | POWER_STATE_SCREEN_OFF_LOCKED;
+    static final int POWER_STATE_ALL_NCI_VERSION_1_0 = POWER_STATE_SWITCH_ON
+                                                     | POWER_STATE_SWITCH_OFF
+                                                     | POWER_STATE_BATTERY_OFF;
+
     // mAidServices maps AIDs to services that have registered them.
     // It's a TreeMap in order to be able to quickly select subsets
     // of AIDs that conflict with each other.
@@ -78,16 +93,7 @@ public class RegisteredAidCache {
     // is authoritative for the current set of services and defaults.
     // It is only valid for the current user.
     final TreeMap<String, AidResolveInfo> mAidCache = new TreeMap<String, AidResolveInfo>();
-    //FIXME: directly use the declaration in ApduServerInfo in framework
-    static final int POWER_STATE_SWITCH_ON = 1;
-    static final int POWER_STATE_SWITCH_OFF = 2;
-    static final int POWER_STATE_BATTERY_OFF = 4;
-    static final int POWER_STATE_ALL = POWER_STATE_SWITCH_ON | POWER_STATE_SWITCH_OFF |POWER_STATE_BATTERY_OFF ;
-    static final int SCREEN_STATE_OFF_UNLOCKED = 0x08;
-    static final int SCREEN_STATE_ON_LOCKED = 0x10;
-    static final int SCREEN_STATE_OFF_LOCKED = 0x20;
-    static final int SCREEN_STATE_INVALID = 0x00;
-    static final int SCREEN_STATE_DEFAULT_MASK = 0x16;
+
     // Represents a single AID registration of a service
     final class ServiceAidInfo {
         NfcApduServiceInfo service;
@@ -828,6 +834,33 @@ public class RegisteredAidCache {
         }
     }
 
+    private int computeAidPowerState(boolean isOnHost, boolean requiresScreenOn,
+                                     boolean requiresUnlock) {
+        int power = POWER_STATE_ALL;
+        if (NfcService.getInstance().getNciVersion() < NfcService.getInstance().NCI_VERSION_2_0) {
+            power = POWER_STATE_ALL_NCI_VERSION_1_0;
+        }
+
+        if (isOnHost) {
+            power &= ~(POWER_STATE_SWITCH_OFF | POWER_STATE_BATTERY_OFF);
+        } else {
+            if (requiresUnlock) {
+                power &= ~POWER_STATE_SCREEN_ON_LOCKED;
+            }
+        }
+
+        if (requiresScreenOn) {
+            power &= ~(POWER_STATE_SWITCH_OFF | POWER_STATE_BATTERY_OFF
+                     | POWER_STATE_SCREEN_OFF_UNLOCKED | POWER_STATE_SCREEN_OFF_LOCKED);
+        }
+        if (requiresUnlock) {
+            power &= ~(POWER_STATE_SWITCH_OFF | POWER_STATE_BATTERY_OFF
+                     | POWER_STATE_SCREEN_OFF_LOCKED);
+        }
+
+        return power;
+    }
+
     void updateRoutingLocked(boolean force) {
         if (!mNfcEnabled) {
             if (DBG) Log.d(TAG, "Not updating routing table because NFC is off.");
@@ -900,6 +933,11 @@ public class RegisteredAidCache {
                } else {
                    aidType.powerstate = updateRoutePowerState(powerstate);
                }
+                boolean requiresUnlock = resolveInfo.defaultService.requiresUnlock();
+                boolean requiresScreenOn = resolveInfo.defaultService.requiresScreenOn();
+                aidType.power =
+                        computeAidPowerState(aidType.isOnHost, requiresScreenOn, requiresUnlock);
+
                routingEntries.put(aid, aidType);
             } else if (resolveInfo.services.size() == 1) {
                 // Only one service, but not the default, must route to host
@@ -922,12 +960,19 @@ public class RegisteredAidCache {
                                         NfcService.getInstance().NCI_VERSION_2_0){
                     aidType.powerstate = updateRoutePowerState(aidType.powerstate);
                 }
+                boolean requiresUnlock = resolveInfo.services.get(0).requiresUnlock();
+                boolean requiresScreenOn = resolveInfo.services.get(0).requiresScreenOn();
+                aidType.power =
+                        computeAidPowerState(aidType.isOnHost, requiresScreenOn, requiresUnlock);
+
                 routingEntries.put(aid, aidType);
             } else if (resolveInfo.services.size() > 1) {
                 // Multiple services if all the services are routing to same
                 // offhost then the service should be routed to off host.
                 boolean onHost = false;
                 String offHostSE = null;
+                boolean requiresUnlock = false;
+                boolean requiresScreenOn = true;
                 for (NfcApduServiceInfo service : resolveInfo.services) {
                     // In case there is at least one service which routes to host
                     // Route it to host for user to select which service to use
@@ -935,12 +980,26 @@ public class RegisteredAidCache {
                     if (!onHost) {
                         if (offHostSE == null) {
                             offHostSE = service.getOffHostSecureElement();
+                            requiresUnlock = service.requiresUnlock();
+                            requiresScreenOn = service.requiresScreenOn();
                         } else if (!offHostSE.equals(
                                 service.getOffHostSecureElement())) {
                             // There are registerations to different SEs, route this
                             // to host and have user choose a service for this AID
                             offHostSE = null;
                             onHost = true;
+                            requiresUnlock = false;
+                            requiresScreenOn = true;
+                            break;
+                        } else if (requiresUnlock != service.requiresUnlock()
+                                || requiresScreenOn != service.requiresScreenOn()) {
+                            // There are registrations to the same SE with differernt supported
+                            // power states, route this to host and have user choose a service
+                            // for this AID
+                            offHostSE = null;
+                            onHost = true;
+                            requiresUnlock = false;
+                            requiresScreenOn = true;
                             break;
                         }
                     }
@@ -964,6 +1023,11 @@ public class RegisteredAidCache {
                     aidType.powerstate = updateRoutePowerState(aidType.powerstate);
                 }
                 if (DBG) Log.d(TAG," AID power state 3 "+ aid  + aidType.powerstate);
+
+                requiresUnlock = onHost ? false : requiresUnlock;
+                requiresScreenOn = onHost ? true : requiresScreenOn;
+                aidType.power = computeAidPowerState(onHost, requiresScreenOn, requiresUnlock);
+
                 routingEntries.put(aid, aidType);
             }
         }

@@ -1779,7 +1779,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
       buf = NULL;
       bufLen = 0;
       return RoutingManager::getInstance().addAidRouting(buf, bufLen, route,
-                                                       power, aidInfo);
+                                                         aidInfo, power);
     }
     ScopedByteArrayRO bytes(e, aid);
     buf = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
@@ -1802,13 +1802,10 @@ static void nfaConnectionCallback(uint8_t connEvent,
       pTransactionController->transactionEnd(
           TRANSACTION_REQUESTOR(RF_FIELD_EVT));
     }
-    bool result = RoutingManager::getInstance().addAidRouting(
-        buf, bufLen, route, power, aidInfo);
-#else
-  bool result =
-      RoutingManager::getInstance().addAidRouting(buf, bufLen, route, aidInfo);
-
 #endif
+    bool result = RoutingManager::getInstance().addAidRouting(
+        buf, bufLen, route, aidInfo, power);
+
     return result;
   }
 

@@ -231,7 +231,7 @@ public interface DeviceHost {
     public int[] doGetActiveSecureElementList();
     public boolean sendRawFrame(byte[] data);
 
-    public boolean routeAid(byte[] aid, int route, int aidInfo, int powerState);
+    public boolean routeAid(byte[] aid, int route, int aidInfo, int power);
 
     public boolean unrouteAid(byte[] aid);
 

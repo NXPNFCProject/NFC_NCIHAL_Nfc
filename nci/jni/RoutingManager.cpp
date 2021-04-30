@@ -1133,14 +1133,9 @@ void RoutingManager::setEmptyAidEntry(int routeAndPowerState) {
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: Status :0x%2x", __func__, nfaStat);
 }
-
-bool RoutingManager::addAidRouting(const uint8_t* aid, uint8_t aidLen,
-                                   int route, int power, int aidInfo)
-#else
-bool RoutingManager::addAidRouting(const uint8_t* aid, uint8_t aidLen,
-                                   int route, int aidInfo)
 #endif
-{
+bool RoutingManager::addAidRouting(const uint8_t* aid, uint8_t aidLen,
+                                   int route, int aidInfo, int power) {
   static const char fn[] = "RoutingManager::addAidRouting";
   uint8_t powerState = 0x01;
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", fn);
@@ -1185,10 +1180,15 @@ bool RoutingManager::addAidRouting(const uint8_t* aid, uint8_t aidLen,
   // Set power config
 
   SyncEventGuard guard(SecureElement::getInstance().mAidAddRemoveEvent);
-  if (!mSecureNfcEnabled) {
-    powerState = power;
-  }
 #endif
+  if (!mSecureNfcEnabled) {
+    if (power == 0x00) {
+      powerState = (route != 0x00) ? mOffHostAidRoutingPowerState : 0x11;
+    } else {
+      powerState =
+          (route != 0x00) ? mOffHostAidRoutingPowerState & power : power;
+    }
+  }
   if (handle == ROUTE_LOC_HOST_ID) powerState &= 0x11;
   tNFA_STATUS nfaStat =
       NFA_EeAddAidRouting(handle, aidLen, (uint8_t*)aid, powerState, aidInfo);

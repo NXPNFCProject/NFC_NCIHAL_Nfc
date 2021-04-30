@@ -120,7 +120,7 @@ public class AidRoutingManager {
         String offHostSE;
         int route;
         int aidInfo;
-        int powerstate;
+        int power;
     }
 
     public AidRoutingManager() {
@@ -210,9 +210,9 @@ public class AidRoutingManager {
 
             NfcService.getInstance().unrouteAids(aid);
         }
-        if(NfcService.getInstance().getNciVersion() != NfcService.getInstance().NCI_VERSION_1_0) {
-          // unRoute EmptyAid
-          NfcService.getInstance().unrouteAids("");
+        if (NfcService.getInstance().getNciVersion() >= NfcService.getInstance().NCI_VERSION_2_0) {
+            // unRoute EmptyAid
+            NfcService.getInstance().unrouteAids("");
         }
     }
 
@@ -274,7 +274,7 @@ public class AidRoutingManager {
                 seList.add(route);
             aidEntry.getValue().route = route;
             int aidType = aidEntry.getValue().aidInfo;
-            int power = aidEntry.getValue().powerstate;
+            int power = aidEntry.getValue().power;
             String aid = aidEntry.getKey();
             Set<String> entries =
                     aidRoutingTable.get(route, new HashSet<String>());
@@ -387,9 +387,49 @@ public class AidRoutingManager {
                       }
                     }
                 }
-                if( calculateAidRouteSize(aidRoutingTableCache) <= mMaxAidRoutingTableSize) {
-                aidRouteResolved = true;
-                break;
+              if (mDefaultRoute != mDefaultIsoDepRoute) {
+                  if (NfcService.getInstance().getNciVersion()
+                          >= NfcService.getInstance().NCI_VERSION_2_0) {
+                      String emptyAid = "";
+                      AidEntry entry = new AidEntry();
+                      int default_route_power_state;
+                      entry.route = mDefaultRoute;
+                      if (mDefaultRoute == ROUTE_HOST) {
+                          entry.isOnHost = true;
+                          default_route_power_state = RegisteredAidCache.POWER_STATE_SWITCH_ON
+                                  | RegisteredAidCache.POWER_STATE_SCREEN_ON_LOCKED;
+                      } else {
+                          entry.isOnHost = false;
+                          default_route_power_state = RegisteredAidCache.POWER_STATE_ALL;
+                      }
+                      entry.aidInfo = RegisteredAidCache.AID_ROUTE_QUAL_PREFIX;
+                      entry.power = default_route_power_state;
+
+                      aidRoutingTableCache.put(emptyAid, entry);
+                      if (DBG) Log.d(TAG, "Add emptyAid into AidRoutingTable");
+                  }
+               }
+
+              // Register additional offhost AIDs when their support power states are
+              // differernt from the default route entry
+              if (mDefaultRoute != ROUTE_HOST) {
+                  int default_route_power_state = RegisteredAidCache.POWER_STATE_ALL;
+                  if (NfcService.getInstance().getNciVersion()
+                          < NfcService.getInstance().NCI_VERSION_2_0) {
+                      default_route_power_state =
+                              RegisteredAidCache.POWER_STATE_ALL_NCI_VERSION_1_0;
+                  }
+
+                  Set<String> aidsForDefaultRoute = mAidRoutingTable.get(mDefaultRoute);
+                  for (String aid : aidsForDefaultRoute) {
+                      if (aidMap.get(aid).power != default_route_power_state) {
+                          aidRoutingTableCache.put(aid, aidMap.get(aid));
+                      }
+                  }
+              }
+              if (calculateAidRouteSize(aidRoutingTableCache) <= mMaxAidRoutingTableSize) {
+                  aidRouteResolved = true;
+                  break;
               }
           }
 
@@ -414,21 +454,25 @@ public class AidRoutingManager {
          return;
        }
         for (Map.Entry<String, AidEntry> aidEntry : routeCache.entrySet())  {
-            if(aidEntry.getKey().isEmpty())
-                continue;
-            AidEntry element = aidEntry.getValue();
-            if (DBG) Log.d (TAG, element.toString());
-            NfcService.getInstance().routeAids(
-                 aidEntry.getKey(),
-                 element.route,
-                 element.aidInfo,
-                 element.powerstate);
+          /*NXP_EXTNS: Empty Aid route is registered by Nfc service. To align majority of code with
+           * AOSP, additional check is added to skip empty aid route registration from
+           * AidRoutingManager*/
+          if (aidEntry.getKey().isEmpty()) {
+            continue;
+          }
+            int route = aidEntry.getValue().route;
+            int aidType = aidEntry.getValue().aidInfo;
+            String aid = aidEntry.getKey();
+            int power = aidEntry.getValue().power;
+            if (DBG) {
+              Log.d(TAG,
+                  "commit aid:" + aid + ",route:" + route + ",aidtype:" + aidType
+                      + ", power state:" + power);
+            }
+
+            NfcService.getInstance().routeAids(aid, route, aidType, power);
         }
 
-        AidEntry emptyAidEntry = routeCache.get("");
-        if (emptyAidEntry != null)
-          NfcService.getInstance().routeAids(
-              "", emptyAidEntry.route, emptyAidEntry.aidInfo, emptyAidEntry.powerstate);
         if (NfcService.getInstance().isNfcEnabled())
           NfcService.getInstance().commitRouting();
     }

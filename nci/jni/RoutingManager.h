@@ -174,8 +174,6 @@ class RoutingManager {
   void nfaEEDisconnect();
   SyncEvent mEEDisconnectEvt;
   bool removeNfcid2Routing(uint8_t* nfcID2);
-  bool addAidRouting(const uint8_t* aid, uint8_t aidLen, int route, int power,
-                     int aidInfo);
   int addNfcid2Routing(uint8_t* nfcid2, uint8_t aidLen, const uint8_t* syscode,
                        int syscodelen, const uint8_t* optparam,
                        int optparamlen);
@@ -183,9 +181,6 @@ class RoutingManager {
   bool is_ee_recovery_ongoing();
   void setEmptyAidEntry(int route);
   void ClearSystemCodeRouting();
-#else
-  bool addAidRouting(const uint8_t* aid, uint8_t aidLen, int route,
-                     int aidInfo);
 #endif
 
   void setEERecovery(bool value);
@@ -199,6 +194,8 @@ class RoutingManager {
   bool setNfcSecure(bool enable);
   void updateRoutingTable();
   void ee_removed_disc_ntf_handler(tNFA_HANDLE handle, tNFA_EE_STATUS status);
+  bool addAidRouting(const uint8_t* aid, uint8_t aidLen, int route, int aidInfo,
+                     int power);
   bool setRoutingEntry(int type, int value, int route, int power);
   bool clearRoutingEntry(int type);
   bool clearAidTable();
