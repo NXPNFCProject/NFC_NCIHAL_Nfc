@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2020 NXP
+*  Copyright 2018-2021 NXP
 *
 ******************************************************************************/
 package com.android.nfc.cardemulation;
@@ -37,7 +37,7 @@ package com.android.nfc.cardemulation;
 import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
-import android.nfc.cardemulation.NfcApduServiceInfo;
+import android.nfc.cardemulation.ApduServiceInfo;
 import android.nfc.cardemulation.CardEmulation;
 import android.util.Log;
 import android.util.proto.ProtoOutputStream;
@@ -56,8 +56,6 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.PriorityQueue;
 import java.util.TreeMap;
-import android.nfc.cardemulation.NfcAidGroup;
-import com.android.nfc.NfcService;
 import com.nxp.nfc.NfcConstants;
 import android.os.SystemProperties;
 public class RegisteredAidCache {
@@ -80,7 +78,8 @@ public class RegisteredAidCache {
     static final int POWER_STATE_ALL_NCI_VERSION_1_0 = POWER_STATE_SWITCH_ON
                                                      | POWER_STATE_SWITCH_OFF
                                                      | POWER_STATE_BATTERY_OFF;
-
+    static final int SCREEN_STATE_INVALID = 0x00;
+    static final int SCREEN_STATE_DEFAULT_MASK = 0x16;
     // mAidServices maps AIDs to services that have registered them.
     // It's a TreeMap in order to be able to quickly select subsets
     // of AIDs that conflict with each other.
@@ -96,7 +95,7 @@ public class RegisteredAidCache {
 
     // Represents a single AID registration of a service
     final class ServiceAidInfo {
-        NfcApduServiceInfo service;
+        ApduServiceInfo service;
         String aid;
         String category;
 
@@ -135,8 +134,8 @@ public class RegisteredAidCache {
     // Represents a list of services, an optional default and a category that
     // an AID was resolved to.
     final class AidResolveInfo {
-        List<NfcApduServiceInfo> services = new ArrayList<NfcApduServiceInfo>();
-        NfcApduServiceInfo defaultService = null;
+        List<ApduServiceInfo> services = new ArrayList<ApduServiceInfo>();
+        ApduServiceInfo defaultService = null;
         String category = null;
         boolean mustRoute = true; // Whether this AID should be routed at all
         ReslovedPrefixConflictAid prefixInfo = null;
@@ -219,7 +218,7 @@ public class RegisteredAidCache {
                             resolveInfo.defaultService = entryResolveInfo.defaultService;
                             resolveInfo.category = entryResolveInfo.category;
                         }
-                        for (NfcApduServiceInfo serviceInfo : entryResolveInfo.services) {
+                        for (ApduServiceInfo serviceInfo : entryResolveInfo.services) {
                             if (!resolveInfo.services.contains(serviceInfo)) {
                                 resolveInfo.services.add(serviceInfo);
                             }
@@ -284,8 +283,8 @@ public class RegisteredAidCache {
         AidResolveInfo resolveInfo = new AidResolveInfo();
         resolveInfo.category = CardEmulation.CATEGORY_OTHER;
 
-        NfcApduServiceInfo matchedForeground = null;
-        NfcApduServiceInfo matchedPayment = null;
+        ApduServiceInfo matchedForeground = null;
+        ApduServiceInfo matchedPayment = null;
         for (ServiceAidInfo serviceAidInfo : conflictingServices) {
             boolean serviceClaimsPaymentAid =
                     CardEmulation.CATEGORY_PAYMENT.equals(serviceAidInfo.category);
@@ -382,7 +381,7 @@ public class RegisteredAidCache {
             //If the AID is subsetAID check for prefix in same service.
             if (isSubset(aidServices.get(0).aid)) {
                 resolveinfo.prefixInfo = findPrefixConflictForSubsetAid(aidServices.get(0).aid ,
-                        new ArrayList<NfcApduServiceInfo>(){{add(resolveinfo.defaultService);}},true);
+                        new ArrayList<ApduServiceInfo>(){{add(resolveinfo.defaultService);}},true);
             }
              return resolveinfo;
         } else if (aidDefaultInfo.paymentDefault != null) {
@@ -401,7 +400,7 @@ public class RegisteredAidCache {
                 //If the AID is subsetAID check for prefix in same service.
                 if (isSubset(aidServices.get(0).aid)) {
                     resolveinfo.prefixInfo = findPrefixConflictForSubsetAid(aidServices.get(0).aid ,
-                            new ArrayList<NfcApduServiceInfo>(){{add(resolveinfo.defaultService);}},true);
+                        new ArrayList<ApduServiceInfo>(){{add(resolveinfo.defaultService);}},true);
                 }
                 return resolveinfo;
             }
@@ -419,7 +418,7 @@ public class RegisteredAidCache {
                 //If the AID is subsetAID check for conflicting prefix in all
                 //conflciting services and root services.
                 if (isSubset(aidServices.get(0).aid)) {
-                    ArrayList <NfcApduServiceInfo> apduServiceList = new  ArrayList <NfcApduServiceInfo>();
+                    ArrayList <ApduServiceInfo> apduServiceList = new  ArrayList <ApduServiceInfo>();
                     for (ServiceAidInfo serviceInfo : conflictingServices)
                         apduServiceList.add(serviceInfo.service);
                     for (ServiceAidInfo serviceInfo : aidServices)
@@ -432,10 +431,10 @@ public class RegisteredAidCache {
         }
     }
 
-    void generateServiceMapLocked(List<NfcApduServiceInfo> services) {
+    void generateServiceMapLocked(List<ApduServiceInfo> services) {
         // Easiest is to just build the entire tree again
         mAidServices.clear();
-        for (NfcApduServiceInfo service : services) {
+        for (ApduServiceInfo service : services) {
             if (DBG) Log.d(TAG, "generateServiceMap component: " + service.getComponent());
             List<String> prefixAids = service.getPrefixAids();
             List<String> subSetAids = service.getSubsetAids();
@@ -487,14 +486,7 @@ public class RegisteredAidCache {
                 serviceAidInfo.aid = aid.toUpperCase();
                 serviceAidInfo.service = service;
                 serviceAidInfo.category = service.getCategoryForAid(aid);
-                if( (serviceAidInfo.category.equals(CardEmulation.CATEGORY_OTHER)) &&
-                    ((service.getServiceState(CardEmulation.CATEGORY_OTHER) == NfcConstants.SERVICE_STATE_DISABLED) ||
-                     (service.getServiceState(CardEmulation.CATEGORY_OTHER) == NfcConstants.SERVICE_STATE_DISABLING))){
-                    /*Do not include the services which are already disabled Or services which are disabled by user recently
-                     * for the current commit to routing table*/
-                    if (DBG) Log.e(TAG, "ignoring other category aid because service category is disabled");
-                    continue;
-                }
+
                 if (mAidServices.containsKey(serviceAidInfo.aid)) {
                     final ArrayList<ServiceAidInfo> serviceAidInfos =
                             mAidServices.get(serviceAidInfo.aid);
@@ -539,7 +531,7 @@ public class RegisteredAidCache {
     }
 
     ReslovedPrefixConflictAid findPrefixConflictForSubsetAid(String subsetAid ,
-            ArrayList<NfcApduServiceInfo> prefixServices, boolean priorityRootAid){
+            ArrayList<ApduServiceInfo> prefixServices, boolean priorityRootAid){
         ArrayList<String> prefixAids = new ArrayList<String>();
         String minPrefix = null;
         //This functions checks whether there is a prefix AID matching to subset AID
@@ -549,7 +541,7 @@ public class RegisteredAidCache {
         //3..If the subset AID and prefix AID are same add only one AID with both prefix , subset bits set.
         // Cut off "#"
         String plainSubsetAid = subsetAid.substring(0, subsetAid.length() - 1);
-        for (NfcApduServiceInfo service : prefixServices) {
+        for (ApduServiceInfo service : prefixServices) {
             for (String prefixAid : service.getPrefixAids()) {
                 // Cut off "#"
                 String plainPrefix= prefixAid.substring(0, prefixAid.length() - 1);
@@ -890,13 +882,18 @@ public class RegisteredAidCache {
             } else if (resolveInfo.defaultService != null) {
                 // There is a default service set, route to where that service resides -
                 // either on the host (HCE) or on an SE.
-                NfcApduServiceInfo.ESeInfo seInfo = resolveInfo.defaultService.getSEInfo();
                 aidType.isOnHost = resolveInfo.defaultService.isOnHost();
                 if (!aidType.isOnHost) {
                     aidType.offHostSE =
                             resolveInfo.defaultService.getOffHostSecureElement();
                 }
-                int powerstate = seInfo.getPowerState() & POWER_STATE_ALL;
+
+                boolean requiresUnlock = resolveInfo.defaultService.requiresUnlock();
+                boolean requiresScreenOn = resolveInfo.defaultService.requiresScreenOn();
+
+              /*  aidType.power =
+                        computeAidPowerState(aidType.isOnHost, requiresScreenOn, requiresUnlock);*/
+                int powerstate = computeAidPowerState(aidType.isOnHost, requiresScreenOn, requiresUnlock);
                 int screenstate= 0;
                 if(powerstate == 0x00) {
                     powerstate = (NfcService.getInstance().GetDefaultMifateCLTRouteEntry() & 0x3F);
@@ -907,64 +904,67 @@ public class RegisteredAidCache {
                 {
                   if(NfcService.getInstance().getNciVersion() ==
                                         NfcService.getInstance().NCI_VERSION_1_0){
-                      screenstate |= updateRoutePowerState(SCREEN_STATE_ON_LOCKED);
+                      screenstate |= updateRoutePowerState(POWER_STATE_SCREEN_ON_LOCKED);
                   } else {
-                      screenstate |= SCREEN_STATE_ON_LOCKED;
+                      screenstate |= POWER_STATE_SCREEN_ON_LOCKED;
                   }
                   if (!isOnHost || isNxpExtnEnabled) {
                     if (DBG) Log.d(TAG," set screen off enable for " + aid);
                     if(NfcService.getInstance().getNciVersion() ==
                                         NfcService.getInstance().NCI_VERSION_1_0){
-                        screenstate |= updateRoutePowerState(SCREEN_STATE_OFF_UNLOCKED) |
-                              updateRoutePowerState(SCREEN_STATE_OFF_LOCKED);
+                        screenstate |= updateRoutePowerState(POWER_STATE_SCREEN_ON_LOCKED) |
+                              updateRoutePowerState(POWER_STATE_SCREEN_OFF_LOCKED);
                     } else{
-                        screenstate |= SCREEN_STATE_OFF_UNLOCKED | SCREEN_STATE_OFF_LOCKED;
+                        screenstate |= POWER_STATE_SCREEN_ON_LOCKED | POWER_STATE_SCREEN_OFF_LOCKED;
                     }
                   }
                   powerstate |= screenstate;
                 }
 
-               int route = isOnHost ? 0 : seInfo.getSeId();
-               if (DBG) Log.d(TAG," AID power state "+ aid  + " "+ powerstate  +" route "+route);
-               aidType.route = route;
                if(NfcService.getInstance().getNciVersion() ==
                                         NfcService.getInstance().NCI_VERSION_1_0){
-                   aidType.powerstate = powerstate;
+                   aidType.power = powerstate;
                } else {
-                   aidType.powerstate = updateRoutePowerState(powerstate);
+                   aidType.power = updateRoutePowerState(powerstate);
                }
-                boolean requiresUnlock = resolveInfo.defaultService.requiresUnlock();
-                boolean requiresScreenOn = resolveInfo.defaultService.requiresScreenOn();
-                aidType.power =
-                        computeAidPowerState(aidType.isOnHost, requiresScreenOn, requiresUnlock);
-
                routingEntries.put(aid, aidType);
             } else if (resolveInfo.services.size() == 1) {
                 // Only one service, but not the default, must route to host
                 // to ask the user to choose one.
+                if (resolveInfo.category.equals(
+                        CardEmulation.CATEGORY_PAYMENT)) {
+                    aidType.isOnHost = true;
+                } else {
+                    aidType.isOnHost = resolveInfo.services.get(0).isOnHost();
+                    if (!aidType.isOnHost) {
+                        aidType.offHostSE =
+                                resolveInfo.services.get(0).getOffHostSecureElement();
+                    }
+                }
+
+                boolean requiresUnlock = resolveInfo.services.get(0).requiresUnlock();
+                boolean requiresScreenOn = resolveInfo.services.get(0).requiresScreenOn();
+
+                /*aidType.power =
+                        computeAidPowerState(aidType.isOnHost, requiresScreenOn, requiresUnlock);*/
                 aidType.isOnHost = true;
                 if(NfcService.getInstance().getNciVersion() ==
                                         NfcService.getInstance().NCI_VERSION_1_0){
-                    aidType.powerstate = updateRoutePowerState(POWER_STATE_SWITCH_ON) |
-                          updateRoutePowerState(SCREEN_STATE_ON_LOCKED);
+                    aidType.power = updateRoutePowerState(POWER_STATE_SWITCH_ON) |
+                          updateRoutePowerState(POWER_STATE_SCREEN_ON_LOCKED);
                 } else {
-                    aidType.powerstate = POWER_STATE_SWITCH_ON | SCREEN_STATE_ON_LOCKED;
+                    aidType.power = POWER_STATE_SWITCH_ON | POWER_STATE_SCREEN_ON_LOCKED;
                 }
 
                 if(isNxpExtnEnabled) {
-                    aidType.powerstate |= SCREEN_STATE_OFF_UNLOCKED | SCREEN_STATE_OFF_LOCKED;
+                    aidType.power |= POWER_STATE_SCREEN_ON_LOCKED | POWER_STATE_SCREEN_OFF_LOCKED;
                   }
 
-                if (DBG) Log.d(TAG," AID power state 2 "+ aid  +" "+aidType.powerstate);
+                if (DBG) Log.d(TAG," AID power state 2 "+ aid  +" "+aidType.power);
                 if(NfcService.getInstance().getNciVersion() >=
                                         NfcService.getInstance().NCI_VERSION_2_0){
-                    aidType.powerstate = updateRoutePowerState(aidType.powerstate);
+                    aidType.power = updateRoutePowerState(aidType.power);
                 }
-                boolean requiresUnlock = resolveInfo.services.get(0).requiresUnlock();
-                boolean requiresScreenOn = resolveInfo.services.get(0).requiresScreenOn();
-                aidType.power =
-                        computeAidPowerState(aidType.isOnHost, requiresScreenOn, requiresUnlock);
-
                 routingEntries.put(aid, aidType);
             } else if (resolveInfo.services.size() > 1) {
                 // Multiple services if all the services are routing to same
@@ -973,7 +973,7 @@ public class RegisteredAidCache {
                 String offHostSE = null;
                 boolean requiresUnlock = false;
                 boolean requiresScreenOn = true;
-                for (NfcApduServiceInfo service : resolveInfo.services) {
+                for (ApduServiceInfo service : resolveInfo.services) {
                     // In case there is at least one service which routes to host
                     // Route it to host for user to select which service to use
                     onHost |= service.isOnHost();
@@ -1006,35 +1006,34 @@ public class RegisteredAidCache {
                 }
                 aidType.isOnHost = onHost;
                 aidType.offHostSE = onHost ? null : offHostSE;
+                requiresUnlock = onHost ? false : requiresUnlock;
+                requiresScreenOn = onHost ? true : requiresScreenOn;
+
+                /*aidType.power = computeAidPowerState(onHost, requiresScreenOn, requiresUnlock);*/
                 if(NfcService.getInstance().getNciVersion() ==
                                         NfcService.getInstance().NCI_VERSION_1_0){
-                    aidType.powerstate = updateRoutePowerState(POWER_STATE_SWITCH_ON) |
-                          updateRoutePowerState(SCREEN_STATE_ON_LOCKED);
+                    aidType.power = updateRoutePowerState(POWER_STATE_SWITCH_ON) |
+                          updateRoutePowerState(POWER_STATE_SCREEN_ON_LOCKED);
                 } else {
-                    aidType.powerstate = POWER_STATE_SWITCH_ON | SCREEN_STATE_ON_LOCKED;
+                    aidType.power = POWER_STATE_SWITCH_ON | POWER_STATE_SCREEN_ON_LOCKED;
                 }
 
                 if(isNxpExtnEnabled) {
-                    aidType.powerstate |= SCREEN_STATE_OFF_UNLOCKED | SCREEN_STATE_OFF_LOCKED;
+                    aidType.power |= POWER_STATE_SCREEN_ON_LOCKED | POWER_STATE_SCREEN_OFF_LOCKED;
                 }
 
                 if(NfcService.getInstance().getNciVersion() >=
                                         NfcService.getInstance().NCI_VERSION_2_0){
-                    aidType.powerstate = updateRoutePowerState(aidType.powerstate);
+                    aidType.power = updateRoutePowerState(aidType.power);
                 }
-                if (DBG) Log.d(TAG," AID power state 3 "+ aid  + aidType.powerstate);
-
-                requiresUnlock = onHost ? false : requiresUnlock;
-                requiresScreenOn = onHost ? true : requiresScreenOn;
-                aidType.power = computeAidPowerState(onHost, requiresScreenOn, requiresUnlock);
-
+                if (DBG) Log.d(TAG," AID power state 3 "+ aid  + aidType.power);
                 routingEntries.put(aid, aidType);
             }
         }
         mRoutingManager.configureRouting(routingEntries, force);
     }
 
-    public void onServicesUpdated(int userId, List<NfcApduServiceInfo> services) {
+    public void onServicesUpdated(int userId, List<ApduServiceInfo> services) {
         if (DBG) Log.d(TAG, "onServicesUpdated");
         synchronized (mLock) {
             if (ActivityManager.getCurrentUser() == userId) {
@@ -1104,12 +1103,12 @@ public class RegisteredAidCache {
     String dumpEntry(Map.Entry<String, AidResolveInfo> entry) {
         StringBuilder sb = new StringBuilder();
         String category = entry.getValue().category;
-        NfcApduServiceInfo defaultServiceInfo = entry.getValue().defaultService;
+        ApduServiceInfo defaultServiceInfo = entry.getValue().defaultService;
         sb.append("    \"" + entry.getKey() + "\" (category: " + category + ")\n");
         ComponentName defaultComponent = defaultServiceInfo != null ?
                 defaultServiceInfo.getComponent() : null;
 
-        for (NfcApduServiceInfo serviceInfo : entry.getValue().services) {
+        for (ApduServiceInfo serviceInfo : entry.getValue().services) {
             sb.append("        ");
             if (serviceInfo.getComponent().equals(defaultComponent)) {
                 sb.append("*DEFAULT* ");
@@ -1147,9 +1146,9 @@ public class RegisteredAidCache {
           /*Mapping SWITCH_ON(0x01) to PROP_SCRN_ON_UNLOCKED(0x20)*/
           tempPwrState |= PROP_SCRN_ON_UNLOCKED;
         }
-        if((inputPwr & SCREEN_STATE_OFF_UNLOCKED) == SCREEN_STATE_OFF_UNLOCKED ||
-                (inputPwr & SCREEN_STATE_OFF_LOCKED) == SCREEN_STATE_OFF_LOCKED) {
-          /*Mapping SCREEN_STATE_OFF_UNLOCKED(0x08) or SCREEN_STATE_OFF_LOCKED(0x20)
+        if((inputPwr & POWER_STATE_SCREEN_ON_LOCKED) == POWER_STATE_SCREEN_ON_LOCKED ||
+                (inputPwr & POWER_STATE_SCREEN_OFF_LOCKED) == POWER_STATE_SCREEN_OFF_LOCKED) {
+          /*Mapping POWER_STATE_SCREEN_ON_LOCKED(0x08) or POWER_STATE_SCREEN_OFF_LOCKED(0x20)
            * to PROP_SCRN_OFF(0x08)*/
           tempPwrState |= PROP_SCRN_OFF;
         }
@@ -1158,7 +1157,6 @@ public class RegisteredAidCache {
       Log.d(TAG, "updateRoutePowerState outputPwr "+ inputPwr);
       return inputPwr;
     }
-
     /**
      * Dump debugging information as a RegisteredAidCacheProto
      *
@@ -1173,14 +1171,14 @@ public class RegisteredAidCache {
             long token = proto.start(RegisteredAidCacheProto.AID_CACHE_ENTRIES);
             proto.write(RegisteredAidCacheProto.AidCacheEntry.KEY, entry.getKey());
             proto.write(RegisteredAidCacheProto.AidCacheEntry.CATEGORY, entry.getValue().category);
-            NfcApduServiceInfo defaultServiceInfo = entry.getValue().defaultService;
+            ApduServiceInfo defaultServiceInfo = entry.getValue().defaultService;
             ComponentName defaultComponent = defaultServiceInfo != null ?
                     defaultServiceInfo.getComponent() : null;
             if (defaultComponent != null) {
                 defaultComponent.dumpDebug(proto,
                         RegisteredAidCacheProto.AidCacheEntry.DEFAULT_COMPONENT);
             }
-            for (NfcApduServiceInfo serviceInfo : entry.getValue().services) {
+            for (ApduServiceInfo serviceInfo : entry.getValue().services) {
                 long sToken = proto.start(RegisteredAidCacheProto.AidCacheEntry.SERVICES);
                 serviceInfo.dumpDebug(proto);
                 proto.end(sToken);

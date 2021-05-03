@@ -121,7 +121,6 @@ import com.nxp.nfc.INxpNfcAdapter;
 import com.nxp.nfc.INxpNfcAdapterExtras;
 import com.nxp.nfc.INxpWlcAdapter;
 import com.nxp.nfc.INxpWlcCallBack;
-import com.nxp.nfc.NfcAidServiceInfo;
 import com.nxp.nfc.NfcConstants;
 
 import java.io.BufferedReader;
@@ -2398,15 +2397,6 @@ public class NfcService implements DeviceHostListener {
                 }
                 return status;
             }
-        }
-        @Override
-        public List<NfcAidServiceInfo> getServicesAidInfo(int userId, String category){
-            return mCardEmulationManager.getServicesAidInfo(userId, category);
-        }
-
-        @Override
-        public int updateServiceState(int userId , Map serviceState) {
-            return mCardEmulationManager.updateServiceState(userId ,serviceState);
         }
 
         @Override
