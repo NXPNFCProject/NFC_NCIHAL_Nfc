@@ -1382,6 +1382,7 @@ static jboolean nfcManager_routeAid(JNIEnv* e, jobject, jbyteArray aid,
   uint8_t* buf;
   size_t bufLen;
 #if (NXP_EXTNS == TRUE)
+  static int sT4tPowerState = 0;
   if (aid == NULL)
     RoutingManager::getInstance().checkAndUpdateAltRoute(route);
   SecureElement& se = SecureElement::getInstance();
@@ -1412,7 +1413,10 @@ static jboolean nfcManager_routeAid(JNIEnv* e, jobject, jbyteArray aid,
 #if (NXP_EXTNS == TRUE)
   if (route == SecureElement::getInstance().T4T_NFCEE_ID) {
     NativeT4tNfcee::getInstance().checkAndUpdateT4TAid(buf, (uint8_t*)&bufLen);
-    RoutingManager::getInstance().removeAidRouting(buf, bufLen);
+    if (sT4tPowerState != power) {
+      sT4tPowerState = power;
+      RoutingManager::getInstance().removeAidRouting(buf, bufLen);
+    }
   }
 #endif
   return RoutingManager::getInstance().addAidRouting(buf, bufLen, route,
