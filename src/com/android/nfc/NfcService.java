@@ -122,6 +122,7 @@ import com.nxp.nfc.INxpNfcAdapterExtras;
 import com.nxp.nfc.INxpWlcAdapter;
 import com.nxp.nfc.INxpWlcCallBack;
 import com.nxp.nfc.NfcConstants;
+import com.nxp.nfc.NxpNfcAdapter;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -275,6 +276,7 @@ public class NfcService implements DeviceHostListener {
     static final int NFC_POLL_V = 0x08;
     static final int NFC_POLL_B_PRIME = 0x10;
     static final int NFC_POLL_KOVIO = 0x20;
+    static final int NFC_POLL_Q = 0x100;
 
     // Return values from NfcEe.open() - these are 1:1 mapped
     // to the thrown EE_EXCEPTION_ exceptions in nfc-extras.
@@ -1842,6 +1844,9 @@ public class NfcService implements DeviceHostListener {
             if ((flags & NfcAdapter.FLAG_READER_NFC_BARCODE) != 0) {
                 techMask |= NFC_POLL_KOVIO;
             }
+            if ((flags & NxpNfcAdapter.FLAG_READER_NFC_Q) != 0) {
+                techMask |= NFC_POLL_Q;
+            }
 
             return techMask;
         }
@@ -3153,6 +3158,8 @@ public class NfcService implements DeviceHostListener {
                     techMask |= NFC_POLL_V;
                 if ((mReaderModeParams.flags & NfcAdapter.FLAG_READER_NFC_BARCODE) != 0)
                     techMask |= NFC_POLL_KOVIO;
+                if ((mReaderModeParams.flags & NxpNfcAdapter.FLAG_READER_NFC_Q) != 0)
+                    techMask |= NFC_POLL_Q;
 
                 paramsBuilder.setTechMask(techMask);
                 paramsBuilder.setEnableReaderMode(true);
