@@ -1523,34 +1523,38 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter,max_tech_mask :%lx", fn, max_tech_mask);
     if(NFA_SET_TECHNOLOGY_ROUTING == type)
     {
-        /*  Masking with available SE Technologies */
-        value &=  max_tech_mask;
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter >>>> max_tech_mask :%lx value :0x%x", fn, max_tech_mask, value);
-        switch_on_mask    = (power & 0x01) ? value : 0;
-        switch_off_mask   = (power & 0x02) ? value : 0;
-        battery_off_mask  = (power & 0x04) ? value : 0;
-        screen_off_mask   = (power & 0x08) ? value : 0;
-        screen_lock_mask  = (power & 0x10) ? value : 0;
-        screen_off_lock_mask = (power & 0x20) ? value : 0;
+      NativeJniExtns::getInstance().notifyNfcEvent(
+          "readTechRouteLoc", (void*)&route, (void*)&value);
+      /*  Masking with available SE Technologies */
+      value &= max_tech_mask;
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("%s: enter >>>> max_tech_mask :%lx value :0x%x", fn,
+                          max_tech_mask, value);
+      switch_on_mask = (power & 0x01) ? value : 0;
+      switch_off_mask = (power & 0x02) ? value : 0;
+      battery_off_mask = (power & 0x04) ? value : 0;
+      screen_off_mask = (power & 0x08) ? value : 0;
+      screen_lock_mask = (power & 0x10) ? value : 0;
+      screen_off_lock_mask = (power & 0x20) ? value : 0;
 
-        if((max_tech_mask != 0x01) && (max_tech_mask == 0x02) && value) // type B only
-        {
-            switch_on_mask    &= ~NFA_TECHNOLOGY_MASK_A;
-            switch_off_mask   &= ~NFA_TECHNOLOGY_MASK_A;
-            battery_off_mask  &= ~NFA_TECHNOLOGY_MASK_A;
-            screen_off_mask   &= ~NFA_TECHNOLOGY_MASK_A;
-            screen_lock_mask  &= ~NFA_TECHNOLOGY_MASK_A;
-            screen_off_lock_mask &= ~NFA_TECHNOLOGY_MASK_A;
-        }
-        else if((max_tech_mask == 0x01) && (max_tech_mask != 0x02) && value) // type A only
-        {
-            switch_on_mask    &= ~NFA_TECHNOLOGY_MASK_B;
-            switch_off_mask   &= ~NFA_TECHNOLOGY_MASK_B;
-            battery_off_mask  &= ~NFA_TECHNOLOGY_MASK_B;
-            screen_off_mask   &= ~NFA_TECHNOLOGY_MASK_B;
-            screen_lock_mask  &= ~NFA_TECHNOLOGY_MASK_B;
-            screen_off_lock_mask  &= ~NFA_TECHNOLOGY_MASK_B;
-        }
+      if ((max_tech_mask != 0x01) && (max_tech_mask == 0x02) && value)  // type B only
+      {
+        switch_on_mask &= ~NFA_TECHNOLOGY_MASK_A;
+        switch_off_mask &= ~NFA_TECHNOLOGY_MASK_A;
+        battery_off_mask &= ~NFA_TECHNOLOGY_MASK_A;
+        screen_off_mask &= ~NFA_TECHNOLOGY_MASK_A;
+        screen_lock_mask &= ~NFA_TECHNOLOGY_MASK_A;
+        screen_off_lock_mask &= ~NFA_TECHNOLOGY_MASK_A;
+      } else if ((max_tech_mask == 0x01) && (max_tech_mask != 0x02) &&
+                 value)  // type A only
+      {
+        switch_on_mask &= ~NFA_TECHNOLOGY_MASK_B;
+        switch_off_mask &= ~NFA_TECHNOLOGY_MASK_B;
+        battery_off_mask &= ~NFA_TECHNOLOGY_MASK_B;
+        screen_off_mask &= ~NFA_TECHNOLOGY_MASK_B;
+        screen_lock_mask &= ~NFA_TECHNOLOGY_MASK_B;
+        screen_off_lock_mask &= ~NFA_TECHNOLOGY_MASK_B;
+      }
 
         if ((mHostListnTechMask) && (mFwdFuntnEnable)) {
           if ((max_tech_mask != 0x01) && (max_tech_mask == 0x02) && value) {
