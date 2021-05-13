@@ -2141,6 +2141,7 @@ static jint nfcManager_doGetLastError(JNIEnv*, jobject) {
 *******************************************************************************/
 static jboolean nfcManager_doDeinitialize(JNIEnv*, jobject) {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+  sIsDisabling = true;
 
 #if (NXP_EXTNS == TRUE)
   NativeJniExtns::getInstance().notifyNfcEvent(__func__);
@@ -2148,10 +2149,7 @@ static jboolean nfcManager_doDeinitialize(JNIEnv*, jobject) {
     nfcManager_dodeactivateSeInterface(NULL, NULL);
   }
   handleWiredmode(false); /* Nfc Off*/
-#endif
-  sIsDisabling = true;
 
-#if (NXP_EXTNS == TRUE)
   if(NFA_STATUS_OK != NFA_RegVSCback (false,nfaVSCNtfCallback)) { //De-Register Lx Debug CallBack
     LOG(ERROR) << StringPrintf("%s:  nfaVSCNtfCallback Deresgister failed..!", __func__);
   }
@@ -2160,9 +2158,6 @@ static jboolean nfcManager_doDeinitialize(JNIEnv*, jobject) {
   RoutingManager::getInstance().onNfccShutdown();
   PowerSwitch::getInstance().initialize(PowerSwitch::UNKNOWN_LEVEL);
   HciEventManager::getInstance().finalize();
-#if (NXP_EXTNS == TRUE)
-  SecureElement::getInstance().releasePendingTransceive();
-#endif
   if (sIsNfaEnabled) {
     SyncEventGuard guard(sNfaDisableEvent);
     EXTNS_Close();
@@ -2674,6 +2669,7 @@ void handleWiredmode(bool isShutdown)
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter, isShutdown %d", __func__, isShutdown);
     SecureElement &se = SecureElement::getInstance();
     if(se.mIsWiredModeOpen) {
+      se.releasePendingTransceive();
       se.setNfccPwrConfig(SecureElement::POWER_ALWAYS_ON);
       se.sendEvent(SecureElement::EVT_END_OF_APDU_TRANSFER);
       usleep(10 * 1000);

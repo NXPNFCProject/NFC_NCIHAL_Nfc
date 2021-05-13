@@ -43,6 +43,7 @@ namespace android
 {
 extern void startRfDiscovery (bool isStart);
 extern tNFA_STATUS NxpNfc_Write_Cmd_Common(uint8_t retlen, uint8_t* buffer);
+extern bool nfcManager_isNfcDisabling();
 }
 uint8_t  SecureElement::mStaticPipeProp;
 /*******************************************************************************
@@ -873,18 +874,18 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
         {
             mAbortEvent.wait();
         }
-        if(mAbortEventWaitOk == false)
-        {
-            setNfccPwrConfig(NFCC_DECIDES);
+        if ((mAbortEventWaitOk == false) &&
+            (android::nfcManager_isNfcDisabling() != true)) {
+          setNfccPwrConfig(NFCC_DECIDES);
 
-            SecEle_Modeset(NFCEE_DISABLE);
-            usleep(1000 * 1000);
+          SecEle_Modeset(NFCEE_DISABLE);
+          usleep(1000 * 1000);
 
-            setNfccPwrConfig(POWER_ALWAYS_ON|COMM_LINK_ACTIVE);
-            SecEle_Modeset(NFCEE_ENABLE);
-            usleep(200 * 1000);
+          setNfccPwrConfig(POWER_ALWAYS_ON | COMM_LINK_ACTIVE);
+          SecEle_Modeset(NFCEE_ENABLE);
+          usleep(200 * 1000);
 
-            LOG(INFO) << StringPrintf("%s: ABORT no response; power cycle  ", fn);
+          LOG(INFO) << StringPrintf("%s: ABORT no response; power cycle  ", fn);
         }
     } else if(mTransceiveStatus == NFA_STATUS_TIMEOUT)
     {
@@ -1744,6 +1745,8 @@ void SecureElement::releasePendingTransceive()
     {
         SyncEventGuard guard (mTransceiveEvent);
         mTransceiveEvent.notifyOne();
+        SyncEventGuard guard_Abort(mAbortEvent);
+        mAbortEvent.notifyOne();
     }
     LOG(INFO) << StringPrintf("%s: Exit", fn);
 }
