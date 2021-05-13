@@ -1624,19 +1624,11 @@ static void nfaConnectionCallback(uint8_t connEvent,
             sIsDisabling = false;
           }
           PowerSwitch::getInstance().initialize(PowerSwitch::UNKNOWN_LEVEL);
-#if (NXP_EXTNS == TRUE)
-          if (eventData->status == NFA_STATUS_FAILED) {
-            LOG(ERROR) << StringPrintf("%s: Disabling NFC service", __func__);
-          } else {
-#endif
-            LOG(ERROR) << StringPrintf("%s: crash NFC service", __func__);
-            //////////////////////////////////////////////
-            // crash the NFC service process so it can restart automatically
-            abort();
-//////////////////////////////////////////////
-#if (NXP_EXTNS == TRUE)
-          }
-#endif
+          LOG(ERROR) << StringPrintf("%s: crash NFC service", __func__);
+          //////////////////////////////////////////////
+          // crash the NFC service process so it can restart automatically
+          abort();
+          //////////////////////////////////////////////
         }
       } break;
 
