@@ -316,10 +316,6 @@ public class NfcService implements DeviceHostListener {
 
     public static final String ACTION_EXTENDED_FIELD_TIMEOUT =
             "com.android.nfc.action.ACTION_EXTENDED_FIELD_TIMEOUT";
-    public static final String ACTION_EXTENDED_FIELD_ON =
-            "com.android.nfc.action.ACTION_EXTENDED_FIELD_ON";
-    public static final String ACTION_EXTENDED_FIELD_OFF =
-            "com.android.nfc.action.ACTION_EXTENDED_FIELD_OFF";
 
     public static boolean sIsShortRecordLayout = false;
     // Default delay used for presence checks in ETSI mode
