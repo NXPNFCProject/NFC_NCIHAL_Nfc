@@ -421,19 +421,6 @@ void NfcTag::discoverTechnologies(tNFA_ACTIVATED& activationData) {
       }
     }
   } else if (NFC_PROTOCOL_ISO_DEP == rfDetail.protocol) {
-    if ((rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_POLL_A) ||
-        (rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_POLL_A_ACTIVE)) {
-      double fc = 13560000;
-      uint8_t fwi = rfDetail.intf_param.intf_param.pa_iso.fwi;
-      if (fwi >= MIN_FWI && fwi <= MAX_FWI) {
-        double fwt = (((1 << fwi) * 256 * 16) / fc) * 1000;
-        if (fwt < MIN_TRANSCEIVE_TIMEOUT_IN_MILLISEC)
-          fwt = MIN_TRANSCEIVE_TIMEOUT_IN_MILLISEC;
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-            "Setting the Xceive timeout = %f, fwi = %0#x", fwt, fwi);
-        setTransceiveTimeout(mTechList[mNumTechList], 3*fwt);
-      }
-    }
     // type-4 tag uses technology ISO-DEP and technology A or B
     mTechList[mNumTechList] =
         TARGET_TYPE_ISO14443_4;  // is TagTechnology.ISO_DEP by Java API
@@ -445,7 +432,7 @@ void NfcTag::discoverTechnologies(tNFA_ACTIVATED& activationData) {
         int fwt = (1 << (fwi - MIN_FWI)) * 618;
         DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
             "Setting the transceive timeout = %d, fwi = %0#x", fwt, fwi);
-        setTransceiveTimeout(mTechList[mNumTechList], fwt);
+        setTransceiveTimeout(mTechList[mNumTechList], 3*fwt);
       }
     }
 #if (NXP_EXTNS == TRUE)

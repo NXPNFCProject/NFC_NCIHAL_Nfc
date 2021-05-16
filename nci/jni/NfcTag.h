@@ -45,7 +45,6 @@
 
 #define MIN_FWI (11)
 #define MAX_FWI (14)
-#define MIN_TRANSCEIVE_TIMEOUT_IN_MILLISEC (500.0)
 
 typedef struct activationParams {
   int mTechParams;
