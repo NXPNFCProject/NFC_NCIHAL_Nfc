@@ -74,6 +74,7 @@ class NfcTag {
   activationParams_t mActivationParams_t;
   bool mIsMultiProtocolTag;
 #if (NXP_EXTNS == TRUE)
+  uint8_t mNfcID0[4];
   bool mWaitingForSelect;
 #endif
   /*******************************************************************************
@@ -524,6 +525,17 @@ class NfcTag {
   **
   *******************************************************************************/
   void selectCompleteStatus(bool status);
+  /*******************************************************************************
+  **
+  ** Function:        updateNfcID0Param
+  **
+  ** Description:     Update TypeB NCIID0 from interface activated ntf.
+  **
+  ** Returns:         None.
+  **
+  *******************************************************************************/
+  void updateNfcID0Param(uint8_t* nfcID0);
+
 #endif
  private:
   std::vector<int> mTechnologyTimeoutsTable;

@@ -1942,4 +1942,19 @@ void selectCompleteCallBack(union sigval) {
     NFA_Deactivate(false);
   }
 }
+/******************************************************************************
+**
+** Function:        updateNfcID0Param
+**
+** Description:     Update TypeB NCIID0 from interface activated ntf.
+**
+** Returns:         None.
+**
+*******************************************************************************/
+void NfcTag::updateNfcID0Param(uint8_t* nfcID0) {
+  DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("%s: nfcID0 =%X%X%X%X", __func__, nfcID0[0], nfcID0[1],
+                      nfcID0[2], nfcID0[3]);
+  memcpy(mNfcID0, nfcID0, 4);
+}
 #endif

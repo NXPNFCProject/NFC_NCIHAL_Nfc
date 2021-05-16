@@ -152,7 +152,7 @@ extern void nativeNfcTag_formatStatus(bool is_ok);
 extern void nativeNfcTag_resetPresenceCheck();
 extern void nativeNfcTag_doReadCompleted(tNFA_STATUS status);
 extern void nativeNfcTag_setRfInterface(tNFA_INTF_TYPE rfInterface);
-extern void nativeNfcTag_setActivatedRfProtocol(tNFA_INTF_TYPE rfProtocol);
+extern void nativeNfcTag_setActivatedRfProtocol(tNFA_INTF_TYPE rfProtocol, uint8_t mode);
 extern void nativeNfcTag_abortWaits();
 extern void doDwpChannel_ForceExit();
 extern void nativeLlcpConnectionlessSocket_abortWait();
@@ -874,7 +874,13 @@ static void nfaConnectionCallback(uint8_t connEvent,
           (!isListenMode(eventData->activated))) {
         nativeNfcTag_setRfInterface(
             (tNFA_INTF_TYPE)eventData->activated.activate_ntf.intf_param.type);
-        nativeNfcTag_setActivatedRfProtocol(activatedProtocol);
+        nativeNfcTag_setActivatedRfProtocol(activatedProtocol, eventData->activated.activate_ntf.rf_tech_param.mode);
+        if (eventData->activated.activate_ntf.rf_tech_param.mode == TARGET_TYPE_ISO14443_3B) {
+          DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+              "%s: NFA_ACTIVATED_EVT: received typeB NFCID0", __func__);
+          NfcTag::getInstance().updateNfcID0Param(
+              eventData->activated.activate_ntf.rf_tech_param.param.pb.nfcid0);
+        }
       }
 
       if (EXTNS_GetConnectFlag() == true) {
@@ -1078,6 +1084,10 @@ static void nfaConnectionCallback(uint8_t connEvent,
           NfcTag::getInstance().mTechListIndex = 0;
           nativeNfcTag_resetPresenceCheck();
           NfcTag::getInstance().connectionEventHandler(connEvent, eventData);
+#if (NFC_NXP_NON_STD_CARD == TRUE)
+          checkCmdSent = 0;
+          checkTagNtf = 0;
+#endif
           nativeNfcTag_abortWaits();
           NfcTag::getInstance().abort();
           NfcTag::getInstance().setMultiProtocolTagSupport(false);
@@ -3364,6 +3374,10 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
       }
     }
     NfcTag::getInstance().mNfcDisableinProgress = true;
+#if (NFC_NXP_NON_STD_CARD == TRUE)
+    checkCmdSent = 0;
+    checkTagNtf = 0;
+#endif
     nativeNfcTag_abortWaits();
     NfcTag::getInstance().abort();
     sAbortConnlessWait = true;
