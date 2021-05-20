@@ -124,8 +124,10 @@ public class WlcServiceProxy {
   }
 
   public void enable(PersistStatus instruction) {
-    if (!isServiceConnected() || (mClientObj == null) || (mClientEnable == null))
+    if (!isServiceConnected() || (mClientObj == null) || (mClientEnable == null)) {
       notifyStatus(WLC_STATUS_FAILED);
+      return;
+    }
     int status = WLC_STATUS_FAILED;
     try {
       status = (int) mClientEnable.invoke(mClientObj);
@@ -151,8 +153,10 @@ public class WlcServiceProxy {
   }
 
   public void disable(PersistStatus instruction) {
-    if (!isServiceConnected() || (mClientObj == null) || (mClientDisable == null))
+    if (!isServiceConnected() || (mClientObj == null) || (mClientDisable == null)) {
       notifyStatus(WLC_STATUS_FAILED);
+      return;
+    }
     int status = WLC_STATUS_FAILED;
     try {
       status = (int) mClientDisable.invoke(mClientObj);
