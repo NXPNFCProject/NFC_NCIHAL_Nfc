@@ -1215,7 +1215,7 @@ bool RoutingManager::removeAidRouting(const uint8_t* aid, uint8_t aidLen) {
     DLOG_IF(INFO, nfc_debug_enabled) << fn << ": removed AID";
     return true;
   } else {
-    LOG(ERROR) << fn << ": failed to remove AID";
+    LOG(WARNING) << fn << ": failed to remove AID";
     return false;
   }
 }
