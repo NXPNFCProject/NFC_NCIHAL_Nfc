@@ -44,6 +44,7 @@ namespace android
 static const int EE_ERROR_INIT = -3;
 static void NxpNfc_ParsePlatformID(const uint8_t*);
 extern bool nfcManager_isNfcActive();
+extern bool nfcManager_isNfcDisabling();
 /*******************************************************************************
 **
 ** Function:        nativeNfcSecureElement_doOpenSecureElementConnection
@@ -58,6 +59,12 @@ extern bool nfcManager_isNfcActive();
 static jint nativeNfcSecureElement_doOpenSecureElementConnection (JNIEnv*, jobject)
 {
     LOG(INFO) << StringPrintf("%s: Enter; ", __func__);
+    if (nfcManager_isNfcDisabling()) {
+      LOG(INFO) << StringPrintf(
+          "%s: Nfc is Disabling. Can not open SE connection. Line: %d",
+          __func__, __LINE__);
+      return EE_ERROR_INIT;
+    }
     bool stat = false;
     const int32_t recvBufferMaxSize = 1024;
     uint8_t recvBuffer [recvBufferMaxSize];
@@ -93,7 +100,12 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection (JNIEnv*, jobje
        {
          stat = false;
          LOG(INFO) << StringPrintf("%s: Mode set ntf STATUS_FAILED", __func__);
-
+         if (nfcManager_isNfcDisabling()) {
+           LOG(INFO) << StringPrintf(
+               "%s: Nfc is Disabling. Can not open SE connection. Line : %d ",
+               __func__, __LINE__);
+           return EE_ERROR_INIT;
+         }
          SyncEventGuard guard (se.mEERecoveryComplete);
          {
            se.mEERecoveryComplete.wait();
