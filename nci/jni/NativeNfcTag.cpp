@@ -911,16 +911,18 @@ static jint nativeNfcTag_doConnect(JNIEnv*, jobject, jint targetHandle) {
   /* Switching is required for CTS protocol paramter test case.*/
   if (sCurrentConnectedTargetType == TARGET_TYPE_ISO14443_3A ||
       sCurrentConnectedTargetType == TARGET_TYPE_ISO14443_3B) {
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-        "%s: switching to tech: %d need to switch rf intf to frame", __func__,
-        sCurrentConnectedTargetType);
+    if (sCurrentConnectedTargetProtocol != NFC_PROTOCOL_MIFARE) {
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+          "%s: switching to tech: %d need to switch rf intf to frame", __func__,
+          sCurrentConnectedTargetType);
 #if (NXP_EXTNS == TRUE && NFC_NXP_NON_STD_CARD == TRUE)
-    if (sNonNciCard_t.Changan_Card == true)
-      sNeedToSwitchRf = true;
-    else
+      if (sNonNciCard_t.Changan_Card == true)
+        sNeedToSwitchRf = true;
+      else
 #endif
-      retCode = switchRfInterface(NFA_INTERFACE_FRAME) ? NFA_STATUS_OK
-                                                       : NFA_STATUS_FAILED;
+        retCode = switchRfInterface(NFA_INTERFACE_FRAME) ? NFA_STATUS_OK
+                                                         : NFA_STATUS_FAILED;
+    }
   } else if (sCurrentConnectedTargetType == TARGET_TYPE_MIFARE_CLASSIC) {
     retCode = switchRfInterface(NFA_INTERFACE_MIFARE) ? NFA_STATUS_OK
                                                       : NFA_STATUS_FAILED;
