@@ -294,6 +294,7 @@ static bool sP2pActive = false;  // whether p2p was last active
 static bool sAbortConnlessWait = false;
 static jint sLfT3tMax = 0;
 static bool sRoutingInitialized = false;
+static bool sIsRecovering = false;
 
 static uint8_t sIsSecElemSelected = 0;  // has NFC service selected a sec elem
 static uint8_t sIsSecElemDetected = 0;  // has NFC service deselected a sec elem
@@ -1596,8 +1597,21 @@ static void nfaConnectionCallback(uint8_t connEvent,
           }
           LOG(ERROR) << StringPrintf("%s: toggle NFC state to recovery nfc",
                                      __func__);
+          sIsRecovering = true;
           e->CallVoidMethod(nat->manager,
                             android::gCachedNfcManagerNotifyHwErrorReported);
+          {
+          DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+              "%s: aborting  sNfaSetPowerSubState", __func__);
+          SyncEventGuard guard(sNfaSetPowerSubState);
+          sNfaSetPowerSubState.notifyOne();
+        }
+        {
+          DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+              "%s: aborting  sNfaSetConfigEvent", __func__);
+          SyncEventGuard guard(sNfaSetConfigEvent);
+          sNfaSetConfigEvent.notifyOne();
+        }
         } else {
           nativeNfcTag_abortWaits();
           NfcTag::getInstance().abort();
@@ -2140,6 +2154,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
                         mwVer.major_version, mwVer.minor_version);
 
     tNFA_STATUS stat = NFA_STATUS_OK;
+    sIsRecovering = false;
     NfcTag::getInstance().mNfcDisableinProgress = false;
     PowerSwitch& powerSwitch = PowerSwitch::getInstance();
     if (sIsNfaEnabled) {
@@ -3337,7 +3352,9 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
     if (nfcFL.eseFL._JCOP_WA_ENABLE) {
       NFA_HciW4eSETransaction_Complete(Wait);
     }
-    RoutingManager::getInstance().onNfccShutdown();
+    if (!recovery_option || !sIsRecovering) {
+      RoutingManager::getInstance().onNfccShutdown();
+    }
     SecureElement::getInstance().finalize();
     PowerSwitch::getInstance().initialize(PowerSwitch::UNKNOWN_LEVEL);
     HciEventManager::getInstance().finalize();
@@ -5053,6 +5070,13 @@ static jstring nfcManager_doGetNfaStorageDir(JNIEnv* e, jobject o) {
 #endif
       return;
     }
+
+    // skip remaining SetScreenState tasks when trying to silent recover NFCC
+    if (recovery_option && sIsRecovering) {
+      prevScreenState = state;
+      return;
+    }
+
     if (NFC_GetNCIVersion() == NCI_VERSION_2_0) {
       if (prevScreenState == NFA_SCREEN_STATE_OFF_LOCKED ||
           prevScreenState == NFA_SCREEN_STATE_OFF_UNLOCKED ||
@@ -5072,6 +5096,12 @@ static jstring nfcManager_doGetNfaStorageDir(JNIEnv* e, jobject o) {
         } else {
           sNfaSetPowerSubState.wait();
         }
+      }
+
+      // skip remaining SetScreenState tasks when trying to silent recover NFCC
+      if (recovery_option && sIsRecovering) {
+        prevScreenState = state;
+        return;
       }
 
       if (state == NFA_SCREEN_STATE_OFF_LOCKED ||
@@ -5110,6 +5140,12 @@ static jstring nfcManager_doGetNfaStorageDir(JNIEnv* e, jobject o) {
         return;
       }
 
+      // skip remaining SetScreenState tasks when trying to silent recover NFCC
+      if (recovery_option && sIsRecovering) {
+        prevScreenState = state;
+        return;
+      }
+
       if (prevScreenState == NFA_SCREEN_STATE_ON_UNLOCKED) {
         SyncEventGuard guard(sNfaSetPowerSubState);
         status = NFA_SetPowerSubStateForScreenState(state);
@@ -5121,6 +5157,13 @@ static jstring nfcManager_doGetNfaStorageDir(JNIEnv* e, jobject o) {
           sNfaSetPowerSubState.wait();
         }
       }
+
+      // skip remaining SetScreenState tasks when trying to silent recover NFCC
+      if (recovery_option && sIsRecovering) {
+        prevScreenState = state;
+        return;
+      }
+
       if ((state == NFA_SCREEN_STATE_OFF_LOCKED ||
             state == NFA_SCREEN_STATE_OFF_UNLOCKED) &&
             prevScreenState == NFA_SCREEN_STATE_ON_UNLOCKED) {
@@ -5149,6 +5192,12 @@ static jstring nfcManager_doGetNfaStorageDir(JNIEnv* e, jobject o) {
       if (sRfEnabled) {
         // Stop RF discovery to reconfigure
         startRfDiscovery(false);
+      }
+
+      // skip remaining SetScreenState tasks when trying to silent recover NFCC
+      if (recovery_option && sIsRecovering) {
+        prevScreenState = state;
+        return;
       }
 
       if (state == NFA_SCREEN_STATE_OFF_UNLOCKED ||
