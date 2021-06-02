@@ -64,6 +64,7 @@ import android.nfc.IAppCallback;
 import android.nfc.INfcAdapter;
 import android.nfc.INfcAdapterExtras;
 import android.nfc.INfcCardEmulation;
+import android.nfc.INfcControllerAlwaysOnListener;
 import android.nfc.INfcDta;
 import android.nfc.INfcFCardEmulation;
 import android.nfc.INfcTag;
@@ -147,11 +148,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.TimerTask;
 import java.util.Timer;
@@ -460,7 +463,9 @@ public class NfcService implements DeviceHostListener {
     // and the default AsyncTask thread so it is read unprotected from that
     // thread
     int mState;  // one of NfcAdapter.STATE_ON, STATE_TURNING_ON, etc
-
+    // mAlwaysOnState is protected by this, however it is only modified in onCreate()
+    // and the default AsyncTask thread so it is read unprotected from that thread
+    int mAlwaysOnState;  // one of NfcAdapter.STATE_ON, STATE_TURNING_ON, etc
     // fields below are final after onCreate()
     Context mContext;
     private DeviceHost mDeviceHost;
@@ -517,6 +522,9 @@ public class NfcService implements DeviceHostListener {
 
     private IVrManager vrManager;
     boolean mIsVrModeEnabled;
+    private final boolean mIsAlwaysOnSupported;
+    private final Set<INfcControllerAlwaysOnListener> mAlwaysOnListeners =
+        Collections.synchronizedSet(new HashSet<>());
     /* WiredSe attributes */
     Class mWiredSeClass;
     Method mWiredSeInitMethod, mWiredSeDeInitMethod;
@@ -782,6 +790,8 @@ public class NfcService implements DeviceHostListener {
 
         mState = NfcAdapter.STATE_OFF;
 
+        mAlwaysOnState = NfcAdapter.STATE_OFF;
+
         mIsDebugBuild = "userdebug".equals(Build.TYPE) || "eng".equals(Build.TYPE);
 
         mPowerManager = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
@@ -889,6 +899,9 @@ public class NfcService implements DeviceHostListener {
 
         // Make sure this is only called when object construction is complete.
         ServiceManager.addService(SERVICE_NAME, mNfcAdapter);
+
+        mIsAlwaysOnSupported =
+            mContext.getResources().getBoolean(R.bool.nfcc_always_on_allowed);
 
         new EnableDisableTask().execute(TASK_BOOT);  // do blocking boot tasks
 
@@ -1872,6 +1885,45 @@ public class NfcService implements DeviceHostListener {
                                 DEFAULT_PRESENCE_CHECK_DELAY))
                         : DEFAULT_PRESENCE_CHECK_DELAY;
             }
+        }
+
+        @Override
+        public boolean setControllerAlwaysOn(boolean value) throws RemoteException {
+            NfcPermissions.enforceSetControllerAlwaysOnPermissions(mContext);
+            if (!mIsAlwaysOnSupported) {
+                return false;
+            }
+            return true;
+        }
+
+        @Override
+        public boolean isControllerAlwaysOn() throws RemoteException {
+            NfcPermissions.enforceSetControllerAlwaysOnPermissions(mContext);
+            return mIsAlwaysOnSupported && mAlwaysOnState == NfcAdapter.STATE_ON;
+        }
+
+        @Override
+        public boolean isControllerAlwaysOnSupported() throws RemoteException {
+            NfcPermissions.enforceSetControllerAlwaysOnPermissions(mContext);
+            return mIsAlwaysOnSupported;
+        }
+
+        @Override
+        public void registerControllerAlwaysOnListener(
+            INfcControllerAlwaysOnListener listener) throws RemoteException {
+            NfcPermissions.enforceSetControllerAlwaysOnPermissions(mContext);
+            if (!mIsAlwaysOnSupported) return;
+
+            mAlwaysOnListeners.add(listener);
+        }
+
+        @Override
+        public void unregisterControllerAlwaysOnListener(
+            INfcControllerAlwaysOnListener listener) throws RemoteException {
+            NfcPermissions.enforceSetControllerAlwaysOnPermissions(mContext);
+            if (!mIsAlwaysOnSupported) return;
+
+            mAlwaysOnListeners.remove(listener);
         }
     }
 
