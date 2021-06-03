@@ -485,7 +485,7 @@ bool RoutingManager::removeAidRouting(const uint8_t* aid, uint8_t aidLen) {
 #endif
     return true;
   } else {
-    LOG(ERROR) << fn << ": failed to remove AID";
+    LOG(WARNING) << fn << ": failed to remove AID";
     return false;
   }
 }

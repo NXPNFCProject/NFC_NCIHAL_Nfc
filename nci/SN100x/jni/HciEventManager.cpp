@@ -183,7 +183,7 @@ void HciEventManager::nfaHciCallback(tNFA_HCI_EVT event,
     evtSrc = "SIM2";
 #endif
   } else {
-    LOG(ERROR) << "Incorrect Pipe Id";
+    LOG(WARNING) << "Incorrect Pipe Id";
     return;
   }
 
