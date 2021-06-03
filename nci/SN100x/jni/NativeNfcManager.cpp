@@ -1167,6 +1167,24 @@ if (!sP2pActive && eventData->rf_field.status == NFA_STATUS_OK) {
         e->CallVoidMethod(nat->manager,
                           android::gCachedNfcManagerNotifyHwErrorReported);
         {
+          DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+              "%s: aborting  sNfaEnableDisablePollingEvent", __func__);
+          SyncEventGuard guard(sNfaEnableDisablePollingEvent);
+          sNfaEnableDisablePollingEvent.notifyOne();
+        }
+        {
+          DLOG_IF(INFO, nfc_debug_enabled)
+              << StringPrintf("%s: aborting  sNfaEnableEvent", __func__);
+          SyncEventGuard guard(sNfaEnableEvent);
+          sNfaEnableEvent.notifyOne();
+        }
+        {
+          DLOG_IF(INFO, nfc_debug_enabled)
+              << StringPrintf("%s: aborting  sNfaDisableEvent", __func__);
+          SyncEventGuard guard(sNfaDisableEvent);
+          sNfaDisableEvent.notifyOne();
+        }
+        {
           DLOG_IF(INFO, nfc_debug_enabled)
               << StringPrintf("%s: aborting  sNfaSetPowerSubState", __func__);
           SyncEventGuard guard(sNfaSetPowerSubState);
@@ -1177,6 +1195,12 @@ if (!sP2pActive && eventData->rf_field.status == NFA_STATUS_OK) {
               << StringPrintf("%s: aborting  sNfaSetConfigEvent", __func__);
           SyncEventGuard guard(sNfaSetConfigEvent);
           sNfaSetConfigEvent.notifyOne();
+        }
+        {
+          DLOG_IF(INFO, nfc_debug_enabled)
+              << StringPrintf("%s: aborting  sNfaGetConfigEvent", __func__);
+          SyncEventGuard guard(sNfaGetConfigEvent);
+          sNfaGetConfigEvent.notifyOne();
         }
 
       } else {
