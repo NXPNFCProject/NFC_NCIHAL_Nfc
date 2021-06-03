@@ -106,6 +106,7 @@
                  android:usesCleartextTraffic="false"
                  android:supportsRtl="true"
                  android:hardwareAccelerated="false"
+                 android:memtagMode="async"
     >
         <meta-data android:name="com.google.android.backup.api_key"
             android:value="AEdPqrEAAAAIbiKKs0wlimxeJ9y8iRIaBOH6aeb2IurmZyBHvg" />
