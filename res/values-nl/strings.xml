@@ -42,7 +42,7 @@
     <string name="prompt_connect_to_network" msgid="8511683573657516114">"Verbinding maken met netwerk <xliff:g id="NETWORK_SSID">%1$s</xliff:g>?"</string>
     <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"NFC moet zijn ingeschakeld voor Android Beam. Wil je dit inschakelen?"</string>
     <string name="android_beam" msgid="1666446406999492763">"Android Beam"</string>
-    <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"De app heeft geen toestemming voor externe opslag. Dit recht is nodig om het bestand te beamen."</string>
+    <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"De app heeft geen rechten voor externe opslag. Dit recht is nodig om het bestand te beamen."</string>
     <string name="title_confirm_url_open" msgid="8069968913244794478">"Link openen?"</string>
     <string name="summary_confirm_url_open" product="tablet" msgid="3353502750736192055">"Je tablet heeft een link ontvangen via NFC:"</string>
     <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"Je telefoon heeft een link ontvangen via NFC:"</string>
