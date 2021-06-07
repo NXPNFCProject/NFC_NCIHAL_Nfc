@@ -416,7 +416,8 @@ bool RoutingManager::addAidRouting(const uint8_t* aid, uint8_t aidLen,
 
     if (route == SecureElement::DH_ID) {
       power &= ~(PWR_SWTCH_OFF_MASK | PWR_BATT_OFF_MASK);
-      if (!stat) power &= HOST_PWR_STATE;
+      if (!stat)
+        DLOG_IF(INFO, nfc_debug_enabled) << fn << "Generic power state";
     }
     if (power == 0x00) {
       powerState = (route != SecureElement::DH_ID)
