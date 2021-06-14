@@ -933,23 +933,13 @@ public class RegisteredAidCache {
             } else if (resolveInfo.services.size() == 1) {
                 // Only one service, but not the default, must route to host
                 // to ask the user to choose one.
-                if (resolveInfo.category.equals(
-                        CardEmulation.CATEGORY_PAYMENT)) {
-                    aidType.isOnHost = true;
-                } else {
-                    aidType.isOnHost = resolveInfo.services.get(0).isOnHost();
-                    if (!aidType.isOnHost) {
-                        aidType.offHostSE =
-                                resolveInfo.services.get(0).getOffHostSecureElement();
-                    }
-                }
+                aidType.isOnHost = true;
 
                 boolean requiresUnlock = resolveInfo.services.get(0).requiresUnlock();
                 boolean requiresScreenOn = resolveInfo.services.get(0).requiresScreenOn();
 
                 /*aidType.power =
                         computeAidPowerState(aidType.isOnHost, requiresScreenOn, requiresUnlock);*/
-                aidType.isOnHost = true;
                 if(NfcService.getInstance().getNciVersion() ==
                                         NfcService.getInstance().NCI_VERSION_1_0){
                     aidType.power = updateRoutePowerState(POWER_STATE_SWITCH_ON) |
