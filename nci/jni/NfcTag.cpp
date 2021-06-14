@@ -1257,6 +1257,11 @@ void NfcTag::resetTechnologies() {
   mIsFelicaLite = false;
   resetAllTransceiveTimeouts();
 #if (NXP_EXTNS == TRUE)
+  /* reset KOVIO uidLen on disconnect/presence
+   * check failed/DEACTIVATED_NTF to enable
+   * thus isSameKovio returns false
+   * */
+  mLastKovioUidLen = 0;
   mNumDiscNtf = 0;
 #endif
 }
