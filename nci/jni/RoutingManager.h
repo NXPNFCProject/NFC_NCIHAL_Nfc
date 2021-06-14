@@ -138,6 +138,7 @@ typedef struct {
 class RoutingManager {
  public:
 #if (NXP_EXTNS == TRUE)
+  static const uint8_t HOST_PWR_STATE = 0x11;
   static const int NFA_SET_AID_ROUTING = 4;
   static const int NFA_SET_TECHNOLOGY_ROUTING = 1;
   static const int NFA_SET_PROTOCOL_ROUTING = 2;

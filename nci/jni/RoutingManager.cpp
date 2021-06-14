@@ -1182,10 +1182,13 @@ bool RoutingManager::addAidRouting(const uint8_t* aid, uint8_t aidLen,
 #endif
   if (!mSecureNfcEnabled) {
     if (power == 0x00) {
-      powerState = (route != 0x00) ? mOffHostAidRoutingPowerState : 0x11;
+      powerState = (route != SecureElement::DH_ID)
+                       ? mOffHostAidRoutingPowerState
+                       : HOST_PWR_STATE;
     } else {
-      powerState =
-          (route != 0x00) ? mOffHostAidRoutingPowerState & power : power;
+      powerState = (route != SecureElement::DH_ID)
+                       ? mOffHostAidRoutingPowerState & power
+                       : power;
     }
   }
   if (handle == ROUTE_LOC_HOST_ID) powerState &= 0x11;
