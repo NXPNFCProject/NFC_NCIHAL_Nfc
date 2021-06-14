@@ -425,7 +425,10 @@ public class AidRoutingManager {
                   if (aidsForDefaultRoute != null) {
                     for (String aid : aidsForDefaultRoute) {
                       if (aidMap.get(aid).power != default_route_power_state) {
-                        aidRoutingTableCache.put(aid, aidMap.get(aid));
+                        if(aid.endsWith("*") || aid.endsWith("#"))
+                            aidRoutingTableCache.put(aid.substring(0,aid.length() - 1), aidMap.get(aid));
+                        else
+                            aidRoutingTableCache.put(aid, aidMap.get(aid));
                       }
                     }
                   }
