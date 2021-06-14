@@ -462,18 +462,20 @@ public class HandoverDataParser {
 
         try {
 
+            byte[] bdaddr = null;
+            byte role = 0xF; // invalid default
+            byte[] leScC = null;
+            byte[] leScR = null;
+            byte[] nameBytes = null;
+            byte[] securityManagerTK = null;
             while (payload.remaining() > 0) {
                 int len = payload.get();
                 int type = payload.get();
                 switch (type) {
                     case BT_HANDOVER_TYPE_MAC: // mac address
-
                         int startpos = payload.position();
-                        byte[] bdaddr = new byte[7]; // 6 bytes for mac, 1 for addres type
+                        bdaddr = new byte[7]; // 6 bytes for mac, 1 for address type
                         payload.get(bdaddr);
-                        if (result.oobData == null)
-                            result.oobData = new OobData();
-                        result.oobData.setLeBluetoothDeviceAddress(bdaddr);
                         payload.position(startpos);
 
                         byte[] address = parseMacFromBluetoothRecord(payload);
@@ -481,19 +483,22 @@ public class HandoverDataParser {
                         result.device = mBluetoothAdapter.getRemoteDevice(address);
                         result.valid = true;
                         break;
+
                     case BT_HANDOVER_TYPE_LE_ROLE:
-                        byte role = payload.get();
+                        role = payload.get();
                         if (role == BT_HANDOVER_LE_ROLE_CENTRAL_ONLY) {
                             // only central role supported, can't pair
                             result.valid = false;
                             return result;
                         }
                         break;
+
                     case BT_HANDOVER_TYPE_LONG_LOCAL_NAME:
-                        byte[] nameBytes = new byte[len - 1];
+                        nameBytes = new byte[len - 1];
                         payload.get(nameBytes);
                         result.name = new String(nameBytes, StandardCharsets.UTF_8);
                         break;
+
                     case BT_HANDOVER_TYPE_SECURITY_MANAGER_TK:
                         if (len-1 != SECURITY_MANAGER_TK_SIZE) {
                             Log.i(TAG, "BT OOB: invalid size of SM TK, should be " +
@@ -501,12 +506,8 @@ public class HandoverDataParser {
                             break;
                         }
 
-                        byte[] securityManagerTK = new byte[len - 1];
+                        securityManagerTK = new byte[len - 1];
                         payload.get(securityManagerTK);
-
-                        if (result.oobData == null)
-                            result.oobData = new OobData();
-                        result.oobData.setSecurityManagerTk(securityManagerTK);
                         break;
 
                     case BT_HANDOVER_TYPE_LE_SC_CONFIRMATION:
@@ -516,12 +517,8 @@ public class HandoverDataParser {
                             break;
                         }
 
-                        byte[] leScC = new byte[len - 1];
+                        leScC = new byte[len - 1];
                         payload.get(leScC);
-
-                        if (result.oobData == null)
-                            result.oobData = new OobData();
-                        result.oobData.setLeSecureConnectionsConfirmation(leScC);
                         break;
 
                     case BT_HANDOVER_TYPE_LE_SC_RANDOM:
@@ -531,12 +528,8 @@ public class HandoverDataParser {
                             break;
                         }
 
-                        byte[] leScR = new byte[len - 1];
+                        leScR = new byte[len - 1];
                         payload.get(leScR);
-
-                        if (result.oobData == null)
-                            result.oobData = new OobData();
-                        result.oobData.setLeSecureConnectionsRandom(leScR);
                         break;
 
                     default:
@@ -544,6 +537,11 @@ public class HandoverDataParser {
                         break;
                 }
             }
+            result.oobData = OobData.createLeBuilder(leScC, bdaddr, (int)(role & 0xFF))
+                .setRandomizerHash(leScR)
+                .setDeviceName(nameBytes)
+                .setLeTemporaryKey(securityManagerTK)
+                .build();
         } catch (IllegalArgumentException e) {
             Log.i(TAG, "BLE OOB: error parsing OOB data", e);
         } catch (BufferUnderflowException e) {
