@@ -53,6 +53,9 @@ using android::base::StringPrintf;
 extern bool nfc_debug_enabled;
 static void deleteglobaldata(JNIEnv* e);
 static jobjectArray sTechPollBytes;
+#if (NXP_EXTNS == TRUE)
+static jobjectArray gtechActBytes;
+#endif
 static int sLastSelectedTagId = 0;
 
 #if (NXP_EXTNS == TRUE)
@@ -673,6 +676,11 @@ static void deleteglobaldata(JNIEnv* e) {
   if (sTechPollBytes != NULL) {
     e->DeleteGlobalRef(sTechPollBytes);
   }
+#if (NXP_EXTNS == TRUE)
+  if (gtechActBytes != NULL) {
+    e->DeleteGlobalRef(gtechActBytes);
+  }
+#endif
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", fn);
 }
 
@@ -933,7 +941,18 @@ void NfcTag::fillNativeNfcTagMembers4(JNIEnv* e, jclass tag_cls, jobject tag,
       e->SetObjectArrayElement(techActBytes.get(), i, actBytes.get());
     }
   }
-
+#if (NXP_EXTNS == TRUE)
+  jobject gtechActBytesObject;
+  if (mTechListTail == 0) {
+    gtechActBytes =
+        reinterpret_cast<jobjectArray>(e->NewGlobalRef(techActBytes.get()));
+  } else {
+    for (int j = 0; j < mTechListTail; j++) {
+      gtechActBytesObject = e->GetObjectArrayElement(gtechActBytes, j);
+      e->SetObjectArrayElement(techActBytes.get(), j, gtechActBytesObject);
+    }
+  }
+#endif
   for (int i = mTechListTail; i < mNumTechList; i++) {
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: index=%d", fn, i);
     if (NFC_PROTOCOL_T1T == mTechLibNfcTypes[i] ||
@@ -1044,6 +1063,13 @@ void NfcTag::fillNativeNfcTagMembers4(JNIEnv* e, jclass tag_cls, jobject tag,
     }
     e->SetObjectArrayElement(techActBytes.get(), i, actBytes.get());
   }  // for: every technology in the array of current selected tag
+#if (NXP_EXTNS == TRUE)
+  if (gtechActBytes != NULL && mTechListTail != 0) {
+    e->DeleteGlobalRef(gtechActBytes);
+    gtechActBytes =
+        reinterpret_cast<jobjectArray>(e->NewGlobalRef(techActBytes.get()));
+  }
+#endif
   jfieldID f = e->GetFieldID(tag_cls, "mTechActBytes", "[[B");
   e->SetObjectField(tag, f, techActBytes.get());
 }
