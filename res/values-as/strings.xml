@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="app_name" msgid="78565911793142902">"Nfc সেৱা"</string>
+    <string name="nfcUserLabel" msgid="7708535817084357357">"Nfc"</string>
+    <string name="accessibility_nfc_enabled" msgid="7796246979948787735">"NFC সক্ষম কৰা হ\'ল৷"</string>
+    <string name="tap_to_beam" msgid="5819197866281059878">"বীম কৰিবলৈ টিপক"</string>
+    <string name="beam_progress" msgid="7453634884807323920">"অন্তৰ্গামী বীম..."</string>
+    <string name="beam_outgoing" msgid="4679536649779123495">"বীম চলি আছে..."</string>
+    <string name="beam_complete" msgid="477026736424637435">"বীম সম্পূৰ্ণ হ’ল"</string>
+    <string name="beam_failed" msgid="5116241718189888630">"বীম সম্পূৰ্ণ নহ\'ল"</string>
+    <string name="beam_canceled" msgid="5425192751826544741">"বীম বাতিল কৰা হ’ল"</string>
+    <string name="cancel" msgid="61873902552555096">"বাতিল কৰক"</string>
+    <string name="beam_tap_to_view" msgid="7430394753262448349">"চাবলৈ টিপক"</string>
+    <string name="beam_handover_not_supported" msgid="4083165921751489015">"প্ৰাপকৰ ডিভাইচলৈ বীমৰ যোগে ডাঙৰ ফাইল পঠিয়াব নোৱাৰি৷"</string>
+    <string name="beam_try_again" msgid="3364677301009783455">"ডিভাইচসমূহ আকৌ একেলগ কৰক"</string>
+    <string name="beam_busy" msgid="5253335587620612576">"বৰ্তমান বীম ব্যস্ত আছে৷ পূৰ্বৰ স্থানান্তৰণ কাৰ্য সম্পূৰ্ণ হ\'লে পুনৰ চেষ্টা কৰক৷"</string>
+    <string name="device" msgid="4459621591392478151">"ডিভাইচ"</string>
+    <string name="connecting_peripheral" msgid="1296182660525660935">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g> সংযোগ কৰি থকা হৈছে"</string>
+    <string name="connected_peripheral" msgid="20748648543160091">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g> সংযোগ কৰা হ’ল"</string>
+    <string name="connect_peripheral_failed" msgid="7925702596242839275">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g> সংযোগ কৰিব পৰা নগ\'ল"</string>
+    <string name="disconnecting_peripheral" msgid="1443699384809097200">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g> সংযোগ বিচ্ছিন্ন কৰি থকা হৈছে"</string>
+    <string name="disconnected_peripheral" msgid="4470578100296504366">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g> সংযোগ বিচ্ছিন্ন কৰা হ’ল"</string>
+    <string name="pairing_peripheral" msgid="6983626861540899365">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g> যোৰা লগাই থকা হৈছে"</string>
+    <string name="pairing_peripheral_failed" msgid="6087643307743264679">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g> যোৰা লগাব পৰা নগ\'ল"</string>
+    <string name="failed_to_enable_bt" msgid="7229153323594758077">"ব্লুটুথ সক্ষম কৰিব পৰা নগ\'ল"</string>
+    <string name="confirm_pairing" msgid="4112568077038265363">"আপুনি ব্লুটুথ ডিভাইচ <xliff:g id="DEVICE_NAME">%1$s</xliff:g> যোৰা লগাবলৈ বিচৰাটো নিশ্চিতনে?"</string>
+    <string name="pair_yes" msgid="3525614878559994448">"হয়"</string>
+    <string name="pair_no" msgid="5022308368904055020">"নহয়"</string>
+    <string name="tap_again_to_pay" msgid="5754988005412859897">"<xliff:g id="APP">%1$s</xliff:g>ৰ জৰিয়তে পৰিশোধ কৰিবলৈ আকৌ টিপক"</string>
+    <string name="tap_again_to_complete" msgid="5423640945118279123">"<xliff:g id="APP">%1$s</xliff:g>ৰ জৰিয়তে সম্পূৰ্ণ কৰিবলৈ আকৌ টিপক"</string>
+    <string name="transaction_failure" msgid="7828102078637936513">"<xliff:g id="APP">%1$s</xliff:g>ৰ জৰিয়তে এই লেনদেন সম্পূৰ্ণ কৰিব পৰা নগ\'ল৷"</string>
+    <string name="could_not_use_app" msgid="8137587876138569083">"<xliff:g id="APP">%1$s</xliff:g> ব্যৱহাৰ কৰিব পৰা নগ\'ল৷"</string>
+    <string name="pay_with" msgid="5531545488795798945">"ইয়াৰ জৰিয়তে পৰিশোধ কৰক"</string>
+    <string name="complete_with" msgid="6797459104103012992">"ইয়াৰ জৰিয়তে সম্পূৰ্ণ কৰক"</string>
+    <string name="default_pay_app_removed" msgid="4108250545457437360">"আপোনাৰ পচন্দৰ \'টিপক আৰু পৰিশোধ কৰক\' এপটো আঁতৰোৱা হৈছে৷ অন্য এটা বাছনি কৰিবনে?"</string>
+    <string name="ask_nfc_tap" msgid="2925239870458286340">"সম্পূৰ্ণ কৰিবলৈ অন্য এটা ডিভাইচত টিপক"</string>
+    <string name="wifi_connect" msgid="6250727951843550671">"সংযোগ কৰক"</string>
+    <string name="status_unable_to_connect" msgid="9183908200295307657">"নেটৱৰ্কৰ লগত সংযোগ কৰিব পৰা নগ\'ল"</string>
+    <string name="status_wifi_connected" msgid="5893022897732105739">"সংযোগ কৰা হ’ল"</string>
+    <string name="title_connect_to_network" msgid="2474034615817280146">"নেটৱৰ্কৰ লগত সংযোগ কৰক"</string>
+    <string name="prompt_connect_to_network" msgid="8511683573657516114">"<xliff:g id="NETWORK_SSID">%1$s</xliff:g> নেটৱৰ্কৰ লগত সংযোগ কৰিবনে?"</string>
+    <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"Android বীমে NFC সক্ষম কৰিব লাগিব৷ আপুনি ইয়াক সক্ষম কৰিবলৈ বিচাৰেনে?"</string>
+    <string name="android_beam" msgid="1666446406999492763">"Android বীম"</string>
+    <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"এপ্লিকেশ্বনটোৰ বাহ্যিক সঞ্চয়াগাৰ ব্যৱহাৰ কৰাৰ অনুমতি নাই৷ এই ফাইলটো বীম কৰিবলৈ এয়া প্ৰয়োজন।"</string>
+    <string name="title_confirm_url_open" msgid="8069968913244794478">"লিংক খুলিবনে?"</string>
+    <string name="summary_confirm_url_open" product="tablet" msgid="3353502750736192055">"আপোনাৰ টেবলেটে NFC যোগে এই লিংক পাইছে:"</string>
+    <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"আপোনাৰ ফ\'নে NFC যোগে এই লিংক পাইছে:"</string>
+    <string name="action_confirm_url_open" msgid="3458322738812921189">"লিংক খোলক"</string>
+    <string name="tag_read_error" msgid="2485274498885877547">"NFC পঢ়াত আসোঁৱাহ। আকৌ চেষ্টা কৰক।"</string>
+    <string name="tag_dispatch_failed" msgid="3562984995049738400">"এই NFC টেগৰ বাবে কোনো সমৰ্থিত এপ্লিকেশ্বন নাই"</string>
+    <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"NFC হয়তো অৱৰোধ কৰি ৰখা আছে"</string>
+    <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"কেনেকৈ সমাধান কৰিব লাগে সেয়া জানিবলৈ টিপক।"</string>
+</resources>

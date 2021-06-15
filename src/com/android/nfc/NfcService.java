@@ -123,6 +123,7 @@ import com.nxp.nfc.INxpNfcAdapterExtras;
 import com.nxp.nfc.INxpWlcAdapter;
 import com.nxp.nfc.INxpWlcCallBack;
 import com.nxp.nfc.NfcConstants;
+import com.nxp.nfc.NxpNfcAdapter;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -278,6 +279,7 @@ public class NfcService implements DeviceHostListener {
     static final int NFC_POLL_V = 0x08;
     static final int NFC_POLL_B_PRIME = 0x10;
     static final int NFC_POLL_KOVIO = 0x20;
+    static final int NFC_POLL_Q = 0x100;
 
     // Return values from NfcEe.open() - these are 1:1 mapped
     // to the thrown EE_EXCEPTION_ exceptions in nfc-extras.
@@ -545,6 +547,11 @@ public class NfcService implements DeviceHostListener {
     private Object mT4tNfcEeObj = new Object();
     private Bundle mT4tNfceeReturnBundle = new Bundle();
     private WlcServiceProxy mWlc = null;
+    private int SELFTEST_RESTORE_RFTXCFG = 0x00;
+    private int SELFTEST_SET_RFTXCFG = 0x01;
+    private int SELFTEST_PRBS = 0x06;
+    private int SELFTEST_SWP = 0x07;
+
     public static NfcService getInstance() {
         return sService;
     }
@@ -1349,13 +1356,13 @@ public class NfcService implements DeviceHostListener {
             new EnableDisableTask().execute(TASK_ENABLE);
 
             if (mIsRecovering) {
-                 // Intents for all users
-                 IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_OFF);
-                 filter.addAction(Intent.ACTION_SCREEN_ON);
-                 filter.addAction(Intent.ACTION_USER_PRESENT);
-                 filter.addAction(Intent.ACTION_USER_SWITCHED);
-                 mContext.registerReceiverAsUser(mReceiver, UserHandle.ALL, filter, null, null);
-                 mIsRecovering = false;
+              // Intents for all users
+              IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_OFF);
+              filter.addAction(Intent.ACTION_SCREEN_ON);
+              filter.addAction(Intent.ACTION_USER_PRESENT);
+              filter.addAction(Intent.ACTION_USER_SWITCHED);
+              mContext.registerReceiverAsUser(mReceiver, UserHandle.ALL, filter, null, null);
+              mIsRecovering = false;
             }
 
             return true;
@@ -1863,6 +1870,9 @@ public class NfcService implements DeviceHostListener {
             if ((flags & NfcAdapter.FLAG_READER_NFC_BARCODE) != 0) {
                 techMask |= NFC_POLL_KOVIO;
             }
+            if ((flags & NxpNfcAdapter.FLAG_READER_NFC_Q) != 0) {
+                techMask |= NFC_POLL_Q;
+            }
 
             return techMask;
         }
@@ -2233,15 +2243,25 @@ public class NfcService implements DeviceHostListener {
         public int nfcSelfTest(int type) {
             NfcPermissions.enforceUserPermissions(mContext);
             NfcPermissions.enforceAdminPermissions(mContext);
-            int status = 0xFF, prbs_test = 0x06, swpSelf_test = 0x07;
+            int status = 0xFF;
             Method mNfcSelfTestMethod;
-            Log.i(TAG,"doNfcSelfTest type ENter : " + type);
+            Log.i(TAG,"doNfcSelfTest type Enter : " + type);
             synchronized(NfcService.this) {
               try {
-                 if(mNfcExtnsObj!=null && (type == prbs_test || type == swpSelf_test)){
-                    mNfcSelfTestMethod = mNfcExtnsClass.getDeclaredMethod("doNfcSelfTest", int.class);
-                    mNfcSelfTestMethod.invoke(mNfcExtnsObj,type);
-                 }else {
+                 if(type == SELFTEST_PRBS || type == SELFTEST_SWP){
+                     if (mNfcExtnsObj!=null) {
+                         mNfcSelfTestMethod = mNfcExtnsClass.getDeclaredMethod(
+                             "doNfcSelfTest", int.class);
+                         mNfcSelfTestMethod.invoke(mNfcExtnsObj,type);
+                         status = 0x00;
+                     } else {
+                         Log.i(TAG,"doNfcSelfTest: " + type + " isn't supported");
+                         return status;
+                     }
+                 } else if(type == SELFTEST_RESTORE_RFTXCFG || type == SELFTEST_SET_RFTXCFG) {
+                    mNfcAdapter.resonantFrequency(type);
+                    status = 0x00;
+                 } else {
                     status = mDeviceHost.doNfcSelfTest(type);
                  }
               } catch (NoSuchMethodException e ) {
@@ -3203,6 +3223,8 @@ public class NfcService implements DeviceHostListener {
                     techMask |= NFC_POLL_V;
                 if ((mReaderModeParams.flags & NfcAdapter.FLAG_READER_NFC_BARCODE) != 0)
                     techMask |= NFC_POLL_KOVIO;
+                if ((mReaderModeParams.flags & NxpNfcAdapter.FLAG_READER_NFC_Q) != 0)
+                    techMask |= NFC_POLL_Q;
 
                 paramsBuilder.setTechMask(techMask);
                 paramsBuilder.setEnableReaderMode(true);
@@ -3385,6 +3407,13 @@ public class NfcService implements DeviceHostListener {
         return mDeviceHost.createLlcpServerSocket(sap, sn, miu, rw, linearBufferLength);
     }
 
+    public int getAidRoutingTableSize ()
+    {
+        int aidTableSize = 0x00;
+        aidTableSize =  mDeviceHost.getAidTableSize();
+        return aidTableSize;
+    }
+
     public void sendMockNdefTag(NdefMessage msg) {
         sendMessage(MSG_MOCK_NDEF, msg);
     }
@@ -3419,11 +3448,6 @@ public class NfcService implements DeviceHostListener {
         msg.setData(aidPowerState);
 
         mHandler.sendMessage(msg);
-    }
-
-    public int getAidRoutingTableSize ()
-    {
-        return mDeviceHost.getAidTableSize();
     }
 
     public void unrouteAids(String aid) {
@@ -3562,6 +3586,10 @@ public class NfcService implements DeviceHostListener {
      */
     public int GetT4TNfceePowerState() {
         int powerState = mDeviceHost.getT4TNfceePowerState();
+        if (mIsSecureNfcEnabled) {
+          /* Secure nfc on,Setting power state screen on unlocked */
+          powerState=0x01;
+        }
         if (DBG) Log.d(TAG, "T4TNfceePowerState : " + powerState);
         return powerState;
     }
@@ -3922,13 +3950,14 @@ public class NfcService implements DeviceHostListener {
                             break;
                         }
                         if (mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED) {
-                          applyRouting(false);
+                            applyRouting(false);
+                            mIsRequestUnlockShowed = false;
                         }
                         int screen_state_mask = (mNfcUnlockManager.isLockscreenPollingEnabled()) ?
                                 (ScreenStateHelper.SCREEN_POLLING_TAG_MASK | mScreenState) : mScreenState;
 
-                        if (mNfcUnlockManager.isLockscreenPollingEnabled())
-                            applyRouting(false);
+                       if (mNfcUnlockManager.isLockscreenPollingEnabled())
+                           applyRouting(false);
 
                        mDeviceHost.doSetScreenState(screen_state_mask);
                    } finally {
@@ -3953,25 +3982,25 @@ public class NfcService implements DeviceHostListener {
                     break;
 
                 case MSG_TOAST_DEBOUNCE_EVENT:
-                    sToast_debounce = false;
-                    break;
+                  sToast_debounce = false;
+                  break;
 
                 case MSG_DELAY_POLLING:
-                    synchronized (NfcService.this) {
-                      if (!mPollingDelayed) {
-                        return;
-                      }
-                      mPollingDelayed = false;
-                      mDeviceHost.startStopPolling(true);
+                  synchronized (NfcService.this) {
+                    if (!mPollingDelayed) {
+                      return;
                     }
-                    if (DBG)
-                      Log.d(TAG, "Polling is started");
-                    break;
+                    mPollingDelayed = false;
+                    mDeviceHost.startStopPolling(true);
+                  }
+                  if (DBG)
+                    Log.d(TAG, "Polling is started");
+                  break;
 
                 case MSG_SE_INIT:
-                    Log.e(TAG, "msg se init");
+                  Log.e(TAG, "msg se init");
 
-                    try {
+                  try {
                     if (mIsHceCapable) {
                         // Generate the initial card emulation routing table
                         computeRoutingParameters();

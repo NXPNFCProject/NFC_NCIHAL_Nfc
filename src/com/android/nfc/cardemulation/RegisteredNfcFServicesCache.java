@@ -447,12 +447,12 @@ public class RegisteredNfcFServicesCache {
                                 try {
                                     componentName = ComponentName.unflattenFromString(compString);
                                     currentUid = Integer.parseInt(uidString);
+                                    systemCode = parser.getAttributeValue(null, "system-code");
+                                    description = parser.getAttributeValue(null, "description");
+                                    nfcid2 = parser.getAttributeValue(null, "nfcid2");
                                 } catch (NumberFormatException e) {
                                     Log.e(TAG, "Could not parse service uid");
                                 }
-                                systemCode = parser.getAttributeValue(null, "system-code");
-                                description = parser.getAttributeValue(null, "description");
-                                nfcid2 = parser.getAttributeValue(null, "nfcid2");
                             }
                         }
                     } else if (eventType == XmlPullParser.END_TAG) {
