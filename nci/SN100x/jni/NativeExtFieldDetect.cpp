@@ -75,6 +75,7 @@ NativeExtFieldDetect& NativeExtFieldDetect::getInstance() {
 int NativeExtFieldDetect::startExtendedFieldDetectMode(JNIEnv* e, jobject o,
                                                        jint detectionTimeout) {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+  unsigned long lx_debug_cfg = 0;
 
   efdmTimerValue = detectionTimeout;
 
@@ -103,6 +104,11 @@ int NativeExtFieldDetect::startExtendedFieldDetectMode(JNIEnv* e, jobject o,
   /*Stop Rf discovery*/
   if (android::isDiscoveryStarted()) {
     android::startRfDiscovery(false);
+  }
+
+  if (NfcConfig::hasKey(NAME_NXP_CORE_PROP_SYSTEM_DEBUG)) {
+    lx_debug_cfg = NfcConfig::getUnsigned(NAME_NXP_CORE_PROP_SYSTEM_DEBUG);
+    mLxdebug_cfg = (uint8_t)lx_debug_cfg & LX_DEBUG_CFG_MASK;
   }
 
   /* Configure extended field detect Debug notification based on config
@@ -147,7 +153,6 @@ int NativeExtFieldDetect::startExtendedFieldDetectMode(JNIEnv* e, jobject o,
 *******************************************************************************/
 int NativeExtFieldDetect::stopExtendedFieldDetectMode(JNIEnv* e, jobject o) {
   int efdStatus = EFDSTATUS_FAILED;
-  const uint8_t RESET_LX_DEBUG = 0x00;
 
   if (!android::nfcManager_isNfcActive() ||
       android::nfcManager_isNfcDisabling()) {
@@ -165,7 +170,7 @@ int NativeExtFieldDetect::stopExtendedFieldDetectMode(JNIEnv* e, jobject o) {
   }
 
   /* Reset extended field detect debug notification.*/
-  if (configureExtFieldDetectDebugNtf(RESET_LX_DEBUG) == NFA_STATUS_OK) {
+  if (configureExtFieldDetectDebugNtf(mLxdebug_cfg) == NFA_STATUS_OK) {
     /*Configure to keep desired Poll Phases (as before) but only add
      * FieldDetect Mode for Listen Phase */
     NFA_SetFieldDetectMode(false);
@@ -329,6 +334,7 @@ void NativeExtFieldDetect::initEfdmNativeStruct(JNIEnv* e, jobject o) {
 *******************************************************************************/
 void NativeExtFieldDetect::initialize(nfc_jni_native_data* native) {
   mNativeData = native;
+  mLxdebug_cfg = 0x00;
 }
 /*******************************************************************************
 **

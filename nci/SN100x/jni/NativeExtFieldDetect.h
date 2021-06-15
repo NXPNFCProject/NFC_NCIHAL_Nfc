@@ -40,6 +40,7 @@ class NativeExtFieldDetect {
   bool firstRffieldON;
   bool isefdmStarted;
   nfc_jni_native_data* mNativeData;
+  uint8_t mLxdebug_cfg;
   /*******************************************************************************
   **
   ** Function:        initialize
