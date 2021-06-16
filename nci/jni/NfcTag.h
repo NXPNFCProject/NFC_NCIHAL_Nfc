@@ -43,7 +43,16 @@
 
 #include "nfa_rw_api.h"
 
+#if (NXP_EXTNS == TRUE)
+/* Transceive timeout should be set to 4*fwt due to retry.
+ * Default Timeout value for FWI 0 to 9 is 618ms.
+ * FWT for FWI value is 9 is 154.65 ms. 4*fwt is ~618ms.
+ * So from the FWI value 10 onwards calculation need to
+ * updated instead of default value(618ms). */
+#define MIN_FWI (10)
+#else
 #define MIN_FWI (11)
+#endif
 #define MAX_FWI (14)
 
 typedef struct activationParams {

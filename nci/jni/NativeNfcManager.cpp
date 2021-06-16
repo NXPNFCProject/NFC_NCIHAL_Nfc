@@ -855,6 +855,22 @@ static void nfaConnectionCallback(uint8_t connEvent,
         NfcTag::getInstance().setNumDiscNtf(0);
       }
 #if (NXP_EXTNS == TRUE)
+
+      //UPDATE transceive timeout for ISO_DEP (T4T-4A) according to FWI value
+      tNFA_ACTIVATED& activated = eventData->activated;
+      if ((activated.activate_ntf.protocol == NFC_PROTOCOL_ISO_DEP) &&
+          ((NFC_DISCOVERY_TYPE_POLL_A == activated.activate_ntf.rf_tech_param.mode) ||
+          (NFC_DISCOVERY_TYPE_POLL_A_ACTIVE == activated.activate_ntf.rf_tech_param.mode))) {
+        uint8_t fwi = activated.activate_ntf.intf_param.intf_param.pa_iso.fwi;
+        if (fwi >= MIN_FWI && fwi <= MAX_FWI) {
+          int fwt = (1 << (fwi - MIN_FWI)) * 310;
+          DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+              "Setting the transceive timeout = %d, fwi = %02x", 4*fwt, fwi);
+          if (NfcTag::getInstance().getTransceiveTimeout(TARGET_TYPE_ISO14443_4) < 4*fwt)
+            NfcTag::getInstance().setTransceiveTimeout(TARGET_TYPE_ISO14443_4, 4*fwt);
+        }
+      }
+
       if (gSelfTestType != NFC_CMD_TYPE_TYPE_NONE) {
         activatedNtf_Cb();
         break;
@@ -883,7 +899,6 @@ static void nfaConnectionCallback(uint8_t connEvent,
               eventData->activated.activate_ntf.rf_tech_param.param.pb.nfcid0);
         }
       }
-
       if (EXTNS_GetConnectFlag() == true) {
         NfcTag::getInstance().setActivationState();
         nativeNfcTag_doConnectStatus(true);
@@ -933,13 +948,11 @@ static void nfaConnectionCallback(uint8_t connEvent,
                 << StringPrintf("%s: Invalid FelicaReaderState : %d  ",
                                 __func__, gFelicaReaderState);
             gFelicaReaderState = STATE_IDLE;
-#endif
-            DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-                "%s: Ignoring P2P target in reader mode.", __func__);
-            NFA_Deactivate(false);
-#if (NXP_EXTNS == TRUE)
           }
 #endif
+          DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+                "%s: Ignoring P2P target in reader mode.", __func__);
+          NFA_Deactivate(false);
           break;
         }
         sP2pActive = true;
@@ -961,6 +974,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
             LOG(ERROR) << StringPrintf("%s: Failed to disable RF field events",
                                        __func__);
           }
+        }
 
 #endif
           DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
