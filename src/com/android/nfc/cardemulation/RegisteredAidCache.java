@@ -71,13 +71,14 @@ public class RegisteredAidCache {
     static final int POWER_STATE_BATTERY_OFF = 0x4;
     static final int POWER_STATE_SCREEN_OFF_UNLOCKED = 0x8;
     static final int POWER_STATE_SCREEN_ON_LOCKED = 0x10;
+    static final int POWER_STATE_SCREEN_OFF_NCI1_0 = 0x8;
     static final int POWER_STATE_SCREEN_OFF_LOCKED = 0x20;
     static final int POWER_STATE_ALL = POWER_STATE_SWITCH_ON | POWER_STATE_SWITCH_OFF
                                      | POWER_STATE_BATTERY_OFF | POWER_STATE_SCREEN_OFF_UNLOCKED
                                      | POWER_STATE_SCREEN_ON_LOCKED | POWER_STATE_SCREEN_OFF_LOCKED;
-    static final int POWER_STATE_ALL_NCI_VERSION_1_0 = POWER_STATE_SWITCH_ON
-                                                     | POWER_STATE_SWITCH_OFF
-                                                     | POWER_STATE_BATTERY_OFF;
+    static final int POWER_STATE_ALL_NCI_VERSION_1_0 = POWER_STATE_SWITCH_ON | POWER_STATE_SWITCH_OFF
+                                                     | POWER_STATE_BATTERY_OFF | POWER_STATE_SCREEN_OFF_NCI1_0
+                                                     | POWER_STATE_SCREEN_ON_LOCKED;
     static final int SCREEN_STATE_INVALID = 0x00;
     static final int SCREEN_STATE_DEFAULT_MASK = 0x16;
     // mAidServices maps AIDs to services that have registered them.
