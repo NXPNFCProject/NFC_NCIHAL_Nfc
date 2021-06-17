@@ -847,9 +847,11 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
 
         LOG(INFO) << StringPrintf("%s: Empty AID SELECT cmd detected, substituting AID from config file, new length=%d", fn, idx);
     }
-
     {
         SyncEventGuard guard (mTransceiveEvent);
+        if (!mIsWiredModeOpen) {
+            return isSuccess;
+        }
         mActualResponseSize = 0;
         memset (mResponseData, 0, sizeof(mResponseData));
         nfaStat = NFA_HciSendApdu (mNfaHciHandle, mActiveEeHandle, xmitBufferSize, xmitBuffer, sizeof(mResponseData), mResponseData, timeoutMillisec);
@@ -1741,13 +1743,10 @@ void SecureElement::releasePendingTransceive()
 {
     static const char fn [] = "SecureElement::releasePendingTransceive";
     LOG(INFO) << StringPrintf("%s: Entered", fn);
-    if(mIsWiredModeOpen)
-    {
-        SyncEventGuard guard (mTransceiveEvent);
-        mTransceiveEvent.notifyOne();
-        SyncEventGuard guard_Abort(mAbortEvent);
-        mAbortEvent.notifyOne();
-    }
+    SyncEventGuard guard (mTransceiveEvent);
+    mTransceiveEvent.notifyOne();
+    SyncEventGuard guard_Abort(mAbortEvent);
+    mAbortEvent.notifyOne();
     LOG(INFO) << StringPrintf("%s: Exit", fn);
 }
 

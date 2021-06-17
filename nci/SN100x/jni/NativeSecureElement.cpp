@@ -12,7 +12,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2020 NXP
+*  Copyright 2018-2021 NXP
 *
 ******************************************************************************/
 
@@ -164,6 +164,8 @@ static jboolean nativeNfcSecureElement_doDisconnectSecureElementConnection (JNIE
 
     if(!se.mIsWiredModeOpen)
          return false;
+
+    se.mIsWiredModeOpen = false;
      /* release any pending transceive wait */
     se.releasePendingTransceive();
 
@@ -178,8 +180,6 @@ static jboolean nativeNfcSecureElement_doDisconnectSecureElementConnection (JNIE
         if(status == NFA_STATUS_OK)
             stat = true;
     }
-    se.mIsWiredModeOpen = false;
-
     /* if nothing is active after this, then tell the controller to power down */
     if (! PowerSwitch::getInstance ().setModeOff (PowerSwitch::SE_CONNECTED))
         PowerSwitch::getInstance ().setLevel (PowerSwitch::LOW_POWER);
