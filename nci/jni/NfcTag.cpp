@@ -424,10 +424,10 @@ void NfcTag::discoverTechnologies(tNFA_ACTIVATED& activationData) {
       }
     }
   } else if (NFC_PROTOCOL_ISO_DEP == rfDetail.protocol) {
-#if(NXP_EXTNS==FALSE)
     // type-4 tag uses technology ISO-DEP and technology A or B
     mTechList[mNumTechList] =
         TARGET_TYPE_ISO14443_4;  // is TagTechnology.ISO_DEP by Java API
+#if(NXP_EXTNS==FALSE)
     if ((NFC_DISCOVERY_TYPE_POLL_A == rfDetail.rf_tech_param.mode) ||
         (NFC_DISCOVERY_TYPE_POLL_A_ACTIVE == rfDetail.rf_tech_param.mode)) {
       uint8_t fwi = rfDetail.intf_param.intf_param.pa_iso.fwi;
