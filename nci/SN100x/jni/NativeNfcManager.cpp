@@ -2711,6 +2711,7 @@ void handleWiredmode()
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
     SecureElement &se = SecureElement::getInstance();
     if(se.mIsWiredModeOpen) {
+      se.mIsWiredModeOpen = false;
       se.releasePendingTransceive();
       se.setNfccPwrConfig(SecureElement::POWER_ALWAYS_ON);
       se.sendEvent(SecureElement::EVT_END_OF_APDU_TRANSFER);
