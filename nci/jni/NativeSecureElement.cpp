@@ -17,7 +17,7 @@
  *
  *  The original Work has been changed by NXP.
  *
- *  Copyright 2015-2020 NXP
+ *  Copyright 2015-2021 NXP
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -534,7 +534,7 @@ static jbyteArray nativeNfcSecureElement_doTransceive(JNIEnv* e, jobject,
                                                       jint handle,
                                                       jbyteArray data) {
   const int32_t recvBufferMaxSize = 0x8800;  // 1024; 34k
-  uint8_t recvBuffer[recvBufferMaxSize];
+  std::unique_ptr<uint8_t> recvBuffer(new uint8_t[recvBufferMaxSize]);;
   int32_t recvBufferActualSize = 0;
   eTransceiveStatus tranStatus = TRANSCEIVE_STATUS_FAILED;
 

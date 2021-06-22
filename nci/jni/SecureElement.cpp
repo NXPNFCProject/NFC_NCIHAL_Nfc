@@ -4574,7 +4574,7 @@ tNFA_STATUS SecureElement::SecElem_sendEvt_Abort() {
   tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
   int32_t timeoutMillisec = 10000;
   uint8_t atr_len = 0x10;
-  uint8_t recvBuffer[MAX_RESPONSE_SIZE];
+  std::unique_ptr<uint8_t> recvBuffer(new uint8_t[MAX_RESPONSE_SIZE]);;
   mAbortEventWaitOk = false;
 
   if (nfcFL.nfccFL._NFCEE_REMOVED_NTF_RECOVERY &&
