@@ -892,34 +892,8 @@ public class RegisteredAidCache {
 
                 boolean requiresUnlock = resolveInfo.defaultService.requiresUnlock();
                 boolean requiresScreenOn = resolveInfo.defaultService.requiresScreenOn();
-                int powerstate =
+                aidType.power =
                         computeAidPowerState(aidType.isOnHost, requiresScreenOn, requiresUnlock);
-                if (!isNxpExtnEnabled) {
-                    aidType.power = powerstate;
-                } else {
-                    int screenstate = 0;
-                    if (powerstate == 0x00) {
-                        powerstate = (NfcService.getInstance().GetDefaultMifateCLTRouteEntry() & 0x3F);
-                    }
-
-                    boolean isOnHost = resolveInfo.defaultService.isOnHost();
-                    if ((powerstate & POWER_STATE_SWITCH_ON) == POWER_STATE_SWITCH_ON) {
-                        if (NfcService.getInstance().getNciVersion()
-                            == NfcService.getInstance().NCI_VERSION_1_0) {
-                            screenstate |= updateRoutePowerState(POWER_STATE_SCREEN_ON_LOCKED);
-                            if (!isOnHost) {
-                                if (DBG)
-                                    Log.d(TAG, " NCI1.0 - set screen off enable for " + aid);
-                                screenstate |= updateRoutePowerState(POWER_STATE_SCREEN_OFF_UNLOCKED)
-                                    | updateRoutePowerState(POWER_STATE_SCREEN_OFF_LOCKED);
-                            }
-                            powerstate |= screenstate;
-                            aidType.power = powerstate;
-                        } else {
-                            aidType.power = updateRoutePowerState(powerstate);
-                        }
-                    }
-                }
                 routingEntries.put(aid, aidType);
             } else if (resolveInfo.services.size() == 1) {
                 // Only one service, but not the default, must route to host
@@ -928,21 +902,10 @@ public class RegisteredAidCache {
 
                 boolean requiresUnlock = resolveInfo.services.get(0).requiresUnlock();
                 boolean requiresScreenOn = resolveInfo.services.get(0).requiresScreenOn();
-                int powerstate =
+                aidType.power =
                     computeAidPowerState(aidType.isOnHost, requiresScreenOn, requiresUnlock);
-                if (!isNxpExtnEnabled) {
-                    aidType.power = powerstate;
-                } else {
-                    if (NfcService.getInstance().getNciVersion()
-                        == NfcService.getInstance().NCI_VERSION_1_0) {
-                        aidType.power = updateRoutePowerState(POWER_STATE_SWITCH_ON)
-                            | updateRoutePowerState(POWER_STATE_SCREEN_ON_LOCKED);
-                    } else {
-                        aidType.power = updateRoutePowerState(powerstate);
-                    }
-                    if (DBG)
-                        Log.d(TAG, " AID power state 2 " + aid + aidType.power);
-                }
+                if (DBG)
+                    Log.d(TAG, "AID match with single service." );
                 routingEntries.put(aid, aidType);
             } else if (resolveInfo.services.size() > 1) {
                 // Multiple services if all the services are routing to same
@@ -986,21 +949,10 @@ public class RegisteredAidCache {
                 aidType.offHostSE = onHost ? null : offHostSE;
                 requiresUnlock = onHost ? false : requiresUnlock;
                 requiresScreenOn = onHost ? true : requiresScreenOn;
-                int powerstate =
+                aidType.power =
                     computeAidPowerState(onHost, requiresScreenOn, requiresUnlock);
-                if (!isNxpExtnEnabled) {
-                    aidType.power = powerstate;
-                } else {
-                    if (NfcService.getInstance().getNciVersion()
-                        == NfcService.getInstance().NCI_VERSION_1_0) {
-                        aidType.power = updateRoutePowerState(POWER_STATE_SWITCH_ON)
-                            | updateRoutePowerState(POWER_STATE_SCREEN_ON_LOCKED);
-                    } else {
-                        aidType.power = updateRoutePowerState(powerstate);
-                    }
-                  if (DBG)
-                    Log.d(TAG, " AID power state 3 " + aid + aidType.power);
-                }
+                if (DBG)
+                    Log.d(TAG, "AID match with multiple service." );
                 routingEntries.put(aid, aidType);
             }
         }
@@ -1105,32 +1057,6 @@ public class RegisteredAidCache {
         pw.println("");
     }
 
-    int updateRoutePowerState(int inputPwr) {
-      final int PROP_SCRN_ON_UNLOCKED = 0x20;
-      final int PROP_SCRN_OFF = 0x08;
-      Log.d(TAG, "updateRoutePowerState inputPwr "+ inputPwr);
-
-      /*If extns service present mapping proprietary pwr state
-       * to NCI2.0 pwr state*/
-      if((NfcService.getInstance().isNfcExtnsPresent()) &&
-              (inputPwr != SCREEN_STATE_INVALID)) {
-        int tempPwrState = inputPwr & SCREEN_STATE_DEFAULT_MASK;
-
-        if((inputPwr & POWER_STATE_SWITCH_ON) == POWER_STATE_SWITCH_ON) {
-          /*Mapping SWITCH_ON(0x01) to PROP_SCRN_ON_UNLOCKED(0x20)*/
-          tempPwrState |= PROP_SCRN_ON_UNLOCKED;
-        }
-        if((inputPwr & POWER_STATE_SCREEN_OFF_UNLOCKED) == POWER_STATE_SCREEN_OFF_UNLOCKED ||
-                (inputPwr & POWER_STATE_SCREEN_OFF_LOCKED) == POWER_STATE_SCREEN_OFF_LOCKED) {
-          /*Mapping POWER_STATE_SCREEN_OFF_UNLOCKED(0x08) or POWER_STATE_SCREEN_OFF_LOCKED(0x20)
-           * to PROP_SCRN_OFF(0x08)*/
-          tempPwrState |= PROP_SCRN_OFF;
-        }
-        inputPwr = tempPwrState;
-      }
-      Log.d(TAG, "updateRoutePowerState outputPwr "+ inputPwr);
-      return inputPwr;
-    }
     /**
      * Dump debugging information as a RegisteredAidCacheProto
      *

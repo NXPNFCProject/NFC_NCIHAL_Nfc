@@ -411,13 +411,9 @@ bool RoutingManager::addAidRouting(const uint8_t* aid, uint8_t aidLen,
     /*masking lower 8 bits as power states will be available only in that
      * region*/
     power &= 0xFF;
-    /*Map PWR state as per NCI2.0 if required*/
-    bool stat = checkAndUpdatePowerState((uint8_t&)power);
 
     if (route == SecureElement::DH_ID) {
       power &= ~(PWR_SWTCH_OFF_MASK | PWR_BATT_OFF_MASK);
-      if (!stat)
-        DLOG_IF(INFO, nfc_debug_enabled) << fn << "Generic power state";
     }
     if (power == 0x00) {
       powerState = (route != SecureElement::DH_ID)
@@ -750,13 +746,8 @@ void RoutingManager::updateDefaultRoute() {
   uint16_t routeLoc = ((mDefaultSysCodeRoute == 0x00) ? ROUTE_LOC_HOST_ID :
         ((mDefaultSysCodeRoute == 0x01 ) ? ROUTE_LOC_ESE_ID : getUiccRouteLocId(mDefaultSysCodeRoute)));
 
-  /*Map PWR state as per NCI2.0 if required*/
-  bool stat = checkAndUpdatePowerState(mDefaultSysCodePowerstate);
-
   if (mDefaultSysCodeRoute == SecureElement::DH_ID) {
     mDefaultSysCodePowerstate &= ~(PWR_SWTCH_OFF_MASK | PWR_BATT_OFF_MASK);
-
-    if (!stat) mDefaultSysCodePowerstate &= (HOST_PWR_STATE);
   }
 #endif
 
@@ -1510,14 +1501,10 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
     /*masking lower 8 bits as power states will be available only in that
      * region*/
     power &= 0xFF;
-    /*Map PWR state as per NCI2.0 if required*/
-    bool stat = checkAndUpdatePowerState((uint8_t&)power);
 
     if ((ee_handle == ROUTE_LOC_HOST_ID) &&
         (NFA_SET_PROTOCOL_ROUTING == type)) {
       power &= ~(PWR_SWTCH_OFF_MASK | PWR_BATT_OFF_MASK);
-
-      if (!stat) power &= (HOST_PWR_STATE);
     }
 
     max_tech_mask = SecureElement::getInstance().getSETechnology(ee_handle);
@@ -1797,12 +1784,8 @@ void RoutingManager::setEmptyAidEntry(int routeAndPowerState) {
       return;
     }
 
-    /*Map PWR state as per NCI2.0 if required*/
-    bool stat = checkAndUpdatePowerState(power);
-
     if(routeLoc == ROUTE_LOC_HOST_ID) {
       power &= ~(PWR_SWTCH_OFF_MASK | PWR_BATT_OFF_MASK);
-      if (!stat) power &= (HOST_PWR_STATE);
     }
 
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: power %x",__func__,power);
@@ -2169,31 +2152,5 @@ void RoutingManager::processGetRoutingRsp(tNFA_DM_CBACK_DATA* eventData) {
     SyncEventGuard guard(sNfaGetRoutingEvent);
     sNfaGetRoutingEvent.notifyOne();
   }
-}
-
-/*******************************************************************************
-**
-** Function:        checkAndUpdatePowerState
-**
-** Description:     Maps the proprietary power states to NCI2.0 power state
-**                  Input power : Proprietary power input
-**
-** Returns:         If JNI_EXTNS present(true), otherwise (false)
-**
-*******************************************************************************/
-bool RoutingManager::checkAndUpdatePowerState(uint8_t& power) {
-  bool status = false;
-  uint8_t tempPower = (uint8_t)(power & POWER_STATE_MASK);
-  NativeJniExtns& jniExtns = NativeJniExtns::getInstance();
-
-  if (jniExtns.isExtensionPresent()) {
-    NativeJniExtns::getInstance().notifyNfcEvent("updateRoutingPowerState",
-                                                 (void*)&tempPower);
-    status = true;
-  } else {
-    status = false;
-  }
-  power = tempPower;
-  return status;
 }
 #endif

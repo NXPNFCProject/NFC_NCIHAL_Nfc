@@ -159,7 +159,6 @@ class RoutingManager {
     tNFA_HANDLE checkAndUpdateAltRoute(int& routeLoc);
 
     uint32_t getUicc2selected();
-    bool checkAndUpdatePowerState(uint8_t& power);
     bool isNfceeActive(int routeLoc, tNFA_HANDLE& ActDevHandle);
     uint16_t sRoutingBuffLen;
     uint8_t* sRoutingBuff;
