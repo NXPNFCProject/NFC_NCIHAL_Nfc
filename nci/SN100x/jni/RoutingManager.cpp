@@ -525,7 +525,10 @@ void RoutingManager::onNfccShutdown() {
   }
   if (actualNumEe != 0) {
     for (uint8_t xx = 0; xx < actualNumEe; xx++) {
-      if ((eeInfo[xx].num_interface != 0) &&
+      if (
+#if(NXP_EXTNS != TRUE)
+          (eeInfo[xx].num_interface != 0) &&
+#endif
           (eeInfo[xx].ee_interface[0] != NCI_NFCEE_INTERFACE_HCI_ACCESS) &&
           (eeInfo[xx].ee_status == NFA_EE_STATUS_ACTIVE)) {
         DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(

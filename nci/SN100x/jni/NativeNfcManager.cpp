@@ -129,7 +129,7 @@ extern void nativeLlcpConnectionlessSocket_receiveData(uint8_t* data,
 #if(NXP_EXTNS == TRUE)
 extern tNFA_STATUS Nxp_doResonantFrequency(bool modeOn);
 extern tNFA_STATUS nativeNfcTag_safeDisconnect();
-void handleWiredmode(bool isShutdown);
+void handleWiredmode();
 int nfcManager_doPartialInitialize(JNIEnv* e, jobject o, jint mode);
 int nfcManager_doPartialDeInitialize(JNIEnv* e, jobject o);
 extern tNFA_STATUS NxpNfc_Write_Cmd_Common(uint8_t retlen, uint8_t* buffer);
@@ -1793,7 +1793,7 @@ static void nfcManager_doShutdown(JNIEnv*, jobject) {
   NfcAdaptation& theInstance = NfcAdaptation::GetInstance();
 #if (NXP_EXTNS == TRUE)
   NativeT4tNfcee::getInstance().onNfccShutdown();
-  handleWiredmode(true); /* Device off*/
+  handleWiredmode(); /* Device off*/
   sIsDisabling = false;
   sIsNfaEnabled = false;
 #endif
@@ -2188,7 +2188,7 @@ static jboolean nfcManager_doDeinitialize(JNIEnv*, jobject) {
   if (SecureElement::getInstance().mIsSeIntfActivated) {
     nfcManager_dodeactivateSeInterface(NULL, NULL);
   }
-  handleWiredmode(false); /* Nfc Off*/
+  handleWiredmode(); /* Nfc Off*/
 
   if(NFA_STATUS_OK != NFA_RegVSCback (false,nfaVSCNtfCallback)) { //De-Register Lx Debug CallBack
     LOG(ERROR) << StringPrintf("%s:  nfaVSCNtfCallback Deresgister failed..!", __func__);
@@ -2706,18 +2706,15 @@ static void nfcManager_doAbort(JNIEnv* e, jobject, jstring msg) {
  ** Returns:     void
  **
  *******************************************************************************/
-void handleWiredmode(bool isShutdown)
+void handleWiredmode()
 {
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter, isShutdown %d", __func__, isShutdown);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
     SecureElement &se = SecureElement::getInstance();
     if(se.mIsWiredModeOpen) {
       se.releasePendingTransceive();
       se.setNfccPwrConfig(SecureElement::POWER_ALWAYS_ON);
       se.sendEvent(SecureElement::EVT_END_OF_APDU_TRANSFER);
       usleep(10 * 1000);
-    }
-    if(!isShutdown) {
-      se. SecEle_Modeset(SecureElement::NFCEE_DISABLE);
     }
 }
 /*******************************************************************************
