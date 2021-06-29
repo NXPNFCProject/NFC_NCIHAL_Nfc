@@ -504,6 +504,11 @@ static void nfaConnectionCallback(uint8_t connEvent,
                           __func__, eventData->status);
 
       gActivated = false;
+#if (NXP_EXTNS == TRUE)
+      if (SecureElement::getInstance().isRfFieldOn()) {
+        SecureElement::getInstance().mRfFieldIsOn= false;
+      }
+#endif
 
       SyncEventGuard guard(sNfaEnableDisablePollingEvent);
       sNfaEnableDisablePollingEvent.notifyOne();
@@ -3491,10 +3496,6 @@ void startRfDiscovery(bool isStart) {
   if (status == NFA_STATUS_OK) {
     sNfaEnableDisablePollingEvent.wait (); //wait for NFA_RF_DISCOVERY_xxxx_EVT
     sRfEnabled = isStart;
-#if(NXP_EXTNS == TRUE)
-    if (isStart == false && SecureElement::getInstance().mRfFieldIsOn == true)
-      SecureElement::getInstance().mRfFieldIsOn = false;
-#endif
   } else {
     LOG(ERROR) << StringPrintf(
         "%s: Failed to start/stop RF discovery; error=0x%X", __func__, status);
