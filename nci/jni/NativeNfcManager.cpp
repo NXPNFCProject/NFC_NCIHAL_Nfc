@@ -153,6 +153,7 @@ extern void nativeNfcTag_resetPresenceCheck();
 extern void nativeNfcTag_doReadCompleted(tNFA_STATUS status);
 extern void nativeNfcTag_setRfInterface(tNFA_INTF_TYPE rfInterface);
 extern void nativeNfcTag_setActivatedRfProtocol(tNFA_INTF_TYPE rfProtocol, uint8_t mode);
+extern uint8_t nativeNfcTag_getActivatedMode();
 extern void nativeNfcTag_abortWaits();
 extern void doDwpChannel_ForceExit();
 extern void nativeLlcpConnectionlessSocket_abortWait();
@@ -892,7 +893,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
         nativeNfcTag_setRfInterface(
             (tNFA_INTF_TYPE)eventData->activated.activate_ntf.intf_param.type);
         nativeNfcTag_setActivatedRfProtocol(activatedProtocol, eventData->activated.activate_ntf.rf_tech_param.mode);
-        if (eventData->activated.activate_ntf.rf_tech_param.mode == TARGET_TYPE_ISO14443_3B) {
+        if (nativeNfcTag_getActivatedMode() == TARGET_TYPE_ISO14443_3B) {
           DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
               "%s: NFA_ACTIVATED_EVT: received typeB NFCID0", __func__);
           NfcTag::getInstance().updateNfcID0Param(

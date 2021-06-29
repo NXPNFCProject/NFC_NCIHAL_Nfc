@@ -356,6 +356,17 @@ void nativeNfcTag_setActivatedRfProtocol(tNFA_INTF_TYPE rfProtocol, uint8_t mode
 }
 
 /*******************************************************************************
+ **
+ ** Function:        nativeNfcTag_getActivatedMode
+ **
+ ** Description:     Get rf Activated Mode.
+ **
+ ** Returns:         Returns Tech and mode parameter
+ **
+ *******************************************************************************/
+uint8_t nativeNfcTag_getActivatedMode() { return sCurrentActivatedMode; }
+
+/*******************************************************************************
 **
 ** Function:        ndefHandlerCallback
 **
