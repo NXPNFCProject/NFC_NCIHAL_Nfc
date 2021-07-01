@@ -224,7 +224,7 @@ void configureNfccConfigControl(bool flag);
 #endif
 jmethodID  gCachedNfcManagerNotifySeListenActivated;
 jmethodID  gCachedNfcManagerNotifySeListenDeactivated;
-jmethodID  gCachedNfcManagerNotifySeInitialized;
+jmethodID  gCachedNfcManagerNotifyEeUpdated;
 void doStartupConfig();
 void startStopPolling(bool isStartPolling);
 void startRfDiscovery(bool isStart);
@@ -1024,6 +1024,8 @@ static jboolean nfcManager_initNativeStruc(JNIEnv* e, jobject o) {
       e->GetMethodID(cls.get(), "notifyRfFieldActivated", "()V");
   gCachedNfcManagerNotifyRfFieldDeactivated =
       e->GetMethodID(cls.get(), "notifyRfFieldDeactivated", "()V");
+  gCachedNfcManagerNotifyEeUpdated =
+      e->GetMethodID(cls.get(),"notifyEeUpdated", "()V");
   gCachedNfcManagerNotifyHwErrorReported =
       e->GetMethodID(cls.get(), "notifyHwErrorReported", "()V");
 #if(NXP_EXTNS == TRUE)
@@ -1034,8 +1036,6 @@ static jboolean nfcManager_initNativeStruc(JNIEnv* e, jobject o) {
       e->GetMethodID(cls.get(),"notifySeListenActivated", "()V");
   gCachedNfcManagerNotifySeListenDeactivated =
       e->GetMethodID(cls.get(),"notifySeListenDeactivated", "()V");
-  gCachedNfcManagerNotifySeInitialized =
-      e->GetMethodID(cls.get(),"notifySeInitialized", "()V");
   gCachedNfcManagerNotifyTagAbortListeners =
       e->GetMethodID(cls.get(), "notifyTagAbort", "()V");
 #endif

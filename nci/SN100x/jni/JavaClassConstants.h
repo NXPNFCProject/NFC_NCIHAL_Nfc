@@ -48,6 +48,8 @@ extern jmethodID gCachedNfcManagerNotifyLlcpFirstPacketReceived;
 extern jmethodID gCachedNfcManagerNotifyHostEmuActivated;
 extern jmethodID gCachedNfcManagerNotifyHostEmuData;
 extern jmethodID gCachedNfcManagerNotifyHostEmuDeactivated;
+extern jmethodID gCachedNfcManagerNotifyEeUpdated;
+
 extern const char* gNativeP2pDeviceClassName;
 extern const char* gNativeLlcpServiceSocketClassName;
 extern const char* gNativeLlcpConnectionlessSocketClassName;
@@ -60,7 +62,6 @@ extern jmethodID gCachedNfcManagerNotifySeListenDeactivated;
 extern jmethodID gCachedNfcManagerNotifySeListenActivated;
 extern jmethodID gCachedNfcManagerNotifyRfFieldDeactivated;
 extern jmethodID gCachedNfcManagerNotifyRfFieldActivated;
-extern jmethodID gCachedNfcManagerNotifySeInitialized;
 extern const char* gNativeNfcMposManagerClassName;
 extern const char* gNativeT4tNfceeClassName;
 extern jmethodID gCachedNfcManagerNotifyLxDebugInfo;

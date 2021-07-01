@@ -775,7 +775,7 @@ bool SecureElement::notifySeInitialized() {
             << StringPrintf("%s: jni env is null", fn);
         return false;
     }
-    e->CallVoidMethod (mNativeData->manager, android::gCachedNfcManagerNotifySeInitialized);
+    e->CallVoidMethod (mNativeData->manager, android::gCachedNfcManagerNotifyEeUpdated);
     CHECK(!e->ExceptionCheck());
     return true;
 }

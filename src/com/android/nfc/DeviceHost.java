@@ -59,8 +59,6 @@ public interface DeviceHost {
          */
         public void onSeListenDeactivated();
 
-        public void onSeInitialized();
-
         /**
          * Notifies SRD event
          */
@@ -81,6 +79,8 @@ public interface DeviceHost {
         public void onRemoteFieldActivated();
 
         public void onRemoteFieldDeactivated();
+
+        public void onEeUpdated();
 
         public void onHwErrorReported();
         /**
