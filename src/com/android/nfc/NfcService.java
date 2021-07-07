@@ -3503,7 +3503,17 @@ public class NfcService implements DeviceHostListener {
     }
     public void deInitWiredSe() {
         Log.d(TAG, "DeInit wired Se");
-        mHandler.sendEmptyMessage(MSG_DEINIT_WIREDSE);
+        try {
+          mWiredSeInitMethod = mWiredSeClass.getDeclaredMethod("wiredSeDeInitialize");
+          mWiredSeInitMethod.invoke(mWiredSeObj);
+        } catch (NoSuchElementException | NoSuchMethodException e) {
+          Log.i(TAG, "No such Method wiredSeDeInitialize");
+        } catch (RuntimeException | IllegalAccessException | InvocationTargetException e) {
+          Log.e(TAG, "Error in invoking wiredSeDeInitialize invocation");
+        } catch (Exception e) {
+          Log.e(TAG, "caught Exception during wiredSeDeInitialize");
+          e.printStackTrace();
+        }
     }
     /**
      * get default Aid route entry from shared preference
@@ -4029,20 +4039,6 @@ public class NfcService implements DeviceHostListener {
                      }
                     break;
                 }
-                case MSG_DEINIT_WIREDSE: {
-                    try {
-                      mWiredSeInitMethod = mWiredSeClass.getDeclaredMethod("wiredSeDeInitialize");
-                      mWiredSeInitMethod.invoke(mWiredSeObj);
-                    } catch (NoSuchElementException | NoSuchMethodException e) {
-                      Log.i(TAG, "No such Method wiredSeDeInitialize");
-                    } catch (RuntimeException | IllegalAccessException | InvocationTargetException e) {
-                      Log.e(TAG, "Error in invoking wiredSeDeInitialize invocation");
-                    } catch (Exception e) {
-                      Log.e(TAG, "caught Exception during wiredSeDeInitialize");
-                      e.printStackTrace();
-                    }
-                   break;
-               }
                case MSG_WRITE_T4TNFCEE: {
                  Bundle writeBundle = (Bundle) msg.obj;
                  byte[] fileId = writeBundle.getByteArray("fileId");
