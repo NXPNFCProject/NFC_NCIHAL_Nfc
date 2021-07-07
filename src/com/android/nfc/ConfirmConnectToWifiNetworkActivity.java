@@ -1,3 +1,21 @@
+/******************************************************************************
+*
+*  The original Work has been changed by NXP.
+*  Modifications Copyright 2021 NXP
+*
+*  Licensed under the Apache License, Version 2.0 (the "License");
+*  you may not use this file except in compliance with the License.
+*  You may obtain a copy of the License at
+*
+*  http://www.apache.org/licenses/LICENSE-2.0
+*
+*  Unless required by applicable law or agreed to in writing, software
+*  distributed under the License is distributed on an "AS IS" BASIS,
+*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*  See the License for the specific language governing permissions and
+*  limitations under the License.
+*
+******************************************************************************/
 package com.android.nfc;
 
 import android.app.Activity;
@@ -63,23 +81,29 @@ public class ConfirmConnectToWifiNetworkActivity extends Activity
         WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 
         if (!isChangeWifiStateGranted()) {
-            showFailToast();
-        } else if (!wifiManager.isWifiEnabled()) {
-            wifiManager.setWifiEnabled(true);
-            mEnableWifiInProgress = true;
-
-            mHandler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    if (getAndClearEnableWifiInProgress()) {
-                        showFailToast();
-                        ConfirmConnectToWifiNetworkActivity.this.finish();
-                    }
-                }
-            }, ENABLE_WIFI_TIMEOUT_MILLIS);
-
+           showFailToast();
         } else {
-            doConnect(wifiManager);
+            try {
+                if(!wifiManager.isWifiEnabled()) {
+                    wifiManager.setWifiEnabled(true);
+                    mEnableWifiInProgress = true;
+
+                    mHandler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (getAndClearEnableWifiInProgress()) {
+                                showFailToast();
+                                ConfirmConnectToWifiNetworkActivity.this.finish();
+                            }
+                        }
+                    }, ENABLE_WIFI_TIMEOUT_MILLIS);
+
+                } else {
+                    doConnect(wifiManager);
+                }
+            } catch (SecurityException e) {
+                showFailToast();
+            }
         }
 
         mAlertDialog.dismiss();
