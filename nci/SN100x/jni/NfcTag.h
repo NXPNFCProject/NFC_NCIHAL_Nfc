@@ -33,7 +33,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2020 NXP
+*  Copyright 2020-2021 NXP
 *
 ******************************************************************************/
 #pragma once
@@ -60,6 +60,8 @@ class NfcTag {
   enum NonStdTagRefTimeIndx { MFC, ISO_DEP };
   typedef struct NonStdTagProcParams {
     tNFC_RESULT_DEVT discovery_ntf;  /* RF discovery notification details */
+    tNFC_INTF_PARAMS intf_param;     /* Interface type and params */
+    bool isSkipIsoDepAct = false;
   } nonStdTagProcParams_t;
 #else
   enum ActivationState { Idle, Sleep, Active };
@@ -253,28 +255,29 @@ class NfcTag {
 *******************************************************************************/
 bool isTagDetectedInRefTime(uint32_t nonStdCardRefTime);
 
-  /*******************************************************************************
-  **
-  ** Function         updateNdefState
-  **
-  ** Description      Update Non standatd MFC state based on RF_DISC_NTF or
-  **                  INTF_ACTIVATED_NTF
-  **
-  ** Returns          TRUE(time diff less than reference)/FALSE(Otherwise)
-  **
-  *******************************************************************************/
-  void updateNdefState(uint8_t protocol, uint8_t more_disc_ntf);
+/*******************************************************************************
+**
+** Function         updateNonStdTagState
+**
+** Description      Update Non standard Tag state based on RF_DISC_NTF or
+**                  INTF_ACTIVATED_NTF
+**
+** Returns          None
+**
+*******************************************************************************/
+void updateNonStdTagState(uint8_t protocol, uint8_t more_disc_ntf);
 
-  /*******************************************************************************
-  **
-  ** Function         clearNonStdMfcState
-  **
-  ** Description      Clear Non standard MFC states
-  **
-  ** Returns          None
-  **
-  *******************************************************************************/
-  void clearNonStdMfcState();
+/*******************************************************************************
+**
+** Function         clearNonStdMfcState
+**
+** Description      Clear Non standard MFC states
+**
+** Returns          None
+**
+*******************************************************************************/
+void clearNonStdMfcState();
+
 #endif
   /*******************************************************************************
   **
@@ -343,7 +346,6 @@ bool isTagDetectedInRefTime(uint32_t nonStdCardRefTime);
   **
   *******************************************************************************/
   bool isNfcCombiCard();
-
 #endif
 
   /*******************************************************************************
@@ -680,7 +682,41 @@ bool isTagDetectedInRefTime(uint32_t nonStdCardRefTime);
 ** Returns:         None
 **
 *******************************************************************************/
-void processNonStandardTag();
+  void processNonStandardTag(tNFC_RESULT_DEVT& discovery_ntf);
+
+  /*******************************************************************************
+  **
+  ** Function         storeNonStdTagData
+  **
+  ** Description      Store non standard tag data
+  **
+  ** Returns          None
+  **
+  *******************************************************************************/
+  void storeNonStdTagData();
+
+  /*******************************************************************************
+  **
+  ** Function         clearNonStdTagData
+  **
+  ** Description      Clear non standard tag data
+  **
+  ** Returns          None
+  **
+  *******************************************************************************/
+  void clearNonStdTagData();
+
+  /*******************************************************************************
+  **
+  ** Function         shouldSkipProtoActivate
+  **
+  ** Description      Check whether tag activation should be skipped or not. If
+  **                  activation is skipped then send fake activate event.
+  **
+  ** Returns:         True if tag activation is skipped.
+  **
+  *******************************************************************************/
+  bool shouldSkipProtoActivate(tNFC_PROTOCOL protocol);
 #endif
 
   /*******************************************************************************
