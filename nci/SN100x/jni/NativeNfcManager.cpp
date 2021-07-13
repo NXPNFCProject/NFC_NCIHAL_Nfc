@@ -546,6 +546,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
 #if (NXP_EXTNS == TRUE)
       if (eventData->status == NFC_DEACTIVATE_REASON_DH_REQ_FAILED) {
         NfcTag::getInstance().isIsoDepDhReqFailed = true;
+        NfcTag::getInstance().connectionEventHandler(connEvent, eventData);
       }
 #endif
       break;

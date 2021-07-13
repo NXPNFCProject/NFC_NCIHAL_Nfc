@@ -327,16 +327,15 @@ bool NfcTag::isTagDetectedInRefTime(uint32_t reference) {
 
 /*******************************************************************************
 **
-** Function         updateNdefState
+** Function         updateNonStdTagState
 **
-** Description      Update Non standatd MFC state based on RF_DISC_NTF or
+** Description      Update Non standard Tag state based on RF_DISC_NTF or
 **                  INTF_ACTIVATED_NTF
 **
-** Returns          TRUE(time diff less than reference)/FALSE(Otherwise)
+** Returns          None
 **
 *******************************************************************************/
-void NfcTag::updateNdefState(uint8_t protocol, uint8_t more_disc_ntf) {
-  bool isMFCDetected = false;
+void NfcTag::updateNonStdTagState(uint8_t protocol, uint8_t more_disc_ntf) {
   if (protocol == NFC_PROTOCOL_MIFARE) {
     /*If NonStd MFC tag is detected*/
     if (mIsNonStdMFCTag && isTagDetectedInRefTime(mNonStdCardTimeDiff[MFC])) {
@@ -346,7 +345,15 @@ void NfcTag::updateNdefState(uint8_t protocol, uint8_t more_disc_ntf) {
     }
     /*If WA flag is true but no non standard MFC detected in next iteration
      * clear the WA flag*/
+  } else if (protocol == NFC_PROTOCOL_ISO_DEP) {
+    if (isIsoDepDhReqFailed &&
+        isTagDetectedInRefTime(mNonStdCardTimeDiff[ISO_DEP])) {
+      mNonStdTagdata.isSkipIsoDepAct = true;
+    } else {
+      clearNonStdTagData();
+    }
   } else if (more_disc_ntf == NCI_DISCOVER_NTF_LAST) {
+    bool isMFCDetected = false;
     for (int i = 0; i < mNumTechList; i++) {
       if (mTechLibNfcTypes[i] == NFC_PROTOCOL_MIFARE) {
         isMFCDetected = true;
@@ -685,8 +692,7 @@ void NfcTag::discoverTechnologies(tNFA_DISC_RESULT& discoveryData) {
 
   }
 #if (NXP_EXTNS == TRUE)
-  mNonStdTagdata.discovery_ntf = discoveryData.discovery_ntf;
-  processNonStandardTag();
+  processNonStandardTag(discoveryData.discovery_ntf);
 #endif
   if (discovery_ntf.more != NCI_DISCOVER_NTF_MORE) {
     for (int i = 0; i < mNumDiscTechList; i++) {
@@ -869,7 +875,7 @@ void NfcTag::storeActivationParams() {
 ** Returns:         None
 **
 *******************************************************************************/
-void NfcTag::processNonStandardTag() {
+void NfcTag::processNonStandardTag(tNFC_RESULT_DEVT& discovery_ntf) {
   if (!isNonStdCardSupported) {
     DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s:Non standard support disabled", __func__);
@@ -877,7 +883,6 @@ void NfcTag::processNonStandardTag() {
   }
   DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s:Non standard support enabled", __func__);
-  tNFC_RESULT_DEVT& discovery_ntf = mNonStdTagdata.discovery_ntf;
   if (discovery_ntf.rf_tech_param.param.pa.sel_rsp == NON_STD_CARD_SAK) {
     // Non Standard Transit => ISO-DEP
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
@@ -885,7 +890,7 @@ void NfcTag::processNonStandardTag() {
     mTechLibNfcTypesDiscData[mNumDiscNtf] = NFC_PROTOCOL_ISO_DEP;
     isNonStdTagDetected = true;
   } else {
-    updateNdefState(discovery_ntf.protocol, discovery_ntf.more);
+    updateNonStdTagState(discovery_ntf.protocol, discovery_ntf.more);
   }
 }
 #endif
@@ -1577,12 +1582,16 @@ void NfcTag::selectFirstTag() {
         << StringPrintf("%s: nfa target idx=%d h=0x%X; protocol=0x%X", fn, i,
                         mTechHandlesDiscData[i], mTechLibNfcTypesDiscData[i]);
     if (mTechLibNfcTypesDiscData[i] != NFA_PROTOCOL_NFC_DEP) {
-      sLastSelectedTagId = i;
 #if (NXP_EXTNS == TRUE)
-      selectedId = i;
+      if (!shouldSkipProtoActivate(mTechLibNfcTypesDiscData[i])) {
+        selectedId = i;
 #endif
-      foundIdx = i;
-      break;
+        sLastSelectedTagId = i;
+        foundIdx = i;
+        break;
+#if (NXP_EXTNS == TRUE)
+      }
+#endif
     }
   }
 
@@ -1862,6 +1871,20 @@ void NfcTag::connectionEventHandler(uint8_t event, tNFA_CONN_EVT_DATA* data) {
           data->activated.activate_ntf.intf_param.type !=
               NFC_INTERFACE_EE_DIRECT_RF) {
         tNFA_ACTIVATED& activated = data->activated;
+#if (NXP_EXTNS == TRUE)
+        // In case activated tag is a multiprotocol tag then store
+        // activated tag data because sometimes sleep may not supported by
+        // non standard tag during multiprotocol tag detection.
+        if (mIsMultiProtocolTag) {
+          clearNonStdTagData();
+          memcpy(&(mNonStdTagdata.discovery_ntf.rf_tech_param),
+                 &(activated.activate_ntf.rf_tech_param),
+                 sizeof(tNFC_RF_TECH_PARAMS));
+          memcpy(&mNonStdTagdata.intf_param,
+                 &(activated.activate_ntf.intf_param),
+                 sizeof(tNFC_INTF_PARAMS));
+        }
+#endif
         if (IsSameKovio(activated)) break;
         mIsActivated = true;
         mProtocol = activated.activate_ntf.protocol;
@@ -1904,6 +1927,19 @@ void NfcTag::connectionEventHandler(uint8_t event, tNFA_CONN_EVT_DATA* data) {
       mNdefDetectionTimedOut = ndef_detect.status == NFA_STATUS_TIMEOUT;
       if (mNdefDetectionTimedOut)
         LOG(ERROR) << StringPrintf("%s: NDEF detection timed out", fn);
+#if (NXP_EXTNS == TRUE)
+    } break;
+
+    case NFA_DEACTIVATE_FAIL_EVT: {
+      // If all the attempts to sleep is failed. Then store current timestamp.
+      if (data->status == NFC_DEACTIVATE_REASON_DH_REQ_FAILED) {
+        mNumDiscNtf = 0;
+        LOG(ERROR) << StringPrintf("%s: NFA_DEACTIVATE_FAIL_EVT", __func__);
+        if (mIsMultiProtocolTag) {
+          storeNonStdTagData();
+        }
+      }
+#endif
     }
   }
 }
@@ -2103,3 +2139,72 @@ void NfcTag::setNumDiscNtf(int numDiscNtfValue) {
 **
 *******************************************************************************/
 int NfcTag::getNumDiscNtf() { return mNumDiscNtf; }
+
+/*******************************************************************************
+**
+** Function         clearNonStdTagData
+**
+** Description      Clear non standard tag data
+**
+** Returns          None
+**
+*******************************************************************************/
+void NfcTag::clearNonStdTagData() {
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s", __func__);
+  memset(&mNonStdTagdata, 0, sizeof(mNonStdTagdata));
+}
+
+/*******************************************************************************
+**
+** Function         storeNonStdTagData
+**
+** Description      Store non standard tag data
+**
+** Returns          None
+**
+*******************************************************************************/
+void NfcTag::storeNonStdTagData() {
+  int ret = clock_gettime(CLOCK_MONOTONIC, &LastDetectedTime);
+  if (ret == -1) {
+    DLOG_IF(ERROR, nfc_debug_enabled)
+        << StringPrintf("Log : clock_gettime failed");
+    clearNonStdTagData();
+  } else {
+    tNFC_RESULT_DEVT& nonStdTagInfo = mNonStdTagdata.discovery_ntf;
+    nonStdTagInfo.rf_disc_id = mTechHandles[sLastSelectedTagId];
+    nonStdTagInfo.protocol = mTechLibNfcTypes[sLastSelectedTagId];
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s: %u is stored", __func__, nonStdTagInfo.rf_disc_id);
+  }
+}
+
+/*******************************************************************************
+**
+** Function         shouldSkipProtoActivate
+**
+** Description      Check whether tag activation should be skipped or not. If
+**                  activation is skipped then send fake activate event.
+**
+** Returns:         True if tag activation is skipped.
+**
+*******************************************************************************/
+bool NfcTag::shouldSkipProtoActivate(tNFC_PROTOCOL protocol) {
+  bool status = false;
+  if ((protocol == NFA_PROTOCOL_ISO_DEP) && mNonStdTagdata.isSkipIsoDepAct) {
+    tNFA_CONN_EVT_DATA evt_data;
+    tNFC_ACTIVATE_DEVT& act_ntf = evt_data.activated.activate_ntf;
+    tNFC_RESULT_DEVT& nonStdTagInfo = mNonStdTagdata.discovery_ntf;
+    act_ntf.rf_disc_id = nonStdTagInfo.rf_disc_id;
+    act_ntf.protocol = nonStdTagInfo.protocol;
+    memcpy(&(act_ntf.rf_tech_param), &(nonStdTagInfo.rf_tech_param),
+           sizeof(tNFC_RF_TECH_PARAMS));
+    memcpy(&(act_ntf.intf_param), &(mNonStdTagdata.intf_param),
+           sizeof(tNFC_INTF_PARAMS));
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s: %u is skipped", __func__, act_ntf.rf_disc_id);
+    connectionEventHandler(NFA_ACTIVATED_EVT, &evt_data);
+    mNumDiscNtf--;
+    status = true;
+  }
+  return status;
+}
