@@ -1514,8 +1514,6 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter,max_tech_mask :%lx", fn, max_tech_mask);
     if(NFA_SET_TECHNOLOGY_ROUTING == type)
     {
-      NativeJniExtns::getInstance().notifyNfcEvent(
-          "readTechRouteLoc", (void*)&route, (void*)&value);
       /*  Masking with available SE Technologies */
       value &= max_tech_mask;
       DLOG_IF(INFO, nfc_debug_enabled)
@@ -1528,7 +1526,8 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
       screen_lock_mask = (power & 0x10) ? value : 0;
       screen_off_lock_mask = (power & 0x20) ? value : 0;
 
-      if ((max_tech_mask != 0x01) && (max_tech_mask == 0x02) && value)  // type B only
+      if ((max_tech_mask != 0x01) && (max_tech_mask == 0x02) &&
+          value)  // type B only
       {
         switch_on_mask &= ~NFA_TECHNOLOGY_MASK_A;
         switch_off_mask &= ~NFA_TECHNOLOGY_MASK_A;

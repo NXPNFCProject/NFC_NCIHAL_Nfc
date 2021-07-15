@@ -219,7 +219,6 @@ void enableLastRfDiscovery();
 void storeLastDiscoveryParams(int technologies_mask, bool enable_lptd,
                               bool reader_mode, bool enable_host_routing,
                               bool enable_p2p, bool restart);
-void configureNfccConfigControl(bool flag);
 #endif
 jmethodID  gCachedNfcManagerNotifySeListenActivated;
 jmethodID  gCachedNfcManagerNotifySeListenDeactivated;
@@ -1808,38 +1807,14 @@ static void nfcManager_configNfccConfigControl(bool flag) {
   if (NFC_GetNCIVersion() != NCI_VERSION_1_0) {
     uint8_t nfa_set_config[] = { 0x00 };
     nfa_set_config[0] = (flag == true ? 1 : 0);
-#if (NXP_EXTNS == TRUE)
-    SyncEventGuard guard(sNfaSetConfigEvent);
-#endif
+
     tNFA_STATUS status = NFA_SetConfig(NCI_PARAM_ID_NFCC_CONFIG_CONTROL, sizeof(nfa_set_config),
             &nfa_set_config[0]);
-#if (NXP_EXTNS == TRUE)
-    if (status == NFA_STATUS_OK)
-      sNfaSetConfigEvent.wait(10 * ONE_SECOND_MS);
-    else
-      LOG(ERROR) << StringPrintf("%s:Failed to configure NFCC_CONFIG_CONTROL",
-                                 __func__);
-#else
     if (status != NFA_STATUS_OK) {
       LOG(ERROR) << __func__  << ": Failed to configure NFCC_CONFIG_CONTROL";
     }
-#endif
   }
 }
-#if(NXP_EXTNS == TRUE)
-/*******************************************************************************
-**
-** Function:        configureNfccConfigControl
-**
-** Description:     The Wrapper of nfcManager_configNfccConfigControl.
-**
-** Returns:         None
-**
-*******************************************************************************/
-void configureNfccConfigControl(bool flag) {
-   nfcManager_configNfccConfigControl(flag);
-}
-#endif
 
 /*******************************************************************************
 **
