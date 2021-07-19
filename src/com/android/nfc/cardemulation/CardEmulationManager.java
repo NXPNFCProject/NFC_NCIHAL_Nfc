@@ -562,6 +562,13 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
                 return null;
             }
         }
+
+        @Override
+        public boolean isDefaultPaymentRegistered() throws RemoteException {
+            String defaultComponent = Settings.Secure.getString(mContext.getContentResolver(),
+                    Settings.Secure.NFC_PAYMENT_DEFAULT_COMPONENT);
+            return defaultComponent != null ? true : false;
+        }
     }
 
     /**
