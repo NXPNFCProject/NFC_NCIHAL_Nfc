@@ -514,6 +514,7 @@ public class BeamTransferManager implements Handler.Callback,
 
     PendingIntent buildCancelIntent() {
         Intent intent = new Intent(BeamStatusReceiver.ACTION_CANCEL_HANDOVER_TRANSFER);
+        intent.setPackage("com.android.nfc");
         intent.putExtra(BeamStatusReceiver.EXTRA_ADDRESS, mRemoteDevice.getAddress());
         intent.putExtra(BeamStatusReceiver.EXTRA_INCOMING, mIncoming ?
                 BeamStatusReceiver.DIRECTION_INCOMING : BeamStatusReceiver.DIRECTION_OUTGOING);
