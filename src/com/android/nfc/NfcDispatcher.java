@@ -49,9 +49,11 @@ import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.nfc.tech.Ndef;
 import android.nfc.tech.NfcBarcode;
+import android.os.Binder;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Messenger;
+import android.os.Process;
 import android.os.RemoteException;
 import android.os.SystemProperties;
 import android.os.UserHandle;
@@ -102,6 +104,8 @@ class NfcDispatcher {
     private PendingIntent mOverrideIntent;
     private IntentFilter[] mOverrideFilters;
     private String[][] mOverrideTechLists;
+    private int mForegroundUid;
+    private ForegroundUtils mForegroundUtils;
     private boolean mProvisioningOnly;
 
     NfcDispatcher(Context context,
@@ -116,7 +120,8 @@ class NfcDispatcher {
         mScreenStateHelper = new ScreenStateHelper(context);
         mNfcUnlockManager = NfcUnlockManager.getInstance();
         mDeviceSupportsBluetooth = BluetoothAdapter.getDefaultAdapter() != null;
-
+        mForegroundUid = Process.INVALID_UID;
+        mForegroundUtils = ForegroundUtils.getInstance();
         synchronized (this) {
             mProvisioningOnly = provisionOnly;
         }
@@ -148,6 +153,29 @@ class NfcDispatcher {
         mOverrideIntent = intent;
         mOverrideFilters = filters;
         mOverrideTechLists = techLists;
+
+        if (mOverrideIntent != null) {
+            int callingUid = Binder.getCallingUid();
+            if (mForegroundUid != callingUid) {
+                mForegroundUtils.registerUidToBackgroundCallback(mForegroundCallback, callingUid);
+                mForegroundUid = callingUid;
+            }
+        }
+    }
+
+    final ForegroundUtils.Callback mForegroundCallback = new ForegroundCallbackImpl();
+
+    class ForegroundCallbackImpl implements ForegroundUtils.Callback {
+        @Override
+        public void onUidToBackground(int uid) {
+            synchronized (NfcDispatcher.this) {
+                if (mForegroundUid == uid) {
+                    if (DBG) Log.d(TAG, "Uid " + uid + " switch to background.");
+                    mForegroundUid = Process.INVALID_UID;
+                    setForegroundDispatch(null, null, null);
+                }
+            }
+        }
     }
 
     public synchronized void disableProvisioningMode() {
