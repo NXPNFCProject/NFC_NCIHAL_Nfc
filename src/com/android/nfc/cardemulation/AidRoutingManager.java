@@ -387,7 +387,11 @@ public class AidRoutingManager {
                       }
                     }
                 }
-              if (mDefaultRoute != mDefaultIsoDepRoute) {
+              // register default route in below cases:
+              // 1. mDefaultRoute is different with mDefaultIsoDepRoute
+              // 2. mDefaultRoute and mDefaultIsoDepRoute all equal to ROUTE_HOST
+              //    , which is used for screen off HCE scenarios
+              if (mDefaultRoute != mDefaultIsoDepRoute || mDefaultIsoDepRoute == ROUTE_HOST) {
                   if (NfcService.getInstance().getNciVersion()
                           >= NfcService.getInstance().NCI_VERSION_2_0) {
                       String emptyAid = "";
