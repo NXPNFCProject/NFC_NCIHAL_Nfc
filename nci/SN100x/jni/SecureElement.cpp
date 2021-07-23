@@ -718,7 +718,6 @@ void SecureElement::nfaHciCallback(tNFA_HCI_EVT event,
         }
         else if(eventData->rcvd_evt.evt_code == NFA_HCI_EVT_INIT_COMPLETED) {
             LOG(INFO) << StringPrintf("%s: NFA_HCI_EVT_INIT_COMPLETED; received", fn);
-            SecureElement::getInstance().notifySeInitialized();
         }
         else if (eventData->rcvd_evt.evt_code == NFA_HCI_EVT_CONNECTIVITY)
         {
@@ -746,6 +745,7 @@ void SecureElement::nfaHciCallback(tNFA_HCI_EVT event,
           LOG(INFO) << StringPrintf("%s: NFA_HCI_INIT_COMPLETED; received", fn);
           SyncEventGuard guard (sSecElem.mEERecoveryComplete);
           sSecElem.mEERecoveryComplete.notifyOne();
+          SecureElement::getInstance().notifySeInitialized();
           break;
         }
 #if (NXP_SRD == TRUE)
