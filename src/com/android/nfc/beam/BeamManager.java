@@ -27,6 +27,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Messenger;
+import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.util.Log;
 
@@ -36,7 +37,8 @@ import android.util.Log;
  */
 public class BeamManager implements Handler.Callback {
     private static final String TAG = "BeamManager";
-    private static final boolean DBG = false;
+    private static final boolean DBG =
+            SystemProperties.getBoolean("persist.nfc.debug_enabled", false);
 
     private static final String ACTION_WHITELIST_DEVICE =
             "android.btopp.intent.action.WHITELIST_DEVICE";

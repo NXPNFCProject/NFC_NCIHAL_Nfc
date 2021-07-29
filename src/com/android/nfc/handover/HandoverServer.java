@@ -28,6 +28,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.nfc.FormatException;
 import android.nfc.NdefMessage;
+import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.util.Log;
 
@@ -38,7 +39,7 @@ import java.util.Arrays;
 public final class HandoverServer {
     static final String HANDOVER_SERVICE_NAME = "urn:nfc:sn:handover";
     static final String TAG = "HandoverServer";
-    static final Boolean DBG = false;
+    static final Boolean DBG = SystemProperties.getBoolean("persist.nfc.debug_enabled", false);
 
     static final int MIU = 128;
 
