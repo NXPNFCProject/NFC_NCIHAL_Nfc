@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2019-2020 NXP
+*  Copyright 2019-2021 NXP
 *
 ******************************************************************************/
 
@@ -52,6 +52,7 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.nfc.cardemulation.NfcFServiceInfo;
 import android.nfc.cardemulation.NfcFCardEmulation;
 import android.nfc.cardemulation.HostNfcFService;
+import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.util.AtomicFile;
 import android.util.Log;
@@ -76,12 +77,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
-import android.os.SystemProperties;
 
 public class RegisteredNfcFServicesCache {
     static final String XML_INDENT_OUTPUT_FEATURE = "http://xmlpull.org/v1/doc/features.html#indent-output";
     static final String TAG = "RegisteredNfcFServicesCache";
-    static final boolean DBG = ((SystemProperties.get("persist.nfc.ce_debug").equals("1")) ? true : false);
+    static final boolean DBG = SystemProperties.getBoolean("persist.nfc.debug_enabled", false);
 
     final Context mContext;
     final AtomicReference<BroadcastReceiver> mReceiver;

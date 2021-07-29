@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018- 2019 NXP
+*  Copyright 2018-2021 NXP
 *
 ******************************************************************************/
 
@@ -47,6 +47,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.util.Log;
 import android.util.proto.ProtoOutputStream;
@@ -55,11 +56,10 @@ import com.android.nfc.NfcService;
 import com.android.nfc.NfcStatsLog;
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
-import android.os.SystemProperties;
 
 public class HostNfcFEmulationManager {
     static final String TAG = "HostNfcFEmulationManager";
-    static final boolean DBG = ((SystemProperties.get("persist.nfc.ce_debug").equals("1")) ? true : false);
+    static final boolean DBG = SystemProperties.getBoolean("persist.nfc.debug_enabled", false);
 
     static final int STATE_IDLE = 0;
     static final int STATE_W4_SERVICE = 1;
