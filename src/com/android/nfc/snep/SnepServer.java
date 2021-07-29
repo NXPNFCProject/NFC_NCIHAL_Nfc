@@ -23,6 +23,7 @@ import com.android.nfc.NfcService;
 
 import android.nfc.NdefMessage;
 import android.nfc.NfcAdapter;
+import android.os.SystemProperties;
 import android.util.Log;
 
 import java.io.IOException;
@@ -33,7 +34,8 @@ import java.io.IOException;
  */
 public final class SnepServer {
     private static final String TAG = "SnepServer";
-    private static final boolean DBG = false;
+    private static final boolean DBG =
+            SystemProperties.getBoolean("persist.nfc.debug_enabled", false);
     private static final int DEFAULT_MIU = 248;
     private static final int DEFAULT_RW_SIZE = 1;
 

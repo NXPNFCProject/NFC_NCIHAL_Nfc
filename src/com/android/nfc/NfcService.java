@@ -160,7 +160,7 @@ import java.util.TimerTask;
 import java.util.Timer;
 
 public class NfcService implements DeviceHostListener {
-    static final boolean DBG = true;
+    static final boolean DBG = SystemProperties.getBoolean("persist.nfc.debug_enabled", true);
     static final String TAG = "NfcService";
 
     public static final String SERVICE_NAME = "nfc";

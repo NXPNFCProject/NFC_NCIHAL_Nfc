@@ -30,7 +30,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2020 NXP
+*  Copyright 2018-2021 NXP
 *
 ******************************************************************************/
 package com.android.nfc.snep;
@@ -41,6 +41,7 @@ import com.android.nfc.sneptest.DtaSnepClient;
 import com.android.nfc.sneptest.ExtDtaSnepServer;
 
 import android.nfc.FormatException;
+import android.os.SystemProperties;
 import android.util.Log;
 
 import java.io.ByteArrayInputStream;
@@ -51,7 +52,7 @@ import java.util.Arrays;
 
 public class SnepMessenger {
     private static final String TAG = "SnepMessenger";
-    private static final boolean DBG = true;
+    static final boolean DBG = SystemProperties.getBoolean("persist.nfc.debug_enabled", true);
     private static final int HEADER_LENGTH = 6;
     final LlcpSocket mSocket;
     final int mFragmentLength;
