@@ -329,6 +329,7 @@ static int nfcManager_staticDualUicc_Precondition(int uiccSlot);
 static int nfcManager_setPreferredSimSlot(JNIEnv* e, jobject o, jint uiccSlot);
 static bool nfcManager_deactivateOnPollDisabled(tNFA_ACTIVATED& activated);
 static jint nfcManager_enableDebugNtf(JNIEnv* e, jobject o, jbyte fieldValue);
+static void waitIfRfStateActive();
 #endif
 static uint16_t sCurrentConfigLen;
 static uint8_t sConfig[256];
@@ -1501,12 +1502,9 @@ static jboolean nfcManager_unrouteAid(JNIEnv* e, jobject, jbyteArray aid) {
 static jboolean nfcManager_commitRouting(JNIEnv* e, jobject) {
 #if (NXP_EXTNS == TRUE)
   bool status = false;
-  SecureElement& se = SecureElement::getInstance();
 
-  if (se.isRfFieldOn() || se.mActivatedInListenMode) {
-    /* Delay is required to avoid update routing during RF Field session*/
-    usleep(1000 * 1000);
-  }
+  waitIfRfStateActive();
+
   if (sIsDisabling || !sIsNfaEnabled) {
     return status;
   }
@@ -1835,11 +1833,7 @@ static void nfcManager_enableDiscovery(JNIEnv* e, jobject o,
   tNFA_TECHNOLOGY_MASK tech_mask = DEFAULT_TECH_MASK;
   struct nfc_jni_native_data* nat = getNative(e, o);
 #if(NXP_EXTNS == TRUE)
-  SecureElement& se = SecureElement::getInstance();
-  if (se.isRfFieldOn() || se.mActivatedInListenMode) {
-    /* Delay is required if CE is ongoing */
-    usleep(1000 * 1000);
-  }
+  waitIfRfStateActive();
   storeLastDiscoveryParams(technologies_mask, enable_lptd,
         reader_mode, enable_host_routing ,enable_p2p, restart);
 #endif
@@ -4402,6 +4396,34 @@ static jint nfcManager_enableDebugNtf(JNIEnv* e, jobject o, jbyte fieldValue) {
   startRfDiscovery(true);
   return status;
 }
+
+/**********************************************************************************
+**
+** Function:       waitIfRfStateActive
+**
+** Description:    This api is used to wait/delay if RF session is active.
+**
+** Returns:        None
+**
+**********************************************************************************/
+static void waitIfRfStateActive() {
+  uint16_t delayLoopCount = 0;
+  uint16_t delayInMs = 50;
+  const uint16_t maxDelayInMs = 1000;
+  uint16_t maxDelayLoopCount = maxDelayInMs/delayInMs;
+
+  SecureElement& se = SecureElement::getInstance();
+
+  while (se.isRfFieldOn() || se.mActivatedInListenMode) {
+    /* Delay is required to avoid update routing during RF Field session*/
+    usleep(delayInMs * 1000);
+    delayLoopCount++;
+    if (delayLoopCount > maxDelayLoopCount) {
+      break;
+    }
+  }
+}
+
 /*******************************************************************************
 **
 ** Function:        nfcManager_setPreferredSimSlot()
