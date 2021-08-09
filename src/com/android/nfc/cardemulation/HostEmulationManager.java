@@ -205,7 +205,7 @@ public class HostEmulationManager {
                     }
                     if (defaultServiceInfo.requiresScreenOn() && !mPowerManager.isScreenOn()) {
                         // Just ignore all future APDUs
-                        mState = STATE_W4_DEACTIVATE;
+                        NfcService.getInstance().sendData(AID_NOT_FOUND);
                         return;
                     }
                     // In no circumstance should this be an OffHostService -
