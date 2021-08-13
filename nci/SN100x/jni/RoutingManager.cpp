@@ -1822,7 +1822,7 @@ tNFA_HANDLE RoutingManager::checkAndUpdateAltRoute(int& routeLoc) {
 
     if (!isSeActive) {
       fallBackOption =
-          NfcConfig::getUnsigned(NAME_CHECK_DEFAULT_PROTO_SE_ID, ROUTE_DISABLE);
+          NfcConfig::getUnsigned(NAME_CHECK_DEFAULT_PROTO_SE_ID, ROUTE_ESE);
         DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
             "%s: fallBackOption - 0x%lX  routeLoc = 0x%X",
             __func__, fallBackOption, routeLoc);
