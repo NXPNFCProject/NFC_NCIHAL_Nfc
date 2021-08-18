@@ -16,6 +16,8 @@
 
 package com.android.nfc.handover;
 
+import static android.view.WindowManager.LayoutParams.SYSTEM_FLAG_HIDE_NON_SYSTEM_OVERLAY_WINDOWS;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothDevice;
@@ -35,6 +37,7 @@ public class ConfirmConnectActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().addSystemFlags(SYSTEM_FLAG_HIDE_NON_SYSTEM_OVERLAY_WINDOWS);
         AlertDialog.Builder builder = new AlertDialog.Builder(this,
                 R.style.DialogAlertDayNight);
         Intent launchIntent = getIntent();
