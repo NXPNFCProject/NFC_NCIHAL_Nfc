@@ -352,8 +352,6 @@ public interface DeviceHost {
     public boolean accessControlForCOSU (int mode);
 
     public int getFWVersion();
-    public byte[] readerPassThruMode(byte status, byte modulationTyp);
-    public byte[] transceiveAppData(byte[] data);
     boolean isNfccBusy();
     int setTransitConfig(String configs);
     public int getRemainingAidTableSize();
