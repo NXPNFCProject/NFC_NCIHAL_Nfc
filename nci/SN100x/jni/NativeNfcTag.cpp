@@ -1818,18 +1818,7 @@ static jboolean nativeNfcTag_doPresenceCheck(JNIEnv*, jobject) {
     status =
         NFA_RwPresenceCheck(NfcTag::getInstance().getPresenceCheckAlgorithm());
     if (status == NFA_STATUS_OK) {
-#if (NXP_EXTNS == TRUE)
-      int pCtimeout = NfcConfig::getUnsigned(NAME_NXP_PRESENCE_CHECK_TIMEOUT,
-                                             DEFAULT_PRESENCE_CHECK_TIMEOUT);
-      if (sPresenceCheckEvent.wait(pCtimeout) == false)
-      {
-        LOG(ERROR) << StringPrintf("%s: timeout waiting presence check",
-                                   __func__);
-        sIsTagPresent = false;
-      }
-#else
       sPresenceCheckEvent.wait();
-#endif
       isPresent = sIsTagPresent ? JNI_TRUE : JNI_FALSE;
     }
   }
