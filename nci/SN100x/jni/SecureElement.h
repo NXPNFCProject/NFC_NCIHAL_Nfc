@@ -163,7 +163,8 @@ void getEeHandleList(tNFA_HANDLE *list, uint8_t* count);
   uint8_t mNumEePresent;          // actual number of usable EE's
   uint8_t     mCreatedPipe;
   static uint8_t mStaticPipeProp;
-  Mutex           mMutex; // protects fields below
+  Mutex mTimeoutHandleMutex; // Used to Sync handleTransceiveTimeout() & releasePendingTransceive()
+  Mutex mMutex; // protects fields below
   struct timespec mLastRfFieldToggle; // last time RF field went off
 
 
@@ -215,6 +216,18 @@ bool notifySeInitialized();
 **
 *******************************************************************************/
 static void nfaHciCallback(tNFA_HCI_EVT event, tNFA_HCI_EVT_DATA* eventData);
+
+/*******************************************************************************
+**
+** Function:        handleTransceiveTimeout
+**
+** Description:     Reset eSE via power link & Mode set command
+**                  after Transceive Timed out.
+**
+** Returns:         None
+**
+*******************************************************************************/
+void handleTransceiveTimeout(uint8_t powerConfigValue);
 
 public:
 #if(NXP_EXTNS == TRUE)

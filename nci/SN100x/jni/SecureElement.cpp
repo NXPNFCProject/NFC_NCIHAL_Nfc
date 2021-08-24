@@ -29,6 +29,7 @@
 #include "RoutingManager.h"
 #include "HciEventManager.h"
 #include "MposManager.h"
+#include "SyncEvent.h"
 #if (NXP_SRD == TRUE)
 #include "SecureDigitization.h"
 #endif
@@ -38,6 +39,7 @@ SecureElement SecureElement::sSecElem;
 const char* SecureElement::APP_NAME = "nfc_jni";
 extern bool nfc_debug_enabled;
 extern bool isDynamicUiccEnabled;
+#define ONE_SECOND_MS 1000
 
 namespace android
 {
@@ -876,16 +878,9 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
         {
             mAbortEvent.wait();
         }
-        if ((mAbortEventWaitOk == false) &&
+        if ((mAbortEventWaitOk == false) && mIsWiredModeOpen &&
             (android::nfcManager_isNfcDisabling() != true)) {
-          setNfccPwrConfig(NFCC_DECIDES);
-
-          SecEle_Modeset(NFCEE_DISABLE);
-          usleep(1000 * 1000);
-
-          setNfccPwrConfig(POWER_ALWAYS_ON | COMM_LINK_ACTIVE);
-          SecEle_Modeset(NFCEE_ENABLE);
-          usleep(200 * 1000);
+          handleTransceiveTimeout(NFCC_DECIDES);
 
           LOG(INFO) << StringPrintf("%s: ABORT no response; power cycle  ", fn);
         }
@@ -893,13 +888,7 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
     {
         LOG(ERROR) << StringPrintf("%s: timeout 2 %x",fn ,mTransceiveStatus);
         //Try Mode Set on/off
-        setNfccPwrConfig(POWER_ALWAYS_ON);
-        SecEle_Modeset(NFCEE_DISABLE);
-
-        usleep(1000 * 1000);
-
-        setNfccPwrConfig(POWER_ALWAYS_ON|COMM_LINK_ACTIVE);
-        SecEle_Modeset(NFCEE_ENABLE);
+        handleTransceiveTimeout(POWER_ALWAYS_ON);
         sendEvent(SecureElement::EVT_END_OF_APDU_TRANSFER);
         {
             tNFA_EE_INFO *pEE = findEeByHandle (EE_HANDLE_0xF3);
@@ -910,14 +899,7 @@ bool SecureElement::transceive (uint8_t* xmitBuffer, int32_t xmitBufferSize, uin
               LOG(INFO) << StringPrintf("%s: NFA_EE_MODE_SET_EVT reset status; (0x%04x)", fn, pEE->ee_status);
               if(eeStatus != NFA_EE_STATUS_ACTIVE)
               {
-                  setNfccPwrConfig(NFCC_DECIDES);
-
-                  SecEle_Modeset(NFCEE_DISABLE);
-                  usleep(200 * 1000);
-
-                  setNfccPwrConfig(POWER_ALWAYS_ON|COMM_LINK_ACTIVE);
-                  SecEle_Modeset(NFCEE_ENABLE);
-                  usleep(200 * 1000);
+                  handleTransceiveTimeout(NFCC_DECIDES);
                   LOG(INFO) << StringPrintf("%s: NFA_EE_MODE_SET_EVT; power cycle complete ", fn);
               }
             }
@@ -1741,6 +1723,7 @@ void SecureElement::finalize() {
 *******************************************************************************/
 void SecureElement::releasePendingTransceive()
 {
+    AutoMutex mutex(mTimeoutHandleMutex);
     static const char fn [] = "SecureElement::releasePendingTransceive";
     LOG(INFO) << StringPrintf("%s: Entered", fn);
     SyncEventGuard guard (mTransceiveEvent);
@@ -1839,3 +1822,33 @@ uint16_t SecureElement::getEeStatus(uint16_t eehandle) {
   return ee_status;
 }
 
+/*******************************************************************************
+**
+** Function:        handleTransceiveTimeout
+**
+** Description:     Reset eSE via power link & Mode set command
+**                  after Transceive Timed out.
+**
+** Returns:         None
+**
+*******************************************************************************/
+void SecureElement::handleTransceiveTimeout(uint8_t powerConfigValue) {
+    AutoMutex mutex(mTimeoutHandleMutex);
+    SyncEvent sTimeOutDelaySyncEvent;
+    if (!mIsWiredModeOpen) return;
+    setNfccPwrConfig(powerConfigValue);
+
+    SecEle_Modeset(NFCEE_DISABLE);
+    {
+        SyncEventGuard gaurd(sTimeOutDelaySyncEvent);
+        sTimeOutDelaySyncEvent.wait(1 * ONE_SECOND_MS);
+    }
+
+
+    setNfccPwrConfig(POWER_ALWAYS_ON | COMM_LINK_ACTIVE);
+    SecEle_Modeset(NFCEE_ENABLE);
+    {
+        SyncEventGuard gaurd(sTimeOutDelaySyncEvent);
+        sTimeOutDelaySyncEvent.wait(200);
+    }
+}
