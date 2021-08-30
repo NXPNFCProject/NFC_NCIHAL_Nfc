@@ -15,9 +15,9 @@
  */
 /******************************************************************************
  *
- *  The original Work has been changed by NXP Semiconductors.
+ *  The original Work has been changed by NXP.
  *
- *  Copyright (C) 2015-2020 NXP Semiconductors
+ *  Copyright 2015-2021 NXP
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -3825,6 +3825,7 @@ void* spiEventHandlerThread(void* arg) {
   }
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
   pthread_cleanup_pop(1);
+  android::mSPIDwpSyncMutex.unlock();
   return NULL;
 }
 

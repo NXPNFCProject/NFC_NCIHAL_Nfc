@@ -6678,7 +6678,7 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
         }
       }
       actualReadCntxLen = read(fileStream, &readCntxLen, 1);
-      if (readCntxLen > 0x00) {
+      if (readCntxLen > 0x00 && readCntxLen <= 0x01) {
         actualReadCntx = read(fileStream, uiccContext, readCntxLen);
         readCrc = (uint8_t*)malloc(2 * sizeof(uint8_t));
         actualReadCrc = read(fileStream, readCrc, sizeof(crcVal));
