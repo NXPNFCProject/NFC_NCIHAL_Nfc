@@ -662,6 +662,10 @@ void NfcTag::discoverTechnologies(tNFA_DISC_RESULT& discoveryData) {
   }
   mTechHandlesDiscData[index] = discovery_ntf.rf_disc_id;
   mTechLibNfcTypesDiscData[index] = discovery_ntf.protocol;
+#if (NXP_EXTNS == TRUE)
+  memcpy(&(mTechParams[index]), &(discovery_ntf.rf_tech_param),
+         sizeof(discovery_ntf.rf_tech_param));
+#endif
   if (mNumDiscTechList < MAX_NUM_TECHNOLOGY) {
     mNumDiscTechList++;
 
