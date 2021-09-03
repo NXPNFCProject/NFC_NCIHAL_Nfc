@@ -54,6 +54,7 @@ import android.nfc.cardemulation.ApduServiceInfo;
 import android.nfc.cardemulation.CardEmulation;
 import android.nfc.cardemulation.HostApduService;
 import android.nfc.cardemulation.OffHostApduService;
+import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.util.AtomicFile;
 import android.util.Log;
@@ -79,7 +80,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import com.android.nfc.NfcService;
-import android.os.SystemProperties;
 
 /**
  * This class is inspired by android.content.pm.RegisteredServicesCache
@@ -91,8 +91,7 @@ import android.os.SystemProperties;
 public class RegisteredServicesCache {
     static final String XML_INDENT_OUTPUT_FEATURE = "http://xmlpull.org/v1/doc/features.html#indent-output";
     static final String TAG = "RegisteredServicesCache";
-    static final boolean DEBUG =
-        ((SystemProperties.get("persist.nfc.ce_debug").equals("1")) ? true : false);
+    static final boolean DEBUG = SystemProperties.getBoolean("persist.nfc.debug_enabled", false);
     static final String SERVICE_STATE_FILE_VERSION="1.0";
 
     final Context mContext;

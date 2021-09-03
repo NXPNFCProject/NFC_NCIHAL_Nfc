@@ -39,6 +39,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.nfc.cardemulation.ApduServiceInfo;
 import android.nfc.cardemulation.CardEmulation;
+import android.os.SystemProperties;
 import android.util.Log;
 import android.util.proto.ProtoOutputStream;
 
@@ -57,7 +58,6 @@ import java.util.NavigableMap;
 import java.util.PriorityQueue;
 import java.util.TreeMap;
 import com.nxp.nfc.NfcConstants;
-import android.os.SystemProperties;
 public class RegisteredAidCache {
     static final String TAG = "RegisteredAidCache";
 

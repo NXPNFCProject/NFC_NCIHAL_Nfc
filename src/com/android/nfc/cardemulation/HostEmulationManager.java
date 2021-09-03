@@ -51,6 +51,7 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.PowerManager;
 import android.os.RemoteException;
+import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.util.Log;
 import android.util.proto.ProtoOutputStream;
@@ -61,11 +62,10 @@ import com.android.nfc.cardemulation.RegisteredAidCache.AidResolveInfo;
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import android.os.SystemProperties;
 
 public class HostEmulationManager {
     static final String TAG = "HostEmulationManager";
-    static final boolean DBG = ((SystemProperties.get("persist.nfc.ce_debug").equals("1")) ? true : false);
+    static final boolean DBG = SystemProperties.getBoolean("persist.nfc.debug_enabled", false);
 
     static final int STATE_IDLE = 0;
     static final int STATE_W4_SELECT = 1;
@@ -205,7 +205,7 @@ public class HostEmulationManager {
                     }
                     if (defaultServiceInfo.requiresScreenOn() && !mPowerManager.isScreenOn()) {
                         // Just ignore all future APDUs
-                        mState = STATE_W4_DEACTIVATE;
+                        NfcService.getInstance().sendData(AID_NOT_FOUND);
                         return;
                     }
                     // In no circumstance should this be an OffHostService -
