@@ -543,7 +543,7 @@ static jbyteArray nativeNfcSecureElement_doTransceive(JNIEnv* e, jobject,
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
       "%s: enter; handle=0x%X; buf len=%zu", __func__, handle, bytes.size());
   tranStatus = SecureElement::getInstance().transceive(
-      reinterpret_cast<uint8_t*>(&bytes[0]), bytes.size(), recvBuffer,
+      reinterpret_cast<uint8_t*>(&bytes[0]), bytes.size(), recvBuffer.get(),
       recvBufferMaxSize, recvBufferActualSize, WIRED_MODE_TRANSCEIVE_TIMEOUT);
   if (tranStatus == TRANSCEIVE_STATUS_MAX_WTX_REACHED) {
     LOG(ERROR) << StringPrintf("%s: Wired Mode Max WTX count reached",
@@ -556,7 +556,8 @@ static jbyteArray nativeNfcSecureElement_doTransceive(JNIEnv* e, jobject,
   // copy results back to java
   jbyteArray result = e->NewByteArray(recvBufferActualSize);
   if (result != NULL) {
-    e->SetByteArrayRegion(result, 0, recvBufferActualSize, (jbyte*)recvBuffer);
+    e->SetByteArrayRegion(result, 0, recvBufferActualSize,
+                          (jbyte*)recvBuffer.get());
   }
   if (nfcFL.nfcNxpEse &&
       nfcFL.eseFL._NFCC_ESE_UICC_CONCURRENT_ACCESS_PROTECTION &&

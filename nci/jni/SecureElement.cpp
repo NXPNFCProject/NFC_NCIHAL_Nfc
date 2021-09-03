@@ -4587,7 +4587,7 @@ tNFA_STATUS SecureElement::SecElem_sendEvt_Abort() {
 
   SyncEventGuard guard(mAbortEvent);
   nfaStat = NFA_HciSendEvent(mNfaHciHandle, mNewPipeId, EVT_ABORT, 0, NULL,
-                             atr_len, recvBuffer, timeoutMillisec);
+                             atr_len, recvBuffer.get(), timeoutMillisec);
   if (nfaStat == NFA_STATUS_OK) {
     mAbortEvent.wait();
   }
