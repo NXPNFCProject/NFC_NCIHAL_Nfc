@@ -659,7 +659,7 @@ public class NfcService implements DeviceHostListener {
     }
 
     @Override
-    public void onSeInitialized() {
+    public void onEeUpdated() {
         sendMessage(NfcService.MSG_SE_INIT, null);
     }
 

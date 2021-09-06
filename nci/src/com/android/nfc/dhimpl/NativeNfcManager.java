@@ -561,10 +561,6 @@ public class NativeNfcManager implements DeviceHost {
         mListener.onSeListenDeactivated();
     }
 
-    private void notifySeInitialized() {
-        mListener.onSeInitialized();
-    }
-
     private void notifySrdEvt(int event) {
         mListener.onNotifySrdEvt(event);
     }
@@ -626,6 +622,11 @@ public class NativeNfcManager implements DeviceHost {
     private void notifyTransactionListeners(byte[] aid, byte[] data, String evtSrc) {
         mListener.onNfcTransactionEvent(aid, data, evtSrc);
     }
+
+    private void notifyEeUpdated() {
+        mListener.onEeUpdated();
+    }
+
     /**
      * Notifies Tag abort operation
      */
