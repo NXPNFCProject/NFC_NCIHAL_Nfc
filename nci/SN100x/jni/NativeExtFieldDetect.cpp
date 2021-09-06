@@ -29,8 +29,6 @@ using namespace std;
 
 extern bool nfc_debug_enabled;
 
-#define LX_DEBUG_CFG_MASK 0x00FF
-
 NativeExtFieldDetect NativeExtFieldDetect::sNativeExtFieldDetectInstance;
 IntervalTimer mEfdmTimer;
 
@@ -75,7 +73,6 @@ NativeExtFieldDetect& NativeExtFieldDetect::getInstance() {
 int NativeExtFieldDetect::startExtendedFieldDetectMode(JNIEnv* e, jobject o,
                                                        jint detectionTimeout) {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
-  unsigned long lx_debug_cfg = 0;
 
   efdmTimerValue = detectionTimeout;
 
@@ -86,16 +83,12 @@ int NativeExtFieldDetect::startExtendedFieldDetectMode(JNIEnv* e, jobject o,
     return EFDSTATUS_ERROR_ALREADY_STARTED;
   }
   int efdStatus = EFDSTATUS_FAILED;
-  unsigned long num = 0x00;
-  uint8_t efdmConfig = 0x00;
-  const uint8_t EFDM_MASK = 0xFF;
-
-  if (NfcConfig::hasKey(NAME_NXP_EXTENDED_FIELD_DETECT_LX_DEBUG)) {
-    num = NfcConfig::getUnsigned(NAME_NXP_EXTENDED_FIELD_DETECT_LX_DEBUG);
-    if (num == 0x0000) {
+  uint8_t num = 0x00;
+  const uint8_t EXTENDED_FIELD_TAG_ENABLE = 0x01;
+  if (NfcConfig::hasKey(NAME_NXP_EXTENDED_FIELD_DETECT_MODE)) {
+    num = NfcConfig::getUnsigned(NAME_NXP_EXTENDED_FIELD_DETECT_MODE);
+    if (num != EXTENDED_FIELD_TAG_ENABLE) {
       return EFDSTATUS_ERROR_FEATURE_DISABLED_IN_CONFIG;
-    } else {
-      efdmConfig = (num & EFDM_MASK);
     }
   } else {
     return EFDSTATUS_ERROR_FEATURE_NOT_SUPPORTED;
@@ -106,20 +99,11 @@ int NativeExtFieldDetect::startExtendedFieldDetectMode(JNIEnv* e, jobject o,
     android::startRfDiscovery(false);
   }
 
-  if (NfcConfig::hasKey(NAME_NXP_CORE_PROP_SYSTEM_DEBUG)) {
-    lx_debug_cfg = NfcConfig::getUnsigned(NAME_NXP_CORE_PROP_SYSTEM_DEBUG);
-    mLxdebug_cfg = (uint8_t)lx_debug_cfg & LX_DEBUG_CFG_MASK;
-  }
-
-  /* Configure extended field detect Debug notification based on config
-   * option.*/
-  if (configureExtFieldDetectDebugNtf(efdmConfig) == NFA_STATUS_OK) {
-    /*Configure to keep desired Poll Phases (as before) but only add
-     * FieldDetect Mode for Listen Phase */
-    NFA_SetFieldDetectMode(true);
-    if (NFA_DisableListening() == NFA_STATUS_OK) {
-      efdStatus = EFDSTATUS_SUCCESS;
-    }
+  /*Configure to keep desired Poll Phases (as before) but only add
+   * FieldDetect Mode for Listen Phase */
+  NFA_SetFieldDetectMode(true);
+  if (NFA_DisableListening() == NFA_STATUS_OK) {
+    efdStatus = EFDSTATUS_SUCCESS;
   }
 
   if (efdStatus == EFDSTATUS_SUCCESS) {
@@ -169,14 +153,11 @@ int NativeExtFieldDetect::stopExtendedFieldDetectMode(JNIEnv* e, jobject o) {
     android::startRfDiscovery(false);
   }
 
-  /* Reset extended field detect debug notification.*/
-  if (configureExtFieldDetectDebugNtf(mLxdebug_cfg) == NFA_STATUS_OK) {
-    /*Configure to keep desired Poll Phases (as before) but only add
-     * FieldDetect Mode for Listen Phase */
-    NFA_SetFieldDetectMode(false);
-    if (NFA_EnableListening() == NFA_STATUS_OK) {
-      efdStatus = EFDSTATUS_SUCCESS;
-    }
+  /*Configure to keep desired Poll Phases (as before) but only add
+   * FieldDetect Mode for Listen Phase */
+  NFA_SetFieldDetectMode(false);
+  if (NFA_EnableListening() == NFA_STATUS_OK) {
+    efdStatus = EFDSTATUS_SUCCESS;
   }
 
   /*Start RF discovery*/
@@ -264,39 +245,7 @@ void NativeExtFieldDetect::postEfdmTimeoutEvt(union sigval) {
   CHECK(!e->ExceptionCheck());
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
 }
-/**********************************************************************************
-**
-** Function:       configureExtFieldDetectDebugNtf
-**
-** Description:    Enable & disable the Lx debug notifications
-** Byte 0:
-**  b7|b6|b5|b4|b3|b2|b1|b0|
-**    |  |x |  |  |  |  |  |    Modulation Detected
-**    |  |  |X |  |  |  |  |    Enable L1 Events (ISO14443-4, ISO18092)
-**    |  |  |  |X |  |  |  |    Enable L2 Reader Events(ROW specific)
-**    |  |  |  |  |X |  |  |    Enable Felica SystemCode
-**    |  |  |  |  |  |X |  |    Enable Felica RF (all Felica CM events)
-**    |  |  |  |  |  |  |X |    Enable L2 Events CE (ISO14443-3, RF Field
-*ON/OFF)
-** Byte 1: Reserved for future use, shall always be 0x00.
-**
-** Returns:        returns 0x00 in success case, 0x03 in failure case,
-**                 0x01 is Nfc is off
-**********************************************************************************/
-int NativeExtFieldDetect::configureExtFieldDetectDebugNtf(uint8_t fieldValue) {
-  uint8_t cmd_lxdebug[] = {0x20, 0x02, 0x06, 0x01, 0xA0,
-                           0x1D, 0x02, 0x00, 0x00};
-  tNFA_STATUS status = NFA_STATUS_FAILED;
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s : enter", __func__);
 
-  cmd_lxdebug[7] =
-      (uint8_t)(fieldValue & LX_DEBUG_CFG_MASK); /* Lx debug ntfs */
-  status = android::NxpNfc_Write_Cmd_Common(sizeof(cmd_lxdebug), cmd_lxdebug);
-
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s : exit", __func__);
-
-  return status;
-}
 /*******************************************************************************
 **
 ** Function:      isextendedFieldDetectMode
@@ -334,7 +283,6 @@ void NativeExtFieldDetect::initEfdmNativeStruct(JNIEnv* e, jobject o) {
 *******************************************************************************/
 void NativeExtFieldDetect::initialize(nfc_jni_native_data* native) {
   mNativeData = native;
-  mLxdebug_cfg = 0x00;
 }
 /*******************************************************************************
 **

@@ -149,25 +149,5 @@ class NativeExtFieldDetect {
   static NativeExtFieldDetect sNativeExtFieldDetectInstance;
   int efdmTimerValue;
   static const int EFDM_TIMEOUT_EVT = 0xF2;
-  /**********************************************************************************
-  **
-  ** Function:       configureExtFieldDetectDebugNtf
-  **
-  ** Description:    Enable & disable the Lx debug notifications
-  ** Byte 0:
-  **  b7|b6|b5|b4|b3|b2|b1|b0|
-  **    |  |x |  |  |  |  |  |    Modulation Detected
-  **    |  |  |X |  |  |  |  |    Enable L1 Events (ISO14443-4, ISO18092)
-  **    |  |  |  |X |  |  |  |    Enable L2 Reader Events(ROW specific)
-  **    |  |  |  |  |X |  |  |    Enable Felica SystemCode
-  **    |  |  |  |  |  |X |  |    Enable Felica RF (all Felica CM events)
-  **    |  |  |  |  |  |  |X |    Enable L2 Events CE (ISO14443-3, RF Field
-  *ON/OFF)
-  ** Byte 1: Reserved for future use, shall always be 0x00.
-  **
-  ** Returns:        returns 0x00 in success case, 0x03 in failure case,
-  **                 0x01 is Nfc is off
-  **********************************************************************************/
-  int configureExtFieldDetectDebugNtf(uint8_t fieldValue);
 };
 #endif
