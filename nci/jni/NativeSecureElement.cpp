@@ -171,7 +171,9 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection(JNIEnv*,
         LOG(ERROR) << StringPrintf("Modeset failed");
       }
     }
-    usleep(150000); /*provide enough delay if NFCC enter in recovery*/
+    SyncEvent delayEvent;
+    SyncEventGuard guard(delayEvent);
+    delayEvent.wait(150000); /*provide enough delay if NFCC enter in recovery*/
   }
 #endif
   stat = se.activate(
