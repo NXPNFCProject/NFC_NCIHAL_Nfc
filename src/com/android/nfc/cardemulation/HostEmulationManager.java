@@ -397,11 +397,11 @@ public class HostEmulationManager {
 
         Intent intent = new Intent(HostApduService.SERVICE_INTERFACE);
         intent.setComponent(service);
-        mLastBoundPaymentServiceName = service;
         if (mContext.bindServiceAsUser(intent, mPaymentConnection,
                 Context.BIND_AUTO_CREATE | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS,
                 new UserHandle(userId))) {
           mPaymentServiceBound = true;
+          mLastBoundPaymentServiceName = service;
         } else {
             Log.e(TAG, "Could not bind (persistent) payment service.");
         }
