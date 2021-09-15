@@ -1,0 +1,8 @@
+{
+  "postsubmit": [
+    {
+      "name": "NfcNciInstrumentationTests",
+      "keywords": ["primary-device"]
+    }
+  ]
+}
