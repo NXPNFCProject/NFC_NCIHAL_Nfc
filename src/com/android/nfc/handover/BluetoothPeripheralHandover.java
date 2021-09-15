@@ -484,7 +484,10 @@ public class BluetoothPeripheralHandover implements BluetoothProfile.ServiceList
                 mRetryCount = 0;
                 nextStepConnect();
             } else if (bond == BluetoothDevice.BOND_NONE) {
-                if (mRetryCount < MAX_RETRY_COUNT) {
+                int reason = intent.getIntExtra(BluetoothDevice.EXTRA_REASON,
+                        BluetoothAdapter.ERROR);
+                if (mRetryCount < MAX_RETRY_COUNT
+                        && reason != BluetoothDevice.UNBOND_REASON_AUTH_FAILED) {
                     sendRetryMessage(RETRY_PAIRING_WAIT_TIME_MS);
                 } else {
                     toast(getToastString(R.string.pairing_peripheral_failed));
