@@ -1249,6 +1249,10 @@ public class NfcService implements DeviceHostListener {
             // to avoid the tag being discovered again.
             maybeDisconnectTarget();
 
+            synchronized (NfcService.this) {
+                mPollingDisableDeathRecipients.clear();
+                mReaderModeParams = null;
+            }
             mNfcDispatcher.setForegroundDispatch(null, null, null);
 
 

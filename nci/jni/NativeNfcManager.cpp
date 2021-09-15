@@ -3425,6 +3425,7 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
     sDiscoveryEnabled = false;
     sIsDisabling = false;
     sPollingEnabled = false;
+    sReaderModeEnabled = false;
     //    sIsSecElemSelected = false;
     sIsSecElemSelected = 0;
     gActivated = false;
