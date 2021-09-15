@@ -128,7 +128,7 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
                 true, mSettingsObserver, UserHandle.USER_ALL);
 
         // Load current settings defaults for payments
-        loadDefaultsFromSettings(ActivityManager.getCurrentUser());
+        loadDefaultsFromSettings(ActivityManager.getCurrentUser(), false);
     }
 
     private final class SettingsObserver extends ContentObserver {
@@ -143,11 +143,11 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
             // a change made for another user, we'll sync it down
             // on user switch.
             int currentUser = ActivityManager.getCurrentUser();
-            loadDefaultsFromSettings(currentUser);
+            loadDefaultsFromSettings(currentUser, false);
         }
     };
 
-    void loadDefaultsFromSettings(int userId) {
+    void loadDefaultsFromSettings(int userId, boolean force) {
         boolean paymentDefaultChanged = false;
         boolean paymentPreferForegroundChanged = false;
         // Load current payment default from settings
@@ -177,10 +177,10 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
             }
         }
         // Notify if anything changed
-        if (paymentDefaultChanged) {
+        if (paymentDefaultChanged || force) {
             mCallback.onPreferredPaymentServiceChanged(newDefault);
         }
-        if (paymentPreferForegroundChanged) {
+        if (paymentPreferForegroundChanged || force) {
             computePreferredForegroundService();
         }
     }
@@ -378,7 +378,7 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
     }
 
     public void onUserSwitched(int userId) {
-        loadDefaultsFromSettings(userId);
+        loadDefaultsFromSettings(userId, true);
     }
 
     public boolean packageHasPreferredService(String packageName) {

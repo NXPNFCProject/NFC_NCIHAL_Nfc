@@ -827,6 +827,15 @@ public class NfcService implements DeviceHostListener {
         filter.addAction(Intent.ACTION_USER_SWITCHED);
         mContext.registerReceiverAsUser(mReceiver, UserHandle.ALL, filter, null, null);
 
+        // Listen for work profile adds or removes.
+        IntentFilter managedProfileFilter = new IntentFilter();
+        managedProfileFilter.addAction(Intent.ACTION_MANAGED_PROFILE_ADDED);
+        managedProfileFilter.addAction(Intent.ACTION_MANAGED_PROFILE_REMOVED);
+        managedProfileFilter.addAction(Intent.ACTION_MANAGED_PROFILE_AVAILABLE);
+        managedProfileFilter.addAction(Intent.ACTION_MANAGED_PROFILE_UNAVAILABLE);
+        mContext.registerReceiverAsUser(mManagedProfileReceiver, UserHandle.ALL,
+                managedProfileFilter, null, null);
+
         IntentFilter ownerFilter = new IntentFilter(Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE);
         ownerFilter.addAction(Intent.ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE);
         ownerFilter.addAction(Intent.ACTION_SHUTDOWN);
@@ -4738,6 +4747,26 @@ public class NfcService implements DeviceHostListener {
         }
     };
 
+    private final BroadcastReceiver mManagedProfileReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            UserHandle user = intent.getParcelableExtra(Intent.EXTRA_USER);
+
+            // User should be filled for below intents, check the existence.
+            if (user == null) {
+                Log.d(TAG, intent.getAction() + " broadcast without EXTRA_USER.");
+                return;
+            }
+
+            if (action.equals(Intent.ACTION_MANAGED_PROFILE_ADDED) ||
+                    action.equals(Intent.ACTION_MANAGED_PROFILE_AVAILABLE) ||
+                    action.equals(Intent.ACTION_MANAGED_PROFILE_REMOVED) ||
+                    action.equals(Intent.ACTION_MANAGED_PROFILE_UNAVAILABLE)) {
+                mCardEmulationManager.onManagedProfileChanged();
+            }
+        }
+    };
 
     private final BroadcastReceiver mOwnerReceiver = new BroadcastReceiver() {
         @Override
