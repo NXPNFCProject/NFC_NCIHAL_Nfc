@@ -64,6 +64,8 @@ public interface DeviceHost {
          */
         public void onNotifySrdEvt(int event);
 
+        public void onNotifyEfdmEvt(int efdmEvt);
+
         /**
          * Notifies P2P Device detected, to activate LLCP link
          */
@@ -366,4 +368,6 @@ public interface DeviceHost {
     public boolean isLockedT4tData();
     public boolean doClearNdefT4tData();
     public int doEnableDebugNtf(byte fieldValue);
+    public int startExtendedFieldDetectMode(int detectionTimeout);
+    public int stopExtendedFieldDetectMode();
 }

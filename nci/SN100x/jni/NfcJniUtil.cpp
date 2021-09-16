@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2020 NXP
+*  Copyright 2018-2021 NXP
 *
 ******************************************************************************/
 #include "NfcJniUtil.h"
@@ -88,6 +88,8 @@ jint JNI_OnLoad(JavaVM* jvm, void*) {
   if (android::register_com_android_nfc_NativeNfcMposManager (e) == -1)
     return JNI_ERR;
   if (android::register_com_android_nfc_NativeT4tNfcee(e) == -1)
+    return JNI_ERR;
+  if (android::register_com_android_nfc_NativeExtFieldDetect(e) == -1)
     return JNI_ERR;
   NativeJniExtns::getInstance().initialize(e);
 #endif
