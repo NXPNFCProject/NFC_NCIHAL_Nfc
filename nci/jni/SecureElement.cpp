@@ -3782,6 +3782,9 @@ void* spiEventHandlerThread(void* arg) {
         android::mSPIDwpSyncMutex.unlock();
       } else if (nfcFL.eseFL._ESE_SVDD_SYNC) {
         nfaVSC_SVDDSyncOnOff(true);
+        android::mSPIDwpSyncMutex.unlock();
+      } else  {
+        android::mSPIDwpSyncMutex.unlock();
       }
     } else if (nfcFL.eseFL._ESE_SVDD_SYNC &&
                ((usEvent & P61_STATE_SPI_SVDD_SYNC_END) ||
@@ -3825,7 +3828,6 @@ void* spiEventHandlerThread(void* arg) {
   }
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
   pthread_cleanup_pop(1);
-  android::mSPIDwpSyncMutex.unlock();
   return NULL;
 }
 
