@@ -3216,6 +3216,8 @@ public class NfcService implements DeviceHostListener {
                     if (newParams.shouldEnableDiscovery()) {
                         boolean shouldRestart = mCurrentDiscoveryParameters.shouldEnableDiscovery();
                         mDeviceHost.enableDiscovery(newParams, shouldRestart);
+                        if (mPollingPaused)
+                          mDeviceHost.disableDiscovery();
                     } else {
                         mDeviceHost.disableDiscovery();
                     }
