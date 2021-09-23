@@ -2145,8 +2145,6 @@ static void nfaConnectionCallback(uint8_t connEvent,
 #if (NXP_EXTNS == TRUE)
     rfActivation = false;
     tNFA_PMID ven_config_addr[] = {0xA0, 0x07};
-    tNFA_PMID pollProfileAddr[] = {0xA0, 0x44};
-    uint8_t pollProfileVal[] = {NFC_FORUM_POLL};
     bool isSuccess = false;
     sNfcee_disc_state = UICC_SESSION_NOT_INTIALIZED;
     IsEseCeDisabled = false;
@@ -2345,7 +2343,6 @@ static void nfaConnectionCallback(uint8_t connEvent,
             }
             gGeneralPowershutDown = 0;
           }
-          updateEeprom(pollProfileAddr, sizeof(pollProfileVal), pollProfileVal);
           if (gIsDtaEnabled == true) {
             uint8_t configData = 0;
             configData =
