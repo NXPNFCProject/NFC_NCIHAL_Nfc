@@ -905,6 +905,8 @@ public class RegisteredAidCache {
                 boolean requiresScreenOn = resolveInfo.services.get(0).requiresScreenOn();
                 aidType.power =
                     computeAidPowerState(aidType.isOnHost, requiresScreenOn, requiresUnlock);
+                if (DBG)
+                    Log.d(TAG, "AID match with single service." );
                 routingEntries.put(aid, aidType);
             } else if (resolveInfo.services.size() > 1) {
                 // Multiple services if all the services are routing to same
