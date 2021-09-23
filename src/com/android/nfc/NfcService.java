@@ -1173,7 +1173,9 @@ public class NfcService implements DeviceHostListener {
             if (mIsHceCapable) {
                 // Generate the initial card emulation routing table
                 mCardEmulationManager.onNfcEnabled();
-                computeRoutingParameters();
+                if (getLastCommitRoutingStatus() == false) {
+                    computeRoutingParameters();
+                }
             }
 
             nci_version = getNciVersion();
