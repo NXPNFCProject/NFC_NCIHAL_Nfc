@@ -459,7 +459,8 @@ public class BluetoothPeripheralHandover implements BluetoothProfile.ServiceList
             toast(getToastString(R.string.pairing_peripheral));
         }
         if (mOobData != null) {
-            if (!mDevice.createBondOutOfBand(mTransport, mOobData, null /* optional p256 data */)) {
+            if (!mDevice.createBondOutOfBand(mTransport, /* p192 not implemented for LE */ null,
+                mOobData)) {
                 toast(getToastString(R.string.pairing_peripheral_failed));
                 complete(false);
             }
