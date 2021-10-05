@@ -18,9 +18,6 @@ package com.android.nfc.beam;
 
 import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
 
-import com.android.nfc.R;
-import com.android.nfc.beam.FireflyRenderer;
-
 import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
@@ -42,6 +39,7 @@ import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.os.AsyncTask;
 import android.os.Binder;
+import android.os.IBinder;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.ActionMode;
@@ -52,7 +50,6 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
-import com.android.internal.policy.PhoneWindow;
 import android.view.SearchEvent;
 import android.view.Surface;
 import android.view.SurfaceControl;
@@ -68,7 +65,9 @@ import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import com.android.internal.policy.PhoneWindow;
+import com.android.nfc.R;
+import com.android.nfc.beam.FireflyRenderer;
 import java.util.List;
 
 /**
@@ -613,8 +612,6 @@ public class SendUi implements Animator.AnimatorListener, View.OnTouchListener,
                 mDisplayMetrics.heightPixels);
         float smallestWidthDp = smallestWidth / (mDisplayMetrics.densityDpi / 160f);
 
-        int rot = mDisplay.getRotation();
-
         // TODO this is somewhat device-specific; need generic solution.
         // The starting crop for the screenshot is the fullscreen without the status bar, which
         // is always on top. The conditional check will determine how to crop the navbar,
@@ -639,7 +636,16 @@ public class SendUi implements Animator.AnimatorListener, View.OnTouchListener,
         int height = crop.height();
         // Take the screenshot. SurfaceControl will generate a hardware bitmap in the correct
         // orientation and size.
-        Bitmap bitmap = SurfaceControl.screenshot(crop, width, height, rot);
+        IBinder displayToken = SurfaceControl.getInternalDisplayToken();
+        final SurfaceControl.DisplayCaptureArgs captureArgs =
+                new SurfaceControl.DisplayCaptureArgs.Builder(displayToken)
+                        .setSourceCrop(crop)
+                        .setSize(width, height)
+                        .build();
+        SurfaceControl.ScreenshotHardwareBuffer screenshotBuffer =
+                SurfaceControl.captureDisplay(captureArgs);
+        final Bitmap bitmap = screenshotBuffer == null ? null : screenshotBuffer.asBitmap();
+
         // Bail if we couldn't take the screenshot
         if (bitmap == null) {
             return null;
