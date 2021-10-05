@@ -40,7 +40,7 @@ public class BeamManager implements Handler.Callback {
     private static final boolean DBG =
             SystemProperties.getBoolean("persist.nfc.debug_enabled", false);
 
-    private static final String ACTION_WHITELIST_DEVICE =
+    private static final String ACTION_ALLOWLIST_DEVICE =
             "android.btopp.intent.action.WHITELIST_DEVICE";
     public static final int MSG_BEAM_COMPLETE = 0;
 
@@ -91,7 +91,7 @@ public class BeamManager implements Handler.Callback {
         receiveIntent.putExtra(BeamReceiveService.EXTRA_BEAM_TRANSFER_RECORD, transferRecord);
         receiveIntent.putExtra(BeamReceiveService.EXTRA_BEAM_COMPLETE_CALLBACK,
                 new Messenger(mCallback));
-        whitelistOppDevice(context, handoverData.device);
+        allowlistOppDevice(context, handoverData.device);
         context.startServiceAsUser(receiveIntent, UserHandle.CURRENT);
         return true;
     }
@@ -135,9 +135,9 @@ public class BeamManager implements Handler.Callback {
         return false;
     }
 
-    void whitelistOppDevice(Context context, BluetoothDevice device) {
-        if (DBG) Log.d(TAG, "Whitelisting " + device + " for BT OPP");
-        Intent intent = new Intent(ACTION_WHITELIST_DEVICE);
+    void allowlistOppDevice(Context context, BluetoothDevice device) {
+        if (DBG) Log.d(TAG, "Allowlist " + device + " for BT OPP");
+        Intent intent = new Intent(ACTION_ALLOWLIST_DEVICE);
         intent.setPackage(context.getString(R.string.bluetooth_package));
         intent.putExtra(BluetoothDevice.EXTRA_DEVICE, device);
         intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);

@@ -121,7 +121,7 @@ public final class NfcWifiProtectedSetup {
             short fieldId = payload.getShort();
             int fieldSize = payload.getShort() & 0xFFFF;
 
-            // sanity check
+            // Quick check
             if (payload.position() + fieldSize > startPosition + size) {
                 return null;
             }

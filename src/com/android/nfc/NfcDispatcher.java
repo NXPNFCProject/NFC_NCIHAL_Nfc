@@ -368,7 +368,7 @@ class NfcDispatcher {
                 // We only allow NDEF-message dispatch in provisioning mode
                 return DISPATCH_FAIL;
             }
-            // Restrict to mime-types in whitelist.
+            // Restrict to mime-types in allowlist.
             String ndefMimeType = message.getRecords()[0].toMimeType();
             if (provisioningMimes == null ||
                     !(Arrays.asList(provisioningMimes).contains(ndefMimeType))) {
