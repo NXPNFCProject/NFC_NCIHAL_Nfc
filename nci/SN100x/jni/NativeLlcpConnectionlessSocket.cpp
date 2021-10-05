@@ -108,7 +108,7 @@ void nativeLlcpConnectionlessSocket_receiveData(uint8_t* data, uint32_t len,
       << StringPrintf("%s: waiting for data = %d, len = %d", __func__,
                       sConnlessRecvWaitingForData, len);
 
-  // Sanity...
+  // Quick check...
   if (sConnlessRecvLen < len) {
     len = sConnlessRecvLen;
   }

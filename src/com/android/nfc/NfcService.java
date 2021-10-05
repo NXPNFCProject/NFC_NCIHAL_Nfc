@@ -1073,7 +1073,7 @@ public class NfcService implements DeviceHostListener {
     class EnableDisableTask extends AsyncTask<Integer, Void, Void> {
         @Override
         protected Void doInBackground(Integer... params) {
-            // Sanity check mState
+            // Quick check mState
             switch (mState) {
                 case NfcAdapter.STATE_TURNING_OFF:
                 case NfcAdapter.STATE_TURNING_ON:
