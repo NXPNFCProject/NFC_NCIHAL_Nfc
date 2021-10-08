@@ -16,15 +16,6 @@
 
 package com.android.nfc.handover;
 
-import java.nio.BufferUnderflowException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.Random;
-
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothClass;
 import android.bluetooth.BluetoothDevice;
@@ -39,6 +30,14 @@ import android.os.ParcelUuid;
 import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.util.Log;
+import java.nio.BufferUnderflowException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Random;
 
 /**
  * Manages handover of NFC to other technologies.
@@ -539,7 +538,7 @@ public class HandoverDataParser {
                         break;
                 }
             }
-            result.oobData = OobData.createLeBuilder(leScC, bdaddr, (int)(role & 0xFF))
+            result.oobData = new OobData.LeBuilder(leScC, bdaddr, (int)(role & 0xFF))
                 .setRandomizerHash(leScR)
                 .setDeviceName(nameBytes)
                 .setLeTemporaryKey(securityManagerTK)
