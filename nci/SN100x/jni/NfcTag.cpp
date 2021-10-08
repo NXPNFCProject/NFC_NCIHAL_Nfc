@@ -165,9 +165,9 @@ void NfcTag::initialize(nfc_jni_native_data* native) {
     vector<uint8_t> timeDiff = NfcConfig::getBytes(NAME_NXP_NON_STD_CARD_TIMEDIFF);
     DLOG_IF(INFO, nfc_debug_enabled)
        << StringPrintf("%s: Non std card", __func__);
-    for (uint8_t i=0; i<timeDiff.size(); i++) {
+    for (size_t i=0; i<timeDiff.size(); i++) {
       mNonStdCardTimeDiff.at(i) = timeDiff.at(i) * TIME_MUL_100MS;
-      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: timediff[%d] = %d",
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: timediff[%zu] = %d",
           __func__, i, mNonStdCardTimeDiff.at(i));
     }
   } else {
