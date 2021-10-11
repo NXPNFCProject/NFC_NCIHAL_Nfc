@@ -235,6 +235,15 @@ public class NativeNfcManager implements DeviceHost {
     @Override
     public native boolean isFieldDetectEnabled();
 
+    @Override
+    public native int doStartRssiMode(int rssiNtfTimeIntervalInMillisec);
+
+    @Override
+    public native int doStopRssiMode();
+
+    @Override
+    public native boolean isRssiEnabled();
+
     public native int doRegisterT3tIdentifier(byte[] t3tIdentifier);
 
     @Override

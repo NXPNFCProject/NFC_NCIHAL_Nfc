@@ -2552,6 +2552,24 @@ public class NfcService implements DeviceHostListener {
         }
 
         @Override
+        public int startRssiMode(int rssiNtfTimeIntervalInMillisec) {
+          NfcPermissions.enforceUserPermissions(mContext);
+          return mDeviceHost.doStartRssiMode(rssiNtfTimeIntervalInMillisec);
+        }
+
+        @Override
+        public int stopRssiMode() {
+          NfcPermissions.enforceUserPermissions(mContext);
+          return mDeviceHost.doStopRssiMode();
+        }
+
+        @Override
+        public boolean isRssiEnabled() {
+          NfcPermissions.enforceUserPermissions(mContext);
+          return mDeviceHost.isRssiEnabled();
+        }
+
+        @Override
         public int doWriteT4tData(byte[] fileId, byte[] data, int length) {
           NfcPermissions.enforceUserPermissions(mContext);
           Bundle writeBundle = new Bundle();

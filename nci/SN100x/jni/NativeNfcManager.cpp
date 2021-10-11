@@ -277,6 +277,8 @@ typedef enum {
   FDSTATUS_ERROR_UNKNOWN
 } field_detect_status_t;
 
+typedef field_detect_status_t rssi_status_t;
+
 #endif
 
 static void nfaConnectionCallback(uint8_t event, tNFA_CONN_EVT_DATA* eventData);
@@ -311,6 +313,8 @@ static int nfcManager_setPreferredSimSlot(JNIEnv* e, jobject o, jint uiccSlot);
 static bool nfcManager_deactivateOnPollDisabled(tNFA_ACTIVATED& activated);
 static jint nfcManager_enableDebugNtf(JNIEnv* e, jobject o, jbyte fieldValue);
 static void waitIfRfStateActive();
+static rssi_status_t nfcManager_doSetRssiMode(bool enable,
+                                              int rssiNtfTimeIntervalInMillisec);
 #endif
 static uint16_t sCurrentConfigLen;
 static uint8_t sConfig[256];
@@ -2505,6 +2509,53 @@ tNFA_STATUS getConfig(uint16_t* rspLen, uint8_t* configValue, uint8_t numParam,
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter", __func__);
     return NFA_IsFieldDetectEnabled();
   }
+
+  /*******************************************************************************
+  **
+  ** Function:        nfcManager_StartRssiMode
+  **
+  ** Description:     Updates RSSI mode ENABLE/DISABLE
+  **                  e: JVM environment.
+  **                  o: Java object.
+  **
+  ** Returns:         Update status
+  **
+  *******************************************************************************/
+  static rssi_status_t nfcManager_StartRssiMode(JNIEnv*, jobject,
+                                                jint rssiNtfTimeIntervalInMillisec) {
+    return nfcManager_doSetRssiMode(true, rssiNtfTimeIntervalInMillisec);
+  }
+
+  /*******************************************************************************
+  **
+  ** Function:        nfcManager_StopRssiMode
+  **
+  ** Description:     Updates RSSI mode ENABLE/DISABLE
+  **                  e: JVM environment.
+  **                  o: Java object.
+  **
+  ** Returns:         Update status
+  **
+  *******************************************************************************/
+  static rssi_status_t nfcManager_StopRssiMode(JNIEnv*, jobject) {
+    return nfcManager_doSetRssiMode(false, 0);
+  }
+
+  /*******************************************************************************
+  **
+  ** Function:        nfcManager_IsRssiEnabled
+  **
+  ** Description:     Returns current status of RSSI mode
+  **                  e: JVM environment.
+  **                  o: Java object.
+  **
+  ** Returns:         true/false
+  **
+  *******************************************************************************/
+  static jboolean nfcManager_IsRssiEnabled(JNIEnv*, jobject) {
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter", __func__);
+    return NFA_IsRssiEnabled();
+  }
 #endif
 
 /*******************************************************************************
@@ -3367,6 +3418,9 @@ static JNINativeMethod gMethods[] = {
               (void*)nfcManager_SetFieldDetectMode},
     {"isFieldDetectEnabled", "()Z",
               (void*)nfcManager_IsFieldDetectEnabled},
+    {"doStartRssiMode", "(I)I", (void*)nfcManager_StartRssiMode},
+    {"doStopRssiMode", "()I", (void*)nfcManager_StopRssiMode},
+    {"isRssiEnabled", "()Z", (void*)nfcManager_IsRssiEnabled},
     // check firmware version
     {"getFWVersion", "()I", (void*)nfcManager_getFwVersion},
     {"isNfccBusy", "()Z", (void*)nfcManager_isNfccBusy},
@@ -3947,6 +4001,74 @@ static int nfcManager_staticDualUicc_Precondition(int uiccSlot) {
     retStat = DUAL_UICC_ERROR_INVALID_SLOT;
   }
   return retStat;
+}
+
+static rssi_status_t nfcManager_doSetRssiMode(
+    bool enable, int rssiNtfTimeIntervalInMillisec) {
+  DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("%s: Enter rssiNtfTimeIntervalInMillisec = %d ", __func__,
+                      rssiNtfTimeIntervalInMillisec);
+
+  if (!sIsNfaEnabled) {
+    DLOG_IF(ERROR, nfc_debug_enabled)
+        << StringPrintf("%s: Nfc is not Enabled. Returning", __func__);
+    return FDSTATUS_ERROR_NFC_IS_OFF;
+  }
+
+  if (MposManager::getInstance().isMposOngoing()) {
+    DLOG_IF(ERROR, nfc_debug_enabled)
+        << StringPrintf("%s: MPOS is ongoing.. Returning", __func__);
+    return FDSTATUS_ERROR_NFC_BUSY_IN_MPOS;
+  }
+
+  if (NFA_IsRssiEnabled() == enable) {
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+        "%s: Already %s", __func__, ((enable) ? "ENABLED" : "DISABLED"));
+    return FDSTATUS_SUCCESS;
+  }
+
+  uint8_t rssiNtfTimeInterval =
+      (rssiNtfTimeIntervalInMillisec / 10) +
+      ((rssiNtfTimeIntervalInMillisec % 10 != 0x00) ? 0x01 : 0x00);
+  if (enable && (rssiNtfTimeInterval < 0x01 || rssiNtfTimeInterval > 0xFF)) {
+    DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf(
+        "%s: Rssi Notification timeout interval should be in between 10 to "
+        "2550 Millisec",
+        __func__);
+    return FDSTATUS_ERROR_UNKNOWN;
+  }
+
+  if (sRfEnabled) {
+    // Stop RF Discovery
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s: stop discovery", __func__);
+    startRfDiscovery(false);
+  }
+  NFA_SetFieldDetectMode(enable);
+
+  tNFA_STATUS status = NFA_STATUS_REJECTED;
+  uint8_t cmd_rssi[] = {0x20, 0x02, 0x06, 0x01, 0xA1, 0x55, 0x02, 0x00, 0x00};
+
+  cmd_rssi[7] = (uint8_t)enable;  // To enable/disable RSSI
+  cmd_rssi[8] =
+      (uint8_t)rssiNtfTimeInterval;  // RSSI NTF time Interval in value * 10 ms
+  status = android::NxpNfc_Write_Cmd_Common(sizeof(cmd_rssi), cmd_rssi);
+
+  if (status != FDSTATUS_SUCCESS) {
+    NFA_SetFieldDetectMode(false);
+    // start discovery
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+        "%s: reconfigured start discovery Line:%d", __func__, __LINE__);
+    startRfDiscovery(true);
+    return FDSTATUS_ERROR_UNKNOWN;
+  }
+
+  NFA_SetRssiMode(enable);
+  // start discovery
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+      "%s: reconfigured start discovery Line:%d", __func__, __LINE__);
+  startRfDiscovery(true);
+  return FDSTATUS_SUCCESS;
 }
 
 /**********************************************************************************

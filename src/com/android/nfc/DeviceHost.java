@@ -362,6 +362,9 @@ public interface DeviceHost {
     public int setPreferredSimSlot(int uiccSlot);
     public int doSetFieldDetectMode(boolean mode);
     public boolean isFieldDetectEnabled();
+    public int doStartRssiMode(int rssiNtfTimeIntervalInMillisec);
+    public int doStopRssiMode();
+    public boolean isRssiEnabled();
     public int doWriteT4tData(byte[] fileId, byte[] data, int length);
     public byte[] doReadT4tData(byte[] fileId);
     public boolean doLockT4tData(boolean lock);
