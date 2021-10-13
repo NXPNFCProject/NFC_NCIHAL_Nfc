@@ -4041,7 +4041,7 @@ public class NfcService implements DeviceHostListener {
                   Log.e(TAG, "msg se init");
 
                   try {
-                    if (mIsHceCapable) {
+                    if (isNfcEnabled() && mIsHceCapable) {
                         // Generate the initial card emulation routing table
                         computeRoutingParameters();
                         commitRouting();
