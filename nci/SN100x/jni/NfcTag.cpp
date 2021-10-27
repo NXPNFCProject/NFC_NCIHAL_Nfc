@@ -500,6 +500,10 @@ void NfcTag::discoverTechnologies(tNFA_ACTIVATED& activationData) {
 
   if (mTechListTail < (MAX_NUM_TECHNOLOGY - 1)) {
     mNumTechList = mTechListTail;
+   } else {
+    LOG(ERROR) << StringPrintf("%s: exceed max=%d", fn, MAX_NUM_TECHNOLOGY);
+    android_errorWriteLog(0x534e4554, "189942532");
+    goto TheEnd;
   }
   mTechHandles[mNumTechList] = rfDetail.rf_disc_id;
   mTechLibNfcTypes[mNumTechList] = rfDetail.protocol;
@@ -654,6 +658,7 @@ void NfcTag::discoverTechnologies(tNFA_ACTIVATED& activationData) {
         << StringPrintf("%s: index=%d; tech=%d; handle=%d; nfc type=%d", fn, i,
                         mTechList[i], mTechHandles[i], mTechLibNfcTypes[i]);
   }
+  TheEnd:
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", fn);
 }
 
