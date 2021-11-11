@@ -74,12 +74,12 @@ int NativeExtFieldDetect::startExtendedFieldDetectMode(JNIEnv* e, jobject o,
                                                        jint detectionTimeout) {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
 
-  efdmTimerValue = detectionTimeout;
+  mEfdmTimerValue = detectionTimeout;
 
   if (!android::nfcManager_isNfcActive() ||
       android::nfcManager_isNfcDisabling()) {
     return EFDSTATUS_ERROR_NFC_IS_OFF;
-  } else if (isefdmStarted) {
+  } else if (mIsefdmStarted) {
     return EFDSTATUS_ERROR_ALREADY_STARTED;
   }
   int efdStatus = EFDSTATUS_FAILED;
@@ -107,7 +107,7 @@ int NativeExtFieldDetect::startExtendedFieldDetectMode(JNIEnv* e, jobject o,
   }
 
   if (efdStatus == EFDSTATUS_SUCCESS) {
-    isefdmStarted = true;
+    mIsefdmStarted = true;
   }
 
   /*Start Rf discovery*/
@@ -115,7 +115,7 @@ int NativeExtFieldDetect::startExtendedFieldDetectMode(JNIEnv* e, jobject o,
     android::startRfDiscovery(true);
   }
 
-  firstRffieldON = true;
+  mFirstRffieldON = true;
 
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: Exit 0x%2x", __func__, efdStatus);
@@ -141,7 +141,7 @@ int NativeExtFieldDetect::stopExtendedFieldDetectMode(JNIEnv* e, jobject o) {
   if (!android::nfcManager_isNfcActive() ||
       android::nfcManager_isNfcDisabling()) {
     return EFDSTATUS_ERROR_NFC_IS_OFF;
-  } else if (!isefdmStarted) {
+  } else if (!mIsefdmStarted) {
     return EFDSTATUS_ERROR_NOT_STARTED;
   }
 
@@ -165,8 +165,8 @@ int NativeExtFieldDetect::stopExtendedFieldDetectMode(JNIEnv* e, jobject o) {
     android::startRfDiscovery(true);
   }
 
-  if (isefdmStarted == true) {
-    isefdmStarted = false;
+  if (mIsefdmStarted == true) {
+    mIsefdmStarted = false;
   }
 
   return efdStatus;
@@ -195,13 +195,13 @@ void NativeExtFieldDetect::startEfdmTimer() {
     return;
   }
 
-  if (firstRffieldON) {
+  if (mFirstRffieldON) {
     /* Start efdm timer only for 1st RF ON*/
-       firstRffieldON = false;
+       mFirstRffieldON = false;
     /* Posting efdm timeout event to application */
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-        "%s: Interval Timer started..0x%2x", __func__, efdmTimerValue);
-    mEfdmTimer.set(efdmTimerValue, NativeExtFieldDetect::postEfdmTimeoutEvt);
+        "%s: Interval Timer started..0x%2x", __func__, mEfdmTimerValue);
+    mEfdmTimer.set(mEfdmTimerValue, NativeExtFieldDetect::postEfdmTimeoutEvt);
   }
 
   CHECK(!e->ExceptionCheck());
@@ -255,7 +255,7 @@ void NativeExtFieldDetect::postEfdmTimeoutEvt(union sigval) {
 ** Returns:       true : if Extended field detect is ON else false
 **
 *******************************************************************************/
-bool NativeExtFieldDetect::isextendedFieldDetectMode() { return isefdmStarted; }
+bool NativeExtFieldDetect::isextendedFieldDetectMode() { return mIsefdmStarted; }
 
 /*******************************************************************************
 **

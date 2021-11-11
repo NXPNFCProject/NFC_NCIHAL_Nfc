@@ -37,8 +37,6 @@ typedef enum {
 
 class NativeExtFieldDetect {
  public:
-  bool firstRffieldON;
-  bool isefdmStarted;
   nfc_jni_native_data* mNativeData;
   /*******************************************************************************
   **
@@ -145,8 +143,10 @@ class NativeExtFieldDetect {
   static void postEfdmTimeoutEvt(union sigval);
 
  private:
+  bool mFirstRffieldON;
+  bool mIsefdmStarted;
   static NativeExtFieldDetect sNativeExtFieldDetectInstance;
-  int efdmTimerValue;
+  int mEfdmTimerValue;
   static const int EFDM_TIMEOUT_EVT = 0xF2;
 };
 #endif
