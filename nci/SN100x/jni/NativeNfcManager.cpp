@@ -552,6 +552,9 @@ static void nfaConnectionCallback(uint8_t connEvent,
         NfcTag::getInstance().isIsoDepDhReqFailed = true;
         NfcTag::getInstance().connectionEventHandler(connEvent, eventData);
       }
+      if (gIsWaiting4Deact2SleepNtf) {
+        gIsWaiting4Deact2SleepNtf = false;
+      }
 #endif
       break;
 
