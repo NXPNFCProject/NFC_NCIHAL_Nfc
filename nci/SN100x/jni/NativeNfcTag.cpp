@@ -974,11 +974,6 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
       rVal = STATUS_CODE_TARGET_LOST;
       break;
     }
-#if (NXP_EXTNS == TRUE)
-    if (natTag.isCashBeeActivated() == true) {
-      natTag.mCashbeeDetected = false;
-    }
-#endif
 
     if (sConnectOk) {
       rVal = 0;  // success
@@ -993,6 +988,11 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
   sConnectWaitingForComplete = JNI_FALSE;
   gIsTagDeactivating = false;
   gIsSelectingRfInterface = false;
+#if (NXP_EXTNS == TRUE)
+  if (natTag.isCashBeeActivated() == true) {
+    natTag.mCashbeeDetected = false;
+  }
+#endif
   sRfInterfaceMutex.unlock();
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: exit; status=%d", __func__, rVal);
