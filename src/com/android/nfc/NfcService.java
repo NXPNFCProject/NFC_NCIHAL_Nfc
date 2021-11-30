@@ -341,6 +341,8 @@ public class NfcService implements DeviceHostListener {
 
     public static final int NCI_VERSION_1_0 = 0x10;
 
+    public static final int NCI_VERSION_UNKNOWN = 0x00;
+
     public static final String ACTION_LLCP_UP =
             "com.android.nfc.action.LLCP_UP";
     public static final String ACTION_LX_DATA_RECVD =
@@ -407,7 +409,7 @@ public class NfcService implements DeviceHostListener {
 
     private final UserManager mUserManager;
 
-    private static int nci_version = NCI_VERSION_1_0;
+    private static int nci_version = NCI_VERSION_UNKNOWN;
     // NFC Execution Environment
     // fields below are protected by this
     public NativeNfcSecureElement mSecureElement;
