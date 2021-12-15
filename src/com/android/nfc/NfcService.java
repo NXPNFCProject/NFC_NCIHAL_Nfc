@@ -852,13 +852,13 @@ public class NfcService implements DeviceHostListener {
         IntentFilter ownerFilter = new IntentFilter(Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE);
         ownerFilter.addAction(Intent.ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE);
         ownerFilter.addAction(Intent.ACTION_SHUTDOWN);
-        mContext.registerReceiver(mOwnerReceiver, ownerFilter);
+        mContext.registerReceiverAsUser(mOwnerReceiver, UserHandle.ALL, ownerFilter, null, null);
 
         ownerFilter = new IntentFilter();
         ownerFilter.addAction(Intent.ACTION_PACKAGE_ADDED);
         ownerFilter.addAction(Intent.ACTION_PACKAGE_REMOVED);
         ownerFilter.addDataScheme("package");
-        mContext.registerReceiver(mOwnerReceiver, ownerFilter);
+        mContext.registerReceiverAsUser(mOwnerReceiver, UserHandle.ALL, ownerFilter, null, null);
 
         IntentFilter policyFilter = new IntentFilter(DevicePolicyManager.ACTION_DEVICE_POLICY_MANAGER_STATE_CHANGED);
         mContext.registerReceiverAsUser(mPolicyReceiver, UserHandle.ALL, policyFilter, null, null);
@@ -988,7 +988,8 @@ public class NfcService implements DeviceHostListener {
     }
 
     void updatePackageCache() {
-        PackageManager pm = mContext.getPackageManager();
+        PackageManager pm = mContext.createContextAsUser(UserHandle.of(mUserId), /*flags=*/0)
+                .getPackageManager();
         List<PackageInfo> packagesNfcEvents = pm.getPackagesHoldingPermissions(
                 new String[] {android.Manifest.permission.NFC_TRANSACTION_EVENT},
                 PackageManager.GET_ACTIVITIES);
@@ -4325,7 +4326,8 @@ public class NfcService implements DeviceHostListener {
                 for (int i = 0; i < nfcAccess.length; i++) {
                     if (nfcAccess[i]) {
                         intent.setPackage(mNfcEventInstalledPackages.get(i));
-                        mContext.sendBroadcast(intent, null, options.toBundle());
+                        mContext.sendBroadcastAsUser(intent, UserHandle.of(mUserId), null,
+                                options.toBundle());
                     }
                 }
             } catch (RemoteException e) {
@@ -4396,7 +4398,7 @@ public class NfcService implements DeviceHostListener {
             intent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
             for (String packageName : mNfcEventInstalledPackages) {
                 intent.setPackage(packageName);
-                mContext.sendBroadcast(intent);
+                mContext.sendBroadcastAsUser(intent, UserHandle.of(mUserId));
              }
          }
 
@@ -4463,7 +4465,7 @@ public class NfcService implements DeviceHostListener {
                     for (String packageName : SEPackages) {
                         intent.setPackage(packageName);
                         intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
-                        mContext.sendBroadcast(intent);
+                        mContext.sendBroadcastAsUser(intent, UserHandle.of(mUserId));
                     }
                 }
                 PackageManager pm = mContext.getPackageManager();
@@ -4479,7 +4481,7 @@ public class NfcService implements DeviceHostListener {
                                 ApplicationInfo.PRIVATE_FLAG_PRIVILEGED) != 0)) {
                             intent.setPackage(packageName);
                             intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
-                            mContext.sendBroadcast(intent);
+                            mContext.sendBroadcastAsUser(intent, UserHandle.of(mUserId));
                         }
                     } catch (Exception e) {
                         Log.e(TAG, "Exception in getPackageInfo " + e);
@@ -4735,6 +4737,7 @@ public class NfcService implements DeviceHostListener {
             } else if (action.equals(Intent.ACTION_USER_SWITCHED)) {
                 int userId = intent.getIntExtra(Intent.EXTRA_USER_HANDLE, 0);
                 mUserId = userId;
+                updatePackageCache();
                 if (mIsBeamCapable) {
                     int beamSetting =
                         PackageManager.COMPONENT_ENABLED_STATE_DEFAULT;
