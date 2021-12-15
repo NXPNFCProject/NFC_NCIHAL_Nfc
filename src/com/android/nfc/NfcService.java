@@ -3911,7 +3911,7 @@ public class NfcService implements DeviceHostListener {
                     break;
                 case MSG_RF_FIELD_ACTIVATED:
                     Intent fieldOnIntent = new Intent(ACTION_RF_FIELD_ON_DETECTED);
-                    sendNfcEeAccessProtectedBroadcast(fieldOnIntent);
+                    sendNfcPermissionProtectedBroadcast(fieldOnIntent);
                     if (!mIsRequestUnlockShowed
                             && mIsSecureNfcEnabled && mKeyguard.isKeyguardLocked()) {
                         if (DBG) Log.d(TAG, "Request unlock");
@@ -3926,19 +3926,19 @@ public class NfcService implements DeviceHostListener {
                     break;
                 case MSG_RF_FIELD_DEACTIVATED:
                     Intent fieldOffIntent = new Intent(ACTION_RF_FIELD_OFF_DETECTED);
-                    sendNfcEeAccessProtectedBroadcast(fieldOffIntent);
+                    sendNfcPermissionProtectedBroadcast(fieldOffIntent);
                     break;
                 case MSG_SRD_EVT_TIMEOUT:
                     Intent srdTimeoutIntent = new Intent(ACTION_SRD_EVT_TIMEOUT);
-                    sendNfcEeAccessProtectedBroadcast(srdTimeoutIntent);
+                    sendNfcPermissionProtectedBroadcast(srdTimeoutIntent);
                     break;
                 case MSG_SRD_EVT_FEATURE_NOT_SUPPORT:
                     Intent srdFeatureNotSupported = new Intent(ACTION_SRD_EVT_FEATURE_NOT_SUPPORT);
-                    sendNfcEeAccessProtectedBroadcast(srdFeatureNotSupported);
+                    sendNfcPermissionProtectedBroadcast(srdFeatureNotSupported);
                    break;
                 case MSG_EFDM_EVT_TIMEOUT:
                     Intent efdmTimeoutIntent = new Intent(ACTION_EXTENDED_FIELD_TIMEOUT);
-                    sendNfcEeAccessProtectedBroadcast(efdmTimeoutIntent);
+                    sendNfcPermissionProtectedBroadcast(efdmTimeoutIntent);
                     break;
                 case MSG_RESUME_POLLING:
                     mNfcAdapter.resumePolling();
@@ -4388,39 +4388,17 @@ public class NfcService implements DeviceHostListener {
             return packages;
         }
 
-        private void sendNfcEeAccessProtectedBroadcast(Intent intent) {
-            intent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
-            // Resume app switches so the receivers can start activites without delay
-            mNfcDispatcher.resumeAppSwitches();
-            ArrayList<String> matchingPackages = new ArrayList<String>();
-            ArrayList<String> preferredPackages = new ArrayList<String>();
-            synchronized (this) {
-                ArrayList<String> SEPackages = getSEAccessAllowedPackages();
-                if (SEPackages!= null && !SEPackages.isEmpty()) {
-                    for (String packageName : SEPackages) {
-                        intent.setPackage(packageName);
-                        mContext.sendBroadcast(intent);
-                    }
-                }
-                PackageManager pm = mContext.getPackageManager();
-                for (String packageName : mNfcEventInstalledPackages) {
-                    try {
-                        PackageInfo info = pm.getPackageInfo(packageName, 0);
-                        if (SEPackages != null && SEPackages.contains(packageName)) {
-                            continue;
-                        }
-                        if (info.applicationInfo != null &&
-                                ((info.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0 ||
-                                (info.applicationInfo.privateFlags & ApplicationInfo.PRIVATE_FLAG_PRIVILEGED) != 0)) {
-                            intent.setPackage(packageName);
-                            mContext.sendBroadcast(intent);
-                        }
-                    } catch (Exception e) {
-                        Log.e(TAG, "Exception in getPackageInfo " + e);
-                    }
-                }
+
+        private void sendNfcPermissionProtectedBroadcast(Intent intent) {
+            if (mNfcEventInstalledPackages.isEmpty()) {
+                return;
             }
-        }
+            intent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
+            for (String packageName : mNfcEventInstalledPackages) {
+                intent.setPackage(packageName);
+                mContext.sendBroadcast(intent);
+             }
+         }
 
         /* Returns the list of packages request for nfc preferred payment service changed and
          * have access to NFC Events on any SE */
