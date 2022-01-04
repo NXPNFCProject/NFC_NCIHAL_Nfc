@@ -34,6 +34,7 @@
 #include "HciEventManager.h"
 #include <android-base/stringprintf.h>
 #include <base/logging.h>
+#include <log/log.h>
 #include <nativehelper/ScopedLocalRef.h>
 #include "JavaClassConstants.h"
 #include "NfcJniUtil.h"
@@ -194,20 +195,25 @@ void HciEventManager::nfaHciCallback(tNFA_HCI_EVT event,
   if (event == NFA_HCI_EVENT_RCVD_EVT &&
       eventData->rcvd_evt.evt_code == NFA_HCI_EVT_TRANSACTION &&
       buffLength > 3 && event_buff[0] == 0x81) {
-    int aidlen = event_buff[1];
-    std::vector<uint8_t> aid(event_buff.begin() + 2,
-                             event_buff.begin() + aidlen + 2);
+    uint32_t aidlen = event_buff[1];
+    if (aidlen < (buffLength - 1)) {
+      std::vector<uint8_t> aid(event_buff.begin() + 2,
+                               event_buff.begin() + aidlen + 2);
 
-    int32_t berTlvStart = aidlen + 2 + 1;
-    int32_t berTlvLen = buffLength - berTlvStart;
-    std::vector<uint8_t> data;
-    if (berTlvLen > 0 && event_buff[2 + aidlen] == 0x82) {
-      std::vector<uint8_t> berTlv(event_buff.begin() + berTlvStart,
-                                  event_buff.end());
-      // BERTLV decoding here, to support extended data length for params.
-      data = getInstance().getDataFromBerTlv(berTlv);
+      int32_t berTlvStart = aidlen + 2 + 1;
+      int32_t berTlvLen = buffLength - berTlvStart;
+      std::vector<uint8_t> data;
+      if (berTlvLen > 0 && event_buff[2 + aidlen] == 0x82) {
+        std::vector<uint8_t> berTlv(event_buff.begin() + berTlvStart,
+                                    event_buff.end());
+        // BERTLV decoding here, to support extended data length for params.
+        data = getInstance().getDataFromBerTlv(berTlv);
+      }
+      getInstance().notifyTransactionListenersOfAid(aid, data, evtSrc);
+    } else {
+      android_errorWriteLog(0x534e4554, "181346545");
+      LOG(ERROR) << StringPrintf("error: aidlen(%d) is too big", aidlen);
     }
-    getInstance().notifyTransactionListenersOfAid(aid, data, evtSrc);
   }
 }
 
