@@ -17,7 +17,7 @@
  *
  *  The original Work has been changed by NXP.
  *
- *  Copyright 2015-2020 NXP
+ *  Copyright 2015-2021 NXP
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -1116,7 +1116,7 @@ void RoutingManager::setEmptyAidEntry(int routeAndPowerState) {
                          : getUiccRouteLocId(routeLoc)));
 
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: route %x", __func__, routeLoc);
-  if (routeLoc == ROUTE_LOC_HOST_ID) power &= 0x11;
+  if (routeLoc == ROUTE_LOC_HOST_ID) power &= ~(0x06);
   if (routeLoc == NFA_HANDLE_INVALID) {
     LOG(ERROR) << StringPrintf("%s: Invalid routeLoc. Return.", __func__);
     return;
@@ -1191,7 +1191,7 @@ bool RoutingManager::addAidRouting(const uint8_t* aid, uint8_t aidLen,
                        : power;
     }
   }
-  if (handle == ROUTE_LOC_HOST_ID) powerState &= 0x11;
+  if (handle == ROUTE_LOC_HOST_ID) powerState &= ~(0x06);
   tNFA_STATUS nfaStat =
       NFA_EeAddAidRouting(handle, aidLen, (uint8_t*)aid, powerState, aidInfo);
 
