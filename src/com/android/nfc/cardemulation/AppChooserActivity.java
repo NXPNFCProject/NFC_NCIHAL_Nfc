@@ -16,13 +16,6 @@
 
 package com.android.nfc.cardemulation;
 
-import com.android.internal.R;
-import com.android.internal.app.AlertActivity;
-import com.android.internal.app.AlertController;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -37,6 +30,7 @@ import android.nfc.NfcAdapter;
 import android.nfc.cardemulation.ApduServiceInfo;
 import android.nfc.cardemulation.CardEmulation;
 import android.os.Bundle;
+import android.os.UserHandle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -48,6 +42,13 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import com.android.internal.R;
+import com.android.internal.app.AlertActivity;
+import com.android.internal.app.AlertController;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class AppChooserActivity extends AlertActivity
         implements AdapterView.OnItemClickListener {
@@ -166,7 +167,9 @@ public class AppChooserActivity extends AlertActivity
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         DisplayAppInfo info = (DisplayAppInfo) mListAdapter.getItem(position);
-        mCardEmuManager.setDefaultForNextTap(info.serviceInfo.getComponent());
+        mCardEmuManager.setDefaultForNextTap(
+                UserHandle.getUserHandleForUid(info.serviceInfo.getUid()).getIdentifier(),
+                info.serviceInfo.getComponent());
         Intent dialogIntent = new Intent(this, TapAgainDialog.class);
         dialogIntent.putExtra(TapAgainDialog.EXTRA_CATEGORY, mCategory);
         dialogIntent.putExtra(TapAgainDialog.EXTRA_APDU_SERVICE, info.serviceInfo);

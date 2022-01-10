@@ -62,6 +62,7 @@ import com.nxp.nfc.NfcConstants;
 
 import com.android.internal.annotations.GuardedBy;
 import com.android.internal.util.FastXmlSerializer;
+
 import com.google.android.collect.Maps;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -146,6 +147,14 @@ public class RegisteredServicesCache {
         return services;
     }
 
+    private int getProfileParentId(int userId) {
+        UserManager um = mContext.createContextAsUser(
+                UserHandle.of(userId), /*flags=*/0)
+                .getSystemService(UserManager.class);
+        UserHandle uh = um.getProfileParent(UserHandle.of(userId));
+        return uh == null ? userId : uh.getIdentifier();
+    }
+
     public RegisteredServicesCache(Context context, Callback callback) {
         mContext = context;
         mCallback = callback;
@@ -160,7 +169,7 @@ public class RegisteredServicesCache {
                 if (DEBUG) Log.d(TAG, "Intent action: " + action);
                 if (uid != -1) {
                     int currentUser = ActivityManager.getCurrentUser();
-                    if (currentUser == UserHandle.getUserId(uid)) {
+                    if (currentUser == getProfileParentId(UserHandle.getUserId(uid))) {
                         if(Intent.ACTION_PACKAGE_REMOVED.equals(action)) {
                             Uri uri = intent.getData();
                             String pkg = uri != null ? uri.getSchemeSpecificPart() : null;
