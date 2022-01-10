@@ -711,11 +711,7 @@ public class NfcService implements DeviceHostListener {
 
     @Override
     public void onHwErrorReported() {
-        try {
-            mContext.unregisterReceiver(mReceiver);
-        } catch (IllegalArgumentException e) {
-            Log.w(TAG, "Failed to unregisterScreenState BroadCastReceiver: " + e);
-        }
+        mContext.unregisterReceiver(mReceiver);
         mIsRecovering = true;
         new EnableDisableTask().execute(TASK_DISABLE);
         new EnableDisableTask().execute(TASK_ENABLE);
