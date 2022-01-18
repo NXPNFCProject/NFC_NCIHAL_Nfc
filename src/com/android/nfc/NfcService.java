@@ -495,6 +495,7 @@ public class NfcService implements DeviceHostListener {
     boolean mSEClientAccessState = false;
     NfcAdapterService mNfcAdapter;
     NfcDtaService mNfcDtaService;
+    RoutingTableParser mRoutingTableParser;
     NxpNfcAdapterExtrasService mNxpExtrasService;
     NxpNfcAdapterService mNxpNfcAdapter;
     NxpWlcAdapterService mNxpWlcAdapter;
@@ -733,6 +734,7 @@ public class NfcService implements DeviceHostListener {
 
         mNfcTagService = new TagService();
         mNfcAdapter = new NfcAdapterService();
+        mRoutingTableParser = new RoutingTableParser();
 
         mNxpNfcAdapter = new NxpNfcAdapterService();
         mNxpExtrasService = new NxpNfcAdapterExtrasService();
@@ -4956,6 +4958,9 @@ public class NfcService implements DeviceHostListener {
                 mCardEmulationManager.dump(fd, pw, args);
             }
             mNfcDispatcher.dump(fd, pw, args);
+            if (mState == NfcAdapter.STATE_ON) {
+                mRoutingTableParser.dump(mDeviceHost, pw);
+            }
             copyNativeCrashLogsIfAny(pw);
             pw.flush();
             mDeviceHost.dump(fd);
