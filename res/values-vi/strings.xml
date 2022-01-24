@@ -43,10 +43,10 @@
     <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"Android Beam yêu cầu bật NFC. Bạn có muốn bật NFC không?"</string>
     <string name="android_beam" msgid="1666446406999492763">"Android Beam"</string>
     <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"Ứng dụng không có quyền truy cập vào Bộ nhớ ngoài. Ứng dụng cần phải có quyền này để chiếu tệp này"</string>
-    <string name="title_confirm_url_open" msgid="8069968913244794478">"Mở liên kết?"</string>
+    <string name="title_confirm_url_open" msgid="8069968913244794478">"Mở đường liên kết?"</string>
     <string name="summary_confirm_url_open" product="tablet" msgid="3353502750736192055">"Máy tính bảng của bạn đã nhận được một liên kết thông qua NFC:"</string>
     <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"Điện thoại của bạn đã nhận được một liên kết thông qua NFC:"</string>
-    <string name="action_confirm_url_open" msgid="3458322738812921189">"Mở liên kết"</string>
+    <string name="action_confirm_url_open" msgid="3458322738812921189">"Mở đường liên kết"</string>
     <string name="tag_read_error" msgid="2485274498885877547">"Lỗi đọc thẻ NFC. Hãy thử lại."</string>
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"Không có ứng dụng nào hỗ trợ thẻ NFC này"</string>
     <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"NFC có thể bị chặn"</string>

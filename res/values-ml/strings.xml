@@ -33,7 +33,7 @@
     <string name="could_not_use_app" msgid="8137587876138569083">"<xliff:g id="APP">%1$s</xliff:g> ഉപയോഗിക്കാനായില്ല."</string>
     <string name="pay_with" msgid="5531545488795798945">"ഇതുപയോഗിച്ച് പണമടയ്‌ക്കുക"</string>
     <string name="complete_with" msgid="6797459104103012992">"ഇതുപയോഗിച്ച് പൂർത്തിയാക്കുക"</string>
-    <string name="default_pay_app_removed" msgid="4108250545457437360">"\'ടാപ്പുചെയ്‌ത് പണമടയ്‌ക്കുക\' എന്നതിനായി നിങ്ങൾ തിരഞ്ഞെടുത്ത സേവനം നീക്കംചെയ്‌തു. മറ്റൊന്ന് തിരഞ്ഞെടുക്കണോ?"</string>
+    <string name="default_pay_app_removed" msgid="4108250545457437360">"\'ടാപ്പ് ചെയ്‌ത് പണമടയ്‌ക്കുക\' എന്നതിനായി നിങ്ങൾ തിരഞ്ഞെടുത്ത സേവനം നീക്കംചെയ്‌തു. മറ്റൊന്ന് തിരഞ്ഞെടുക്കണോ?"</string>
     <string name="ask_nfc_tap" msgid="2925239870458286340">"പൂർത്തിയാക്കുന്നതിന് മറ്റൊരു ഉപകരണം ടാപ്പുചെയ്യുക"</string>
     <string name="wifi_connect" msgid="6250727951843550671">"കണക്റ്റ് ചെയ്യുക"</string>
     <string name="status_unable_to_connect" msgid="9183908200295307657">"നെറ്റ്‌വർക്കിലേക്ക് കണക്റ്റുചെയ്യാനായില്ല"</string>

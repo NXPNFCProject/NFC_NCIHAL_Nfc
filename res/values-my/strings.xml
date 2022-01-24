@@ -15,7 +15,7 @@
     <string name="beam_handover_not_supported" msgid="4083165921751489015">"လက်ခံစက်သည် လှိုင်းလွှင့်ခြင်းမှတစ်ဆင့် ကြီးမားသောဖိုင်လွဲခြင်းများကို မထောက်ပံ့ပါ"</string>
     <string name="beam_try_again" msgid="3364677301009783455">"ထပ်ပြီး စက်ကို အတူထားပါ"</string>
     <string name="beam_busy" msgid="5253335587620612576">"Beam လောလောဆယ် အလုပ်များနေ၏။ ယခင် ကူးပြောင်းမှုပြီးမှ ထပ်မံကြိုးစားပါ။"</string>
-    <string name="device" msgid="4459621591392478151">"ကိရိယာ"</string>
+    <string name="device" msgid="4459621591392478151">"စက်ပစ္စည်း"</string>
     <string name="connecting_peripheral" msgid="1296182660525660935">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g> အားချိတ်ဆက်နေ၏"</string>
     <string name="connected_peripheral" msgid="20748648543160091">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g> အား ချိတ်ဆက်ပြီး"</string>
     <string name="connect_peripheral_failed" msgid="7925702596242839275">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g> အား မချိတ်ဆက်နိုင်ပါ"</string>
