@@ -12,7 +12,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2021 NXP
+*  Copyright 2018-2022 NXP
 *
 ******************************************************************************/
 
@@ -558,7 +558,11 @@ void SecureElement::nfaHciCallback(tNFA_HCI_EVT event,
         break;
 
     case NFA_HCI_EVENT_SENT_EVT:
-        LOG(INFO) << StringPrintf("%s: NFA_HCI_EVENT_SENT_EVT; status=0x%X", fn, eventData->evt_sent.status);
+        {
+          SyncEventGuard guard(sSecElem.mHciSendEvent);
+          sSecElem.mHciSendEvent.notifyOne();
+          LOG(INFO) << StringPrintf("%s: NFA_HCI_EVENT_SENT_EVT; status=0x%X", fn, eventData->evt_sent.status);
+        }
         break;
 
     case NFA_HCI_RSP_RCVD_EVT: //response received from secure element
@@ -1598,10 +1602,13 @@ bool SecureElement::sendEvent(uint8_t event)
 {
     tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
     bool retval = true;
+    SyncEventGuard guard(mHciSendEvent);
     nfaStat = NFA_HciSendEvent (mNfaHciHandle, mNewPipeId, event, 0x00, NULL, 0x00,NULL, 0);
 
     if(nfaStat != NFA_STATUS_OK)
         retval = false;
+    else
+        mHciSendEvent.wait();
 
     return retval;
 }

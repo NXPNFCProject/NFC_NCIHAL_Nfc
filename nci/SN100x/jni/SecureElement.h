@@ -12,7 +12,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2021 NXP
+*  Copyright 2018-2022 NXP
 *
 ******************************************************************************/
 
@@ -75,6 +75,7 @@ public:
   bool mErrorRecovery;
   SyncEvent   mPwrLinkCtrlEvent;
   SyncEvent   mEERecoveryComplete;
+  SyncEvent   mHciSendEvent; //Event to wait on the call of NFA_HciSendEvent(...)
   tNFA_HANDLE EE_HANDLE_0xF4;   //handle to secure element in slot 1
   static const tNFA_HANDLE EE_HANDLE_0xF3 = 0x4C0;//0x401; //handle to secure element in slot 0
   static const tNFA_HANDLE EE_HANDLE_0xF8 = 0x481; //handle to secure element in slot 2
