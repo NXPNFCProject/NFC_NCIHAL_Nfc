@@ -58,6 +58,7 @@
 #include "NativeJniExtns.h"
 #include "NativeT4tNfcee.h"
 #include "NfcSelfTest.h"
+#include "NfcTagExtns.h"
 #include "SecureElement.h"
 #include "nfa_nfcee_int.h"
 #if (NXP_SRD == TRUE)
@@ -125,15 +126,8 @@ int nfcManager_doPartialDeInitialize(JNIEnv* e, jobject o);
 extern tNFA_STATUS NxpNfc_Write_Cmd_Common(uint8_t retlen, uint8_t* buffer);
 extern void NxpNfc_GetHwInfo(void);
 extern tNFA_STATUS send_flush_ram_to_flash();
-extern bool nativeNfcTag_checkActivatedProtoParameters(
-    tNFA_ACTIVATED& activationData);
-extern bool gIsWaiting4Deact2SleepNtf;
-extern bool gGotDeact2IdleNtf;
 extern void nativeNfcTag_abortTagOperations(tNFA_STATUS status);
-extern void nativeNfcTag_setRfProtocol(tNFA_INTF_TYPE rfProtocol, uint8_t mode);
-extern uint8_t nativeNfcTag_getActivatedMode();
 extern void nfaVSCNtfCallback(uint8_t event, uint16_t param_len, uint8_t *p_param);
-extern void nativeNfcTag_updateMFCActivationFailTime();
 #endif
 }  // namespace android
 
@@ -441,6 +435,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
 #if (NXP_EXTNS == TRUE)
   static uint8_t prev_more_val = 0x00;
   uint8_t cur_more_val = 0x00;
+  NfcTagExtns& nfcTagExtns = NfcTagExtns::getInstance();
 #endif
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: event= %u", __func__, connEvent);
@@ -518,6 +513,10 @@ static void nfaConnectionCallback(uint8_t connEvent,
                                    __func__, status);
       } else {
         NfcTag::getInstance().connectionEventHandler(connEvent, eventData);
+#if (NXP_EXTNS == TRUE)
+        nfcTagExtns.processNonStdNtfHandler(EVENT_TYPE::NFA_DISC_RESULT_EVENT,
+                                            eventData);
+#endif
         handleRfDiscoveryEvent(&eventData->disc_result.discovery_ntf);
       }
       break;
@@ -530,14 +529,15 @@ static void nfaConnectionCallback(uint8_t connEvent,
           __func__, eventData->status, gIsSelectingRfInterface, sIsDisabling);
 
       if (sIsDisabling) break;
+#if (NXP_EXTNS == TRUE)
+      nfcTagExtns.processNonStdNtfHandler(EVENT_TYPE::NFA_SELECT_RESULT_EVENT,
+                                          eventData);
+#endif
       if (eventData->status != NFA_STATUS_OK) {
         if (gIsSelectingRfInterface) {
           nativeNfcTag_doConnectStatus(false);
         }
-#if (NXP_EXTNS == TRUE)
-        NfcTag::getInstance().mTechListIndex = 0;
-        nativeNfcTag_updateMFCActivationFailTime();
-#endif
+
         LOG(ERROR) << StringPrintf(
             "%s: NFA_SELECT_RESULT_EVT error: status = %d", __func__,
             eventData->status);
@@ -550,13 +550,8 @@ static void nfaConnectionCallback(uint8_t connEvent,
           << StringPrintf("%s: NFA_DEACTIVATE_FAIL_EVT: status = %d", __func__,
                           eventData->status);
 #if (NXP_EXTNS == TRUE)
-      if (eventData->status == NFC_DEACTIVATE_REASON_DH_REQ_FAILED) {
-        NfcTag::getInstance().isIsoDepDhReqFailed = true;
-        NfcTag::getInstance().connectionEventHandler(connEvent, eventData);
-      }
-      if (gIsWaiting4Deact2SleepNtf) {
-        gIsWaiting4Deact2SleepNtf = false;
-      }
+      nfcTagExtns.processNonStdNtfHandler(EVENT_TYPE::NFA_DEACTIVATE_FAIL_EVENT,
+                                          eventData);
 #endif
       break;
 
@@ -571,7 +566,6 @@ static void nfaConnectionCallback(uint8_t connEvent,
         NfcTag::getInstance().setNumDiscNtf(0);
       }
 #if (NXP_EXTNS == TRUE)
-        NfcTag::getInstance().isIsoDepDhReqFailed = false;
         if (NfcSelfTest::GetInstance().SelfTestType != TEST_TYPE_NONE) {
           NfcSelfTest::GetInstance().ActivatedNtf_Cb();
           break;
@@ -583,25 +577,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
         nativeNfcTag_setRfInterface(
                 (tNFA_INTF_TYPE)eventData->activated.activate_ntf.intf_param.type);
         nativeNfcTag_setActivatedRfProtocol(activatedProtocol);
-#if (NXP_EXTNS == TRUE)
-        nativeNfcTag_setRfProtocol(
-            (tNFA_INTF_TYPE)eventData->activated.activate_ntf.protocol,
-            eventData->activated.activate_ntf.rf_tech_param.mode);
-        if (nativeNfcTag_getActivatedMode() == TARGET_TYPE_ISO14443_3B) {
-          DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-              "%s: NFA_ACTIVATED_EVT: received typeB NFCID0", __func__);
-          NfcTag::getInstance().updateNfcID0Param(
-              eventData->activated.activate_ntf.rf_tech_param.param.pb.nfcid0);
-        }
-#endif
       }
-#if (NXP_EXTNS == TRUE)
-      /*clear NonStdMfcTag state if a non-multiprotocol tag is activated*/
-      if (!NfcTag::getInstance().mIsMultiProtocolTag &&
-          NfcTag::getInstance().mIsNonStdMFCTag) {
-        NfcTag::getInstance().clearNonStdMfcState();
-      }
-#endif
       if (EXTNS_GetConnectFlag() == TRUE) {
         NfcTag::getInstance().setActivationState();
         nativeNfcTag_doConnectStatus(true);
@@ -611,15 +587,14 @@ static void nfaConnectionCallback(uint8_t connEvent,
       if (sIsDisabling || !sIsNfaEnabled) break;
       gActivated = true;
 
+#if (NXP_EXTNS == TRUE)
+      nfcTagExtns.processNonStdNtfHandler(EVENT_TYPE::NFA_ACTIVATED_EVENT,
+                                          eventData);
+#endif
 #if (NXP_EXTNS != TRUE)
       NfcTag::getInstance().setActivationState();
 #endif
       if (gIsSelectingRfInterface) {
-#if (NXP_EXTNS == TRUE)
-        if (nativeNfcTag_checkActivatedProtoParameters(eventData->activated)) {
-          NfcTag::getInstance().setActivationState();
-        }
-#endif
         nativeNfcTag_doConnectStatus(true);
         break;
       }
@@ -693,40 +668,26 @@ static void nfaConnectionCallback(uint8_t connEvent,
       if (NfcSelfTest::GetInstance().SelfTestType != TEST_TYPE_NONE) {
         break;
       }
-      if(gIsWaiting4Deact2SleepNtf) {
-        if(eventData->deactivated.type == NFA_DEACTIVATE_TYPE_IDLE) {
-          gGotDeact2IdleNtf = true;
-        } else if(eventData->deactivated.type == NFA_DEACTIVATE_TYPE_SLEEP) {
-          gIsWaiting4Deact2SleepNtf = false;
-        }
-      }
 #endif
       NfcTag::getInstance().setDeactivationState(eventData->deactivated);
       NfcTag::getInstance().selectNextTagIfExists();
+#if (NXP_EXTNS == TRUE)
+      // can be moved to non-std tag handling
+      nfcTagExtns.processNonStdNtfHandler(EVENT_TYPE::NFA_DEACTIVATE_EVENT,
+                                          eventData);
+#endif
       if (eventData->deactivated.type != NFA_DEACTIVATE_TYPE_SLEEP) {
         {
           SyncEventGuard g(gDeactivatedEvent);
           gActivated = false;  // guard this variable from multi-threaded access
           gDeactivatedEvent.notifyOne();
         }
-#if (NXP_EXTNS == TRUE)
-        NfcTag::getInstance ().setNumDiscNtf(0);
-        NfcTag::getInstance ().mTechListIndex =0;
-#endif
         nativeNfcTag_resetPresenceCheck();
-#if (NXP_EXTNS == TRUE)
-        if (gIsSelectingRfInterface == false) {
-          NfcTag::getInstance().connectionEventHandler(connEvent, eventData);
-          nativeNfcTag_abortWaits();
-        }
-#else
+#if (NXP_EXTNS != TRUE)
         NfcTag::getInstance().connectionEventHandler(connEvent, eventData);
         nativeNfcTag_abortWaits();
 #endif
         NfcTag::getInstance().abort();
-#if (NXP_EXTNS == TRUE)
-        NfcTag::getInstance().setMultiProtocolTagSupport(false);
-#endif
       } else if (gIsTagDeactivating) {
         NfcTag::getInstance().setActive(false);
         nativeNfcTag_doDeactivateStatus(0);

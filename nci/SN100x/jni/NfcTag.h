@@ -33,7 +33,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2020-2021 NXP
+*  Copyright 2020-2022 NXP
 *
 ******************************************************************************/
 #pragma once
@@ -57,18 +57,17 @@ class NfcTag {
  public:
 #if (NXP_EXTNS == TRUE)
   enum ActivationState { Idle, Sleep, Active, InActive };
-  enum NonStdTagRefTimeIndx { MFC, ISO_DEP };
-  typedef struct NonStdTagProcParams {
-    tNFC_RESULT_DEVT discovery_ntf;  /* RF discovery notification details */
-    tNFC_INTF_PARAMS intf_param;     /* Interface type and params */
-    bool isSkipIsoDepAct = false;
-  } nonStdTagProcParams_t;
 #else
   enum ActivationState { Idle, Sleep, Active };
 #endif
   static const int MAX_NUM_TECHNOLOGY =
       11;  // max number of technologies supported by one or more tags
 #if (NXP_EXTNS == TRUE)
+  int mTechLibNfcTypesDiscData[MAX_NUM_TECHNOLOGY];  // array of detailed tag
+                                                     // types ( RF Protocol)
+                                                     // received from
+                                                     // RF_DISC_NTF
+  int mNumDiscNtf;
   activationParams_t mActivationParams_t;
 #endif
   int mTechList[MAX_NUM_TECHNOLOGY];  // array of NFC technologies according to
@@ -84,17 +83,8 @@ class NfcTag {
 #if (NXP_EXTNS == TRUE)
   int mTechListIndex;
   bool mIsMultiProtocolTag;
-  bool mCashbeeDetected;
   int  mCurrentRequestedProtocol;
   uint8_t mNfcID0[4];
-  bool mIsNonStdMFCTag;
-  bool mIsSkipNdef;
-  struct timespec LastDetectedTime;
-  vector<uint32_t> mNonStdCardTimeDiff;
-  nonStdTagProcParams_t mNonStdTagdata;
-  bool isNonStdCardSupported;
-  bool isNonStdTagDetected;
-  bool isIsoDepDhReqFailed;
 #endif
 
   /*******************************************************************************
@@ -211,28 +201,6 @@ class NfcTag {
   void resetActivationState();
 
   /*******************************************************************************
-  **
-  ** Function:        updateNfcID0Param
-  **
-  ** Description:     Update TypeB NCIID0 from interface activated ntf.
-  **
-  ** Returns:         None.
-  **
-  *******************************************************************************/
-  void updateNfcID0Param(uint8_t* nfcID0);
-
-  /******************************************************************************
-   **
-   ** Function:        clearActivationParams
-   **
-   ** Description:     Clears the current activation parameters value.
-   **
-   ** Returns:         None.
-   **
-   *******************************************************************************/
-  void clearActivationParams();
-
-  /*******************************************************************************
    **
    ** Function:        notifyNfcAbortTagops()
    **
@@ -242,30 +210,6 @@ class NfcTag {
    **
    *******************************************************************************/
   static void notifyNfcAbortTagops(union sigval);
-
-/*******************************************************************************
-**
-** Function         isTagDetectedInRefTime
-**
-** Description      Computes time difference in milliseconds and compare it
-**                  with the reference provided.
-**
-** Returns          TRUE(time diff less than reference)/FALSE(Otherwise)
-**
-*******************************************************************************/
-bool isTagDetectedInRefTime(uint32_t nonStdCardRefTime);
-
-/*******************************************************************************
-**
-** Function         updateNonStdTagState
-**
-** Description      Update Non standard Tag state based on RF_DISC_NTF or
-**                  INTF_ACTIVATED_NTF
-**
-** Returns          None
-**
-*******************************************************************************/
-void updateNonStdTagState(uint8_t protocol, uint8_t more_disc_ntf);
 
 /*******************************************************************************
 **
@@ -595,11 +539,13 @@ void clearNonStdMfcState();
   int mTechHandlesDiscData[MAX_NUM_TECHNOLOGY];      // array of tag handles (RF
                                                      // DISC ID) received from
                                                      // RF_DISC_NTF
+#if (NXP_EXTNS == FALSE)
   int mTechLibNfcTypesDiscData[MAX_NUM_TECHNOLOGY];  // array of detailed tag
                                                      // types ( RF Protocol)
                                                      // received from
                                                      // RF_DISC_NTF
   int mNumDiscNtf;
+#endif
   int mNumDiscTechList;
   int mTechListTail;  // Index of Last added entry in mTechList
   /*******************************************************************************
@@ -670,53 +616,6 @@ void clearNonStdMfcState();
   **
   *******************************************************************************/
   void storeActivationParams();
-
- /*******************************************************************************
-**
-** Function:        processNonStandardTag
-**
-** Description:     Handle Non standard Tag
-*
-**                  Data: The Discovery ntf information.
-**
-** Returns:         None
-**
-*******************************************************************************/
-  void processNonStandardTag(tNFC_RESULT_DEVT& discovery_ntf);
-
-  /*******************************************************************************
-  **
-  ** Function         storeNonStdTagData
-  **
-  ** Description      Store non standard tag data
-  **
-  ** Returns          None
-  **
-  *******************************************************************************/
-  void storeNonStdTagData();
-
-  /*******************************************************************************
-  **
-  ** Function         clearNonStdTagData
-  **
-  ** Description      Clear non standard tag data
-  **
-  ** Returns          None
-  **
-  *******************************************************************************/
-  void clearNonStdTagData();
-
-  /*******************************************************************************
-  **
-  ** Function         shouldSkipProtoActivate
-  **
-  ** Description      Check whether tag activation should be skipped or not. If
-  **                  activation is skipped then send fake activate event.
-  **
-  ** Returns:         True if tag activation is skipped.
-  **
-  *******************************************************************************/
-  bool shouldSkipProtoActivate(tNFC_PROTOCOL protocol);
 #endif
 
   /*******************************************************************************
