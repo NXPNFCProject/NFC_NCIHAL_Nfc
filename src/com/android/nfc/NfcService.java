@@ -4766,7 +4766,7 @@ public class NfcService implements DeviceHostListener {
                 }
                 int screenState = mScreenStateHelper.checkScreenState();
                 if (screenState != mScreenState) {
-                    new ApplyRoutingTask().execute(Integer.valueOf(screenState));
+                    sendMessage(NfcService.MSG_APPLY_SCREEN_STATE, screenState);
                 }
             }
         }
