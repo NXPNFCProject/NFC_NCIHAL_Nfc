@@ -488,7 +488,6 @@ void SecureElement::nfaHciCallback(tNFA_HCI_EVT event,
                                    tNFA_HCI_EVT_DATA* eventData) {
     static const char fn [] = "SecureElement::nfaHciCallback";
     LOG(INFO) << StringPrintf("%s: event=0x%X", fn, event);
-    int evtSrc = 0xFF;
 
     switch (event)
     {
@@ -632,17 +631,17 @@ void SecureElement::nfaHciCallback(tNFA_HCI_EVT event,
         if(eventData->rcvd_evt.pipe == 0x0A) //UICC
         {
             LOG(INFO) << StringPrintf("%s: NFA_HCI_EVENT_RCVD_EVT; source UICC",fn);
-            evtSrc = SecureElement::getInstance().getGenericEseId(SecureElement::getInstance().EE_HANDLE_0xF4 & ~NFA_HANDLE_GROUP_EE); //UICC
+            SecureElement::getInstance().getGenericEseId(SecureElement::getInstance().EE_HANDLE_0xF4 & ~NFA_HANDLE_GROUP_EE); //UICC
         }
         else if(eventData->rcvd_evt.pipe == 0x16) //ESE
         {
             LOG(INFO) << StringPrintf("%s: NFA_HCI_EVENT_RCVD_EVT; source ESE",fn);
-            evtSrc = SecureElement::getInstance().getGenericEseId(EE_HANDLE_0xF3 & ~NFA_HANDLE_GROUP_EE); //ESE
+            SecureElement::getInstance().getGenericEseId(EE_HANDLE_0xF3 & ~NFA_HANDLE_GROUP_EE); //ESE
         }
         else if(eventData->rcvd_evt.pipe == CONNECTIVITY_PIPE_ID_UICC3) //UICC3
         {
             LOG(INFO) << StringPrintf("%s: NFA_HCI_EVENT_RCVD_EVT; source UICC3",fn);
-            evtSrc = SecureElement::getInstance().getGenericEseId(SecureElement::getInstance().EE_HANDLE_0xF9 & ~NFA_HANDLE_GROUP_EE); //UICC
+            SecureElement::getInstance().getGenericEseId(SecureElement::getInstance().EE_HANDLE_0xF9 & ~NFA_HANDLE_GROUP_EE); //UICC
         }
         else if (((eventData->rcvd_evt.evt_code == NFA_HCI_EVT_ATR))
                 &&(eventData->rcvd_evt.pipe == mStaticPipeProp))
@@ -1585,9 +1584,7 @@ tNFA_STATUS SecureElement::setNfccPwrConfig(uint8_t value)
 {
     static const char fn [] = "SecureElement::setNfccPwrConfig()";
     tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
-    static uint8_t cur_value = 0xFF;
     LOG(INFO) << StringPrintf("%s: Enter: config= 0x%X", fn, value);
-    cur_value = value;
     SyncEventGuard guard (mPwrLinkCtrlEvent);
     nfaStat = NFA_EePowerAndLinkCtrl((uint8_t)EE_HANDLE_0xF3, value);
     if(nfaStat ==  NFA_STATUS_OK) {
