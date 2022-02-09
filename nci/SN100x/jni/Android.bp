@@ -8,6 +8,7 @@ cc_library_shared {
      ["-DNXP_EXTNS=TRUE",
       "-DNXP_SRD=TRUE",]  + [
       "-DNXP_QTAG=TRUE",]  + [
+      "-DFEATURE_SECURE_READER",
         "-Wall",
         "-Wextra",
         "-Wno-unused-parameter",
