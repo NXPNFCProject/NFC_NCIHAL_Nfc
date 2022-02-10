@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- *  Copyright 2015-2021 NXP
+ *  Copyright 2015-2022 NXP
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -210,7 +210,16 @@ tNFA_STATUS send_flush_ram_to_flash() {
   DLOG_IF(INFO, nfc_debug_enabled)
     << StringPrintf("%s: enter", __func__);
   tNFA_STATUS status = NFA_STATUS_OK;
-  uint8_t  cmd[] = {0x2F, 0x21, 0x00};
+  const uint8_t FW_ROM_VERSION_PN557 = 0x12;
+  tNFC_FW_VERSION fw_version = nfc_ncif_getFWVersion();
+  // Flash Sync command not applicable for PN557 , disable command only for
+  // PN557
+  if (fw_version.rom_code_version == FW_ROM_VERSION_PN557) {
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+        "%s: Skipping Flash sync cmd for PN557 chipset", __func__);
+    return status;
+  }
+  uint8_t cmd[] = {0x2F, 0x21, 0x00};
 
   status = NxpNfc_Write_Cmd_Common(sizeof(cmd), cmd);
   if(status != NFA_STATUS_OK) {
