@@ -1382,11 +1382,7 @@ static jbyteArray nativeNfcTag_doTransceive(JNIEnv* e, jobject o,
         DLOG_IF(INFO, nfc_debug_enabled)
             << StringPrintf("%s: reconnect finish", __func__);
       } else if (sCurrentConnectedTargetProtocol == NFC_PROTOCOL_MIFARE) {
-#if (NXP_EXTNS == TRUE)
         uint32_t transDataLen = static_cast<uint32_t>(sRxDataBuffer.size());
-#else
-        uint32_t transDataLen = sRxDataBuffer.size();
-#endif
         uint8_t* transData = (uint8_t*)sRxDataBuffer.data();
         bool doReconnect = false;
 
