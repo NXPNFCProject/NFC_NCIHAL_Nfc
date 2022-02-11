@@ -659,7 +659,7 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         @Override
         public List<NfcFServiceInfo> getNfcFServices(int userId)
                 throws RemoteException {
-            NfcPermissions.validateUserId(userId);
+            NfcPermissions.validateProfileId(mContext, userId);
             NfcPermissions.enforceUserPermissions(mContext);
             return mNfcFServicesCache.getServices(userId);
         }
@@ -695,8 +695,8 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
     }
 
     @Override
-    public void onEnabledForegroundNfcFServiceChanged(ComponentName service) {
-        mT3tIdentifiersCache.onEnabledForegroundNfcFServiceChanged(service);
-        mHostNfcFEmulationManager.onEnabledForegroundNfcFServiceChanged(service);
+    public void onEnabledForegroundNfcFServiceChanged(int userId, ComponentName service) {
+        mT3tIdentifiersCache.onEnabledForegroundNfcFServiceChanged(userId, service);
+        mHostNfcFEmulationManager.onEnabledForegroundNfcFServiceChanged(userId, service);
     }
 }
