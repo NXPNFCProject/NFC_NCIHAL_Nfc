@@ -1860,8 +1860,8 @@ static jboolean nativeNfcTag_doIsNdefFormatable(JNIEnv* e, jobject o,
   } else if (NFA_PROTOCOL_T3T == protocol) {
     isFormattable = NfcTag::getInstance().isFelicaLite() ? JNI_TRUE : JNI_FALSE;
   } else if (NFA_PROTOCOL_T2T == protocol) {
-    isFormattable = (NfcTag::getInstance().isMifareUltralight() |
-                     NfcTag::getInstance().isInfineonMyDMove() |
+    isFormattable = (NfcTag::getInstance().isMifareUltralight() ||
+                     NfcTag::getInstance().isInfineonMyDMove() ||
                      NfcTag::getInstance().isKovioType2Tag())
                         ? JNI_TRUE
                         : JNI_FALSE;
