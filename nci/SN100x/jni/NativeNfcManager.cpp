@@ -2193,6 +2193,7 @@ static jboolean nfcManager_doDeinitialize(JNIEnv*, jobject) {
   sAbortConnlessWait = true;
   nativeLlcpConnectionlessSocket_abortWait();
   sIsNfaEnabled = false;
+  sRoutingInitialized = false;
   sDiscoveryEnabled = false;
   sPollingEnabled = false;
   sIsDisabling = false;
@@ -3279,17 +3280,11 @@ static jboolean nfcManager_doSetNfcSecure(JNIEnv* e, jobject o,
                                           jboolean enable) {
   RoutingManager& routingManager = RoutingManager::getInstance();
   routingManager.setNfcSecure(enable);
-#if(NXP_EXTNS != TRUE)
-  bool rfEnabled = sRfEnabled;
-#endif
   if (sRoutingInitialized) {
 #if(NXP_EXTNS != TRUE)
       routingManager.disableRoutingToHost();
-      if (rfEnabled) startRfDiscovery(false);
       routingManager.updateRoutingTable();
       routingManager.enableRoutingToHost();
-      routingManager.commitRouting();
-      if (rfEnabled) startRfDiscovery(true);
 #else
       routingManager.updateRoutingTable();
 #endif
