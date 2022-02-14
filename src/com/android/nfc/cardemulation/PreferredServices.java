@@ -191,8 +191,10 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
         boolean preferForeground = false;
         try {
             // get the setting from the main user instead of from the user profiles.
-            preferForeground = Settings.Secure.getIntForUser(mContext.getContentResolver(),
+            if(currentUser != null){
+                preferForeground = Settings.Secure.getIntForUser(mContext.getContentResolver(),
                     Settings.Secure.NFC_PAYMENT_FOREGROUND, currentUser.getIdentifier()) != 0;
+            }
         } catch (SettingNotFoundException e) {
         }
         synchronized (mLock) {
@@ -447,20 +449,22 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
     }
 
     public void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
-        pw.println("Preferred services (in order of importance): ");
-        pw.println("    *** Current preferred foreground service: " + mForegroundCurrent
-                + " (UID:" + mForegroundCurrentUid + ")");
-        pw.println("    *** Current preferred payment service: "
-                + mPaymentDefaults.currentPreferred + "("
-                + getUserName(mPaymentDefaults.mUserHandle) + ")");
-        pw.println("        Next tap default: " + mNextTapDefault
-                + " (" + getUserName(UserHandle.of(mNextTapDefaultUserId)) + ")");
-        pw.println("        Default for foreground app (UID: " + mForegroundUid
-                + "): " + mForegroundRequested);
-        pw.println("        Default in payment settings: " + mPaymentDefaults.settingsDefault
-                + "(" + getUserName(mPaymentDefaults.mUserHandle) + ")");
-        pw.println("        Payment settings allows override: " + mPaymentDefaults.preferForeground);
-        pw.println("");
+        synchronized (mLock) {
+            pw.println("Preferred services (in order of importance): ");
+            pw.println("    *** Current preferred foreground service: " + mForegroundCurrent
+                    + " (UID:" + mForegroundCurrentUid + ")");
+            pw.println("    *** Current preferred payment service: "
+                    + mPaymentDefaults.currentPreferred + "("
+                    + getUserName(mPaymentDefaults.mUserHandle) + ")");
+            pw.println("        Next tap default: " + mNextTapDefault
+                    + " (" + getUserName(UserHandle.of(mNextTapDefaultUserId)) + ")");
+            pw.println("        Default for foreground app (UID: " + mForegroundUid
+                    + "): " + mForegroundRequested);
+            pw.println("        Default in payment settings: " + mPaymentDefaults.settingsDefault
+                    + "(" + getUserName(mPaymentDefaults.mUserHandle) + ")");
+            pw.println("        Payment settings allows override: " + mPaymentDefaults.preferForeground);
+            pw.println("");
+        }
     }
 
     private String getUserName(UserHandle uh) {
