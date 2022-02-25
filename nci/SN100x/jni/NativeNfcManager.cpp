@@ -1988,7 +1988,8 @@ void nfcManager_disableDiscovery(JNIEnv* e, jobject o) {
   if (!PowerSwitch::getInstance().setModeOff(PowerSwitch::DISCOVERY))
     PowerSwitch::getInstance().setLevel(PowerSwitch::LOW_POWER);
 TheEnd:
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
+  DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("%s: exit: Status = 0x%X", __func__, status);
 }
 #if (NXP_EXTNS==FALSE)
 void enableDisableLptd(bool enable) {

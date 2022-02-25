@@ -12,7 +12,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2021 NXP
+*  Copyright 2018-2022 NXP
 *
 ******************************************************************************/
 
@@ -253,7 +253,8 @@ static jbyteArray nativeNfcSecureElement_doGetAtr (JNIEnv* e, jobject, jint hand
         e->SetByteArrayRegion(result, 0, recvBufferActualSize, (jbyte *) recvBuffer);
     }
 
-    LOG(INFO) << StringPrintf("%s: exit: recv len=%d", __func__, recvBufferActualSize);
+    LOG(INFO) << StringPrintf("%s: exit: Status = 0x%X: recv len=%d", __func__,
+                              stat, recvBufferActualSize);
 
     return result;
 }
