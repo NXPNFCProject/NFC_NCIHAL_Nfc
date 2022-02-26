@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2021 NXP
+*  Copyright 2018-2022 NXP
 *
 ******************************************************************************/
 #include <android-base/stringprintf.h>
@@ -1828,6 +1828,10 @@ static void nfcManager_enableDiscovery(JNIEnv* e, jobject o,
   tNFA_TECHNOLOGY_MASK tech_mask = DEFAULT_TECH_MASK;
   struct nfc_jni_native_data* nat = getNative(e, o);
 #if(NXP_EXTNS == TRUE)
+  // If Nfc is disabling or disabled shall return
+  if (sIsDisabling || !sIsNfaEnabled)
+    return;
+
   waitIfRfStateActive();
   storeLastDiscoveryParams(technologies_mask, enable_lptd,
         reader_mode, enable_host_routing ,enable_p2p, restart);
@@ -1959,6 +1963,12 @@ static void nfcManager_enableDiscovery(JNIEnv* e, jobject o,
 void nfcManager_disableDiscovery(JNIEnv* e, jobject o) {
   tNFA_STATUS status = NFA_STATUS_OK;
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter;", __func__);
+
+#if(NXP_EXTNS == TRUE)
+  // If Nfc is disabling or disabled shall return
+  if (sIsDisabling || !sIsNfaEnabled)
+    return;
+#endif
 
   if (sDiscoveryEnabled == false) {
     DLOG_IF(INFO, nfc_debug_enabled)
