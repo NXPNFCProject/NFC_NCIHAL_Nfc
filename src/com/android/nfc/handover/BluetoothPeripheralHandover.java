@@ -271,8 +271,7 @@ public class BluetoothPeripheralHandover implements BluetoothProfile.ServiceList
                         if (mInput.getConnectionState(mDevice)
                                 != BluetoothProfile.STATE_DISCONNECTED) {
                             mHidResult = RESULT_PENDING;
-                            mInput.setConnectionPolicy(mDevice,
-                                BluetoothProfile.CONNECTION_POLICY_FORBIDDEN);
+                            mInput.disconnect(mDevice);
                             toast(getToastString(R.string.disconnecting_peripheral));
                             break;
                         } else {
@@ -282,16 +281,14 @@ public class BluetoothPeripheralHandover implements BluetoothProfile.ServiceList
                         if (mHeadset.getConnectionState(mDevice)
                                 != BluetoothProfile.STATE_DISCONNECTED) {
                             mHfpResult = RESULT_PENDING;
-                            mHeadset.setConnectionPolicy(mDevice,
-                                BluetoothProfile.CONNECTION_POLICY_FORBIDDEN);
+                            mHeadset.disconnect(mDevice);
                         } else {
                             mHfpResult = RESULT_DISCONNECTED;
                         }
                         if (mA2dp.getConnectionState(mDevice)
                                 != BluetoothProfile.STATE_DISCONNECTED) {
                             mA2dpResult = RESULT_PENDING;
-                            mA2dp.setConnectionPolicy(mDevice,
-                                BluetoothProfile.CONNECTION_POLICY_FORBIDDEN);
+                            mA2dp.disconnect(mDevice);
                         } else {
                             mA2dpResult = RESULT_DISCONNECTED;
                         }
@@ -390,8 +387,7 @@ public class BluetoothPeripheralHandover implements BluetoothProfile.ServiceList
                                 BluetoothProfile.STATE_CONNECTED) {
                             if (mIsHeadsetAvailable) {
                                 mHfpResult = RESULT_PENDING;
-                                mHeadset.setConnectionPolicy(mDevice,
-                                    BluetoothProfile.CONNECTION_POLICY_ALLOWED);
+                                mHeadset.connect(mDevice);
                             } else {
                                 mHfpResult = RESULT_DISCONNECTED;
                             }
@@ -401,8 +397,7 @@ public class BluetoothPeripheralHandover implements BluetoothProfile.ServiceList
                         if (mA2dp.getConnectionState(mDevice) != BluetoothProfile.STATE_CONNECTED) {
                             if (mIsA2dpAvailable) {
                                 mA2dpResult = RESULT_PENDING;
-                                mA2dp.setConnectionPolicy(mDevice,
-                                    BluetoothProfile.CONNECTION_POLICY_ALLOWED);
+                                mA2dp.connect(mDevice);
                             } else {
                                 mA2dpResult = RESULT_DISCONNECTED;
                             }
