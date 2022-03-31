@@ -10,7 +10,7 @@
     <string name="beam_complete" msgid="477026736424637435">"Beam tamamlandı"</string>
     <string name="beam_failed" msgid="5116241718189888630">"Beam tamamlanmadı"</string>
     <string name="beam_canceled" msgid="5425192751826544741">"Beam ləğv edilib"</string>
-    <string name="cancel" msgid="61873902552555096">"Ləğv et"</string>
+    <string name="cancel" msgid="61873902552555096">"Ləğv edin"</string>
     <string name="beam_tap_to_view" msgid="7430394753262448349">"Baxmaq üçün tıklayın"</string>
     <string name="beam_handover_not_supported" msgid="4083165921751489015">"Qəbul edənin cihazı beam vasitəsilə böyük fayl ötürülməsini dəstəkləmir."</string>
     <string name="beam_try_again" msgid="3364677301009783455">"Cihazları yenidən bir yerə gətir"</string>

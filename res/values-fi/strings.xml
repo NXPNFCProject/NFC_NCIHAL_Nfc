@@ -10,7 +10,7 @@
     <string name="beam_complete" msgid="477026736424637435">"Sisältö jaettu"</string>
     <string name="beam_failed" msgid="5116241718189888630">"Jakoa ei suoritettu valmiiksi"</string>
     <string name="beam_canceled" msgid="5425192751826544741">"Jako peruutettu"</string>
-    <string name="cancel" msgid="61873902552555096">"Peruuta"</string>
+    <string name="cancel" msgid="61873902552555096">"Peru"</string>
     <string name="beam_tap_to_view" msgid="7430394753262448349">"Näytä koskettamalla"</string>
     <string name="beam_handover_not_supported" msgid="4083165921751489015">"Vastaanottajan laite ei tue suurten tiedostojen siirtoa sisällön jakamisen kautta."</string>
     <string name="beam_try_again" msgid="3364677301009783455">"Yhdistä laitteet uudelleen"</string>
