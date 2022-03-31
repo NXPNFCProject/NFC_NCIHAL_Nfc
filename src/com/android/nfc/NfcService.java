@@ -4717,7 +4717,9 @@ public class NfcService implements DeviceHostListener {
                 } else if (action.equals(Intent.ACTION_USER_PRESENT)) {
                     screenState = ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED;
                 }
-                sendMessage(NfcService.MSG_APPLY_SCREEN_STATE, screenState);
+                if (mScreenState != screenState){
+                    sendMessage(NfcService.MSG_APPLY_SCREEN_STATE, screenState);
+                }
             } else if (action.equals(Intent.ACTION_USER_SWITCHED)) {
                 int userId = intent.getIntExtra(Intent.EXTRA_USER_HANDLE, 0);
                 mUserId = userId;
