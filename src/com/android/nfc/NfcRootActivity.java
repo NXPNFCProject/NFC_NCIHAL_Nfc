@@ -17,7 +17,6 @@
 package com.android.nfc;
 
 import android.app.Activity;
-import android.app.ActivityManager;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.os.Bundle;
@@ -26,6 +25,7 @@ import android.os.UserHandle;
 public class NfcRootActivity extends Activity {
 
     static final String EXTRA_LAUNCH_INTENT = "launchIntent";
+    static final String EXTRA_LAUNCH_INTENT_USER_HANDLE = "launchIntentUserHandle";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,7 +35,10 @@ public class NfcRootActivity extends Activity {
             final Intent launchIntent = intent.getParcelableExtra(EXTRA_LAUNCH_INTENT);
             if (launchIntent != null) {
                 try {
-                    startActivityAsUser(launchIntent, UserHandle.CURRENT);
+                    UserHandle user = intent.hasExtra(EXTRA_LAUNCH_INTENT_USER_HANDLE)
+                            ? intent.getParcelableExtra(EXTRA_LAUNCH_INTENT_USER_HANDLE)
+                            : UserHandle.CURRENT;
+                    startActivityAsUser(launchIntent, user);
                 } catch (ActivityNotFoundException e) {
                 } catch (SecurityException e) {
                 }
