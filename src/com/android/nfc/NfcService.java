@@ -1003,27 +1003,27 @@ public class NfcService implements DeviceHostListener {
                 .getSystemService(UserManager.class);
         List<UserHandle> luh = um.getEnabledProfiles();
 
-        for (UserHandle uh : luh) {
-            if (um.isQuietModeEnabled(uh)) continue;
+        synchronized (this) {
+            mNfcEventInstalledPackages.clear();
+            mNfcPreferredPaymentChangedInstalledPackages.clear();
+            for (UserHandle uh : luh) {
+                if (um.isQuietModeEnabled(uh)) continue;
 
-            PackageManager pm = mContext.createContextAsUser(uh,
-                    /*flags=*/0).getPackageManager();
-            List<PackageInfo> packagesNfcEvents = pm.getPackagesHoldingPermissions(
-                    new String[] {android.Manifest.permission.NFC_TRANSACTION_EVENT},
-                    PackageManager.GET_ACTIVITIES);
-            List<PackageInfo> packagesNfcPreferredPaymentChanged =
-                    pm.getPackagesHoldingPermissions(
-                    new String[] {android.Manifest.permission.NFC_PREFERRED_PAYMENT_INFO},
-                    PackageManager.GET_ACTIVITIES);
-            synchronized (this) {
-                mNfcEventInstalledPackages.clear();
+                PackageManager pm = mContext.createContextAsUser(uh,
+                        /*flags=*/0).getPackageManager();
+                List<PackageInfo> packagesNfcEvents = pm.getPackagesHoldingPermissions(
+                        new String[] {android.Manifest.permission.NFC_TRANSACTION_EVENT},
+                        PackageManager.GET_ACTIVITIES);
+                List<PackageInfo> packagesNfcPreferredPaymentChanged =
+                        pm.getPackagesHoldingPermissions(
+                        new String[] {android.Manifest.permission.NFC_PREFERRED_PAYMENT_INFO},
+                        PackageManager.GET_ACTIVITIES);
                 List<String> packageListNfcEvent = new ArrayList<String>();
                 for (int i = 0; i < packagesNfcEvents.size(); i++) {
                     packageListNfcEvent.add(packagesNfcEvents.get(i).packageName);
                 }
                 mNfcEventInstalledPackages.put(uh.getIdentifier(), packageListNfcEvent);
 
-                mNfcPreferredPaymentChangedInstalledPackages.clear();
                 List<String> packageListNfcPreferredPaymentChanged = new ArrayList<String>();
                 for (int i = 0; i < packagesNfcPreferredPaymentChanged.size(); i++) {
                     packageListNfcPreferredPaymentChanged.add(
