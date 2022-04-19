@@ -1965,7 +1965,7 @@ NFCSTATUS phFriNfc_ExtnsTransceive(phNfc_sTransceiveInfo_t* pTransceiveInfo,
     length = SendLength - i;
     memcpy(pTransceiveInfo->sSendData.buffer, &restore_payload[0],
            sizeof(restore_payload));
-    pTransceiveInfo->sSendData.length = length + sizeof(restore_payload);
+    pTransceiveInfo->sSendData.length = length + static_cast<uint32_t> (sizeof(restore_payload));
     pTransceiveInfo->sRecvData.length = MAX_BUFF_SIZE;
 
     gphNxpExtns_Context.incrdecflag = true;
