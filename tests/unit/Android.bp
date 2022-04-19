@@ -1,0 +1,32 @@
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+android_test {
+    name: "NfcNciInstrumentationTests",
+
+    certificate: "platform",
+
+    libs: [
+        "android.test.runner",
+        "android.test.base",
+        "android.test.mock",
+    ],
+
+    static_libs: [
+        "androidx.test.core",
+        "androidx.test.rules",
+        "androidx.test.ext.junit",
+        "mockito-target",
+        "truth-prebuilt",
+    ],
+
+    // Include all test java files.
+    srcs: ["src/**/*.java"],
+
+    platform_apis: true,
+
+    test_suites: ["device-tests"],
+
+    instrumentation_for: "NfcNci",
+}
