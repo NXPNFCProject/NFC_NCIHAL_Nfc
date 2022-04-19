@@ -355,7 +355,7 @@ public class HostEmulationManager {
             Log.d(TAG, "Service already bound as regular service.");
             return mService;
         } else {
-            Log.d(TAG, "Binding to service " + service);
+            Log.d(TAG, "Binding to service " + service + " for userid:" + userId);
             unbindServiceIfNeededLocked();
             Intent aidIntent = new Intent(HostApduService.SERVICE_INTERFACE);
             aidIntent.setComponent(service);
@@ -423,6 +423,7 @@ public class HostEmulationManager {
     void bindPaymentServiceLocked(int userId, ComponentName service) {
         unbindPaymentServiceLocked();
 
+        Log.d(TAG, "Binding to payment service " + service + " for userid:" + userId);
         Intent intent = new Intent(HostApduService.SERVICE_INTERFACE);
         intent.setComponent(service);
         if (mContext.bindServiceAsUser(intent, mPaymentConnection,

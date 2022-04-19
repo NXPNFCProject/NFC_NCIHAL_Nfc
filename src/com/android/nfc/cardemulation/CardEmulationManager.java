@@ -285,7 +285,7 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
     void verifyDefaults(int userId, List<ApduServiceInfo> services) {
         ComponentName defaultPaymentService =
                 getDefaultServiceForCategory(userId, CardEmulation.CATEGORY_PAYMENT, true);
-        if (DBG) Log.d(TAG, "Current default: " + defaultPaymentService);
+        if (DBG) Log.d(TAG, "Current default: " + defaultPaymentService + " for user:" + userId);
         if (defaultPaymentService == null) {
             // A payment service may have been removed, leaving only one;
             // in that case, automatically set that app as default.
@@ -330,7 +330,7 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
                 return service;
             } else {
                 return mServiceCache.hasService(userId, service) ? service : null;
-             }
+            }
         } else {
             return null;
         }
@@ -674,7 +674,7 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
 
     @Override
     public void onPreferredPaymentServiceChanged(int userId, ComponentName service) {
-        mAidCache.onPreferredPaymentServiceChanged(service);
+        mAidCache.onPreferredPaymentServiceChanged(userId, service);
         mHostEmulationManager.onPreferredPaymentServiceChanged(userId, service);
 
         NfcService.getInstance().onPreferredPaymentChanged(
@@ -683,7 +683,7 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
 
     @Override
     public void onPreferredForegroundServiceChanged(int userId, ComponentName service) {
-        mAidCache.onPreferredForegroundServiceChanged(service);
+        mAidCache.onPreferredForegroundServiceChanged(userId, service);
         mHostEmulationManager.onPreferredForegroundServiceChanged(userId, service);
 
         NfcService.getInstance().onPreferredPaymentChanged(
