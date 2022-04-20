@@ -35,33 +35,36 @@
 
 package com.android.nfc.cardemulation;
 
-import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.nfc.cardemulation.NfcFServiceInfo;
 import android.os.SystemProperties;
+import android.os.UserHandle;
+import android.os.UserManager;
 import android.util.Log;
 import android.util.proto.ProtoOutputStream;
 
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 
 public class RegisteredT3tIdentifiersCache {
     static final String TAG = "RegisteredT3tIdentifiersCache";
     static final boolean DBG = SystemProperties.getBoolean("persist.nfc.debug_enabled", false);
 
     // All NFC-F services that have registered
-    List<NfcFServiceInfo> mServices = new ArrayList<NfcFServiceInfo>();
+    final Map<Integer, List<NfcFServiceInfo>> mUserNfcFServiceInfo =
+            new HashMap<Integer, List<NfcFServiceInfo>>();
 
     final HashMap<String, NfcFServiceInfo> mForegroundT3tIdentifiersCache =
             new HashMap<String, NfcFServiceInfo>();
 
     ComponentName mEnabledForegroundService;
+    int mEnabledForegroundServiceUserId = -1;
 
     final class T3tIdentifier {
         public final String systemCode;
@@ -118,11 +121,24 @@ public class RegisteredT3tIdentifiersCache {
         }
     }
 
+    void generateUserNfcFServiceInfoLocked(int userId, List<NfcFServiceInfo> services) {
+        mUserNfcFServiceInfo.put(userId, services);
+    }
+
+    private int getProfileParentId(int userId) {
+        UserManager um = mContext.createContextAsUser(
+                UserHandle.of(userId), /*flags=*/0)
+                .getSystemService(UserManager.class);
+        UserHandle uh = um.getProfileParent(UserHandle.of(userId));
+        return uh == null ? userId : uh.getIdentifier();
+    }
+
     void generateForegroundT3tIdentifiersCacheLocked() {
         if (DBG) Log.d(TAG, "generateForegroundT3tIdentifiersCacheLocked");
         mForegroundT3tIdentifiersCache.clear();
         if (mEnabledForegroundService != null) {
-            for (NfcFServiceInfo service : mServices) {
+            for (NfcFServiceInfo service :
+                    mUserNfcFServiceInfo.get(mEnabledForegroundServiceUserId)) {
                 if (mEnabledForegroundService.equals(service.getComponent())) {
                     if (!service.getSystemCode().equalsIgnoreCase("NULL") &&
                             !service.getNfcid2().equalsIgnoreCase("NULL")) {
@@ -180,28 +196,29 @@ public class RegisteredT3tIdentifiersCache {
     public void onServicesUpdated(int userId, List<NfcFServiceInfo> services) {
         if (DBG) Log.d(TAG, "onServicesUpdated");
         synchronized (mLock) {
-            if (ActivityManager.getCurrentUser() == userId) {
-                // Rebuild our internal data-structures
-                mServices = services;
-            } else {
-                Log.d(TAG, "Ignoring update because it's not for the current user.");
-            }
+            mUserNfcFServiceInfo.put(userId, services);
         }
     }
 
-    public void onEnabledForegroundNfcFServiceChanged(ComponentName component) {
+    /**
+     * Enabled Foreground NfcF service changed
+     */
+    public void onEnabledForegroundNfcFServiceChanged(int userId, ComponentName component) {
         if (DBG) Log.d(TAG, "Enabled foreground service changed.");
         synchronized (mLock) {
             if (component != null) {
-                if (mEnabledForegroundService != null) {
+                if (mEnabledForegroundService != null
+                        && mEnabledForegroundServiceUserId == userId) {
                     return;
                 }
                 mEnabledForegroundService = component;
+                mEnabledForegroundServiceUserId = userId;
             } else {
                 if (mEnabledForegroundService == null) {
                     return;
                 }
                 mEnabledForegroundService = null;
+                mEnabledForegroundServiceUserId = -1;
             }
             generateForegroundT3tIdentifiersCacheLocked();
         }
@@ -218,6 +235,7 @@ public class RegisteredT3tIdentifiersCache {
             mNfcEnabled = false;
             mForegroundT3tIdentifiersCache.clear();
             mEnabledForegroundService = null;
+            mEnabledForegroundServiceUserId = -1;
         }
         mRoutingManager.onNfccRoutingTableCleared();
     }
@@ -227,6 +245,7 @@ public class RegisteredT3tIdentifiersCache {
             mForegroundT3tIdentifiersCache.clear();
             updateRoutingLocked(false);
             mEnabledForegroundService = null;
+            mEnabledForegroundServiceUserId = -1;
         }
     }
 
