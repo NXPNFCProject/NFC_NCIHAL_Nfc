@@ -3419,6 +3419,7 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
     sAbortConnlessWait = true;
     nativeLlcpConnectionlessSocket_abortWait();
     sIsNfaEnabled = false;
+    sRoutingInitialized = false;
     sDiscoveryEnabled = false;
     sIsDisabling = false;
     sPollingEnabled = false;
@@ -4375,17 +4376,11 @@ static void restartUiccListen(jint uiccSlot) {
                                             jboolean enable) {
     RoutingManager& routingManager = RoutingManager::getInstance();
     routingManager.setNfcSecure(enable);
-#if (NXP_EXTNS != TRUE)
-    bool rfEnabled = sRfEnabled;
-#endif
     if (sRoutingInitialized) {
 #if (NXP_EXTNS != TRUE)
       routingManager.disableRoutingToHost();
-      if (rfEnabled) startRfDiscovery(false);
       routingManager.updateRoutingTable();
       routingManager.enableRoutingToHost();
-      routingManager.commitRouting();
-      if (rfEnabled) startRfDiscovery(true);
 #else
       routingManager.updateRoutingTable();
 #endif
