@@ -232,6 +232,7 @@ class RoutingManager {
 #endif
   void updateDefaultProtocolRoute();
   void updateDefaultRoute();
+  bool isTypeATypeBTechSupportedInEe(tNFA_HANDLE eeHandle);
   void printMemberData(void);
   void extractRouteLocationAndPowerStates(const int defaultRoute,
                                           const int protoRoute,
