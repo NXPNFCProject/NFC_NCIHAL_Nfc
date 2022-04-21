@@ -328,6 +328,10 @@ void NfcTag::discoverTechnologies(tNFA_ACTIVATED& activationData) {
 
   if (mTechListTail < (MAX_NUM_TECHNOLOGY - 1)) {
     mNumTechList = mTechListTail;
+   } else {
+    LOG(ERROR) << StringPrintf("%s: exceed max=%d", fn, MAX_NUM_TECHNOLOGY);
+    android_errorWriteLog(0x534e4554, "189942532");
+    goto TheEnd;
   }
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
       "mNumTechList =%d, mTechListIndex=%d", mNumTechList, mTechListIndex);
