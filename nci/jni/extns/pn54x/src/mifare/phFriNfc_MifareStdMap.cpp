@@ -13,6 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/******************************************************************************
+ *
+ *  The original Work has been changed by NXP.
+ *
+ *  Copyright 2022 NXP
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
 
 /*
  * NFC Ndef Mapping For Remote Devices.
@@ -320,7 +339,7 @@ NFCSTATUS phFriNfc_MifareStdMap_H_Reset(phFriNfc_NdefMap_t* NdefMap) {
  ******************************************************************************/
 NFCSTATUS phFriNfc_MifareStdMap_ChkNdef(phFriNfc_NdefMap_t* NdefMap) {
   NFCSTATUS status = NFCSTATUS_PENDING;
-  uint8_t atq, sak;
+  uint8_t sak;
 
   if (NdefMap == NULL) {
     status = PHNFCSTVAL(CID_FRI_NFC_NDEF_MAP, NFCSTATUS_INVALID_PARAMETER);
@@ -331,7 +350,6 @@ NFCSTATUS phFriNfc_MifareStdMap_ChkNdef(phFriNfc_NdefMap_t* NdefMap) {
     /* Get the Select Response and Sense Response to get
         the exact Card Type either Mifare 1k or 4k */
     sak = NdefMap->psRemoteDevInfo->RemoteDevInfo.Iso14443A_Info.Sak;
-    atq = NdefMap->psRemoteDevInfo->RemoteDevInfo.Iso14443A_Info.AtqA[0];
 
     if (0x08 == (sak & 0x18)) {
       /* Total Number of Blocks in Mifare 1k Card */

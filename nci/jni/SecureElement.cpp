@@ -17,7 +17,7 @@
  *
  *  The original Work has been changed by NXP.
  *
- *  Copyright 2015-2021 NXP
+ *  Copyright 2015-2022 NXP
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -2486,26 +2486,25 @@ void SecureElement::nfaHciCallback(tNFA_HCI_EVT event,
       } else if (eventData->rcvd_evt.evt_code == NFA_HCI_EVT_CONNECTIVITY) {
         DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
             "%s: NFA_HCI_EVENT_RCVD_EVT; NFA_HCI_EVT_CONNECTIVITY", fn);
-        int evtSrc = 0xFF;
         if (eventData->rcvd_evt.pipe == 0x0A)  // UICC
         {
           DLOG_IF(INFO, nfc_debug_enabled)
               << StringPrintf("%s: NFA_HCI_EVENT_RCVD_EVT; source UICC", fn);
-          evtSrc = SecureElement::getInstance().getGenericEseId(
+          SecureElement::getInstance().getGenericEseId(
               SecureElement::getInstance().EE_HANDLE_0xF4 &
               ~NFA_HANDLE_GROUP_EE);                  // UICC
         } else if (eventData->rcvd_evt.pipe == 0x16)  // ESE
         {
           DLOG_IF(INFO, nfc_debug_enabled)
               << StringPrintf("%s: NFA_HCI_EVENT_RCVD_EVT; source ESE", fn);
-          evtSrc = SecureElement::getInstance().getGenericEseId(
+          SecureElement::getInstance().getGenericEseId(
               EE_HANDLE_0xF3 & ~NFA_HANDLE_GROUP_EE);  // ESE
         } else if (nfcFL.nfccFL._NFC_NXP_STAT_DUAL_UICC_WO_EXT_SWITCH &&
                    (eventData->rcvd_evt.pipe == 0x23)) /*UICC2*/
         {
           DLOG_IF(INFO, nfc_debug_enabled)
               << StringPrintf("%s: NFA_HCI_EVENT_RCVD_EVT; source UICC2", fn);
-          evtSrc = SecureElement::getInstance().getGenericEseId(
+          SecureElement::getInstance().getGenericEseId(
               EE_HANDLE_0xF8 & ~NFA_HANDLE_GROUP_EE); /*UICC2*/
         }
         //            int pipe = (eventData->rcvd_evt.pipe);
@@ -4743,7 +4742,6 @@ tNFA_STATUS SecureElement::setNfccPwrConfig(uint8_t value) {
   }
 
   tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
-  static uint8_t cur_value = 0xFF;
 
   /*if(cur_value == value)
   {
@@ -4761,7 +4759,6 @@ tNFA_STATUS SecureElement::setNfccPwrConfig(uint8_t value) {
           "%s: SPI session is open. Host controls power-link configuration to eSE", __func__);
       return NFA_STATUS_FAILED;
     }
-    cur_value = value;
     SyncEventGuard guard(mPwrLinkCtrlEvent);
     tNFC_INTF_REQ_SRC reqSrc = NFC_INTF_REQ_SRC_DWP;
     if ((value == 0x03) && dual_mode_current_state & SPI_ON) {

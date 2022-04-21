@@ -17,7 +17,7 @@
  *
  *  The original Work has been changed by NXP.
  *
- *  Copyright 2015-2020 NXP
+ *  Copyright 2015-2020,2022 NXP
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -471,7 +471,8 @@ static jbyteArray nativeNfcTag_doRead(JNIEnv* e, jobject o) {
   }
   sReadDataLen = 0;
 
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
+  DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("%s: exit: Status = 0x%X", __func__, status);
   return buf;
 }
 
@@ -1625,6 +1626,8 @@ static jbyteArray nativeNfcTag_doTransceive(JNIEnv* e, jobject o,
     if (doReconnectFlag == 0) {
       int retCode = NFCSTATUS_SUCCESS;
       retCode = nativeNfcTag_doReconnect(e, o);
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("%s Status = 0x%X", __func__, retCode);
       doReconnectFlag = 0x01;
     }
   }
@@ -2514,6 +2517,8 @@ static jboolean nativeNfcTag_doNdefFormat(JNIEnv* e, jobject o, jbyteArray) {
   if (sCurrentConnectedTargetProtocol == NFA_PROTOCOL_ISO_DEP) {
     int retCode = NFCSTATUS_SUCCESS;
     retCode = nativeNfcTag_doReconnect(e, o);
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s Status = 0x%X", __func__, retCode);
   }
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
   return (status == NFA_STATUS_OK) ? JNI_TRUE : JNI_FALSE;

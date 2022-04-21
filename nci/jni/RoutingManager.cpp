@@ -17,7 +17,7 @@
  *
  *  The original Work has been changed by NXP.
  *
- *  Copyright 2015-2021 NXP
+ *  Copyright 2015-2022 NXP
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -1425,7 +1425,6 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route,
 
   tNFA_HANDLE ActDevHandle = NFA_HANDLE_INVALID;
   uint8_t count, seId = 0;
-  uint8_t isSeIDPresent = 0;
   tNFA_HANDLE ee_handleList[SecureElement::MAX_NUM_EE];
   SecureElement::getInstance().getEeHandleList(ee_handleList, &count);
 
@@ -1435,7 +1434,6 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route,
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
         "%s: enter, ee_handleList[%d]:%x", fn, i, ee_handleList[i]);
     if ((ee_handle != 0x400) && (ee_handle == ActDevHandle)) {
-      isSeIDPresent = 1;
       break;
     }
   }

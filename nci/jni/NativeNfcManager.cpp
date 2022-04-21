@@ -17,7 +17,7 @@
  *
  *  The original Work has been changed by NXP.
  *
- *  Copyright 2015-2021 NXP
+ *  Copyright 2015-2022 NXP
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -4290,6 +4290,8 @@ static void restartUiccListen(jint uiccSlot) {
                                      __func__);
         }
       }
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("%s: exit: Status = 0x%X", __func__, status);
 
       /*If retStat is success then routing table will be reconfigured from
        * NfcService
@@ -6564,9 +6566,7 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
     fileStream = open(filename, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
     if (fileStream >= 0) {
       size_t actualWrittenCntx = 0;
-      size_t actualWrittenCrc = 0;
       size_t actualWrittenTechCap = 0;
-      size_t actualWrittenCntxLen = 0;
 
       if (slotnum == 1) {
         if(lseek(fileStream, 0, SEEK_SET) < 0) {
@@ -6581,7 +6581,7 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
         }
       }
 
-      actualWrittenCntxLen = write(fileStream, &uiccContextLen, sizeof(uiccContextLen));
+      write(fileStream, &uiccContextLen, sizeof(uiccContextLen));
       if (uiccContextLen > 0x00) {
         cntx_len = uiccContextLen;
         techCap = uiccTechCapLen;
@@ -6593,7 +6593,7 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
           "%s:CRC calculated %02x %02x", __func__, frameByte[0], frameByte[1]);
 
       actualWrittenCntx = write(fileStream, uiccContext, cntx_len);
-      actualWrittenCrc = write(fileStream, frameByte, sizeof(crcVal));
+      write(fileStream, frameByte, sizeof(crcVal));
       actualWrittenTechCap = write(fileStream, uiccTechCap, techCap);
 
       DLOG_IF(INFO, nfc_debug_enabled)
@@ -6653,9 +6653,6 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
     int fileStream = open(filename, O_RDONLY);
     if (fileStream >= 0) {
       size_t actualReadCntx = 0;
-      size_t actualReadCntxLen = 0;
-      size_t actualReadCrc = 0;
-      size_t actualReadTechCap = 0;
       uint8_t readCntxLen = 0;
 
       if (slotnum == 1) {
@@ -6670,14 +6667,14 @@ bool update_transaction_stat(const char * req_handle, transaction_state_t req_st
           LOG(ERROR) << StringPrintf("lseek failed");
         }
       }
-      actualReadCntxLen = read(fileStream, &readCntxLen, 1);
+      read(fileStream, &readCntxLen, 1);
       if (readCntxLen > 0x00 && readCntxLen <= 0x01) {
         actualReadCntx = read(fileStream, uiccContext, readCntxLen);
         readCrc = (uint8_t*)malloc(2 * sizeof(uint8_t));
-        actualReadCrc = read(fileStream, readCrc, sizeof(crcVal));
+        read(fileStream, readCrc, sizeof(crcVal));
         crcVal = calc_crc16(uiccContext, readCntxLen);
         frameByte = (uint8_t*)&crcVal;
-        actualReadTechCap = read(fileStream, uiccTechCap, uiccTechCapLen);
+        read(fileStream, uiccTechCap, uiccTechCapLen);
 
         DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
             "%s:CRC calculated %02x %02x -- CRC read %02x %02x", __func__,
