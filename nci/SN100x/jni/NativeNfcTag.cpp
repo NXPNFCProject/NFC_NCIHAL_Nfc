@@ -784,7 +784,11 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
 
   do {
     // if tag has shutdown, abort this method
-    if (NfcTag::getInstance().isNdefDetectionTimedOut()) {
+    if (
+#if (NXP_EXTNS == TRUE)
+        sCurrentConnectedTargetProtocol != NFC_PROTOCOL_MIFARE &&
+#endif
+        NfcTag::getInstance().isNdefDetectionTimedOut()) {
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: ndef detection timeout; break", __func__);
       rVal = STATUS_CODE_TARGET_LOST;
