@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2020-2021 NXP
+*  Copyright 2020-2022 NXP
 *
 ******************************************************************************/
 package com.android.nfc.cardemulation;
@@ -191,8 +191,10 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
         boolean preferForeground = false;
         try {
             // get the setting from the main user instead of from the user profiles.
-            preferForeground = Settings.Secure.getIntForUser(mContext.getContentResolver(),
+            if(currentUser != null){
+                preferForeground = Settings.Secure.getIntForUser(mContext.getContentResolver(),
                     Settings.Secure.NFC_PAYMENT_FOREGROUND, currentUser.getIdentifier()) != 0;
+            }
         } catch (SettingNotFoundException e) {
         }
         synchronized (mLock) {
@@ -201,7 +203,9 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
 
             mPaymentDefaults.settingsDefault = newDefault;
             if (newDefault != null && (!newDefault.equals(mPaymentDefaults.currentPreferred)
-                    || mPaymentDefaults.mUserHandle.getIdentifier() != newUser.getIdentifier())) {
+                    || ((newUser!=null)
+                        && mPaymentDefaults.mUserHandle.getIdentifier()
+                        != newUser.getIdentifier()))) {
                 paymentDefaultChanged = true;
                 mPaymentDefaults.currentPreferred = newDefault;
                 mPaymentDefaults.mUserHandle = newUser;
@@ -214,7 +218,7 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
             }
         }
         // Notify if anything changed
-        if (paymentDefaultChanged || force) {
+        if (newUser!=null && (paymentDefaultChanged || force)) {
             mCallback.onPreferredPaymentServiceChanged(newUser.getIdentifier(), newDefault);
         }
         if (paymentPreferForegroundChanged || force) {
@@ -434,33 +438,36 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
 
     public boolean packageHasPreferredService(String packageName) {
         if (packageName == null) return false;
-
-        if (mPaymentDefaults.currentPreferred != null &&
-                packageName.equals(mPaymentDefaults.currentPreferred.getPackageName())) {
-            return true;
-        } else if (mForegroundCurrent != null &&
-                packageName.equals(mForegroundCurrent.getPackageName())) {
-            return true;
-        } else {
-            return false;
+        synchronized (mLock) {
+            if (mPaymentDefaults.currentPreferred != null &&
+                    packageName.equals(mPaymentDefaults.currentPreferred.getPackageName())) {
+                return true;
+            } else if (mForegroundCurrent != null &&
+                    packageName.equals(mForegroundCurrent.getPackageName())) {
+                return true;
+            } else {
+                return false;
+            }
         }
     }
 
     public void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
-        pw.println("Preferred services (in order of importance): ");
-        pw.println("    *** Current preferred foreground service: " + mForegroundCurrent
-                + " (UID:" + mForegroundCurrentUid + ")");
-        pw.println("    *** Current preferred payment service: "
-                + mPaymentDefaults.currentPreferred + "("
-                + getUserName(mPaymentDefaults.mUserHandle) + ")");
-        pw.println("        Next tap default: " + mNextTapDefault
-                + " (" + getUserName(UserHandle.of(mNextTapDefaultUserId)) + ")");
-        pw.println("        Default for foreground app (UID: " + mForegroundUid
-                + "): " + mForegroundRequested);
-        pw.println("        Default in payment settings: " + mPaymentDefaults.settingsDefault
-                + "(" + getUserName(mPaymentDefaults.mUserHandle) + ")");
-        pw.println("        Payment settings allows override: " + mPaymentDefaults.preferForeground);
-        pw.println("");
+        synchronized (mLock) {
+            pw.println("Preferred services (in order of importance): ");
+            pw.println("    *** Current preferred foreground service: " + mForegroundCurrent
+                    + " (UID:" + mForegroundCurrentUid + ")");
+            pw.println("    *** Current preferred payment service: "
+                    + mPaymentDefaults.currentPreferred + "("
+                    + getUserName(mPaymentDefaults.mUserHandle) + ")");
+            pw.println("        Next tap default: " + mNextTapDefault
+                    + " (" + getUserName(UserHandle.of(mNextTapDefaultUserId)) + ")");
+            pw.println("        Default for foreground app (UID: " + mForegroundUid
+                    + "): " + mForegroundRequested);
+            pw.println("        Default in payment settings: " + mPaymentDefaults.settingsDefault
+                    + "(" + getUserName(mPaymentDefaults.mUserHandle) + ")");
+            pw.println("        Payment settings allows override: " + mPaymentDefaults.preferForeground);
+            pw.println("");
+        }
     }
 
     private String getUserName(UserHandle uh) {
@@ -485,24 +492,26 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
      * Never reuse a proto field number. When removing a field, mark it as reserved.
      */
     void dumpDebug(ProtoOutputStream proto) {
-        if (mForegroundCurrent != null) {
-            mForegroundCurrent.dumpDebug(proto, PreferredServicesProto.FOREGROUND_CURRENT);
+        synchronized (mLock) {
+            if (mForegroundCurrent != null) {
+                mForegroundCurrent.dumpDebug(proto, PreferredServicesProto.FOREGROUND_CURRENT);
+            }
+            if (mPaymentDefaults.currentPreferred != null) {
+                mPaymentDefaults.currentPreferred.dumpDebug(proto,
+                        PreferredServicesProto.FOREGROUND_CURRENT);
+            }
+            if (mNextTapDefault != null) {
+                mNextTapDefault.dumpDebug(proto, PreferredServicesProto.NEXT_TAP_DEFAULT);
+            }
+            proto.write(PreferredServicesProto.FOREGROUND_UID, mForegroundUid);
+            if (mForegroundRequested != null) {
+                mForegroundRequested.dumpDebug(proto, PreferredServicesProto.FOREGROUND_REQUESTED);
+            }
+            if (mPaymentDefaults.settingsDefault != null) {
+                mPaymentDefaults.settingsDefault.dumpDebug(proto,
+                        PreferredServicesProto.SETTINGS_DEFAULT);
+            }
+            proto.write(PreferredServicesProto.PREFER_FOREGROUND, mPaymentDefaults.preferForeground);
         }
-        if (mPaymentDefaults.currentPreferred != null) {
-            mPaymentDefaults.currentPreferred.dumpDebug(proto,
-                    PreferredServicesProto.FOREGROUND_CURRENT);
-        }
-        if (mNextTapDefault != null) {
-            mNextTapDefault.dumpDebug(proto, PreferredServicesProto.NEXT_TAP_DEFAULT);
-        }
-        proto.write(PreferredServicesProto.FOREGROUND_UID, mForegroundUid);
-        if (mForegroundRequested != null) {
-            mForegroundRequested.dumpDebug(proto, PreferredServicesProto.FOREGROUND_REQUESTED);
-        }
-        if (mPaymentDefaults.settingsDefault != null) {
-            mPaymentDefaults.settingsDefault.dumpDebug(proto,
-                    PreferredServicesProto.SETTINGS_DEFAULT);
-        }
-        proto.write(PreferredServicesProto.PREFER_FOREGROUND, mPaymentDefaults.preferForeground);
     }
 }
