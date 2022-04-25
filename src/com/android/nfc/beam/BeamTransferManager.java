@@ -519,7 +519,7 @@ public class BeamTransferManager implements Handler.Callback,
         intent.putExtra(BeamStatusReceiver.EXTRA_INCOMING, mIncoming ?
                 BeamStatusReceiver.DIRECTION_INCOMING : BeamStatusReceiver.DIRECTION_OUTGOING);
         PendingIntent pi = PendingIntent.getBroadcast(mContext, mTransferId, intent,
-                PendingIntent.FLAG_ONE_SHOT);
+                PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
 
         return pi;
     }
