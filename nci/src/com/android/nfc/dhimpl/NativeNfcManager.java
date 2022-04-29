@@ -356,6 +356,10 @@ public class NativeNfcManager implements DeviceHost {
       return mExtFieldMgr.stopExtendedFieldDetectMode();
     }
     @Override
+    public int startCardEmulation() {
+      return mExtFieldMgr.startCardEmulation();
+    }
+    @Override
     public boolean doLockT4tData(boolean lock) {
       return mT4tNfceeMgr.doLockT4tData(lock);
     }

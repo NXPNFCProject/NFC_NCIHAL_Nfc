@@ -64,6 +64,24 @@ jint nativeFieldMgr_stopExtendedFieldDetectMode(JNIEnv* e, jobject o) {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
   return extFieldDetectMode.stopExtendedFieldDetectMode(e, o);
 }
+
+/*******************************************************************************
+**
+** Function:        nativeFieldMgr_startCardEmulation
+**
+** Description:     This API performs to start default RF discovery
+**
+** Returns:         0x00 :EFDSTATUS_SUCCESS
+**                  0x01 :EFDSTATUS_FAILED
+**                  0x05 :EFDSTATUS_ERROR_NFC_IS_OFF
+**                  0x06 :EFDSTATUS_ERROR_UNKNOWN
+**
+*******************************************************************************/
+jint nativeFieldMgr_startCardEmulation(JNIEnv* e, jobject o) {
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+  return extFieldDetectMode.startCardEmulation(e, o);
+}
+
 /*****************************************************************************
  **
  ** Description:     JNI functions
@@ -74,6 +92,8 @@ static JNINativeMethod gMethods[] = {
      (void*)nativeFieldMgr_startExtendedFieldDetectMode},
     {"stopExtendedFieldDetectMode", "()I",
      (void*)nativeFieldMgr_stopExtendedFieldDetectMode},
+    {"startCardEmulation", "()I",
+     (void*)nativeFieldMgr_startCardEmulation},
 };
 
 /*******************************************************************************

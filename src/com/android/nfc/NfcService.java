@@ -2664,6 +2664,12 @@ public class NfcService implements DeviceHostListener {
           return mDeviceHost.stopExtendedFieldDetectMode();
         }
 
+        @Override
+        public int startCardEmulation() {
+          NfcPermissions.enforceUserPermissions(mContext);
+          return mDeviceHost.startCardEmulation();
+        }
+
     }
 
     final class ReaderModeDeathRecipient implements IBinder.DeathRecipient {

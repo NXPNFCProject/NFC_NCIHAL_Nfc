@@ -23,4 +23,6 @@ public class NativeExtFieldDetectManager {
   public native int startExtendedFieldDetectMode(int detectionTimeout);
 
   public native int stopExtendedFieldDetectMode();
+
+  public native int startCardEmulation();
 }

@@ -384,4 +384,5 @@ public interface DeviceHost {
     public int doEnableDebugNtf(byte fieldValue);
     public int startExtendedFieldDetectMode(int detectionTimeout);
     public int stopExtendedFieldDetectMode();
+    public int startCardEmulation();
 }

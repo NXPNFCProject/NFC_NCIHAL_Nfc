@@ -160,17 +160,58 @@ int NativeExtFieldDetect::stopExtendedFieldDetectMode(JNIEnv* e, jobject o) {
     efdStatus = EFDSTATUS_SUCCESS;
   }
 
-  /*Start RF discovery*/
-  if (!android::isDiscoveryStarted()) {
-    android::startRfDiscovery(true);
-  }
-
   if (mIsefdmStarted == true) {
     mIsefdmStarted = false;
   }
 
   return efdStatus;
 }
+
+/*******************************************************************************
+**
+** Function:        startCardEmulation
+**
+** Description:     This API performs to start default RF discovery
+**
+** Returns:         0x00 :EFDSTATUS_SUCCESS
+**                  0x01 :EFDSTATUS_FAILED
+**                  0x05 :EFDSTATUS_ERROR_NFC_IS_OFF
+**                  0x06 :EFDSTATUS_ERROR_UNKNOWN
+**
+*******************************************************************************/
+int NativeExtFieldDetect::startCardEmulation(JNIEnv* e, jobject o) {
+  int efdStatus = EFDSTATUS_FAILED;
+
+  if (!android::nfcManager_isNfcActive() ||
+      android::nfcManager_isNfcDisabling()) {
+    return EFDSTATUS_ERROR_NFC_IS_OFF;
+  }
+
+  /*Kill the timer if running*/
+  mEfdmTimer.kill();
+
+  /*Stop Rf discovery*/
+  if (android::isDiscoveryStarted()) {
+    android::startRfDiscovery(false);
+  }
+
+  /*Configure to keep desired Poll Phases (as before) but only add
+   * FieldDetect Mode for Listen Phase */
+  NFA_SetFieldDetectMode(false);
+  if (NFA_EnableListening() == NFA_STATUS_OK) {
+    efdStatus = EFDSTATUS_SUCCESS;
+  }
+
+  /*Start RF discovery*/
+  if (!android::isDiscoveryStarted()) {
+    android::startRfDiscovery(true);
+  }
+
+  mIsefdmStarted = false;
+
+  return efdStatus;
+}
+
 /*******************************************************************************
 **
 ** Function:        startEfdmTimer
