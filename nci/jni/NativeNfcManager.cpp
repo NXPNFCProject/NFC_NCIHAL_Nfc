@@ -55,7 +55,6 @@
 #include "RoutingManager.h"
 #include "SecureElement.h"
 #include "SyncEvent.h"
-#include "nfc_config.h"
 #if (NXP_EXTNS == TRUE)
 #include <cutils/properties.h>
 #include <signal.h>
@@ -66,11 +65,13 @@
 #include "DwpChannel.h"
 #include "TransactionController.h"
 #include "ce_api.h"
+#include "debug_lmrt.h"
 #include "nfa_api.h"
 #include "nfa_ee_api.h"
 #include "nfa_p2p_api.h"
 #include "nfc_api.h"
 #include "nfc_brcm_defs.h"
+#include "nfc_config.h"
 #include "phNxpConfig.h"
 #include "phNxpExtns.h"
 #include "rw_api.h"
@@ -254,6 +255,44 @@ static void nfcManager_changeDiscoveryTech(JNIEnv* e, jobject o, jint pollTech,
 bool nfcManager_isNfcActive();
 #endif
 }  // namespace android
+
+/*******************************************************************************
+**
+** Function:        nfcManager_doGetMaxRoutingTableSize
+**
+** Description:     Retrieve the max routing table size from cache
+**                  e: JVM environment.
+**                  o: Java object.
+**
+** Returns:         Max Routing Table size
+**
+*******************************************************************************/
+static jint nfcManager_doGetMaxRoutingTableSize(JNIEnv* e, jobject o) {
+  return lmrt_get_max_size();
+}
+
+/*******************************************************************************
+**
+** Function:        nfcManager_doGetRoutingTable
+**
+** Description:     Retrieve the committed listen mode routing configuration
+**                  e: JVM environment.
+**                  o: Java object.
+**
+** Returns:         Committed listen mode routing configuration
+**
+*******************************************************************************/
+static jbyteArray nfcManager_doGetRoutingTable(JNIEnv* e, jobject o) {
+  std::vector<uint8_t>* routingTable = lmrt_get_tlvs();
+
+  CHECK(e);
+  jbyteArray rtJavaArray = e->NewByteArray((*routingTable).size());
+  CHECK(rtJavaArray);
+  e->SetByteArrayRegion(rtJavaArray, 0, (*routingTable).size(),
+                        (jbyte*)&(*routingTable)[0]);
+
+  return rtJavaArray;
+}
 
 /*****************************************************************************
 **
@@ -4556,6 +4595,10 @@ static jstring nfcManager_doGetNfaStorageDir(JNIEnv* e, jobject o) {
     {"doSetNfcSecure", "(Z)Z", (void*)nfcManager_doSetNfcSecure},
     {"getNfaStorageDir", "()Ljava/lang/String;",
      (void*)nfcManager_doGetNfaStorageDir},
+    {"getRoutingTable", "()[B", (void*)nfcManager_doGetRoutingTable},
+
+    {"getMaxRoutingTableSize", "()I",
+     (void*)nfcManager_doGetMaxRoutingTableSize},
   };
 
   /*******************************************************************************

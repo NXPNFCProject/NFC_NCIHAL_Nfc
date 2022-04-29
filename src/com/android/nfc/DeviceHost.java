@@ -37,6 +37,7 @@ package com.android.nfc;
 import android.annotation.Nullable;
 import android.nfc.NdefMessage;
 import android.os.Bundle;
+
 import java.io.FileDescriptor;
 import java.io.IOException;
 
@@ -343,6 +344,16 @@ public interface DeviceHost {
     public boolean setNfcSecure(boolean enable);
 
     public String getNfaStorageDir();
+
+    /**
+    * Get the committed listen mode routing configuration
+    */
+    byte[] getRoutingTable();
+
+    /**
+    * Get the Max Routing Table size from cache
+    */
+    int getMaxRoutingTableSize();
 
     /**
      * Start or stop RF polling
