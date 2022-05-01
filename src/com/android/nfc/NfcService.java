@@ -2039,7 +2039,7 @@ public class NfcService implements DeviceHostListener {
                             0x00;
           {
               int powerState = 0x39; /*Default set it to NCI 2.0*/
-              int routEntry = 0x11; /*Default set it to NCI 2.0*/
+              int routEntry = 0x39; /*Default set it to NCI 2.0*/
               if(nci_version == NCI_VERSION_1_0) {
                   powerState = 0x1F;
                   routEntry = 0xE9;

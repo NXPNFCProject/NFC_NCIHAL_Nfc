@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2021 NXP
+*  Copyright 2018-2022 NXP
 *
 ******************************************************************************/
 package com.android.nfc.cardemulation;
@@ -400,7 +400,9 @@ public class AidRoutingManager {
                       if (mDefaultRoute == ROUTE_HOST) {
                           entry.isOnHost = true;
                           default_route_power_state = RegisteredAidCache.POWER_STATE_SWITCH_ON
-                                  | RegisteredAidCache.POWER_STATE_SCREEN_ON_LOCKED;
+                                  | RegisteredAidCache.POWER_STATE_SCREEN_ON_LOCKED
+                                  | RegisteredAidCache.POWER_STATE_SCREEN_OFF_UNLOCKED
+                                  | RegisteredAidCache.POWER_STATE_SCREEN_OFF_LOCKED;
                       } else {
                           entry.isOnHost = false;
                           default_route_power_state = RegisteredAidCache.POWER_STATE_ALL;

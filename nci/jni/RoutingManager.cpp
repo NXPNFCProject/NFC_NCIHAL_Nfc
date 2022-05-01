@@ -424,7 +424,7 @@ void RoutingManager::enableRoutingToHost() {
   tNFA_PROTOCOL_MASK protoMask = NFA_PROTOCOL_MASK_ISO_DEP;
   if (mDefaultIsoDepRoute == NFC_DH_ID) {
     nfaStat = NFA_EeSetDefaultProtoRouting(
-        NFC_DH_ID, protoMask, 0, 0, mSecureNfcEnabled ? 0 : protoMask, 0, 0);
+        NFC_DH_ID, protoMask, 0, 0, mSecureNfcEnabled ? 0 : protoMask, protoMask, protoMask);
     if (nfaStat == NFA_STATUS_OK)
       mRoutingEvent.wait();
     else
@@ -2694,7 +2694,7 @@ void RoutingManager::updateDefaultRoute() {
     }
     uint8_t powerState = 0x01;
     if (!mSecureNfcEnabled)
-      powerState = (mDefaultEe != 0x00) ? mOffHostAidRoutingPowerState : 0x11;
+      powerState = (mDefaultEe != 0x00) ? mOffHostAidRoutingPowerState : 0x39;
     nfaStat = NFA_EeAddAidRouting(mDefaultEe, 0, NULL, powerState,
                                   AID_ROUTE_QUAL_PREFIX);
     if (nfaStat == NFA_STATUS_OK)

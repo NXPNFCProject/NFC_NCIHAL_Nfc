@@ -17,7 +17,7 @@
  *
  *  The original Work has been changed by NXP Semiconductors.
  *
- *  Copyright (C) 2015-2020 NXP Semiconductors
+ *  Copyright (C) 2015-2021, 2022 NXP
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -138,7 +138,7 @@ typedef struct {
 class RoutingManager {
  public:
 #if (NXP_EXTNS == TRUE)
-  static const uint8_t HOST_PWR_STATE = 0x11;
+  static const uint8_t HOST_PWR_STATE = 0x39;
   static const int NFA_SET_AID_ROUTING = 4;
   static const int NFA_SET_TECHNOLOGY_ROUTING = 1;
   static const int NFA_SET_PROTOCOL_ROUTING = 2;
