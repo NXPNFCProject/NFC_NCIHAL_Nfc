@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2021 NXP
+*  Copyright 2018-2022 NXP
 *
 ******************************************************************************/
 package com.android.nfc;
@@ -4806,8 +4806,11 @@ public class NfcService implements DeviceHostListener {
                     action.equals(Intent.ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE)) {
                 updatePackageCache();
             } else if (action.equals(Intent.ACTION_SHUTDOWN)) {
-                if (DBG) Log.d(TAG, "Device is shutting down.");
-                if (isNfcEnabled()) {
+                // FLAG_RECEIVER_FOREGROUND is checked to ignore the intent from UserController
+                // when a user is stopped.
+                if (isNfcEnabled()
+                        && (intent.getFlags() & Intent.FLAG_RECEIVER_FOREGROUND) != 0) {
+                    if (DBG) Log.d(TAG, "Device is shutting down.");
                     mDeviceHost.shutdown();
                 }
             }
