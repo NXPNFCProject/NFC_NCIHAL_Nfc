@@ -224,6 +224,8 @@ public class NfcService implements DeviceHostListener {
     static final int MSG_DEINIT_WIREDSE = 66;
     static final int MSG_READ_T4TNFCEE = 67;
     static final int MSG_WRITE_T4TNFCEE = 68;
+    static final int MSG_TXLDO_OVERCORRENT_RECOVERY = 69;
+    private static final int STATE_TXLDO_OVERCORRENT_ERROR = 0xE3;
 
     // SCR/MPOS constants
     static final int SE_READER_TYPE_INAVLID   = 0;
@@ -720,6 +722,13 @@ public class NfcService implements DeviceHostListener {
         mIsRecovering = true;
         new EnableDisableTask().execute(TASK_DISABLE);
         new EnableDisableTask().execute(TASK_ENABLE);
+    }
+
+    @Override
+    public void notifyCoreGenericError(int errorCode) {
+        if (errorCode == STATE_TXLDO_OVERCORRENT_ERROR) {
+            sendMessage(NfcService.MSG_TXLDO_OVERCORRENT_RECOVERY, null);
+        }
     }
 
     final class ReaderModeParams {
@@ -4195,6 +4204,9 @@ public class NfcService implements DeviceHostListener {
                case MSG_WLC_DISABLE:
                 mWlc.disable(WlcServiceProxy.PersistStatus.UPDATE);
                 break;
+                case MSG_TXLDO_OVERCORRENT_RECOVERY:
+                    mDeviceHost.restartRFDiscovery();
+                    break;
                default:
                  Log.e(TAG, "Unknown message received");
                  break;

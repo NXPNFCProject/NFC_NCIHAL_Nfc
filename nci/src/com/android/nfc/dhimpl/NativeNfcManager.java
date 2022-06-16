@@ -555,6 +555,13 @@ public class NativeNfcManager implements DeviceHost {
         return true;
     }
 
+    private native void doRestartRFDiscovery();
+
+    @Override
+    public void restartRFDiscovery() {
+        doRestartRFDiscovery();
+    }
+
     private native boolean doSetNfcSecure(boolean enable);
     @Override
     public boolean setNfcSecure(boolean enable) {
@@ -650,6 +657,10 @@ public class NativeNfcManager implements DeviceHost {
 
     private void notifyHwErrorReported() {
         mListener.onHwErrorReported();
+    }
+
+    private void notifyCoreGenericError(int errorCode) {
+        mListener.notifyCoreGenericError(errorCode);
     }
 
     private void notifyTransactionListeners(byte[] aid, byte[] data, String evtSrc) {
