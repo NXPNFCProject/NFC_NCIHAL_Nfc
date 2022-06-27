@@ -1355,6 +1355,22 @@ void RoutingManager::setDefaultProtoRouting(int seId, int proto_switchon,
   //    }
 }
 
+bool RoutingManager::isNfceeActive(int routeLoc, tNFA_HANDLE& ActDevHandle) {
+  bool isSeIDPresent = false;
+  tNFA_HANDLE seHandle =
+      SecureElement::getInstance().getEseHandleFromGenericId(routeLoc);
+
+  DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("%s: seHandle : %x", __func__, seHandle);
+  if (SecureElement::getInstance().getSETechnology(seHandle) != 0) {
+    ActDevHandle = seHandle;
+    isSeIDPresent = true;
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("Default AID route handle active");
+  }
+  return isSeIDPresent;
+}
+
 bool RoutingManager::setRoutingEntry(int type, int value, int route,
                                      int power) {
   static const char fn[] = "RoutingManager::setRoutingEntry";
@@ -1412,6 +1428,16 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route,
              ? 0x4C0
              : ((route == 0x02) ? SecureElement::getInstance().EE_HANDLE_0xF4
                                 : NFA_HANDLE_INVALID));
+  }
+
+  if ((route == 0x01 && ee_handle == 0x4C0) ||
+      (route == 0x02 && (ee_handle == 0x480 || ee_handle == 0x481))) {
+    tNFA_HANDLE tempActDevHandle = NFA_HANDLE_INVALID;
+    bool isSeActive = false;
+    isSeActive = isNfceeActive(route, tempActDevHandle);
+    if (!isSeActive) {
+      route = 0x00;
+    }
   }
 
   if (0x00 == route) {

@@ -182,6 +182,7 @@ class RoutingManager {
   bool is_ee_recovery_ongoing();
   void setEmptyAidEntry(int route);
   void ClearSystemCodeRouting();
+  bool isNfceeActive(int routeLoc, tNFA_HANDLE& ActDevHandle);
 #endif
 
   void setEERecovery(bool value);

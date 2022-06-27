@@ -3596,6 +3596,15 @@ static void nfcManager_doFactoryReset(JNIEnv*, jobject) {
     if (NfcConfig::hasKey(NAME_DEFAULT_AID_ROUTE)) {
       num = NfcConfig::getUnsigned(NAME_DEFAULT_AID_ROUTE);
     }
+    if (num == 0x01 || num == 0x02) {
+      tNFA_HANDLE tempActDevHandle = NFA_HANDLE_INVALID;
+      bool isSeActive = false;
+      isSeActive =
+          RoutingManager::getInstance().isNfceeActive(num, tempActDevHandle);
+      if (!isSeActive) {
+        num = 0x00;
+      }
+    }
 #endif
     return num;
   }
