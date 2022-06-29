@@ -4832,11 +4832,8 @@ public class NfcService implements DeviceHostListener {
                     action.equals(Intent.ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE)) {
                 updatePackageCache();
             } else if (action.equals(Intent.ACTION_SHUTDOWN)) {
-                // FLAG_RECEIVER_FOREGROUND is checked to ignore the intent from UserController
-                // when a user is stopped.
-                if (isNfcEnabled()
-                        && (intent.getFlags() & Intent.FLAG_RECEIVER_FOREGROUND) != 0) {
-                    if (DBG) Log.d(TAG, "Device is shutting down.");
+                if (DBG) Log.d(TAG, "Device is shutting down.");
+                if (isNfcEnabled()) {
                     mDeviceHost.shutdown();
                 }
             }
