@@ -420,6 +420,8 @@ public class NfcService implements DeviceHostListener {
             new HashMap<Integer, ReaderModeDeathRecipient>();
     private final ReaderModeDeathRecipient mReaderModeDeathRecipient =
             new ReaderModeDeathRecipient();
+    private final SeServiceDeathRecipient mSeServiceDeathRecipient =
+            new SeServiceDeathRecipient();
     private final NfcUnlockManager mNfcUnlockManager;
 
 
@@ -977,8 +979,7 @@ public class NfcService implements DeviceHostListener {
                 Log.e(TAG, "Failed to register VR mode state listener: " + e);
             }
         }
-        mSEService = ISecureElementService.Stub.asInterface(ServiceManager.getService(
-                Context.SECURE_ELEMENT_SERVICE));
+        connectToSeService();
         try {
           mWlc = new WlcServiceProxy(mContext, mNxpPrefs);
           mNxpWlcAdapter = new NxpWlcAdapterService(mContext,mWlc);
@@ -989,10 +990,22 @@ public class NfcService implements DeviceHostListener {
 
     private boolean isSEServiceAvailable() {
         if (mSEService == null) {
-            mSEService = ISecureElementService.Stub.asInterface(ServiceManager.getService(
-                    Context.SECURE_ELEMENT_SERVICE));
+            connectToSeService();
         }
         return (mSEService != null);
+    }
+
+    private void connectToSeService() {
+        try {
+            mSEService = ISecureElementService.Stub.asInterface(ServiceManager.getService(
+                  Context.SECURE_ELEMENT_SERVICE));
+            if (mSEService != null) {
+                IBinder seServiceBinder = mSEService.asBinder();
+                seServiceBinder.linkToDeath(mSeServiceDeathRecipient, 0);
+            }
+        } catch (RemoteException e) {
+            Log.e(TAG, "Error Registering SE service to linktoDeath : " + e);
+        }
     }
 
     void initSoundPool() {
@@ -2703,6 +2716,16 @@ public class NfcService implements DeviceHostListener {
           return mDeviceHost.startCardEmulation();
         }
 
+    }
+
+    final class SeServiceDeathRecipient implements IBinder.DeathRecipient {
+        @Override
+        public void binderDied() {
+            synchronized (NfcService.this) {
+                Log.i(TAG, "SE Service died");
+                mSEService = null;
+            }
+        }
     }
 
     final class ReaderModeDeathRecipient implements IBinder.DeathRecipient {
