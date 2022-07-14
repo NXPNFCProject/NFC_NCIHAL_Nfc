@@ -287,9 +287,30 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
                 getDefaultServiceForCategory(userId, CardEmulation.CATEGORY_PAYMENT, true);
         if (DBG) Log.d(TAG, "Current default: " + defaultPaymentService + " for user:" + userId);
         if (defaultPaymentService == null) {
-            // A payment service may have been removed, set default payment selection to "not set".
-            if (DBG) Log.d(TAG, "No default set, last payment service removed.");
-            setDefaultServiceForCategoryChecked(userId, null, CardEmulation.CATEGORY_PAYMENT);
+            // A payment service may have been removed, leaving only one;
+            // in that case, automatically set that app as default.
+            int numPaymentServices = 0;
+            ComponentName lastFoundPaymentService = null;
+            for (ApduServiceInfo service : services) {
+                if (service.hasCategory(CardEmulation.CATEGORY_PAYMENT))  {
+                    numPaymentServices++;
+                    lastFoundPaymentService = service.getComponent();
+                }
+            }
+            if (numPaymentServices > 1) {
+                // More than one service left, leave default unset
+                if (DBG) Log.d(TAG, "No default set, more than one service left.");
+                setDefaultServiceForCategoryChecked(userId, null, CardEmulation.CATEGORY_PAYMENT);
+            } else if (numPaymentServices == 1) {
+                // Make single found payment service the default
+                if (DBG) Log.d(TAG, "No default set, making single service default.");
+                setDefaultServiceForCategoryChecked(userId, lastFoundPaymentService,
+                        CardEmulation.CATEGORY_PAYMENT);
+            } else {
+                // No payment services left, leave default at null
+                if (DBG) Log.d(TAG, "No default set, last payment service removed.");
+                setDefaultServiceForCategoryChecked(userId, null, CardEmulation.CATEGORY_PAYMENT);
+            }
         }
     }
 
