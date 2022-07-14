@@ -160,15 +160,14 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
         boolean paymentDefaultChanged = false;
         boolean paymentPreferForegroundChanged = false;
         // Load current payment default from settings
-        UserManager um = mContext.createContextAsUser(
-                UserHandle.of(ActivityManager.getCurrentUser()), /*flags=*/0)
+        UserHandle currentUser = UserHandle.of(ActivityManager.getCurrentUser());
+        UserManager um = mContext.createContextAsUser(currentUser, /*flags=*/0)
                 .getSystemService(UserManager.class);
         List<UserHandle> userHandles = um.getEnabledProfiles();
 
         String name = null;
         String newDefaultName = null;
         UserHandle newUser = null;
-        UserHandle currentUser = null;
         // search for default payment setting within enabled profiles
         for (UserHandle uh : userHandles) {
             name = Settings.Secure.getStringForUser(
