@@ -513,6 +513,9 @@ public class NfcService implements DeviceHostListener {
     boolean mNotifyDispatchFailed;
     boolean mNotifyReadFailed;
 
+    // for recording the latest Tag object cookie
+    long mCookieUpToDate = 0;
+
     private NfcDispatcher mNfcDispatcher;
     private PowerManager mPowerManager;
     private KeyguardManager mKeyguard;
@@ -3025,6 +3028,23 @@ public class NfcService implements DeviceHostListener {
         @Override
         public boolean getExtendedLengthApdusSupported() throws RemoteException {
             return mDeviceHost.getExtendedLengthApdusSupported();
+        }
+
+        @Override
+        public void setTagUpToDate(long cookie) throws RemoteException {
+            if (DBG) Log.d(TAG, "Register Tag " + Long.toString(cookie) + " as the latest");
+            mCookieUpToDate = cookie;
+        }
+
+        @Override
+        public boolean isTagUpToDate(long cookie) throws RemoteException {
+            if (mCookieUpToDate == cookie) {
+                if (DBG) Log.d(TAG, "Tag " + Long.toString(cookie) + " is up to date");
+                return true;
+            }
+
+            if (DBG) Log.d(TAG, "Tag " + Long.toString(cookie) + " is out of date");
+            return false;
         }
     }
 
