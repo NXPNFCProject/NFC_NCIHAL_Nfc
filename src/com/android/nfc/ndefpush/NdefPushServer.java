@@ -16,15 +16,15 @@
 
 package com.android.nfc.ndefpush;
 
-import com.android.nfc.DeviceHost.LlcpServerSocket;
-import com.android.nfc.DeviceHost.LlcpSocket;
-import com.android.nfc.LlcpException;
-import com.android.nfc.NfcService;
-
 import android.nfc.FormatException;
 import android.nfc.NdefMessage;
 import android.nfc.NfcAdapter;
 import android.util.Log;
+
+import com.android.nfc.DeviceHost.LlcpServerSocket;
+import com.android.nfc.DeviceHost.LlcpSocket;
+import com.android.nfc.LlcpException;
+import com.android.nfc.NfcService;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

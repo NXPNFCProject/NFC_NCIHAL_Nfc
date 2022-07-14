@@ -19,10 +19,10 @@ package com.android.nfc;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.Application;
+import android.content.pm.PackageManager;
 import android.os.Process;
 import android.os.UserHandle;
 import android.view.ThreadedRenderer;
-import android.content.pm.PackageManager;
 
 import java.util.Iterator;
 import java.util.List;

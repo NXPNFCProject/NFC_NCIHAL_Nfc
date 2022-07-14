@@ -16,14 +16,13 @@
 
 package com.android.nfc.ndefpush;
 
+import android.nfc.FormatException;
+import android.nfc.NdefMessage;
 import android.util.Log;
 
-import android.nfc.NdefMessage;
-import android.nfc.FormatException;
-
 import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 
 /**

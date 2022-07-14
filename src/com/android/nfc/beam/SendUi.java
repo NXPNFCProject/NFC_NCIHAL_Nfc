@@ -32,7 +32,6 @@ import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
@@ -45,7 +44,6 @@ import android.util.Log;
 import android.view.ActionMode;
 import android.view.Display;
 import android.view.KeyEvent;
-import android.view.KeyboardShortcutGroup;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -67,8 +65,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 import com.android.internal.policy.PhoneWindow;
 import com.android.nfc.R;
-import com.android.nfc.beam.FireflyRenderer;
-import java.util.List;
 
 /**
  * This class is responsible for handling the UI animation

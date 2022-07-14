@@ -15,20 +15,20 @@
  */
 package com.android.nfc.sneptest;
 
-import java.io.IOException;
-
 import android.content.Context;
 import android.nfc.NdefMessage;
 import android.util.Log;
 
-import com.android.nfc.DtaServiceConnector;
 import com.android.nfc.DeviceHost.LlcpServerSocket;
 import com.android.nfc.DeviceHost.LlcpSocket;
+import com.android.nfc.DtaServiceConnector;
 import com.android.nfc.LlcpException;
 import com.android.nfc.NfcService;
 import com.android.nfc.snep.SnepException;
 import com.android.nfc.snep.SnepMessage;
 import com.android.nfc.snep.SnepMessenger;
+
+import java.io.IOException;
 
 public final class ExtDtaSnepServer {
     private static final String TAG = "ExtDtaSnepServer";

@@ -16,8 +16,6 @@
 
 package com.android.nfc;
 
-import java.util.List;
-
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -29,6 +27,8 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+
+import java.util.List;
 
 public class DtaServiceConnector {
 

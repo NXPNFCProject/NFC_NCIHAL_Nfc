@@ -19,6 +19,7 @@ package com.android.nfc.snep;
 import android.nfc.FormatException;
 import android.nfc.NdefMessage;
 import android.nfc.NdefRecord;
+
 import com.android.nfc.NfcService;
 import com.android.nfc.sneptest.DtaSnepClient;
 

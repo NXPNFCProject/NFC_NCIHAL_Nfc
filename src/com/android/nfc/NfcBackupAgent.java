@@ -18,9 +18,9 @@ package com.android.nfc;
 
 import android.app.backup.BackupAgentHelper;
 import android.app.backup.SharedPreferencesBackupHelper;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.nfc.NfcAdapter;
-import android.content.Context;
 
 public class NfcBackupAgent extends BackupAgentHelper {
     // Backup identifier
