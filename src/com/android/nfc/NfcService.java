@@ -1023,8 +1023,14 @@ public class NfcService implements DeviceHostListener {
             for (UserHandle uh : luh) {
                 if (um.isQuietModeEnabled(uh)) continue;
 
-                PackageManager pm = mContext.createContextAsUser(uh,
-                        /*flags=*/0).getPackageManager();
+                PackageManager pm;
+                try {
+                    pm = mContext.createContextAsUser(uh, /*flags=*/0).getPackageManager();
+                } catch (IllegalStateException e) {
+                    Log.d(TAG, "Fail to get PackageManager for user: " + uh);
+                    continue;
+                }
+
                 List<PackageInfo> packagesNfcEvents = pm.getPackagesHoldingPermissions(
                         new String[] {android.Manifest.permission.NFC_TRANSACTION_EVENT},
                         PackageManager.GET_ACTIVITIES);
@@ -4529,8 +4535,14 @@ public class NfcService implements DeviceHostListener {
                             mContext.sendBroadcastAsUser(intent, userHandle);
                         }
                     }
-                    PackageManager pm = mContext.createContextAsUser(userHandle,
-                            /*flags=*/0).getPackageManager();
+                    PackageManager pm;
+                    try {
+                        pm = mContext.createContextAsUser(userHandle, /*flags=*/0)
+                                .getPackageManager();
+                    } catch (IllegalStateException e) {
+                        Log.d(TAG, "Fail to get PackageManager for user: " + userHandle);
+                        continue;
+                    }
                     for (String packageName :
                             mNfcPreferredPaymentChangedInstalledPackages.get(userId)) {
                         try {
