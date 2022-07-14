@@ -1140,8 +1140,9 @@ static NFCSTATUS phNciNfc_RecvMfResp(phNciNfc_Buff_t* RspBuffInfo,
   if (NULL == RspBuffInfo) {
     status = NFCSTATUS_FAILED;
   } else {
-    if ((0 == (RspBuffInfo->wLen)) || (PH_NCINFC_STATUS_OK != wStatus) ||
-        (NULL == (RspBuffInfo->pBuff))) {
+    if (((PHNCINFC_EXTNID_SIZE + PHNCINFC_EXTNSTATUS_SIZE) >
+         RspBuffInfo->wLen) ||
+        (PH_NCINFC_STATUS_OK != wStatus) || (NULL == (RspBuffInfo->pBuff))) {
       status = NFCSTATUS_FAILED;
     } else {
       RecvdExtnRspId = (phNciNfc_ExtnRespId_t)RspBuffInfo->pBuff[0];
@@ -1155,10 +1156,6 @@ static NFCSTATUS phNciNfc_RecvMfResp(phNciNfc_Buff_t* RspBuffInfo,
                NdefMap->State == PH_FRINFC_NDEFMAP_STATE_WRITE ||
                NdefMap->State == PH_FRINFC_NDEFMAP_STATE_WR_NDEF_LEN ||
                NdefMap->State == PH_FRINFC_NDEFMAP_STATE_INIT)) {
-            if (2 > RspBuffInfo->wLen) {
-              android_errorWriteLog(0x534e4554, "181346550");
-              return NFCSTATUS_FAILED;
-            }
             uint8_t rspAck = RspBuffInfo->pBuff[RspBuffInfo->wLen - 2];
             uint8_t rspAckMask = ((RspBuffInfo->pBuff[RspBuffInfo->wLen - 1]) &
                                   MAX_NUM_VALID_BITS_FOR_ACK);
@@ -1172,11 +1169,6 @@ static NFCSTATUS phNciNfc_RecvMfResp(phNciNfc_Buff_t* RspBuffInfo,
             status = NFCSTATUS_SUCCESS;
             uint16_t wRecvDataSz = 0;
 
-            if ((PHNCINFC_EXTNID_SIZE + PHNCINFC_EXTNSTATUS_SIZE) >
-                RspBuffInfo->wLen) {
-              android_errorWriteLog(0x534e4554, "181346550");
-              return NFCSTATUS_FAILED;
-            }
             /* DataLen = TotalRecvdLen - (sizeof(RspId) + sizeof(Status)) */
             wPldDataSize = ((RspBuffInfo->wLen) -
                             (PHNCINFC_EXTNID_SIZE + PHNCINFC_EXTNSTATUS_SIZE));
