@@ -100,6 +100,7 @@ import android.se.omapi.ISecureElementService;
 import android.service.vr.IVrManager;
 import android.service.vr.IVrStateCallbacks;
 import android.text.TextUtils;
+import android.util.EventLog;
 import android.util.Log;
 import android.util.proto.ProtoOutputStream;
 import android.widget.Toast;
@@ -3044,6 +3045,8 @@ public class NfcService implements DeviceHostListener {
             }
 
             if (DBG) Log.d(TAG, "Tag " + Long.toString(cookie) + " is out of date");
+            EventLog.writeEvent(0x534e4554, "199291025", -1,
+                    "The obsolete tag was attempted to be accessed");
             return false;
         }
     }
