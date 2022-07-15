@@ -894,4 +894,47 @@ public class NativeNfcTag implements TagEndpoint {
 
         return ndefMsg;
     }
+
+    @Override
+    public void findNdef() {
+        int[] technologies = getTechList();
+        int[] handles = mTechHandles;
+        int currHandle = 0;
+
+        for (int techIndex = 0; techIndex < technologies.length; techIndex++) {
+            if (currHandle != handles[techIndex]) {
+                currHandle = handles[techIndex];
+                int status = connectWithStatus(technologies[techIndex]);
+                if (status != 0) {
+                    Log.d(TAG, "Connect Failed - status = " + status);
+                    if (status == STATUS_CODE_TARGET_LOST) {
+                        break;
+                    }
+                    continue; // try next handle
+                }
+
+                int[] ndefinfo = new int[2];
+                status = checkNdefWithStatus(ndefinfo);
+                if (status != 0) {
+                    Log.d(TAG, "findNdef: Check NDEF Failed - status = "
+                            + status);
+                    if (status == STATUS_CODE_TARGET_LOST) {
+                        break;
+                    }
+                    continue; // try next handle
+                } else {
+                    int supportedNdefLength = ndefinfo[0];
+                    int cardState = ndefinfo[1];
+                    addNdefTechnology(null,
+                            getConnectedHandle(),
+                            getConnectedLibNfcType(),
+                            getConnectedTechnology(),
+                            supportedNdefLength, cardState);
+                    break;
+                }
+            } else {
+                Log.d(TAG, "findNdef: Duplicate techIndex = " + techIndex);
+            }
+        }
+    }
 }
