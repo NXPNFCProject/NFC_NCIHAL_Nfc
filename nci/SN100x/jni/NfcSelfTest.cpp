@@ -26,13 +26,13 @@ NfcSelfTest NfcSelfTest::sSelfTestMgr;
 nxp_selftest_data gselfTestData;
 extern bool nfc_debug_enabled;
 extern SyncEvent sChangeDiscTechEvent;
-extern SyncEvent sNfaSetConfigEvent;
 static SyncEvent sNfaVscNtfEvent;
 
 using android::base::StringPrintf;
 using namespace android;
 
 namespace android {
+extern SyncEvent gNfaSetConfigEvent;
 extern bool nfcManager_isNfcActive();
 extern bool isDiscoveryStarted();
 extern void startRfDiscovery(bool isStart);
@@ -528,9 +528,9 @@ tNFA_STATUS NfcSelfTest::PerformTransacAB(uint8_t aType) {
   status = executeCmdSeq(NFCInitCmdSeq, sizeof(NFCInitCmdSeq));
   if (status == NFA_STATUS_OK) {
     {
-      SyncEventGuard guard(sNfaSetConfigEvent);
+      SyncEventGuard guard(gNfaSetConfigEvent);
       status = NFA_SetConfig(0x85, 1, val85);
-      if (status == NFA_STATUS_OK) sNfaSetConfigEvent.wait(2 * ONE_SECOND_MS);
+      if (status == NFA_STATUS_OK) gNfaSetConfigEvent.wait(2 * ONE_SECOND_MS);
     }
     {
       SyncEventGuard guard(gselfTestData.NxpSelfTestEvt);

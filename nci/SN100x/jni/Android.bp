@@ -45,7 +45,10 @@ cc_library_shared {
     ],
     product_variables: {
         debuggable: {
-            cflags: ["-DDCHECK_ALWAYS_ON"],
+            cflags: [
+                "-DDCHECK_ALWAYS_ON",
+                "-DDTA_ENABLED"
+            ],
         },
     },
     static_libs: ["libxml2"],

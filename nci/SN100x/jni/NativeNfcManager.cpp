@@ -45,6 +45,9 @@
 #include "HciEventManager.h"
 #include "JavaClassConstants.h"
 #include "NfcAdaptation.h"
+#ifdef DTA_ENABLED
+#include "NfcDta.h"
+#endif /* DTA_ENABLED */
 #include "NfcJniUtil.h"
 #include "NfcTag.h"
 #include "PeerToPeer.h"
@@ -142,7 +145,6 @@ SyncEvent sNfaSetPowerSubState;
 bool legacy_mfc_reader = true;
 int recovery_option = 0;
 SyncEvent sChangeDiscTechEvent;
-SyncEvent sNfaSetConfigEvent;  // event for Set_Config....
 #if(NXP_EXTNS == TRUE)
 bool sSeRfActive = false;  // whether RF with SE is likely active
 /*Structure to store  discovery parameters*/
@@ -224,7 +226,8 @@ static SyncEvent sNfaDisableEvent;               // event for NFA_Disable()
 static SyncEvent sNfaEnableDisablePollingEvent;  // event for
                                                  // NFA_EnablePolling(),
                                                  // NFA_DisablePolling()
-static SyncEvent sNfaGetConfigEvent;             // event for Get_Config....
+SyncEvent gNfaSetConfigEvent;                    // event for Set_Config....
+SyncEvent gNfaGetConfigEvent;                    // event for Get_Config....
 #if(NXP_EXTNS == TRUE)
 static SyncEvent sNfaTransitConfigEvent;  // event for NFA_SetTransitConfig()
 bool suppressLogs = true;
@@ -314,8 +317,8 @@ static rssi_status_t nfcManager_doSetRssiMode(bool enable,
                                               int rssiNtfTimeIntervalInMillisec);
 static void nfcManager_restartRFDiscovery(JNIEnv* e, jobject o);
 #endif
-static uint16_t sCurrentConfigLen;
-static uint8_t sConfig[256];
+uint16_t gCurrentConfigLen;
+uint8_t gConfig[256];
 static int NFA_SCREEN_POLLING_TAG_MASK = 0x10;
 static bool gIsDtaEnabled = false;
 #if (NXP_EXTNS==TRUE)
@@ -1052,8 +1055,8 @@ void nfaDeviceManagementCallback(uint8_t dmEvent,
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: NFA_DM_SET_CONFIG_EVT", __func__);
       {
-        SyncEventGuard guard(sNfaSetConfigEvent);
-        sNfaSetConfigEvent.notifyOne();
+        SyncEventGuard guard(gNfaSetConfigEvent);
+        gNfaSetConfigEvent.notifyOne();
       }
       break;
 
@@ -1061,17 +1064,17 @@ void nfaDeviceManagementCallback(uint8_t dmEvent,
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: NFA_DM_GET_CONFIG_EVT", __func__);
       {
-        SyncEventGuard guard(sNfaGetConfigEvent);
+        SyncEventGuard guard(gNfaGetConfigEvent);
         if (eventData->status == NFA_STATUS_OK &&
-            eventData->get_config.tlv_size <= sizeof(sConfig)) {
-          sCurrentConfigLen = eventData->get_config.tlv_size;
-          memcpy(sConfig, eventData->get_config.param_tlvs,
+            eventData->get_config.tlv_size <= sizeof(gConfig)) {
+          gCurrentConfigLen = eventData->get_config.tlv_size;
+          memcpy(gConfig, eventData->get_config.param_tlvs,
                  eventData->get_config.tlv_size);
         } else {
           LOG(ERROR) << StringPrintf("%s: NFA_DM_GET_CONFIG failed", __func__);
-          sCurrentConfigLen = 0;
+          gCurrentConfigLen = 0;
         }
-        sNfaGetConfigEvent.notifyOne();
+        gNfaGetConfigEvent.notifyOne();
       }
       break;
 
@@ -1152,15 +1155,15 @@ if (!sP2pActive && eventData->rf_field.status == NFA_STATUS_OK) {
         }
         {
           DLOG_IF(INFO, nfc_debug_enabled)
-              << StringPrintf("%s: aborting  sNfaSetConfigEvent", __func__);
-          SyncEventGuard guard(sNfaSetConfigEvent);
-          sNfaSetConfigEvent.notifyOne();
+              << StringPrintf("%s: aborting gNfaSetConfigEvent", __func__);
+          SyncEventGuard guard(gNfaSetConfigEvent);
+          gNfaSetConfigEvent.notifyOne();
         }
         {
           DLOG_IF(INFO, nfc_debug_enabled)
-              << StringPrintf("%s: aborting  sNfaGetConfigEvent", __func__);
-          SyncEventGuard guard(sNfaGetConfigEvent);
-          sNfaGetConfigEvent.notifyOne();
+              << StringPrintf("%s: aborting gNfaGetConfigEvent", __func__);
+          SyncEventGuard guard(gNfaGetConfigEvent);
+          gNfaGetConfigEvent.notifyOne();
         }
 
       } else {
@@ -1699,16 +1702,16 @@ static jboolean nfcManager_doInitialize(JNIEnv* e, jobject o) {
 
         // get LF_T3T_MAX
         {
-          SyncEventGuard guard(sNfaGetConfigEvent);
+          SyncEventGuard guard(gNfaGetConfigEvent);
           tNFA_PMID configParam[1] = {NCI_PARAM_ID_LF_T3T_MAX};
           stat = NFA_GetConfig(1, configParam);
           if (stat == NFA_STATUS_OK) {
-            sNfaGetConfigEvent.wait();
-            if (sCurrentConfigLen >= 4 ||
-                sConfig[1] == NCI_PARAM_ID_LF_T3T_MAX) {
+            gNfaGetConfigEvent.wait();
+            if (gCurrentConfigLen >= 4 ||
+                gConfig[1] == NCI_PARAM_ID_LF_T3T_MAX) {
               DLOG_IF(INFO, nfc_debug_enabled)
-                  << StringPrintf("%s: lfT3tMax=%d", __func__, sConfig[3]);
-              sLfT3tMax = sConfig[3];
+                  << StringPrintf("%s: lfT3tMax=%d", __func__, gConfig[3]);
+              sLfT3tMax = gConfig[3];
             }
           }
         }
@@ -1724,6 +1727,9 @@ static jboolean nfcManager_doInitialize(JNIEnv* e, jobject o) {
 
         // Do custom NFCA startup configuration.
         doStartupConfig();
+#ifdef DTA_ENABLED
+        NfcDta::getInstance().setNfccConfigParams();
+#endif /* DTA_ENABLED */
         goto TheEnd;
       }
     }
@@ -1973,53 +1979,6 @@ TheEnd:
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: exit: Status = 0x%X", __func__, status);
 }
-#if (NXP_EXTNS==FALSE)
-void enableDisableLptd(bool enable) {
-  // This method is *NOT* thread-safe. Right now
-  // it is only called from the same thread so it's
-  // not an issue.
-  static bool sCheckedLptd = false;
-  static bool sHasLptd = false;
-
-  tNFA_STATUS stat = NFA_STATUS_OK;
-  if (!sCheckedLptd) {
-    sCheckedLptd = true;
-    SyncEventGuard guard(sNfaGetConfigEvent);
-    tNFA_PMID configParam[1] = {NCI_PARAM_ID_TAGSNIFF_CFG};
-    stat = NFA_GetConfig(1, configParam);
-    if (stat != NFA_STATUS_OK) {
-      LOG(ERROR) << StringPrintf("%s: NFA_GetConfig failed", __func__);
-      return;
-    }
-    sNfaGetConfigEvent.wait();
-    if (sCurrentConfigLen < 4 || sConfig[1] != NCI_PARAM_ID_TAGSNIFF_CFG) {
-      LOG(ERROR) << StringPrintf(
-          "%s: Config TLV length %d returned is too short", __func__,
-          sCurrentConfigLen);
-      return;
-    }
-    if (sConfig[3] == 0) {
-      LOG(ERROR) << StringPrintf(
-          "%s: LPTD is disabled, not enabling in current config", __func__);
-      return;
-    }
-    sHasLptd = true;
-  }
-  // Bail if we checked and didn't find any LPTD config before
-  if (!sHasLptd) return;
-  uint8_t enable_byte = enable ? 0x01 : 0x00;
-
-  SyncEventGuard guard(sNfaSetConfigEvent);
-
-  stat = NFA_SetConfig(NCI_PARAM_ID_TAGSNIFF_CFG, 1, &enable_byte);
-  if (stat == NFA_STATUS_OK)
-    sNfaSetConfigEvent.wait();
-  else
-    LOG(ERROR) << StringPrintf("%s: Could not configure LPTD feature",
-                               __func__);
-  return;
-}
-#endif
 /*******************************************************************************
 **
 ** Function:        nfcManager_doCreateLlcpServiceSocket
@@ -2375,14 +2334,14 @@ tNFA_STATUS getConfig(uint16_t* rspLen, uint8_t* configValue, uint8_t numParam,
   tNFA_STATUS status = NFA_STATUS_FAILED;
   if (rspLen == NULL || configValue == NULL || param == NULL)
     return NFA_STATUS_FAILED;
-  SyncEventGuard guard(sNfaGetConfigEvent);
+  SyncEventGuard guard(gNfaGetConfigEvent);
   status = NFA_GetConfig(numParam, param);
   if (status == NFA_STATUS_OK) {
-    if (sNfaGetConfigEvent.wait(WIRED_MODE_TRANSCEIVE_TIMEOUT) == false) {
+    if (gNfaGetConfigEvent.wait(WIRED_MODE_TRANSCEIVE_TIMEOUT) == false) {
       *rspLen = 0;
     } else {
-      *rspLen = sCurrentConfigLen;
-      memcpy(configValue, sConfig, sCurrentConfigLen);
+      *rspLen = gCurrentConfigLen;
+      memcpy(configValue, gConfig, gCurrentConfigLen);
     }
   } else {
     *rspLen = 0;
@@ -3089,11 +3048,11 @@ static void nfcManager_doSetScreenState(JNIEnv* e, jobject o,
         NCI_LISTEN_DH_NFCEE_ENABLE_MASK | NCI_POLLING_DH_ENABLE_MASK;
   }
 
-  SyncEventGuard guard(sNfaSetConfigEvent);
+  SyncEventGuard guard(gNfaSetConfigEvent);
   status = NFA_SetConfig(NCI_PARAM_ID_CON_DISCOVERY_PARAM,
                          NCI_PARAM_LEN_CON_DISCOVERY_PARAM, &discovry_param);
   if (status == NFA_STATUS_OK) {
-    sNfaSetConfigEvent.wait();
+    gNfaSetConfigEvent.wait();
   } else {
     LOG(ERROR) << StringPrintf("%s: Failed to update CON_DISCOVER_PARAM",
                                __FUNCTION__);
@@ -3549,21 +3508,6 @@ bool isDiscoveryStarted() {
 **
 *******************************************************************************/
 void doStartupConfig() {
-#if (NXP_EXTNS == FALSE)
- struct nfc_jni_native_data* nat = getNative(0, 0);
-  tNFA_STATUS stat = NFA_STATUS_FAILED;
-
-   //If polling for Active mode, set the ordering so that we choose Active over
-   //Passive mode first.
-  if (nat && (nat->tech_mask &
-              (NFA_TECHNOLOGY_MASK_A_ACTIVE | NFA_TECHNOLOGY_MASK_F_ACTIVE))) {
-    uint8_t act_mode_order_param[] = {0x01};
-    SyncEventGuard guard(sNfaSetConfigEvent);
-    stat = NFA_SetConfig(NCI_PARAM_ID_ACT_ORDER, sizeof(act_mode_order_param),
-                         &act_mode_order_param[0]);
-    if (stat == NFA_STATUS_OK) sNfaSetConfigEvent.wait();
-  }
-#endif
   // configure RF polling frequency for each technology
   static tNFA_DM_DISC_FREQ_CFG nfa_dm_disc_freq_cfg;
   // values in the polling_frequency[] map to members of nfa_dm_disc_freq_cfg
@@ -3677,7 +3621,7 @@ void startStopPolling(bool isStartPolling) {
       << StringPrintf("%s: enter; isStart=%u", __func__, isStartPolling);
 
   if (NFC_GetNCIVersion() >= NCI_VERSION_2_0) {
-    SyncEventGuard guard(sNfaSetConfigEvent);
+    SyncEventGuard guard(gNfaSetConfigEvent);
     if (isStartPolling) {
       discovry_param =
           NCI_LISTEN_DH_NFCEE_ENABLE_MASK | NCI_POLLING_DH_ENABLE_MASK;
@@ -3688,7 +3632,7 @@ void startStopPolling(bool isStartPolling) {
     status = NFA_SetConfig(NCI_PARAM_ID_CON_DISCOVERY_PARAM,
                            NCI_PARAM_LEN_CON_DISCOVERY_PARAM, &discovry_param);
     if (status == NFA_STATUS_OK) {
-      sNfaSetConfigEvent.wait();
+      gNfaSetConfigEvent.wait();
     } else {
       LOG(ERROR) << StringPrintf("%s: Failed to update CON_DISCOVER_PARAM",
                                  __FUNCTION__);
