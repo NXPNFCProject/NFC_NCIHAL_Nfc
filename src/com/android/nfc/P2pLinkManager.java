@@ -352,9 +352,11 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
         mDtaRwSize  = rwSize;
         mTestCaseID = testCaseId;
         synchronized (this) {
-            if(mExtDtaSnepServer == null)
-            mExtDtaSnepServer = new ExtDtaSnepServer(mServiceName, mServiceSap, mDtaMiu, mDtaRwSize,
-                                                     mExtDtaSnepServerCallback,mContext, mTestCaseID);
+            if(mExtDtaSnepServer == null) {
+                mExtDtaSnepServer = new ExtDtaSnepServer(mServiceName, mServiceSap, mDtaMiu,
+                                                         mDtaRwSize, mExtDtaSnepServerCallback,
+                                                         mContext, mTestCaseID);
+            }
             mExtDtaSnepServer.start();
             mExtDtaSnepServerRunning = true;
         }
@@ -1015,10 +1017,11 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
     final SnepServer.Callback mDefaultSnepCallback = new SnepServer.Callback() {
         @Override
         public SnepMessage doPut(NdefMessage msg) {
-            if(NfcService.sIsDtaMode)
-            Log.d(TAG, "DTA mode enabled, dont dispatch the tag");
-            else
-            onReceiveComplete(msg);
+            if(NfcService.sIsDtaMode) {
+                Log.d(TAG, "DTA mode enabled, don't dispatch the tag");
+            } else {
+                onReceiveComplete(msg);
+            }
             return SnepMessage.getMessage(SnepMessage.RESPONSE_SUCCESS);
         }
 
