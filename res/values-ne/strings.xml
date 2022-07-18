@@ -35,10 +35,10 @@
     <string name="complete_with" msgid="6797459104103012992">"सँग समाप्त गर्नुहोस्"</string>
     <string name="default_pay_app_removed" msgid="4108250545457437360">"तपाईँको प्राथमिकमा पर्ने Tap &amp; Pay सेवा हटाइयो। अर्को चयन गर्नुहुन्छ?"</string>
     <string name="ask_nfc_tap" msgid="2925239870458286340">"पूरा गर्नको लागि अर्को उपकरण ट्याप गर्नुहोस्"</string>
-    <string name="wifi_connect" msgid="6250727951843550671">"जडान गर्नुहोस्"</string>
+    <string name="wifi_connect" msgid="6250727951843550671">"कनेक्ट गर्नुहोस्"</string>
     <string name="status_unable_to_connect" msgid="9183908200295307657">"सञ्जालसँग जडान गर्न असक्षम भयो"</string>
     <string name="status_wifi_connected" msgid="5893022897732105739">"जोडिएको"</string>
-    <string name="title_connect_to_network" msgid="2474034615817280146">"सञ्जालमा जडान गर्नुहोस्"</string>
+    <string name="title_connect_to_network" msgid="2474034615817280146">"सञ्जालमा कनेक्ट गर्नुहोस्"</string>
     <string name="prompt_connect_to_network" msgid="8511683573657516114">"सञ्जाल <xliff:g id="NETWORK_SSID">%1$s</xliff:g>मा जडान गर्ने?"</string>
     <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"Android बीम सक्षम गर्नको लागि NFC आवश्यक छ। के तपाईं यसलाई सक्षम गर्न चाहनुहुन्छ?"</string>
     <string name="android_beam" msgid="1666446406999492763">"Android बिम"</string>

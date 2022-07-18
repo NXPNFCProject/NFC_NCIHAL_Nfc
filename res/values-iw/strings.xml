@@ -33,7 +33,7 @@
     <string name="could_not_use_app" msgid="8137587876138569083">"לא ניתן היה להשתמש ב-<xliff:g id="APP">%1$s</xliff:g>."</string>
     <string name="pay_with" msgid="5531545488795798945">"תשלום באמצעות"</string>
     <string name="complete_with" msgid="6797459104103012992">"השלמה באמצעות"</string>
-    <string name="default_pay_app_removed" msgid="4108250545457437360">"השירות המועדף עליך עבור \'הקשה לתשלום\' הוסר. האם לבחור אחר?"</string>
+    <string name="default_pay_app_removed" msgid="4108250545457437360">"השירות המועדף עליך עבור \'תשלום בקליק\' הוסר. האם לבחור אחר?"</string>
     <string name="ask_nfc_tap" msgid="2925239870458286340">"יש להקיש על מכשיר אחר להשלמה"</string>
     <string name="wifi_connect" msgid="6250727951843550671">"התחברות"</string>
     <string name="status_unable_to_connect" msgid="9183908200295307657">"לא ניתן להתחבר לרשת"</string>

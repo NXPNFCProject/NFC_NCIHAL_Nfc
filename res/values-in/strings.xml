@@ -37,7 +37,7 @@
     <string name="ask_nfc_tap" msgid="2925239870458286340">"Ketuk perangkat lain untuk menyelesaikan"</string>
     <string name="wifi_connect" msgid="6250727951843550671">"Hubungkan"</string>
     <string name="status_unable_to_connect" msgid="9183908200295307657">"Tidak dapat menyambung ke jaringan"</string>
-    <string name="status_wifi_connected" msgid="5893022897732105739">"Tersambung"</string>
+    <string name="status_wifi_connected" msgid="5893022897732105739">"Terhubung"</string>
     <string name="title_connect_to_network" msgid="2474034615817280146">"Sambungkan ke jaringan"</string>
     <string name="prompt_connect_to_network" msgid="8511683573657516114">"Sambungkan ke jaringan <xliff:g id="NETWORK_SSID">%1$s</xliff:g>?"</string>
     <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"Android Beam memerlukan NFC untuk diaktifkan. Ingin mengaktifkannya?"</string>

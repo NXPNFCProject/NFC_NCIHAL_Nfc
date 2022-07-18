@@ -12,7 +12,7 @@
     <string name="beam_canceled" msgid="5425192751826544741">"બીમ રદ કર્યું"</string>
     <string name="cancel" msgid="61873902552555096">"રદ કરો"</string>
     <string name="beam_tap_to_view" msgid="7430394753262448349">"જોવા માટે ટૅપ કરો"</string>
-    <string name="beam_handover_not_supported" msgid="4083165921751489015">"પ્રાપ્તિકર્તાનું ઉપકરણ બીમ દ્વારા મોટી ફાઇલનાં સ્થાનાંતરણનું સમર્થન કરતું નથી."</string>
+    <string name="beam_handover_not_supported" msgid="4083165921751489015">"પ્રાપ્તિકર્તાનું ડિવાઇસ બીમ દ્વારા મોટી ફાઇલનાં ટ્રાન્સફરને સપોર્ટ કરતું નથી."</string>
     <string name="beam_try_again" msgid="3364677301009783455">"ઉપકરણોને ફરીથી એકસાથે લાવો"</string>
     <string name="beam_busy" msgid="5253335587620612576">"બીમ હાલમાં વ્યસ્ત છે. પહેલાંના સ્થાનાંતરણ પૂર્ણ થાય ત્યારે ફરીથી પ્રયાસ કરો."</string>
     <string name="device" msgid="4459621591392478151">"ઉપકરણ"</string>
