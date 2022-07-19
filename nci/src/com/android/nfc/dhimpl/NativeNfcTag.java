@@ -36,9 +36,6 @@
 package com.android.nfc.dhimpl;
 
 import android.annotation.Nullable;
-import com.android.nfc.DeviceHost;
-import com.android.nfc.DeviceHost.TagEndpoint;
-
 import android.nfc.FormatException;
 import android.nfc.NdefMessage;
 import android.nfc.tech.IsoDep;
@@ -47,12 +44,15 @@ import android.nfc.tech.MifareUltralight;
 import android.nfc.tech.Ndef;
 import android.nfc.tech.NfcA;
 import android.nfc.tech.NfcB;
+import android.nfc.tech.NfcBarcode;
 import android.nfc.tech.NfcF;
 import android.nfc.tech.NfcV;
-import android.nfc.tech.NfcBarcode;
 import android.nfc.tech.TagTechnology;
 import android.os.Bundle;
 import android.util.Log;
+
+import com.android.nfc.DeviceHost;
+import com.android.nfc.DeviceHost.TagEndpoint;
 
 /**
  * Native interface to the NFC tag functions
@@ -363,9 +363,16 @@ public class NativeNfcTag implements TagEndpoint {
         }
         return status;
     }
+
     @Override
     public synchronized boolean checkNdef(int[] ndefinfo) {
-        return checkNdefWithStatus(ndefinfo) == 0;
+        boolean status = false;
+        if (hasTech(TagTechnology.NDEF)) {
+            status = true;
+        } else {
+            status = checkNdefWithStatus(ndefinfo) == 0;
+        }
+        return status;
     }
 
     private native byte[] doRead();
