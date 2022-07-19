@@ -3082,15 +3082,16 @@ public class NfcService implements DeviceHostListener {
 
         @Override
         public boolean isTagUpToDate(long cookie) throws RemoteException {
-            if (mCookieUpToDate == cookie) {
+            /* if (mCookieUpToDate == cookie) {
                 if (DBG) Log.d(TAG, "Tag " + Long.toString(cookie) + " is up to date");
                 return true;
             }
 
             if (DBG) Log.d(TAG, "Tag " + Long.toString(cookie) + " is out of date");
             EventLog.writeEvent(0x534e4554, "199291025", -1,
-                    "The obsolete tag was attempted to be accessed");
-            return false;
+                    "The obsolete tag was attempted to be accessed"); */
+            /* Always returning true to avoid cookie up to date check. */
+            return true;
         }
     }
 
