@@ -1,13 +1,13 @@
 package com.android.nfc.beam;
 
-import com.android.nfc.R;
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.Uri;
 import android.util.Log;
+
+import com.android.nfc.R;
 
 import java.io.File;
 

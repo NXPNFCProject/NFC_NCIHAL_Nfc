@@ -16,16 +16,14 @@
 
 package com.android.nfc;
 
-import java.util.ArrayList;
-
+import android.Manifest.permission;
 import android.app.Activity;
-import android.app.ActivityManager;
 import android.app.ActivityManagerNative;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
+import android.content.ClipData;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.ClipData;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
@@ -35,16 +33,17 @@ import android.nfc.NdefMessage;
 import android.nfc.NdefRecord;
 import android.nfc.NfcAdapter;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.os.SystemProperties;
 import android.os.UserHandle;
-import android.os.RemoteException;
-import android.util.Log;
 import android.util.EventLog;
+import android.util.Log;
 import android.webkit.URLUtil;
-import android.Manifest.permission;
 import android.widget.Toast;
 
 import com.android.internal.R;
+
+import java.util.ArrayList;
 
 /**
  * This class is registered by NfcService to handle

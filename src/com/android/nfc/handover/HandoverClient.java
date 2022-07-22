@@ -20,9 +20,9 @@ import android.nfc.NdefMessage;
 import android.os.SystemProperties;
 import android.util.Log;
 
+import com.android.nfc.DeviceHost.LlcpSocket;
 import com.android.nfc.LlcpException;
 import com.android.nfc.NfcService;
-import com.android.nfc.DeviceHost.LlcpSocket;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

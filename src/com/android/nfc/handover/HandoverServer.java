@@ -15,22 +15,17 @@
  */
 package com.android.nfc.handover;
 
+import android.content.Context;
+import android.nfc.FormatException;
+import android.nfc.NdefMessage;
+import android.os.SystemProperties;
+import android.util.Log;
+
 import com.android.nfc.DeviceHost.LlcpServerSocket;
 import com.android.nfc.DeviceHost.LlcpSocket;
 import com.android.nfc.LlcpException;
 import com.android.nfc.NfcService;
 import com.android.nfc.beam.BeamManager;
-import com.android.nfc.beam.BeamReceiveService;
-import com.android.nfc.beam.BeamTransferRecord;
-
-import android.bluetooth.BluetoothDevice;
-import android.content.Context;
-import android.content.Intent;
-import android.nfc.FormatException;
-import android.nfc.NdefMessage;
-import android.os.SystemProperties;
-import android.os.UserHandle;
-import android.util.Log;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

@@ -16,8 +16,6 @@
 
 package com.android.nfc.beam;
 
-import com.android.nfc.R;
-
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.content.Intent;
@@ -26,6 +24,8 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.SystemClock;
 import android.util.Log;
+
+import com.android.nfc.R;
 
 import java.util.ArrayList;
 

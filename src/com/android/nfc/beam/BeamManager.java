@@ -15,10 +15,6 @@
 */
 package com.android.nfc.beam;
 
-import com.android.nfc.NfcService;
-import com.android.nfc.R;
-import com.android.nfc.handover.HandoverDataParser;
-
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.content.Intent;
@@ -30,6 +26,10 @@ import android.os.Messenger;
 import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.util.Log;
+
+import com.android.nfc.NfcService;
+import com.android.nfc.R;
+import com.android.nfc.handover.HandoverDataParser;
 
 /**
  * Manager for starting and stopping Beam transfers. Prevents more than one transfer from

@@ -16,16 +16,16 @@
 
 package com.android.nfc.echoserver;
 
-import com.android.nfc.DeviceHost.LlcpConnectionlessSocket;
-import com.android.nfc.LlcpException;
-import com.android.nfc.DeviceHost.LlcpServerSocket;
-import com.android.nfc.DeviceHost.LlcpSocket;
-import com.android.nfc.LlcpPacket;
-import com.android.nfc.NfcService;
-
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+
+import com.android.nfc.DeviceHost.LlcpConnectionlessSocket;
+import com.android.nfc.DeviceHost.LlcpServerSocket;
+import com.android.nfc.DeviceHost.LlcpSocket;
+import com.android.nfc.LlcpException;
+import com.android.nfc.LlcpPacket;
+import com.android.nfc.NfcService;
 
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;

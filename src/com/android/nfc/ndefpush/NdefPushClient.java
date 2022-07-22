@@ -35,12 +35,12 @@
 
 package com.android.nfc.ndefpush;
 
+import android.nfc.NdefMessage;
+import android.util.Log;
+
 import com.android.nfc.DeviceHost.LlcpSocket;
 import com.android.nfc.LlcpException;
 import com.android.nfc.NfcService;
-
-import android.nfc.NdefMessage;
-import android.util.Log;
 
 import java.io.IOException;
 import java.util.Arrays;

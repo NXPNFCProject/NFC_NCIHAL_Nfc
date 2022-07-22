@@ -15,25 +15,20 @@
  */
 package com.android.nfc.sneptest;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-
-import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
 import android.nfc.NdefMessage;
-import android.os.IBinder;
-import android.os.Messenger;
 import android.util.Log;
 
 import com.android.nfc.DeviceHost.LlcpSocket;
+import com.android.nfc.DtaServiceConnector;
 import com.android.nfc.LlcpException;
 import com.android.nfc.NfcService;
-import com.android.nfc.DtaServiceConnector;
 import com.android.nfc.snep.SnepException;
 import com.android.nfc.snep.SnepMessage;
 import com.android.nfc.snep.SnepMessenger;
+
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
 public final class DtaSnepClient {
     private static final String TAG = "DtaSnepClient";

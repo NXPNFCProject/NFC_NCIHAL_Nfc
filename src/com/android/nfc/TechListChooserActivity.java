@@ -16,13 +16,13 @@
 
 package com.android.nfc;
 
-import com.android.internal.app.ResolverActivity;
-
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.Log;
+
+import com.android.internal.app.ResolverActivity;
 
 import java.util.ArrayList;
 

@@ -35,14 +35,14 @@
 ******************************************************************************/
 package com.android.nfc.snep;
 
+import android.nfc.FormatException;
+import android.os.SystemProperties;
+import android.util.Log;
+
 import com.android.nfc.DeviceHost.LlcpSocket;
 import com.android.nfc.NfcService;
 import com.android.nfc.sneptest.DtaSnepClient;
 import com.android.nfc.sneptest.ExtDtaSnepServer;
-
-import android.nfc.FormatException;
-import android.os.SystemProperties;
-import android.util.Log;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

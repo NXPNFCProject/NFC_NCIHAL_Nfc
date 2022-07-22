@@ -43,6 +43,7 @@ import android.app.ActivityManager;
 import android.app.ActivityManager.RunningTaskInfo;
 import com.android.nfc.NfcService;
 import com.android.nfc.NfcStatsLog;
+
 import android.util.SparseArray;
 import android.util.proto.ProtoOutputStream;
 import java.io.FileDescriptor;

@@ -16,12 +16,12 @@
 
 package com.android.nfc;
 
-import com.android.nfc.beam.SendUi;
-
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.os.Vibrator;
+
+import com.android.nfc.beam.SendUi;
 
 /**
  * Manages vibration, sound and animation for P2P events.
