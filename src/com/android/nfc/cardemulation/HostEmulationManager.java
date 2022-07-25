@@ -73,7 +73,7 @@ public class HostEmulationManager {
     static final int STATE_W4_DEACTIVATE = 3;
     static final int STATE_XFER = 4;
 
-    /** Minimum AID lenth as per ISO7816 */
+    /** Minimum AID length as per ISO7816 */
     static final int MINIMUM_AID_LENGTH = 5;
 
     /** Length of Select APDU header including length byte */

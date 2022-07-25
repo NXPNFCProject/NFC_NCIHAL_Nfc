@@ -36,6 +36,7 @@ package com.android.nfc.cardemulation;
 
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.List;
 
 import android.content.ComponentName;
@@ -84,6 +85,20 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
     static final boolean DBG = SystemProperties.getBoolean("persist.nfc.debug_enabled", false);
     static final int NFC_HCE_APDU = 0x01;
     static final int NFC_HCE_NFCF = 0x04;
+    /** Minimum AID length as per ISO7816 */
+    static final int MINIMUM_AID_LENGTH = 5;
+    /** Length of Select APDU header including length byte */
+    static final int SELECT_APDU_HDR_LENGTH = 5;
+    /** Length of the NDEF Tag application AID */
+    static final int NDEF_AID_LENGTH = 7;
+    /** AID of the NDEF Tag application Mapping Version 1.0 */
+    static final byte[] NDEF_AID_V1 =
+            new byte[] {(byte) 0xd2, 0x76, 0x00, 0x00, (byte) 0x85, 0x01, 0x00};
+    /** AID of the NDEF Tag application Mapping Version 2.0 */
+    static final byte[] NDEF_AID_V2 =
+            new byte[] {(byte) 0xd2, 0x76, 0x00, 0x00, (byte) 0x85, 0x01, 0x01};
+    /** Select APDU header */
+    static final byte[] SELECT_AID_HDR = new byte[] {0x00, (byte) 0xa4, 0x04, 0x00};
 
     final RegisteredAidCache mAidCache;
     final RegisteredT3tIdentifiersCache mT3tIdentifiersCache;
@@ -97,6 +112,7 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
     final CardEmulationInterface mCardEmulationInterface;
     final NfcFCardEmulationInterface mNfcFCardEmulationInterface;
     final PowerManager mPowerManager;
+    boolean mNotSkipAid;
 
     public CardEmulationManager(Context context) {
         mContext = context;
@@ -130,11 +146,16 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
 
     public void onHostCardEmulationActivated(int technology) {
         if (mPowerManager != null) {
-            mPowerManager.userActivity(SystemClock.uptimeMillis(), PowerManager.USER_ACTIVITY_EVENT_TOUCH, 0);
+            // Use USER_ACTIVITY_FLAG_INDIRECT to applying power hints without resets
+            // the screen timeout
+            mPowerManager.userActivity(SystemClock.uptimeMillis(),
+                    PowerManager.USER_ACTIVITY_EVENT_TOUCH,
+                    PowerManager.USER_ACTIVITY_FLAG_INDIRECT);
         }
         if (technology == NFC_HCE_APDU) {
             mHostEmulationManager.onHostEmulationActivated();
             mPreferredServices.onHostEmulationActivated();
+            mNotSkipAid = false;
         } else if (technology == NFC_HCE_NFCF) {
             mHostNfcFEmulationManager.onHostEmulationActivated();
             mNfcFServicesCache.onHostEmulationActivated();
@@ -143,13 +164,16 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
     }
 
     public void onHostCardEmulationData(int technology, byte[] data) {
-        if (mPowerManager != null) {
-            mPowerManager.userActivity(SystemClock.uptimeMillis(), PowerManager.USER_ACTIVITY_EVENT_TOUCH, 0);
-        }
         if (technology == NFC_HCE_APDU) {
             mHostEmulationManager.onHostEmulationData(data);
         } else if (technology == NFC_HCE_NFCF) {
             mHostNfcFEmulationManager.onHostEmulationData(data);
+        }
+        // Don't trigger userActivity if it's selecting NDEF AID
+        if (mPowerManager != null && !(technology == NFC_HCE_APDU && isSkipAid(data))) {
+            // Caution!! USER_ACTIVITY_EVENT_TOUCH resets the screen timeout
+            mPowerManager.userActivity(SystemClock.uptimeMillis(),
+                    PowerManager.USER_ACTIVITY_EVENT_TOUCH, 0);
         }
     }
 
@@ -381,6 +405,37 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
             mNfcFServicesCache.invalidateCache(userId);
         }
         return mNfcFServicesCache.hasService(userId, service);
+    }
+
+    /**
+     * Returns true if it's not selecting NDEF AIDs
+     * It's used to skip userActivity if it only selects NDEF AIDs
+     */
+    boolean isSkipAid(byte[] data) {
+        if (mNotSkipAid || data == null
+                || data.length < SELECT_APDU_HDR_LENGTH + MINIMUM_AID_LENGTH
+                || !Arrays.equals(SELECT_AID_HDR, 0, SELECT_AID_HDR.length,
+                        data, 0, SELECT_AID_HDR.length)) {
+            return false;
+        }
+        int aidLength = data[SELECT_APDU_HDR_LENGTH - 1];
+        if (data.length >= SELECT_APDU_HDR_LENGTH + NDEF_AID_LENGTH
+                && aidLength == NDEF_AID_LENGTH) {
+            if (Arrays.equals(data, SELECT_APDU_HDR_LENGTH,
+                        SELECT_APDU_HDR_LENGTH + NDEF_AID_LENGTH,
+                        NDEF_AID_V1, 0, NDEF_AID_LENGTH)) {
+                if (DBG) Log.d(TAG, "Skip for NDEF_V1");
+                return true;
+            } else if (Arrays.equals(data, SELECT_APDU_HDR_LENGTH,
+                        SELECT_APDU_HDR_LENGTH + NDEF_AID_LENGTH,
+                        NDEF_AID_V2, 0, NDEF_AID_LENGTH)) {
+                if (DBG) Log.d(TAG, "Skip for NDEF_V2");
+                return true;
+            }
+        }
+        // The data payload is not selecting the skip AID.
+        mNotSkipAid = true;
+        return false;
     }
 
     /**
