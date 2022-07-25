@@ -11,6 +11,8 @@
     <integer name="max_antenna_blocked_failure_count">10</integer>
     <integer name="toast_debounce_time_ms">3000</integer>
     <integer name="unknown_tag_polling_delay">-1</integer>
+    <integer name="unknown_tag_polling_delay_count_max">5</integer>
+    <integer name="unknown_tag_polling_delay_long">30000</integer>
 
     <!-- List of SKUs where Secure NFC functionality is supported -->
     <string-array name="config_skuSupportsSecureNfc" translatable="false" />
