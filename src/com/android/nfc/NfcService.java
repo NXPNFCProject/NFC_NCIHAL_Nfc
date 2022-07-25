@@ -4614,10 +4614,10 @@ public class NfcService implements DeviceHostListener {
                     unregisterObject(tagEndpoint.getHandle());
                     if (mPollDelay > NO_POLL_DELAY) {
                         tagEndpoint.stopPresenceChecking();
-                        mDeviceHost.startStopPolling(false);
                         synchronized (NfcService.this) {
                             if (!mPollingDelayed) {
                                 mPollingDelayed = true;
+                                mDeviceHost.startStopPolling(false);
                                 if (DBG) Log.d(TAG, "Polling delayed");
                                 mHandler.sendMessageDelayed(
                                         mHandler.obtainMessage(MSG_DELAY_POLLING), mPollDelay);
