@@ -236,18 +236,18 @@ public class SnepMessenger {
             // added for TC_C_BIT_BI_01_0
             if (mIsClient && requestField == SnepMessage.REQUEST_PUT) {
                 if (DBG) Log.d(TAG, "errorneous PUT request received, disconnecting from server");
-                    close();
+                close();
             }
             // added for TC_C_GET_BV_03
             if (mIsClient && (requestSize > SnepMessage.MAL_IUT)) {
                 if (DBG) Log.d(TAG, "responding reject");
-                    return new SnepMessage(requestVersion, requestField, requestSize, 0, null);
+                return new SnepMessage(requestVersion, requestField, requestSize, 0, null);
             }
             //added for TC_S_ACC_BV_05_0&1 and TC_S_ACC_BV_06_0&1
             if (!mIsClient && ((requestSize > SnepMessage.MAL_IUT) ||
                                 requestSize == SnepMessage.MAL)) {
                 if (DBG) Log.d(TAG, "responding reject");
-                    return new SnepMessage(requestVersion, requestField, requestSize, 0, null);
+                return new SnepMessage(requestVersion, requestField, requestSize, 0, null);
             }
         }
 
