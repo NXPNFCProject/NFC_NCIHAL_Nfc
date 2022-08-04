@@ -179,6 +179,7 @@ jmethodID gCachedNfcManagerNotifyHwErrorReported;
 #if(NXP_EXTNS == TRUE)
 jmethodID gCachedNfcManagerNotifyLxDebugInfo;
 jmethodID gCachedNfcManagerNotifyTagAbortListeners;
+jmethodID gCachedNfcManagerNotifyCoreGenericError;
 #endif
 
 const char* gNativeP2pDeviceClassName =
@@ -315,6 +316,7 @@ static jint nfcManager_enableDebugNtf(JNIEnv* e, jobject o, jbyte fieldValue);
 static void waitIfRfStateActive();
 static rssi_status_t nfcManager_doSetRssiMode(bool enable,
                                               int rssiNtfTimeIntervalInMillisec);
+static void nfcManager_restartRFDiscovery(JNIEnv* e, jobject o);
 #endif
 static uint16_t sCurrentConfigLen;
 static uint8_t sConfig[256];
@@ -1022,6 +1024,8 @@ static jboolean nfcManager_initNativeStruc(JNIEnv* e, jobject o) {
       e->GetMethodID(cls.get(),"notifySeListenDeactivated", "()V");
   gCachedNfcManagerNotifyTagAbortListeners =
       e->GetMethodID(cls.get(), "notifyTagAbort", "()V");
+  gCachedNfcManagerNotifyCoreGenericError =
+      e->GetMethodID(cls.get(), "notifyCoreGenericError", "(I)V");
 #endif
   gCachedNfcManagerNotifyTransactionListeners = e->GetMethodID(
       cls.get(), "notifyTransactionListeners", "([B[BLjava/lang/String;)V");
@@ -1263,6 +1267,21 @@ if (!sP2pActive && eventData->rf_field.status == NFA_STATUS_OK) {
       SyncEventGuard guard(sNfaSetPowerSubState);
       sNfaSetPowerSubState.notifyOne();
     } break;
+#if(NXP_EXTNS == TRUE)
+    case NFA_DM_GEN_ERROR_REVT: {
+      struct nfc_jni_native_data* nat = getNative(NULL, NULL);
+      JNIEnv* e = NULL;
+      ScopedAttach attach(nat->vm, &e);
+      if (e == NULL) {
+        LOG(ERROR) << StringPrintf("jni env is null");
+        return;
+      }
+
+      e->CallVoidMethod(nat->manager,
+                        android::gCachedNfcManagerNotifyCoreGenericError,
+                        eventData->status);
+    } break;
+#endif
     default:
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("%s: unhandled event", __func__);
@@ -3447,6 +3466,7 @@ static JNINativeMethod gMethods[] = {
     {"setPreferredSimSlot", "(I)I", (void*)nfcManager_setPreferredSimSlot},
     {"doNfcSelfTest", "(I)I", (void*) nfcManager_nfcSelfTest},
     {"doEnableDebugNtf", "(B)I", (void*) nfcManager_enableDebugNtf},
+    {"doRestartRFDiscovery", "()V", (void*)nfcManager_restartRFDiscovery},
 #endif
     {"doSetNfcSecure", "(Z)Z", (void*)nfcManager_doSetNfcSecure},
     {"getNfaStorageDir", "()Ljava/lang/String;",
@@ -3834,6 +3854,22 @@ static jint nfcManager_getFwVersion(JNIEnv * e, jobject o) {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: exit; version =0x%X", __func__, version);
     return version;
+}
+
+/*******************************************************************************
+**
+** Function:        nfcManager_restartRFDiscovery
+** Description:     Restarts RF discovery
+**
+**                  e: JVM environment.
+**                  o: Java object.
+**
+*******************************************************************************/
+static void nfcManager_restartRFDiscovery(JNIEnv*, jobject) {
+  if (sRfEnabled) {
+    android::startRfDiscovery(false);
+  }
+  android::startRfDiscovery(true);
 }
 
   /*******************************************************************************

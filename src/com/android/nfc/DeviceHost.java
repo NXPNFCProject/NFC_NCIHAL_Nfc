@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2021 NXP
+*  Copyright 2018-2022 NXP
 *
 ******************************************************************************/
 package com.android.nfc;
@@ -95,6 +95,11 @@ public interface DeviceHost {
         public void onLxDebugConfigData(int len, byte[] data);
 
         public void notifyTagAbort();
+
+        /**
+         * Notifies core generic error notification
+         */
+        void notifyCoreGenericError(int errorCode);
     }
 
     public interface TagEndpoint {
@@ -373,4 +378,8 @@ public interface DeviceHost {
     public int doEnableDebugNtf(byte fieldValue);
     public int startExtendedFieldDetectMode(int detectionTimeout);
     public int stopExtendedFieldDetectMode();
+    /**
+     * Restarts RF Discovery
+     */
+    void restartRFDiscovery();
 }
