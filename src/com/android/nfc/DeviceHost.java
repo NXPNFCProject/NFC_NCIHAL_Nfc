@@ -403,4 +403,8 @@ public interface DeviceHost {
      * Restarts RF Discovery
      */
     void restartRFDiscovery();
+    /**
+     * Enable or Disable the ULPDet Mode based on flag
+     */
+    boolean setULPDetMode(boolean flag);
 }

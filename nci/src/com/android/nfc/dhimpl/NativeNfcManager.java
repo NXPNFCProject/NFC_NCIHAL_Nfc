@@ -144,6 +144,13 @@ public class NativeNfcManager implements DeviceHost {
         doFactoryReset();
     }
 
+    private native boolean doSetULPDetMode(boolean flag);
+
+    @Override
+    public boolean setULPDetMode(boolean flag) {
+        return doSetULPDetMode(flag);
+    }
+
     private native void doShutdown();
 
     @Override

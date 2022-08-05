@@ -316,6 +316,7 @@ static void waitIfRfStateActive();
 static rssi_status_t nfcManager_doSetRssiMode(bool enable,
                                               int rssiNtfTimeIntervalInMillisec);
 static void nfcManager_restartRFDiscovery(JNIEnv* e, jobject o);
+static jboolean nfcManager_doSetULPDetMode(JNIEnv* e, jobject o, bool flag);
 #endif
 uint16_t gCurrentConfigLen;
 uint8_t gConfig[256];
@@ -3422,6 +3423,7 @@ static JNINativeMethod gMethods[] = {
     {"doNfcSelfTest", "(I)I", (void*) nfcManager_nfcSelfTest},
     {"doEnableDebugNtf", "(B)I", (void*) nfcManager_enableDebugNtf},
     {"doRestartRFDiscovery", "()V", (void*)nfcManager_restartRFDiscovery},
+    {"doSetULPDetMode", "(Z)Z", (void*)nfcManager_doSetULPDetMode},
 #endif
     {"doSetNfcSecure", "(Z)Z", (void*)nfcManager_doSetNfcSecure},
     {"getNfaStorageDir", "()Ljava/lang/String;",
@@ -4181,6 +4183,11 @@ static jint nfcManager_nfcSelfTest(JNIEnv* e, jobject o, jint aType)
     return NfcSelfTest::GetInstance().doNfccSelfTest(aType);
 }
 
+static jboolean nfcManager_doSetULPDetMode(JNIEnv* e, jobject o, bool flag) {
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter; ", __func__);
+  NfcAdaptation& theInstance = NfcAdaptation::GetInstance();
+  return theInstance.HalSetProperty("nfc.ulpdet", flag ? "1" : "0");
+}
 #endif
 } /* namespace android */
 /* namespace android */

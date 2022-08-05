@@ -518,6 +518,7 @@ public class NfcService implements DeviceHostListener {
     private final int mPollDelayCountMax;
     private int mPollDelayCount;
     private boolean mPollDelayed;
+    private boolean mIsULPDetModeEnabled = false;
 
     boolean mNotifyDispatchFailed;
     boolean mNotifyReadFailed;
@@ -747,6 +748,26 @@ public class NfcService implements DeviceHostListener {
         public int flags;
         public IAppCallback callback;
         public int presenceCheckDelay;
+    }
+
+    /**
+     * Enable or Disable the ULPDet Mode based on flag
+     */
+    public boolean setULPDetMode(boolean flag) {
+        if ((flag && mState != NfcAdapter.STATE_ON)
+                || (!flag && mState != NfcAdapter.STATE_OFF)) {
+            Log.d(TAG, "Enable ULPDet is allowed in Nfc On state or "
+                    + "Disable ULPDet is allowed in Nfc Off state");
+            return false;
+        }
+        if ((mDeviceHost.setULPDetMode(flag))) {
+            Log.d(TAG, "setULPDetMode " + flag);
+            mIsULPDetModeEnabled = flag;
+            new EnableDisableTask().execute(flag ? TASK_DISABLE : TASK_ENABLE);
+            return true;
+        }
+        Log.d(TAG, "setULPDetMode update failed");
+        return false;
     }
 
     public NfcService(Application nfcApplication) {
@@ -1454,6 +1475,7 @@ public class NfcService implements DeviceHostListener {
         public boolean enable() throws RemoteException {
             NfcPermissions.enforceAdminPermissions(mContext);
 
+            mIsULPDetModeEnabled = false;
             saveNfcOnSetting(true);
 
             new EnableDisableTask().execute(TASK_ENABLE);
@@ -2714,6 +2736,16 @@ public class NfcService implements DeviceHostListener {
         public int startCardEmulation() {
           NfcPermissions.enforceUserPermissions(mContext);
           return mDeviceHost.startCardEmulation();
+        }
+
+        public boolean setULPDetMode(boolean flag) {
+            NfcPermissions.enforceUserPermissions(mContext);
+            return NfcService.this.setULPDetMode(flag);
+        }
+
+        public boolean isULPDetModeEnabled() {
+            NfcPermissions.enforceUserPermissions(mContext);
+            return mIsULPDetModeEnabled;
         }
 
     }
