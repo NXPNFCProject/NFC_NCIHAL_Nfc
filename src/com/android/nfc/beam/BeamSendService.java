@@ -107,7 +107,8 @@ public class BeamSendService extends Service implements BeamTransferManager.Call
             // register Beam status receiver
             mBeamStatusReceiver = new BeamStatusReceiver(this, mTransferManager);
             registerReceiver(mBeamStatusReceiver, mBeamStatusReceiver.getIntentFilter(),
-                    BeamStatusReceiver.BEAM_STATUS_PERMISSION, new Handler());
+                    BeamStatusReceiver.BEAM_STATUS_PERMISSION, new Handler(),
+                    Context.RECEIVER_EXPORTED);
 
             if (transferRecord.dataLinkType == BeamTransferRecord.DATA_LINK_TYPE_BLUETOOTH) {
                 if (mBluetoothAdapter.isEnabled()) {
