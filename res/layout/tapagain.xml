@@ -17,29 +17,42 @@
 */
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
               android:orientation="vertical">
-        <TextView
-            android:layout_gravity="center"
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/tap_again_toolbar"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:padding="14dp"
-            android:textSize="24dp"
-            android:fontFamily="sans-serif-light"
-            android:id="@+id/textview"
-        />
+            android:layout_height="?android:attr/actionBarSize"/>
+
         <ImageView android:id="@+id/screenshot"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="50dp"
-            android:layout_marginTop="20dp"
-            android:gravity="center"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_marginBottom="16dp"
+            android:layout_marginTop="24dp"
+            android:layout_gravity="center"
+            android:scaleType="centerInside"
             android:adjustViewBounds="true"
-            android:maxWidth="96dp"
-            android:maxHeight="96dp"
-            android:scaleType="fitCenter"
-            android:src="@drawable/tap_again"
-            />
+            android:maxWidth="56dp"
+            android:maxHeight="56dp"
+            android:src="@drawable/nfc_icon"
+            android:background="@drawable/circle_shape"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="20dp"
+            android:gravity="center"
+            android:layout_gravity="center"
+            android:textAlignment="center"
+            android:text="@string/tap_again_description"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:textColor="?android:attr/textColorPrimary"/>
+
+        <ImageView android:id="@+id/tap_again_appicon"
+            android:layout_height="84dp"
+            android:layout_width="match_parent"
+            android:layout_marginTop="72dp"
+            android:gravity="center"
+            android:layout_centerHorizontal="true"/>
 </LinearLayout>

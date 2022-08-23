@@ -22,13 +22,18 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
 import android.nfc.NfcAdapter;
 import android.nfc.cardemulation.ApduServiceInfo;
 import android.nfc.cardemulation.CardEmulation;
 import android.os.Bundle;
+import android.os.UserHandle;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.ImageView;
 import android.widget.TextView;
+import androidx.appcompat.widget.Toolbar;
 
 import com.android.internal.R;
 import com.android.internal.app.AlertActivity;
@@ -56,7 +61,7 @@ public class TapAgainDialog extends AlertActivity implements DialogInterface.OnC
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setTheme(com.android.nfc.R.style.DialogAlertDayNight);
+        setTheme(com.android.nfc.R.style.TapAgainDayNight);
 
         final NfcAdapter adapter = NfcAdapter.getDefaultAdapter(this);
         mCardEmuManager = CardEmulation.getInstance(adapter);
@@ -72,24 +77,22 @@ public class TapAgainDialog extends AlertActivity implements DialogInterface.OnC
         ap.mView = getLayoutInflater().inflate(com.android.nfc.R.layout.tapagain, null);
 
         PackageManager pm = getPackageManager();
-        TextView tv = (TextView) ap.mView.findViewById(com.android.nfc.R.id.textview);
-        String description = serviceInfo.getDescription();
-        if (description == null) {
-            CharSequence label = serviceInfo.loadLabel(pm);
-            if (label == null) {
+
+        Toolbar toolbar = (Toolbar) ap.mView.findViewById(com.android.nfc.R.id.tap_again_toolbar);
+        toolbar.setNavigationIcon(getDrawable(com.android.nfc.R.drawable.ic_close));
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
                 finish();
-            } else {
-                description = label.toString();
             }
-        }
-        if (CardEmulation.CATEGORY_PAYMENT.equals(category)) {
-            String formatString = getString(com.android.nfc.R.string.tap_again_to_pay);
-            tv.setText(String.format(formatString, description));
-        } else {
-            String formatString = getString(com.android.nfc.R.string.tap_again_to_complete);
-            tv.setText(String.format(formatString, description));
-        }
-        ap.mNegativeButtonText = getString(R.string.cancel);
+        });
+
+        ImageView iv = (ImageView) ap.mView.findViewById(com.android.nfc.R.id.tap_again_appicon);
+        Drawable icon = pm.getUserBadgedIcon(serviceInfo.loadIcon(pm),
+                UserHandle.getUserHandleForUid(serviceInfo.getUid()));
+
+        iv.setImageDrawable(icon);
+
         setupAlert();
         Window window = getWindow();
         window.addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
