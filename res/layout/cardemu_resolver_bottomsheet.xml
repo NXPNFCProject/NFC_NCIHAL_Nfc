@@ -52,7 +52,7 @@
         <TextView
             android:id="@+id/appchooser_text"
             android:layout_width="match_parent"
-            android:layout_height="32dp"
+            android:layout_height="wrap_content"
             android:layout_marginBottom="32dp"
             android:textAlignment="center"
             android:text="@string/appchooser_description"

@@ -29,6 +29,8 @@
     <string name="pair_no" msgid="5022308368904055020">"Не"</string>
     <string name="tap_again_to_pay" msgid="5754988005412859897">"Допрете повторно за да платите со <xliff:g id="APP">%1$s</xliff:g>"</string>
     <string name="tap_again_to_complete" msgid="5423640945118279123">"Допрете повторно за да заврши со <xliff:g id="APP">%1$s</xliff:g>"</string>
+    <string name="tap_again_description" msgid="3019101527041529661">"Држете го уредот на читачот"</string>
+    <string name="appchooser_description" msgid="2554187931814833244">"Изберете апликација за скенирање"</string>
     <string name="transaction_failure" msgid="7828102078637936513">"Оваа трансакција не може да се заврши со <xliff:g id="APP">%1$s</xliff:g>."</string>
     <string name="could_not_use_app" msgid="8137587876138569083">"Не може да користи <xliff:g id="APP">%1$s</xliff:g>."</string>
     <string name="pay_with" msgid="5531545488795798945">"Плати со"</string>

@@ -29,6 +29,8 @@
     <string name="pair_no" msgid="5022308368904055020">"لا"</string>
     <string name="tap_again_to_pay" msgid="5754988005412859897">"انقر مرة أخرى للدفع باستخدام <xliff:g id="APP">%1$s</xliff:g>"</string>
     <string name="tap_again_to_complete" msgid="5423640945118279123">"انقر مرة أخرى للإكمال باستخدام <xliff:g id="APP">%1$s</xliff:g>"</string>
+    <string name="tap_again_description" msgid="3019101527041529661">"تثبيت الجهاز أمام القارئ"</string>
+    <string name="appchooser_description" msgid="2554187931814833244">"اختيار تطبيق لاستخدامه في المسح الضوئي"</string>
     <string name="transaction_failure" msgid="7828102078637936513">"تعذر إكمال هذه المعاملة باستخدام <xliff:g id="APP">%1$s</xliff:g>."</string>
     <string name="could_not_use_app" msgid="8137587876138569083">"تعذر استخدام <xliff:g id="APP">%1$s</xliff:g>."</string>
     <string name="pay_with" msgid="5531545488795798945">"الدفع بواسطة"</string>

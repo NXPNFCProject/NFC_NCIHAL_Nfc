@@ -29,6 +29,8 @@
     <string name="pair_no" msgid="5022308368904055020">"아니요"</string>
     <string name="tap_again_to_pay" msgid="5754988005412859897">"<xliff:g id="APP">%1$s</xliff:g>(으)로 결제하려면 다시 탭하세요."</string>
     <string name="tap_again_to_complete" msgid="5423640945118279123">"<xliff:g id="APP">%1$s</xliff:g>(으)로 결제를 완료하려면 다시 탭하세요."</string>
+    <string name="tap_again_description" msgid="3019101527041529661">"리더에 갖다 대세요."</string>
+    <string name="appchooser_description" msgid="2554187931814833244">"스캔에 사용할 앱을 선택하세요."</string>
     <string name="transaction_failure" msgid="7828102078637936513">"<xliff:g id="APP">%1$s</xliff:g>(으)로 거래를 완료할 수 없습니다."</string>
     <string name="could_not_use_app" msgid="8137587876138569083">"<xliff:g id="APP">%1$s</xliff:g>을(를) 사용할 수 없습니다."</string>
     <string name="pay_with" msgid="5531545488795798945">"결제 가능한 애플리케이션"</string>

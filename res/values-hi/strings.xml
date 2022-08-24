@@ -29,6 +29,8 @@
     <string name="pair_no" msgid="5022308368904055020">"नहीं"</string>
     <string name="tap_again_to_pay" msgid="5754988005412859897">"<xliff:g id="APP">%1$s</xliff:g> के साथ पेमेंट करने के लिए फिर से टैप करें"</string>
     <string name="tap_again_to_complete" msgid="5423640945118279123">"<xliff:g id="APP">%1$s</xliff:g> के साथ पूरा करने के लिए फिर से टैप करें"</string>
+    <string name="tap_again_description" msgid="3019101527041529661">"रीडर के सामने रखें"</string>
+    <string name="appchooser_description" msgid="2554187931814833244">"स्कैन करने के लिए कोई ऐप्लिकेशन चुनें"</string>
     <string name="transaction_failure" msgid="7828102078637936513">"यह लेन-देन <xliff:g id="APP">%1$s</xliff:g> के साथ पूरा नहीं किया जा सकता."</string>
     <string name="could_not_use_app" msgid="8137587876138569083">"<xliff:g id="APP">%1$s</xliff:g> का उपयोग नहीं किया जा सका."</string>
     <string name="pay_with" msgid="5531545488795798945">"इनके द्वारा पेमेंट करें"</string>

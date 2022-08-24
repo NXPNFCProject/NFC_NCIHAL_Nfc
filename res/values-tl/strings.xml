@@ -29,6 +29,8 @@
     <string name="pair_no" msgid="5022308368904055020">"Hindi"</string>
     <string name="tap_again_to_pay" msgid="5754988005412859897">"I-tap muli upang magbayad gamit ang <xliff:g id="APP">%1$s</xliff:g>"</string>
     <string name="tap_again_to_complete" msgid="5423640945118279123">"I-tap muli upang kumpletuhin gamit ang <xliff:g id="APP">%1$s</xliff:g>"</string>
+    <string name="tap_again_description" msgid="3019101527041529661">"Itapat sa reader"</string>
+    <string name="appchooser_description" msgid="2554187931814833244">"Piliin ang app na isa-scan"</string>
     <string name="transaction_failure" msgid="7828102078637936513">"Ang transaksyong ito ay hindi makukumpleto gamit ang <xliff:g id="APP">%1$s</xliff:g>."</string>
     <string name="could_not_use_app" msgid="8137587876138569083">"Hindi magamit ang <xliff:g id="APP">%1$s</xliff:g>."</string>
     <string name="pay_with" msgid="5531545488795798945">"Magbayad gamit ang"</string>
