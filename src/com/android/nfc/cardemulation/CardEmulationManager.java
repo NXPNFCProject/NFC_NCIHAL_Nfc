@@ -51,6 +51,7 @@ import android.nfc.cardemulation.CardEmulation;
 import android.os.Binder;
 import android.os.RemoteException;
 import android.os.UserHandle;
+import android.os.UserManager;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.os.SystemProperties;
@@ -287,9 +288,10 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
     }
 
     @Override
-    public void onServicesUpdated(int userId, List<ApduServiceInfo> services) {
-        // Verify defaults are still sane
-        verifyDefaults(userId, services);
+    public void onServicesUpdated(int userId, List<ApduServiceInfo> services,
+            boolean validateInstalled) {
+        // Verify defaults are still the same
+        verifyDefaults(userId, services, validateInstalled);
         // Update the AID cache
         mAidCache.onServicesUpdated(userId, services);
         // Update the preferred services list
@@ -306,10 +308,40 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         mEnabledNfcFServices.onServicesUpdated();
     }
 
-    void verifyDefaults(int userId, List<ApduServiceInfo> services) {
-        ComponentName defaultPaymentService =
-                getDefaultServiceForCategory(userId, CardEmulation.CATEGORY_PAYMENT, true);
-        if (DBG) Log.d(TAG, "Current default: " + defaultPaymentService + " for user:" + userId);
+    void verifyDefaults(int userId, List<ApduServiceInfo> services, boolean validateInstalled) {
+        UserManager um = mContext.createContextAsUser(
+                UserHandle.of(userId), /*flags=*/0).getSystemService(UserManager.class);
+        List<UserHandle> luh = um.getEnabledProfiles();
+
+        ComponentName defaultPaymentService = null;
+        int numDefaultPaymentServices = 0;
+        int userIdDefaultPaymentService = userId;
+
+        for (UserHandle uh : luh) {
+            ComponentName paymentService = getDefaultServiceForCategory(uh.getIdentifier(),
+                    CardEmulation.CATEGORY_PAYMENT,
+                    validateInstalled && (uh.getIdentifier() == userId));
+            if (DBG) Log.d(TAG, "default: " + paymentService + " for user:" + uh);
+            if (paymentService != null) {
+                numDefaultPaymentServices++;
+                defaultPaymentService = paymentService;
+                userIdDefaultPaymentService = uh.getIdentifier();
+            }
+        }
+        if (numDefaultPaymentServices > 1) {
+            Log.e(TAG, "Current default is not aligned across multiple users");
+            // leave default unset
+            for (UserHandle uh : luh) {
+                setDefaultServiceForCategoryChecked(uh.getIdentifier(), null,
+                        CardEmulation.CATEGORY_PAYMENT);
+            }
+        } else {
+            if (DBG) {
+                Log.d(TAG, "Current default: " + defaultPaymentService + " for user:"
+                        + userIdDefaultPaymentService);
+            }
+        }
+
         if (defaultPaymentService == null) {
             // A payment service may have been removed, leaving only one;
             // in that case, automatically set that app as default.
@@ -388,7 +420,7 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
             // calls to our APIs referencing that service to fail.
             // Hence, update the cache in case we don't know about the service.
             if (DBG) Log.d(TAG, "Didn't find passed in service, invalidating cache.");
-            mServiceCache.invalidateCache(userId);
+            mServiceCache.invalidateCache(userId, true);
         }
         return mServiceCache.hasService(userId, service);
     }
