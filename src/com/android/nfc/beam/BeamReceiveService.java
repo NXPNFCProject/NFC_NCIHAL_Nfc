@@ -92,7 +92,8 @@ public class BeamReceiveService extends Service implements BeamTransferManager.C
         // register Beam status receiver
         mBeamStatusReceiver = new BeamStatusReceiver(this, mTransferManager);
         registerReceiver(mBeamStatusReceiver, mBeamStatusReceiver.getIntentFilter(),
-                BeamStatusReceiver.BEAM_STATUS_PERMISSION, new Handler());
+                BeamStatusReceiver.BEAM_STATUS_PERMISSION, new Handler(),
+                Context.RECEIVER_EXPORTED);
 
         mTransferManager.start();
         mTransferManager.updateNotification();

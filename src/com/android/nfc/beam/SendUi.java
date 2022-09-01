@@ -328,7 +328,7 @@ public class SendUi implements Animator.AnimatorListener, View.OnTouchListener,
         new ScreenshotTask().execute();
 
         final IntentFilter filter = new IntentFilter(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
-        mContext.registerReceiver(mReceiver, filter);
+        mContext.registerReceiver(mReceiver, filter, Context.RECEIVER_EXPORTED);
     }
 
     /** Show pre-send animation */
