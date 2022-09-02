@@ -232,14 +232,12 @@ public class RegisteredServicesCache {
     public void onUserSwitched() {
         synchronized (mLock) {
             refreshUserProfilesLocked();
-            invalidateCache(ActivityManager.getCurrentUser());
         }
     }
 
     public void onManagedProfileChanged() {
         synchronized (mLock) {
             refreshUserProfilesLocked();
-            invalidateCache(ActivityManager.getCurrentUser());
         }
     }
 
