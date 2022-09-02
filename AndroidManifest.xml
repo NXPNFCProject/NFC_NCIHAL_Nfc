@@ -137,6 +137,7 @@
             android:excludeFromRecents="true"
             android:clearTaskOnLaunch="true"
             android:multiprocess="true"
+            android:theme="@style/BottomSheetDialogStyle"
         />
 
         <activity android:name=".cardemulation.TapAgainDialog"

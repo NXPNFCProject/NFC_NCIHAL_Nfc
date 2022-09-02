@@ -20,21 +20,23 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
             android:orientation="horizontal"
             android:gravity="center"
-            android:layout_height="76dp"
+            android:layout_height="72dp"
             android:layout_width="match_parent">
 
     <ImageView android:id="@+id/appicon"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginRight="16dp"
+            android:layout_marginLeft="24dp"
             android:scaleType="fitCenter"
-            android:gravity="center_vertical"
-            />
+            android:gravity="center_vertical"/>
 
     <!-- Activity name -->
     <TextView android:id="@+id/applabel"
             android:textAppearance="?android:attr/textAppearanceMedium"
+            android:textColor="?android:attr/textColorPrimary"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="32dp"
             android:gravity="center_vertical|left"
             android:minLines="2"
             android:maxLines="2"

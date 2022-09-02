@@ -49,6 +49,8 @@
     <string name="tap_again_to_complete">Tap again to complete with <xliff:g id="app">%1$s</xliff:g></string>
     <!-- String that is telling the user that his NFC transaction couldn't be completed with the
          indicated app -->
+    <string name="tap_again_description">Hold to reader</string>
+    <string name="appchooser_description">Choose app to scan</string>
     <string name="transaction_failure">This transaction couldn\'t be completed with <xliff:g id="app">%1$s</xliff:g>.</string>
     <!-- String that is telling the user that his NFC transaction couldn't be completed with the
          indicated app -->

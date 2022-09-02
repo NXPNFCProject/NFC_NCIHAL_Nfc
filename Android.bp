@@ -26,6 +26,7 @@ android_app {
     libs: ["com.nxp.nfc"],
     static_libs: [
         "androidx.appcompat_appcompat",
+        "com.google.android.material_material",
         "android.hardware.secure_element-V1.0-java",
         "vendor.nxp.nxpwiredse-V1.0-java",
         ],
