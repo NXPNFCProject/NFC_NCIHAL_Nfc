@@ -29,6 +29,8 @@
     <string name="pair_no" msgid="5022308368904055020">"නැත"</string>
     <string name="tap_again_to_pay" msgid="5754988005412859897">"<xliff:g id="APP">%1$s</xliff:g> සමඟ ගෙවීමට නැවත තට්ටු කරන්න"</string>
     <string name="tap_again_to_complete" msgid="5423640945118279123">"<xliff:g id="APP">%1$s</xliff:g> සමඟ සම්පූර්ණ කිරීමට නැවත තට්ටු කරන්න"</string>
+    <string name="tap_again_description" msgid="3019101527041529661">"කියවනයට අල්ලන්න"</string>
+    <string name="appchooser_description" msgid="2554187931814833244">"ස්කෑන් කිරීමට යෙදුම තෝරන්න"</string>
     <string name="transaction_failure" msgid="7828102078637936513">"මෙම ගනුදෙනුව <xliff:g id="APP">%1$s</xliff:g> සමඟ සම්පූර්ණ කළ නොහැක."</string>
     <string name="could_not_use_app" msgid="8137587876138569083">"<xliff:g id="APP">%1$s</xliff:g> භාවිතා කළ නොහැක."</string>
     <string name="pay_with" msgid="5531545488795798945">"සමඟ ගෙවන්න"</string>

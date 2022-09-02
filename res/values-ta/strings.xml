@@ -12,7 +12,7 @@
     <string name="beam_canceled" msgid="5425192751826544741">"பீம் ரத்து செய்யப்பட்டது"</string>
     <string name="cancel" msgid="61873902552555096">"ரத்துசெய்"</string>
     <string name="beam_tap_to_view" msgid="7430394753262448349">"பார்க்க, தட்டவும்"</string>
-    <string name="beam_handover_not_supported" msgid="4083165921751489015">"பெறுநரின் சாதனம் பீம் வழியான பெரிய கோப்புப் பரிமாற்றத்தை ஆதரிக்கவில்லை."</string>
+    <string name="beam_handover_not_supported" msgid="4083165921751489015">"பெறுநரின் சாதனம் பீம் வழியான பெரிய ஃபைல் பரிமாற்றத்தை ஆதரிக்கவில்லை."</string>
     <string name="beam_try_again" msgid="3364677301009783455">"மீண்டும் சாதனங்களை ஒன்றாகக் கொண்டுவரவும்"</string>
     <string name="beam_busy" msgid="5253335587620612576">"பீம் தற்போது பணிமிகுதியில் உள்ளது. முந்தைய இடமாற்றம் முடியும்போது, மீண்டும் முயலவும்."</string>
     <string name="device" msgid="4459621591392478151">"சாதனம்"</string>
@@ -29,6 +29,8 @@
     <string name="pair_no" msgid="5022308368904055020">"இல்லை"</string>
     <string name="tap_again_to_pay" msgid="5754988005412859897">"<xliff:g id="APP">%1$s</xliff:g> உடன் கட்டணம் செலுத்த மீண்டும் தட்டவும்"</string>
     <string name="tap_again_to_complete" msgid="5423640945118279123">"<xliff:g id="APP">%1$s</xliff:g> உடன் நிறைவு செய்ய மீண்டும் தட்டவும்"</string>
+    <string name="tap_again_description" msgid="3019101527041529661">"ரீடரருக்கு நேராகப் பிடிக்கவும்"</string>
+    <string name="appchooser_description" msgid="2554187931814833244">"ஸ்கேன் செய்ய ஆப்ஸைத் தேர்ந்தெடுக்கவும்"</string>
     <string name="transaction_failure" msgid="7828102078637936513">"இந்தப் பரிவர்த்தனையை <xliff:g id="APP">%1$s</xliff:g> உடன் முடிக்க முடியவில்லை."</string>
     <string name="could_not_use_app" msgid="8137587876138569083">"<xliff:g id="APP">%1$s</xliff:g> ஐப் பயன்படுத்த முடியவில்லை."</string>
     <string name="pay_with" msgid="5531545488795798945">"இதனுடன் செலுத்து"</string>
@@ -42,7 +44,7 @@
     <string name="prompt_connect_to_network" msgid="8511683573657516114">"<xliff:g id="NETWORK_SSID">%1$s</xliff:g> நெட்வொர்க்குடன் இணைக்கவா?"</string>
     <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"Android பீம்மிற்கு NFC இயக்கப்பட்டிருக்க வேண்டும். இயக்கவா?"</string>
     <string name="android_beam" msgid="1666446406999492763">"Android பீம்"</string>
-    <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"வெளிப்புறச் சேமிப்பகத்திற்கான அனுமதி பயன்பாட்டிற்கு இல்லை. கோப்பை பீம் செய்ய, இந்த அனுமதி தேவை"</string>
+    <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"வெளிப்புறச் சேமிப்பகத்திற்கான அனுமதி பயன்பாட்டிற்கு இல்லை. ஃபைலை பீம் செய்ய, இந்த அனுமதி தேவை"</string>
     <string name="title_confirm_url_open" msgid="8069968913244794478">"இணைப்பைத் திறக்கவா?"</string>
     <string name="summary_confirm_url_open" product="tablet" msgid="3353502750736192055">"NFC வழியாக உங்கள் டேப்லெட்டுக்கு, ஒரு இணைப்பு வந்துள்ளது:"</string>
     <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"NFC வழியாக உங்கள் ஃபோனுக்கு, ஒரு இணைப்பு வந்துள்ளது:"</string>

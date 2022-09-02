@@ -29,6 +29,8 @@
     <string name="pair_no" msgid="5022308368904055020">"Non"</string>
     <string name="tap_again_to_pay" msgid="5754988005412859897">"Toca de novo para pagar con <xliff:g id="APP">%1$s</xliff:g>"</string>
     <string name="tap_again_to_complete" msgid="5423640945118279123">"Toca de novo para completar con <xliff:g id="APP">%1$s</xliff:g>"</string>
+    <string name="tap_again_description" msgid="3019101527041529661">"Achega o dispositivo ao lector"</string>
+    <string name="appchooser_description" msgid="2554187931814833244">"Escolle unha aplicación para escanear"</string>
     <string name="transaction_failure" msgid="7828102078637936513">"Esta transacción non se puido completar con <xliff:g id="APP">%1$s</xliff:g>."</string>
     <string name="could_not_use_app" msgid="8137587876138569083">"Non se puido usar <xliff:g id="APP">%1$s</xliff:g>."</string>
     <string name="pay_with" msgid="5531545488795798945">"Pagar con"</string>

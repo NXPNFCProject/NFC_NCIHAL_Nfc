@@ -2,7 +2,7 @@
 <resources xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="app_name" msgid="78565911793142902">"NFC zerbitzua"</string>
-    <string name="nfcUserLabel" msgid="7708535817084357357">"NFC"</string>
+    <string name="nfcUserLabel" msgid="7708535817084357357">"NFCa"</string>
     <string name="accessibility_nfc_enabled" msgid="7796246979948787735">"NFC gaituta."</string>
     <string name="tap_to_beam" msgid="5819197866281059878">"Sakatu NFC bidez partekatzeko"</string>
     <string name="beam_progress" msgid="7453634884807323920">"Sarrerako NFC bidez partekatzea…"</string>
@@ -14,7 +14,7 @@
     <string name="beam_tap_to_view" msgid="7430394753262448349">"Sakatu ikusteko"</string>
     <string name="beam_handover_not_supported" msgid="4083165921751489015">"Hartzailearen gailuak ez du onartzen fitxategi handiak NFC bidez transferitzea."</string>
     <string name="beam_try_again" msgid="3364677301009783455">"Elkartu gailuak berriro"</string>
-    <string name="beam_busy" msgid="5253335587620612576">"Beam lanpetuta dago. Saiatu berriro abian den transferentzia amaitutakoan."</string>
+    <string name="beam_busy" msgid="5253335587620612576">"Beam okupatuta dago. Saiatu berriro abian den transferentzia amaitutakoan."</string>
     <string name="device" msgid="4459621591392478151">"gailua"</string>
     <string name="connecting_peripheral" msgid="1296182660525660935">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g> konektatzen"</string>
     <string name="connected_peripheral" msgid="20748648543160091">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g> konektatu da"</string>
@@ -29,6 +29,8 @@
     <string name="pair_no" msgid="5022308368904055020">"Ez"</string>
     <string name="tap_again_to_pay" msgid="5754988005412859897">"<xliff:g id="APP">%1$s</xliff:g> aplikazioarekin ordaintzeko, sakatu berriro"</string>
     <string name="tap_again_to_complete" msgid="5423640945118279123">"Ekintza <xliff:g id="APP">%1$s</xliff:g> aplikazioarekin osatzeko, sakatu berriro"</string>
+    <string name="tap_again_description" msgid="3019101527041529661">"Jarri irakurgailuan"</string>
+    <string name="appchooser_description" msgid="2554187931814833244">"Aukeratu bilatzeko erabili nahi duzun aplikazio bat"</string>
     <string name="transaction_failure" msgid="7828102078637936513">"Ezin izan da transakzioa osatu <xliff:g id="APP">%1$s</xliff:g> aplikazioarekin."</string>
     <string name="could_not_use_app" msgid="8137587876138569083">"Ezin izan da <xliff:g id="APP">%1$s</xliff:g> erabili."</string>
     <string name="pay_with" msgid="5531545488795798945">"Ordaindu honekin"</string>
