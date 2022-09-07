@@ -758,11 +758,13 @@ public class NfcService implements DeviceHostListener {
      * Enable or Disable the ULPDet Mode based on flag
      */
     public boolean setULPDetMode(boolean flag) {
-        if ((flag && mState != NfcAdapter.STATE_ON)
-                || (!flag && mState != NfcAdapter.STATE_OFF)) {
-            Log.d(TAG, "Enable ULPDet is allowed in Nfc On state or "
-                    + "Disable ULPDet is allowed in Nfc Off state");
-            return false;
+        synchronized (NfcService.this) {
+            if ((flag && mState != NfcAdapter.STATE_ON)
+                    || (!flag && mState != NfcAdapter.STATE_OFF)) {
+                Log.d(TAG, "Enable ULPDet is allowed in Nfc On state or "
+                        + "Disable ULPDet is allowed in Nfc Off state");
+                return false;
+            }
         }
         if ((mDeviceHost.setULPDetMode(flag))) {
             Log.d(TAG, "setULPDetMode " + flag);
