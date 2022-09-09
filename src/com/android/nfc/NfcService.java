@@ -4908,11 +4908,8 @@ public class NfcService implements DeviceHostListener {
                 if (getSendingUserId() != UserHandle.USER_ALL) {
                     return;
                 }
-                // FLAG_RECEIVER_FOREGROUND is checked to ignore the intent from UserController
-                // when a user is stopped.
-                if (isNfcEnabled()
-                        && (intent.getFlags() & Intent.FLAG_RECEIVER_FOREGROUND) != 0) {
-                    if (DBG) Log.d(TAG, "Device is shutting down.");
+                if (DBG) Log.d(TAG, "Device is shutting down.");
+                if (isNfcEnabled()) {
                     mDeviceHost.shutdown();
                 }
             }
