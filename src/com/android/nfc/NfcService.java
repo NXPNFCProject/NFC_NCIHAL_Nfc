@@ -267,6 +267,7 @@ public class NfcService implements DeviceHostListener {
     static final int TASK_ENABLE = 1;
     static final int TASK_DISABLE = 2;
     static final int TASK_BOOT = 3;
+    static final int TASK_ENABLE_FOR_ULPDET = 4;
 
     // Listen Protocol
     public static final int NFC_LISTEN_PROTO_ISO_DEP = 0x01;    // This values is need to move from this to CardEmulationManager
@@ -764,7 +765,7 @@ public class NfcService implements DeviceHostListener {
             if ((flag && mState != NfcAdapter.STATE_ON)
                     || (!flag && mState != NfcAdapter.STATE_OFF)) {
                 Log.d(TAG, "Enable ULPDet is allowed in Nfc On state or "
-                        + "Disable ULPDet is allowed in Nfc Off state");
+                        + "Disable ULPDet is allowed only if it is enabled");
                 return false;
             }
         }
@@ -774,7 +775,7 @@ public class NfcService implements DeviceHostListener {
             new EnableDisableTask().execute(flag ? TASK_DISABLE : TASK_ENABLE);
             return true;
         }
-        Log.d(TAG, "setULPDetMode update failed");
+        Log.d(TAG, (flag ? "Enable" : "Disable") + " ULPDetMode failed");
         return false;
     }
 
@@ -1199,6 +1200,9 @@ public class NfcService implements DeviceHostListener {
                 case TASK_DISABLE:
                     disableInternal();
                     break;
+                case TASK_ENABLE_FOR_ULPDET:
+                    enableInternalForULPDet();
+                    break;
                 case TASK_BOOT:
                     boolean initialized;
                     if (mPrefs.getBoolean(PREF_FIRST_BOOT, true)) {
@@ -1325,6 +1329,35 @@ public class NfcService implements DeviceHostListener {
             initWiredSe();
             synchronized (NfcService.this) {
                 updateState(NfcAdapter.STATE_ON);
+            }
+            return true;
+        }
+
+        boolean enableInternalForULPDet() {
+            synchronized (NfcService.this) {
+                Log.i(TAG, "Disabling NFC requires NFCC to be out of ULPDET mode."
+                        + " Enabling NFC stack.");
+                mState = NfcAdapter.STATE_TURNING_ON;
+            }
+            WatchDogThread watchDog = new WatchDogThread("enableInternal", INIT_WATCHDOG_MS);
+            watchDog.start();
+            try {
+                mRoutingWakeLock.acquire();
+                try {
+                    if (!mDeviceHost.initialize()) {
+                        Log.w(TAG, "Error enabling NFC");
+                        updateState(NfcAdapter.STATE_OFF);
+                        return false;
+                    }
+                } finally {
+                    mRoutingWakeLock.release();
+                }
+            } finally {
+                watchDog.cancel();
+            }
+
+            synchronized (NfcService.this) {
+                mState = NfcAdapter.STATE_ON;
             }
             return true;
         }
@@ -1513,6 +1546,10 @@ public class NfcService implements DeviceHostListener {
 
             if (saveState) {
                 saveNfcOnSetting(false);
+            }
+            if (mIsULPDetModeEnabled) {
+                mIsULPDetModeEnabled = false;
+                new EnableDisableTask().execute(TASK_ENABLE_FOR_ULPDET);
             }
 
             new EnableDisableTask().execute(TASK_DISABLE);
@@ -1812,6 +1849,9 @@ public class NfcService implements DeviceHostListener {
 
         @Override
         public int getState() throws RemoteException {
+            if (mIsULPDetModeEnabled) {
+                return NfcAdapter.STATE_ON;
+            }
             synchronized (NfcService.this) {
                 return mState;
             }
