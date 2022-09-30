@@ -14,7 +14,7 @@
 | Android Version        | NXP Release          | NXP Tag  |
 | :-------------: |:---------------------:| :-----:|
 | android-13-preview-1              |  13.01.00 (PN80T/PN81T/PN553/PN557) |  NFC_AR_00_18C0_13.01.00_OpnSrc |
-
+| android-13.0.0_r3              |  13.02.00 (PN80T/PN81T/PN553/PN557) |  NFC_AR_00_18C0_13.02.00_OpnSrc |
 
 
 
