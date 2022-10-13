@@ -594,7 +594,7 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
             }
 
             if (DBG) Log.d(TAG, "mMessageToSend = " + mMessageToSend);
-            if (DBG) Log.d(TAG, "mUrisToSend = " + mUrisToSend);
+            if (DBG) Log.d(TAG, "mUrisToSend = " + Arrays.toString(mUrisToSend));
         }
     }
 
@@ -1322,7 +1322,7 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
 
             pw.println("mCallbackNdef=" + mCallbackNdef);
             pw.println("mMessageToSend=" + mMessageToSend);
-            pw.println("mUrisToSend=" + mUrisToSend);
+            pw.println("mUrisToSend=" + Arrays.toString(mUrisToSend));
         }
     }
 

@@ -868,8 +868,8 @@ class NfcDispatcher {
     void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
         synchronized (this) {
             pw.println("mOverrideIntent=" + mOverrideIntent);
-            pw.println("mOverrideFilters=" + mOverrideFilters);
-            pw.println("mOverrideTechLists=" + mOverrideTechLists);
+            pw.println("mOverrideFilters=" + Arrays.toString(mOverrideFilters));
+            pw.println("mOverrideTechLists=" + Arrays.deepToString(mOverrideTechLists));
         }
     }
 
