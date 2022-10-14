@@ -12,7 +12,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  Copyright 2018-2020 NXP
+ *  Copyright 2018-2020, 2022 NXP
  *
  ******************************************************************************/
 #include "MposManager.h"
@@ -92,7 +92,7 @@ static bool nativeNfcMposManager_doMposGetReaderMode(JNIEnv*, jobject)
 ** Description:     e: JVM environment.
 **                  o: Java object.
 **                  on: Set/Reset the MPOS reader mode
-**                  rdrType: Requested Reader Type. e.g. "MFC"
+**                  rdrType: Requested Reader Type. e.g. "MPOS"
 **
 ** Returns:         SUCCESS/FAILED/BUSY/REJECTED.
 **

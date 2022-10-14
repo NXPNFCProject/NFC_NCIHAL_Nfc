@@ -12,7 +12,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  Copyright 2018-2020 NXP
+ *  Copyright 2018-2020, 2022 NXP
  *
  ******************************************************************************/
 
@@ -111,7 +111,7 @@ void MposManager::finalize()
 **
 ** Description:     This API shall be called to get a valid Reader Type based on i/p.
 **
-** Parameters:      readerType: a string "MPOS" or "MFC"
+** Parameters:      readerType: a string "MPOS"
 **
 ** Returns:         Equivalent integer value to requested readerType
 **
@@ -120,8 +120,6 @@ uint8_t MposManager::getReaderType(std::string readerType) {
   uint8_t type = NFA_SCR_INVALID;
   if (readerType == "MPOS") {
     type = NFA_SCR_MPOS;
-  } else if (readerType == "MFC") {
-    type = NFA_SCR_MFC;
   } else {
   }
   return type;
@@ -131,7 +129,7 @@ uint8_t MposManager::getReaderType(std::string readerType) {
 ** Function:        setMposReaderMode
 **
 ** Description:     on: Set/reset requested Reader mode.
-**                  readerType: Requested Reader e.g. "MFC", "MPOS"
+**                  readerType: Requested Reader e.g. "MPOS"
 **                             If not provided default value is "MPOS"
 **
 ** Returns:         SUCCESS/FAILED/BUSY/REJECTED

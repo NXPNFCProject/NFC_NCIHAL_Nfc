@@ -233,7 +233,6 @@ public class NfcService implements DeviceHostListener {
     // SCR/MPOS constants
     static final int SE_READER_TYPE_INAVLID   = 0;
     static final int SE_READER_TYPE_MPOS      = 1;
-    static final int SE_READER_TYPE_MFC       = 2;
     static final int MSG_SCR_START_SUCCESS            = 70;
     static final int MSG_SCR_START_FAIL               = 71;
     static final int MSG_SCR_RESTART                  = 72;
@@ -2248,8 +2247,6 @@ public class NfcService implements DeviceHostListener {
             /* Invalid Secure Reader Type received. */
           } else if(readerType.equals("MPOS")) {
             reader =  SE_READER_TYPE_MPOS;
-          } else if (readerType.equals("MFC")) {
-            reader = SE_READER_TYPE_MFC;
           } else {
             /* Invalid Secure Reader Type received. */
           }
@@ -2268,9 +2265,6 @@ public class NfcService implements DeviceHostListener {
               switch(reader) {
               case SE_READER_TYPE_MPOS:
                 status = mDeviceHost.mposSetReaderMode(on);
-              break;
-              case SE_READER_TYPE_MFC:
-                status = mDeviceHost.configureSecureReaderMode(on, readerType);
               break;
               default :
                 Log.e(TAG, "Invalid Secure Reader Type received.");
