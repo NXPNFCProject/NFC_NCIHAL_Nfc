@@ -488,7 +488,7 @@ public class HostEmulationManager {
             if (data[3] != 0x00) {
                 Log.d(TAG, "Selecting next, last or previous AID occurrence is not supported");
             }
-            int aidLength = data[4];
+            int aidLength = Byte.toUnsignedInt(data[4]);
             if (data.length < SELECT_APDU_HDR_LENGTH + aidLength) {
                 return null;
             }

@@ -450,7 +450,7 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
                         data, 0, SELECT_AID_HDR.length)) {
             return false;
         }
-        int aidLength = data[SELECT_APDU_HDR_LENGTH - 1];
+        int aidLength = Byte.toUnsignedInt(data[SELECT_APDU_HDR_LENGTH - 1]);
         if (data.length >= SELECT_APDU_HDR_LENGTH + NDEF_AID_LENGTH
                 && aidLength == NDEF_AID_LENGTH) {
             if (Arrays.equals(data, SELECT_APDU_HDR_LENGTH,
