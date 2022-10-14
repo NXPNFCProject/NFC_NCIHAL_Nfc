@@ -52,7 +52,7 @@ public class NfcApplication extends Application {
         // object in those cases, hence check the name of the process
         // to determine whether we're the main NFC service, or the
         // handover process
-        ActivityManager am = (ActivityManager)this.getSystemService(ACTIVITY_SERVICE);
+        ActivityManager am = this.getSystemService(ActivityManager.class);
         List processes = am.getRunningAppProcesses();
         Iterator i = processes.iterator();
         while (i.hasNext()) {

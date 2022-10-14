@@ -147,7 +147,7 @@ public class BluetoothPeripheralHandover implements BluetoothProfile.ServiceList
             mIsA2dpAvailable = true;
         }
 
-        mAudioManager = (AudioManager)mContext.getSystemService(Context.AUDIO_SERVICE);
+        mAudioManager = mContext.getSystemService(AudioManager.class);
 
         mState = STATE_INIT;
     }

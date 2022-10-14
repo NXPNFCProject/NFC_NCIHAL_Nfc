@@ -24,9 +24,8 @@ class ScreenStateHelper {
     private final KeyguardManager mKeyguardManager;
 
     ScreenStateHelper(Context context) {
-        mKeyguardManager = (KeyguardManager)
-                context.getSystemService(Context.KEYGUARD_SERVICE);
-        mPowerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+        mKeyguardManager = context.getSystemService(KeyguardManager.class);
+        mPowerManager = context.getSystemService(PowerManager.class);
     }
 
     int checkScreenState() {

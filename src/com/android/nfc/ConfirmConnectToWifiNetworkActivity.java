@@ -60,7 +60,7 @@ public class ConfirmConnectToWifiNetworkActivity extends Activity
 
     @Override
     public void onClick(View v) {
-        WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+        WifiManager wifiManager = getSystemService(WifiManager.class);
 
         if (!isChangeWifiStateGranted()) {
             showFailToast();
@@ -86,7 +86,7 @@ public class ConfirmConnectToWifiNetworkActivity extends Activity
     }
 
     private boolean isChangeWifiStateGranted() {
-        AppOpsManager appOps = (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
+        AppOpsManager appOps = getSystemService(AppOpsManager.class);
         int modeChangeWifiState = appOps.checkOpNoThrow(AppOpsManager.OP_CHANGE_WIFI_STATE,
                                                         Binder.getCallingUid(), getPackageName());
         return modeChangeWifiState == AppOpsManager.MODE_ALLOWED;
@@ -148,8 +148,8 @@ public class ConfirmConnectToWifiNetworkActivity extends Activity
                         && wifiState == WifiManager.WIFI_STATE_ENABLED) {
                     if (getAndClearEnableWifiInProgress()) {
                         doConnect(
-                                (WifiManager) ConfirmConnectToWifiNetworkActivity.this
-                                        .getSystemService(Context.WIFI_SERVICE));
+                                ConfirmConnectToWifiNetworkActivity.this
+                                        .getSystemService(WifiManager.class));
                     }
                 }
             }

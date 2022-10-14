@@ -42,12 +42,11 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.android.internal.R;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
-import com.google.android.material.bottomsheet.BottomSheetBehavior.BottomSheetCallback;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -100,7 +99,7 @@ public class AppChooserActivity extends AppCompatActivity
         final NfcAdapter adapter = NfcAdapter.getDefaultAdapter(this);
         mCardEmuManager = CardEmulation.getInstance(adapter);
 
-        final ActivityManager am = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+        final ActivityManager am = getSystemService(ActivityManager.class);
         mIconSize = am.getLauncherLargeIconSize();
 
         // Three cases:
@@ -209,7 +208,7 @@ public class AppChooserActivity extends AppCompatActivity
         private List<DisplayAppInfo> mList;
 
         public ListAdapter(Context context, ArrayList<ApduServiceInfo> services) {
-            mInflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            mInflater = context.getSystemService(LayoutInflater.class);
             // For each component, get the corresponding app name and icon
             PackageManager pm = getPackageManager();
             mList = new ArrayList<DisplayAppInfo>();

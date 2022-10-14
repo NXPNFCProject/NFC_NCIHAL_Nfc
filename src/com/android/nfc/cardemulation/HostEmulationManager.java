@@ -129,7 +129,7 @@ public class HostEmulationManager {
         mLock = new Object();
         mAidCache = aidCache;
         mState = STATE_IDLE;
-        mKeyguard = (KeyguardManager) context.getSystemService(Context.KEYGUARD_SERVICE);
+        mKeyguard = context.getSystemService(KeyguardManager.class);
         mPowerManager = context.getSystemService(PowerManager.class);
     }
 

@@ -130,7 +130,7 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
                 context, mNfcFServicesCache, mT3tIdentifiersCache, this);
         mServiceCache.initialize();
         mNfcFServicesCache.initialize();
-        mPowerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+        mPowerManager = context.getSystemService(PowerManager.class);
     }
 
     public INfcCardEmulation getNfcCardEmulationInterface() {
