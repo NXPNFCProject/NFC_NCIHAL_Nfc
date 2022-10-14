@@ -325,6 +325,12 @@ public class RegisteredServicesCache {
                 boolean onHost = !resolvedOffHostServices.contains(resolvedService);
                 ServiceInfo si = resolvedService.serviceInfo;
                 ComponentName componentName = new ComponentName(si.packageName, si.name);
+                // Check if the package exported the service in manifest
+                if (!si.exported) {
+                    Log.e(TAG, "Skipping application component " + componentName +
+                            ": it must configured as exported");
+                    continue;
+                }
                 // Check if the package holds the NFC permission
                 if (pm.checkPermission(android.Manifest.permission.NFC, si.packageName) !=
                         PackageManager.PERMISSION_GRANTED) {
