@@ -47,7 +47,6 @@
 #include "JavaClassConstants.h"
 #include "nfc_brcm_defs.h"
 #include "nfc_config.h"
-#include "phNxpExtns.h"
 #include "rw_int.h"
 #if (NXP_EXTNS == TRUE)
 #include "IntervalTimer.h"
@@ -492,7 +491,6 @@ void NfcTag::discoverTechnologies(tNFA_ACTIVATED& activationData) {
     mTechList[mNumTechList] = TARGET_TYPE_KOVIO_BARCODE;
   } else if (NFC_PROTOCOL_MIFARE == rfDetail.protocol) {
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Mifare Classic", fn);
-    EXTNS_MfcInit(activationData);
     mTechList[mNumTechList] =
         TARGET_TYPE_ISO14443_3A;  // is TagTechnology.NFC_A by Java API
     mNumTechList++;
@@ -1370,7 +1368,6 @@ void NfcTag::resetTechnologies() {
   mIsFelicaLite = false;
   resetAllTransceiveTimeouts();
 #if (NXP_EXTNS == TRUE)
-  EXTNS_SetConnectFlag(false);
   /* reset KOVIO uidLen on disconnect/presence
    * check failed/DEACTIVATED_NTF to enable
    * thus isSameKovio returns false

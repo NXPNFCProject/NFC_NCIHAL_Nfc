@@ -17,18 +17,14 @@
 ******************************************************************************/
 
 #pragma once
-#include "nfa_hci_api.h"
-#include "nfa_hci_defs.h"
 #include "NfcJniUtil.h"
-#include "nfc_api.h"
-#include "config.h"
 #include "SyncEvent.h"
+#include "config.h"
+#include "nfa_ce_api.h"
 #include "nfa_ee_api.h"
 #include "nfa_hci_api.h"
 #include "nfa_hci_defs.h"
-#include "nfa_ce_api.h"
-#include "phNxpExtns.h"
-#include "phNfcTypes.h"
+#include "nfc_api.h"
 
 #define MAX_NFCEE 5
 #define WIRED_MODE_TRANSCEIVE_TIMEOUT 2000

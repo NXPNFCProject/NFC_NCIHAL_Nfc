@@ -30,6 +30,7 @@
 #include "NfcAdaptation.h"
 #include "NativeJniExtns.h"
 #include "nfc_config.h"
+typedef uint16_t NFCSTATUS; /* Return values */
 
 using android::base::StringPrintf;
 
