@@ -25,11 +25,12 @@ android_app {
     jni_libs: ["libnfc_nci_jni"],
     libs: ["com.nxp.nfc"],
     static_libs: [
+        "androidx.annotation_annotation",
         "androidx.appcompat_appcompat",
         "com.google.android.material_material",
         "android.hardware.secure_element-V1.0-java",
         ],
     optimize: {
-        enabled: false,
+        proguard_flags_files: ["proguard.flags"],
     },
 }

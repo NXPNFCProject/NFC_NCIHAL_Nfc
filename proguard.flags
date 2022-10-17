@@ -1,0 +1,2 @@
+# Keep all impl classes referenced via JNI.
+-keep class com.android.nfc.dhimpl**.Native* { *; }

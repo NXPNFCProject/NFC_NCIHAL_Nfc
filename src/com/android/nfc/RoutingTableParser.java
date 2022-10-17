@@ -19,6 +19,8 @@ package com.android.nfc;
 import android.os.SystemProperties;
 import android.util.Log;
 
+import androidx.annotation.VisibleForTesting;
+
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.Locale;
@@ -185,6 +187,7 @@ public class RoutingTableParser {
     /**
     * Check commit status by inputting type and entry
     */
+    @VisibleForTesting
     public int getCommitStatus(byte type, byte[] entry) {
         if (!validateEntryInfo(type, entry)) return STATS_NOT_FOUND;
 
