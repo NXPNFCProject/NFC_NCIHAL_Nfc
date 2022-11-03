@@ -86,7 +86,7 @@ public final class NfcStateTest {
     @After
     public void tearDown() throws Exception {
         mContext.unregisterReceiver(mAdapterStateChangedReceiver);
-        if (mNfcAdapter.isControllerAlwaysOnSupported()) {
+        if (mNfcSupported && mNfcAdapter.isControllerAlwaysOnSupported()) {
             mNfcAdapter.unregisterControllerAlwaysOnListener(mListener);
         }
     }
