@@ -402,8 +402,8 @@ public class RegisteredAidCache {
             resolveinfo = resolveAidConflictLocked(aidServices, true);
             //If the AID is subsetAID check for prefix in same service.
             if (isSubset(aidServices.get(0).aid)) {
-                resolveinfo.prefixInfo = findPrefixConflictForSubsetAid(aidServices.get(0).aid ,
-                        new ArrayList<ApduServiceInfo>(){{add(resolveinfo.defaultService);}},true);
+                resolveinfo.prefixInfo = findPrefixConflictForSubsetAid(aidServices.get(0).aid,
+                        List.of(resolveinfo.defaultService), true);
             }
              return resolveinfo;
         } else if (aidDefaultInfo.paymentDefault != null) {
@@ -421,8 +421,8 @@ public class RegisteredAidCache {
                 resolveinfo = resolveAidConflictLocked(aidServices, true);
                 //If the AID is subsetAID check for prefix in same service.
                 if (isSubset(aidServices.get(0).aid)) {
-                    resolveinfo.prefixInfo = findPrefixConflictForSubsetAid(aidServices.get(0).aid ,
-                        new ArrayList<ApduServiceInfo>(){{add(resolveinfo.defaultService);}},true);
+                    resolveinfo.prefixInfo = findPrefixConflictForSubsetAid(aidServices.get(0).aid,
+                        List.of(resolveinfo.defaultService), true);
                 }
                 return resolveinfo;
             }
@@ -440,13 +440,13 @@ public class RegisteredAidCache {
                 //If the AID is subsetAID check for conflicting prefix in all
                 //conflciting services and root services.
                 if (isSubset(aidServices.get(0).aid)) {
-                    ArrayList <ApduServiceInfo> apduServiceList = new  ArrayList <ApduServiceInfo>();
+                    ArrayList<ApduServiceInfo> apduServiceList = new ArrayList<ApduServiceInfo>();
                     for (ServiceAidInfo serviceInfo : conflictingServices)
                         apduServiceList.add(serviceInfo.service);
                     for (ServiceAidInfo serviceInfo : aidServices)
                         apduServiceList.add(serviceInfo.service);
-                    resolveinfo.prefixInfo =
-                         findPrefixConflictForSubsetAid(aidServices.get(0).aid ,apduServiceList,false);
+                    resolveinfo.prefixInfo = findPrefixConflictForSubsetAid(
+                            aidServices.get(0).aid, apduServiceList, false);
                 }
                 return resolveinfo;
             }
@@ -585,7 +585,7 @@ public class RegisteredAidCache {
     }
 
     ResolvedPrefixConflictAid findPrefixConflictForSubsetAid(String subsetAid ,
-            ArrayList<ApduServiceInfo> prefixServices, boolean priorityRootAid){
+            List<ApduServiceInfo> prefixServices, boolean priorityRootAid){
         ArrayList<String> prefixAids = new ArrayList<String>();
         String minPrefix = null;
         //This functions checks whether there is a prefix AID matching to subset AID
