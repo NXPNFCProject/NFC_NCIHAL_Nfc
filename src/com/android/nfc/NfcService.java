@@ -97,6 +97,7 @@ import android.os.VibrationAttributes;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.provider.Settings;
+import android.provider.Settings.SettingNotFoundException;
 import android.se.omapi.ISecureElementService;
 import android.service.vr.IVrManager;
 import android.service.vr.IVrStateCallbacks;
@@ -896,6 +897,7 @@ public class NfcService implements DeviceHostListener {
         filter.addAction(Intent.ACTION_SCREEN_ON);
         filter.addAction(Intent.ACTION_USER_PRESENT);
         filter.addAction(Intent.ACTION_USER_SWITCHED);
+        filter.addAction(Intent.ACTION_USER_ADDED);
         mContext.registerReceiverForAllUsers(mReceiver, filter, null, null);
 
         // Listen for work profile adds or removes.
@@ -1203,6 +1205,7 @@ public class NfcService implements DeviceHostListener {
                         mPrefsEditor.putBoolean(PREF_FIRST_BOOT, false);
                         mPrefsEditor.apply();
                         mDeviceHost.factoryReset();
+                        setPaymentForegroundPreference(mUserId);
                     }
                     Log.d(TAG, "checking on firmware download");
                     if (mPrefs.getBoolean(PREF_NFC_ON, NFC_ON_DEFAULT)) {
@@ -1492,6 +1495,7 @@ public class NfcService implements DeviceHostListener {
               filter.addAction(Intent.ACTION_SCREEN_ON);
               filter.addAction(Intent.ACTION_USER_PRESENT);
               filter.addAction(Intent.ACTION_USER_SWITCHED);
+              filter.addAction(Intent.ACTION_USER_ADDED);
               mContext.registerReceiverForAllUsers(mReceiver, filter, null, null);
               mIsRecovering = false;
             }
@@ -4942,6 +4946,9 @@ public class NfcService implements DeviceHostListener {
                 if (screenState != mScreenState) {
                     sendMessage(NfcService.MSG_APPLY_SCREEN_STATE, screenState);
                 }
+            } else if (action.equals(Intent.ACTION_USER_ADDED)) {
+                int userId = intent.getIntExtra(Intent.EXTRA_USER_HANDLE, 0);
+                setPaymentForegroundPreference(userId);
             }
         }
     };
@@ -4966,6 +4973,7 @@ public class NfcService implements DeviceHostListener {
                     action.equals(Intent.ACTION_MANAGED_PROFILE_REMOVED) ||
                     action.equals(Intent.ACTION_MANAGED_PROFILE_UNAVAILABLE)) {
                 mCardEmulationManager.onManagedProfileChanged();
+                setPaymentForegroundPreference(user.getIdentifier());
             }
         }
     };
@@ -5012,6 +5020,20 @@ public class NfcService implements DeviceHostListener {
             }
         }
     };
+
+    private void setPaymentForegroundPreference(int user) {
+        try {
+            // Check whether the Settings.Secure.NFC_PAYMENT_FOREGROUND exists or not.
+            Settings.Secure.getIntForUser(mContext.getContentResolver(),
+                    Settings.Secure.NFC_PAYMENT_FOREGROUND, user);
+        } catch (SettingNotFoundException e) {
+            boolean foregroundPreference =
+                    mContext.getResources().getBoolean(R.bool.payment_foreground_preference);
+            Settings.Secure.putIntForUser(mContext.getContentResolver(),
+                    Settings.Secure.NFC_PAYMENT_FOREGROUND, foregroundPreference ? 1 : 0, user);
+            Log.d(TAG, "Set NFC_PAYMENT_FOREGROUND preference:" + foregroundPreference);
+        }
+    }
 
     /**
      * for debugging only - no i18n
