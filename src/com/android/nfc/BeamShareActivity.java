@@ -212,7 +212,7 @@ public class BeamShareActivity extends Activity {
         }
 
         BeamShareData shareData = null;
-        UserHandle myUserHandle = new UserHandle(UserHandle.myUserId());
+        UserHandle myUserHandle = UserHandle.of(UserHandle.myUserId());
         if (mUris.size() > 0) {
             // Uris have our first preference for sharing
             Uri[] uriArray = new Uri[mUris.size()];

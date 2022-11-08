@@ -2,6 +2,7 @@ package com.android.nfc;
 
 import android.app.ActivityManager;
 import android.content.Context;
+import android.os.Binder;
 import android.os.UserHandle;
 import android.os.UserManager;
 
@@ -38,7 +39,7 @@ public class NfcPermissions {
             "NFC_SET_CONTROLLER_ALWAYS_ON permission required";
 
     public static void validateUserId(int userId) {
-        if (userId != UserHandle.getCallingUserId()) {
+        if (userId != UserHandle.getUserHandleForUid(Binder.getCallingUid()).getIdentifier()) {
             throw new SecurityException("userId passed in is not the calling user.");
         }
     }

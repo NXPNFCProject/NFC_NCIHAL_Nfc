@@ -619,7 +619,8 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         public boolean setPreferredService(ComponentName service)
                 throws RemoteException {
             NfcPermissions.enforceUserPermissions(mContext);
-            if (!isServiceRegistered(UserHandle.getCallingUserId(), service)) {
+            if (!isServiceRegistered( UserHandle.getUserHandleForUid(
+                    Binder.getCallingUid()).getIdentifier(), service)) {
                 Log.e(TAG, "setPreferredService: unknown component.");
                 return false;
             }
@@ -729,7 +730,8 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         public boolean enableNfcFForegroundService(ComponentName service)
                 throws RemoteException {
             NfcPermissions.enforceUserPermissions(mContext);
-            if (isNfcFServiceInstalled(UserHandle.getCallingUserId(), service)) {
+            if (isNfcFServiceInstalled(UserHandle.getUserHandleForUid(
+                    Binder.getCallingUid()).getIdentifier(), service)) {
                 return mEnabledNfcFServices.registerEnabledForegroundService(service,
                         Binder.getCallingUid());
             }

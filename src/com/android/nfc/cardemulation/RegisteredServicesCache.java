@@ -170,7 +170,8 @@ public class RegisteredServicesCache {
                 if (DEBUG) Log.d(TAG, "Intent action: " + action);
                 if (uid != -1) {
                     int currentUser = ActivityManager.getCurrentUser();
-                    if (currentUser == getProfileParentId(UserHandle.getUserId(uid))) {
+                    if (currentUser == getProfileParentId(UserHandle.
+                            getUserHandleForUid(uid).getIdentifier())) {
                         if(Intent.ACTION_PACKAGE_REMOVED.equals(action)) {
                             Uri uri = intent.getData();
                             String pkg = uri != null ? uri.getSchemeSpecificPart() : null;
@@ -180,9 +181,11 @@ public class RegisteredServicesCache {
                                  Intent.ACTION_PACKAGE_REMOVED.equals(action));
                         if (!replaced) {
                             if (Intent.ACTION_PACKAGE_REMOVED.equals(action)) {
-                                invalidateCache(UserHandle.getUserId(uid), true);
+                                invalidateCache(UserHandle.
+                                        getUserHandleForUid(uid).getIdentifier(), true);
                             } else {
-                                invalidateCache(UserHandle.getUserId(uid), false);
+                                invalidateCache(UserHandle.
+                                        getUserHandleForUid(uid).getIdentifier(), false);
                             }
                         } else {
                             // Cache will automatically be updated on user switch
@@ -303,7 +306,7 @@ public class RegisteredServicesCache {
         PackageManager pm;
         try {
             pm = mContext.createPackageContextAsUser("android", 0,
-                    new UserHandle(userId)).getPackageManager();
+                    UserHandle.of(userId)).getPackageManager();
         } catch (NameNotFoundException e) {
             Log.e(TAG, "Could not create user package context");
             return null;
@@ -477,7 +480,8 @@ public class RegisteredServicesCache {
                             // See if we have a valid service
                             if (currentComponent != null && currentUid >= 0 &&
                                     (currentGroups.size() > 0 || currentOffHostSE != null)) {
-                                final int userId = UserHandle.getUserId(currentUid);
+                                final int userId = UserHandle.
+                                        getUserHandleForUid(currentUid).getIdentifier();
                                 DynamicSettings dynSettings = new DynamicSettings(currentUid);
                                 for (AidGroup group : currentGroups) {
                                     dynSettings.aidGroups.put(group.getCategory(), group);

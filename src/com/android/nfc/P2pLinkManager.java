@@ -532,7 +532,7 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
         synchronized (P2pLinkManager.this) {
             try {
                 mPackageManager  = mContext.createPackageContextAsUser("android", 0,
-                        new UserHandle(userId)).getPackageManager();
+                        UserHandle.of(userId)).getPackageManager();
             } catch (NameNotFoundException e) {
                 Log.e(TAG, "Failed to retrieve PackageManager for user");
             }
@@ -600,7 +600,8 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
 
     private boolean isBeamDisabled(int uid) {
         UserManager userManager = (UserManager) mContext.getSystemService(Context.USER_SERVICE);
-        UserInfo userInfo = userManager.getUserInfo(UserHandle.getUserId(uid));
+        UserInfo userInfo = userManager.getUserInfo(
+                UserHandle.getUserHandleForUid(uid).getIdentifier());
         return userManager.hasUserRestriction(
                         UserManager.DISALLOW_OUTGOING_BEAM, userInfo.getUserHandle());
 

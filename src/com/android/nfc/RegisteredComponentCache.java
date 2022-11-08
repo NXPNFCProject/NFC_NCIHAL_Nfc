@@ -148,7 +148,7 @@ public class RegisteredComponentCache {
     void generateComponentsList() {
         PackageManager pm;
         try {
-            UserHandle currentUser = new UserHandle(ActivityManager.getCurrentUser());
+            UserHandle currentUser = UserHandle.of(ActivityManager.getCurrentUser());
             pm = mContext.createPackageContextAsUser("android", 0,
                     currentUser).getPackageManager();
         } catch (NameNotFoundException e) {
