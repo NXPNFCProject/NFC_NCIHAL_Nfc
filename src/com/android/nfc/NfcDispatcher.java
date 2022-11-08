@@ -746,8 +746,8 @@ class NfcDispatcher {
 
         HandoverDataParser.BluetoothHandoverData handover = mHandoverDataParser.parseBluetooth(m);
         if (handover == null || !handover.valid) return false;
-        if (UserManager.get(mContext).hasUserRestriction(
-                UserManager.DISALLOW_CONFIG_BLUETOOTH,
+        UserManager um = mContext.getSystemService(UserManager.class);
+        if (um.hasUserRestrictionForUser(UserManager.DISALLOW_CONFIG_BLUETOOTH,
                 // hasUserRestriction does not support UserHandle.CURRENT
                 UserHandle.of(ActivityManager.getCurrentUser()))) {
             return false;

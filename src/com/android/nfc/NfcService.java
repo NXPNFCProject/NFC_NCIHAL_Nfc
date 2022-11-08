@@ -1456,7 +1456,7 @@ public class NfcService implements DeviceHostListener {
         IPackageManager mIpm = IPackageManager.Stub.asInterface(ServiceManager.getService("package"));
         boolean isGlobalEnabled = mIsNdefPushEnabled;
         boolean isActiveForUser =
-            (!um.hasUserRestriction(UserManager.DISALLOW_OUTGOING_BEAM, uh)) &&
+            (!um.hasUserRestrictionForUser(UserManager.DISALLOW_OUTGOING_BEAM, uh)) &&
             isGlobalEnabled && mIsBeamCapable;
         if (DBG) {
             Log.d(TAG, "Enforcing a policy change on user: " + uh.toString() +
@@ -1696,7 +1696,7 @@ public class NfcService implements DeviceHostListener {
 
             // don't allow Beam for managed profiles, or devices with a device owner or policy owner
             UserHandle userHandle = UserHandle.getUserHandleForUid(Binder.getCallingUid());
-            if (!mUserManager.hasUserRestriction(UserManager.DISALLOW_OUTGOING_BEAM,
+            if (!mUserManager.hasUserRestrictionForUser(UserManager.DISALLOW_OUTGOING_BEAM,
                         userHandle) &&
                     mIsBeamCapable) {
                 mP2pLinkManager.setNdefCallback(callback, Binder.getCallingUid());

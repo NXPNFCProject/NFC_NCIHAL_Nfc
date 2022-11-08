@@ -600,10 +600,8 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
 
     private boolean isBeamDisabled(int uid) {
         UserManager userManager = (UserManager) mContext.getSystemService(Context.USER_SERVICE);
-        UserInfo userInfo = userManager.getUserInfo(
-                UserHandle.getUserHandleForUid(uid).getIdentifier());
-        return userManager.hasUserRestriction(
-                        UserManager.DISALLOW_OUTGOING_BEAM, userInfo.getUserHandle());
+        return userManager.hasUserRestrictionForUser(
+                UserManager.DISALLOW_OUTGOING_BEAM, UserHandle.getUserHandleForUid(uid));
 
     }
 
