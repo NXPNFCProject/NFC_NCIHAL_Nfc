@@ -170,9 +170,9 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
         UserHandle newUser = null;
         // search for default payment setting within enabled profiles
         for (UserHandle uh : userHandles) {
-            name = Settings.Secure.getStringForUser(
-                    mContext.getContentResolver(), Settings.Secure.NFC_PAYMENT_DEFAULT_COMPONENT,
-                    uh.getIdentifier());
+            name = Settings.Secure.getString(
+                    mContext.createContextAsUser(uh, 0).getContentResolver(),
+                    Settings.Secure.NFC_PAYMENT_DEFAULT_COMPONENT);
             if (name != null) {
                 newUser = uh;
                 newDefaultName = name;
@@ -191,8 +191,9 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
         try {
             // get the setting from the main user instead of from the user profiles.
             if(currentUser != null){
-                preferForeground = Settings.Secure.getIntForUser(mContext.getContentResolver(),
-                    Settings.Secure.NFC_PAYMENT_FOREGROUND, currentUser.getIdentifier()) != 0;
+                preferForeground = Settings.Secure.getInt(mContext
+                    .createContextAsUser(currentUser, 0).getContentResolver(),
+                    Settings.Secure.NFC_PAYMENT_FOREGROUND) != 0;
             }
         } catch (SettingNotFoundException e) {
         }

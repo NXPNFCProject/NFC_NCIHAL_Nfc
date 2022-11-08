@@ -1456,7 +1456,7 @@ public class NfcService implements DeviceHostListener {
 
     void enforceBeamShareActivityPolicy(Context context, UserHandle uh) {
         UserManager um = context.getSystemService(UserManager.class);
-        IPackageManager mIpm = IPackageManager.Stub.asInterface(ServiceManager.getService("package"));
+        PackageManager pm = context.createContextAsUser(uh, 0).getPackageManager();
         boolean isGlobalEnabled = mIsNdefPushEnabled;
         boolean isActiveForUser =
             (!um.hasUserRestrictionForUser(UserManager.DISALLOW_OUTGOING_BEAM, uh)) &&
@@ -1465,18 +1465,13 @@ public class NfcService implements DeviceHostListener {
             Log.d(TAG, "Enforcing a policy change on user: " + uh.toString() +
                     ", isActiveForUser = " + isActiveForUser);
         }
-        try {
-            mIpm.setComponentEnabledSetting(new ComponentName(
-                    BeamShareActivity.class.getPackageName(),
-                    BeamShareActivity.class.getName()),
-                    isActiveForUser ?
-                            PackageManager.COMPONENT_ENABLED_STATE_ENABLED :
-                            PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                            PackageManager.DONT_KILL_APP,
-                    uh.getIdentifier());
-        } catch (RemoteException e) {
-            Log.w(TAG, "Unable to change Beam status for user " + uh);
-        }
+        pm.setComponentEnabledSetting(new ComponentName(
+                BeamShareActivity.class.getPackageName(),
+                BeamShareActivity.class.getName()),
+                isActiveForUser ?
+                        PackageManager.COMPONENT_ENABLED_STATE_ENABLED :
+                        PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                PackageManager.DONT_KILL_APP);
     }
 
     final class NfcAdapterService extends INfcAdapter.Stub {
@@ -4913,16 +4908,11 @@ public class NfcService implements DeviceHostListener {
                 if (mIsBeamCapable) {
                     int beamSetting =
                         PackageManager.COMPONENT_ENABLED_STATE_DEFAULT;
-                    try {
-                        IPackageManager mIpm = IPackageManager.Stub.asInterface(
-                            ServiceManager.getService("package"));
-                        beamSetting = mIpm.getComponentEnabledSetting(new ComponentName(
-                                BeamShareActivity.class.getPackageName(),
-                                BeamShareActivity.class.getName()),
-                                userId);
-                    } catch(RemoteException e) {
-                        Log.e(TAG, "Error int getComponentEnabledSetting for BeamShareActivity");
-                    }
+                    PackageManager pm = context.createContextAsUser(UserHandle.of(userId), 0)
+                            .getPackageManager();
+                    beamSetting = pm.getComponentEnabledSetting(new ComponentName(
+                            BeamShareActivity.class.getPackageName(),
+                            BeamShareActivity.class.getName()));
                     synchronized (this) {
                         if (beamSetting == PackageManager.COMPONENT_ENABLED_STATE_DISABLED) {
                            mIsNdefPushEnabled = false;
@@ -5022,15 +5012,16 @@ public class NfcService implements DeviceHostListener {
     };
 
     private void setPaymentForegroundPreference(int user) {
+        Context uc = mContext.createContextAsUser(UserHandle.of(user), 0);
         try {
             // Check whether the Settings.Secure.NFC_PAYMENT_FOREGROUND exists or not.
-            Settings.Secure.getIntForUser(mContext.getContentResolver(),
-                    Settings.Secure.NFC_PAYMENT_FOREGROUND, user);
+            Settings.Secure.getInt(uc.getContentResolver(),
+                    Settings.Secure.NFC_PAYMENT_FOREGROUND);
         } catch (SettingNotFoundException e) {
             boolean foregroundPreference =
                     mContext.getResources().getBoolean(R.bool.payment_foreground_preference);
-            Settings.Secure.putIntForUser(mContext.getContentResolver(),
-                    Settings.Secure.NFC_PAYMENT_FOREGROUND, foregroundPreference ? 1 : 0, user);
+            Settings.Secure.putInt(uc.getContentResolver(),
+                    Settings.Secure.NFC_PAYMENT_FOREGROUND, foregroundPreference ? 1 : 0);
             Log.d(TAG, "Set NFC_PAYMENT_FOREGROUND preference:" + foregroundPreference);
         }
     }
