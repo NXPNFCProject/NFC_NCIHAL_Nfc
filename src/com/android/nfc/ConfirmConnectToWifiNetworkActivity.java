@@ -87,7 +87,7 @@ public class ConfirmConnectToWifiNetworkActivity extends Activity
 
     private boolean isChangeWifiStateGranted() {
         AppOpsManager appOps = getSystemService(AppOpsManager.class);
-        int modeChangeWifiState = appOps.checkOpNoThrow(AppOpsManager.OP_CHANGE_WIFI_STATE,
+        int modeChangeWifiState = appOps.unsafeCheckOpNoThrow(AppOpsManager.OPSTR_CHANGE_WIFI_STATE,
                                                         Binder.getCallingUid(), getPackageName());
         return modeChangeWifiState == AppOpsManager.MODE_ALLOWED;
     }

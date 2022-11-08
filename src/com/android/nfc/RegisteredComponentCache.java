@@ -74,16 +74,16 @@ public class RegisteredComponentCache {
         intentFilter.addAction(Intent.ACTION_PACKAGE_CHANGED);
         intentFilter.addAction(Intent.ACTION_PACKAGE_REMOVED);
         intentFilter.addDataScheme("package");
-        mContext.registerReceiverAsUser(receiver, UserHandle.ALL, intentFilter, null, null);
+        mContext.registerReceiverForAllUsers(receiver, intentFilter, null, null);
         // Register for events related to sdcard installation.
         IntentFilter sdFilter = new IntentFilter();
         sdFilter.addAction(Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE);
         sdFilter.addAction(Intent.ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE);
-        mContext.registerReceiverAsUser(receiver, UserHandle.ALL, sdFilter, null, null);
+        mContext.registerReceiverForAllUsers(receiver, sdFilter, null, null);
         // Generate a new list upon switching users as well
         IntentFilter userFilter = new IntentFilter();
         userFilter.addAction(Intent.ACTION_USER_SWITCHED);
-        mContext.registerReceiverAsUser(receiver, UserHandle.ALL, userFilter, null, null);
+        mContext.registerReceiverForAllUsers(receiver, userFilter, null, null);
     }
 
     public static class ComponentInfo {

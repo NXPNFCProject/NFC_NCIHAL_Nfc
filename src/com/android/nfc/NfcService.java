@@ -896,7 +896,7 @@ public class NfcService implements DeviceHostListener {
         filter.addAction(Intent.ACTION_SCREEN_ON);
         filter.addAction(Intent.ACTION_USER_PRESENT);
         filter.addAction(Intent.ACTION_USER_SWITCHED);
-        mContext.registerReceiverAsUser(mReceiver, UserHandle.ALL, filter, null, null);
+        mContext.registerReceiverForAllUsers(mReceiver, filter, null, null);
 
         // Listen for work profile adds or removes.
         IntentFilter managedProfileFilter = new IntentFilter();
@@ -904,22 +904,22 @@ public class NfcService implements DeviceHostListener {
         managedProfileFilter.addAction(Intent.ACTION_MANAGED_PROFILE_REMOVED);
         managedProfileFilter.addAction(Intent.ACTION_MANAGED_PROFILE_AVAILABLE);
         managedProfileFilter.addAction(Intent.ACTION_MANAGED_PROFILE_UNAVAILABLE);
-        mContext.registerReceiverAsUser(mManagedProfileReceiver, UserHandle.ALL,
+        mContext.registerReceiverForAllUsers(mManagedProfileReceiver,
                 managedProfileFilter, null, null);
 
         IntentFilter ownerFilter = new IntentFilter(Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE);
         ownerFilter.addAction(Intent.ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE);
         ownerFilter.addAction(Intent.ACTION_SHUTDOWN);
-        mContext.registerReceiverAsUser(mOwnerReceiver, UserHandle.ALL, ownerFilter, null, null);
+        mContext.registerReceiverForAllUsers(mOwnerReceiver, ownerFilter, null, null);
 
         ownerFilter = new IntentFilter();
         ownerFilter.addAction(Intent.ACTION_PACKAGE_ADDED);
         ownerFilter.addAction(Intent.ACTION_PACKAGE_REMOVED);
         ownerFilter.addDataScheme("package");
-        mContext.registerReceiverAsUser(mOwnerReceiver, UserHandle.ALL, ownerFilter, null, null);
+        mContext.registerReceiverForAllUsers(mOwnerReceiver, ownerFilter, null, null);
 
         IntentFilter policyFilter = new IntentFilter(DevicePolicyManager.ACTION_DEVICE_POLICY_MANAGER_STATE_CHANGED);
-        mContext.registerReceiverAsUser(mPolicyReceiver, UserHandle.ALL, policyFilter, null, null);
+        mContext.registerReceiverForAllUsers(mPolicyReceiver, policyFilter, null, null);
 
         updatePackageCache();
 
@@ -1492,7 +1492,7 @@ public class NfcService implements DeviceHostListener {
               filter.addAction(Intent.ACTION_SCREEN_ON);
               filter.addAction(Intent.ACTION_USER_PRESENT);
               filter.addAction(Intent.ACTION_USER_SWITCHED);
-              mContext.registerReceiverAsUser(mReceiver, UserHandle.ALL, filter, null, null);
+              mContext.registerReceiverForAllUsers(mReceiver, filter, null, null);
               mIsRecovering = false;
             }
 
