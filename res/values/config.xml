@@ -19,4 +19,10 @@
     <string-array name="config_skuSupportsSecureNfc" translatable="false" />
     <!-- NFC blocking alert notification link uri string -->
     <string name="antenna_blocked_alert_link" translatable="false" />
+    <!-- NFC Antenna Location API -->
+    <integer name="device_width">0</integer>
+    <integer name="device_height">0</integer>
+    <bool name="device_foldable">false</bool>
+    <integer-array name="antenna_x">0</integer-array>
+    <integer-array name="antenna_y">0</integer-array>
 </resources>
