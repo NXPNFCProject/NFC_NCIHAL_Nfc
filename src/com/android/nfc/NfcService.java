@@ -564,8 +564,6 @@ public class NfcService implements DeviceHostListener {
     Object mWiredSeObj;
     Class mNfcExtnsClass;
     Object  mNfcExtnsObj;
-    Class mNfcExtraClass;
-    Object mNfcExtraObj;
 
     private int ROUTE_ID_HOST  = 0x00;
     private int ROUTE_ID_SMX   = 0x01;
@@ -818,24 +816,6 @@ public class NfcService implements DeviceHostListener {
             Log.e(TAG, " NoSuchMethodException");
         }  catch (InvocationTargetException e) {
             Log.e(TAG, " InvocationTargetException");
-        }
-        Object[] args = new Object[] {mDeviceHost, mContext};
-        try {
-          mNfcExtraClass = Class.forName("com.android.nfc.NfcAdapterExtrasService");
-          Constructor mNfcExtraConstr = mNfcExtraClass.getDeclaredConstructor(DeviceHost.class, Context.class);
-          mNfcExtraObj = mNfcExtraConstr.newInstance(args);
-        } catch (NoSuchMethodException e ) {
-          Log.e(TAG, "NfcAdapterExtrasService NoSuchMethodException");
-          e.printStackTrace();
-        } catch (InvocationTargetException e) {
-          Log.e(TAG, "NfcAdapterExtrasService InvocationTargetException");
-          e.printStackTrace();
-        } catch (ClassNotFoundException | IllegalAccessException e){
-          Log.e(TAG, "NfcAdapterExtrasService Class not found");
-          e.printStackTrace();
-        } catch (InstantiationException e) {
-          Log.e(TAG, "NfcAdapterExtrasService object Instantiation failed");
-          e.printStackTrace();
         }
 
         mNfcUnlockManager = NfcUnlockManager.getInstance();
@@ -1953,7 +1933,8 @@ public class NfcService implements DeviceHostListener {
 
         @Override
         public INfcAdapterExtras getNfcAdapterExtrasInterface(String pkg) throws RemoteException {
-            return (INfcAdapterExtras) mNfcExtraObj;
+            // nfc-extras implementation is no longer present in AOSP.
+            return null;
         }
 
         @Override
