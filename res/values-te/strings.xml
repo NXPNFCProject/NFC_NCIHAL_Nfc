@@ -11,7 +11,7 @@
     <string name="beam_failed" msgid="5116241718189888630">"Beam పూర్తి కాలేదు"</string>
     <string name="beam_canceled" msgid="5425192751826544741">"Beam రద్దు చేయబడింది"</string>
     <string name="cancel" msgid="61873902552555096">"రద్దు చేయండి"</string>
-    <string name="beam_tap_to_view" msgid="7430394753262448349">"వీక్షించడానికి నొక్కండి"</string>
+    <string name="beam_tap_to_view" msgid="7430394753262448349">"చూడటానికి నొక్కండి"</string>
     <string name="beam_handover_not_supported" msgid="4083165921751489015">"స్వీకర్త పరికరం Beam ద్వారా పెద్ద ఫైల్ బదిలీకి మద్దతు ఇవ్వదు."</string>
     <string name="beam_try_again" msgid="3364677301009783455">"పరికరాలను మళ్లీ సమీపంలోకి తీసుకురండి"</string>
     <string name="beam_busy" msgid="5253335587620612576">"Beam ప్రస్తుతం బిజీగా ఉంది. మునుపటి బదిలీ పూర్తయిన తర్వాత మళ్లీ ప్రయత్నించండి."</string>

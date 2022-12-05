@@ -29,7 +29,7 @@
     <string name="pair_no" msgid="5022308368904055020">"Không"</string>
     <string name="tap_again_to_pay" msgid="5754988005412859897">"Nhấn lại để thanh toán bằng <xliff:g id="APP">%1$s</xliff:g>"</string>
     <string name="tap_again_to_complete" msgid="5423640945118279123">"Nhấn lại để hoàn tất bằng <xliff:g id="APP">%1$s</xliff:g>"</string>
-    <string name="tap_again_description" msgid="3019101527041529661">"Đưa vào gần đầu đọc"</string>
+    <string name="tap_again_description" msgid="3019101527041529661">"Đưa vào máy đọc thẻ"</string>
     <string name="appchooser_description" msgid="2554187931814833244">"Chọn ứng dụng để quét"</string>
     <string name="transaction_failure" msgid="7828102078637936513">"Không thể hoàn tất giao dịch này bằng <xliff:g id="APP">%1$s</xliff:g>."</string>
     <string name="could_not_use_app" msgid="8137587876138569083">"Không thể sử dụng <xliff:g id="APP">%1$s</xliff:g>."</string>

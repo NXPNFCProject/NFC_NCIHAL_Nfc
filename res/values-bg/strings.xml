@@ -3,7 +3,7 @@
     xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="app_name" msgid="78565911793142902">"Nfc Service"</string>
     <string name="nfcUserLabel" msgid="7708535817084357357">"NFC"</string>
-    <string name="accessibility_nfc_enabled" msgid="7796246979948787735">"КБП е активирана."</string>
+    <string name="accessibility_nfc_enabled" msgid="7796246979948787735">"NFC е активирана."</string>
     <string name="tap_to_beam" msgid="5819197866281059878">"Докоснете за излъчване"</string>
     <string name="beam_progress" msgid="7453634884807323920">"Входящо излъчване..."</string>
     <string name="beam_outgoing" msgid="4679536649779123495">"Излъчва се..."</string>
@@ -42,15 +42,15 @@
     <string name="status_wifi_connected" msgid="5893022897732105739">"Установена е връзка"</string>
     <string name="title_connect_to_network" msgid="2474034615817280146">"Установяване на връзка с мрежата"</string>
     <string name="prompt_connect_to_network" msgid="8511683573657516114">"Да се установи ли връзка с мрежата „<xliff:g id="NETWORK_SSID">%1$s</xliff:g>“?"</string>
-    <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"Функцията „Android Лъч“ изисква да активирате КБП. Искате ли да го направите?"</string>
+    <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"Функцията „Android Лъч“ изисква да активирате NFC. Искате ли да го направите?"</string>
     <string name="android_beam" msgid="1666446406999492763">"Android Лъч"</string>
     <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"Приложението няма разрешение за външно хранилище. То се изисква за излъчването на този файл"</string>
     <string name="title_confirm_url_open" msgid="8069968913244794478">"Да се отвори ли връзката?"</string>
-    <string name="summary_confirm_url_open" product="tablet" msgid="3353502750736192055">"Таблетът ви получи връзка през КБП:"</string>
-    <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"Телефонът ви получи връзка през КБП:"</string>
+    <string name="summary_confirm_url_open" product="tablet" msgid="3353502750736192055">"Таблетът ви получи връзка през NFC:"</string>
+    <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"Телефонът ви получи връзка през NFC:"</string>
     <string name="action_confirm_url_open" msgid="3458322738812921189">"Отваряне на връзката"</string>
     <string name="tag_read_error" msgid="2485274498885877547">"Грешка при четене за NFC. Опитайте отново."</string>
-    <string name="tag_dispatch_failed" msgid="3562984995049738400">"Няма приложение, което поддържа този маркер за КБП"</string>
+    <string name="tag_dispatch_failed" msgid="3562984995049738400">"Няма приложение, което поддържа този маркер за NFC"</string>
     <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"Функцията NFC може да е блокирана"</string>
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Докоснете, за да научите как да отстраните проблема."</string>
 </resources>

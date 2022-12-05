@@ -35,7 +35,7 @@
     <string name="could_not_use_app" msgid="8137587876138569083">"No se pudo utilizar <xliff:g id="APP">%1$s</xliff:g>."</string>
     <string name="pay_with" msgid="5531545488795798945">"Pagar con"</string>
     <string name="complete_with" msgid="6797459104103012992">"Completar con"</string>
-    <string name="default_pay_app_removed" msgid="4108250545457437360">"Se eliminó tu servicio preferido para usar la función Presionar y pagar. ¿Quieres seleccionar otro?"</string>
+    <string name="default_pay_app_removed" msgid="4108250545457437360">"Se eliminó tu servicio preferido para usar el pago sin contacto. ¿Quieres seleccionar otro?"</string>
     <string name="ask_nfc_tap" msgid="2925239870458286340">"Presiona otro dispositivo para completar."</string>
     <string name="wifi_connect" msgid="6250727951843550671">"Conectar"</string>
     <string name="status_unable_to_connect" msgid="9183908200295307657">"No se pudo establecer la conexión con la red."</string>

@@ -10,7 +10,7 @@
     <string name="beam_complete" msgid="477026736424637435">"ବିମ୍‌ ସମ୍ପୂର୍ଣ୍ଣ ହୋଇଛି"</string>
     <string name="beam_failed" msgid="5116241718189888630">"ବିମ୍‌ ସମ୍ପୂର୍ଣ୍ଣ ହେଲା ନାହିଁ"</string>
     <string name="beam_canceled" msgid="5425192751826544741">"ବିମ୍‌ ବାତିଲ୍‌ ହୋଇଛି"</string>
-    <string name="cancel" msgid="61873902552555096">"ବାତିଲ୍ କରନ୍ତୁ"</string>
+    <string name="cancel" msgid="61873902552555096">"ବାତିଲ କରନ୍ତୁ"</string>
     <string name="beam_tap_to_view" msgid="7430394753262448349">"ଦେଖିବା ପାଇଁ ଟାପ୍‌ କରନ୍ତୁ"</string>
     <string name="beam_handover_not_supported" msgid="4083165921751489015">"ପ୍ରାପ୍ତକର୍ତ୍ତାଙ୍କ ଡିଭାଇସ୍‌, ବିମ୍‌ ମାଧ୍ୟମରେ ବଡ଼ ସାଇଜ୍‌ର ଫାଇଲ୍ ଟ୍ରାନ୍ସଫର‌୍‌ ସପୋର୍ଟ କରେନାହିଁ।"</string>
     <string name="beam_try_again" msgid="3364677301009783455">"ଡିଭାଇସ୍‌ଗୁଡ଼ିକୁ ପୁଣି ଏକାଠି କରନ୍ତୁ"</string>

@@ -27,7 +27,7 @@
     <string name="confirm_pairing" msgid="4112568077038265363">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g> Bluetooth түзмөгүн байланыштырасызбы?"</string>
     <string name="pair_yes" msgid="3525614878559994448">"Ооба"</string>
     <string name="pair_no" msgid="5022308368904055020">"Жок"</string>
-    <string name="tap_again_to_pay" msgid="5754988005412859897">"<xliff:g id="APP">%1$s</xliff:g> менен төлөө үчүн, кайра тийиңиз"</string>
+    <string name="tap_again_to_pay" msgid="5754988005412859897">"<xliff:g id="APP">%1$s</xliff:g> менен төлөө үчүн телефонуңузду кайра жакындатыңыз"</string>
     <string name="tap_again_to_complete" msgid="5423640945118279123">"<xliff:g id="APP">%1$s</xliff:g> менен аягына чыгарыш үчүн, тийиңиз"</string>
     <string name="tap_again_description" msgid="3019101527041529661">"Окугучка жакын кармаңыз"</string>
     <string name="appchooser_description" msgid="2554187931814833244">"Скандоочу колдонмону тандаңыз"</string>
