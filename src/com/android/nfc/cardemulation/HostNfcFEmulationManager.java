@@ -170,9 +170,15 @@ public class HostNfcFEmulationManager {
                         mPendingPacket = data;
                         mState = STATE_W4_SERVICE;
                     }
+
+                    int uid = -1;
+                    if(resolvedService != null) {
+                        uid = resolvedService.getUid();
+                    }
                     NfcStatsLog.write(NfcStatsLog.NFC_CARDEMULATION_OCCURRED,
                             NfcStatsLog.NFC_CARDEMULATION_OCCURRED__CATEGORY__HCE_PAYMENT,
-                            "HCEF");
+                            "HCEF",
+                            uid);
                     break;
                 case STATE_W4_SERVICE:
                     Log.d(TAG, "Unexpected packet in STATE_W4_SERVICE");
