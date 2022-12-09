@@ -39,6 +39,7 @@
 #pragma once
 #include <vector>
 #include "NfcJniUtil.h"
+#include "NfcStatsUtil.h"
 #include "SyncEvent.h"
 #include "nfa_rw_api.h"
 #if (NXP_EXTNS == TRUE)
@@ -54,6 +55,7 @@ typedef struct activationParams {
 #endif
 
 class NfcTag {
+  friend class NfcTagTest;
  public:
 #if (NXP_EXTNS == TRUE)
   enum ActivationState { Idle, Sleep, Active, InActive };
@@ -86,6 +88,7 @@ class NfcTag {
   int  mCurrentRequestedProtocol;
   uint8_t mNfcID0[4];
 #endif
+  NfcStatsUtil* mNfcStatsUtil;
 
   /*******************************************************************************
   **

@@ -16,6 +16,7 @@ cc_library_shared {
         "-fexceptions",
     ],
     srcs: ["**/*.cpp"],
+    exclude_srcs: ["NfcTagTest.cpp"],
 
     include_dirs: [
         "external/libxml2/include",
@@ -36,6 +37,7 @@ cc_library_shared {
         "libnfc-nci",
         "libchrome",
         "libbase",
+        "libstatslog_nfc",
         "vendor.nxp.nxpnfc@2.0",
     ],
     product_variables: {
@@ -52,4 +54,35 @@ cc_library_shared {
         misc_undefined: ["bounds"],
         scs: true,
     },
+}
+
+cc_test {
+    name: "nfc.nci.jni.tests",
+
+    srcs: ["NfcTagTest.cpp"],
+
+    shared_libs: [
+        "libnfc-nci",
+        "libnfc_nci_jni",
+        "libstatslog_nfc",
+    ],
+
+    static_libs: [
+        "libgmock",
+        "libgtest",
+    ],
+
+    header_libs: [
+        "jni_headers"
+    ],
+
+    include_dirs: [
+        "packages/apps/Nfc/nci/jni",
+        "system/nfc/src/include",
+        "system/nfc/src/gki/common",
+        "system/nfc/src/gki/ulinux",
+        "system/nfc/src/nfa/include",
+        "system/nfc/src/nfc/include",
+        "system/nfc/utils/include",
+    ],
 }

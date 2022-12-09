@@ -43,6 +43,7 @@
 #include <log/log.h>
 #include <nativehelper/ScopedLocalRef.h>
 #include <nativehelper/ScopedPrimitiveArray.h>
+#include <statslog_nfc.h>
 
 #include "JavaClassConstants.h"
 #include "nfc_brcm_defs.h"
@@ -115,6 +116,7 @@ NfcTag::NfcTag()
   memset(&mActivationParams_t, 0, sizeof(activationParams_t));
 #endif
   memset (&mLastKovioTime, 0, sizeof(timespec));
+  mNfcStatsUtil = new NfcStatsUtil();
 }
 
 /*******************************************************************************
@@ -513,6 +515,8 @@ void NfcTag::discoverTechnologies(tNFA_ACTIVATED& activationData) {
         << StringPrintf("%s: index=%d; tech=%d; handle=%d; nfc type=%d", fn, i,
                         mTechList[i], mTechHandles[i], mTechLibNfcTypes[i]);
   }
+  mNfcStatsUtil->logNfcTagType(mTechLibNfcTypes[mTechListTail],
+                               mTechParams[mTechListTail].mode);
   TheEnd:
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", fn);
 }
@@ -607,6 +611,11 @@ void NfcTag::notifyNfcAbortTagops(union sigval) {
 void NfcTag::createNativeNfcTag(tNFA_ACTIVATED& activationData) {
   static const char fn[] = "NfcTag::createNativeNfcTag";
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", fn);
+
+  if (mNativeData == NULL) {
+    LOG(ERROR) << StringPrintf("%s: mNativeData is null", fn);
+    return;
+  }
 
   JNIEnv* e = NULL;
   ScopedAttach attach(mNativeData->vm, &e);
