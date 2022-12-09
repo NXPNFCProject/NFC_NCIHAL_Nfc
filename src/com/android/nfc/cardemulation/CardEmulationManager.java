@@ -789,4 +789,12 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         mT3tIdentifiersCache.onEnabledForegroundNfcFServiceChanged(userId, service);
         mHostNfcFEmulationManager.onEnabledForegroundNfcFServiceChanged(userId, service);
     }
+
+    public String getRegisteredAidCategory(String aid) {
+        RegisteredAidCache.AidResolveInfo resolvedInfo = mAidCache.resolveAid(aid);
+        if (resolvedInfo != null) {
+            return resolvedInfo.category;
+        }
+        return "";
+    }
 }

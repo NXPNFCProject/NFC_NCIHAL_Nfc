@@ -60,6 +60,7 @@ import android.media.SoundPool;
 import android.net.Uri;
 import android.nfc.AvailableNfcAntenna;
 import android.nfc.BeamShareData;
+import android.nfc.cardemulation.CardEmulation;
 import android.nfc.ErrorCodes;
 import android.nfc.FormatException;
 import android.nfc.IAppCallback;
@@ -4522,6 +4523,10 @@ public class NfcService implements DeviceHostListener {
             try {
                 String reader = new String(readerByteArray, "UTF-8");
                 int uid = -1;
+                StringBuilder aidString = new StringBuilder(aid.length);
+                for (byte b : aid) {
+                    aidString.append(String.format("%02X", b));
+                }
                 for (int userId : mNfcEventInstalledPackages.keySet()) {
                     List<String> packagesOfUser = mNfcEventInstalledPackages.get(userId);
                     String[] installedPackages = new String[packagesOfUser.size()];
@@ -4536,10 +4541,6 @@ public class NfcService implements DeviceHostListener {
                     intent.putExtra(NfcAdapter.EXTRA_AID, aid);
                     intent.putExtra(NfcAdapter.EXTRA_DATA, data);
                     intent.putExtra(NfcAdapter.EXTRA_SECURE_ELEMENT_NAME, reader);
-                    StringBuilder aidString = new StringBuilder(aid.length);
-                    for (byte b : aid) {
-                        aidString.append(String.format("%02X", b));
-                    }
                     String url =
                             new String("nfc://secure:0/" + reader + "/" + aidString.toString());
                     intent.setData(Uri.parse(url));
@@ -4576,8 +4577,27 @@ public class NfcService implements DeviceHostListener {
                         }
                     }
                 }
+                String aidCategory = mCardEmulationManager
+                        .getRegisteredAidCategory(aidString.toString());
+                if (DBG) Log.d(TAG, "aid cateogry: " + aidCategory);
+
+                int offhostCategory;
+                switch (aidCategory) {
+                    case CardEmulation.CATEGORY_PAYMENT:
+                        offhostCategory = NfcStatsLog
+                              .NFC_CARDEMULATION_OCCURRED__CATEGORY__OFFHOST_PAYMENT;
+                        break;
+                    case CardEmulation.CATEGORY_OTHER:
+                        offhostCategory = NfcStatsLog
+                                .NFC_CARDEMULATION_OCCURRED__CATEGORY__OFFHOST_OTHER;
+                        break;
+                    default:
+                        offhostCategory = NfcStatsLog
+                            .NFC_CARDEMULATION_OCCURRED__CATEGORY__OFFHOST;
+                };
+
                 NfcStatsLog.write(NfcStatsLog.NFC_CARDEMULATION_OCCURRED,
-                        NfcStatsLog.NFC_CARDEMULATION_OCCURRED__CATEGORY__OFFHOST,
+                        offhostCategory,
                         reader,
                         uid);
             } catch (RemoteException e) {
