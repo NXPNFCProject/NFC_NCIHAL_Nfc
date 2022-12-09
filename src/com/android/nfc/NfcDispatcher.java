@@ -285,6 +285,8 @@ class NfcDispatcher {
                 int uid = -1;
                 if (activities.size() == 1) {
                     uid = activities.get(0).activityInfo.applicationInfo.uid;
+                } else {
+                    NfcStatsLog.write(NfcStatsLog.NFC_READER_CONFLICT_OCCURRED);
                 }
                 NfcStatsLog.write(NfcStatsLog.NFC_TAG_OCCURRED,
                         NfcStatsLog.NFC_TAG_OCCURRED__TYPE__APP_LAUNCH,
@@ -306,6 +308,8 @@ class NfcDispatcher {
                     int uid = -1;
                     if (activities.size() == 1) {
                         uid = activities.get(0).activityInfo.applicationInfo.uid;
+                    } else {
+                        NfcStatsLog.write(NfcStatsLog.NFC_READER_CONFLICT_OCCURRED);
                     }
                     NfcStatsLog.write(NfcStatsLog.NFC_TAG_OCCURRED,
                             NfcStatsLog.NFC_TAG_OCCURRED__TYPE__APP_LAUNCH,
@@ -799,10 +803,10 @@ class NfcDispatcher {
             intent.putExtra(Intent.EXTRA_INTENT, dispatch.intent);
             intent.putParcelableArrayListExtra(TechListChooserActivity.EXTRA_RESOLVE_INFOS,
                     matches);
-            if (dispatch.tryStartActivity(intent)) {
-                if (DBG) Log.i(TAG, "matched multiple TECH");
-                return true;
-            }
+
+            if (DBG) Log.i(TAG, "matched multiple TECH");
+            NfcStatsLog.write(NfcStatsLog.NFC_READER_CONFLICT_OCCURRED);
+            return dispatch.tryStartActivity(intent);
         }
         return false;
     }
