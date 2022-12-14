@@ -1303,6 +1303,10 @@ static jboolean nfcManager_sendRawFrame(JNIEnv* e, jobject, jbyteArray data) {
 static jboolean nfcManager_setRoutingEntry (JNIEnv*, jobject, jint type, jint value, jint route, jint power)
 {
     jboolean result = false;
+    if (!sIsNfaEnabled) {
+      LOG(ERROR) << StringPrintf("%s: sIsNfaEnabled is false. Return...", __func__);
+      return result;
+    }
 
     result = RoutingManager::getInstance().setRoutingEntry(type, value, route, power);
     return result;

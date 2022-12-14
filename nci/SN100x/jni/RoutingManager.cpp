@@ -541,6 +541,26 @@ bool RoutingManager::commitRouting() {
 
 void RoutingManager::onNfccShutdown() {
   static const char fn[] = "RoutingManager:onNfccShutdown";
+
+#if(NXP_EXTNS == TRUE)
+  RoutingManager& routingManager = RoutingManager::getInstance();
+  {
+    LOG(INFO) << StringPrintf("%s: mAidAddRemoveEvent Notified", __func__);
+    SyncEventGuard guard(routingManager.mAidAddRemoveEvent);
+    routingManager.mAidAddRemoveEvent.notifyOne();
+  }
+  {
+    LOG(INFO) << StringPrintf("%s: mEeUpdateEvent Notified", __func__);
+    SyncEventGuard guard(routingManager.mEeUpdateEvent);
+    routingManager.mEeUpdateEvent.notifyOne();
+  }
+  {
+    LOG(INFO) << StringPrintf("%s: mRoutingEvent Notified", __func__);
+    SyncEventGuard guard(routingManager.mRoutingEvent);
+    routingManager.mRoutingEvent.notifyOne();
+  }
+#endif
+
   if (mDefaultOffHostRoute == 0x00 && mDefaultFelicaRoute == 0x00) return;
 
   tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
