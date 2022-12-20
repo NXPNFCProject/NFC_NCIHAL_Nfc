@@ -19,11 +19,9 @@ package com.android.nfc;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
-import android.app.IActivityManager;
 import android.app.PendingIntent;
 import android.app.PendingIntent.CanceledException;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothProtoEnums;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -47,7 +45,6 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.Process;
-import android.os.RemoteException;
 import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.os.UserManager;
@@ -86,7 +83,6 @@ class NfcDispatcher {
     static final int DISPATCH_UNLOCK = 3;
 
     private final Context mContext;
-    private final IActivityManager mIActivityManager;
     private final RegisteredComponentCache mTechListFilters;
     private final ContentResolver mContentResolver;
     private final HandoverDataParser mHandoverDataParser;
@@ -110,7 +106,6 @@ class NfcDispatcher {
                   HandoverDataParser handoverDataParser,
                   boolean provisionOnly) {
         mContext = context;
-        mIActivityManager = ActivityManager.getService();
         mTechListFilters = new RegisteredComponentCache(mContext,
                 NfcAdapter.ACTION_TECH_DISCOVERED, NfcAdapter.ACTION_TECH_DISCOVERED);
         mContentResolver = context.getContentResolver();
@@ -119,7 +114,8 @@ class NfcDispatcher {
         mNfcUnlockManager = NfcUnlockManager.getInstance();
         mDeviceSupportsBluetooth = BluetoothAdapter.getDefaultAdapter() != null;
         mForegroundUid = Process.INVALID_UID;
-        mForegroundUtils = ForegroundUtils.getInstance();
+        mForegroundUtils = ForegroundUtils.getInstance(
+                context.getSystemService(ActivityManager.class));
         synchronized (this) {
             mProvisioningOnly = provisionOnly;
         }
@@ -891,9 +887,10 @@ class NfcDispatcher {
      * resumeAppSwitches().
     */
     void resumeAppSwitches() {
-        try {
-            mIActivityManager.resumeAppSwitches();
-        } catch (RemoteException e) { }
+        //// Should be auto resumed after S
+        // try {
+        //     mIActivityManager.resumeAppSwitches();
+        // } catch (RemoteException e) { }
     }
 
     /** Returns true if the tech list filter matches the techs on the tag */

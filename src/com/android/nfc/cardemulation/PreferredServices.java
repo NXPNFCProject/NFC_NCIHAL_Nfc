@@ -86,7 +86,7 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
     final RegisteredServicesCache mServiceCache;
     final RegisteredAidCache mAidCache;
     final Callback mCallback;
-    final ForegroundUtils mForegroundUtils = ForegroundUtils.getInstance();
+    final ForegroundUtils mForegroundUtils;
     final Handler mHandler = new Handler(Looper.getMainLooper());
 
     final class PaymentDefaults {
@@ -124,6 +124,8 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
     public PreferredServices(Context context, RegisteredServicesCache serviceCache,
             RegisteredAidCache aidCache, Callback callback) {
         mContext = context;
+        mForegroundUtils = ForegroundUtils.getInstance(
+                context.getSystemService(ActivityManager.class));
         mServiceCache = serviceCache;
         mAidCache = aidCache;
         mCallback = callback;

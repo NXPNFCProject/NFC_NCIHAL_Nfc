@@ -36,7 +36,6 @@
 package com.android.nfc;
 
 import android.content.Intent;
-import android.content.pm.UserInfo;
 
 import com.android.nfc.beam.BeamManager;
 import com.android.nfc.beam.BeamSendService;
@@ -55,6 +54,7 @@ import com.android.nfc.snep.SnepClient;
 import com.android.nfc.snep.SnepMessage;
 import com.android.nfc.snep.SnepServer;
 
+import android.app.ActivityManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
@@ -308,7 +308,8 @@ class P2pLinkManager implements Handler.Callback, P2pEventListener.Callback {
         mDefaultRwSize = defaultRwSize;
         mLlcpServicesConnected = false;
         mNdefCallbackUid = -1;
-        mForegroundUtils = ForegroundUtils.getInstance();
+        mForegroundUtils = ForegroundUtils.getInstance(
+                context.getSystemService(ActivityManager.class));
      }
 
     /**
