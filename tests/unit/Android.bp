@@ -17,12 +17,21 @@ android_test {
         "androidx.test.core",
         "androidx.test.rules",
         "androidx.test.ext.junit",
-        "mockito-target",
+        "mockito-target-extended-minus-junit4",
         "truth-prebuilt",
     ],
 
+    jni_libs: [
+        // Required for ExtendedMockito
+        "libdexmakerjvmtiagent",
+        "libstaticjvmtiagent",
+    ],
+
     // Include all test java files.
-    srcs: ["src/**/*.java"],
+    srcs: [
+      "src/**/*.java",
+      ":statslog-Nfc-java-gen",
+    ],
 
     platform_apis: true,
 
