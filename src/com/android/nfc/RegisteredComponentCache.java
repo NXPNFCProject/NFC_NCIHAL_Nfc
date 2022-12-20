@@ -24,6 +24,7 @@ import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.pm.PackageManager.ResolveInfoFlags;
 import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.content.res.XmlResourceParser;
@@ -157,7 +158,8 @@ public class RegisteredComponentCache {
         }
         ArrayList<ComponentInfo> components = new ArrayList<ComponentInfo>();
         List<ResolveInfo> resolveInfos = pm.queryIntentActivitiesAsUser(new Intent(mAction),
-                PackageManager.GET_META_DATA, ActivityManager.getCurrentUser());
+                ResolveInfoFlags.of(PackageManager.GET_META_DATA),
+                UserHandle.of(ActivityManager.getCurrentUser()));
         for (ResolveInfo resolveInfo : resolveInfos) {
             try {
                 parseComponentInfo(pm, resolveInfo, components);

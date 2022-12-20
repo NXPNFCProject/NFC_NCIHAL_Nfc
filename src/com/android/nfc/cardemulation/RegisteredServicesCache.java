@@ -42,6 +42,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.pm.PackageManager.ResolveInfoFlags;
 import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
 import android.net.Uri;
@@ -316,11 +317,11 @@ public class RegisteredServicesCache {
 
         List<ResolveInfo> resolvedServices = new ArrayList<>(pm.queryIntentServicesAsUser(
                 new Intent(HostApduService.SERVICE_INTERFACE),
-                PackageManager.GET_META_DATA, userId));
+                ResolveInfoFlags.of(PackageManager.GET_META_DATA), UserHandle.of(userId)));
 
         List<ResolveInfo> resolvedOffHostServices = pm.queryIntentServicesAsUser(
                 new Intent(OffHostApduService.SERVICE_INTERFACE),
-                PackageManager.GET_META_DATA, userId);
+                ResolveInfoFlags.of(PackageManager.GET_META_DATA), UserHandle.of(userId));
         resolvedServices.addAll(resolvedOffHostServices);
 
         for (ResolveInfo resolvedService : resolvedServices) {

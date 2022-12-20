@@ -31,6 +31,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.pm.PackageManager.ResolveInfoFlags;
 import android.content.pm.ResolveInfo;
 import android.content.res.Resources.NotFoundException;
 import android.net.Uri;
@@ -241,8 +242,8 @@ class NfcDispatcher {
             boolean status = false;
             List<UserHandle> luh = getCurrentActiveUserHandles();
             for (UserHandle uh : luh) {
-                if (packageManager.queryIntentActivitiesAsUser(intent, 0,
-                        uh).size() > 0) {
+                if (packageManager.queryIntentActivitiesAsUser(intent,
+                        ResolveInfoFlags.of(0), uh).size() > 0) {
                     status = true;
                 }
             }
@@ -272,8 +273,8 @@ class NfcDispatcher {
             // to determine if there is an Activity to handle this intent, and base the
             // result of off that.
             // try current user if there is an Activity to handle this intent
-            List<ResolveInfo> activities = packageManager.queryIntentActivitiesAsUser(intent, 0,
-                    ActivityManager.getCurrentUser());
+            List<ResolveInfo> activities = packageManager.queryIntentActivitiesAsUser(intent,
+                    ResolveInfoFlags.of(0), UserHandle.of(ActivityManager.getCurrentUser()));
             if (activities.size() > 0) {
                 if (DBG) Log.d(TAG, "tryStartActivity currentUser");
                 context.startActivityAsUser(rootIntent, UserHandle.CURRENT);
@@ -295,7 +296,8 @@ class NfcDispatcher {
             // try other users when there is no Activity in current user to handle this intent
             List<UserHandle> userHandles = getCurrentActiveUserHandles();
             for (UserHandle uh : userHandles) {
-                activities = packageManager.queryIntentActivitiesAsUser(intent, 0, uh);
+                activities = packageManager.queryIntentActivitiesAsUser(intent,
+                        ResolveInfoFlags.of(0), uh);
                 if (activities.size() > 0) {
                     if (DBG) Log.d(TAG, "tryStartActivity other user");
                     rootIntent.putExtra(NfcRootActivity.EXTRA_LAUNCH_INTENT_USER_HANDLE, uh);
@@ -322,7 +324,7 @@ class NfcDispatcher {
         boolean tryStartActivity(Intent intentToStart) {
             // try current user if there is an Activity to handle this intent
             List<ResolveInfo> activities = packageManager.queryIntentActivitiesAsUser(
-                    intentToStart, 0, ActivityManager.getCurrentUser());
+                    intentToStart, 0, UserHandle.of(ActivityManager.getCurrentUser()));
             if (activities.size() > 0) {
                 if (DBG) Log.d(TAG, "tryStartActivity(Intent) currentUser");
                 rootIntent.putExtra(NfcRootActivity.EXTRA_LAUNCH_INTENT, intentToStart);
@@ -343,7 +345,8 @@ class NfcDispatcher {
             // try other users when there is no Activity in current user to handle this intent
             List<UserHandle> userHandles = getCurrentActiveUserHandles();
             for (UserHandle uh : userHandles) {
-                activities = packageManager.queryIntentActivitiesAsUser(intentToStart, 0, uh);
+                activities = packageManager.queryIntentActivitiesAsUser(intentToStart,
+                        ResolveInfoFlags.of(0), uh);
                 if (activities.size() > 0) {
                     if (DBG) Log.d(TAG, "tryStartActivity(Intent) other user");
                     rootIntent.putExtra(NfcRootActivity.EXTRA_LAUNCH_INTENT, intentToStart);

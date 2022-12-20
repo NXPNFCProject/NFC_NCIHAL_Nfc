@@ -43,6 +43,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.pm.PackageManager.ResolveInfoFlags;
 import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
 import android.nfc.cardemulation.HostNfcFService;
@@ -263,7 +264,7 @@ public class RegisteredNfcFServicesCache {
 
         List<ResolveInfo> resolvedServices = pm.queryIntentServicesAsUser(
                 new Intent(HostNfcFService.SERVICE_INTERFACE),
-                PackageManager.GET_META_DATA, userId);
+                ResolveInfoFlags.of(PackageManager.GET_META_DATA), UserHandle.of(userId));
 
         for (ResolveInfo resolvedService : resolvedServices) {
             try {
