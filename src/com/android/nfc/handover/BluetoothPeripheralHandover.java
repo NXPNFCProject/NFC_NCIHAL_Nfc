@@ -31,7 +31,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.AudioManager;
-import android.media.session.MediaSessionLegacyHelper;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -571,15 +570,10 @@ public class BluetoothPeripheralHandover implements BluetoothProfile.ServiceList
             return;
         }
 
-        MediaSessionLegacyHelper helper = MediaSessionLegacyHelper.getHelper(mContext);
-        if (helper != null) {
-            KeyEvent keyEvent = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PLAY);
-            helper.sendMediaButtonEvent(keyEvent, false);
-            keyEvent = new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_MEDIA_PLAY);
-            helper.sendMediaButtonEvent(keyEvent, false);
-        } else {
-            Log.w(TAG, "Unable to send media key event");
-        }
+        KeyEvent keyEvent = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PLAY);
+        mAudioManager.dispatchMediaKeyEvent(keyEvent);
+        keyEvent = new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_MEDIA_PLAY);
+        mAudioManager.dispatchMediaKeyEvent(keyEvent);
     }
 
     void requestPairConfirmation() {
