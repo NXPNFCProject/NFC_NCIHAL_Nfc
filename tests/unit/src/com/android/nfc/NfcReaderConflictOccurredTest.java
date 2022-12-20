@@ -29,6 +29,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.nfc.Tag;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.util.Log;
 import androidx.test.core.content.pm.ApplicationInfoBuilder;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -37,7 +38,6 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.android.dx.mockito.inline.extended.ExtendedMockito;
 import com.android.nfc.handover.HandoverDataParser;
 
-import java.util.concurrent.Executor;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,7 +57,6 @@ public final class NfcReaderConflictOccurredTest {
 
     private MockitoSession mStaticMockSession;
     private NfcDispatcher mNfcDispatcher;
-    private boolean onLocked;
 
     @Before
     public void setUp() {
@@ -73,25 +72,29 @@ public final class NfcReaderConflictOccurredTest {
         }
         mNfcSupported = true;
 
-        ScreenStateHelper screenStateHelper = new ScreenStateHelper(context);
-        if (screenStateHelper.checkScreenState() == ScreenStateHelper.SCREEN_STATE_ON_LOCKED) {
-            onLocked = true;
-            return;
-        }
-        onLocked = false;
-
         PackageManager mockPackageManager = Mockito.mock(PackageManager.class);
         // multiple resolveInfos for Tag
         when(mockPackageManager.queryIntentActivitiesAsUser(
                 any(Intent.class),
                 eq(0),
                 anyInt())).thenReturn(constructConflictingResolveInfos());
+        PowerManager mockPowerManager = Mockito.mock(PowerManager.class);
+        when(mockPowerManager.isScreenOn()).thenReturn(false);
 
         Context mockContext = new ContextWrapper(context) {
             @Override
             public PackageManager getPackageManager() {
                 Log.i(TAG, "[Mock] getPackageManager");
                 return mockPackageManager;
+            }
+
+            @Override
+            public Object getSystemService(String name) {
+              if (Context.POWER_SERVICE.equals(name)) {
+                  Log.i(TAG, "[Mock] mockPowerManager");
+                  return mockPowerManager;
+              }
+              return super.getSystemService(name);
             }
         };
 
@@ -108,7 +111,7 @@ public final class NfcReaderConflictOccurredTest {
 
     @Test
     public void testLogReaderConflict() {
-        if (!mNfcSupported || onLocked) return;
+        if (!mNfcSupported) return;
 
         Tag tag = Tag.createMockTag(null, new int[0], new Bundle[0], 0L);
         mNfcDispatcher.dispatchTag(tag);

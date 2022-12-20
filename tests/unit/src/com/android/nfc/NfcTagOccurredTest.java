@@ -15,11 +15,15 @@
  */
 package com.android.nfc;
 
+import static org.mockito.Mockito.when;
+
 import android.bluetooth.BluetoothProtoEnums;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.pm.PackageManager;
 import android.nfc.Tag;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.util.Log;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -27,13 +31,12 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.android.dx.mockito.inline.extended.ExtendedMockito;
 import com.android.nfc.handover.HandoverDataParser;
 
-import java.util.concurrent.Executor;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.mockito.MockitoSession;
 
 @RunWith(AndroidJUnit4.class)
@@ -44,7 +47,6 @@ public final class NfcTagOccurredTest {
 
     private MockitoSession mStaticMockSession;
     private NfcDispatcher mNfcDispatcher;
-    private boolean onLocked;
 
     @Before
     public void setUp() {
@@ -60,15 +62,23 @@ public final class NfcTagOccurredTest {
         }
         mNfcSupported = true;
 
-        ScreenStateHelper screenStateHelper = new ScreenStateHelper(context);
-        if (screenStateHelper.checkScreenState() == ScreenStateHelper.SCREEN_STATE_ON_LOCKED) {
-            onLocked = true;
-            return;
-        }
-        onLocked = false;
+        PowerManager mockPowerManager = Mockito.mock(PowerManager.class);
+        when(mockPowerManager.isScreenOn()).thenReturn(false);
+
+        Context mockContext = new ContextWrapper(context) {
+            @Override
+            public Object getSystemService(String name) {
+              if (Context.POWER_SERVICE.equals(name)) {
+                  Log.i(TAG, "[Mock] mockPowerManager");
+                  return mockPowerManager;
+              }
+              return super.getSystemService(name);
+            }
+        };
 
         InstrumentationRegistry.getInstrumentation().runOnMainSync(
-              () -> mNfcDispatcher = new NfcDispatcher(context, new HandoverDataParser(), false));
+              () -> mNfcDispatcher = new NfcDispatcher(mockContext,
+                      new HandoverDataParser(), false));
         Assert.assertNotNull(mNfcDispatcher);
     }
 
@@ -79,7 +89,7 @@ public final class NfcTagOccurredTest {
 
     @Test
     public void testLogOthers() {
-        if (!mNfcSupported || onLocked) return;
+        if (!mNfcSupported) return;
 
         Tag tag = Tag.createMockTag(null, new int[0], new Bundle[0], 0L);
         mNfcDispatcher.dispatchTag(tag);

@@ -19,6 +19,9 @@ android_test {
         "androidx.test.ext.junit",
         "mockito-target-extended-minus-junit4",
         "truth-prebuilt",
+        "androidx.annotation_annotation",
+        "androidx.appcompat_appcompat",
+        "com.google.android.material_material",
     ],
 
     jni_libs: [
@@ -30,7 +33,7 @@ android_test {
     // Include all test java files.
     srcs: [
       "src/**/*.java",
-      ":statslog-Nfc-java-gen",
+      ":nfc-sources",
     ],
 
     platform_apis: true,

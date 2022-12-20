@@ -34,7 +34,6 @@ import com.android.dx.mockito.inline.extended.ExtendedMockito;
 import com.android.nfc.cardemulation.RegisteredAidCache.AidResolveInfo;
 import com.android.nfc.NfcStatsLog;
 
-import java.util.concurrent.Executor;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -82,6 +81,11 @@ public final class NfcAidConflictOccurredTest {
             public void startActivityAsUser(Intent intent, UserHandle user) {
                 Log.i(TAG, "[Mock] startActivityAsUser");
             }
+
+            @Override
+            public void sendBroadcastAsUser(Intent intent, UserHandle user) {
+                Log.i(TAG, "[Mock] sendBroadcastAsUser");
+            }
         };
         InstrumentationRegistry.getInstrumentation().runOnMainSync(
               () -> mHostEmulation = new HostEmulationManager(mockContext, mockAidCache));
@@ -92,6 +96,7 @@ public final class NfcAidConflictOccurredTest {
 
     @After
     public void tearDown() {
+        mHostEmulation.onHostEmulationDeactivated();
         mStaticMockSession.finishMocking();
     }
 

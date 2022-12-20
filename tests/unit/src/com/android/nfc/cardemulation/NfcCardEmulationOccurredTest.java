@@ -21,9 +21,12 @@ import static org.mockito.Mockito.when;
 import android.bluetooth.BluetoothProtoEnums;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.ContextWrapper;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.nfc.cardemulation.ApduServiceInfo;
 import android.nfc.cardemulation.CardEmulation;
+import android.os.UserHandle;
 import android.util.Log;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -32,7 +35,6 @@ import com.android.dx.mockito.inline.extended.ExtendedMockito;
 import com.android.nfc.cardemulation.RegisteredAidCache.AidResolveInfo;
 import com.android.nfc.NfcStatsLog;
 
-import java.util.concurrent.Executor;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -69,6 +71,13 @@ public final class NfcCardEmulationOccurredTest {
         }
         mNfcSupported = true;
 
+        Context mockContext = new ContextWrapper(context) {
+            @Override
+            public void sendBroadcastAsUser(Intent intent, UserHandle user) {
+                Log.i(TAG, "[Mock] sendBroadcastAsUser");
+            }
+        };
+
         RegisteredAidCache mockAidCache = Mockito.mock(RegisteredAidCache.class);
         ApduServiceInfo apduServiceInfo = Mockito.mock(ApduServiceInfo.class);
         when(apduServiceInfo.requiresUnlock()).thenReturn(false);
@@ -84,7 +93,7 @@ public final class NfcCardEmulationOccurredTest {
         when(mockAidCache.resolveAid(anyString())).thenReturn(aidResolveInfo);
 
         InstrumentationRegistry.getInstrumentation().runOnMainSync(
-              () -> mHostEmulation = new HostEmulationManager(context, mockAidCache));
+              () -> mHostEmulation = new HostEmulationManager(mockContext, mockAidCache));
         Assert.assertNotNull(mHostEmulation);
 
         mHostEmulation.onHostEmulationActivated();
@@ -92,6 +101,7 @@ public final class NfcCardEmulationOccurredTest {
 
     @After
     public void tearDown() {
+        mHostEmulation.onHostEmulationDeactivated();
         mStaticMockSession.finishMocking();
     }
 
