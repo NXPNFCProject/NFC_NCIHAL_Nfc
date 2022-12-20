@@ -3,6 +3,10 @@
     {
       "name": "NfcNciInstrumentationTests",
       "keywords": ["primary-device"]
+    },
+    {
+      "name": "NfcNciUnitTests",
+      "keywords": ["primary-device"]
     }
   ],
   "pts-prebuilt": [
