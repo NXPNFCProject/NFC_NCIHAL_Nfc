@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- *  Copyright 2019-2021 NXP
+ *  Copyright 2019-2021, 2023 NXP
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -313,7 +313,7 @@ jbyteArray NativeT4tNfcee::t4tReadData(JNIEnv* e, jobject object,
       e->SetByteArrayRegion(result.get(), 0, sRxDataBuffer.size(),
             (const jbyte*)sRxDataBuffer.data());
     } else {
-      char data[1] = {0xFF};
+      char data[1] = {(char)0xFF};
       result.reset(e->NewByteArray(0x01));
       e->SetByteArrayRegion(result.get(), 0, 0x01, (jbyte*)data);
       LOG(ERROR) << StringPrintf("%s: Failed to allocate java byte array",
@@ -321,7 +321,7 @@ jbyteArray NativeT4tNfcee::t4tReadData(JNIEnv* e, jobject object,
     }
     sRxDataBuffer.clear();
   } else if (mT4tOpStatus == NFA_T4T_STATUS_INVALID_FILE_ID){
-    char data[1] = {0xFF};
+    char data[1] = {(char)0xFF};
     result.reset(e->NewByteArray(0x01));
     e->SetByteArrayRegion(result.get(), 0, 0x01, (jbyte*)data);
   }
