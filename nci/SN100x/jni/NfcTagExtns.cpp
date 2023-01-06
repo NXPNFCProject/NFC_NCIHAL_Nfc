@@ -15,7 +15,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  Copyright 2022 NXP
+ *  Copyright 2022-2023 NXP
  *
  ******************************************************************************/
 #include "NfcTagExtns.h"
@@ -672,7 +672,7 @@ tTagStatus NfcTagExtns::performTagDeactivation() {
       ret = TAG_STATUS_FAILED;
     }
   } else {
-    if (SecureElement::getInstance().isRfFieldOn()) {
+    if (SecureElement::getInstance().isActivatedInListenMode()) {
       NfcTag::getInstance().resetActivationState();
       DLOG_IF(INFO, android::nfc_debug_enabled)
           << StringPrintf("%s: card emulation on priotiy", __func__);
