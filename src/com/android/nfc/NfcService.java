@@ -39,7 +39,6 @@ import android.app.Application;
 import android.app.BroadcastOptions;
 import android.app.KeyguardManager;
 import android.app.PendingIntent;
-import android.app.VrManager;
 import android.app.admin.DevicePolicyManager;
 import android.app.backup.BackupManager;
 import android.content.BroadcastReceiver;
@@ -101,6 +100,7 @@ import android.os.Vibrator;
 import android.provider.Settings;
 import android.provider.Settings.SettingNotFoundException;
 import android.se.omapi.ISecureElementService;
+import android.service.vr.IVrManager;
 import android.service.vr.IVrStateCallbacks;
 import android.text.TextUtils;
 import android.util.EventLog;
@@ -547,7 +547,6 @@ public class NfcService implements DeviceHostListener {
     private Vibrator mVibrator;
     private VibrationEffect mVibrationEffect;
     private ISecureElementService mSEService;
-    private VrManager mVrManager;
 
     private ScreenStateHelper mScreenStateHelper;
     private ForegroundUtils mForegroundUtils;
@@ -557,6 +556,7 @@ public class NfcService implements DeviceHostListener {
     private static int sToast_debounce_time_ms = 3000;
     public  static boolean sIsDtaMode = false;
 
+    private IVrManager vrManager;
     boolean mIsVrModeEnabled;
     private final boolean mIsAlwaysOnSupported;
     private final Set<INfcControllerAlwaysOnListener> mAlwaysOnListeners =
@@ -867,7 +867,6 @@ public class NfcService implements DeviceHostListener {
         mActivityManager = mContext.getSystemService(ActivityManager.class);
         mVibrator = mContext.getSystemService(Vibrator.class);
         mVibrationEffect = VibrationEffect.createOneShot(200, VibrationEffect.DEFAULT_AMPLITUDE);
-        mVrManager = mContext.getSystemService(VrManager.class);
 
         mScreenState = mScreenStateHelper.checkScreenState();
         mPreviousScreenState = mScreenState;
@@ -984,6 +983,16 @@ public class NfcService implements DeviceHostListener {
 
         mHandler.sendEmptyMessageDelayed(MSG_UPDATE_STATS, STATS_UPDATE_INTERVAL_MS);
 
+        IVrManager mVrManager = IVrManager.Stub.asInterface(ServiceManager.getService(
+                mContext.VR_SERVICE));
+        if (mVrManager != null) {
+            try {
+                mVrManager.registerListener(mVrStateCallbacks);
+                mIsVrModeEnabled = mVrManager.getVrModeState();
+            } catch (RemoteException e) {
+                Log.e(TAG, "Failed to register VR mode state listener: " + e);
+            }
+        }
         connectToSeService();
         try {
           mWlc = new WlcServiceProxy(mContext, mNxpPrefs);
@@ -1440,7 +1449,7 @@ public class NfcService implements DeviceHostListener {
                 return;
             }
 
-            if (mVrManager.isVrModeEnabled()) {
+            if (mIsVrModeEnabled) {
                 Log.d(TAG, "Not playing NFC sound when Vr Mode is enabled");
                 return;
             }
@@ -5086,6 +5095,15 @@ public class NfcService implements DeviceHostListener {
         }
     };
 
+    private final IVrStateCallbacks mVrStateCallbacks = new IVrStateCallbacks.Stub() {
+        @Override
+        public void onVrStateChanged(boolean enabled) {
+            synchronized (this) {
+                mIsVrModeEnabled = enabled;
+            }
+        }
+    };
+
     private void setPaymentForegroundPreference(int user) {
         Context uc = mContext.createContextAsUser(UserHandle.of(user), 0);
         try {
@@ -5290,7 +5308,7 @@ public class NfcService implements DeviceHostListener {
         proto.write(NfcServiceDumpProto.HCE_F_CAPABLE, mIsHceFCapable);
         proto.write(NfcServiceDumpProto.BEAM_CAPABLE, mIsBeamCapable);
         proto.write(NfcServiceDumpProto.SECURE_NFC_CAPABLE, mIsSecureNfcCapable);
-        proto.write(NfcServiceDumpProto.VR_MODE_ENABLED, mVrManager.isVrModeEnabled());
+        proto.write(NfcServiceDumpProto.VR_MODE_ENABLED, mIsVrModeEnabled);
 
         long token = proto.start(NfcServiceDumpProto.DISCOVERY_PARAMS);
         mCurrentDiscoveryParameters.dumpDebug(proto);
