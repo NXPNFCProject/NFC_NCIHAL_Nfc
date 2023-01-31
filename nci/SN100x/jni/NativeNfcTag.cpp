@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 /******************************************************************************
-*
-*  The original Work has been changed by NXP.
-*
-*  Licensed under the Apache License, Version 2.0 (the "License");
-*  you may not use this file except in compliance with the License.
-*  You may obtain a copy of the License at
-*
-*  http://www.apache.org/licenses/LICENSE-2.0
-*
-*  Unless required by applicable law or agreed to in writing, software
-*  distributed under the License is distributed on an "AS IS" BASIS,
-*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-*  See the License for the specific language governing permissions and
-*  limitations under the License.
-*
-*  Copyright 2018-2022 NXP
-*
-******************************************************************************/
+ *
+ *  The original Work has been changed by NXP.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ *  Copyright 2018-2023 NXP
+ *
+ ******************************************************************************/
 
 #include <android-base/stringprintf.h>
 #include <base/logging.h>
@@ -1374,6 +1374,12 @@ static jint nativeNfcTag_doCheckNdef(JNIEnv* e, jobject o, jintArray ndefInfo) {
   jint* ndef = NULL;
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter ", __func__);
 #if (NXP_EXTNS == TRUE)
+  // If tag is already deactivated.
+  if (NfcTag::getInstance().isActivated() == false) {
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s: tag already deactivated...", __func__);
+    return NFA_STATUS_FAILED;
+  }
   int handle = sCurrentConnectedHandle;
   if (NfcTagExtns::getInstance().processNonStdTagOperation(
           TAG_API_REQUEST::TAG_CHECK_NDEF_API, TAG_OPERATION::TAG_SKIP_NDEF) !=
