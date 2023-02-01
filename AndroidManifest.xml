@@ -42,6 +42,7 @@
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
     <uses-permission android:name="android.permission.BLUETOOTH_PRIVILEGED" />
     <uses-permission android:name="android.permission.NFC" />
+    <uses-permission android:name="android.permission.NFC_SET_CONTROLLER_ALWAYS_ON" />
     <uses-permission android:name="android.permission.BIND_NFC_SERVICE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.STATUS_BAR" />
