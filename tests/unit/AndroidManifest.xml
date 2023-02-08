@@ -41,10 +41,10 @@
     <uses-permission android:name="android.permission.STOP_APP_SWITCHES" />
 
     <application android:debuggable="true">
-        <uses-library android:name="android.test.runner" />
         <uses-library android:name="com.nxp.nfc"
             android:required="true"
         />
+        <uses-library android:name="android.test.runner" />
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
