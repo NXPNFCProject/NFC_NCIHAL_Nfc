@@ -267,6 +267,16 @@ void transactionController::transactionEnd(
     sem_getvalue(&mBarrier, &val);
     if (!val) sem_post(&mBarrier);
   }
+/* SR modify The low probability of mobile phones will always be in the state of card simulation chunxu.long  2023.02.18 start */
+  else {
+    if(transactionTerminate(TRANSACTION_REQUESTOR(exec_pending_req)))
+     DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s: Transaction control killed successfully", __FUNCTION__);
+    else
+     DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s: Transaction control killed fail", __FUNCTION__);
+  }
+/* SR modify The low probability of mobile phones will always be in the state of card simulation chunxu.long  2023.02.18 end */
 }
 /*******************************************************************************
  **
