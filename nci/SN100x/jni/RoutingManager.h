@@ -33,7 +33,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2021 NXP
+*  Copyright 2018-2021, 2023 NXP
 *
 ******************************************************************************/
 #pragma once
@@ -261,6 +261,7 @@ class RoutingManager {
     static const int ROUTE_LOC_HOST_ID      = 0x400;
     //FIX THIS:static const int ROUTE_LOC_ESE_ID       = SecureElement::EE_HANDLE_0xF3;
     static const int ROUTE_LOC_ESE_ID       = 0x4C0;
+    static const int ROUTE_LOC_EUICC_ID     = 0x4C1;
     static const int ROUTE_LOC_UICC1_ID     = 0x402;
     static const int ROUTE_LOC_UICC1_ID_NCI2_0 = 0x480;
     //FIX THIS:static const int ROUTE_LOC_UICC2_ID     = SecureElement::EE_HANDLE_0xF8;

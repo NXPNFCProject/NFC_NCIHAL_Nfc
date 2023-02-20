@@ -12,7 +12,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2022 NXP
+*  Copyright 2018-2023 NXP
 *
 ******************************************************************************/
 
@@ -231,6 +231,10 @@ jint SecureElement::getGenericEseId(tNFA_HANDLE handle) {
     else if (handle == (EE_HANDLE_0xF9 & ~NFA_HANDLE_GROUP_EE)) //UICC2 - 0x04
     {
         ret = UICC3_ID;
+    }
+    else if (handle == (EE_HANDLE_0xF5 & ~NFA_HANDLE_GROUP_EE)) //EUICC - 0xC1
+    {
+        ret = EUICC_ID;
     }
     LOG(INFO) << StringPrintf("%s: exit; ESE-Generic-ID = 0x%02X", fn, ret);
     return ret;
@@ -1543,6 +1547,10 @@ tNFA_HANDLE SecureElement::getEseHandleFromGenericId(jint eseId)
     else if(eseId == EE_HANDLE_0xF3 || eseId == EE_HANDLE_0xF4 || eseId == EE_HANDLE_0xF9)
     {
         handle = eseId;
+    }
+    else if(eseId == EUICC_ID)
+    {
+        handle = EE_HANDLE_0xF5; //0x4C1;
     }
     LOG(INFO) << StringPrintf("%s: enter; ESE-Handle = 0x%03X", fn, handle);
     return handle;

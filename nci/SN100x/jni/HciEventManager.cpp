@@ -28,7 +28,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2019-2020 NXP
+*  Copyright 2019-2020, 2023 NXP
 *
 ******************************************************************************/
 #include "HciEventManager.h"
@@ -46,6 +46,7 @@ uint8_t HciEventManager::sEsePipe;
 uint8_t HciEventManager::sSimPipe;
 #if(NXP_EXTNS == TRUE)
 uint8_t HciEventManager::sSim2Pipe;
+uint8_t HciEventManager::sESimPipe;
 #endif
 
 using android::base::StringPrintf;
@@ -68,6 +69,7 @@ void HciEventManager::initialize(nfc_jni_native_data* native) {
 #else
   sSim2Pipe = (uint8_t)NfcConfig::getUnsigned(NAME_OFF_HOST_SIM2_PIPE_ID,
           OFF_HOST_DEFAULT_PIPE_ID);
+  sESimPipe = NfcConfig::getUnsigned(NAME_OFF_HOST_ESIM_PIPE_ID, 0x2B);
 #endif
   sEsePipe = NfcConfig::getUnsigned(NAME_OFF_HOST_ESE_PIPE_ID, 0x16);
   sSimPipe = NfcConfig::getUnsigned(NAME_OFF_HOST_SIM_PIPE_ID, 0x0A);
@@ -182,6 +184,8 @@ void HciEventManager::nfaHciCallback(tNFA_HCI_EVT event,
 #if(NXP_EXTNS == TRUE)
   } else if (eventData->rcvd_evt.pipe == sSim2Pipe) {
     evtSrc = "SIM2";
+  } else if (eventData->rcvd_evt.pipe == sESimPipe) {
+    evtSrc = "SIM3";
 #endif
   } else {
     LOG(WARNING) << "Incorrect Pipe Id";

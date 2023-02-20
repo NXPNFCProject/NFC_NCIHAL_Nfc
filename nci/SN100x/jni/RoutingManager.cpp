@@ -33,7 +33,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  Copyright 2018-2021 NXP
+ *  Copyright 2018-2021, 2023 NXP
  *
  ******************************************************************************/
 #include <android-base/stringprintf.h>
@@ -1552,8 +1552,8 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
     uint8_t screen_off_mask = 0x00;
     uint8_t screen_off_lock_mask = 0x00;
     uint8_t protocol_mask = 0x00;
-
-    ee_handle = ((route == 0x00) ? ROUTE_LOC_HOST_ID : ((route == 0x01) ? ROUTE_LOC_ESE_ID : getUiccRouteLocId(route)));
+    ee_handle = ((route == 0x00) ? ROUTE_LOC_HOST_ID : ((route == 0x01) ? ROUTE_LOC_ESE_ID :
+      ((route == SecureElement::EUICC_ID) ? ROUTE_LOC_EUICC_ID : getUiccRouteLocId(route))));
     if(ee_handle == NFA_HANDLE_INVALID )
     {
         DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter, handle:%x invalid", fn, ee_handle);
@@ -1837,7 +1837,8 @@ void RoutingManager::setEmptyAidEntry(int routeAndPowerState) {
         LOG(ERROR) << StringPrintf("%s: Invalid routeLoc. Return.", __func__);
         return;
     }
-    routeLoc = ((routeLoc == 0x00) ? ROUTE_LOC_HOST_ID : ((routeLoc == 0x01 ) ? ROUTE_LOC_ESE_ID : getUiccRouteLocId(routeLoc)));
+    routeLoc = ((routeLoc == 0x00) ? ROUTE_LOC_HOST_ID : ((routeLoc == 0x01 ) ? ROUTE_LOC_ESE_ID:
+        ((routeLoc == SecureElement::EUICC_ID) ? ROUTE_LOC_EUICC_ID : getUiccRouteLocId(routeLoc))));
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: route %x",__func__,routeLoc);
 
     max_tech_mask = SecureElement::getInstance().getSETechnology(routeLoc);

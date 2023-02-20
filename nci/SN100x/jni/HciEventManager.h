@@ -28,7 +28,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2019-2020 NXP
+*  Copyright 2019-2020, 2023 NXP
 *
 ******************************************************************************/
 #pragma once
@@ -48,6 +48,7 @@ class HciEventManager {
   static uint8_t sSimPipe;
 #if(NXP_EXTNS == TRUE)
   static uint8_t sSim2Pipe;
+  static uint8_t sESimPipe;
   static const uint8_t OFF_HOST_DEFAULT_PIPE_ID = 0x23;
 #endif
 
