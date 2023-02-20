@@ -846,9 +846,11 @@ bool NativeT4tNfcee::isFwSupportNonStdT4TAid() {
   jboolean isFwSupport = false;
   memset(&nfc_native_fw_version, 0, sizeof(nfc_native_fw_version));
   const uint8_t FW_ROM_VERSION = 0x01;
+  const uint8_t FW_ROM_VERSION_SN3XX = 0x02;
   const uint8_t FW_MAJOR_VERSION_SN1XX = 0x10;
   const uint8_t FW_MAJOR_VERSION_SN2XX = 0x01;
   const uint8_t FW_MINOR_VERSION_SN1XX = 0x54;
+  const uint8_t FW_MAJOR_VERSION_SN3XX = 0x20;
   nfc_native_fw_version = nfc_ncif_getFWVersion();
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
       "FW Version: %x.%x.%x", nfc_native_fw_version.rom_code_version,
@@ -860,6 +862,9 @@ bool NativeT4tNfcee::isFwSupportNonStdT4TAid() {
         (nfc_native_fw_version.major_version == FW_MAJOR_VERSION_SN2XX)) {
       isFwSupport = true;
     }
+  } else if ((nfc_native_fw_version.rom_code_version == FW_ROM_VERSION_SN3XX) &&
+             (nfc_native_fw_version.major_version == FW_MAJOR_VERSION_SN3XX)) {
+    isFwSupport = true;
   }
   LOG(INFO) << StringPrintf(
       "nfcManager_isFwSupportNonStdT4TAid Enter isFwSupport = %d", isFwSupport);
