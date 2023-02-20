@@ -1889,7 +1889,8 @@ tNFA_HANDLE RoutingManager::checkAndUpdateAltRoute(int& routeLoc) {
             __func__, fallBackOption, routeLoc);
     }
     if ((fallBackOption == ROUTE_ESE) && ((routeLoc == ROUTE_LOC_UICC1_ID_IDX)
-            || (routeLoc == ROUTE_LOC_UICC2_ID_IDX))) {
+            || (routeLoc == ROUTE_LOC_UICC2_ID_IDX)
+            || (routeLoc == SecureElement::EUICC_ID))) {
       DLOG_IF(INFO, nfc_debug_enabled)
             << StringPrintf("Default route not available");
       /*check if eSE exist*/
