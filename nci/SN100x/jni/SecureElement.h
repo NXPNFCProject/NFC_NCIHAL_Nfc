@@ -26,7 +26,7 @@
 #include "nfa_hci_defs.h"
 #include "nfc_api.h"
 
-#define MAX_NFCEE 5
+#define MAX_NFCEE 6
 #define WIRED_MODE_TRANSCEIVE_TIMEOUT 2000
 #define CONNECTIVITY_PIPE_ID_UICC1 0x0A
 #define CONNECTIVITY_PIPE_ID_UICC2 0x23

@@ -81,7 +81,7 @@ const JNINativeMethod RoutingManager::sMethods[] = {
      (void*)RoutingManager::
          com_android_nfc_cardemulation_doGetDefaultIsoDepRouteDestination}};
 
-static const int MAX_NUM_EE = 5;
+static const int MAX_NUM_EE = 6;
 // SCBR from host works only when App is in foreground
 static const uint8_t SYS_CODE_PWR_STATE_HOST = 0x01;
 #if (NXP_EXTNS != TRUE)
