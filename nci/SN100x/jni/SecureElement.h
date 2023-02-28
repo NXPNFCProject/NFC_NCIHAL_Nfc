@@ -32,7 +32,8 @@
 #define CONNECTIVITY_PIPE_ID_UICC2 0x23
 #define CONNECTIVITY_PIPE_ID_UICC3 0x31
 #define NFA_EE_TAG_HCI_HOST_ID 0xA0 /* HCI host ID */
-#define SMX_PIPE_ID 0x19
+#define SMX_ESE_PIPE_ID 0x19
+#define SMX_EUICC_PIPE_ID 0x27
 #if (NXP_EXTNS == TRUE)
 typedef enum {
   UICC_01_SELECTED_ENABLED = 0x01,
@@ -286,13 +287,15 @@ public:
  **                  recvBufferMaxSize: Maximum size of buffer.
  **                  recvBufferActualSize: Actual length of response.
  **                  timeoutMillisec: timeout in millisecond.
+ **                  eeHandle: handle to the selected NFCEE.
  **
  ** Returns:         True if ok.
  **
  *******************************************************************************/
  bool transceive(uint8_t* xmitBuffer, int32_t xmitBufferSize,
                  uint8_t* recvBuffer, int32_t recvBufferMaxSize,
-                 int32_t& recvBufferActualSize, int32_t timeoutMillisec);
+                 int32_t& recvBufferActualSize, int32_t timeoutMillisec,
+                 tNFA_HANDLE eeHandle = EE_HANDLE_0xF3);
  /*******************************************************************************
  **
  ** Function:        activate
@@ -321,12 +324,11 @@ public:
  ** Function:        deactivate
  **
  ** Description:     Turn off the secure element.
- **                  seID: ID of secure element; 0xF3 or 0xF4.
  **
  ** Returns:         True if ok.
  **
  *******************************************************************************/
- bool deactivate(jint seID);
+ bool deactivate();
  /*******************************************************************************
  **
  ** Function:       SecElem_EeModeSet
@@ -379,7 +381,7 @@ public:
   ** Returns:        NFA_STATUS_OK/NFA_STATUS_FAILED.
   **
   *******************************************************************************/
- bool SecEle_Modeset(uint8_t type);
+ bool SecEle_Modeset(uint8_t type, tNFA_HANDLE seHandle = EE_HANDLE_0xF3);
  /*******************************************************************************
   **
   ** Function:        notifyRfFieldEvent
@@ -465,7 +467,7 @@ public:
  ** Returns:         Handle to the execution environment.
  **
  *******************************************************************************/
- tNFA_HANDLE getActiveEeHandle(tNFA_HANDLE eeHandle);
+ tNFA_HANDLE getActiveEeHandle(tNFA_HANDLE eeHandle = EE_HANDLE_0xF3);
  /*******************************************************************************
  **
  ** Function         getLastRfFiledToggleTime
@@ -485,7 +487,8 @@ public:
  ** Returns          status
  **
  *******************************************************************************/
- tNFA_STATUS setNfccPwrConfig(uint8_t value);
+ tNFA_STATUS setNfccPwrConfig(uint8_t value,
+                              tNFA_HANDLE seHandle = EE_HANDLE_0xF3);
  /*******************************************************************************
  **
  ** Function         sendEvent
@@ -516,7 +519,7 @@ public:
  ** Returns:         None
  **
  *******************************************************************************/
- uint8_t getGateAndPipeList();
+ uint8_t getGateAndPipeList(tNFA_HANDLE eeHandle = EE_HANDLE_0xF3);
  /*******************************************************************************
  **
  ** Function:        finalize

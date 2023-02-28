@@ -12,7 +12,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2022 NXP
+*  Copyright 2018-2023 NXP
 *
 ******************************************************************************/
 
@@ -57,92 +57,93 @@ extern bool nfcManager_isNfcDisabling();
 ** Returns:         Handle of secure element.  values < 0 represent failure.
 **
 *******************************************************************************/
-static jint nativeNfcSecureElement_doOpenSecureElementConnection (JNIEnv*, jobject)
-{
-    LOG(INFO) << StringPrintf("%s: Enter; ", __func__);
-    if (nfcManager_isNfcDisabling()) {
-      LOG(INFO) << StringPrintf(
-          "%s: Nfc is Disabling. Can not open SE connection. Line: %d",
-          __func__, __LINE__);
-      return EE_ERROR_INIT;
+static jint nativeNfcSecureElement_doOpenSecureElementConnection(JNIEnv* e,
+                                                                 jobject o) {
+  LOG(INFO) << StringPrintf("%s: Enter; ", __func__);
+  if (nfcManager_isNfcDisabling()) {
+    LOG(INFO) << StringPrintf(
+        "%s: Nfc is Disabling. Can not open SE connection.", __func__);
+    return EE_ERROR_INIT;
+  }
+  bool stat = false;
+  const int32_t recvBufferMaxSize = 1024;
+  uint8_t recvBuffer[recvBufferMaxSize];
+  int32_t recvBufferActualSize = 0;
+  uint8_t seId = SecureElement::ESE_ID;
+  tNFA_HANDLE seHandle = SecureElement::EE_HANDLE_0xF3;
+  jint secElemHandle = EE_ERROR_INIT;
+  SecureElement& se = SecureElement::getInstance();
+  se.mModeSetNtfstatus = NFA_STATUS_FAILED;
+
+  NativeJniExtns::getInstance().notifyNfcEvent(__func__);
+  /* Tell the controller to power up to get ready for sec elem operations */
+  PowerSwitch::getInstance().setLevel(PowerSwitch::FULL_POWER);
+  PowerSwitch::getInstance().setModeOn(PowerSwitch::SE_CONNECTED);
+
+  if (e != NULL && o != NULL) { /* The req is from WiredSeServce */
+    if (NfcConfig::hasKey(NAME_NXP_SE_SMB_TERMINAL_TYPE) &&
+        NfcConfig::getUnsigned(NAME_NXP_SE_SMB_TERMINAL_TYPE) == 0x01) {
+      seId = SecureElement::EUICC_ID;
+      seHandle = SecureElement::EE_HANDLE_0xF5;
+      LOG(INFO) << StringPrintf("%s: SMB for eUICC", __func__);
     }
-    bool stat = false;
-    const int32_t recvBufferMaxSize = 1024;
-    uint8_t recvBuffer [recvBufferMaxSize];
-    int32_t recvBufferActualSize = 0;
+  }
+  /* If controller is not routing AND there is no pipe connected,
+         then turn on the sec elem */
+  stat = se.activate(seId);  // It is to get the current activated handle.
 
-    jint secElemHandle = EE_ERROR_INIT;
-    NFCSTATUS status = NFCSTATUS_FAILED;
-    SecureElement &se = SecureElement::getInstance();
-    se.mModeSetNtfstatus = NFA_STATUS_FAILED;
-
-    NativeJniExtns::getInstance().notifyNfcEvent(__func__);
-    /* Tell the controller to power up to get ready for sec elem operations */
-    PowerSwitch::getInstance ().setLevel (PowerSwitch::FULL_POWER);
-    PowerSwitch::getInstance ().setModeOn (PowerSwitch::SE_CONNECTED);
-
-    /* If controller is not routing AND there is no pipe connected,
-           then turn on the sec elem */
-    stat = se.activate(SecureElement::ESE_ID); // It is to get the current activated handle.
-
-    if((stat) && (nfcFL.eseFL._NCI_NFCEE_PWR_LINK_CMD))
-    {
-       status = se.setNfccPwrConfig(se.POWER_ALWAYS_ON|se.COMM_LINK_ACTIVE);
-    }
-    if(status != NFA_STATUS_OK)
-    {
+  if ((stat) && (nfcFL.eseFL._NCI_NFCEE_PWR_LINK_CMD)) {
+    if (NFA_STATUS_OK !=
+        se.setNfccPwrConfig(se.POWER_ALWAYS_ON | se.COMM_LINK_ACTIVE,
+                            seHandle)) {
       LOG(INFO) << StringPrintf("%s: power link command failed", __func__);
-      stat =false;
+      stat = false;
     }
-    else
-    {
-       stat = se.SecEle_Modeset(se.NFCEE_ENABLE);
-       if(se.mModeSetNtfstatus != NFA_STATUS_OK)
-       {
-         stat = false;
-         LOG(INFO) << StringPrintf("%s: Mode set ntf STATUS_FAILED", __func__);
-         if (nfcManager_isNfcDisabling()) {
-           LOG(INFO) << StringPrintf(
-               "%s: Nfc is Disabling. Can not open SE connection. Line : %d ",
-               __func__, __LINE__);
-           return EE_ERROR_INIT;
-         }
-         SyncEventGuard guard (se.mEERecoveryComplete);
-         {
-           se.mEERecoveryComplete.wait();
-           LOG(INFO) << StringPrintf("%s: Recovery complete", __func__);
-         }
-         if(se.mErrorRecovery)
-         {
-           stat = true;
-         }
-       }
-       if(stat == true)
-       {
-         se.mIsWiredModeOpen = true;
-         stat = se.apduGateReset(se.mActiveEeHandle, recvBuffer, &recvBufferActualSize);
-        if (stat)
-        {
-            secElemHandle = se.mActiveEeHandle;
-        }
-       }
+  }
+  if (stat) {
+    stat = se.SecEle_Modeset(se.NFCEE_ENABLE, seHandle);
+    if (se.mModeSetNtfstatus != NFA_STATUS_OK) {
+      stat = false;
+      LOG(INFO) << StringPrintf("%s: Mode set ntf STATUS_FAILED", __func__);
+      if (nfcManager_isNfcDisabling()) {
+        LOG(INFO) << StringPrintf(
+            "%s: Nfc is Disabling. Can not open SE connection.", __func__);
+        return EE_ERROR_INIT;
+      }
+      SyncEventGuard guard(se.mEERecoveryComplete);
+      {
+        se.mEERecoveryComplete.wait();
+        LOG(INFO) << StringPrintf("%s: Recovery complete", __func__);
+      }
+      if (se.mErrorRecovery) {
+        stat = true;
+      }
     }
+    if (stat == true) {
+      se.mIsWiredModeOpen = true;
+      stat = se.apduGateReset(se.mActiveEeHandle, recvBuffer,
+                              &recvBufferActualSize);
+      if (stat) {
+        secElemHandle = se.mActiveEeHandle;
+      }
+    }
+  }
 
-    /* if code fails to connect to the secure element, and nothing is active, then
-     * tell the controller to power down
-     */
-    if ((!stat) && (! PowerSwitch::getInstance ().setModeOff (PowerSwitch::SE_CONNECTED)))
-    {
-        LOG(INFO) << StringPrintf("%s: stat fails; ", __func__);
-        PowerSwitch::getInstance ().setLevel (PowerSwitch::LOW_POWER);
-        se.deactivate(SecureElement::ESE_ID);
-        se.mIsWiredModeOpen = false;
-        stat = false;
-    }
-    LOG(INFO) << StringPrintf("%s: exit; return handle=0x%X", __func__, secElemHandle);
-    return secElemHandle;
+  /* if code fails to connect to the secure element, and nothing is active, then
+   * tell the controller to power down
+   */
+  if ((!stat) &&
+      (!PowerSwitch::getInstance().setModeOff(PowerSwitch::SE_CONNECTED))) {
+    LOG(INFO) << StringPrintf("%s: stat fails; ", __func__);
+    PowerSwitch::getInstance().setLevel(PowerSwitch::LOW_POWER);
+    se.deactivate();
+    se.mIsWiredModeOpen = false;
+    stat = false;
+  }
+  LOG(INFO) << StringPrintf("%s: exit; return handle=0x%X", __func__,
+                            secElemHandle);
+  return secElemHandle;
 }
-
 
 /*******************************************************************************
 **
@@ -170,7 +171,7 @@ static jboolean nativeNfcSecureElement_doDisconnectSecureElementConnection (JNIE
      /* release any pending transceive wait */
     se.releasePendingTransceive();
 
-    status = se.setNfccPwrConfig(se.POWER_ALWAYS_ON);
+    status = se.setNfccPwrConfig(se.POWER_ALWAYS_ON, handle);
     if(status != NFA_STATUS_OK)
     {
         LOG(INFO) << StringPrintf("%s: power link command failed", __func__);
@@ -294,7 +295,9 @@ static jbyteArray nativeNfcSecureElement_doTransceive (JNIEnv* e, jobject, jint 
     if(!se.mIsWiredModeOpen)
         return NULL;
 
-    se.transceive(reinterpret_cast<uint8_t*>(&bytes[0]), bytes.size(), recvBuffer.get(), recvBufferMaxSize, recvBufferActualSize, se.SmbTransceiveTimeOutVal);
+    se.transceive(reinterpret_cast<uint8_t*>(&bytes[0]), bytes.size(),
+                  recvBuffer.get(), recvBufferMaxSize, recvBufferActualSize,
+                  se.SmbTransceiveTimeOutVal, handle);
 
     //copy results back to java
     jbyteArray result = e->NewByteArray(recvBufferActualSize);
