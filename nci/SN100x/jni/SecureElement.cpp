@@ -1081,6 +1081,7 @@ bool SecureElement::deactivate (jint seID)
     }
 
     mActiveEeHandle = NFA_HANDLE_INVALID;
+    mNewPipeId = 0x00;
 
     //deactivate secure element
     for (int index=0; index < mActualNumEe; index++)
@@ -1655,43 +1656,51 @@ void SecureElement::getEeHandleList(tNFA_HANDLE *list, uint8_t* count)
 **
 ** Function:        getGateAndPipeList
 **
-** Description:     Get the gate and pipe list.
+** Description:     Try to allocate an APDU gate to HCI_APP. If successful, get
+**                  the respective APDU_APP_PIPE_ID.
 **
-** Returns:         None
+** Returns:         Success, returns the APDU_PIPE_ID.
+**                  Failure, returns 0x00.
 **
 *******************************************************************************/
 uint8_t SecureElement::getGateAndPipeList()
 {
-    tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
-    static const char fn [] = "SecureElement::getActiveEeHandle";
-    //uint8_t destHost = (EE_HANDLE_0xF3 & ~NFA_HANDLE_GROUP_EE);
+    static const char fn [] = "SecureElement::getGateAndPipeList";
+    uint8_t destHost = (EE_HANDLE_0xF3 & ~NFA_HANDLE_GROUP_EE);
 
+    SyncEventGuard guardOwnGate (mAllocateGateEvent);
+    if (NFA_STATUS_OK == NFA_HciAllocGate(mNfaHciHandle, NFA_HCI_APDU_APP_GATE))
+    {
+        if(!mAllocateGateEvent.wait(500))
+            LOG(ERROR) << StringPrintf("%s: NFA_HciAllocGate() Timeout", fn);
+        if (!mNewSourceGate)
+            LOG(ERROR) << StringPrintf("%s: NFA_HciAllocGate() Failed", fn);
+    }
     // Get a list of existing gates and pipes
     LOG(INFO) << StringPrintf("%s: get gate, pipe list", fn);
-        SyncEventGuard guard (mPipeListEvent);
-        nfaStat = NFA_HciGetGateAndPipeList (mNfaHciHandle);
-        if (nfaStat == NFA_STATUS_OK)
+    SyncEventGuard guard (mPipeListEvent);
+    if (NFA_STATUS_OK == NFA_HciGetGateAndPipeList (mNfaHciHandle))
+    {
+        if(!mPipeListEvent.wait(500))
+            LOG(ERROR) << StringPrintf("%s: NFA_HciGetGateAndPipeList() Timeout", fn);
+        if (mHciCfg.status == NFA_STATUS_OK)
         {
-            mPipeListEvent.wait();
-            if (mHciCfg.status == NFA_STATUS_OK)
+            for (uint8_t xx = 0; xx < mHciCfg.num_pipes; xx++)
             {
-                 mNewPipeId = 0x19;
-                /*WA: Not updated the pipe id from libnfc-nci
-                for (uint8_t xx = 0; xx < mHciCfg.num_pipes; xx++)
+                if (mHciCfg.pipe[xx].dest_host == destHost)
                 {
-                    if ( (mHciCfg.pipe[xx].dest_host == destHost))
-                    {
-                        mNewSourceGate = mHciCfg.pipe[xx].local_gate;
-                        mNewPipeId     = mHciCfg.pipe[xx].pipe_id;
-
-                        LOG(INFO) << StringPrintf("%s: found configured gate: 0x%02x  pipe: 0x%02x", fn, mNewSourceGate, mNewPipeId);
-                        break;
-                    }
+                    mNewSourceGate = mHciCfg.pipe[xx].local_gate;
+                    mNewPipeId     = mHciCfg.pipe[xx].pipe_id;
+                    break;
                 }
-                */
             }
+            if (mNewPipeId == 0x00)
+                LOG(ERROR) << StringPrintf("%s: Pipe is not found", fn);
         }
-        return mNewPipeId;
+    }
+    LOG(INFO) << StringPrintf("%s: exit "
+                "gate: 0x%02x  pipe: 0x%02x", fn, mNewSourceGate, mNewPipeId);
+    return mNewPipeId;
 }
 /*******************************************************************************
 **
