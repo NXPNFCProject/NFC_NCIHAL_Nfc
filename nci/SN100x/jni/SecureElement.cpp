@@ -1175,7 +1175,7 @@ void SecureElement::notifyModeSet (tNFA_HANDLE eeHandle, bool success, tNFA_EE_S
 **
 ** Function:        getAtr
 **
-** Description:     GetAtr response from the connected eSE
+** Description:     GetAtr response from the connected EE(eSE or eUICC)
 **
 ** Returns:         Returns True if success
 **
@@ -1211,7 +1211,7 @@ bool SecureElement::apduGateReset(jint seID, uint8_t* recvBuffer, int32_t *recvB
       {
         LOG(INFO) << StringPrintf("%s (EVT_ABORT) response timeout", fn);
         LOG(INFO) << StringPrintf("%s Perform NFCEE recovery", fn);
-        if(!doNfcee_Session_Reset())
+        if(!doNfcee_Session_Reset(mActiveEeHandle))
         {
           nfaStat = NFA_STATUS_FAILED;
           LOG(INFO) << StringPrintf("%s recovery failed", fn);
@@ -1232,11 +1232,11 @@ bool SecureElement::apduGateReset(jint seID, uint8_t* recvBuffer, int32_t *recvB
       else if(mAtrStatus == NFA_STATUS_HCI_WTX_TIMEOUT)
       {
         LOG(INFO) << StringPrintf("%s MAX_WTX limit reached, eSE power recycle", fn);
-        setNfccPwrConfig(NFCC_DECIDES);
-        SecEle_Modeset(NFCEE_DISABLE);
+        setNfccPwrConfig(NFCC_DECIDES, mActiveEeHandle);
+        SecEle_Modeset(NFCEE_DISABLE, mActiveEeHandle);
         usleep(50 * 1000);
-        setNfccPwrConfig(POWER_ALWAYS_ON|COMM_LINK_ACTIVE);
-        SecEle_Modeset(NFCEE_ENABLE);
+        setNfccPwrConfig(POWER_ALWAYS_ON|COMM_LINK_ACTIVE, mActiveEeHandle);
+        SecEle_Modeset(NFCEE_ENABLE, mActiveEeHandle);
         nfaStat = NFA_STATUS_OK;
       }
       if((nfaStat == NFA_STATUS_OK) && (mErrorRecovery == true))
@@ -1271,12 +1271,12 @@ bool SecureElement::apduGateReset(jint seID, uint8_t* recvBuffer, int32_t *recvB
 **
 ** Function:        doNfcee_Session_Reset
 **
-** Description:     Perform NFcee session reset & recovery
+** Description:     Perform EE(eSE or eUICC) session reset & recovery
 **
 ** Returns:         Returns True if success
 **
 *******************************************************************************/
-bool SecureElement::doNfcee_Session_Reset()
+bool SecureElement::doNfcee_Session_Reset(tNFA_HANDLE mActiveEeHandle)
 {
   tNFA_STATUS status = NFA_STATUS_FAILED;
   static const char fn[] = " SecureElement::doNfcee_Session_Reset";
@@ -1293,14 +1293,14 @@ bool SecureElement::doNfcee_Session_Reset()
     if(setNfccPwrConfig(POWER_ALWAYS_ON) == NFA_STATUS_OK)
     {
       LOG(INFO) << StringPrintf("%s Nfcee session PWRLNK 01", fn);
-      if(SecEle_Modeset(NFCEE_DISABLE))
+      if(SecEle_Modeset(NFCEE_DISABLE, mActiveEeHandle))
       {
         LOG(INFO) << StringPrintf("%s Nfcee session mode set off", fn);
         usleep(100 * 1000);
-        if(setNfccPwrConfig(POWER_ALWAYS_ON|COMM_LINK_ACTIVE) == NFA_STATUS_OK)
+        if(setNfccPwrConfig(POWER_ALWAYS_ON|COMM_LINK_ACTIVE, mActiveEeHandle) == NFA_STATUS_OK)
         {
           LOG(INFO) << StringPrintf("%s Nfcee session PWRLNK 03", fn);
-          if(SecEle_Modeset(NFCEE_ENABLE))
+          if(SecEle_Modeset(NFCEE_ENABLE, mActiveEeHandle))
           {
             usleep(100 * 1000);
             LOG(INFO) << StringPrintf("%s Nfcee session mode set on", fn);
@@ -1801,7 +1801,7 @@ uint16_t SecureElement::getEeStatus(uint16_t eehandle) {
 **
 ** Function:        handleTransceiveTimeout
 **
-** Description:     Reset eSE via power link & Mode set command
+** Description:     Reset EE(eSE or eUICC) via power link & Mode set command
 **                  after Transceive Timed out.
 **
 ** Returns:         None
@@ -1811,17 +1811,17 @@ void SecureElement::handleTransceiveTimeout(uint8_t powerConfigValue) {
     AutoMutex mutex(mTimeoutHandleMutex);
     SyncEvent sTimeOutDelaySyncEvent;
     if (!mIsWiredModeOpen) return;
-    setNfccPwrConfig(powerConfigValue);
+    setNfccPwrConfig(powerConfigValue, mActiveEeHandle);
 
-    SecEle_Modeset(NFCEE_DISABLE);
+    SecEle_Modeset(NFCEE_DISABLE, mActiveEeHandle);
     {
         SyncEventGuard gaurd(sTimeOutDelaySyncEvent);
         sTimeOutDelaySyncEvent.wait(1 * ONE_SECOND_MS);
     }
 
 
-    setNfccPwrConfig(POWER_ALWAYS_ON | COMM_LINK_ACTIVE);
-    SecEle_Modeset(NFCEE_ENABLE);
+    setNfccPwrConfig(POWER_ALWAYS_ON | COMM_LINK_ACTIVE, mActiveEeHandle);
+    SecEle_Modeset(NFCEE_ENABLE, mActiveEeHandle);
     {
         SyncEventGuard gaurd(sTimeOutDelaySyncEvent);
         sTimeOutDelaySyncEvent.wait(200);

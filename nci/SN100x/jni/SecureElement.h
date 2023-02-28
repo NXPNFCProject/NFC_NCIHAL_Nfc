@@ -343,7 +343,7 @@ public:
  **
  ** Function:        getAtr
  **
- ** Description:     GetAtr response from the connected eSE
+ ** Description:     GetAtr response from the connected EE(eSE or eUICC)
  **
  ** Returns:         Returns True if success
  **
@@ -354,12 +354,12 @@ public:
  **
  ** Function:        doNfcee_Session_Reset
  **
- ** Description:     GetAtr response from the connected eSE
+ ** Description:     Perform EE(eSE or eUICC) session reset & recovery
  **
  ** Returns:         Returns True if success
  **
  *******************************************************************************/
- bool doNfcee_Session_Reset();
+ bool doNfcee_Session_Reset(tNFA_HANDLE mActiveEeHandle);
 
  /*******************************************************************************
  **
