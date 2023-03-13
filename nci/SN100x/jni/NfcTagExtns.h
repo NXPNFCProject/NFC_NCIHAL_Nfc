@@ -78,8 +78,8 @@ class NfcTagExtns {
   /*
    * Index for Non-standard tag type
    * into mNonStdCardTimeDiff array*/
-  static const int MFC = 1;
-  static const int ISO_DEP = 2;
+  static const int MFC = 0;
+  static const int ISO_DEP = 1;
 
   uint8_t mNfcID0[4]; /* ISO-DEP TypeB NfcID value*/
   uint32_t tagState;  /* Current state in NfcTagExtns being processed*/
