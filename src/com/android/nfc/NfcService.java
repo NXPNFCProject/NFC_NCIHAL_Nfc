@@ -327,6 +327,15 @@ public class NfcService implements DeviceHostListener {
     // the Beam animation when called through the share menu.
     static final int INVOKE_BEAM_DELAY_MS = 1000;
 
+    static final String NFCSNOOP_MODE_FILTERED = "filtered";
+    static final String NFCSNOOP_MODE_FULL = "full";
+    static final String NFCSNOOPLOGMODE =
+            SystemProperties.get("persist.nfc.nfcsnooplogmode", NFCSNOOP_MODE_FILTERED);
+    static final String VERBOSE_VENDOR_LOG_ENABLED = "enabled";
+    static final String VERBOSE_VENDOR_LOG_DISABLED = "disabled";
+    static final String NFCVERBOSEVENDORLOG =
+            SystemProperties.get("persist.nfc.verbosevendorlog", VERBOSE_VENDOR_LOG_DISABLED);
+
     // RF field events as defined in NFC extras
     public static final String ACTION_RF_FIELD_ON_DETECTED =
             "com.android.nfc_extras.action.RF_FIELD_ON_DETECTED";
@@ -1000,6 +1009,11 @@ public class NfcService implements DeviceHostListener {
             mContext.getResources().getBoolean(R.bool.tag_intent_app_pref_supported);
 
         new EnableDisableTask().execute(TASK_BOOT);  // do blocking boot tasks
+
+        if (NFCSNOOPLOGMODE.equals(NFCSNOOP_MODE_FULL) ||
+                NFCVERBOSEVENDORLOG.equals(VERBOSE_VENDOR_LOG_ENABLED)) {
+            new NfcDeveloperOptionNotification(mContext).startNotification();
+        }
 
         mHandler.sendEmptyMessageDelayed(MSG_UPDATE_STATS, STATS_UPDATE_INTERVAL_MS);
 
@@ -5179,9 +5193,23 @@ public class NfcService implements DeviceHostListener {
                 if (screenState != mScreenState) {
                     sendMessage(NfcService.MSG_APPLY_SCREEN_STATE, screenState);
                 }
+
+                if (NFCSNOOPLOGMODE.equals(NFCSNOOP_MODE_FULL) ||
+                        NFCVERBOSEVENDORLOG.equals(VERBOSE_VENDOR_LOG_ENABLED)) {
+                    new NfcDeveloperOptionNotification(mContext.createContextAsUser(
+                            UserHandle.of(ActivityManager.getCurrentUser()), /*flags=*/0))
+                            .startNotification();
+                }
             } else if (action.equals(Intent.ACTION_USER_ADDED)) {
                 int userId = intent.getIntExtra(Intent.EXTRA_USER_HANDLE, 0);
                 setPaymentForegroundPreference(userId);
+
+                if (NFCSNOOPLOGMODE.equals(NFCSNOOP_MODE_FULL) ||
+                        NFCVERBOSEVENDORLOG.equals(VERBOSE_VENDOR_LOG_ENABLED)) {
+                    new NfcDeveloperOptionNotification(mContext.createContextAsUser(
+                            UserHandle.of(ActivityManager.getCurrentUser()), /*flags=*/0))
+                            .startNotification();
+                }
             }
         }
     };
@@ -5403,6 +5431,8 @@ public class NfcService implements DeviceHostListener {
             pw.println("mIsZeroClickRequested=" + mIsNdefPushEnabled);
             pw.println("mScreenState=" + ScreenStateHelper.screenStateToString(mScreenState));
             pw.println("mIsSecureNfcEnabled=" + mIsSecureNfcEnabled);
+            pw.println("NFCSNOOP=" + NFCSNOOPLOGMODE);
+            pw.println("VerboseVendorLog=" + NFCVERBOSEVENDORLOG);
             pw.println(mCurrentDiscoveryParameters);
             if (mIsBeamCapable) {
                 mP2pLinkManager.dump(fd, pw, args);
