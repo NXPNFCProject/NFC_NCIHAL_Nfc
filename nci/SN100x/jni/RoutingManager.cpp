@@ -1272,14 +1272,14 @@ void RoutingManager::nfcFCeCallback(uint8_t event,
   switch (event) {
     case NFA_CE_REGISTERED_EVT: {
       DLOG_IF(INFO, nfc_debug_enabled)
-          << StringPrintf("%s: registerd event notified", fn);
+          << StringPrintf("%s: registered event notified", fn);
       routingManager.mNfcFOnDhHandle = eventData->ce_registered.handle;
       SyncEventGuard guard(routingManager.mRoutingEvent);
       routingManager.mRoutingEvent.notifyOne();
     } break;
     case NFA_CE_DEREGISTERED_EVT: {
       DLOG_IF(INFO, nfc_debug_enabled)
-          << StringPrintf("%s: deregisterd event notified", fn);
+          << StringPrintf("%s: deregistered event notified", fn);
       SyncEventGuard guard(routingManager.mRoutingEvent);
       routingManager.mRoutingEvent.notifyOne();
     } break;
