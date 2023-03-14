@@ -36,8 +36,7 @@ import android.widget.TextView;
 import androidx.appcompat.widget.Toolbar;
 
 import com.android.internal.R;
-import com.android.internal.app.AlertActivity;
-import com.android.internal.app.AlertController;
+import com.android.nfc.cardemulation.util.AlertActivity;
 
 public class TapAgainDialog extends AlertActivity implements DialogInterface.OnClickListener {
     public static final String ACTION_CLOSE =
@@ -71,14 +70,9 @@ public class TapAgainDialog extends AlertActivity implements DialogInterface.OnC
         IntentFilter filter = new IntentFilter(ACTION_CLOSE);
         filter.addAction(Intent.ACTION_SCREEN_OFF);
         registerReceiver(mReceiver, filter);
-        AlertController.AlertParams ap = mAlertParams;
 
-        ap.mTitle = "";
-        ap.mView = getLayoutInflater().inflate(com.android.nfc.R.layout.tapagain, null);
-
-        PackageManager pm = getPackageManager();
-
-        Toolbar toolbar = (Toolbar) ap.mView.findViewById(com.android.nfc.R.id.tap_again_toolbar);
+        View view = getLayoutInflater().inflate(com.android.nfc.R.layout.tapagain, null);
+        Toolbar toolbar = (Toolbar) view.findViewById(com.android.nfc.R.id.tap_again_toolbar);
         toolbar.setNavigationIcon(getDrawable(com.android.nfc.R.drawable.ic_close));
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
@@ -87,11 +81,15 @@ public class TapAgainDialog extends AlertActivity implements DialogInterface.OnC
             }
         });
 
-        ImageView iv = (ImageView) ap.mView.findViewById(com.android.nfc.R.id.tap_again_appicon);
+        PackageManager pm = getPackageManager();
+        ImageView iv = (ImageView) view.findViewById(com.android.nfc.R.id.tap_again_appicon);
         Drawable icon = pm.getUserBadgedIcon(serviceInfo.loadIcon(pm),
                 UserHandle.getUserHandleForUid(serviceInfo.getUid()));
 
         iv.setImageDrawable(icon);
+
+        mAlertBuilder.setTitle("");
+        mAlertBuilder.setView(view);
 
         setupAlert();
         Window window = getWindow();
