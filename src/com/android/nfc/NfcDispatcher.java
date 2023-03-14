@@ -1080,11 +1080,12 @@ class NfcDispatcher {
                 proto.write(NfcDispatcherProto.OVERRIDE_TECH_LISTS, techListsJoiner.toString());
             }
             if (mOverrideIntent != null) {
-                mOverrideIntent.dumpDebug(proto, NfcDispatcherProto.OVERRIDE_INTENT);
+                Utils.dumpDebugPendingIntent(
+                        mOverrideIntent, proto, NfcDispatcherProto.OVERRIDE_INTENT);
             }
             if (mOverrideFilters != null) {
                 for (IntentFilter filter : mOverrideFilters) {
-                    filter.dumpDebug(proto, NfcDispatcherProto.OVERRIDE_FILTERS);
+                    Utils.dumpDebugIntentFilter(filter, proto, NfcDispatcherProto.OVERRIDE_FILTERS);
                 }
             }
         }
