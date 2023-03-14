@@ -29,6 +29,6 @@
         <option name="package" value="com.android.nfc.tests.unit" />
         <option name="runner" value="androidx.test.runner.AndroidJUnitRunner" />
         <option name="hidden-api-checks" value="false"/>
-        <option name="test-filter-dir" value="/data/data/com.android.nfc" />
+        <option name="test-filter-dir" value="/data/data/com.android.nfc.tests.unit" />
     </test>
 </configuration>
