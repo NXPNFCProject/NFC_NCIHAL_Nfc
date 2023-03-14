@@ -4546,7 +4546,15 @@ public class NfcService implements DeviceHostListener {
                             .stream()
                             .collect(Collectors.toMap(
                                       activity -> activity.activityInfo.applicationInfo.packageName,
-                                      activity -> activity.activityInfo.applicationInfo.uid));
+                                      activity -> activity.activityInfo.applicationInfo.uid,
+                                      (packageName1, packageName2) -> {
+                                          if (DBG) {
+                                              Log.d(TAG,
+                                                      "queryBroadcastReceiversAsUser duplicate: " +
+                                                      packageName1 + ", " + packageName2);
+                                          }
+                                          return packageName1;
+                                      }));
                     if (DBG) {
                         String[] packageNames = hasIntentPackages
                                 .keySet().toArray(new String[hasIntentPackages.size()]);
