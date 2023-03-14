@@ -130,13 +130,13 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
         mAidCache = aidCache;
         mCallback = callback;
         mSettingsObserver = new SettingsObserver(mHandler);
-        mContext.getContentResolver().registerContentObserver(
+        mContext.getContentResolver().registerContentObserverAsUser(
                 paymentDefaultUri,
-                true, mSettingsObserver, UserHandle.USER_ALL);
+                true, mSettingsObserver, UserHandle.ALL);
 
-        mContext.getContentResolver().registerContentObserver(
+        mContext.getContentResolver().registerContentObserverAsUser(
                 paymentForegroundUri,
-                true, mSettingsObserver, UserHandle.USER_ALL);
+                true, mSettingsObserver, UserHandle.ALL);
 
         // Load current settings defaults for payments
         loadDefaultsFromSettings(ActivityManager.getCurrentUser(), false);
