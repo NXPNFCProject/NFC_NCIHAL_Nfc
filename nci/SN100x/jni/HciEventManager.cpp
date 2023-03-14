@@ -192,28 +192,35 @@ void HciEventManager::nfaHciCallback(tNFA_HCI_EVT event,
     return;
   }
 
-  uint8_t* buff = eventData->rcvd_evt.p_evt_buf;
-  uint32_t buffLength = eventData->rcvd_evt.evt_len;
   // Check the event and check if it contains the AID
-  if (event == NFA_HCI_EVENT_RCVD_EVT &&
-      eventData->rcvd_evt.evt_code == NFA_HCI_EVT_TRANSACTION &&
-      buffLength > 3 && buff[0] == 0x81) {
-    std::vector<uint8_t> event_buff(buff, buff + buffLength);
-    int aidlen = event_buff[1];
-    std::vector<uint8_t> aid(event_buff.begin() + 2,
-                             event_buff.begin() + aidlen + 2);
-
-    int32_t berTlvStart = aidlen + 2 + 1;
-    int32_t berTlvLen = buffLength - berTlvStart;
-    std::vector<uint8_t> data;
-    if (berTlvLen > 0 && event_buff[2 + aidlen] == 0x82) {
-      std::vector<uint8_t> berTlv(event_buff.begin() + berTlvStart,
-                                  event_buff.end());
-      // BERTLV decoding here, to support extended data length for params.
-      data = getInstance().getDataFromBerTlv(berTlv);
-    }
-    getInstance().notifyTransactionListenersOfAid(aid, data, evtSrc);
+  uint8_t* event_buff = eventData->rcvd_evt.p_evt_buf;
+  uint32_t event_buff_len = eventData->rcvd_evt.evt_len;
+  if (event != NFA_HCI_EVENT_RCVD_EVT ||
+      eventData->rcvd_evt.evt_code != NFA_HCI_EVT_TRANSACTION ||
+      event_buff_len <= 3 || event_buff == nullptr || event_buff[0] != 0x81) {
+    LOG(WARNING) << "Invalid event";
+    return;
   }
+
+  uint32_t aid_len = event_buff[1];
+  if (aid_len >= (event_buff_len - 1)) {
+    android_errorWriteLog(0x534e4554, "181346545");
+    LOG(ERROR) << StringPrintf("error: aidlen(%d) is too big", aid_len);
+    return;
+  }
+
+  std::vector<uint8_t> aid(event_buff + 2, event_buff + aid_len + 2);
+  int32_t berTlvStart = aid_len + 2 + 1;
+  int32_t berTlvLen = event_buff_len - berTlvStart;
+  std::vector<uint8_t> data;
+  if (berTlvLen > 0 && event_buff[2 + aid_len] == 0x82) {
+    std::vector<uint8_t> berTlv(event_buff + berTlvStart,
+                                event_buff + event_buff_len);
+    // BERTLV decoding here, to support extended data length for params.
+    data = getInstance().getDataFromBerTlv(berTlv);
+  }
+
+  getInstance().notifyTransactionListenersOfAid(aid, data, evtSrc);
 }
 
 void HciEventManager::finalize() { mNativeData = NULL; }
