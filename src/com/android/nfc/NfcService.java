@@ -1440,7 +1440,7 @@ public class NfcService implements DeviceHostListener {
                 return;
             }
 
-            if (mVrManager.isVrModeEnabled()) {
+            if (mVrManager != null && mVrManager.isVrModeEnabled()) {
                 Log.d(TAG, "Not playing NFC sound when Vr Mode is enabled");
                 return;
             }
@@ -5291,7 +5291,8 @@ public class NfcService implements DeviceHostListener {
         proto.write(NfcServiceDumpProto.HCE_F_CAPABLE, mIsHceFCapable);
         proto.write(NfcServiceDumpProto.BEAM_CAPABLE, mIsBeamCapable);
         proto.write(NfcServiceDumpProto.SECURE_NFC_CAPABLE, mIsSecureNfcCapable);
-        proto.write(NfcServiceDumpProto.VR_MODE_ENABLED, mVrManager.isVrModeEnabled());
+        proto.write(NfcServiceDumpProto.VR_MODE_ENABLED,
+                (mVrManager != null) ? mVrManager.isVrModeEnabled() : false);
 
         long token = proto.start(NfcServiceDumpProto.DISCOVERY_PARAMS);
         mCurrentDiscoveryParameters.dumpDebug(proto);
