@@ -41,6 +41,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.nfc.cardemulation.HostNfcFService;
 import android.nfc.cardemulation.NfcFServiceInfo;
+import android.nfc.cardemulation.Utils;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -438,7 +439,8 @@ public class HostNfcFEmulationManager {
      */
     void dumpDebug(ProtoOutputStream proto) {
         if (mServiceBound) {
-            mServiceName.dumpDebug(proto, HostNfcFEmulationManagerProto.SERVICE_NAME);
+            Utils.dumpDebugComponentName(
+                    mServiceName, proto, HostNfcFEmulationManagerProto.SERVICE_NAME);
         }
     }
 }

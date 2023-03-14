@@ -39,6 +39,8 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.nfc.cardemulation.ApduServiceInfo;
 import android.nfc.cardemulation.CardEmulation;
+import android.nfc.cardemulation.Utils;
+import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.sysprop.NfcProperties;
@@ -1140,7 +1142,8 @@ public class RegisteredAidCache {
             ComponentName defaultComponent = defaultServiceInfo != null ?
                     defaultServiceInfo.getComponent() : null;
             if (defaultComponent != null) {
-                defaultComponent.dumpDebug(proto,
+                Utils.dumpDebugComponentName(
+                        defaultComponent, proto,
                         RegisteredAidCacheProto.AidCacheEntry.DEFAULT_COMPONENT);
             }
             for (ApduServiceInfo serviceInfo : entry.getValue().services) {
@@ -1151,7 +1154,8 @@ public class RegisteredAidCache {
             proto.end(token);
         }
         if (mPreferredForegroundService != null) {
-            mPreferredForegroundService.dumpDebug(proto,
+            Utils.dumpDebugComponentName(
+                    mPreferredForegroundService, proto,
                     RegisteredAidCacheProto.PREFERRED_FOREGROUND_SERVICE);
         }
         if (mPreferredPaymentService != null) {

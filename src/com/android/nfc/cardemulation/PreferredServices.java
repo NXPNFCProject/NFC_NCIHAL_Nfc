@@ -41,6 +41,7 @@ import android.database.ContentObserver;
 import android.net.Uri;
 import android.nfc.cardemulation.ApduServiceInfo;
 import android.nfc.cardemulation.CardEmulation;
+import android.nfc.cardemulation.Utils;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.UserHandle;
@@ -496,7 +497,8 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
     void dumpDebug(ProtoOutputStream proto) {
         synchronized (mLock) {
             if (mForegroundCurrent != null) {
-                mForegroundCurrent.dumpDebug(proto, PreferredServicesProto.FOREGROUND_CURRENT);
+                Utils.dumpDebugComponentName(
+                        mForegroundCurrent, proto, PreferredServicesProto.FOREGROUND_CURRENT);
             }
             if (mPaymentDefaults.currentPreferred != null) {
                 mPaymentDefaults.currentPreferred.dumpDebug(proto,
@@ -507,7 +509,8 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
             }
             proto.write(PreferredServicesProto.FOREGROUND_UID, mForegroundUid);
             if (mForegroundRequested != null) {
-                mForegroundRequested.dumpDebug(proto, PreferredServicesProto.FOREGROUND_REQUESTED);
+                Utils.dumpDebugComponentName(
+                        mForegroundRequested, proto, PreferredServicesProto.FOREGROUND_REQUESTED);
             }
             if (mPaymentDefaults.settingsDefault != null) {
                 mPaymentDefaults.settingsDefault.dumpDebug(proto,
