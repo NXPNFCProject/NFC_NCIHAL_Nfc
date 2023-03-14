@@ -194,11 +194,11 @@ void HciEventManager::nfaHciCallback(tNFA_HCI_EVT event,
 
   uint8_t* buff = eventData->rcvd_evt.p_evt_buf;
   uint32_t buffLength = eventData->rcvd_evt.evt_len;
-  std::vector<uint8_t> event_buff(buff, buff + buffLength);
   // Check the event and check if it contains the AID
   if (event == NFA_HCI_EVENT_RCVD_EVT &&
       eventData->rcvd_evt.evt_code == NFA_HCI_EVT_TRANSACTION &&
-      buffLength > 3 && event_buff[0] == 0x81) {
+      buffLength > 3 && buff[0] == 0x81) {
+    std::vector<uint8_t> event_buff(buff, buff + buffLength);
     int aidlen = event_buff[1];
     std::vector<uint8_t> aid(event_buff.begin() + 2,
                              event_buff.begin() + aidlen + 2);
