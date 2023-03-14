@@ -128,8 +128,11 @@ import com.nxp.nfc.INxpWlcAdapter;
 import com.nxp.nfc.INxpWlcCallBack;
 import com.nxp.nfc.NfcConstants;
 import com.nxp.nfc.NxpNfcAdapter;
-
 import java.io.BufferedReader;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
@@ -155,6 +158,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -176,6 +180,8 @@ public class NfcService implements DeviceHostListener {
     private int SECURE_ELEMENT_UICC_SLOT_DEFAULT = 1;
     static final int UICC_CONFIGURED = 0x00;
     static final int UICC_NOT_CONFIGURED = 0x01;
+    public static final String PREF_TAG_APP_LIST = "TagIntentAppPreferenceListPrefs";
+
     static final String PREF_NFC_ON = "nfc_on";
     static final boolean NFC_ON_DEFAULT = true;
     static final String PREF_NDEF_PUSH_ON = "ndef_push_on";
@@ -436,6 +442,11 @@ public class NfcService implements DeviceHostListener {
     private final BackupManager mBackupManager;
 
     private final SecureRandom mCookieGenerator = new SecureRandom();
+
+    // Tag app preference list for the target UserId.
+    HashMap<Integer, HashMap<String, Boolean>> mTagAppPrefList =
+            new HashMap<Integer, HashMap<String, Boolean>>();
+
     // cached version of installed packages requesting Android.permission.NFC_TRANSACTION_EVENTS
     // for current user and profiles. The Integer part is the userId.
     HashMap<Integer, List<String>> mNfcEventInstalledPackages =
@@ -495,6 +506,8 @@ public class NfcService implements DeviceHostListener {
     private DeviceHost mDeviceHost;
     private SharedPreferences mPrefs;
     private SharedPreferences.Editor mPrefsEditor;
+    private SharedPreferences mTagAppPrefListPrefs;
+
     private PowerManager.WakeLock mRoutingWakeLock;
     private PowerManager.WakeLock mRequireUnlockWakeLock;
     private PowerManager.WakeLock mEeWakeLock;
@@ -558,6 +571,9 @@ public class NfcService implements DeviceHostListener {
     public  static boolean sIsDtaMode = false;
 
     boolean mIsVrModeEnabled;
+
+    private final boolean mIsTagAppPrefSupported;
+
     private final boolean mIsAlwaysOnSupported;
     private final Set<INfcControllerAlwaysOnListener> mAlwaysOnListeners =
         Collections.synchronizedSet(new HashSet<>());
@@ -980,6 +996,9 @@ public class NfcService implements DeviceHostListener {
         mIsAlwaysOnSupported =
             mContext.getResources().getBoolean(R.bool.nfcc_always_on_allowed);
 
+        mIsTagAppPrefSupported =
+            mContext.getResources().getBoolean(R.bool.tag_intent_app_pref_supported);
+
         new EnableDisableTask().execute(TASK_BOOT);  // do blocking boot tasks
 
         mHandler.sendEmptyMessageDelayed(MSG_UPDATE_STATS, STATS_UPDATE_INTERVAL_MS);
@@ -991,6 +1010,100 @@ public class NfcService implements DeviceHostListener {
         } catch (Exception e) {
           Log.e(TAG, "Error Initializing WLC service module");
         }
+    }
+
+    private void initTagAppPrefList() {
+        if (!mIsTagAppPrefSupported) return;
+        mTagAppPrefList.clear();
+        mTagAppPrefListPrefs = mContext.getSharedPreferences(PREF_TAG_APP_LIST,
+                Context.MODE_PRIVATE);
+        try {
+            if (mTagAppPrefListPrefs != null) {
+                UserManager um = mContext.createContextAsUser(
+                        UserHandle.of(ActivityManager.getCurrentUser()), 0)
+                        .getSystemService(UserManager.class);
+                List<UserHandle> luh = um.getEnabledProfiles();
+                for (UserHandle uh : luh) {
+                    HashMap<String, Boolean> map = new HashMap<>();
+                    int userId = uh.getIdentifier();
+                    String jsonString =
+                            mTagAppPrefListPrefs.getString(Integer.toString(userId),
+                                    (new JSONObject()).toString());
+                    if (jsonString != null) {
+                        JSONObject jsonObject = new JSONObject(jsonString);
+                        Iterator<String> keysItr = jsonObject.keys();
+                        while (keysItr.hasNext()) {
+                            String key = keysItr.next();
+                            Boolean value = jsonObject.getBoolean(key);
+                            map.put(key, value);
+                            if (DBG) Log.d(TAG, "uid:" + userId + "key:" + key + ": " + value);
+                        }
+                    }
+                    mTagAppPrefList.put(userId, map);
+                }
+            } else {
+                Log.e(TAG, "Can't get PREF_TAG_APP_LIST");
+            }
+        } catch (JSONException e) {
+            Log.e(TAG, "JSONException: " + e);
+        }
+    }
+
+    private void storeTagAppPrefList() {
+        if (!mIsTagAppPrefSupported) return;
+        mTagAppPrefListPrefs = mContext.getSharedPreferences(PREF_TAG_APP_LIST,
+                Context.MODE_PRIVATE);
+        if (mTagAppPrefListPrefs != null) {
+            UserManager um = mContext.createContextAsUser(
+                    UserHandle.of(ActivityManager.getCurrentUser()), 0)
+                    .getSystemService(UserManager.class);
+            List<UserHandle> luh = um.getEnabledProfiles();
+            for (UserHandle uh : luh) {
+                SharedPreferences.Editor editor = mTagAppPrefListPrefs.edit();
+                int userId = uh.getIdentifier();
+                HashMap<String, Boolean> map;
+                synchronized (NfcService.this) {
+                    map = mTagAppPrefList.getOrDefault(userId, new HashMap<>());
+                }
+                if (map.size() > 0) {
+                    String userIdStr = Integer.toString(userId);
+                    JSONObject jsonObject = new JSONObject(map);
+                    String jsonString = jsonObject.toString();
+                    editor.remove(userIdStr).putString(userIdStr, jsonString).apply();
+                }
+            }
+        } else {
+            Log.e(TAG, "Can't get PREF_TAG_APP_LIST");
+        }
+    }
+    private boolean isPackageInstalled(String pkgName, int userId) {
+        final PackageInfo info;
+        try {
+            info = mContext.createContextAsUser(UserHandle.of(userId), 0)
+                    .getPackageManager().getPackageInfo(pkgName, PackageManager.MATCH_ALL);
+        } catch (PackageManager.NameNotFoundException e) {
+            return false;
+        }
+        return info != null;
+    }
+    // Remove obsolete entries
+    // return true if the preference list changed.
+    private boolean renewTagAppPrefList() {
+        if (!mIsTagAppPrefSupported) return false;
+        boolean changed = false;
+        UserManager um = mContext.createContextAsUser(
+                UserHandle.of(ActivityManager.getCurrentUser()), 0)
+                .getSystemService(UserManager.class);
+        List<UserHandle> luh = um.getEnabledProfiles();
+        for (UserHandle uh : luh) {
+            int userId = uh.getIdentifier();
+            synchronized (NfcService.this) {
+                changed = mTagAppPrefList.getOrDefault(userId, new HashMap<>())
+                        .keySet().removeIf(k2 -> !isPackageInstalled(k2, userId));
+            }
+        }
+        if (DBG) Log.d(TAG, "TagAppPreference changed " + changed);
+        return changed;
     }
 
     private boolean isSEServiceAvailable() {
@@ -1197,6 +1310,11 @@ public class NfcService implements DeviceHostListener {
 
                     if (initialized) {
                         SystemProperties.set("nfc.initialized", "true");
+                    }
+                    if (mIsTagAppPrefSupported) {
+                        synchronized (NfcService.this) {
+                            initTagAppPrefList();
+                        }
                     }
                     break;
             }
@@ -2078,6 +2196,19 @@ public class NfcService implements DeviceHostListener {
             }
         }
 
+        private int setTagAppPreferenceInternal(int userId, String pkg, boolean allow) {
+            if (!isPackageInstalled(pkg, userId)) {
+                return NfcAdapter.TAG_INTENT_APP_PREF_RESULT_PACKAGE_NOT_FOUND;
+            }
+            if (DBG) Log.i(TAG, "UserId:" + userId + " pkg:" + pkg + ":" + allow);
+            synchronized (NfcService.this) {
+                mTagAppPrefList.computeIfAbsent(userId, key -> new HashMap<String, Boolean>())
+                        .put(pkg, allow);
+            }
+            storeTagAppPrefList();
+            return NfcAdapter.TAG_INTENT_APP_PREF_RESULT_SUCCESS;
+        }
+
         @Override
         public boolean setControllerAlwaysOn(boolean value) throws RemoteException {
             NfcPermissions.enforceSetControllerAlwaysOnPermissions(mContext);
@@ -2115,6 +2246,26 @@ public class NfcService implements DeviceHostListener {
             if (!mIsAlwaysOnSupported) return;
 
             mAlwaysOnListeners.remove(listener);
+        }
+        @Override
+        public boolean isTagIntentAppPreferenceSupported() throws RemoteException {
+            NfcPermissions.enforceAdminPermissions(mContext);
+            return mIsTagAppPrefSupported;
+        }
+        @Override
+        public Map getTagIntentAppPreferenceForUser(int userId) throws RemoteException {
+            NfcPermissions.enforceAdminPermissions(mContext);
+            if (!mIsTagAppPrefSupported) throw new UnsupportedOperationException();
+            synchronized (NfcService.this) {
+                return mTagAppPrefList.getOrDefault(userId, new HashMap<>());
+            }
+        }
+        @Override
+        public int setTagIntentAppPreferenceForUser(int userId,
+                String pkg, boolean allow) throws RemoteException {
+            NfcPermissions.enforceAdminPermissions(mContext);
+            if (!mIsTagAppPrefSupported) throw new UnsupportedOperationException();
+            return setTagAppPreferenceInternal(userId, pkg, allow);
         }
     }
 
@@ -4702,18 +4853,18 @@ public class NfcService implements DeviceHostListener {
                         Log.d(TAG, "Fail to get PackageManager for user: " + userHandle);
                         continue;
                     }
-                    for (String packageName :
+                    for (String pkgName :
                             mNfcPreferredPaymentChangedInstalledPackages.get(userId)) {
                         try {
-                            PackageInfo info = pm.getPackageInfo(packageName, 0);
-                            if (SEPackages != null && SEPackages.contains(packageName)) {
+                            PackageInfo info = pm.getPackageInfo(pkgName, 0);
+                            if (SEPackages != null && SEPackages.contains(pkgName)) {
                                 continue;
                             }
                             if (info.applicationInfo != null && ((info.applicationInfo.flags
                                     & ApplicationInfo.FLAG_SYSTEM) != 0
                                     || (info.applicationInfo.privateFlags
                                     & ApplicationInfo.PRIVATE_FLAG_PRIVILEGED) != 0)) {
-                                intent.setPackage(packageName);
+                                intent.setPackage(pkgName);
                                 intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
                                 mContext.sendBroadcastAsUser(intent, userHandle);
                             }
@@ -5069,6 +5220,8 @@ public class NfcService implements DeviceHostListener {
                     action.equals(Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE) ||
                     action.equals(Intent.ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE)) {
                 updatePackageCache();
+                if (action.equals(Intent.ACTION_PACKAGE_REMOVED)
+                        && renewTagAppPrefList()) storeTagAppPrefList();
             } else if (action.equals(Intent.ACTION_SHUTDOWN)) {
                 if (DBG) Log.d(TAG, "Shutdown received with UserId: " +
                                  getSendingUser().getIdentifier());
@@ -5190,6 +5343,28 @@ public class NfcService implements DeviceHostListener {
       }
     }
 
+    private void dumpTagAppPreference(PrintWriter pw) {
+        pw.println("mIsTagAppPrefSupported =" + mIsTagAppPrefSupported);
+        if (mIsTagAppPrefSupported) {
+            pw.println("TagAppPreference:");
+            UserManager um = mContext.createContextAsUser(
+                    UserHandle.of(ActivityManager.getCurrentUser()), 0)
+                    .getSystemService(UserManager.class);
+            List<UserHandle> luh = um.getEnabledProfiles();
+            for (UserHandle uh : luh) {
+                int userId = uh.getIdentifier();
+                HashMap<String, Boolean> map;
+                synchronized (NfcService.this) {
+                    map = mTagAppPrefList.getOrDefault(userId, new HashMap<>());
+                }
+                if (map.size() > 0) pw.println("userId=" + userId);
+                for (Map.Entry<String, Boolean> entry : map.entrySet()) {
+                    pw.println("pkg: " + entry.getKey() + " : " + entry.getValue());
+                }
+            }
+        }
+    }
+
     void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
         if (mContext.checkCallingOrSelfPermission(android.Manifest.permission.DUMP)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -5239,6 +5414,7 @@ public class NfcService implements DeviceHostListener {
             if (mState == NfcAdapter.STATE_ON) {
                 mRoutingTableParser.dump(mDeviceHost, pw);
             }
+            dumpTagAppPreference(pw);
             copyNativeCrashLogsIfAny(pw);
             pw.flush();
             mDeviceHost.dump(fd);

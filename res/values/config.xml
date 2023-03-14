@@ -9,6 +9,7 @@
     <bool name="polling_disable_allowed">false</bool>
     <bool name="nfcc_always_on_allowed">false</bool>
     <bool name="payment_foreground_preference">true</bool>
+    <bool name="tag_intent_app_pref_supported">false</bool>
     <integer name="max_antenna_blocked_failure_count">10</integer>
     <integer name="toast_debounce_time_ms">3000</integer>
     <integer name="unknown_tag_polling_delay">-1</integer>
