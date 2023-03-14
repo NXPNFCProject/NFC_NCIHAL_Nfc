@@ -20,16 +20,18 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
-import android.bluetooth.BluetoothProtoEnums;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.ResolveInfoFlags;
 import android.content.pm.ResolveInfo;
+import android.content.res.Resources;
 import android.nfc.Tag;
 import android.os.Bundle;
 import android.os.PowerManager;
+import android.os.UserHandle;
 import android.util.Log;
 import androidx.test.core.content.pm.ApplicationInfoBuilder;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -76,10 +78,13 @@ public final class NfcReaderConflictOccurredTest {
         // multiple resolveInfos for Tag
         when(mockPackageManager.queryIntentActivitiesAsUser(
                 any(Intent.class),
-                eq(0),
-                anyInt())).thenReturn(constructConflictingResolveInfos());
+                any(ResolveInfoFlags.class),
+                any(UserHandle.class))).thenReturn(constructConflictingResolveInfos());
         PowerManager mockPowerManager = Mockito.mock(PowerManager.class);
         when(mockPowerManager.isScreenOn()).thenReturn(false);
+        Resources mockResources = Mockito.mock(Resources.class);
+        when(mockResources.getBoolean(eq(R.bool.tag_intent_app_pref_supported)))
+                .thenReturn(false);
 
         Context mockContext = new ContextWrapper(context) {
             @Override
@@ -95,6 +100,12 @@ public final class NfcReaderConflictOccurredTest {
                   return mockPowerManager;
               }
               return super.getSystemService(name);
+            }
+
+            @Override
+            public Resources getResources() {
+                Log.i(TAG, "[Mock] getResources");
+                return mockResources;
             }
         };
 

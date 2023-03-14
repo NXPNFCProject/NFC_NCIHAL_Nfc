@@ -15,12 +15,14 @@
  */
 package com.android.nfc;
 
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import android.bluetooth.BluetoothProtoEnums;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.nfc.Tag;
 import android.os.Bundle;
 import android.os.PowerManager;
@@ -64,6 +66,9 @@ public final class NfcTagOccurredTest {
 
         PowerManager mockPowerManager = Mockito.mock(PowerManager.class);
         when(mockPowerManager.isScreenOn()).thenReturn(false);
+        Resources mockResources = Mockito.mock(Resources.class);
+        when(mockResources.getBoolean(eq(R.bool.tag_intent_app_pref_supported)))
+                .thenReturn(false);
 
         Context mockContext = new ContextWrapper(context) {
             @Override
@@ -73,6 +78,12 @@ public final class NfcTagOccurredTest {
                   return mockPowerManager;
               }
               return super.getSystemService(name);
+            }
+
+            @Override
+            public Resources getResources() {
+                Log.i(TAG, "[Mock] getResources");
+                return mockResources;
             }
         };
 
