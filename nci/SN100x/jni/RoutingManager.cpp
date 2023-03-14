@@ -178,6 +178,9 @@ RoutingManager::RoutingManager()
       NfcConfig::getUnsigned(NAME_HOST_LISTEN_TECH_MASK,
                              NFA_TECHNOLOGY_MASK_A | NFA_TECHNOLOGY_MASK_F);
 
+  mOffHostListenTechMask = NfcConfig::getUnsigned(
+      NAME_OFFHOST_LISTEN_TECH_MASK,
+      NFA_TECHNOLOGY_MASK_A | NFA_TECHNOLOGY_MASK_B | NFA_TECHNOLOGY_MASK_F);
 #if(NXP_EXTNS != TRUE)
   mDeinitializing = false;
   mEeInfoChanged = false;
@@ -904,6 +907,10 @@ tNFA_TECHNOLOGY_MASK RoutingManager::updateEeTechRouteSetting() {
       if (mEeInfo.ee_disc_info[i].lf_protocol != 0)
         seTechMask |= NFA_TECHNOLOGY_MASK_F;
     }
+
+    // If OFFHOST_LISTEN_TECH_MASK exists,
+    // filter out the unspecified technologies
+    seTechMask &= mOffHostListenTechMask;
 
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: seTechMask[%u]=0x%02x", fn, i, seTechMask);
