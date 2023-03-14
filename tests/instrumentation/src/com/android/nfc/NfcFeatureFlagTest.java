@@ -82,4 +82,12 @@ public final class NfcFeatureFlagTest {
                 .getBoolean(R.bool.nfcc_always_on_allowed))
                 .isEqualTo(mNfcAdapter.isControllerAlwaysOnSupported());
     }
+
+    @Test
+    public void testIsTagIntentAppPreferenceSupported() {
+        if (!mNfcSupported) return;
+        assertThat(mContext.getResources()
+                .getBoolean(R.bool.tag_intent_app_pref_supported))
+                .isEqualTo(mNfcAdapter.isTagIntentAppPreferenceSupported());
+    }
 }
