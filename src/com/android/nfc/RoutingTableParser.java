@@ -16,7 +16,7 @@
 
 package com.android.nfc;
 
-import android.os.SystemProperties;
+import android.sysprop.NfcProperties;
 import android.util.Log;
 
 import androidx.annotation.VisibleForTesting;
@@ -30,7 +30,7 @@ import java.util.Vector;
 * Parse the Routing Table from the last backup lmrt cmd and dump it with a clear typography
 */
 public class RoutingTableParser {
-    static final boolean DBG = SystemProperties.getBoolean("persist.nfc.debug_enabled", false);
+    static final boolean DBG = NfcProperties.debug_enabled().orElse(false);
     private static final String TAG = "RoutingTableParser";
     private static int sRoutingTableSize = 0;
     private static int sRoutingTableMaxSize = 0;

@@ -53,12 +53,14 @@ import android.nfc.cardemulation.NfcFServiceInfo;
 import android.nfc.cardemulation.CardEmulation;
 import android.os.Binder;
 import android.os.RemoteException;
+import android.os.SystemClock;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.os.SystemProperties;
 import android.provider.Settings;
+import android.sysprop.NfcProperties;
 import android.util.Log;
 import android.util.proto.ProtoOutputStream;
 import java.util.Map;
@@ -86,7 +88,8 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         RegisteredNfcFServicesCache.Callback, PreferredServices.Callback,
         EnabledNfcFServices.Callback {
     static final String TAG = "CardEmulationManager";
-    static final boolean DBG = SystemProperties.getBoolean("persist.nfc.debug_enabled", false);
+    static final boolean DBG = NfcProperties.debug_enabled().orElse(false);
+
     static final int NFC_HCE_APDU = 0x01;
     static final int NFC_HCE_NFCF = 0x04;
     /** Minimum AID length as per ISO7816 */

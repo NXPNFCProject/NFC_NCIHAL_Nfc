@@ -30,7 +30,8 @@ android_app {
         "androidx.appcompat_appcompat",
         "com.google.android.material_material",
         "android.hardware.secure_element-V1.0-java",
-        ],
+        "PlatformProperties",
+    ],
     optimize: {
         proguard_flags_files: ["proguard.flags"],
     },

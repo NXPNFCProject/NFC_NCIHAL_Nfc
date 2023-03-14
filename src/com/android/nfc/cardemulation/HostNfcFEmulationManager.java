@@ -47,7 +47,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
-import android.os.SystemProperties;
+import android.sysprop.NfcProperties;
 import android.os.UserHandle;
 import android.util.Log;
 import android.util.proto.ProtoOutputStream;
@@ -60,7 +60,7 @@ import java.io.PrintWriter;
 
 public class HostNfcFEmulationManager {
     static final String TAG = "HostNfcFEmulationManager";
-    static final boolean DBG = SystemProperties.getBoolean("persist.nfc.debug_enabled", false);
+    static final boolean DBG = NfcProperties.debug_enabled().orElse(false);
 
     static final int STATE_IDLE = 0;
     static final int STATE_W4_SERVICE = 1;

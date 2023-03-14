@@ -16,7 +16,7 @@
 package com.android.nfc;
 
 import android.app.ActivityManager;
-import android.os.SystemProperties;
+import android.sysprop.NfcProperties;
 import android.util.Log;
 import android.util.SparseArray;
 import android.util.SparseBooleanArray;
@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ForegroundUtils implements ActivityManager.OnUidImportanceListener {
-    static final boolean DBG = SystemProperties.getBoolean("persist.nfc.debug_enabled", false);;
+    static final boolean DBG = NfcProperties.debug_enabled().orElse(false);
     private final String TAG = "ForegroundUtils";
     private final ActivityManager mActivityManager;
 

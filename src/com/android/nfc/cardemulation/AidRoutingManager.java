@@ -34,7 +34,7 @@
 ******************************************************************************/
 package com.android.nfc.cardemulation;
 
-import android.os.SystemProperties;
+import android.sysprop.NfcProperties;
 import android.util.Log;
 import android.util.SparseArray;
 import android.content.Context;
@@ -63,7 +63,7 @@ public class AidRoutingManager {
 
     static final String TAG = "AidRoutingManager";
 
-    static final boolean DBG = SystemProperties.getBoolean("persist.nfc.debug_enabled", false);
+    static final boolean DBG = NfcProperties.debug_enabled().orElse(false);
 
     static final int ROUTE_HOST = 0x00;
 

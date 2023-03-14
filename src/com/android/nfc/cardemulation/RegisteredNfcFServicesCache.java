@@ -49,9 +49,9 @@ import android.content.pm.ServiceInfo;
 import android.nfc.cardemulation.HostNfcFService;
 import android.nfc.cardemulation.NfcFCardEmulation;
 import android.nfc.cardemulation.NfcFServiceInfo;
-import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.os.UserManager;
+import android.sysprop.NfcProperties;
 import android.util.AtomicFile;
 import android.util.Log;
 import android.util.SparseArray;
@@ -80,7 +80,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class RegisteredNfcFServicesCache {
     static final String XML_INDENT_OUTPUT_FEATURE = "http://xmlpull.org/v1/doc/features.html#indent-output";
     static final String TAG = "RegisteredNfcFServicesCache";
-    static final boolean DBG = SystemProperties.getBoolean("persist.nfc.debug_enabled", false);
+    static final boolean DBG = NfcProperties.debug_enabled().orElse(false);
 
     final Context mContext;
     final AtomicReference<BroadcastReceiver> mReceiver;

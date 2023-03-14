@@ -28,8 +28,8 @@ import android.content.pm.PackageManager.ResolveInfoFlags;
 import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.content.res.XmlResourceParser;
-import android.os.SystemProperties;
 import android.os.UserHandle;
+import android.sysprop.NfcProperties;
 import android.util.Log;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class RegisteredComponentCache {
     private static final String TAG = "RegisteredComponentCache";
     private static final boolean DEBUG =
-            SystemProperties.getBoolean("persist.nfc.debug_enabled", false);
+            NfcProperties.debug_enabled().orElse(false);
 
     final Context mContext;
     final String mAction;
