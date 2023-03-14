@@ -5062,8 +5062,9 @@ public class NfcService implements DeviceHostListener {
                     action.equals(Intent.ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE)) {
                 updatePackageCache();
             } else if (action.equals(Intent.ACTION_SHUTDOWN)) {
-                if (DBG) Log.d(TAG, "Shutdown received with UserId: " + getSendingUserId());
-                if (getSendingUserId() != UserHandle.USER_ALL) {
+                if (DBG) Log.d(TAG, "Shutdown received with UserId: " +
+                                 getSendingUser().getIdentifier());
+                if (!getSendingUser().equals(UserHandle.ALL)) {
                     return;
                 }
                 if (DBG) Log.d(TAG, "Device is shutting down.");
