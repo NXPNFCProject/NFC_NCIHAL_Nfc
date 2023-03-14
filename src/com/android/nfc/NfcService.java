@@ -196,9 +196,6 @@ public class NfcService implements DeviceHostListener {
 
     public static final int ROUTE_LOC_MASK=8;
     public static final int TECH_TYPE_MASK=11;
-    static final String TRON_NFC_CE = "nfc_ce";
-    static final String TRON_NFC_P2P = "nfc_p2p";
-    static final String TRON_NFC_TAG = "nfc_tag";
     static final String NATIVE_LOG_FILE_PATH = "/data/misc/nfc/logs";
     static final String NATIVE_LOG_FILE_NAME = "native_crash_logs";
     static final int NATIVE_CRASH_FILE_SIZE = 1024 * 1024;
@@ -220,7 +217,7 @@ public class NfcService implements DeviceHostListener {
     static final int MSG_REGISTER_T3T_IDENTIFIER = 12;
     static final int MSG_DEREGISTER_T3T_IDENTIFIER = 13;
     static final int MSG_TAG_DEBOUNCE = 14;
-    static final int MSG_UPDATE_STATS = 15;
+    // Previously used: MSG_UPDATE_STATS = 15
     static final int MSG_APPLY_SCREEN_STATE = 16;
     static final int MSG_TRANSACTION_EVENT = 17;
     static final int MSG_PREFERRED_PAYMENT_CHANGED = 18;
@@ -264,8 +261,6 @@ public class NfcService implements DeviceHostListener {
     // Negative value for NO polling delay
     static final int NO_POLL_DELAY = -1;
 
-    // Update stats every 4 hours
-    static final long STATS_UPDATE_INTERVAL_MS = 4 * 60 * 60 * 1000;
     static final long MAX_POLLING_PAUSE_TIMEOUT = 40000;
 
     static final int MAX_TOAST_DEBOUNCE_TIME = 10000;
@@ -498,10 +493,6 @@ public class NfcService implements DeviceHostListener {
     // Only accessed on one thread so doesn't need locking
     NdefMessage mLastReadNdefMessage;
 
-    // Metrics
-    AtomicInteger mNumTagsDetected;
-    AtomicInteger mNumP2pDetected;
-    AtomicInteger mNumHceDetected;
     ToastHandler mToastHandler;
     // mState is protected by this, however it is only modified in onCreate()
     // and the default AsyncTask thread so it is read unprotected from that
@@ -664,8 +655,6 @@ public class NfcService implements DeviceHostListener {
     @Override
     public void onHostCardEmulationDeactivated(int technology) {
         if (mCardEmulationManager != null) {
-            // Do metrics here so we don't slow the CE path down
-            mNumHceDetected.incrementAndGet();
             mCardEmulationManager.onHostCardEmulationDeactivated(technology);
         }
     }
@@ -702,7 +691,6 @@ public class NfcService implements DeviceHostListener {
     @Override
     public void onLlcpFirstPacketReceived(NfcDepEndpoint device) {
         if (!mIsBeamCapable) return;
-        mNumP2pDetected.incrementAndGet();
         sendMessage(NfcService.MSG_LLCP_LINK_FIRST_PACKET, device);
     }
 
@@ -897,10 +885,6 @@ public class NfcService implements DeviceHostListener {
         mScreenState = mScreenStateHelper.checkScreenState();
         mPreviousScreenState = mScreenState;
 
-        mNumTagsDetected = new AtomicInteger();
-        mNumP2pDetected = new AtomicInteger();
-        mNumHceDetected = new AtomicInteger();
-
         mBackupManager = new BackupManager(mContext);
 
         // Intents for all users
@@ -1014,8 +998,6 @@ public class NfcService implements DeviceHostListener {
                 NFCVERBOSEVENDORLOG.equals(VERBOSE_VENDOR_LOG_ENABLED)) {
             new NfcDeveloperOptionNotification(mContext).startNotification();
         }
-
-        mHandler.sendEmptyMessageDelayed(MSG_UPDATE_STATS, STATS_UPDATE_INTERVAL_MS);
 
         connectToSeService();
         try {
@@ -4149,7 +4131,6 @@ public class NfcService implements DeviceHostListener {
 
                 case MSG_NDEF_TAG:
                     if (DBG) Log.d(TAG, "Tag detected, notifying applications");
-                    mNumTagsDetected.incrementAndGet();
                     TagEndpoint tag = (TagEndpoint) msg.obj;
                     byte[] debounceTagUid;
                     int debounceTagMs;
@@ -4336,22 +4317,6 @@ public class NfcService implements DeviceHostListener {
                             // Ignore
                         }
                     }
-                    break;
-                case MSG_UPDATE_STATS:
-                    if (mNumTagsDetected.get() > 0) {
-                        MetricsLogger.count(mContext, TRON_NFC_TAG, mNumTagsDetected.get());
-                        mNumTagsDetected.set(0);
-                    }
-                    if (mNumHceDetected.get() > 0) {
-                        MetricsLogger.count(mContext, TRON_NFC_CE, mNumHceDetected.get());
-                        mNumHceDetected.set(0);
-                    }
-                    if (mNumP2pDetected.get() > 0) {
-                        MetricsLogger.count(mContext, TRON_NFC_P2P, mNumP2pDetected.get());
-                        mNumP2pDetected.set(0);
-                    }
-                    removeMessages(MSG_UPDATE_STATS);
-                    sendEmptyMessageDelayed(MSG_UPDATE_STATS, STATS_UPDATE_INTERVAL_MS);
                     break;
 
                 case MSG_APPLY_SCREEN_STATE:
@@ -5498,9 +5463,6 @@ public class NfcService implements DeviceHostListener {
                 ScreenStateHelper.screenStateToProtoEnum(mScreenState));
         proto.write(NfcServiceDumpProto.SECURE_NFC_ENABLED, mIsSecureNfcEnabled);
         proto.write(NfcServiceDumpProto.POLLING_PAUSED, mPollingPaused);
-        proto.write(NfcServiceDumpProto.NUM_TAGS_DETECTED, mNumTagsDetected.get());
-        proto.write(NfcServiceDumpProto.NUM_P2P_DETECTED, mNumP2pDetected.get());
-        proto.write(NfcServiceDumpProto.NUM_HCE_DETECTED, mNumHceDetected.get());
         proto.write(NfcServiceDumpProto.HCE_CAPABLE, mIsHceCapable);
         proto.write(NfcServiceDumpProto.HCE_F_CAPABLE, mIsHceFCapable);
         proto.write(NfcServiceDumpProto.BEAM_CAPABLE, mIsBeamCapable);
