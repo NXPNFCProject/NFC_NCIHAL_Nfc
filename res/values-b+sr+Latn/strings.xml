@@ -53,4 +53,6 @@
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"Nijedna aplikacija ne podržava ovu NFC oznaku"</string>
     <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"NFC je možda blokiran"</string>
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Dodirnite da biste saznali kako da rešite problem."</string>
+    <string name="nfc_logging_alert_title" msgid="5300867034660942987">"NFC podaci se snimaju"</string>
+    <string name="nfc_logging_alert_message" msgid="1550187184825467942">"Dodirnite da biste zaustavili snimanje."</string>
 </resources>

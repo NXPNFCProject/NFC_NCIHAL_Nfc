@@ -53,4 +53,6 @@
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"이 NFC 태그에 지원되는 애플리케이션이 없습니다."</string>
     <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"NFC가 차단되었을 수 있습니다"</string>
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"탭하여 해결 방법을 확인하세요."</string>
+    <string name="nfc_logging_alert_title" msgid="5300867034660942987">"NFC 데이터를 기록 중입니다"</string>
+    <string name="nfc_logging_alert_message" msgid="1550187184825467942">"기록을 중지하려면 탭하세요."</string>
 </resources>

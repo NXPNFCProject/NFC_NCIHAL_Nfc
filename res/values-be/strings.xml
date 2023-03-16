@@ -53,4 +53,6 @@
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"Няма праграм, якія падтрымліваюцца для гэтага цэтліка NFC"</string>
     <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"Магчыма, NFC заблакіраваны"</string>
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Націсніце, каб даведацца, як вырашыць праблему."</string>
+    <string name="nfc_logging_alert_title" msgid="5300867034660942987">"Даныя NFC запісваюцца"</string>
+    <string name="nfc_logging_alert_message" msgid="1550187184825467942">"Націсніце, каб спыніць запіс."</string>
 </resources>

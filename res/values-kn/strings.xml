@@ -53,4 +53,6 @@
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"ಈ NFC ಟ್ಯಾಗ್‌ಗೆ ಯಾವುದೇ ಆ್ಯಪ್‌ ಬೆಂಬಲಿಸುವುದಿಲ್ಲ"</string>
     <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"NFC ಅನ್ನು ನಿರ್ಬಂಧಿಸಿರಬಹುದು"</string>
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"ಹೇಗೆ ಸರಿಪಡಿಸುವುದು ಎಂಬುದನ್ನು ತಿಳಿಯಲು ಟ್ಯಾಪ್ ಮಾಡಿ."</string>
+    <string name="nfc_logging_alert_title" msgid="5300867034660942987">"NFC ಡೇಟಾವನ್ನು ರೆಕಾರ್ಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ"</string>
+    <string name="nfc_logging_alert_message" msgid="1550187184825467942">"ರೆಕಾರ್ಡಿಂಗ್ ನಿಲ್ಲಿಸಲು ಟ್ಯಾಪ್ ಮಾಡಿ."</string>
 </resources>

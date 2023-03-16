@@ -53,4 +53,6 @@
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"Geen gesteunde program vir hierdie NFC-merker nie"</string>
     <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"NFC is dalk geblokkeer"</string>
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Tik om uit te vind hoe om dit reg te stel."</string>
+    <string name="nfc_logging_alert_title" msgid="5300867034660942987">"NFC-data word tans opgeneem"</string>
+    <string name="nfc_logging_alert_message" msgid="1550187184825467942">"Tik om opname te stop."</string>
 </resources>

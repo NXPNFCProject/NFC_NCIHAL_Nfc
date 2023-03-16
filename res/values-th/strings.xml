@@ -53,4 +53,6 @@
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"ไม่มีแอปพลิเคชันที่รองรับแท็ก NFC นี้"</string>
     <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"อาจมีการบล็อก NFC อยู่"</string>
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"แตะเพื่อดูวิธีแก้ไข"</string>
+    <string name="nfc_logging_alert_title" msgid="5300867034660942987">"กำลังบันทึกข้อมูล NFC"</string>
+    <string name="nfc_logging_alert_message" msgid="1550187184825467942">"แตะเพื่อหยุดบันทึก"</string>
 </resources>

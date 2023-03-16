@@ -36,7 +36,8 @@
             android:background="@drawable/nfc_background_outline"
             app:behavior_peekHeight="378dp"
             app:behavior_hideable="true"
-            app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
+            app:layout_behavior=
+                "com.android.nfc.x.com.google.android.material.bottomsheet.BottomSheetBehavior">
 
         <ImageView
             android:id="@+id/screenshot"

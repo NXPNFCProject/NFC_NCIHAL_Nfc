@@ -53,4 +53,6 @@
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"ບໍ່ມີແອັບພລິເຄຊັນທີ່ຮອງຮັບແທັກ NFC ນີ້"</string>
     <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"NFC ອາດຖືກບລັອກໄວ້"</string>
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"ແຕະເພື່ອສຶກສາວິທີແກ້ໄຂ."</string>
+    <string name="nfc_logging_alert_title" msgid="5300867034660942987">"ກຳລັງບັນທຶກຂໍ້ມູນ NFC"</string>
+    <string name="nfc_logging_alert_message" msgid="1550187184825467942">"ແຕະເພື່ອຢຸດການບັນທຶກ."</string>
 </resources>

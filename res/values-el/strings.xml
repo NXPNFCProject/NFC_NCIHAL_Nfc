@@ -53,4 +53,6 @@
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"Δεν υπάρχει υποστηριζόμενη εφαρμογή για αυτήν την ετικέτα NFC"</string>
     <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"Η λειτουργία NFC μπορεί να έχει αποκλειστεί."</string>
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Πατήστε για να μάθετε πώς μπορείτε να διορθώσετε το πρόβλημα."</string>
+    <string name="nfc_logging_alert_title" msgid="5300867034660942987">"Τα δεδομένα NFC εγγράφονται"</string>
+    <string name="nfc_logging_alert_message" msgid="1550187184825467942">"Πατήστε για διακοπή της εγγραφής."</string>
 </resources>

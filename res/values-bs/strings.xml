@@ -53,4 +53,6 @@
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"Nema podržane aplikacije za ovu NFC oznaku"</string>
     <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"NFC je možda blokiran"</string>
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Dodirnite da saznate kako ispraviti problem."</string>
+    <string name="nfc_logging_alert_title" msgid="5300867034660942987">"NFC podaci se trenutno bilježe"</string>
+    <string name="nfc_logging_alert_message" msgid="1550187184825467942">"Dodirnite da zaustavite bilježenje."</string>
 </resources>

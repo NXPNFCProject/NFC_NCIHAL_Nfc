@@ -53,4 +53,6 @@
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"এই NFC টেগৰ বাবে কোনো সমৰ্থিত এপ্লিকেশ্বন নাই"</string>
     <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"NFC হয়তো অৱৰোধ কৰি ৰখা আছে"</string>
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"কেনেকৈ সমাধান কৰিব লাগে সেয়া জানিবলৈ টিপক।"</string>
+    <string name="nfc_logging_alert_title" msgid="5300867034660942987">"NFC ডেটা ৰেকৰ্ড কৰি থকা হৈছে"</string>
+    <string name="nfc_logging_alert_message" msgid="1550187184825467942">"ৰেকৰ্ড কৰা বন্ধ কৰিবলৈ টিপক।"</string>
 </resources>

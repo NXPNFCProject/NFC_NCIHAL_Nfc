@@ -53,4 +53,6 @@
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"এই NFC ট্যাগ ব্যবহার করার মতো কোনও অ্যাপ্লিকেশন নেই"</string>
     <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"NFC হয়ত ব্লক করা আছে"</string>
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"কীভাবে সমস্যার সমাধান করবেন তা জানতে ট্যাপ করুন।"</string>
+    <string name="nfc_logging_alert_title" msgid="5300867034660942987">"NFC ডেটা রেকর্ড করা হচ্ছে"</string>
+    <string name="nfc_logging_alert_message" msgid="1550187184825467942">"রেকর্ডিং বন্ধ করতে ট্যাপ করুন।"</string>
 </resources>

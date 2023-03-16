@@ -53,4 +53,6 @@
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"Для этой NFC-метки нет поддерживаемых приложений"</string>
     <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"Функция NFC может быть заблокирована"</string>
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Нажмите, чтобы узнать, как устранить эту проблему."</string>
+    <string name="nfc_logging_alert_title" msgid="5300867034660942987">"Выполняется запись данных NFC"</string>
+    <string name="nfc_logging_alert_message" msgid="1550187184825467942">"Нажмите, чтобы остановить ее."</string>
 </resources>

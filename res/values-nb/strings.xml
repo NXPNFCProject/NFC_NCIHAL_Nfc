@@ -53,4 +53,6 @@
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"Ingen apper støttes for denne NFC-brikken"</string>
     <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"NFC kan være blokkert"</string>
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Trykk for å finne ut hvordan du løser dette."</string>
+    <string name="nfc_logging_alert_title" msgid="5300867034660942987">"Det registreres NFC-data"</string>
+    <string name="nfc_logging_alert_message" msgid="1550187184825467942">"Trykk for å stoppe registreringen."</string>
 </resources>

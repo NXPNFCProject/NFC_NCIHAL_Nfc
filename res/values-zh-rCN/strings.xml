@@ -35,7 +35,7 @@
     <string name="could_not_use_app" msgid="8137587876138569083">"无法使用“<xliff:g id="APP">%1$s</xliff:g>”。"</string>
     <string name="pay_with" msgid="5531545488795798945">"付款方式："</string>
     <string name="complete_with" msgid="6797459104103012992">"使用以下应用完成操作："</string>
-    <string name="default_pay_app_removed" msgid="4108250545457437360">"用于触碰付款的首选服务已遭删除，您要选择使用其他服务吗？"</string>
+    <string name="default_pay_app_removed" msgid="4108250545457437360">"用于感应式付款的首选服务已遭删除，您要选择使用其他服务吗？"</string>
     <string name="ask_nfc_tap" msgid="2925239870458286340">"请点按其他设备来完成操作"</string>
     <string name="wifi_connect" msgid="6250727951843550671">"连接"</string>
     <string name="status_unable_to_connect" msgid="9183908200295307657">"无法连接到网络"</string>
@@ -53,4 +53,6 @@
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"没有应用支持此 NFC 标签"</string>
     <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"NFC 可能被屏蔽了"</string>
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"点按即可了解如何解决该问题。"</string>
+    <string name="nfc_logging_alert_title" msgid="5300867034660942987">"正在记录 NFC 数据"</string>
+    <string name="nfc_logging_alert_message" msgid="1550187184825467942">"点按即可停止记录。"</string>
 </resources>

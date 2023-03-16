@@ -53,4 +53,6 @@
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"Nu există aplicații acceptate pentru această etichetă NFC"</string>
     <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"Tehnologia NFC poate fi blocată"</string>
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Atinge ca să afli cum să remediezi problema."</string>
+    <string name="nfc_logging_alert_title" msgid="5300867034660942987">"Se înregistrează date NFC"</string>
+    <string name="nfc_logging_alert_message" msgid="1550187184825467942">"Atinge ca să oprești înregistrarea."</string>
 </resources>

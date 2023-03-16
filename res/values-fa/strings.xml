@@ -35,7 +35,7 @@
     <string name="could_not_use_app" msgid="8137587876138569083">"نتوانست از <xliff:g id="APP">%1$s</xliff:g> استفاده کند."</string>
     <string name="pay_with" msgid="5531545488795798945">"پرداخت با"</string>
     <string name="complete_with" msgid="6797459104103012992">"تکمیل با"</string>
-    <string name="default_pay_app_removed" msgid="4108250545457437360">"سرویس ترجیحی شما برای ضربه و پرداخت حذف شده است. سرویس دیگری را انتخاب می‌کنید؟"</string>
+    <string name="default_pay_app_removed" msgid="4108250545457437360">"سرویس ترجیحی شما برای «پرداخت با یک ضربه» حذف شده است. سرویس دیگری انتخاب می‌کنید؟"</string>
     <string name="ask_nfc_tap" msgid="2925239870458286340">"برای تکمیل، روی دستگاه دیگری ضربه بزنید"</string>
     <string name="wifi_connect" msgid="6250727951843550671">"اتصال"</string>
     <string name="status_unable_to_connect" msgid="9183908200295307657">"اتصال به شبکه ممکن نیست"</string>
@@ -53,4 +53,6 @@
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"‏برنامه پشتیبانی‌شده‌ای برای نشان NFC وجود ندارد"</string>
     <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"‏ممکن است «ارتباطات میدان‌نزدیک» (NFC) مسدود باشد"</string>
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"برای آشنایی با نحوه برطرف کردن مشکل، ضربه بزنید."</string>
+    <string name="nfc_logging_alert_title" msgid="5300867034660942987">"‏داده‌های NFC ضبط می‌شود"</string>
+    <string name="nfc_logging_alert_message" msgid="1550187184825467942">"برای توقف ضبط، ضربه بزنید."</string>
 </resources>

@@ -53,4 +53,6 @@
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"Nem található támogatott alkalmazás ehhez az NFC-címkéhez"</string>
     <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"Előfordulhat, hogy le van tiltva az NFC"</string>
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Koppintással további információkhoz juthat a probléma elhárításáról."</string>
+    <string name="nfc_logging_alert_title" msgid="5300867034660942987">"A rendszer rögzíti az NFC-adatokat"</string>
+    <string name="nfc_logging_alert_message" msgid="1550187184825467942">"Koppintson a rögzítés leállításához."</string>
 </resources>

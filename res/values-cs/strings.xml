@@ -53,4 +53,6 @@
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"Pro tuto značku NFC není k dispozici žádná podporovaná aplikace"</string>
     <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"Funkce NFC může být zablokována"</string>
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Klepnutím zjistíte, jak problém vyřešit."</string>
+    <string name="nfc_logging_alert_title" msgid="5300867034660942987">"Data funkce NFC jsou zaznamenávána"</string>
+    <string name="nfc_logging_alert_message" msgid="1550187184825467942">"Klepnutím ukončíte nahrávání."</string>
 </resources>

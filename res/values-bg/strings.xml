@@ -53,4 +53,6 @@
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"Няма приложение, което поддържа този маркер за NFC"</string>
     <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"Функцията NFC може да е блокирана"</string>
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Докоснете, за да научите как да отстраните проблема."</string>
+    <string name="nfc_logging_alert_title" msgid="5300867034660942987">"Записват се данни посредством NFC"</string>
+    <string name="nfc_logging_alert_message" msgid="1550187184825467942">"Докоснете за спиране на записването."</string>
 </resources>

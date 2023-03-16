@@ -53,4 +53,6 @@
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"Aucune application prise en charge pour cette balise CCP"</string>
     <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"La CCP est peut-être bloquée"</string>
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Touchez pour apprendre comment la débloquer."</string>
+    <string name="nfc_logging_alert_title" msgid="5300867034660942987">"Les données CCP sont enregistrées"</string>
+    <string name="nfc_logging_alert_message" msgid="1550187184825467942">"Touchez pour cesser l\'enregistrement."</string>
 </resources>

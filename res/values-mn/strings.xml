@@ -53,4 +53,6 @@
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"Энэ NFC Шошгыг зохицуулах боломжтой дэмжигдсэн апп алга"</string>
     <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"NFC-г блоклосон байж болзошгүй"</string>
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Хэрхэн засах зааврыг харахын тулд товшино уу."</string>
+    <string name="nfc_logging_alert_title" msgid="5300867034660942987">"NFC өгөгдлийг бичиж байна"</string>
+    <string name="nfc_logging_alert_message" msgid="1550187184825467942">"Бичлэгийг зогсоохын тулд товшино уу."</string>
 </resources>

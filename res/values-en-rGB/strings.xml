@@ -53,4 +53,6 @@
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"No supported application for this NFC Tag"</string>
     <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"NFC may be blocked"</string>
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Tap to learn how to fix."</string>
+    <string name="nfc_logging_alert_title" msgid="5300867034660942987">"NFC data is being recorded"</string>
+    <string name="nfc_logging_alert_message" msgid="1550187184825467942">"Tap to stop recording."</string>
 </resources>

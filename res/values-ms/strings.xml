@@ -53,4 +53,6 @@
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"Tiada aplikasi yang disokong untuk Teg NFC ini"</string>
     <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"NFC mungkin disekat"</string>
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Ketik untuk mengetahui cara membetulkan perkara ini."</string>
+    <string name="nfc_logging_alert_title" msgid="5300867034660942987">"Data NFC sedang dirakamkan"</string>
+    <string name="nfc_logging_alert_message" msgid="1550187184825467942">"Ketik untuk menghentikan rakaman."</string>
 </resources>

@@ -53,4 +53,6 @@
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"沒有支援此 NFC 標籤的應用程式"</string>
     <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"NFC 可能會被封鎖"</string>
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"輕按即可瞭解如何修正問題。"</string>
+    <string name="nfc_logging_alert_title" msgid="5300867034660942987">"正在記錄 NFC 資料"</string>
+    <string name="nfc_logging_alert_message" msgid="1550187184825467942">"輕按即可停止記錄。"</string>
 </resources>

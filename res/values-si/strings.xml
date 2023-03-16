@@ -53,4 +53,6 @@
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"මෙම NFC ටැගය සඳහා සහාය දක්වන යෙදුම් නැත"</string>
     <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"NFC ඇතැම් විට අවහිර කළ හැකිය"</string>
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"නිවැරදි කරන ආකාරය දැන ගැනීමට තට්ටු කරන්න."</string>
+    <string name="nfc_logging_alert_title" msgid="5300867034660942987">"NFC දත්ත වාර්තා කරමින් පවතී"</string>
+    <string name="nfc_logging_alert_message" msgid="1550187184825467942">"පටිගත කිරීම නැවැත්වීමට තට්ටු කරන්න."</string>
 </resources>
