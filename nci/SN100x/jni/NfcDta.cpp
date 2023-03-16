@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 NXP
+ * Copyright 2022-2023 NXP
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -214,11 +214,12 @@ tNFA_STATUS NfcDta::setConfigParams(std::vector<uint8_t> configTlv) {
 *******************************************************************************/
 void NfcDta::setNfccConfigParams() {
   char sysPropTlvs[256];
-  property_get("nfc.dta.configTLV", sysPropTlvs, "");
+  int len = 0;
+  len = property_get("nfc.dta.configTLV", sysPropTlvs, "");
   std::string configTlvs(sysPropTlvs);
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
       "%s: SysProperty nfc.configTLV: %s", __func__, configTlvs.c_str());
-  if (configTlvs.empty() && mDefaultTlv.empty()) {
+  if (len <= 0 || (configTlvs.empty() && mDefaultTlv.empty())) {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: Config TLVs not available", __func__);
     return;
