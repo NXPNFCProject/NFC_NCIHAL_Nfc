@@ -32,6 +32,7 @@ extern void nativeNfcTag_abortWaits();
 extern SyncEvent sTransceiveEvent;
 extern bool nfc_debug_enabled;
 extern bool gIsSelectingRfInterface;
+extern void nativeNfcTag_doConnectStatus(jboolean is_connect_ok);
 }  // namespace android
 extern uint32_t TimeDiff(timespec start, timespec end);
 extern int sLastSelectedTagId;
@@ -67,6 +68,7 @@ void NfcTagExtns::initialize() {
   sTagActivatedMode = 0;
   sTagActivatedProtocol = 0;
   isNonStdCardSupported = false;
+  isMfcTransceiveFailed = false;
   tagState = 0;  // clear all bit flags related tag operations
   mNonStdCardTimeDiff.push_back(100);
   mNonStdCardTimeDiff.push_back(300);
@@ -135,6 +137,10 @@ tTagStatus NfcTagExtns::processNonStdTagOperation(TAG_API_REQUEST caller,
       break;
     case TAG_API_REQUEST::TAG_CHECK_NDEF_API:
       status = checkAndSkipNdef();
+      break;
+    case TAG_API_REQUEST::TAG_DO_TRANSCEIVE_API:
+      processMfcTransFailed();
+      status = TAG_STATUS_SUCCESS;
       break;
   }
   return status;
@@ -295,6 +301,59 @@ void NfcTagExtns::processActivatedNtf(tNFA_CONN_EVT_DATA* data) {
 
 /*******************************************************************************
 **
+** Function:        isMfcTransFailed
+**
+** Description:     Returns Miafare Transceive is Fail or not.
+**
+**
+** Returns:         true if Mifare Transceive fail flag set, else false.
+**
+*******************************************************************************/
+bool NfcTagExtns::isMfcTransFailed() { return isMfcTransceiveFailed; }
+
+/*******************************************************************************
+**
+** Function:        resetMfcTransceiveFlag
+**
+** Description:     reset isMfcTransceiveFailed flag to false.
+**
+** Returns:         None
+**
+*******************************************************************************/
+void NfcTagExtns::resetMfcTransceiveFlag() {
+  if (!isNonStdCardSupported) {
+    DLOG_IF(INFO, android::nfc_debug_enabled)
+        << StringPrintf("%s:Non standard support disabled", __func__);
+    return;
+  }
+  isMfcTransceiveFailed = false;
+}
+
+/*******************************************************************************
+**
+** Function:        processMfcTransFailed
+**
+** Description:     set isMfcTransceiveFailed flag , if connected tag is Multi-
+**                  protocol tag with MFC support & current selected interface
+**                  is Mifare.
+**
+**
+** Returns:         None
+**
+*******************************************************************************/
+void NfcTagExtns::processMfcTransFailed() {
+  if (!isNonStdCardSupported) {
+    DLOG_IF(INFO, android::nfc_debug_enabled)
+        << StringPrintf("%s:Non standard support disabled", __func__);
+    return;
+  }
+  if (IS_MULTIPROTO_MFC_TAG()) {
+    isMfcTransceiveFailed = true;
+  }
+}
+
+/*******************************************************************************
+**
 ** Function:        checkActivatedProtoParameters
 **
 ** Description:     Check whether tag activated params are same.If different it
@@ -413,7 +472,11 @@ void NfcTagExtns::processtagSelectEvent(tNFA_CONN_EVT_DATA* data) {
     return;
   }
 
-  if (data->status != NFA_STATUS_OK) {
+  if (isMfcTransFailed() && data->status != NFA_STATUS_OK) {
+    /* If Mifare Transcieve failed && observed Core Generic Error NTF. */
+    data->status = NFA_STATUS_OK;
+    android::nativeNfcTag_doConnectStatus(JNI_FALSE);
+  } else if (data->status != NFA_STATUS_OK) {
     NfcTag::getInstance().mTechListIndex = 0;
     if (IS_MULTIPROTO_MFC_TAG()) {
       tagState |= TAG_MFC_NON_STD_TYPE;
@@ -893,6 +956,7 @@ void NfcTagExtns::abortTagOperation() {
   sTagActivatedMode = 0;
   sTagActivatedProtocol = 0;
   tagState &= ~TAG_NON_STD_SAK_TYPE;
+  resetMfcTransceiveFlag();
 }
 
 /******************************************************************************
