@@ -29,7 +29,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  Copyright 2018-2022,2023 NXP
+ *  Copyright 2018-2023 NXP
  *
  ******************************************************************************/
 #include <android-base/stringprintf.h>
@@ -573,10 +573,11 @@ static void nfaConnectionCallback(uint8_t connEvent,
         NfcTag::getInstance().setNumDiscNtf(0);
       }
 #if (NXP_EXTNS == TRUE)
-        if (NfcSelfTest::GetInstance().SelfTestType != TEST_TYPE_NONE) {
-          NfcSelfTest::GetInstance().ActivatedNtf_Cb();
-          break;
-        }
+      nfcTagExtns.resetMfcTransceiveFlag();
+      if (NfcSelfTest::GetInstance().SelfTestType != TEST_TYPE_NONE) {
+        NfcSelfTest::GetInstance().ActivatedNtf_Cb();
+        break;
+      }
 #endif
       if ((eventData->activated.activate_ntf.protocol !=
            NFA_PROTOCOL_NFC_DEP) &&
