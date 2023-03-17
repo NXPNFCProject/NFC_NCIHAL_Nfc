@@ -1299,6 +1299,11 @@ public class NfcService implements DeviceHostListener {
                         Log.d(TAG, "NFC is off.  Checking firmware version");
                         initialized = mDeviceHost.checkFirmware();
                     }
+
+                    if (initialized) {
+                        SystemProperties.set("nfc.initialized", "true");
+                    }
+
                     if (mIsTagAppPrefSupported) {
                         synchronized (NfcService.this) {
                             initTagAppPrefList();
