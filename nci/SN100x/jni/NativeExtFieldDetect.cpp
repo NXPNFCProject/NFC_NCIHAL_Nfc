@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- *  Copyright 2021-2022 NXP
+ *  Copyright 2021-2023 NXP
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -140,6 +140,11 @@ int NativeExtFieldDetect::stopExtendedFieldDetectMode(JNIEnv* e, jobject o) {
 
   if (!android::nfcManager_isNfcActive() ||
       android::nfcManager_isNfcDisabling()) {
+    DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("%s: Nfc is Disabled or currently being disabled", __func__);
+    mEfdmTimer.kill();
+    mIsefdmStarted = false;
+
     return EFDSTATUS_ERROR_NFC_IS_OFF;
   } else if (!mIsefdmStarted) {
     return EFDSTATUS_ERROR_NOT_STARTED;
