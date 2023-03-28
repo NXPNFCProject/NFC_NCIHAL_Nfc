@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- *  Copyright 2019-2020 NXP
+ *  Copyright 2019-2020,2023 NXP
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -35,9 +35,6 @@ void registerNfcNotifier(NativeNfcExtnsEvt* obj);
 *****************************************************************************/
 extern bool nfc_debug_enabled;
 namespace android {
-extern tNFA_STATUS NxpPropCmd_send(uint8_t* pData4Tx, uint8_t dataLen,
-                                   uint8_t* rsp_len, uint8_t* rsp_buf,
-                                   uint32_t rspTimeout, tHAL_NFC_ENTRY* halMgr);
 extern bool isDiscoveryStarted();
 extern void startRfDiscovery(bool isStart);
 extern int nfcManager_doPartialInitialize(JNIEnv* e, jobject o, jint mode);
