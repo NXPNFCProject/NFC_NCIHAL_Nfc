@@ -169,7 +169,7 @@ import java.util.stream.Collectors;
 import java.util.TimerTask;
 import java.util.Timer;
 
-public class NfcService implements DeviceHostListener {
+public class NfcService implements DeviceHostListener, ForegroundUtils.Callback {
     static final boolean DBG = NfcProperties.debug_enabled().orElse(false);
     static final String TAG = "NfcService";
 
@@ -764,6 +764,8 @@ public class NfcService implements DeviceHostListener {
         public int flags;
         public IAppCallback callback;
         public int presenceCheckDelay;
+        public IBinder binder;
+        public int uid;
     }
 
     /**
@@ -1592,6 +1594,30 @@ public class NfcService implements DeviceHostListener {
                 PackageManager.DONT_KILL_APP);
     }
 
+    private void resetReaderModeParams() {
+        synchronized (NfcService.this) {
+            if (mPollingDisableDeathRecipients.size() == 0) {
+                Log.d(TAG, "Disabling reader mode because app died or moved to background");
+                mReaderModeParams = null;
+                StopPresenceChecking();
+                if (isNfcEnabled()) {
+                    applyRouting(false);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void onUidToBackground(int uid) {
+        Log.i(TAG, "Uid " + uid + " switch to background.");
+        synchronized (NfcService.this) {
+            if (mReaderModeParams != null && mReaderModeParams.uid == uid) {
+                mReaderModeParams.binder.unlinkToDeath(mReaderModeDeathRecipient, 0);
+                resetReaderModeParams();
+            }
+        }
+    }
+
     final class NfcAdapterService extends INfcAdapter.Stub {
         @Override
         public boolean enable() throws RemoteException {
@@ -1974,7 +2000,11 @@ public class NfcService implements DeviceHostListener {
             } else {
                 privilegedCaller = (callingUid == Process.SYSTEM_UID);
             }
-            if (!privilegedCaller && !mForegroundUtils.isInForeground(callingUid)) {
+            Log.d(TAG, "setReaderMode: uid=" + callingUid + ", packageName: "
+                    + packageName + ", flags: " + flags);
+            if (!privilegedCaller
+                    && !mForegroundUtils.registerUidToBackgroundCallback(
+                            NfcService.this, callingUid)) {
                 Log.e(TAG, "setReaderMode: Caller is not in foreground and is not system process.");
                 return;
             }
@@ -2004,7 +2034,7 @@ public class NfcService implements DeviceHostListener {
                             }
                             binder.linkToDeath(mReaderModeDeathRecipient, 0);
                         }
-                        updateReaderModeParams(callback, flags, extras);
+                        updateReaderModeParams(callback, flags, extras, binder, callingUid);
                     } catch (RemoteException e) {
                         Log.e(TAG, "Remote binder has already died.");
                         return;
@@ -2176,7 +2206,8 @@ public class NfcService implements DeviceHostListener {
             return null;
         }
 
-        private void updateReaderModeParams(IAppCallback callback, int flags, Bundle extras) {
+        private void updateReaderModeParams(
+                IAppCallback callback, int flags, Bundle extras, IBinder binder, int uid) {
             synchronized (NfcService.this) {
                 mReaderModeParams = new ReaderModeParams();
                 mReaderModeParams.callback = callback;
@@ -2185,6 +2216,8 @@ public class NfcService implements DeviceHostListener {
                         ? (extras.getInt(NfcAdapter.EXTRA_READER_PRESENCE_CHECK_DELAY,
                                 DEFAULT_PRESENCE_CHECK_DELAY))
                         : DEFAULT_PRESENCE_CHECK_DELAY;
+                mReaderModeParams.binder = binder;
+                mReaderModeParams.uid = uid;
             }
         }
 
@@ -2950,10 +2983,7 @@ public class NfcService implements DeviceHostListener {
             synchronized (NfcService.this) {
                 if (mReaderModeParams != null) {
                     mPollingDisableDeathRecipients.values().remove(this);
-                    if (mPollingDisableDeathRecipients.size() == 0) {
-                        mReaderModeParams = null;
-                        applyRouting(false);
-                    }
+                    resetReaderModeParams();
                 }
             }
         }
