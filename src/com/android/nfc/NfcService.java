@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2022 NXP
+*  Copyright 2018-2023 NXP
 *
 ******************************************************************************/
 package com.android.nfc;
@@ -4167,9 +4167,20 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
 
                   try {
                     if (isNfcEnabled() && mIsHceCapable) {
+                        // Dynamic routing Table update
+                        Log.d(TAG, "Update routing table");
+                        mAidRoutingManager.onNfccRoutingTableCleared();
+                        mDeviceHost.clearRoutingEntry(AID_ENTRY);
+                        mDeviceHost.clearRoutingEntry(TECH_ENTRY);
+                        mDeviceHost.clearRoutingEntry(PROTOCOL_ENTRY);
                         // Generate the initial card emulation routing table
                         computeRoutingParameters();
-                        commitRouting();
+                        // If Nfc is in ON state then onNfcEnabled()
+                        // internally triggers the commitRouting()
+                        mCardEmulationManager.onNfcEnabled();
+                        if (getLastCommitRoutingStatus() == false) {
+                          commitRouting();
+                        }
                     }
 
                     /* TODO Call WiredSe HAL to notify */

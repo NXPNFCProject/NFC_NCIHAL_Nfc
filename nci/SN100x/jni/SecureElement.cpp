@@ -235,6 +235,10 @@ jint SecureElement::getGenericEseId(tNFA_HANDLE handle) {
     else if (handle == (EE_HANDLE_0xF5 & ~NFA_HANDLE_GROUP_EE)) //EUICC - 0xC1
     {
         ret = EUICC_ID;
+    } else if (handle ==
+               (EE_HANDLE_0xF6 & ~NFA_HANDLE_GROUP_EE))  // EUICC - 0xC1
+    {
+        ret = EUICC2_ID;
     }
     LOG(INFO) << StringPrintf("%s: exit; ESE-Generic-ID = 0x%02X", fn, ret);
     return ret;
@@ -1512,6 +1516,8 @@ tNFA_HANDLE SecureElement::getEseHandleFromGenericId(jint eseId)
     else if(eseId == EUICC_ID)
     {
         handle = EE_HANDLE_0xF5; //0x4C1;
+    } else if (eseId == EUICC2_ID) {
+        handle = EE_HANDLE_0xF6;  // 0x4C2;
     }
     LOG(INFO) << StringPrintf("%s: enter; ESE-Handle = 0x%03X", fn, handle);
     return handle;

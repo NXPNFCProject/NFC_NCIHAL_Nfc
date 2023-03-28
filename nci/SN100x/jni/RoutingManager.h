@@ -157,6 +157,7 @@ class RoutingManager {
     void configureEeRegister(bool eeReg);
     void dumpTables(int);
     tNFA_HANDLE checkAndUpdateAltRoute(int& routeLoc);
+    tNFA_HANDLE getNfaHandle(uint16_t routeLoc);
 
     uint32_t getUicc2selected();
     bool isNfceeActive(int routeLoc, tNFA_HANDLE& ActDevHandle);
@@ -263,6 +264,7 @@ class RoutingManager {
     //FIX THIS:static const int ROUTE_LOC_ESE_ID       = SecureElement::EE_HANDLE_0xF3;
     static const int ROUTE_LOC_ESE_ID       = 0x4C0;
     static const int ROUTE_LOC_EUICC_ID     = 0x4C1;
+    static const int ROUTE_LOC_EUICC2_ID    = 0x4C2;
     static const int ROUTE_LOC_UICC1_ID     = 0x402;
     static const int ROUTE_LOC_UICC1_ID_NCI2_0 = 0x480;
     //FIX THIS:static const int ROUTE_LOC_UICC2_ID     = SecureElement::EE_HANDLE_0xF8;

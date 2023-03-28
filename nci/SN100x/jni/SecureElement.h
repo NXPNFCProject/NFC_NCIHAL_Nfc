@@ -53,6 +53,7 @@ public:
   static const uint8_t UICC2_ID = 0x03;
   static const uint8_t UICC3_ID = 0x04;
   static const uint8_t EUICC_ID = 0x05;
+  static const uint8_t EUICC2_ID = 0x06;
   static const uint8_t ESE_ID = 0x01;
   static const uint8_t DH_ID = 0x00;
   static const uint8_t T4T_NFCEE_ID = 0x7F;
@@ -77,6 +78,7 @@ public:
   tNFA_HANDLE EE_HANDLE_0xF4;   //handle to secure element in slot 1
   static const tNFA_HANDLE EE_HANDLE_0xF3 = 0x4C0;//0x401; //handle to secure element in slot 0
   static const tNFA_HANDLE EE_HANDLE_0xF5 = 0x4C1;  // eUICC handle
+  static const tNFA_HANDLE EE_HANDLE_0xF6 = 0x4C2;  // eUICC2 handle
   static const tNFA_HANDLE EE_HANDLE_0xF8 = 0x481; //handle to secure element in slot 2
   static const tNFA_HANDLE EE_HANDLE_0xF9 = 0x482; //handle to secure element in slot 3
   static const tNFA_HANDLE EE_HANDLE_0xF0 = 0x400;//NFCEE handle for host

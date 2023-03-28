@@ -803,8 +803,7 @@ void RoutingManager::updateDefaultRoute() {
   if (NFC_GetNCIVersion() != NCI_VERSION_2_0) return;
 
 #if (NXP_EXTNS == TRUE)
-  uint16_t routeLoc = ((mDefaultSysCodeRoute == 0x00) ? ROUTE_LOC_HOST_ID :
-        ((mDefaultSysCodeRoute == 0x01 ) ? ROUTE_LOC_ESE_ID : getUiccRouteLocId(mDefaultSysCodeRoute)));
+  tNFA_HANDLE routeLoc = getNfaHandle(mDefaultSysCodeRoute);
 
   if (mDefaultSysCodeRoute == SecureElement::DH_ID) {
     mDefaultSysCodePowerstate &= ~(PWR_SWTCH_OFF_MASK | PWR_BATT_OFF_MASK);
@@ -1538,18 +1537,6 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
     unsigned long max_tech_mask = 0x03;
     unsigned long uiccListenTech = 0;
 
-    if (!isDynamicUiccEnabled) {
-       if(nfcManager_getUiccRoute(sCurrentSelectedUICCSlot)!=0xFF) {
-           max_tech_mask = SecureElement::getInstance().getSETechnology(nfcManager_getUiccRoute(sCurrentSelectedUICCSlot));
-       } else {
-            max_tech_mask = SecureElement::getInstance().getSETechnology(SecureElement::getInstance().EE_HANDLE_0xF4);
-       }
-    } else {
-        max_tech_mask = SecureElement::getInstance().getSETechnology(SecureElement::getInstance().EE_HANDLE_0xF4);
-    }
-
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter,max_tech_mask :%lx", fn, max_tech_mask);
-
     tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
     tNFA_HANDLE ee_handle = NFA_HANDLE_INVALID;
     uint8_t switch_on_mask = 0x00;
@@ -1559,8 +1546,7 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
     uint8_t screen_off_mask = 0x00;
     uint8_t screen_off_lock_mask = 0x00;
     uint8_t protocol_mask = 0x00;
-    ee_handle = ((route == 0x00) ? ROUTE_LOC_HOST_ID : ((route == 0x01) ? ROUTE_LOC_ESE_ID :
-      ((route == SecureElement::EUICC_ID) ? ROUTE_LOC_EUICC_ID : getUiccRouteLocId(route))));
+    ee_handle = getNfaHandle((uint16_t)route);
     if(ee_handle == NFA_HANDLE_INVALID )
     {
         DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter, handle:%x invalid", fn, ee_handle);
@@ -1836,7 +1822,7 @@ void RoutingManager::setEmptyAidEntry(int routeAndPowerState) {
 
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter",__func__);
     /* uint32_t routeAndPowerState = (uint16_t)routeLoc : (uint16_t)power state */
-    uint32_t routeLoc = ((routeAndPowerState >> 8) & 0xFF);
+    uint16_t routeLoc = ((routeAndPowerState >> 8) & 0xFF);
     uint8_t power = (routeAndPowerState & 0xFF);
     int max_tech_mask = 0;
     if (routeLoc  == NFA_HANDLE_INVALID)
@@ -1844,10 +1830,9 @@ void RoutingManager::setEmptyAidEntry(int routeAndPowerState) {
         LOG(ERROR) << StringPrintf("%s: Invalid routeLoc. Return.", __func__);
         return;
     }
-    routeLoc = ((routeLoc == 0x00) ? ROUTE_LOC_HOST_ID : ((routeLoc == 0x01 ) ? ROUTE_LOC_ESE_ID:
-        ((routeLoc == SecureElement::EUICC_ID) ? ROUTE_LOC_EUICC_ID : getUiccRouteLocId(routeLoc))));
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: route %x",__func__,routeLoc);
 
+    routeLoc = getNfaHandle(routeLoc);
+    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: route %x",__func__,routeLoc);
     max_tech_mask = SecureElement::getInstance().getSETechnology(routeLoc);
     /* If Route Location Doesn't support Tech A / Tech B, Don't add empty AID route*/
     if ((routeLoc != ROUTE_LOC_HOST_ID) && ((max_tech_mask & 0x03) == 0)) {
@@ -1897,7 +1882,8 @@ tNFA_HANDLE RoutingManager::checkAndUpdateAltRoute(int& routeLoc) {
     }
     if ((fallBackOption == ROUTE_ESE) && ((routeLoc == ROUTE_LOC_UICC1_ID_IDX)
             || (routeLoc == ROUTE_LOC_UICC2_ID_IDX)
-            || (routeLoc == SecureElement::EUICC_ID))) {
+            || (routeLoc == SecureElement::EUICC_ID)
+            || (routeLoc == SecureElement::EUICC2_ID))) {
       DLOG_IF(INFO, nfc_debug_enabled)
             << StringPrintf("Default route not available");
       /*check if eSE exist*/
@@ -2151,6 +2137,36 @@ uint32_t RoutingManager:: getUicc2selected()
     return (SecureElement::getInstance().muicc2_selected == SecureElement::UICC2_ID)?
                  SecureElement::getInstance().EE_HANDLE_0xF8:
                     SecureElement::getInstance().EE_HANDLE_0xF9;
+}
+
+/*******************************************************************************
+**
+** Function:        getNfaHandle
+**
+** Description:     Returns EE handle from Generic EE ID
+**
+** Returns:         EE Handle
+**
+*******************************************************************************/
+tNFA_HANDLE RoutingManager::getNfaHandle(uint16_t routeLoc) {
+    tNFA_HANDLE genHandle = NFA_HANDLE_INVALID;
+    switch (routeLoc) {
+        case SecureElement::DH_ID:
+        genHandle = ROUTE_LOC_HOST_ID;
+        break;
+        case SecureElement::ESE_ID:
+        genHandle = ROUTE_LOC_ESE_ID;
+        break;
+        case SecureElement::EUICC_ID:
+        genHandle = ROUTE_LOC_EUICC_ID;
+        break;
+        case SecureElement::EUICC2_ID:
+        genHandle = ROUTE_LOC_EUICC2_ID;
+        break;
+        default:
+        genHandle = getUiccRouteLocId(routeLoc);
+    }
+    return genHandle;
 }
 
 /*******************************************************************************
