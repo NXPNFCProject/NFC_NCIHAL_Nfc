@@ -161,37 +161,6 @@
             android:noHistory="true"
             android:configChanges="orientation|keyboardHidden|screenSize"
         />
-        <activity android:name=".BeamShareActivity"
-            android:finishOnCloseSystemDialogs="true"
-            android:theme="@android:style/Theme.Translucent"
-            android:label="@string/android_beam"
-            android:noHistory="true"
-            android:exported="true"
-            android:excludeFromRecents="true">
-            <intent-filter>
-                <action android:name="android.intent.action.SEND" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="*/*" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.SEND_MULTIPLE" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="*/*" />
-            </intent-filter>
-        </activity>
-        <activity android:name=".ConfirmConnectToWifiNetworkActivity"
-            android:finishOnCloseSystemDialogs="true"
-            android:excludeFromRecents="true"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar"
-            android:noHistory="true"
-        />
-
-        <service android:name=".beam.BeamSendService"
-            android:process=":beam"
-        />
-        <service android:name=".beam.BeamReceiveService"
-            android:process=":beam"
-        />
 
         <receiver android:name=".NfcBootCompletedReceiver"
             android:exported="true">
