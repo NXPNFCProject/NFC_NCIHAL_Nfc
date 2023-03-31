@@ -29,7 +29,6 @@ cc_library_shared {
     ] + ["system/nfc/SN100x/utils/include"],
 
     shared_libs: [
-        "libandroidicu",
         "libnativehelper",
         "libcutils",
         "libutils",
