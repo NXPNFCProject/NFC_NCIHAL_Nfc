@@ -47,6 +47,7 @@ uint8_t HciEventManager::sSimPipe;
 #if(NXP_EXTNS == TRUE)
 uint8_t HciEventManager::sSim2Pipe;
 uint8_t HciEventManager::sESimPipe;
+uint8_t HciEventManager::sESim2Pipe;
 #endif
 
 using android::base::StringPrintf;
@@ -70,6 +71,7 @@ void HciEventManager::initialize(nfc_jni_native_data* native) {
   sSim2Pipe = (uint8_t)NfcConfig::getUnsigned(NAME_OFF_HOST_SIM2_PIPE_ID,
           OFF_HOST_DEFAULT_PIPE_ID);
   sESimPipe = NfcConfig::getUnsigned(NAME_OFF_HOST_ESIM_PIPE_ID, 0x2B);
+  sESimPipe = NfcConfig::getUnsigned(NAME_OFF_HOST_ESIM2_PIPE_ID, 0x2F);
 #endif
   sEsePipe = NfcConfig::getUnsigned(NAME_OFF_HOST_ESE_PIPE_ID, 0x16);
   sSimPipe = NfcConfig::getUnsigned(NAME_OFF_HOST_SIM_PIPE_ID, 0x0A);
@@ -186,6 +188,8 @@ void HciEventManager::nfaHciCallback(tNFA_HCI_EVT event,
     evtSrc = "SIM2";
   } else if (eventData->rcvd_evt.pipe == sESimPipe) {
     evtSrc = "SIM3";
+  } else if (eventData->rcvd_evt.pipe == sESim2Pipe) {
+    evtSrc = "SIM4";
 #endif
   } else {
     LOG(WARNING) << "Incorrect Pipe Id";

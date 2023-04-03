@@ -49,6 +49,7 @@ class HciEventManager {
 #if(NXP_EXTNS == TRUE)
   static uint8_t sSim2Pipe;
   static uint8_t sESimPipe;
+  static uint8_t sESim2Pipe;
   static const uint8_t OFF_HOST_DEFAULT_PIPE_ID = 0x23;
 #endif
 
