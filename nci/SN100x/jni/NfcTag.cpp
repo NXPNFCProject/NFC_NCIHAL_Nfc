@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2022 NXP
+*  Copyright 2018-2023 NXP
 *
 ******************************************************************************/
 
@@ -578,6 +578,12 @@ TheEnd:
 *******************************************************************************/
 void NfcTag::notifyNfcAbortTagops(union sigval) {
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+
+  if(!NfcTagExtns::getInstance().isNonStdMFCTagDetected()) {
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s:Standard card is Detected", __func__);
+    return;
+  }
   NfcTag& nTag = NfcTag::getInstance();
   JNIEnv* e = NULL;
   ScopedAttach attach(nTag.mNativeData->vm, &e);
