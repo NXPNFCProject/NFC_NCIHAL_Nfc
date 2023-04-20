@@ -83,9 +83,17 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection(JNIEnv* e,
   if (e != NULL && o != NULL) { /* The req is from WiredSeServce */
     if (NfcConfig::hasKey(NAME_NXP_SE_SMB_TERMINAL_TYPE) &&
         NfcConfig::getUnsigned(NAME_NXP_SE_SMB_TERMINAL_TYPE) == 0x01) {
-      seId = SecureElement::EUICC_ID;
-      seHandle = SecureElement::EE_HANDLE_0xF5;
-      LOG(INFO) << StringPrintf("%s: SMB for eUICC", __func__);
+      if (NFC_NFCEE_STATUS_ACTIVE ==
+              se.getEeStatus(SecureElement::EE_HANDLE_0xF5)) {
+        seId = SecureElement::EUICC_ID;
+        seHandle = SecureElement::EE_HANDLE_0xF5;
+      } else {
+        /* If eUICC1 is not activated, choose SMB over eUICC2
+           as either 1 of these 2 eUICC will be active at a time */
+        seId = SecureElement::EUICC2_ID;
+        seHandle = SecureElement::EE_HANDLE_0xF6;
+      }
+      LOG(INFO) << StringPrintf("%s: Activating SMB for %X", __func__, seHandle);
     }
   }
   /* If controller is not routing AND there is no pipe connected,
