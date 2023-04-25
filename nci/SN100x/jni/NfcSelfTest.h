@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- *  Copyright 2019-2022 NXP
+ *  Copyright 2019-2023 NXP
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -212,10 +212,10 @@ class NfcSelfTest {
   /**
    * Executes: Configures the FW and starts the SPC algorithm to save the customer
    *           phase offset into RF_CUST_PHASE_COMPENSATION.
-   * @param    None
+   * @param    clk_freq - clock frequency to be used for SPC test
    * @return status SUCCESS or FAILED.
    */
-  tNFA_STATUS PerformSPCTest();
+  tNFA_STATUS PerformSPCTest(uint8_t clk_freq);
   /*******************************************************************************
    ** Executes: Perform Prbs
    ** @param  on denotes

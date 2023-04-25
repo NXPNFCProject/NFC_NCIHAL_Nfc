@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- *  Copyright 2019-2022 NXP
+ *  Copyright 2019-2023 NXP
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -530,6 +530,7 @@ tNFA_STATUS NfcSelfTest::doNfccSelfTest(int aType) {
   tNFA_STATUS status = NFA_STATUS_FAILED;
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("Self-Test Type %d", aType);
   SelfTestType = aType;
+  uint8_t clk_freq = 4; //4 for 26MHz and 5 for 38.4 MHz.
 
   switch (aType) {
     case TEST_TYPE_RESTORE_RFTXCFG:
@@ -557,7 +558,7 @@ tNFA_STATUS NfcSelfTest::doNfccSelfTest(int aType) {
       status = PerformPrbs(false);
       break;
     case TEST_TYPE_SPC:
-      status = PerformSPCTest();
+      status = PerformSPCTest(clk_freq);
       break;
     default:
       DLOG_IF(ERROR, nfc_debug_enabled)
@@ -761,12 +762,11 @@ static void nfaVSCNtfCallback(uint8_t event, uint16_t param_len, uint8_t *p_para
 /*******************************************************************************
  ** Executes: Configures the FW and starts the SPC algorithm to save the customer
  **           phase offset into RF_CUST_PHASE_COMPENSATION.
- ** @param    None
+ ** @param    clk_freq - clock frequency to be used for SPC test
  ** @return status SUCCESS or FAILED.
  *******************************************************************************/
-tNFA_STATUS NfcSelfTest::PerformSPCTest() {
+tNFA_STATUS NfcSelfTest::PerformSPCTest(uint8_t clk_freq) {
   tNFA_STATUS status = NFA_STATUS_FAILED;
-  uint8_t clk_freq = 4; //4 for 26MHz and 5 for 38.4 MHz.
   uint8_t SPC26MHzTestCmdSeq[] = {CMD_TYPE_CORE_RESET, CMD_TYPE_CORE_INIT,
           CMD_TYPE_NFCC_ALLOW_CHANGE_PARAM, CMD_TYPE_NXP_PROP_EXT, CMD_TYPE_SPC_NTF_EN,
           CMD_TYPE_SPC_26MHZ_BLK1, CMD_TYPE_SPC_26MHZ_BLK2, CMD_TYPE_SPC_26MHZ_BLK3, CMD_TYPE_SPC_START};
