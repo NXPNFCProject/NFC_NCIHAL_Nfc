@@ -29,7 +29,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  Copyright 2019-2020 NXP
+ *  Copyright 2019-2020, 2023 NXP
  *
  ******************************************************************************/
 /*
@@ -499,6 +499,10 @@ bool PeerToPeer::deregisterServer(tJNI_HANDLE jniHandle) {
   if (P2pServer::sSnepServiceName.compare(pSrv->mServiceName) == 0) {
     NFA_PauseP2p();
     NFA_DisableListening();
+    if (!isPollingTempStopped) {
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("%s:isPollingTempStopped is false", fn);
+    }
   }
 #endif
 
