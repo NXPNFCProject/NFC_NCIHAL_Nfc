@@ -184,6 +184,10 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
                 currentUser = uh;
             }
         }
+        if (currentUser == null) {
+            Log.e(TAG, "NULL/ Error fetching currentUser info");
+            return;
+        }
         // no default payment setting in all profles
         if (newUser == null) {
             newUser = currentUser;
@@ -193,11 +197,9 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
         boolean preferForeground = false;
         try {
             // get the setting from the main user instead of from the user profiles.
-            if(currentUser != null){
-                preferForeground = Settings.Secure.getInt(mContext
+            preferForeground = Settings.Secure.getInt(mContext
                     .createContextAsUser(currentUser, 0).getContentResolver(),
                     Settings.Secure.NFC_PAYMENT_FOREGROUND) != 0;
-            }
         } catch (SettingNotFoundException e) {
         }
         synchronized (mLock) {
