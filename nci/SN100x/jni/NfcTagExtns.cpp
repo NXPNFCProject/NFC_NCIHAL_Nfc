@@ -600,6 +600,7 @@ void NfcTagExtns::clearNonStdTagData() {
   DLOG_IF(INFO, android::nfc_debug_enabled) << StringPrintf("%s", __func__);
   memset(&discovery_ntf, 0, sizeof(discovery_ntf));
   memset(&intf_param, 0, sizeof(intf_param));
+  tagState &= ~TAG_SKIP_ISODEP_ACT_TYPE;
 }
 
 /*******************************************************************************
