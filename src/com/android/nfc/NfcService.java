@@ -1001,23 +1001,23 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         mIsTagAppPrefSupported =
             mContext.getResources().getBoolean(R.bool.tag_intent_app_pref_supported);
 
-        if (isSatelliteModeSensitive()) {
-            Uri uri = Settings.Global.getUriFor(SETTINGS_SATELLITE_MODE_ENABLED);
-            if (uri == null) {
-                Log.e(TAG, "satellite mode key does not exist in Settings");
-                return;
-            }
+        Uri uri = Settings.Global.getUriFor(SETTINGS_SATELLITE_MODE_ENABLED);
+        if (uri == null) {
+            Log.e(TAG, "satellite mode key does not exist in Settings");
+        } else {
             mContext.getContentResolver().registerContentObserver(
                     uri,
                     false,
                     new ContentObserver(null) {
                         @Override
                         public void onChange(boolean selfChange) {
-                            Log.i(TAG, "Satellite mode change detected");
-                            if (shouldEnableNfc()) {
-                                new EnableDisableTask().execute(TASK_ENABLE);
-                            } else {
-                                new EnableDisableTask().execute(TASK_DISABLE);
+                            if (isSatelliteModeSensitive()) {
+                                Log.i(TAG, "Satellite mode change detected");
+                                if (shouldEnableNfc()) {
+                                    new EnableDisableTask().execute(TASK_ENABLE);
+                                } else {
+                                    new EnableDisableTask().execute(TASK_DISABLE);
+                                }
                             }
                         }
                     });
