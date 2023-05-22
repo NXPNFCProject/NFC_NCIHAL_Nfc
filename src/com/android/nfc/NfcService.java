@@ -53,6 +53,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Resources.NotFoundException;
+import android.database.ContentObserver;
 import android.media.AudioAttributes;
 import android.media.SoundPool;
 import android.net.Uri;
@@ -76,7 +77,6 @@ import android.nfc.NfcAntennaInfo;
 import android.nfc.Tag;
 import android.nfc.TechListParcel;
 import android.nfc.TransceiveResult;
-import android.nfc.cardemulation.CardEmulation;
 import android.nfc.tech.Ndef;
 import android.nfc.tech.TagTechnology;
 import android.os.AsyncTask;
@@ -101,7 +101,6 @@ import android.os.Vibrator;
 import android.provider.Settings;
 import android.provider.Settings.SettingNotFoundException;
 import android.se.omapi.ISecureElementService;
-import android.service.vr.IVrStateCallbacks;
 import android.sysprop.NfcProperties;
 import android.text.TextUtils;
 import android.util.EventLog;
@@ -774,6 +773,47 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         return false;
     }
 
+    void saveNfcOnSetting(boolean on) {
+        synchronized (NfcService.this) {
+            mPrefsEditor.putBoolean(PREF_NFC_ON, on);
+            mPrefsEditor.apply();
+            mBackupManager.dataChanged();
+        }
+    }
+
+    boolean getNfcOnSetting() {
+        synchronized (NfcService.this) {
+            return mPrefs.getBoolean(PREF_NFC_ON, NFC_ON_DEFAULT);
+        }
+    }
+
+    /**
+     * @hide constant copied from {@link Settings.Global}
+     * TODO(b/274636414): Migrate to official API in Android V.
+     */
+    private static final String SETTINGS_SATELLITE_MODE_RADIOS = "satellite_mode_radios";
+    /**
+     * @hide constant copied from {@link Settings.Global}
+     * TODO(b/274636414): Migrate to official API in Android V.
+     */
+    private static final String SETTINGS_SATELLITE_MODE_ENABLED = "satellite_mode_enabled";
+
+    private boolean isSatelliteModeSensitive() {
+        final String satelliteRadios =
+                Settings.Global.getString(mContentResolver, SETTINGS_SATELLITE_MODE_RADIOS);
+        return satelliteRadios == null || satelliteRadios.contains(Settings.Global.RADIO_NFC);
+    }
+
+    /** Returns true if satellite mode is turned on. */
+    private boolean isSatelliteModeOn() {
+        if (!isSatelliteModeSensitive()) return false;
+        return Settings.Global.getInt(mContentResolver, SETTINGS_SATELLITE_MODE_ENABLED, 0) == 1;
+    }
+
+    boolean shouldEnableNfc() {
+        return getNfcOnSetting() && !isSatelliteModeOn();
+    }
+
     public NfcService(Application nfcApplication) {
         mUserId = ActivityManager.getCurrentUser();
         mContext = nfcApplication;
@@ -960,6 +1000,28 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
 
         mIsTagAppPrefSupported =
             mContext.getResources().getBoolean(R.bool.tag_intent_app_pref_supported);
+
+        if (isSatelliteModeSensitive()) {
+            Uri uri = Settings.Global.getUriFor(SETTINGS_SATELLITE_MODE_ENABLED);
+            if (uri == null) {
+                Log.e(TAG, "satellite mode key does not exist in Settings");
+                return;
+            }
+            mContext.getContentResolver().registerContentObserver(
+                    uri,
+                    false,
+                    new ContentObserver(null) {
+                        @Override
+                        public void onChange(boolean selfChange) {
+                            Log.i(TAG, "Satellite mode change detected");
+                            if (shouldEnableNfc()) {
+                                new EnableDisableTask().execute(TASK_ENABLE);
+                            } else {
+                                new EnableDisableTask().execute(TASK_DISABLE);
+                            }
+                        }
+                    });
+        }
 
         new EnableDisableTask().execute(TASK_BOOT);  // do blocking boot tasks
 
@@ -1265,7 +1327,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                         setPaymentForegroundPreference(mUserId);
                     }
                     Log.d(TAG, "checking on firmware download");
-                    if (mPrefs.getBoolean(PREF_NFC_ON, NFC_ON_DEFAULT)) {
+                    if (shouldEnableNfc()) {
                         Log.d(TAG, "NFC is on. Doing normal stuff");
                         initialized = enableInternal();
                     } else {
@@ -1505,14 +1567,6 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         }
     }
 
-    void saveNfcOnSetting(boolean on) {
-        synchronized (NfcService.this) {
-            mPrefsEditor.putBoolean(PREF_NFC_ON, on);
-            mPrefsEditor.apply();
-            mBackupManager.dataChanged();
-        }
-    }
-
     public void playSound(int sound) {
         synchronized (this) {
             if (mSoundPool == null) {
@@ -1574,7 +1628,9 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
             mIsULPDetModeEnabled = false;
             saveNfcOnSetting(true);
 
-            new EnableDisableTask().execute(TASK_ENABLE);
+            if (shouldEnableNfc()) {
+                new EnableDisableTask().execute(TASK_ENABLE);
+            }
 
             if (mIsRecovering) {
               // Intents for all users
