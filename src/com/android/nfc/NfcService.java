@@ -1274,6 +1274,9 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                     }
 
                     if (initialized) {
+                        // TODO(279846422) The system property will be temporary
+                        // available for vendors that depend on it.
+                        // Remove this code when a replacement API is added.
                         SystemProperties.set("nfc.initialized", "true");
                     }
 
