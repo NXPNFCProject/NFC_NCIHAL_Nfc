@@ -29,9 +29,8 @@ class ScreenStateHelper {
     }
 
     int checkScreenState() {
-        //TODO: fix deprecated api
-        if (!mPowerManager.isScreenOn()) {
-            if(mKeyguardManager.isKeyguardLocked()) {
+        if (!mPowerManager.isInteractive()) {
+            if (mKeyguardManager.isKeyguardLocked()) {
                 return SCREEN_STATE_OFF_LOCKED;
             } else {
                 return SCREEN_STATE_OFF_UNLOCKED;

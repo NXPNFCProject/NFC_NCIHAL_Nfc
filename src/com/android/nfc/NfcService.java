@@ -38,6 +38,7 @@ import android.app.ActivityManager;
 import android.app.Application;
 import android.app.BroadcastOptions;
 import android.app.KeyguardManager;
+import android.app.KeyguardManager.KeyguardLockedStateListener;
 import android.app.PendingIntent;
 import android.app.VrManager;
 import android.app.admin.DevicePolicyManager;
@@ -936,6 +937,8 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         ownerFilter.addAction(Intent.ACTION_PACKAGE_REMOVED);
         ownerFilter.addDataScheme("package");
         mContext.registerReceiverForAllUsers(mOwnerReceiver, ownerFilter, null, null);
+
+        addKeyguardLockedStateListener();
 
         updatePackageCache();
 
@@ -3402,6 +3405,26 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         }
     }
 
+    private void addKeyguardLockedStateListener() {
+        try {
+            mKeyguard.addKeyguardLockedStateListener(mContext.getMainExecutor(),
+                    mIKeyguardLockedStateListener);
+        } catch (Exception e) {
+            Log.e(TAG, "Exception in addKeyguardLockedStateListener " + e);
+        }
+    }
+
+    /**
+     * Receives KeyGuard lock state updates
+     */
+    private KeyguardLockedStateListener mIKeyguardLockedStateListener =
+            new KeyguardLockedStateListener() {
+        @Override
+        public void onKeyguardLockedStateChanged(boolean isKeyguardLocked) {
+            applyScreenState(mScreenStateHelper.checkScreenState());
+        }
+    };
+
     /**
      * Read mScreenState and apply NFC-C polling and NFC-EE routing
      */
@@ -4938,25 +4961,12 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                     || action.equals(Intent.ACTION_SCREEN_OFF)
                     || action.equals(Intent.ACTION_USER_PRESENT)) {
                 // Perform applyRouting() in AsyncTask to serialize blocking calls
-                int screenState = mScreenStateHelper.checkScreenState();
-                if (action.equals(Intent.ACTION_SCREEN_OFF)) {
-                     if (mScreenState != ScreenStateHelper.SCREEN_STATE_OFF_LOCKED) {
-                        screenState = mKeyguard.isKeyguardLocked() ?
-                        ScreenStateHelper.SCREEN_STATE_OFF_LOCKED : ScreenStateHelper.SCREEN_STATE_OFF_UNLOCKED;
-                     }
-                } else if (action.equals(Intent.ACTION_SCREEN_ON)) {
+                if (action.equals(Intent.ACTION_SCREEN_ON)) {
                     synchronized (NfcService.this) {
                         mPollDelayCount = 0;
                     }
-                    screenState = mKeyguard.isKeyguardLocked()
-                            ? ScreenStateHelper.SCREEN_STATE_ON_LOCKED
-                            : ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED;
-                } else if (action.equals(Intent.ACTION_USER_PRESENT)) {
-                    screenState = ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED;
                 }
-                if (mScreenState != screenState){
-                    sendMessage(NfcService.MSG_APPLY_SCREEN_STATE, screenState);
-                }
+                applyScreenState(mScreenStateHelper.checkScreenState());
             } else if (action.equals(Intent.ACTION_USER_SWITCHED)) {
                 int userId = intent.getIntExtra(Intent.EXTRA_USER_HANDLE, 0);
                 mUserId = userId;
@@ -4964,10 +4974,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                 if (mIsHceCapable) {
                     mCardEmulationManager.onUserSwitched(getUserId());
                 }
-                int screenState = mScreenStateHelper.checkScreenState();
-                if (screenState != mScreenState) {
-                    sendMessage(NfcService.MSG_APPLY_SCREEN_STATE, screenState);
-                }
+                applyScreenState(mScreenStateHelper.checkScreenState());
 
                 if (NFC_SNOOP_LOG_MODE.equals(NfcProperties.snoop_log_mode_values.FULL) ||
                         NFC_VENDOR_DEBUG_ENABLED) {
@@ -5038,6 +5045,15 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
             }
         }
     };
+
+    private void applyScreenState(int screenState) {
+        if (mScreenState != screenState) {
+            if (nci_version != NCI_VERSION_2_0) {
+                new ApplyRoutingTask().execute(Integer.valueOf(screenState));
+            }
+            sendMessage(NfcService.MSG_APPLY_SCREEN_STATE, screenState);
+        }
+    }
 
     private void setPaymentForegroundPreference(int user) {
         Context uc = mContext.createContextAsUser(UserHandle.of(user), 0);
