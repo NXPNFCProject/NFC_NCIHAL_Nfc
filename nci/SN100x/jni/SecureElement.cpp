@@ -90,7 +90,7 @@ SecureElement::SecureElement() :
     mActualResponseSize = 0;
     mAtrInfolen = 0;
     mActualNumEe = 0;
-    memset (&mEeInfo, 0, nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED *sizeof(tNFA_EE_INFO));
+    memset (&mEeInfo, 0, MAX_NUM_EE *sizeof(tNFA_EE_INFO));
     memset (mAidForEmptySelect, 0, sizeof(mAidForEmptySelect));
     memset (mVerInfo, 0, sizeof(mVerInfo));
     memset (mAtrInfo, 0, sizeof(mAtrInfo));
