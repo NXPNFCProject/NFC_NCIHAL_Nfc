@@ -971,6 +971,11 @@ jintArray SecureElement::getActiveSecureElementList (JNIEnv* e)
           seId = getGenericEseId(EE_HANDLE_0xF5 & ~NFA_HANDLE_GROUP_EE);
         }
 
+        if (nfcee_handle[i] == EE_HANDLE_0xF6 &&
+            nfcee_status[i] == NFC_NFCEE_STATUS_ACTIVE) {
+          seId = getGenericEseId(EE_HANDLE_0xF6 & ~NFA_HANDLE_GROUP_EE);
+        }
+
         if(nfcee_handle[i] == EE_HANDLE_0xF8 && nfcee_status[i] == NFC_NFCEE_STATUS_ACTIVE)
         {
             seId = getGenericEseId(EE_HANDLE_0xF8 & ~NFA_HANDLE_GROUP_EE);
