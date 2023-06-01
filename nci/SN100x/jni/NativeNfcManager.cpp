@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 /******************************************************************************
-*
-*  The original Work has been changed by NXP.
-*
-*  Licensed under the Apache License, Version 2.0 (the "License");
-*  you may not use this file except in compliance with the License.
-*  You may obtain a copy of the License at
-*
-*  http://www.apache.org/licenses/LICENSE-2.0
-*
-*  Unless required by applicable law or agreed to in writing, software
-*  distributed under the License is distributed on an "AS IS" BASIS,
-*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-*  See the License for the specific language governing permissions and
-*  limitations under the License.
-*
-*  Copyright 2018-2022 NXP
-*
-******************************************************************************/
+ *
+ *  The original Work has been changed by NXP.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ *  Copyright 2018-2022,2023 NXP
+ *
+ ******************************************************************************/
 #include <android-base/stringprintf.h>
 #include <base/logging.h>
 #include <cutils/properties.h>
@@ -85,6 +85,7 @@ using android::base::StringPrintf;
 
 bool isDynamicUiccEnabled;
 bool isDisconnectNeeded;
+bool isCePriorityEnabled;
 #endif
 extern tNFA_DM_DISC_FREQ_CFG* p_nfa_dm_rf_disc_freq_cfg;  // defined in stack
 namespace android {
@@ -1635,6 +1636,13 @@ static jboolean nfcManager_doInitialize(JNIEnv* e, jobject o) {
       isDisconnectNeeded = (isDisconnectNeeded == 0x01 ? true : false);
     } else
       isDisconnectNeeded = false;
+    if (NfcConfig::hasKey(NAME_NXP_CE_PRIORITY_ENABLED)) {
+      isCePriorityEnabled =
+          (NfcConfig::getUnsigned(NAME_NXP_CE_PRIORITY_ENABLED) == 0x01
+               ? true
+               : false);
+    } else
+      isCePriorityEnabled = false;
 
 #endif
   powerSwitch.initialize(PowerSwitch::FULL_POWER);
@@ -4129,6 +4137,9 @@ static void waitIfRfStateActive() {
   uint16_t delayInMs = 50;
   const uint16_t maxDelayInMs = 1000;
   uint16_t maxDelayLoopCount = maxDelayInMs/delayInMs;
+
+  LOG(INFO) << StringPrintf("isCePriorityEnabled :%d", isCePriorityEnabled);
+  if (!isCePriorityEnabled) return;
 
   SecureElement& se = SecureElement::getInstance();
 
