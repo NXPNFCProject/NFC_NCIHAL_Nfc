@@ -84,6 +84,7 @@ using android::base::StringPrintf;
 
 bool isDynamicUiccEnabled;
 bool isDisconnectNeeded;
+bool isCePriorityEnabled;
 #endif
 extern tNFA_DM_DISC_FREQ_CFG* p_nfa_dm_rf_disc_freq_cfg;  // defined in stack
 namespace android {
@@ -1617,6 +1618,13 @@ static jboolean nfcManager_doInitialize(JNIEnv* e, jobject o) {
       isDisconnectNeeded = (isDisconnectNeeded == 0x01 ? true : false);
     } else
       isDisconnectNeeded = false;
+    if (NfcConfig::hasKey(NAME_NXP_CE_PRIORITY_ENABLED)) {
+      isCePriorityEnabled =
+          (NfcConfig::getUnsigned(NAME_NXP_CE_PRIORITY_ENABLED) == 0x01
+               ? true
+               : false);
+    } else
+      isCePriorityEnabled = false;
 
 #endif
   powerSwitch.initialize(PowerSwitch::FULL_POWER);
@@ -4108,6 +4116,9 @@ static void waitIfRfStateActive() {
   uint16_t delayInMs = 50;
   const uint16_t maxDelayInMs = 1000;
   uint16_t maxDelayLoopCount = maxDelayInMs/delayInMs;
+
+  LOG(INFO) << StringPrintf("isCePriorityEnabled :%d", isCePriorityEnabled);
+  if (!isCePriorityEnabled) return;
 
   SecureElement& se = SecureElement::getInstance();
 
