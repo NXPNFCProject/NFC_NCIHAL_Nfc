@@ -12,7 +12,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  Copyright 2018-2020, 2022 NXP
+ *  Copyright 2018-2020, 2022-2023 NXP
  *
  ******************************************************************************/
 #include "MposManager.h"
@@ -105,7 +105,8 @@ static int nativeNfcMcrManage_doConfigureSecureReaderMode(JNIEnv* e, jobject, bo
 #ifdef FEATURE_SECURE_READER
   /* The functionality of Mifare Classic reader over eSE is some what same as
    * MPOS. Hence, reusing the existing code */
-  status = MposManager::getInstance().setMposReaderMode(on, readertype);
+  status =
+      MposManager::getInstance().setMposReaderMode(on, std::move(readertype));
 #endif
   return status;
 }

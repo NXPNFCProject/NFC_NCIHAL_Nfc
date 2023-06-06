@@ -12,7 +12,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  Copyright 2018-2020, 2022 NXP
+ *  Copyright 2018-2020, 2022-2023 NXP
  *
  ******************************************************************************/
 
@@ -139,7 +139,7 @@ tNFA_STATUS MposManager::setMposReaderMode(bool on, std::string readerType) {
   tNFA_STATUS status = NFA_STATUS_REJECTED;
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:enter, Reader Mode %s, Type %s",
           __FUNCTION__, on ? "ON" : "OFF", readerType.c_str());
-  uint8_t rdrType = mMposMgr.getReaderType(readerType);
+  uint8_t rdrType = mMposMgr.getReaderType(std::move(readerType));
   if (rdrType == NFA_SCR_INVALID) {
     return status;
   }

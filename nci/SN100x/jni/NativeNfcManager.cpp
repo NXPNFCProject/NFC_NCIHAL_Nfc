@@ -3843,7 +3843,7 @@ static int nfcManager_setTransitConfig(JNIEnv * e, jobject o,
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
     std::string transitConfig = ConvertJavaStrToStdString(e, config);
     SyncEventGuard guard(sNfaTransitConfigEvent);
-    int stat = NFA_SetTransitConfig(transitConfig);
+    int stat = NFA_SetTransitConfig(std::move(transitConfig));
     if (stat != NFA_STATUS_OK) {
       LOG(ERROR) << StringPrintf("%s: NFA_SetTransitConfig failed", __func__);
     } else {
