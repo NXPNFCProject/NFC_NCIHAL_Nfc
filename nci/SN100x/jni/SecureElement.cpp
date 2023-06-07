@@ -1669,19 +1669,6 @@ uint8_t SecureElement::getGateAndPipeList(tNFA_HANDLE eeHandle) {
 }
 /*******************************************************************************
 **
-** Function         getLastRfFiledToggleTime
-**
-** Description      Provides the last RF filed toggile timer
-**
-** Returns          timespec
-**
-*******************************************************************************/
-struct timespec SecureElement::getLastRfFiledToggleTime(void)
-{
-  return mLastRfFieldToggle;
-}
-/*******************************************************************************
-**
 ** Function:        finalize
 **
 ** Description:     Release all resources.

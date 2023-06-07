@@ -472,16 +472,6 @@ public:
  tNFA_HANDLE getActiveEeHandle(tNFA_HANDLE eeHandle = EE_HANDLE_0xF3);
  /*******************************************************************************
  **
- ** Function         getLastRfFiledToggleTime
- **
- ** Description      Provides the last RF filed toggile timer
- **
- ** Returns          timespec
- **
- *******************************************************************************/
- struct timespec getLastRfFiledToggleTime(void);
- /*******************************************************************************
- **
  ** Function         setNfccPwrConfig
  **
  ** Description      sends the link cntrl command to eSE with the value passed
