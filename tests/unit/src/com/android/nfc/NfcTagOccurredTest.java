@@ -65,7 +65,7 @@ public final class NfcTagOccurredTest {
         mNfcSupported = true;
 
         PowerManager mockPowerManager = Mockito.mock(PowerManager.class);
-        when(mockPowerManager.isScreenOn()).thenReturn(false);
+        when(mockPowerManager.isInteractive()).thenReturn(false);
         Resources mockResources = Mockito.mock(Resources.class);
         when(mockResources.getBoolean(eq(R.bool.tag_intent_app_pref_supported)))
                 .thenReturn(false);
