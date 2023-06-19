@@ -53,6 +53,6 @@
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"Ez dago NFC etiketa hau onartzen duen aplikaziorik"</string>
     <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"Baliteke NFC bidezko konexioa blokeatzea"</string>
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Sakatu hau konponbideei buruzko informazioa lortzeko."</string>
-    <string name="nfc_logging_alert_title" msgid="5300867034660942987">"NFC bidezko datuak erregistratzen ari dira"</string>
+    <string name="nfc_logging_alert_title" msgid="5300867034660942987">"NFCari buruzko datuak erregistratzen"</string>
     <string name="nfc_logging_alert_message" msgid="1550187184825467942">"Sakatu hau grabatzeari uzteko."</string>
 </resources>

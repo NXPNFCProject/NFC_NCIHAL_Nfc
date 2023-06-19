@@ -35,7 +35,7 @@
     <string name="could_not_use_app" msgid="8137587876138569083">"Kunne ikke bruke <xliff:g id="APP">%1$s</xliff:g>."</string>
     <string name="pay_with" msgid="5531545488795798945">"Betal med"</string>
     <string name="complete_with" msgid="6797459104103012992">"Fullfør med"</string>
-    <string name="default_pay_app_removed" msgid="4108250545457437360">"Den foretrukne tjenesten din for berøringsbetaling har blitt fjernet. Vil du velge en annen?"</string>
+    <string name="default_pay_app_removed" msgid="4108250545457437360">"Den foretrukne tjenesten din for kontaktløs betaling er fjernet. Vil du velge en annen?"</string>
     <string name="ask_nfc_tap" msgid="2925239870458286340">"Trykk på en annen enhet for å fullføre"</string>
     <string name="wifi_connect" msgid="6250727951843550671">"Koble til"</string>
     <string name="status_unable_to_connect" msgid="9183908200295307657">"Kunne ikke koble til nettverket"</string>

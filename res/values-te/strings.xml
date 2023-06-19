@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <string name="app_name" msgid="78565911793142902">"Nfc సేవ"</string>
+    <string name="app_name" msgid="78565911793142902">"Nfc సర్వీస్"</string>
     <string name="nfcUserLabel" msgid="7708535817084357357">"Nfc"</string>
     <string name="accessibility_nfc_enabled" msgid="7796246979948787735">"NFC ప్రారంభించబడింది."</string>
     <string name="tap_to_beam" msgid="5819197866281059878">"ప్రసారం చేయడానికి నొక్కండి"</string>
@@ -14,7 +14,7 @@
     <string name="beam_tap_to_view" msgid="7430394753262448349">"చూడటానికి నొక్కండి"</string>
     <string name="beam_handover_not_supported" msgid="4083165921751489015">"స్వీకర్త పరికరం Beam ద్వారా పెద్ద ఫైల్ బదిలీకి మద్దతు ఇవ్వదు."</string>
     <string name="beam_try_again" msgid="3364677301009783455">"పరికరాలను మళ్లీ సమీపంలోకి తీసుకురండి"</string>
-    <string name="beam_busy" msgid="5253335587620612576">"Beam ప్రస్తుతం బిజీగా ఉంది. మునుపటి బదిలీ పూర్తయిన తర్వాత మళ్లీ ప్రయత్నించండి."</string>
+    <string name="beam_busy" msgid="5253335587620612576">"Beam ప్రస్తుతం బిజీగా ఉంది. మునుపటి బదిలీ పూర్తయిన తర్వాత మళ్లీ ట్రై చేయండి."</string>
     <string name="device" msgid="4459621591392478151">"పరికరం"</string>
     <string name="connecting_peripheral" msgid="1296182660525660935">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g>ని కనెక్ట్ చేస్తోంది"</string>
     <string name="connected_peripheral" msgid="20748648543160091">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g> కనెక్ట్ చేయబడింది"</string>
@@ -37,14 +37,14 @@
     <string name="complete_with" msgid="6797459104103012992">"దీనితో పూర్తి చేయండి"</string>
     <string name="default_pay_app_removed" msgid="4108250545457437360">"నొక్కి చెల్లించడం కోసం మీ ప్రాధాన్య సేవ తీసివేయబడింది. మరోదాన్ని ఎంచుకోవాలా?"</string>
     <string name="ask_nfc_tap" msgid="2925239870458286340">"పూర్తి చేయడానికి మరో పరికరాన్ని నొక్కండి"</string>
-    <string name="wifi_connect" msgid="6250727951843550671">"కనెక్ట్ చేయి"</string>
+    <string name="wifi_connect" msgid="6250727951843550671">"కనెక్ట్ చేయండి"</string>
     <string name="status_unable_to_connect" msgid="9183908200295307657">"నెట్‌వర్క్‌కు కనెక్ట్ చేయడం సాధ్యపడలేదు"</string>
     <string name="status_wifi_connected" msgid="5893022897732105739">"కనెక్ట్ చేయబడింది"</string>
     <string name="title_connect_to_network" msgid="2474034615817280146">"నెట్‌‍వర్క్‌కు కనెక్ట్ చేయి"</string>
     <string name="prompt_connect_to_network" msgid="8511683573657516114">"<xliff:g id="NETWORK_SSID">%1$s</xliff:g> నెట్‌వర్క్‌కు కనెక్ట్ చేయాలా?"</string>
     <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"Android Beam కోసం NFC ప్రారంభించబడటం అవసరం. మీరు దాన్ని ప్రారంభించాలనుకుంటున్నారా?"</string>
     <string name="android_beam" msgid="1666446406999492763">"Android Beam"</string>
-    <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"అప్లికేషన్ బాహ్య నిల్వ అనుమతిని కలిగి లేదు. దీనికి ఈ ఫైల్‌ని బీమ్ చేయడం అవసరమవుతుంది"</string>
+    <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"అప్లికేషన్ బాహ్య స్టోరేజ్‌ అనుమతిని కలిగి లేదు. దీనికి ఈ ఫైల్‌ని బీమ్ చేయడం అవసరమవుతుంది"</string>
     <string name="title_confirm_url_open" msgid="8069968913244794478">"లింక్‌ని తెరవాలా?"</string>
     <string name="summary_confirm_url_open" product="tablet" msgid="3353502750736192055">"మీ టాబ్లెట్ NFC ద్వారా లింక్‌ని పొందింది:"</string>
     <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"మీ ఫోన్ NFC ద్వారా లింక్‌ని పొందింది:"</string>
@@ -53,6 +53,6 @@
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"NFC ట్యాగ్‌కి మద్దతు ఇచ్చే అప్లికేషన్ ఏదీ లేదు"</string>
     <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"NFC బ్లాక్ చేయబడవచ్చు"</string>
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"ఎలా పరిష్కరించాలో తెలుసుకోవడానికి ట్యాప్ చేయండి."</string>
-    <string name="nfc_logging_alert_title" msgid="5300867034660942987">"NFC డేటా రికార్డ్ చేయబడుతోంది"</string>
+    <string name="nfc_logging_alert_title" msgid="5300867034660942987">"NFC డేటా రికార్డ్ అవుతోంది"</string>
     <string name="nfc_logging_alert_message" msgid="1550187184825467942">"రికార్డింగ్ ఆపడానికి ట్యాప్ చేయండి."</string>
 </resources>

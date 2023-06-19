@@ -35,7 +35,7 @@
     <string name="could_not_use_app" msgid="8137587876138569083">"Det gick inte att använda <xliff:g id="APP">%1$s</xliff:g>."</string>
     <string name="pay_with" msgid="5531545488795798945">"Betala med"</string>
     <string name="complete_with" msgid="6797459104103012992">"Slutför med"</string>
-    <string name="default_pay_app_removed" msgid="4108250545457437360">"Standardtjänsten för snudda och betala har tagits bort. Vill du välja en annan?"</string>
+    <string name="default_pay_app_removed" msgid="4108250545457437360">"Standardtjänsten för blippa och betala har tagits bort. Vill du välja en annan?"</string>
     <string name="ask_nfc_tap" msgid="2925239870458286340">"Slutför genom att trycka på en annan enhet"</string>
     <string name="wifi_connect" msgid="6250727951843550671">"Anslut"</string>
     <string name="status_unable_to_connect" msgid="9183908200295307657">"Det gick inte att ansluta till nätverket"</string>

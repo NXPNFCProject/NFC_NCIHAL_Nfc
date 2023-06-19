@@ -35,7 +35,7 @@
     <string name="could_not_use_app" msgid="8137587876138569083">"Kan <xliff:g id="APP">%1$s</xliff:g> niet gebruiken."</string>
     <string name="pay_with" msgid="5531545488795798945">"Betalen met"</string>
     <string name="complete_with" msgid="6797459104103012992">"Voltooien met"</string>
-    <string name="default_pay_app_removed" msgid="4108250545457437360">"Je voorkeursservice voor tikken en betalen is verwijderd. Een andere app kiezen?"</string>
+    <string name="default_pay_app_removed" msgid="4108250545457437360">"Je voorkeursservice voor contactloos betalen is verwijderd. Een andere app kiezen?"</string>
     <string name="ask_nfc_tap" msgid="2925239870458286340">"Tik op een ander apparaat om te voltooien"</string>
     <string name="wifi_connect" msgid="6250727951843550671">"Verbinding maken"</string>
     <string name="status_unable_to_connect" msgid="9183908200295307657">"Kan geen verbinding maken met het netwerk"</string>

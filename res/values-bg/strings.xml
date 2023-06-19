@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <string name="app_name" msgid="78565911793142902">"Nfc Service"</string>
+    <string name="app_name" msgid="78565911793142902">"Услуга NFC"</string>
     <string name="nfcUserLabel" msgid="7708535817084357357">"NFC"</string>
     <string name="accessibility_nfc_enabled" msgid="7796246979948787735">"NFC е активирана."</string>
     <string name="tap_to_beam" msgid="5819197866281059878">"Докоснете за излъчване"</string>
