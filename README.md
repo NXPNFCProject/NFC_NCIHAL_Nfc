@@ -15,7 +15,7 @@
 | android-13-preview-1              |  13.09.00 (PN557/PN560/SN100/SN110/SN220) |  NFC_AR_00_1E800_13.09.00_OpnSrc |
 | android-13.0.0_r3              |  13.0B.00 (PN557/PN560/SN100/SN110/SN220) |  NFC_AR_00_1E800_13.0B.00_OpnSrc |
 | android-13.0.0_r3              |  13.0D.01 (PN557/PN560/SN100/SN110/SN220) |  NFC_AR_00_1E800_13.0D.01_OpnSrc |
-
+| android-13.0.0_r3              |  13.0E.00 (PN557/PN560/SN100/SN110/SN220) |  NFC_AR_00_1E800_13.0E.00_OpnSrc |
 
 
 
