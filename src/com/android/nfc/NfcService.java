@@ -1923,6 +1923,13 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                             }
                             binder.linkToDeath(mReaderModeDeathRecipient, 0);
                         }
+                        if (mPollDelayed) {
+                            mHandler.removeMessages(MSG_DELAY_POLLING);
+                            mPollDelayCount = 0;
+                            mPollDelayed = false;
+                            mDeviceHost.startStopPolling(true);
+                            if (DBG) Log.d(TAG, "setReaderMode() polling is started");
+                        }
                         updateReaderModeParams(callback, flags, extras, binder, callingUid);
                     } catch (RemoteException e) {
                         Log.e(TAG, "Remote binder has already died.");
