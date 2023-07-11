@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2021 NXP
+*  Copyright 2018-2021,2023 NXP
 *
 ******************************************************************************/
 
@@ -360,17 +360,11 @@ public class HostNfcFEmulationManager {
                     return;
                 }
                 byte[] data = dataBundle.getByteArray("data");
-                /* this piece of code is commented to allow the application to send an empty
-                   data packet */
-                /*if (data == null) {
+                if (data == null) {
                     Log.e(TAG, "Data is null");
                     return;
                 }
-                if (data.length == 0) {
-                    Log.e(TAG, "Invalid response packet");
-                    return;
-                }*/
-                if (data != null && (data.length != (data[0] & 0xff))) {
+                if (data.length != 0 && (data.length != (data[0] & 0xff))) {
                     Log.e(TAG, "Invalid response packet");
                     return;
                 }

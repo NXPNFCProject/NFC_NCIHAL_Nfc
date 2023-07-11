@@ -1258,26 +1258,10 @@ static jintArray nfcManager_getActiveSecureElementList(JNIEnv *e, jobject o)
 **
 *******************************************************************************/
 static jboolean nfcManager_sendRawFrame(JNIEnv* e, jobject, jbyteArray data) {
-  size_t bufLen = 0;
-  uint8_t* buf = NULL;
-  ScopedByteArrayRO bytes(e);
-
-#if (NXP_EXTNS == TRUE)
-  DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: nfcManager_sendRawFrame", __func__);
-  if (data != NULL) {
-    bytes.reset(data);
-    buf = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
-    bufLen = bytes.size();
-  } else {
-    /*Fix for Felica on Host for Empty NCI packet handling*/
-    bufLen = 0x00;
-  }
-#else
-  bytes.reset(data);
-  buf = const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
-  bufLen = bytes.size();
-#endif
+  ScopedByteArrayRO bytes(e, data);
+  uint8_t* buf =
+      const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(&bytes[0]));
+  size_t bufLen = bytes.size();
   tNFA_STATUS status = NFA_SendRawFrame(buf, bufLen, 0);
 
   return (status == NFA_STATUS_OK);
