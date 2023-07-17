@@ -545,25 +545,6 @@ bool RoutingManager::commitRouting() {
 void RoutingManager::onNfccShutdown() {
   static const char fn[] = "RoutingManager:onNfccShutdown";
 
-#if(NXP_EXTNS == TRUE)
-  RoutingManager& routingManager = RoutingManager::getInstance();
-  {
-    LOG(INFO) << StringPrintf("%s: mAidAddRemoveEvent Notified", __func__);
-    SyncEventGuard guard(routingManager.mAidAddRemoveEvent);
-    routingManager.mAidAddRemoveEvent.notifyOne();
-  }
-  {
-    LOG(INFO) << StringPrintf("%s: mEeUpdateEvent Notified", __func__);
-    SyncEventGuard guard(routingManager.mEeUpdateEvent);
-    routingManager.mEeUpdateEvent.notifyOne();
-  }
-  {
-    LOG(INFO) << StringPrintf("%s: mRoutingEvent Notified", __func__);
-    SyncEventGuard guard(routingManager.mRoutingEvent);
-    routingManager.mRoutingEvent.notifyOne();
-  }
-#endif
-
   if (mDefaultOffHostRoute == 0x00 && mDefaultFelicaRoute == 0x00) return;
 
   tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
@@ -2239,5 +2220,31 @@ void RoutingManager::processGetRoutingRsp(tNFA_DM_CBACK_DATA* eventData) {
     SyncEventGuard guard(sNfaGetRoutingEvent);
     sNfaGetRoutingEvent.notifyOne();
   }
+}
+
+/*******************************************************************************
+**
+** Function:        notifyAllEvents
+**
+** Description:     Unblocks function waiting on syncEvent, if any.
+**
+** Returns:         void
+**
+*******************************************************************************/
+void RoutingManager::notifyAllEvents() {
+  LOG(INFO) << StringPrintf("%s: Enter", __func__);
+  {
+    SyncEventGuard guard(mAidAddRemoveEvent);
+    mAidAddRemoveEvent.notifyOne();
+  }
+  {
+    SyncEventGuard guard(mEeUpdateEvent);
+    mEeUpdateEvent.notifyOne();
+  }
+  {
+    SyncEventGuard guard(mRoutingEvent);
+    mRoutingEvent.notifyOne();
+  }
+  LOG(INFO) << StringPrintf("%s: Exit", __func__);
 }
 #endif

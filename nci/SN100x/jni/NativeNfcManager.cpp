@@ -1289,8 +1289,8 @@ static jboolean nfcManager_sendRawFrame(JNIEnv* e, jobject, jbyteArray data) {
 static jboolean nfcManager_setRoutingEntry (JNIEnv*, jobject, jint type, jint value, jint route, jint power)
 {
     jboolean result = false;
-    if (!sIsNfaEnabled) {
-      LOG(ERROR) << StringPrintf("%s: sIsNfaEnabled is false. Return...", __func__);
+    if (sIsDisabling || !sIsNfaEnabled) {
+      LOG(ERROR) << StringPrintf("%s: sIsNfaEnabled or sIsDisabling", __func__);
       return result;
     }
 
@@ -1312,6 +1312,10 @@ static jboolean nfcManager_setRoutingEntry (JNIEnv*, jobject, jint type, jint va
 static jboolean nfcManager_clearRoutingEntry (JNIEnv*, jobject, jint type)
 {
     jboolean result = false;
+    if (sIsDisabling || !sIsNfaEnabled) {
+      LOG(ERROR) << StringPrintf("%s: sIsNfaEnabled or sIsDisabling", __func__);
+      return result;
+    }
     //checkRecreatePipe(); TODO
     result = RoutingManager::getInstance().clearRoutingEntry(type);
     return result;
@@ -1330,6 +1334,10 @@ static jboolean nfcManager_clearRoutingEntry (JNIEnv*, jobject, jint type)
 
 static void nfcManager_setEmptyAidRoute (JNIEnv*, jobject, jint route)
 {
+    if (sIsDisabling || !sIsNfaEnabled) {
+      LOG(ERROR) << StringPrintf("%s: sIsNfaEnabled or sIsDisabling", __func__);
+      return;
+    }
     RoutingManager::getInstance().setEmptyAidEntry(route);
     return;
 }
@@ -2135,6 +2143,7 @@ static jboolean nfcManager_doDeinitialize(JNIEnv*, jobject) {
   sSeRfActive = false;
   /*Disable Field Detect Mode if enabled*/
   if (NFA_IsFieldDetectEnabled()) NFA_SetFieldDetectMode(false);
+  RoutingManager::getInstance().notifyAllEvents();
   SecureElement::getInstance().finalize ();
   MposManager::getInstance().finalize();
 #endif

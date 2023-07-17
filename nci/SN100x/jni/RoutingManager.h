@@ -158,6 +158,7 @@ class RoutingManager {
     void dumpTables(int);
     tNFA_HANDLE checkAndUpdateAltRoute(int& routeLoc);
     tNFA_HANDLE getNfaHandle(uint16_t routeLoc);
+    void notifyAllEvents();
 
     uint32_t getUicc2selected();
     bool isNfceeActive(int routeLoc, tNFA_HANDLE& ActDevHandle);
