@@ -12,7 +12,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  Copyright 2018-2020 NXP
+ *  Copyright 2018-2020, 2023 NXP
  *
  ******************************************************************************/
 
@@ -28,8 +28,6 @@ public class NativeNfcMposManager {
     public native void doStartPoll();
 
     public native int doMposSetReaderMode(boolean on);
-
-    public native int doConfigureSecureReaderMode(boolean on, String readerType);
 
     public native boolean doMposGetReaderMode();
 }
