@@ -41,7 +41,6 @@ import android.nfc.tech.TagTechnology;
 import android.util.Log;
 
 import com.android.nfc.DeviceHost;
-import com.android.nfc.LlcpException;
 import com.android.nfc.NfcDiscoveryParameters;
 
 import java.io.FileDescriptor;
@@ -54,8 +53,6 @@ public class NativeNfcManager implements DeviceHost {
     private static final String TAG = "NativeNfcManager";
     static final String PREF = "NciDeviceHost";
 
-    static final int DEFAULT_LLCP_MIU = 1980;
-    static final int DEFAULT_LLCP_RWSIZE = 2;
     static final int MODE_DEDICATED = 1;
     static final int MODE_NORMAL = 0;
     static final String DRIVER_NAME = "android-nci";
@@ -379,87 +376,6 @@ public class NativeNfcManager implements DeviceHost {
       return mT4tNfceeMgr.doClearNdefT4tData();
     }
 
-    private native NativeLlcpConnectionlessSocket doCreateLlcpConnectionlessSocket(
-            int nSap, String sn);
-
-    @Override
-    public LlcpConnectionlessSocket createLlcpConnectionlessSocket(int nSap, String sn)
-            throws LlcpException {
-        LlcpConnectionlessSocket socket = doCreateLlcpConnectionlessSocket(nSap, sn);
-        if (socket != null) {
-            return socket;
-        } else {
-            /* Get Error Status */
-            int error = doGetLastError();
-
-            Log.d(TAG, "failed to create llcp socket: " + ErrorCodes.asString(error));
-
-            switch (error) {
-                case ErrorCodes.ERROR_BUFFER_TO_SMALL:
-                case ErrorCodes.ERROR_INSUFFICIENT_RESOURCES:
-                    throw new LlcpException(error);
-                default:
-                    throw new LlcpException(ErrorCodes.ERROR_SOCKET_CREATION);
-            }
-        }
-    }
-
-    private native NativeLlcpServiceSocket doCreateLlcpServiceSocket(
-            int nSap, String sn, int miu, int rw, int linearBufferLength);
-
-    @Override
-    public LlcpServerSocket createLlcpServerSocket(
-            int nSap, String sn, int miu, int rw, int linearBufferLength) throws LlcpException {
-        LlcpServerSocket socket = doCreateLlcpServiceSocket(nSap, sn, miu, rw, linearBufferLength);
-        if (socket != null) {
-            return socket;
-        } else {
-            /* Get Error Status */
-            int error = doGetLastError();
-
-            Log.d(TAG, "failed to create llcp socket: " + ErrorCodes.asString(error));
-
-            switch (error) {
-                case ErrorCodes.ERROR_BUFFER_TO_SMALL:
-                case ErrorCodes.ERROR_INSUFFICIENT_RESOURCES:
-                    throw new LlcpException(error);
-                default:
-                    throw new LlcpException(ErrorCodes.ERROR_SOCKET_CREATION);
-            }
-        }
-    }
-
-    private native NativeLlcpSocket doCreateLlcpSocket(
-            int sap, int miu, int rw, int linearBufferLength);
-
-    @Override
-    public LlcpSocket createLlcpSocket(int sap, int miu, int rw, int linearBufferLength)
-            throws LlcpException {
-        LlcpSocket socket = doCreateLlcpSocket(sap, miu, rw, linearBufferLength);
-        if (socket != null) {
-            return socket;
-        } else {
-            /* Get Error Status */
-            int error = doGetLastError();
-
-            Log.d(TAG, "failed to create llcp socket: " + ErrorCodes.asString(error));
-
-            switch (error) {
-                case ErrorCodes.ERROR_BUFFER_TO_SMALL:
-                case ErrorCodes.ERROR_INSUFFICIENT_RESOURCES:
-                    throw new LlcpException(error);
-                default:
-                    throw new LlcpException(ErrorCodes.ERROR_SOCKET_CREATION);
-            }
-        }
-    }
-
-    @Override
-    public native boolean doCheckLlcp();
-
-    @Override
-    public native boolean doActivateLlcp();
-
     private native void doResetTimeouts();
 
     @Override
@@ -534,16 +450,6 @@ public class NativeNfcManager implements DeviceHost {
         return false;
     }
 
-    @Override
-    public int getDefaultLlcpMiu() {
-        return DEFAULT_LLCP_MIU;
-    }
-
-    @Override
-    public int getDefaultLlcpRwSize() {
-        return DEFAULT_LLCP_RWSIZE;
-    }
-
     private native void doDump(FileDescriptor fd);
 
     @Override
@@ -615,21 +521,6 @@ public class NativeNfcManager implements DeviceHost {
 
     private void notifyEfdmEvt(int efdmEvt) {
         mListener.onNotifyEfdmEvt(efdmEvt);
-    }
-
-    /** Notifies P2P Device detected, to activate LLCP link */
-    private void notifyLlcpLinkActivation(NativeP2pDevice device) {
-        mListener.onLlcpLinkActivated(device);
-    }
-
-    /** Notifies P2P Device detected, to activate LLCP link */
-    private void notifyLlcpLinkDeactivated(NativeP2pDevice device) {
-        mListener.onLlcpLinkDeactivated(device);
-    }
-
-    /** Notifies first packet received from remote LLCP */
-    private void notifyLlcpLinkFirstPacketReceived(NativeP2pDevice device) {
-        mListener.onLlcpFirstPacketReceived(device);
     }
 
     /* Reader over SWP/SCR listeners*/

@@ -173,9 +173,6 @@ struct nfc_jni_native_data* nfc_jni_get_nat(JNIEnv* e, jobject o);
 int register_com_android_nfc_NativeNfcManager(JNIEnv* e);
 int register_com_android_nfc_NativeNfcTag(JNIEnv* e);
 int register_com_android_nfc_NativeP2pDevice(JNIEnv* e);
-int register_com_android_nfc_NativeLlcpConnectionlessSocket(JNIEnv* e);
-int register_com_android_nfc_NativeLlcpServiceSocket(JNIEnv* e);
-int register_com_android_nfc_NativeLlcpSocket(JNIEnv* e);
 #if (NXP_EXTNS == TRUE)
 int register_com_android_nfc_NativeNfcSecureElement (JNIEnv *e);
 int register_com_android_nfc_NativeNfcMposManager (JNIEnv *e);

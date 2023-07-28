@@ -29,8 +29,6 @@ public class NativeP2pDevice implements NfcDepEndpoint {
 
     private byte[] mGeneralBytes;
 
-    private byte mLlcpVersion;
-
     private native byte[] doReceive();
     @Override
     public byte[] receive() {
@@ -74,10 +72,5 @@ public class NativeP2pDevice implements NfcDepEndpoint {
     @Override
     public byte[] getGeneralBytes() {
         return mGeneralBytes;
-    }
-
-    @Override
-    public byte getLlcpVersion() {
-        return mLlcpVersion;
     }
 }

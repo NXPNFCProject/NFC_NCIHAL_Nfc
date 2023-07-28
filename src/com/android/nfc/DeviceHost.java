@@ -67,18 +67,6 @@ public interface DeviceHost {
 
         public void onNotifyEfdmEvt(int efdmEvt);
 
-        /**
-         * Notifies P2P Device detected, to activate LLCP link
-         */
-        public void onLlcpLinkActivated(NfcDepEndpoint device);
-
-        /**
-         * Notifies P2P Device detected, to activate LLCP link
-         */
-        public void onLlcpLinkDeactivated(NfcDepEndpoint device);
-
-        public void onLlcpFirstPacketReceived(NfcDepEndpoint device);
-
         public void onRemoteFieldActivated();
 
         public void onRemoteFieldDeactivated();
@@ -180,48 +168,6 @@ public interface DeviceHost {
         public int getMode();
 
         public byte[] getGeneralBytes();
-
-        public byte getLlcpVersion();
-    }
-
-    public interface LlcpSocket {
-        public void connectToSap(int sap) throws IOException;
-
-        public void connectToService(String serviceName) throws IOException;
-
-        public void close() throws IOException;
-
-        public void send(byte[] data) throws IOException;
-
-        public int receive(byte[] recvBuff) throws IOException;
-
-        public int getRemoteMiu();
-
-        public int getRemoteRw();
-
-        public int getLocalSap();
-
-        public int getLocalMiu();
-
-        public int getLocalRw();
-    }
-
-    public interface LlcpServerSocket {
-        public LlcpSocket accept() throws IOException, LlcpException;
-
-        public void close() throws IOException;
-    }
-
-    public interface LlcpConnectionlessSocket {
-        public int getLinkMiu();
-
-        public int getSap();
-
-        public void send(int sap, byte[] data) throws IOException;
-
-        public LlcpPacket receive() throws IOException;
-
-        public void close() throws IOException;
     }
 
     /**
@@ -286,19 +232,6 @@ public interface DeviceHost {
 
     public int getLfT3tMax();
 
-    public LlcpConnectionlessSocket createLlcpConnectionlessSocket(int nSap, String sn)
-            throws LlcpException;
-
-    public LlcpServerSocket createLlcpServerSocket(int nSap, String sn, int miu,
-            int rw, int linearBufferLength) throws LlcpException;
-
-    public LlcpSocket createLlcpSocket(int sap, int miu, int rw,
-            int linearBufferLength) throws LlcpException;
-
-    public boolean doCheckLlcp();
-
-    public boolean doActivateLlcp();
-
     public void resetTimeouts();
 
     public boolean setTimeout(int technology, int timeout);
@@ -318,10 +251,6 @@ public interface DeviceHost {
     void setP2pTargetModes(int modes);
 
     boolean getExtendedLengthApdusSupported();
-
-    int getDefaultLlcpMiu();
-
-    int getDefaultLlcpRwSize();
 
     void dump(FileDescriptor fd);
 

@@ -114,13 +114,9 @@ extern void nativeNfcTag_doReadCompleted(tNFA_STATUS status);
 extern void nativeNfcTag_setRfInterface(tNFA_INTF_TYPE rfInterface);
 extern void nativeNfcTag_setActivatedRfProtocol(tNFA_INTF_TYPE rfProtocol);
 extern void nativeNfcTag_abortWaits();
-extern void nativeLlcpConnectionlessSocket_abortWait();
 extern void nativeNfcTag_registerNdefTypeHandler();
 extern void nativeNfcTag_acquireRfInterfaceMutexLock();
 extern void nativeNfcTag_releaseRfInterfaceMutexLock();
-extern void nativeLlcpConnectionlessSocket_receiveData(uint8_t* data,
-                                                       uint32_t len,
-                                                       uint32_t remote_sap);
 #if(NXP_EXTNS == TRUE)
 extern tNFA_STATUS Nxp_doResonantFrequency(bool modeOn);
 extern tNFA_STATUS nativeNfcTag_safeDisconnect();
@@ -164,9 +160,6 @@ uint16_t sCurrentSelectedUICCSlot = SECURE_ELEMENT_UICC_SLOT_DEFAULT;
 namespace android {
 jmethodID gCachedNfcManagerNotifyNdefMessageListeners;
 jmethodID gCachedNfcManagerNotifyTransactionListeners;
-jmethodID gCachedNfcManagerNotifyLlcpLinkActivation;
-jmethodID gCachedNfcManagerNotifyLlcpLinkDeactivated;
-jmethodID gCachedNfcManagerNotifyLlcpFirstPacketReceived;
 jmethodID gCachedNfcManagerNotifyHostEmuActivated;
 jmethodID gCachedNfcManagerNotifyHostEmuData;
 jmethodID gCachedNfcManagerNotifyHostEmuDeactivated;
@@ -181,12 +174,6 @@ jmethodID gCachedNfcManagerNotifyCoreGenericError;
 
 const char* gNativeP2pDeviceClassName =
     "com/android/nfc/dhimpl/NativeP2pDevice";
-const char* gNativeLlcpServiceSocketClassName =
-    "com/android/nfc/dhimpl/NativeLlcpServiceSocket";
-const char* gNativeLlcpConnectionlessSocketClassName =
-    "com/android/nfc/dhimpl/NativeLlcpConnectionlessSocket";
-const char* gNativeLlcpSocketClassName =
-    "com/android/nfc/dhimpl/NativeLlcpSocket";
 const char* gNativeNfcTagClassName = "com/android/nfc/dhimpl/NativeNfcTag";
 const char* gNativeNfcManagerClassName =
     "com/android/nfc/dhimpl/NativeNfcManager";
@@ -938,15 +925,6 @@ static jboolean nfcManager_initNativeStruc(JNIEnv* e, jobject o) {
   gCachedNfcManagerNotifyNdefMessageListeners =
       e->GetMethodID(cls.get(), "notifyNdefMessageListeners",
                      "(Lcom/android/nfc/dhimpl/NativeNfcTag;)V");
-  gCachedNfcManagerNotifyLlcpLinkActivation =
-      e->GetMethodID(cls.get(), "notifyLlcpLinkActivation",
-                     "(Lcom/android/nfc/dhimpl/NativeP2pDevice;)V");
-  gCachedNfcManagerNotifyLlcpLinkDeactivated =
-      e->GetMethodID(cls.get(), "notifyLlcpLinkDeactivated",
-                     "(Lcom/android/nfc/dhimpl/NativeP2pDevice;)V");
-  gCachedNfcManagerNotifyLlcpFirstPacketReceived =
-      e->GetMethodID(cls.get(), "notifyLlcpLinkFirstPacketReceived",
-                     "(Lcom/android/nfc/dhimpl/NativeP2pDevice;)V");
 
   gCachedNfcManagerNotifyHostEmuActivated =
       e->GetMethodID(cls.get(), "notifyHostEmuActivated", "(I)V");
@@ -1972,91 +1950,6 @@ TheEnd:
   DLOG_IF(INFO, nfc_debug_enabled)
       << StringPrintf("%s: exit: Status = 0x%X", __func__, status);
 }
-/*******************************************************************************
-**
-** Function:        nfcManager_doCreateLlcpServiceSocket
-**
-** Description:     Create a new LLCP server socket.
-**                  e: JVM environment.
-**                  o: Java object.
-**                  nSap: Service access point.
-**                  sn: Service name
-**                  miu: Maximum information unit.
-**                  rw: Receive window size.
-**                  linearBufferLength: Max buffer size.
-**
-** Returns:         NativeLlcpServiceSocket Java object.
-**
-*******************************************************************************/
-static jobject nfcManager_doCreateLlcpServiceSocket(JNIEnv* e, jobject,
-                                                    jint nSap, jstring sn,
-                                                    jint miu, jint rw,
-                                                    jint linearBufferLength) {
-  PeerToPeer::tJNI_HANDLE jniHandle =
-      PeerToPeer::getInstance().getNewJniHandle();
-
-  ScopedUtfChars serviceName(e, sn);
-
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-      "%s: enter: sap=%i; name=%s; miu=%i; rw=%i; buffLen=%i", __func__, nSap,
-      serviceName.c_str(), miu, rw, linearBufferLength);
-
-  /* Create new NativeLlcpServiceSocket object */
-  jobject serviceSocket = NULL;
-  if (nfc_jni_cache_object_local(e, gNativeLlcpServiceSocketClassName,
-                                 &(serviceSocket)) == -1) {
-    LOG(ERROR) << StringPrintf("%s: Llcp socket object creation error",
-                               __func__);
-    return NULL;
-  }
-
-  /* Get NativeLlcpServiceSocket class object */
-  ScopedLocalRef<jclass> clsNativeLlcpServiceSocket(
-      e, e->GetObjectClass(serviceSocket));
-  if (e->ExceptionCheck()) {
-    e->ExceptionClear();
-    LOG(ERROR) << StringPrintf("%s: Llcp Socket get object class error",
-                               __func__);
-    return NULL;
-  }
-
-  if (!PeerToPeer::getInstance().registerServer(jniHandle,
-                                                serviceName.c_str())) {
-    LOG(ERROR) << StringPrintf("%s: RegisterServer error", __func__);
-    return NULL;
-  }
-
-  jfieldID f;
-
-  /* Set socket handle to be the same as the NfaHandle*/
-  f = e->GetFieldID(clsNativeLlcpServiceSocket.get(), "mHandle", "I");
-  e->SetIntField(serviceSocket, f, (jint)jniHandle);
-  DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: socket Handle = 0x%X", __func__, jniHandle);
-
-  /* Set socket linear buffer length */
-  f = e->GetFieldID(clsNativeLlcpServiceSocket.get(),
-                    "mLocalLinearBufferLength", "I");
-  e->SetIntField(serviceSocket, f, (jint)linearBufferLength);
-  DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: buffer length = %d", __func__, linearBufferLength);
-
-  /* Set socket MIU */
-  f = e->GetFieldID(clsNativeLlcpServiceSocket.get(), "mLocalMiu", "I");
-  e->SetIntField(serviceSocket, f, (jint)miu);
-  DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: MIU = %d", __func__, miu);
-
-  /* Set socket RW */
-  f = e->GetFieldID(clsNativeLlcpServiceSocket.get(), "mLocalRw", "I");
-  e->SetIntField(serviceSocket, f, (jint)rw);
-  DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s:  RW = %d", __func__, rw);
-
-  sLastError = 0;
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
-  return serviceSocket;
-}
 
 /*******************************************************************************
 **
@@ -2154,91 +2047,6 @@ static jboolean nfcManager_doDeinitialize(JNIEnv*, jobject) {
   return JNI_TRUE;
 }
 
-/*******************************************************************************
-**
-** Function:        nfcManager_doCreateLlcpSocket
-**
-** Description:     Create a LLCP connection-oriented socket.
-**                  e: JVM environment.
-**                  o: Java object.
-**                  nSap: Service access point.
-**                  miu: Maximum information unit.
-**                  rw: Receive window size.
-**                  linearBufferLength: Max buffer size.
-**
-** Returns:         NativeLlcpSocket Java object.
-**
-*******************************************************************************/
-static jobject nfcManager_doCreateLlcpSocket(JNIEnv* e, jobject, jint nSap,
-                                             jint miu, jint rw,
-                                             jint linearBufferLength) {
-  DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: enter; sap=%d; miu=%d; rw=%d; buffer len=%d",
-                      __func__, nSap, miu, rw, linearBufferLength);
-
-  PeerToPeer::tJNI_HANDLE jniHandle =
-      PeerToPeer::getInstance().getNewJniHandle();
-  PeerToPeer::getInstance().createClient(jniHandle, miu, rw);
-
-  /* Create new NativeLlcpSocket object */
-  jobject clientSocket = NULL;
-  if (nfc_jni_cache_object_local(e, gNativeLlcpSocketClassName,
-                                 &(clientSocket)) == -1) {
-    LOG(ERROR) << StringPrintf("%s: fail Llcp socket creation", __func__);
-    return clientSocket;
-  }
-
-  /* Get NativeConnectionless class object */
-  ScopedLocalRef<jclass> clsNativeLlcpSocket(e,
-                                             e->GetObjectClass(clientSocket));
-  if (e->ExceptionCheck()) {
-    e->ExceptionClear();
-    LOG(ERROR) << StringPrintf("%s: fail get class object", __func__);
-    return clientSocket;
-  }
-
-  jfieldID f;
-
-  /* Set socket SAP */
-  f = e->GetFieldID(clsNativeLlcpSocket.get(), "mSap", "I");
-  e->SetIntField(clientSocket, f, (jint)nSap);
-
-  /* Set socket handle */
-  f = e->GetFieldID(clsNativeLlcpSocket.get(), "mHandle", "I");
-  e->SetIntField(clientSocket, f, (jint)jniHandle);
-
-  /* Set socket MIU */
-  f = e->GetFieldID(clsNativeLlcpSocket.get(), "mLocalMiu", "I");
-  e->SetIntField(clientSocket, f, (jint)miu);
-
-  /* Set socket RW */
-  f = e->GetFieldID(clsNativeLlcpSocket.get(), "mLocalRw", "I");
-  e->SetIntField(clientSocket, f, (jint)rw);
-
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
-  return clientSocket;
-}
-
-/*******************************************************************************
-**
-** Function:        nfcManager_doCreateLlcpConnectionlessSocket
-**
-** Description:     Create a connection-less socket.
-**                  e: JVM environment.
-**                  o: Java object.
-**                  nSap: Service access point.
-**                  sn: Service name.
-**
-** Returns:         NativeLlcpConnectionlessSocket Java object.
-**
-*******************************************************************************/
-static jobject nfcManager_doCreateLlcpConnectionlessSocket(JNIEnv*, jobject,
-                                                           jint nSap,
-                                                           jstring /*sn*/) {
-  DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: nSap=0x%X", __func__, nSap);
-  return NULL;
-}
 #if (NXP_EXTNS == TRUE)
 /*******************************************************************************
 **
@@ -2608,34 +2416,6 @@ static bool isListenMode(tNFA_ACTIVATED& activated) {
       (NFC_DISCOVERY_TYPE_LISTEN_B_PRIME ==
        activated.activate_ntf.rf_tech_param.mode) ||
       (NFC_INTERFACE_EE_DIRECT_RF == activated.activate_ntf.intf_param.type));
-}
-
-/*******************************************************************************
-**
-** Function:        nfcManager_doCheckLlcp
-**
-** Description:     Not used.
-**
-** Returns:         True
-**
-*******************************************************************************/
-static jboolean nfcManager_doCheckLlcp(JNIEnv*, jobject) {
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s", __func__);
-  return JNI_TRUE;
-}
-
-/*******************************************************************************
-**
-** Function:        nfcManager_doActivateLlcp
-**
-** Description:     Not used.
-**
-** Returns:         True
-**
-*******************************************************************************/
-static jboolean nfcManager_doActivateLlcp(JNIEnv*, jobject) {
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s", __func__);
-  return JNI_TRUE;
 }
 
 /*******************************************************************************
@@ -3304,22 +3084,6 @@ static JNINativeMethod gMethods[] = {
     {"doEnableDiscovery", "(IZZZZZ)V", (void*)nfcManager_enableDiscovery},
 
     {"doStartStopPolling", "(Z)V", (void*)nfcManager_doStartStopPolling},
-
-    {"doCheckLlcp", "()Z", (void*)nfcManager_doCheckLlcp},
-
-    {"doActivateLlcp", "()Z", (void*)nfcManager_doActivateLlcp},
-
-    {"doCreateLlcpConnectionlessSocket",
-     "(ILjava/lang/String;)Lcom/android/nfc/dhimpl/"
-     "NativeLlcpConnectionlessSocket;",
-     (void*)nfcManager_doCreateLlcpConnectionlessSocket},
-
-    {"doCreateLlcpServiceSocket",
-     "(ILjava/lang/String;III)Lcom/android/nfc/dhimpl/NativeLlcpServiceSocket;",
-     (void*)nfcManager_doCreateLlcpServiceSocket},
-
-    {"doCreateLlcpSocket", "(IIII)Lcom/android/nfc/dhimpl/NativeLlcpSocket;",
-     (void*)nfcManager_doCreateLlcpSocket},
 
     {"doGetLastError", "()I", (void*)nfcManager_doGetLastError},
 

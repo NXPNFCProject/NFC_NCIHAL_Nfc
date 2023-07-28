@@ -38,9 +38,6 @@
 namespace android {
 extern jmethodID gCachedNfcManagerNotifyNdefMessageListeners;
 extern jmethodID gCachedNfcManagerNotifyTransactionListeners;
-extern jmethodID gCachedNfcManagerNotifyLlcpLinkActivation;
-extern jmethodID gCachedNfcManagerNotifyLlcpLinkDeactivated;
-extern jmethodID gCachedNfcManagerNotifyLlcpFirstPacketReceived;
 
 /*
  * host-based card emulation
@@ -51,9 +48,6 @@ extern jmethodID gCachedNfcManagerNotifyHostEmuDeactivated;
 extern jmethodID gCachedNfcManagerNotifyEeUpdated;
 
 extern const char* gNativeP2pDeviceClassName;
-extern const char* gNativeLlcpServiceSocketClassName;
-extern const char* gNativeLlcpConnectionlessSocketClassName;
-extern const char* gNativeLlcpSocketClassName;
 extern const char* gNativeNfcTagClassName;
 extern const char* gNativeNfcManagerClassName;
 #if (NXP_EXTNS == TRUE)
