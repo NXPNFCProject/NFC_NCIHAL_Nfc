@@ -2441,28 +2441,22 @@ static void nfcManager_doResonantFrequency(JNIEnv* e, jobject o,
   status = NfcSelfTest::GetInstance().doNfccSelfTest(
       modeOn ? TEST_TYPE_SET_RFTXCFG_RESONANT_FREQ : TEST_TYPE_RESTORE_RFTXCFG);
 
-  if (NFA_STATUS_OK == status) {
-    nfcManager_doDeinitialize(NULL, NULL);
-    usleep(1000 * 1000);
-    nfcManager_doInitialize(NULL, NULL);
-    usleep(1000 * 2000);
+  if (modeOn)        /* TEST_TYPE_SET_RFTXCFG_RESONANT_FREQ */
+    pollTech = 0x00; /* Activate only Card Emulation Mode */
 
-    if (modeOn)        /* TEST_TYPE_SET_RFTXCFG_RESONANT_FREQ */
-      pollTech = 0x00; /* Activate only Card Emulation Mode */
-
-    { /* Change the discovery tech mask as per the test */
-      SyncEventGuard guard(sChangeDiscTechEvent);
-      status = NFA_ChangeDiscoveryTech(pollTech, uiccListenTech);
-      if (NFA_STATUS_OK == status) {
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-            "%s: waiting for nfcManager_changeDiscoveryTech", __func__);
-        sChangeDiscTechEvent.wait();
-      } else {
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-            "%s: nfcManager_changeDiscoveryTech failed", __func__);
-      }
+  { /* Change the discovery tech mask as per the test */
+    SyncEventGuard guard(sChangeDiscTechEvent);
+    status = NFA_ChangeDiscoveryTech(pollTech, uiccListenTech);
+    if (NFA_STATUS_OK == status) {
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+          "%s: waiting for nfcManager_changeDiscoveryTech", __func__);
+      sChangeDiscTechEvent.wait();
+    } else {
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+          "%s: nfcManager_changeDiscoveryTech failed", __func__);
     }
   }
+
   /* Restart the discovery
    * CASE1: TEST_TYPE_SET_RFTXCFG_RESONANT_FREQ --> Only CARD EMULATION
    * CASE2: TEST_TYPE_RESTORE_RFTXCFG --> Both the READER & CE  mode
