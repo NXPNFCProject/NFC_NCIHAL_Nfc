@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2021 NXP
+*  Copyright 2018-2021,2023 NXP
 *
 ******************************************************************************/
 package com.android.nfc.cardemulation;
@@ -98,7 +98,10 @@ public class AidRoutingManager {
     //if true, last commit was successful,
     //if false, there was an overflow of routing table for commit using last set of AID's in (mRouteForAid)
     boolean mLastCommitStatus;
-
+    // if an Application is uninstalled and its AIDs are removed. In this case
+    // if the AID route location is same as Default AID Route, then no routing update
+    // is needed and this variable is set to false. Otherwise set to true
+    private boolean mIsUnrouteRequired = false;
     // mAidRoutingTable contains the current routing table. The index is the route ID.
     // The route can include routes to a eSE/UICC.
     SparseArray<Set<String>> mAidRoutingTable =
@@ -176,8 +179,14 @@ public class AidRoutingManager {
     }
 
     private void clearNfcRoutingTableLocked() {
+        mIsUnrouteRequired = false;
         for (Map.Entry<String, Integer> aidEntry : mRouteForAid.entrySet())  {
             String aid = aidEntry.getKey();
+            int route = aidEntry.getValue();
+            if (route != mDefaultAidRoute) {
+                Log.d(TAG, "unrouting non-default routing AID, routing table update required");
+                mIsUnrouteRequired = true;
+            }
             if (aid.endsWith("*")) {
                 if (mAidMatchingSupport == AID_MATCHING_EXACT_ONLY) {
                     Log.e(TAG, "Device does not support prefix AIDs but AID [" + aid
@@ -236,6 +245,28 @@ public class AidRoutingManager {
         } catch (NumberFormatException e) { }
         return 0;
     }
+    // Checking route of all AIDs from aidRoutingTableCache,
+    // If all routing to mDefaultRoute, no routing command will be send.
+    private boolean isRoutingTableUpdateReqd(HashMap<String, AidEntry> routeCache) {
+        if (routeCache == null) {
+            return false;
+        }
+        for (Map.Entry<String, AidEntry> aidEntry : routeCache.entrySet())  {
+            if (aidEntry.getValue() != null) {
+                int route = aidEntry.getValue().route;
+                String aid = aidEntry.getKey();
+                if (route != mDefaultAidRoute) {
+                    return true;
+                } else {
+                    if (DBG) {
+                        Log.d(TAG, "isRoutingTableUpdateReqd() AID: " + aid
+                                + " route: " + route + ", Same as default, do nothing");
+                    }
+                }
+            }
+        }
+        return false;
+    }
 
     public boolean configureRouting(HashMap<String, AidEntry> aidMap, boolean force) {
         boolean aidRouteResolved = false;
@@ -244,16 +275,17 @@ public class AidRoutingManager {
         mAidRoutingTableSize = NfcService.getInstance().getAidRoutingTableSize();
         mDefaultAidRoute =   NfcService.getInstance().GetDefaultRouteEntry() >> 0x08;
         mDefaultOffHostRoute = doGetDefaultOffHostRouteDestination();
+        boolean isPowerStateUpdated = false;
         Log.e(TAG, "Size of routing table"+mAidRoutingTableSize);
         seList.add(mDefaultAidRoute);
         if (mDefaultRoute != ROUTE_HOST) {
             seList.add(ROUTE_HOST);
         }
-
         SparseArray<Set<String>> aidRoutingTable = new SparseArray<Set<String>>(aidMap.size());
         HashMap<String, Integer> routeForAid = new HashMap<String, Integer>(aidMap.size());
         HashMap<String, Integer> infoForAid = new HashMap<String, Integer>(aidMap.size());
         HashMap<String, Integer> powerForAid = new HashMap<String, Integer>(aidMap.size());
+
         // Then, populate internal data structures first
         for (Map.Entry<String, AidEntry> aidEntry : aidMap.entrySet())  {
             int route = ROUTE_HOST;
@@ -436,6 +468,7 @@ public class AidRoutingManager {
                                     aidRoutingTableCache.put(aid.substring(0,aid.length() - 1), aidMap.get(aid));
                                 else
                                     aidRoutingTableCache.put(aid, aidMap.get(aid));
+                                isPowerStateUpdated = true;
                             }
                         }
                     }
@@ -447,16 +480,23 @@ public class AidRoutingManager {
                 }
             }
 
-            if(aidRouteResolved == true) {
-                NfcService.getInstance().updateDefaultAidRoute(mDefaultRoute);
-                mLastCommitStatus = true;
-                commit(aidRoutingTableCache);
+            boolean isRouteTableUpdated = isRoutingTableUpdateReqd(aidRoutingTableCache);
+
+            if (isPowerStateUpdated || isRouteTableUpdated || mIsUnrouteRequired) {
+                if (aidRouteResolved) {
+                    NfcService.getInstance().updateDefaultAidRoute(mDefaultRoute);
+                    mLastCommitStatus = true;
+                    commit(aidRoutingTableCache);
+                } else {
+                    NfcStatsLog.write(NfcStatsLog.NFC_ERROR_OCCURRED,
+                            NfcStatsLog.NFC_ERROR_OCCURRED__TYPE__AID_OVERFLOW, 0, 0);
+                    Log.e(TAG, "RoutingTable unchanged because it's full, not updating");
+                    NfcService.getInstance().notifyRoutingTableFull();
+                    mLastCommitStatus = false;
+                }
             } else {
-                NfcStatsLog.write(NfcStatsLog.NFC_ERROR_OCCURRED,
-                        NfcStatsLog.NFC_ERROR_OCCURRED__TYPE__AID_OVERFLOW, 0, 0);
-                Log.e(TAG, "RoutingTable unchanged because it's full, not updating");
-                NfcService.getInstance().notifyRoutingTableFull();
-                mLastCommitStatus = false;
+                Log.e(TAG, "All AIDs routing to mDefaultRoute, RoutingTable"
+                        + " update is not required");
             }
         }
         return true;
