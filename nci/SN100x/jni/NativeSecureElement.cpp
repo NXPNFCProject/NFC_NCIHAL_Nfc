@@ -42,6 +42,13 @@ namespace android
 #define ESE_RESET_PROTECTION_ENABLE  0x14
 #define ESE_RESET_PROTECTION_DISABLE  0x15
 #define NFA_ESE_HARD_RESET  0x13
+/*NFCEE TYPE STATUS*/
+typedef enum {
+  NFCEE_TYPE_NONE = 0,
+  NFCEE_TYPE_ESE,
+  NFCEE_TYPE_EUICC,
+} nfcee_type_status_t;
+
 static const int EE_ERROR_INIT = -3;
 static void NxpNfc_ParsePlatformID(const uint8_t*);
 extern bool nfcManager_isNfcActive();
@@ -82,7 +89,7 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection(JNIEnv* e,
 
   if (e != NULL && o != NULL) { /* The req is from WiredSeServce */
     if (NfcConfig::hasKey(NAME_NXP_SE_SMB_TERMINAL_TYPE) &&
-        NfcConfig::getUnsigned(NAME_NXP_SE_SMB_TERMINAL_TYPE) == 0x01) {
+        (NfcConfig::getUnsigned(NAME_NXP_SE_SMB_TERMINAL_TYPE) == NFCEE_TYPE_EUICC)) {
       if (NFC_NFCEE_STATUS_ACTIVE ==
               se.getEeStatus(SecureElement::EE_HANDLE_0xF5)) {
         seId = SecureElement::EUICC_ID;
