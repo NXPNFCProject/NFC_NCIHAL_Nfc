@@ -2001,6 +2001,8 @@ static jint nfcManager_getDefaultAidRoute(JNIEnv* e, jobject o) {
   int num = 0;
   if (NfcConfig::hasKey(NAME_DEFAULT_AID_ROUTE))
     num = (int)NfcConfig::getUnsigned(NAME_DEFAULT_AID_ROUTE);
+  else if (NfcConfig::hasKey(NAME_DEFAULT_ROUTE))
+    num = (int)NfcConfig::getUnsigned(NAME_DEFAULT_ROUTE);
   else
     return NFA_HANDLE_INVALID;
 
