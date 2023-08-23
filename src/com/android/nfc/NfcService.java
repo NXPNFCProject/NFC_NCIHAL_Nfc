@@ -2428,17 +2428,19 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                throws RemoteException {
 
             synchronized (NfcService.this) {
-            if (!(mState == NfcAdapter.STATE_ON)) {
-               if (DBG) Log.d(TAG, "changeDiscoveryTech. NFC is not enabled");
-                  return;
-            }
+                if (!(mState == NfcAdapter.STATE_ON)) {
+                    if (DBG) Log.d(TAG, "changeDiscoveryTech. NFC is not enabled");
+                    return;
+                }
 
-            if (DBG) Log.d(TAG, "changeDiscoveryTech. pollTech : 0x" + Integer.toHexString(pollTech) + ", listenTech : 0x" + Integer.toHexString(listenTech));
+                if (DBG) Log.d(TAG, "changeDiscoveryTech. pollTech : 0x" + Integer.toHexString(pollTech) + ", listenTech : 0x" + Integer.toHexString(listenTech));
 
-            mDeviceHost.doChangeDiscoveryTech(pollTech, listenTech);
+                int status = mDeviceHost.doChangeDiscoveryTech(pollTech, listenTech);
 
-            if (DBG) Log.d(TAG, "applyRouting #15");
-               applyRouting(true);
+                if (status == 0) {
+                    if (DBG) Log.d(TAG, "applyRouting #15");
+                    applyRouting(true);
+                }
             }
         }
 

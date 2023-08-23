@@ -271,7 +271,8 @@ static void nfaDeviceManagementCallback(uint8_t event,
 static bool isPeerToPeer(tNFA_ACTIVATED& activated);
 static bool isListenMode(tNFA_ACTIVATED& activated);
 #if (NXP_EXTNS==TRUE)
-static void nfcManager_changeDiscoveryTech(JNIEnv* e, jobject o, jint pollTech, jint listenTech);
+static jint nfcManager_changeDiscoveryTech(JNIEnv* e, jobject o, jint pollTech,
+                                           jint listenTech);
 #endif
 #if (NXP_EXTNS==FALSE)
 static void enableDisableLptd(bool enable);
@@ -3069,7 +3070,7 @@ static JNINativeMethod gMethods[] = {
             (void*) nfcManager_getDefaultFelicaCLTRoute},
     {"doGetActiveSecureElementList", "()[I",
             (void *)nfcManager_getActiveSecureElementList},
-    {"doChangeDiscoveryTech", "(II)V",
+    {"doChangeDiscoveryTech", "(II)I",
              (void *)nfcManager_changeDiscoveryTech},
     {"doPartialInitForEseCosUpdate", "()Z",
              (void*)nfcManager_doPartialInitForEseCosUpdate},
@@ -3381,17 +3382,24 @@ static tNFA_STATUS stopPolling_rfDiscoveryDisabled() {
 **                  e: JVM environment.
 **                  o: Java object.
 **
-** Returns:         None.
+** Returns:         Returns status as below
+**                  NFA_STATUS_OK - If discovery tech update successful.
+**                  NFA_STATUS_FAILED - If discovery tech update successful.
+**                  NFA_STATUS_REJECTED - If discovery tech update not required
+**                                        in case of current tech same as
+**                                        requested tech.
 **
 *******************************************************************************/
-static void nfcManager_changeDiscoveryTech(JNIEnv* e, jobject o, jint pollTech, jint listenTech)
+static jint nfcManager_changeDiscoveryTech(JNIEnv* e, jobject o, jint pollTech, jint listenTech)
 {
+    tNFA_STATUS status = NFA_STATUS_FAILED;
     DLOG_IF(INFO, nfc_debug_enabled)<< StringPrintf("Enter :%s  pollTech = 0x%x, listenTech = 0x%x", __func__, pollTech, listenTech);
-
-    if (NFA_ChangeDiscoveryTech(pollTech, listenTech) == NFA_STATUS_FAILED) {
-      LOG(ERROR) << StringPrintf(
-            "%s: nfcManager_changeDiscoveryTech failed", __func__);
+    status = NFA_ChangeDiscoveryTech(pollTech, listenTech);
+    if (status == NFA_STATUS_FAILED) {
+    LOG(ERROR) << StringPrintf("%s: nfcManager_changeDiscoveryTech failed",
+                               __func__);
     }
+    return status;
 }
 
 /*******************************************************************************

@@ -302,7 +302,7 @@ public interface DeviceHost {
     void startStopPolling(boolean enable);
 
     /* NXP extension are here */
-    public void doChangeDiscoveryTech(int pollTech, int listenTech);
+    public int doChangeDiscoveryTech(int pollTech, int listenTech);
     public boolean accessControlForCOSU (int mode);
 
     public int getFWVersion();
