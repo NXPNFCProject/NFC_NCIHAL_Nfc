@@ -84,10 +84,12 @@ int NativeExtFieldDetect::startExtendedFieldDetectMode(JNIEnv* e, jobject o,
   }
   int efdStatus = EFDSTATUS_FAILED;
   uint8_t num = 0x00;
-  const uint8_t EXTENDED_FIELD_TAG_ENABLE = 0x01;
+  const uint8_t EXTENDED_FIELD_TAG_WITHOUT_CMA_ENABLE = 0x01;
+  const uint8_t EXTENDED_FIELD_TAG_WITH_CMA_ENABLE = 0x03;
   if (NfcConfig::hasKey(NAME_NXP_EXTENDED_FIELD_DETECT_MODE)) {
     num = NfcConfig::getUnsigned(NAME_NXP_EXTENDED_FIELD_DETECT_MODE);
-    if (num != EXTENDED_FIELD_TAG_ENABLE) {
+    if (!(num == EXTENDED_FIELD_TAG_WITHOUT_CMA_ENABLE ||
+          num == EXTENDED_FIELD_TAG_WITH_CMA_ENABLE)) {
       return EFDSTATUS_ERROR_FEATURE_DISABLED_IN_CONFIG;
     }
   } else {
