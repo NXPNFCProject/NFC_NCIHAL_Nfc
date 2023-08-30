@@ -1708,11 +1708,20 @@ static jboolean nativeNfcTag_doPresenceCheck(JNIEnv*, jobject) {
              (sCurrentConnectedTargetProtocol == NFC_PROTOCOL_T5T))) ||
            (sCurrentConnectedTargetProtocol == NFC_PROTOCOL_T3T))) {
         sPresCheckErrCnt++;
-
+#if (NXP_EXTNS == TRUE)
+        int retryCount =
+            NfcConfig::getUnsigned(NAME_PRESENCE_CHECK_RETRY_COUNT,
+                                   DEFAULT_PRESENCE_CHECK_RETRY_COUNT);
+        while (sPresCheckErrCnt <= retryCount) {
+          DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+              "%s(%d): pres check failed, try again (attempt #%d/%d)",
+              __FUNCTION__, __LINE__, sPresCheckErrCnt, retryCount);
+#else
         while (sPresCheckErrCnt <= 3) {
           DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
               "%s(%d): pres check failed, try again (attempt #%d/3)",
               __FUNCTION__, __LINE__, sPresCheckErrCnt);
+#endif
 
           status = NFA_RwPresenceCheck(method);
 
