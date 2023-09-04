@@ -376,29 +376,6 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
     private int NXP_NFC_STATE_ON = 2;
     private int NXP_NFC_STATE_TURNING_OFF = 3;
 
-    // eSE handle
-    public static final int EE_HANDLE_0xF3 = 0x4C0;
-
-    /**
-     * HOST ID to be able to select it as the default Secure Element
-     */
-    public static final int HOST_ID_TYPE = 0;
-
-    /**
-     * SMART MX ID to be able to select it as the default Secure Element
-     */
-    public static final int SMART_MX_ID_TYPE = 1;
-
-    /**
-     * UICC ID to be able to select it as the default Secure Element
-     */
-    public static final int UICC_ID_TYPE = 2;
-
-    /**
-     * UICC2 ID to be able to select it as the default Secure Element
-     */
-    public static final int UICC2_ID_TYPE = 4;
-
     static final int ROUTE_INVALID = 0xFF;
     static int mOverflowDefaultRoute = ROUTE_INVALID;
 
@@ -2214,7 +2191,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
 
           NfcPermissions.enforceUserPermissions(mContext);
 
-          if (routeLoc == UICC2_ID_TYPE) {
+          if (routeLoc == NfcConstants.UICC2_ID_TYPE) {
             throw new RemoteException("UICC2 is not supported");
           }
           int protoRouteEntry = 0;
@@ -2271,7 +2248,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
 
           NfcPermissions.enforceUserPermissions(mContext);
 
-          if (routeLoc == UICC2_ID_TYPE) {
+          if (routeLoc == NfcConstants.UICC2_ID_TYPE) {
             throw new RemoteException("UICC2 is not supported");
           }
 
@@ -2314,7 +2291,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
 
           NfcPermissions.enforceUserPermissions(mContext);
 
-          if (routeLoc == UICC2_ID_TYPE) {
+          if (routeLoc == NfcConstants.UICC2_ID_TYPE) {
             throw new RemoteException("UICC2 is not supported");
           }
 
@@ -2522,7 +2499,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
 
             NfcPermissions.enforceUserPermissions(mContext);
 
-            if(routeLoc == UICC2_ID_TYPE) {
+            if(routeLoc == NfcConstants.UICC2_ID_TYPE) {
                 throw new RemoteException("UICC2 is not supported");
             }
             if (mIsHceCapable) {
@@ -2542,7 +2519,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                         ((fullPower ? (mDeviceHost.getDefaultAidPowerState() & powerState) | 0x01 : 0)
                             | (lowPower ? 0x01 << 1 : 0) | (noPower ? 0x01 << 2 : 0));
 
-                    if(routeLoc == HOST_ID_TYPE) {
+                    if(routeLoc == NfcConstants.HOST_ID_TYPE) {
                         /*
                         bit pos 1 = Power Off
                         bit pos 2 = Battery Off
@@ -3304,7 +3281,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
 
     boolean _nfcEeReset() throws IOException {
         synchronized (NfcService.this) {
-          return mSecureElement.doReset(EE_HANDLE_0xF3);
+          return mSecureElement.doReset(NfcConstants.EE_HANDLE_0xF3);
         }
      }
 
@@ -3330,7 +3307,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                 throw new IOException("NFC is not enabled");
             }
         }
-        return mSecureElement.doGetAtr(EE_HANDLE_0xF3);
+        return mSecureElement.doGetAtr(NfcConstants.EE_HANDLE_0xF3);
     }
 
 }
