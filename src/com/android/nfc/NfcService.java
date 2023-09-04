@@ -513,6 +513,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
     boolean mIsSecureNfcCapable;
     boolean mIsRequestUnlockShowed;
     boolean mIsRecovering;
+    boolean mIsNfcUserRestricted;
 
     // polling delay control variables
     private final int mPollDelayTime;
@@ -783,8 +784,14 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         return Settings.Global.getInt(mContentResolver, SETTINGS_SATELLITE_MODE_ENABLED, 0) == 1;
     }
 
+    /** Returns true if NFC has user restriction set. */
+    private boolean isNfcUserRestricted() {
+        return mUserManager.getUserRestrictions().getBoolean(
+                UserManager.DISALLOW_NEAR_FIELD_COMMUNICATION_RADIO);
+    }
+
     boolean shouldEnableNfc() {
-        return getNfcOnSetting() && !isSatelliteModeOn();
+        return getNfcOnSetting() && !isSatelliteModeOn() && !isNfcUserRestricted();
     }
 
     public NfcService(Application nfcApplication) {
@@ -997,6 +1004,27 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                         }
                     });
         }
+
+        mIsNfcUserRestricted = isNfcUserRestricted();
+        mContext.registerReceiver(
+                new BroadcastReceiver() {
+                    @Override
+                    public void onReceive(Context context, Intent intent) {
+                        if (mIsNfcUserRestricted == isNfcUserRestricted()) {
+                            return;
+                        }
+                        Log.i(TAG, "Disallow NFC user restriction changed from "
+                            + mIsNfcUserRestricted + " to " + !mIsNfcUserRestricted + ".");
+                        mIsNfcUserRestricted = !mIsNfcUserRestricted;
+                        if (shouldEnableNfc()) {
+                            new EnableDisableTask().execute(TASK_ENABLE);
+                        } else {
+                            new EnableDisableTask().execute(TASK_DISABLE);
+                        }
+                    }
+                },
+                new IntentFilter(UserManager.ACTION_USER_RESTRICTIONS_CHANGED)
+        );
 
         new EnableDisableTask().execute(TASK_BOOT);  // do blocking boot tasks
 
