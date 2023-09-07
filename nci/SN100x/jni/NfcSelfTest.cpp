@@ -38,6 +38,7 @@ extern bool isDiscoveryStarted();
 extern void startRfDiscovery(bool isStart);
 extern int nfcManager_doPartialInitialize(JNIEnv* e, jobject o, jint mode);
 extern int nfcManager_doPartialDeInitialize(JNIEnv*, jobject);
+extern tNFA_STATUS NxpNfc_Write_Cmd_Common(uint8_t retlen, uint8_t* buffer);
 }  // namespace android
 tNFC_chipType NFC_GetChipType();
 
@@ -522,6 +523,31 @@ uint8_t NfcSelfTest::GetCmdBuffer(uint8_t* aCmdBuf, uint8_t aType) {
 }
 
 /*******************************************************************************
+ ** Sends NFCC cmd to enable/select default eUICC port
+ ** @param type - defines the port to be selected
+ ** @return status of NFCC write cmd
+ *******************************************************************************/
+static int SeteUICCdefalutPort(uint8_t type) {
+  tNFA_STATUS status = NFA_STATUS_REJECTED;
+  uint8_t cmd_setport[] = {0x20, 0x02, 0x05, 0x01,
+                           0xA1, 0x97, 0x01, 0x00 /* port num */};
+
+  if (type == TEST_TYPE_SELECT_EUICC_PORT_1) {
+    cmd_setport[7] = 0x00;
+  } else if (type == TEST_TYPE_SELECT_EUICC_PORT_2) {
+    cmd_setport[7] = 0x01;
+  } else {
+    return NFA_STATUS_REJECTED;
+  }
+  if (isDiscoveryStarted()) startRfDiscovery(false);
+
+  status = NxpNfc_Write_Cmd_Common(sizeof(cmd_setport), cmd_setport);
+
+  if (!isDiscoveryStarted()) startRfDiscovery(true);
+  return status;
+}
+
+/*******************************************************************************
  ** Executes NFC self-test requests from service.
  ** @param  aType denotes type of self-test
  ** @return status SUCCESS or FAILED.
@@ -559,6 +585,10 @@ tNFA_STATUS NfcSelfTest::doNfccSelfTest(int aType) {
       break;
     case TEST_TYPE_SPC:
       status = PerformSPCTest(clk_freq);
+      break;
+    case TEST_TYPE_SELECT_EUICC_PORT_1:
+    case TEST_TYPE_SELECT_EUICC_PORT_2:
+      status = SeteUICCdefalutPort(aType);
       break;
     default:
       DLOG_IF(ERROR, nfc_debug_enabled)
