@@ -31,3 +31,4 @@ android_test {
 
     instrumentation_for: "NfcNci",
 }
+

@@ -74,3 +74,4 @@ public class NfcDeveloperOptionNotification {
         notificationManager.notify(NOTIFICATION_ID_NFC, builder.build());
     }
 }
+
