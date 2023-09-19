@@ -3266,26 +3266,6 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
     }
 
     @Override
-    public boolean reset(String pkg) throws RemoteException {
-        Bundle result;
-        boolean stat = false;
-        try {
-            stat = _nfcEeReset();
-            result = writeNoException();
-        } catch (IOException e) {
-            result = writeEeException(EE_ERROR_IO, e.getMessage());
-        }
-        Log.d(TAG,"reset" + stat);
-        return stat;
-    }
-
-    boolean _nfcEeReset() throws IOException {
-        synchronized (NfcService.this) {
-          return mSecureElement.doReset(NfcConstants.EE_HANDLE_0xF3);
-        }
-     }
-
-    @Override
     public Bundle getAtr(String pkg) throws RemoteException {
 
         Bundle result;
