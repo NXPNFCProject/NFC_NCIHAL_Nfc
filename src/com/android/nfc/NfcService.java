@@ -1730,8 +1730,8 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                 IntentFilter[] filters, TechListParcel techListsParcel) {
             NfcPermissions.enforceUserPermissions(mContext);
             if (!mForegroundUtils.isInForeground(Binder.getCallingUid())) {
-                throw new IllegalStateException("Foreground dispatch can only be enabled/disabled "
-                        + "when your activity is in foreground");
+                Log.e(TAG, "setForegroundDispatch: Caller not in foreground.");
+                return;
             }
             // Short-cut the disable path
             if (intent == null && filters == null && techListsParcel == null) {
