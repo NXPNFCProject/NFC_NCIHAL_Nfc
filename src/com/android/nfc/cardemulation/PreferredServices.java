@@ -363,7 +363,8 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
                     mForegroundUid = callingUid;
                     success = true;
                 } else {
-                    throw new IllegalArgumentException("Calling UID is not in the foreground");
+                    Log.e(TAG, "Calling UID is not in the foreground, ignorning!");
+                    success = false;
                 }
             } else {
                 Log.e(TAG, "Requested foreground service conflicts or was removed.");
