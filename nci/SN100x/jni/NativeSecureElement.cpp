@@ -42,12 +42,7 @@ namespace android
 #define ESE_RESET_PROTECTION_ENABLE  0x14
 #define ESE_RESET_PROTECTION_DISABLE  0x15
 #define NFA_ESE_HARD_RESET  0x13
-/*NFCEE TYPE STATUS*/
-typedef enum {
-  NFCEE_TYPE_NONE = 0,
-  NFCEE_TYPE_ESE,
-  NFCEE_TYPE_EUICC,
-} nfcee_type_status_t;
+
 
 static const int EE_ERROR_INIT = -3;
 static void NxpNfc_ParsePlatformID(const uint8_t*);
@@ -77,6 +72,7 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection(JNIEnv* e,
   uint8_t recvBuffer[recvBufferMaxSize];
   int32_t recvBufferActualSize = 0;
   uint8_t seId = SecureElement::ESE_ID;
+  uint8_t SeTerminalType = NFC_EE_TYPE_ESE;
   tNFA_HANDLE seHandle = SecureElement::EE_HANDLE_0xF3;
   jint secElemHandle = EE_ERROR_INIT;
   SecureElement& se = SecureElement::getInstance();
@@ -87,9 +83,12 @@ static jint nativeNfcSecureElement_doOpenSecureElementConnection(JNIEnv* e,
   PowerSwitch::getInstance().setLevel(PowerSwitch::FULL_POWER);
   PowerSwitch::getInstance().setModeOn(PowerSwitch::SE_CONNECTED);
 
+  if(NfcConfig::hasKey(NAME_NXP_SE_SMB_TERMINAL_TYPE))
+      SeTerminalType = NfcConfig::getUnsigned(NAME_NXP_SE_SMB_TERMINAL_TYPE);
+
   if (e != NULL && o != NULL) { /* The req is from WiredSeServce */
-    if (NfcConfig::hasKey(NAME_NXP_SE_SMB_TERMINAL_TYPE) &&
-        (NfcConfig::getUnsigned(NAME_NXP_SE_SMB_TERMINAL_TYPE) == NFCEE_TYPE_EUICC)) {
+    if (SeTerminalType== NFC_EE_TYPE_EUICC ||
+      SeTerminalType == NFC_EE_TYPE_EUICC_WITH_APDUPIPE19) {
       if (NFC_NFCEE_STATUS_ACTIVE ==
               se.getEeStatus(SecureElement::EE_HANDLE_0xF5)) {
         seId = SecureElement::EUICC_ID;

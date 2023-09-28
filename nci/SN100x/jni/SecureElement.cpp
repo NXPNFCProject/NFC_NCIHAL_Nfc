@@ -971,15 +971,18 @@ bool SecureElement::activate (jint seID)
     static const char fn [] = "SecureElement::activate";
     tNFA_HANDLE handle = getEseHandleFromGenericId(seID);
     uint8_t ActivePipeId = getGateAndPipeList(handle);
-
     LOG(INFO) << StringPrintf("%s: enter handle=0x%X, seID=0x%X", fn, handle,seID);
     // Get Fresh EE info if needed.
     if (!getEeInfo()) {
       LOG(ERROR) << StringPrintf("%s: no EE info", fn);
       return false;
     }
-    if ((seID == ESE_ID && ActivePipeId != SMX_ESE_PIPE_ID) ||
-        (seID == EUICC_ID && ActivePipeId != SMX_EUICC_PIPE_ID)) {
+
+    if ((seID == ESE_ID || seID == EUICC_ID || seID == EUICC2_ID) &&
+        (ActivePipeId == SMX_ESE_PIPE_ID || ActivePipeId == SMX_EUICC_PIPE_ID )) {
+      LOG(ERROR) << StringPrintf("%s: Pipe ID:0x%X is created for seID=0x%X", fn,
+                                 ActivePipeId, seID);
+    } else {
       LOG(ERROR) << StringPrintf("%s: Pipe is not created", fn);
       return false;
     }
