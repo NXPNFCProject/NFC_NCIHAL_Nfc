@@ -740,23 +740,16 @@ void SecureElement::nfaHciCallback(tNFA_HCI_EVT event,
         {
             LOG(INFO) << StringPrintf("%s: NFA_HCI_EVENT_RCVD_EVT; NFA_HCI_EVT_CONNECTIVITY", fn);
         } else if (eventData->rcvd_evt.evt_code == NFA_HCI_EVT_DPD_MONITOR) {
-            LOG(INFO) << StringPrintf(
-                "%s: NFA_HCI_EVENT_RCVD_EVT; NFA_HCI_DPD_MONITOR_EVT", fn);
             if ((eventData->rcvd_evt.p_evt_buf[eventData->rcvd_evt.evt_len -
-                                               OFFSET_DPD_MONITOR_BYTE] &
-                 MASK_SMB_DPD_MONITOR_EVT) == MASK_SMB_DPD_MONITOR_EVT) {
-                LOG(ERROR) << StringPrintf("%s: NFA_HCI_DPD_MONITOR_EVT:SMB",
-                                           fn);
+                                               DPD_MONITOR_BYTE_OFFSET] &
+                 SMB_DPD_MONITOR_EVT_MASK)) {
                 NativeJniExtns::getInstance().notifyNfcEvent(
                     "handleDPDMonitorNtf");
             }
-        }
-        else
-        {
+        } else {
             LOG(INFO) << StringPrintf("%s: NFA_HCI_EVENT_RCVD_EVT; ################################### eventData->rcvd_evt.evt_code = 0x%x , NFA_HCI_EVT_CONNECTIVITY = 0x%x", fn, eventData->rcvd_evt.evt_code, NFA_HCI_EVT_CONNECTIVITY);
 
             LOG(INFO) << StringPrintf("%s: NFA_HCI_EVENT_RCVD_EVT; ################################### ", fn);
-
         }
         break;
 
