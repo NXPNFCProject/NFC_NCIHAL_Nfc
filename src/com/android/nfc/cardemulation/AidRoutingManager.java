@@ -482,7 +482,7 @@ public class AidRoutingManager {
 
             boolean isRouteTableUpdated = isRoutingTableUpdateReqd(aidRoutingTableCache);
 
-            if (isPowerStateUpdated || isRouteTableUpdated || mIsUnrouteRequired) {
+            if (isPowerStateUpdated || isRouteTableUpdated || mIsUnrouteRequired || force) {
                 if (aidRouteResolved) {
                     NfcService.getInstance().updateDefaultAidRoute(mDefaultRoute);
                     mLastCommitStatus = true;
