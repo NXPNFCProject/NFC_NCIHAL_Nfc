@@ -101,7 +101,6 @@ public class AidRoutingManager {
     // if an Application is uninstalled and its AIDs are removed. In this case
     // if the AID route location is same as Default AID Route, then no routing update
     // is needed and this variable is set to false. Otherwise set to true
-    private boolean mIsUnrouteRequired = false;
     // mAidRoutingTable contains the current routing table. The index is the route ID.
     // The route can include routes to a eSE/UICC.
     SparseArray<Set<String>> mAidRoutingTable =
@@ -179,14 +178,9 @@ public class AidRoutingManager {
     }
 
     private void clearNfcRoutingTableLocked() {
-        mIsUnrouteRequired = false;
         for (Map.Entry<String, Integer> aidEntry : mRouteForAid.entrySet())  {
             String aid = aidEntry.getKey();
             int route = aidEntry.getValue();
-            if (route != mDefaultAidRoute) {
-                Log.d(TAG, "unrouting non-default routing AID, routing table update required");
-                mIsUnrouteRequired = true;
-            }
             if (aid.endsWith("*")) {
                 if (mAidMatchingSupport == AID_MATCHING_EXACT_ONLY) {
                     Log.e(TAG, "Device does not support prefix AIDs but AID [" + aid
@@ -245,24 +239,36 @@ public class AidRoutingManager {
         } catch (NumberFormatException e) { }
         return 0;
     }
-    // Checking route of all AIDs from aidRoutingTableCache,
-    // If all routing to mDefaultRoute, no routing command will be send.
-    private boolean isRoutingTableUpdateReqd(HashMap<String, AidEntry> routeCache) {
-        if (routeCache == null) {
-            return false;
-        }
-        for (Map.Entry<String, AidEntry> aidEntry : routeCache.entrySet())  {
-            if (aidEntry.getValue() != null) {
-                int route = aidEntry.getValue().route;
-                String aid = aidEntry.getKey();
-                if (route != mDefaultAidRoute) {
-                    return true;
-                } else {
-                    if (DBG) {
-                        Log.d(TAG, "isRoutingTableUpdateReqd() AID: " + aid
-                                + " route: " + route + ", Same as default, do nothing");
+
+    //Check if Any AID entry needs to be removed from previously registered
+    //entries in the Routing table. Current AID entries are part of
+    //mRouteForAid and previously registered AID entries are part of input
+    //argument prevRouteForAid.
+    private boolean checkUnrouteAid(HashMap<String, Integer> prevRouteForAid) {
+        for (Map.Entry<String, Integer> aidEntry : prevRouteForAid.entrySet())  {
+            if(!mRouteForAid.containsKey(aidEntry.getKey()) ||
+                (mRouteForAid.containsKey(aidEntry.getKey()) &&
+                (mRouteForAid.get(aidEntry.getKey()) != aidEntry.getValue()))){
+                    if(aidEntry.getValue() != mDefaultAidRoute){
+                        return true;
                     }
-                }
+            }
+        }
+        return false;
+    }
+
+    //Check if Any AID entry needs to be added to previously registered
+    //entries in the Routing table. Current AID entries are part of
+    //mRouteForAid and previously registered AID entries are part of input
+    //argument prevRouteForAid.
+    private boolean checkRouteAid(HashMap<String, Integer> prevRouteForAid){
+        for (Map.Entry<String, Integer> aidEntry : mRouteForAid.entrySet())  {
+            if(!prevRouteForAid.containsKey(aidEntry.getKey()) ||
+                (prevRouteForAid.containsKey(aidEntry.getKey()) &&
+                (prevRouteForAid.get(aidEntry.getKey()) != aidEntry.getValue()))){
+                    if(aidEntry.getValue() != mDefaultAidRoute){
+                        return true;
+                    }
             }
         }
         return false;
@@ -285,6 +291,7 @@ public class AidRoutingManager {
         HashMap<String, Integer> routeForAid = new HashMap<String, Integer>(aidMap.size());
         HashMap<String, Integer> infoForAid = new HashMap<String, Integer>(aidMap.size());
         HashMap<String, Integer> powerForAid = new HashMap<String, Integer>(aidMap.size());
+        HashMap<String, Integer> prevRouteForAid = new HashMap<String, Integer>();
 
         // Then, populate internal data structures first
         for (Map.Entry<String, AidEntry> aidEntry : aidMap.entrySet())  {
@@ -331,6 +338,7 @@ public class AidRoutingManager {
             // Otherwise, update internal structures and commit new routing
             clearNfcRoutingTableLocked();
             NfcService.getInstance().addT4TNfceeAid();
+            prevRouteForAid = mRouteForAid;
             mRouteForAid = routeForAid;
             mAidRoutingTable = aidRoutingTable;
             mMaxAidRoutingTableSize = NfcService.getInstance().getAidRoutingTableSize();
@@ -480,7 +488,8 @@ public class AidRoutingManager {
                 }
             }
 
-            boolean isRouteTableUpdated = isRoutingTableUpdateReqd(aidRoutingTableCache);
+            boolean mIsUnrouteRequired = checkUnrouteAid(prevRouteForAid);
+            boolean isRouteTableUpdated = checkRouteAid(prevRouteForAid);
 
             if (isPowerStateUpdated || isRouteTableUpdated || mIsUnrouteRequired || force) {
                 if (aidRouteResolved) {
