@@ -107,7 +107,7 @@ public class AidRoutingManager {
             new SparseArray<Set<String>>();
 
     // Easy look-up what the route is for a certain AID
-    HashMap<String, Integer> mRouteForAid = new HashMap<String, Integer>();
+    HashMap<String, AidEntry> mRouteForAid = new HashMap<String, AidEntry>();
 
     private native int doGetDefaultRouteDestination();
     private native int doGetDefaultOffHostRouteDestination();
@@ -178,9 +178,9 @@ public class AidRoutingManager {
     }
 
     private void clearNfcRoutingTableLocked() {
-        for (Map.Entry<String, Integer> aidEntry : mRouteForAid.entrySet())  {
+        for (Map.Entry<String, AidEntry> aidEntry : mRouteForAid.entrySet())  {
             String aid = aidEntry.getKey();
-            int route = aidEntry.getValue();
+            int route = aidEntry.getValue().route;
             if (aid.endsWith("*")) {
                 if (mAidMatchingSupport == AID_MATCHING_EXACT_ONLY) {
                     Log.e(TAG, "Device does not support prefix AIDs but AID [" + aid
@@ -240,18 +240,28 @@ public class AidRoutingManager {
         return 0;
     }
 
+    //Cheking in case of power/route update of any AID after conflict
+    //resolution, is routing required or not?
+    private boolean isConflictResolved(HashMap<String, AidEntry> compareRouteForAid,
+                                       Map.Entry<String, AidEntry> aidEntry){
+        if((compareRouteForAid.containsKey(aidEntry.getKey())) &&
+            ((compareRouteForAid.get(aidEntry.getKey()).route != aidEntry.getValue().route) ||
+            (compareRouteForAid.get(aidEntry.getKey()).power != aidEntry.getValue().power))){
+                return true;
+            }
+        return false;
+    }
+
     //Check if Any AID entry needs to be removed from previously registered
     //entries in the Routing table. Current AID entries are part of
     //mRouteForAid and previously registered AID entries are part of input
     //argument prevRouteForAid.
-    private boolean checkUnrouteAid(HashMap<String, Integer> prevRouteForAid) {
-        for (Map.Entry<String, Integer> aidEntry : prevRouteForAid.entrySet())  {
-            if(!mRouteForAid.containsKey(aidEntry.getKey()) ||
-                (mRouteForAid.containsKey(aidEntry.getKey()) &&
-                (mRouteForAid.get(aidEntry.getKey()) != aidEntry.getValue()))){
-                    if(aidEntry.getValue() != mDefaultAidRoute){
-                        return true;
-                    }
+    private boolean checkUnrouteAid(HashMap<String, AidEntry> prevRouteForAid) {
+        for (Map.Entry<String, AidEntry> aidEntry : prevRouteForAid.entrySet())  {
+            if((aidEntry.getValue().route != mDefaultAidRoute) &&
+                (!mRouteForAid.containsKey(aidEntry.getKey()) ||
+                isConflictResolved(mRouteForAid, aidEntry))){
+                    return true;
             }
         }
         return false;
@@ -261,14 +271,12 @@ public class AidRoutingManager {
     //entries in the Routing table. Current AID entries are part of
     //mRouteForAid and previously registered AID entries are part of input
     //argument prevRouteForAid.
-    private boolean checkRouteAid(HashMap<String, Integer> prevRouteForAid){
-        for (Map.Entry<String, Integer> aidEntry : mRouteForAid.entrySet())  {
-            if(!prevRouteForAid.containsKey(aidEntry.getKey()) ||
-                (prevRouteForAid.containsKey(aidEntry.getKey()) &&
-                (prevRouteForAid.get(aidEntry.getKey()) != aidEntry.getValue()))){
-                    if(aidEntry.getValue() != mDefaultAidRoute){
-                        return true;
-                    }
+    private boolean checkRouteAid(HashMap<String, AidEntry> prevRouteForAid){
+        for (Map.Entry<String, AidEntry> aidEntry : mRouteForAid.entrySet())  {
+            if((aidEntry.getValue().route != mDefaultAidRoute) &&
+                (!prevRouteForAid.containsKey(aidEntry.getKey())||
+                isConflictResolved(prevRouteForAid, aidEntry))){
+                    return true;
             }
         }
         return false;
@@ -288,10 +296,10 @@ public class AidRoutingManager {
             seList.add(ROUTE_HOST);
         }
         SparseArray<Set<String>> aidRoutingTable = new SparseArray<Set<String>>(aidMap.size());
-        HashMap<String, Integer> routeForAid = new HashMap<String, Integer>(aidMap.size());
+        HashMap<String, AidEntry> routeForAid = new HashMap<String, AidEntry>(aidMap.size());
         HashMap<String, Integer> infoForAid = new HashMap<String, Integer>(aidMap.size());
         HashMap<String, Integer> powerForAid = new HashMap<String, Integer>(aidMap.size());
-        HashMap<String, Integer> prevRouteForAid = new HashMap<String, Integer>();
+        HashMap<String, AidEntry> prevRouteForAid = new HashMap<String, AidEntry>();
 
         // Then, populate internal data structures first
         for (Map.Entry<String, AidEntry> aidEntry : aidMap.entrySet())  {
@@ -318,7 +326,7 @@ public class AidRoutingManager {
                     aidRoutingTable.get(route, new HashSet<String>());
             entries.add(aid);
             aidRoutingTable.put(route, entries);
-            routeForAid.put(aid, route);
+            routeForAid.put(aid, aidMap.get(aid));
             infoForAid.put(aid, aidType);
             powerForAid.put(aid, power);
             if (DBG) Log.d(TAG, "#######Routing AID " + aid + " to route "
@@ -374,9 +382,9 @@ public class AidRoutingManager {
                         for (String defaultRouteAid : defaultRouteAids) {
                             // Check whether there are any shorted AIDs routed to non-default
                             // TODO this is O(N^2) run-time complexity...
-                            for (Map.Entry<String, Integer> aidEntry : mRouteForAid.entrySet()) {
+                            for (Map.Entry<String, AidEntry> aidEntry : mRouteForAid.entrySet()) {
                                 String aid = aidEntry.getKey();
-                                int route = aidEntry.getValue();
+                                int route = aidEntry.getValue().route;
                                 if (defaultRouteAid.startsWith(aid) && route != mDefaultRoute) {
                                     if (DBG) Log.d(TAG, "Adding AID " + defaultRouteAid + " for default " +
                                             "route, because a conflicting shorter AID will be " +
