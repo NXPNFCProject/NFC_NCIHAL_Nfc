@@ -240,13 +240,13 @@ public class AidRoutingManager {
         return 0;
     }
 
-    //Cheking in case of power/route update of any AID after conflict
-    //resolution, is routing required or not?
-    private boolean isConflictResolved(HashMap<String, AidEntry> compareRouteForAid,
+    //check if Routing table update is needed for change in power state
+    //or route location after conflict resolution.
+    private boolean isRouteUpdateNeededAfterConflictRes(HashMap<String, AidEntry> currRouteForAid,
                                        Map.Entry<String, AidEntry> aidEntry){
-        if((compareRouteForAid.containsKey(aidEntry.getKey())) &&
-            ((compareRouteForAid.get(aidEntry.getKey()).route != aidEntry.getValue().route) ||
-            (compareRouteForAid.get(aidEntry.getKey()).power != aidEntry.getValue().power))){
+        if((currRouteForAid.containsKey(aidEntry.getKey())) &&
+            ((currRouteForAid.get(aidEntry.getKey()).route != aidEntry.getValue().route) ||
+            (currRouteForAid.get(aidEntry.getKey()).power != aidEntry.getValue().power))){
                 return true;
             }
         return false;
@@ -260,7 +260,7 @@ public class AidRoutingManager {
         for (Map.Entry<String, AidEntry> aidEntry : prevRouteForAid.entrySet())  {
             if((aidEntry.getValue().route != mDefaultAidRoute) &&
                 (!mRouteForAid.containsKey(aidEntry.getKey()) ||
-                isConflictResolved(mRouteForAid, aidEntry))){
+                isRouteUpdateNeededAfterConflictRes(mRouteForAid, aidEntry))){
                     return true;
             }
         }
@@ -275,7 +275,7 @@ public class AidRoutingManager {
         for (Map.Entry<String, AidEntry> aidEntry : mRouteForAid.entrySet())  {
             if((aidEntry.getValue().route != mDefaultAidRoute) &&
                 (!prevRouteForAid.containsKey(aidEntry.getKey())||
-                isConflictResolved(prevRouteForAid, aidEntry))){
+                isRouteUpdateNeededAfterConflictRes(prevRouteForAid, aidEntry))){
                     return true;
             }
         }
