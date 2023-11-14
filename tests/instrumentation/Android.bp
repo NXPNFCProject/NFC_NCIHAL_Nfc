@@ -17,12 +17,12 @@ android_test {
         "androidx.test.core",
         "androidx.test.rules",
         "androidx.test.ext.junit",
-        "truth-prebuilt",
+        "truth",
     ],
 
     // Include all test java files.
     srcs: [
-      "src/**/*.java",
+        "src/**/*.java",
     ],
 
     platform_apis: true,
@@ -31,4 +31,3 @@ android_test {
 
     instrumentation_for: "NfcNci",
 }
-
