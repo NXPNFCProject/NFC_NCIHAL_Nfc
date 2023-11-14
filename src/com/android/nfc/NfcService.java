@@ -4618,10 +4618,8 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                             if (SEPackages != null && SEPackages.contains(pkgName)) {
                                 continue;
                             }
-                            if (info.applicationInfo != null && ((info.applicationInfo.flags
-                                    & ApplicationInfo.FLAG_SYSTEM) != 0
-                                    || (info.applicationInfo.privateFlags
-                                    & ApplicationInfo.PRIVATE_FLAG_PRIVILEGED) != 0)) {
+                            if (info.applicationInfo != null && (info.applicationInfo.isSystemApp()
+                                    || info.applicationInfo.isPrivilegedApp())) {
                                 intent.setPackage(pkgName);
                                 intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
                                 mContext.sendBroadcastAsUser(intent, userHandle);
