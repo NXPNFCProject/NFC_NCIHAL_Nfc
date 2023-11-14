@@ -33,6 +33,7 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.android.nfc.tests.unit">
+    <uses-permission android:name="android.permission.READ_DEVICE_CONFIG" />
 
     <uses-permission android:name="android.permission.NFC" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />

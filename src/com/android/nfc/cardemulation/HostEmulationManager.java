@@ -59,6 +59,7 @@ import android.util.proto.ProtoOutputStream;
 import com.android.nfc.NfcService;
 import com.android.nfc.NfcStatsLog;
 import com.android.nfc.cardemulation.RegisteredAidCache.AidResolveInfo;
+import com.android.nfc.flags.Flags;
 
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
@@ -174,6 +175,9 @@ public class HostEmulationManager {
                 Log.e(TAG, "Got activation event in non-idle state");
             }
             mState = STATE_W4_SELECT;
+        }
+        if (Flags.testFlag()) {
+            Log.v(TAG, "Test feature flag enabled");
         }
     }
 

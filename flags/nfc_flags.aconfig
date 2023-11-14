@@ -1,0 +1,8 @@
+package: "com.android.nfc.flags"
+
+flag {
+    name: "test_flag"
+    namespace: "nfc"
+    description: "Test flag for NFC"
+    bug: "295339053"
+}
