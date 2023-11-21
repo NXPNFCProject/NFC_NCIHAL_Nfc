@@ -271,7 +271,7 @@ void NativeExtFieldDetect::postEfdmTimeoutEvt(union sigval) {
   NativeExtFieldDetect& nEfdm = NativeExtFieldDetect::getInstance();
   JNIEnv* e = NULL;
 
-  if (NULL == nEfdm.mNativeData) {
+  if (NULL == nEfdm.mNativeData || !nEfdm.mIsefdmStarted) {
     return;
   }
   ScopedAttach attach(nEfdm.mNativeData->vm, &e);
