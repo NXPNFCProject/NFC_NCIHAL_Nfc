@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- *  Copyright 2021-2023 NXP
+ *  Copyright 2021-2024 NXP
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -271,7 +271,7 @@ void NativeExtFieldDetect::postEfdmTimeoutEvt(union sigval) {
   NativeExtFieldDetect& nEfdm = NativeExtFieldDetect::getInstance();
   JNIEnv* e = NULL;
 
-  if (NULL == nEfdm.mNativeData) {
+  if (NULL == nEfdm.mNativeData || !nEfdm.mIsefdmStarted) {
     return;
   }
   ScopedAttach attach(nEfdm.mNativeData->vm, &e);
