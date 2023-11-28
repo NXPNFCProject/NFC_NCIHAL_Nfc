@@ -46,6 +46,13 @@ public class NfcBackupAgent extends BackupAgentHelper {
             } else {
                 nfcAdapter.disable();
             }
+
+            if (prefs.getBoolean(NfcService.PREF_NFC_READER_OPTION_ON,
+                    NfcService.NFC_READER_OPTION_DEFAULT)) {
+                nfcAdapter.enableReaderOption(true);
+            } else {
+                nfcAdapter.enableReaderOption(false);
+            }
         }
     }
 }

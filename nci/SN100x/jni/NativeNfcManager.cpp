@@ -1826,6 +1826,18 @@ static void nfcManager_enableDiscovery(JNIEnv* e, jobject o,
       }
     }
   } else {
+    if (!reader_mode && sReaderModeEnabled) {
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+          "%s: if reader mode disable, enable listen again", __func__);
+      struct nfc_jni_native_data* nat = getNative(e, o);
+      sReaderModeEnabled = false;
+      NFA_EnableListening();
+
+      // configure NFCC_CONFIG_CONTROL- NFCC allowed to manage RF configuration.
+      nfcManager_configNfccConfigControl(true);
+
+      NFA_SetRfDiscoveryDuration(nat->discovery_duration);
+    }
     // No technologies configured, stop polling
     stopPolling_rfDiscoveryDisabled();
   }
