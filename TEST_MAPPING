@@ -1,4 +1,9 @@
 {
+  "presubmit": [
+    {
+      "name": "CtsNfcTestCases"
+    }
+  ],
   "postsubmit": [
     {
       "name": "NfcNciInstrumentationTests",
