@@ -257,17 +257,19 @@ public class RegisteredT3tIdentifiersCache {
         ParcelFileDescriptor pFd;
         try {
             pFd = ParcelFileDescriptor.dup(fd);
+            for (Map.Entry<String, NfcFServiceInfo> entry
+                    : mForegroundT3tIdentifiersCache.entrySet()) {
+                pw.println("    NFCID2: " + entry.getKey());
+                pw.println("    NfcFServiceInfo: ");
+                entry.getValue().dump(pFd, pw, args);
+            }
+            pw.println("");
+            mRoutingManager.dump(fd, pw, args);
+            pw.println("");
+            pFd.close();
         } catch (IOException e) {
-            return;
+            pw.println("Failed to dump T3T idenitifier cache entries: " + e);
         }
-        for (Map.Entry<String, NfcFServiceInfo> entry : mForegroundT3tIdentifiersCache.entrySet()) {
-            pw.println("    NFCID2: " + entry.getKey());
-            pw.println("    NfcFServiceInfo: ");
-            entry.getValue().dump(pFd, pw, args);
-        }
-        pw.println("");
-        mRoutingManager.dump(fd, pw, args);
-        pw.println("");
     }
 
     /**

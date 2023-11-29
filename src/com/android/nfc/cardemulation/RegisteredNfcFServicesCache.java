@@ -774,21 +774,22 @@ public class RegisteredNfcFServicesCache {
         ParcelFileDescriptor pFd;
         try {
             pFd = ParcelFileDescriptor.dup(fd);
-        } catch (IOException e) {
-            return;
-        }
-        synchronized (mLock) {
-            for (UserHandle uh : mUserHandles) {
-                UserManager um = mContext.createContextAsUser(
-                        uh, /*flags=*/0).getSystemService(UserManager.class);
-                pw.println("User " + um.getUserName() + " : ");
-                UserServices userServices = findOrCreateUserLocked(uh.getIdentifier());
-                for (NfcFServiceInfo service : userServices.services.values()) {
-                    service.dump(pFd, pw, args);
+            synchronized (mLock) {
+                for (UserHandle uh : mUserHandles) {
+                    UserManager um = mContext.createContextAsUser(
+                            uh, /*flags=*/0).getSystemService(UserManager.class);
+                    pw.println("User " + um.getUserName() + " : ");
+                    UserServices userServices = findOrCreateUserLocked(uh.getIdentifier());
+                    for (NfcFServiceInfo service : userServices.services.values()) {
+                        service.dump(pFd, pw, args);
+                        pw.println("");
+                    }
                     pw.println("");
                 }
-                pw.println("");
             }
+            pFd.close();
+        } catch (IOException e) {
+            pw.println("Failed to dump HCE-F services: " + e);
         }
     }
 
