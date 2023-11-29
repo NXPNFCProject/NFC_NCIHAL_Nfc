@@ -21,6 +21,8 @@ import android.annotation.Nullable;
 import android.app.PendingIntent;
 import android.app.PendingIntentProto;
 import android.content.AuthorityEntryProto;
+import android.content.ComponentName;
+import android.content.ComponentNameProto;
 import android.content.IntentFilter;
 import android.content.IntentFilterProto;
 import android.os.PatternMatcher;

@@ -42,7 +42,7 @@ public class ConfirmConnectToWifiNetworkActivity extends Activity
                         String.format(getResources().getString(R.string.prompt_connect_to_network),
                         printableSsid))
                 .setOnDismissListener(this)
-                .setNegativeButton(com.android.internal.R.string.cancel, null)
+                .setNegativeButton(R.string.cancel, null)
                 .setPositiveButton(R.string.wifi_connect, null)
                 .create();
 

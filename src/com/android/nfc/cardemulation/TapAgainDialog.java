@@ -35,7 +35,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.appcompat.widget.Toolbar;
 
-import com.android.internal.R;
 import com.android.nfc.cardemulation.util.AlertActivity;
 
 public class TapAgainDialog extends AlertActivity implements DialogInterface.OnClickListener {

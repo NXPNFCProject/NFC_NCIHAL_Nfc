@@ -1159,7 +1159,8 @@ public class RegisteredAidCache {
                     RegisteredAidCacheProto.PREFERRED_FOREGROUND_SERVICE);
         }
         if (mPreferredPaymentService != null) {
-            mPreferredPaymentService.dumpDebug(proto,
+            Utils.dumpDebugComponentName(
+                    mPreferredPaymentService, proto,
                     RegisteredAidCacheProto.PREFERRED_PAYMENT_SERVICE);
         }
         long token = proto.start(RegisteredAidCacheProto.ROUTING_MANAGER);

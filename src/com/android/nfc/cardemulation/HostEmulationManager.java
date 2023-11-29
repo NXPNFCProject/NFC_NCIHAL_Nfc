@@ -643,7 +643,8 @@ public class HostEmulationManager {
      */
     void dumpDebug(ProtoOutputStream proto) {
         if (mPaymentServiceBound) {
-            mPaymentServiceName.dumpDebug(proto, HostEmulationManagerProto.PAYMENT_SERVICE_NAME);
+            Utils.dumpDebugComponentName(
+                    mPaymentServiceName, proto, HostEmulationManagerProto.PAYMENT_SERVICE_NAME);
         }
         if (mServiceBound) {
             Utils.dumpDebugComponentName(

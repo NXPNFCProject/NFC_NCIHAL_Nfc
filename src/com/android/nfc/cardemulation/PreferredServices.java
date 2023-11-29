@@ -39,6 +39,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.database.ContentObserver;
 import android.net.Uri;
+import android.nfc.Constants;
 import android.nfc.cardemulation.ApduServiceInfo;
 import android.nfc.cardemulation.CardEmulation;
 import android.nfc.cardemulation.Utils;
@@ -78,9 +79,9 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
     static final String TAG = "PreferredCardEmulationServices";
     static final boolean DBG = NfcProperties.debug_enabled().orElse(false);
     static final Uri paymentDefaultUri = Settings.Secure.getUriFor(
-            Settings.Secure.NFC_PAYMENT_DEFAULT_COMPONENT);
+            Constants.SETTINGS_SECURE_NFC_PAYMENT_DEFAULT_COMPONENT);
     static final Uri paymentForegroundUri = Settings.Secure.getUriFor(
-            Settings.Secure.NFC_PAYMENT_FOREGROUND);
+            Constants.SETTINGS_SECURE_NFC_PAYMENT_FOREGROUND);
 
     final SettingsObserver mSettingsObserver;
     final Context mContext;
@@ -175,7 +176,7 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
         for (UserHandle uh : userHandles) {
             name = Settings.Secure.getString(
                     mContext.createContextAsUser(uh, 0).getContentResolver(),
-                    Settings.Secure.NFC_PAYMENT_DEFAULT_COMPONENT);
+                    Constants.SETTINGS_SECURE_NFC_PAYMENT_DEFAULT_COMPONENT);
             if (name != null) {
                 newUser = uh;
                 newDefaultName = name;
@@ -199,7 +200,7 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
             // get the setting from the main user instead of from the user profiles.
             preferForeground = Settings.Secure.getInt(mContext
                     .createContextAsUser(currentUser, 0).getContentResolver(),
-                    Settings.Secure.NFC_PAYMENT_FOREGROUND) != 0;
+                    Constants.SETTINGS_SECURE_NFC_PAYMENT_FOREGROUND) != 0;
         } catch (SettingNotFoundException e) {
         }
         synchronized (mLock) {
@@ -503,11 +504,13 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
                         mForegroundCurrent, proto, PreferredServicesProto.FOREGROUND_CURRENT);
             }
             if (mPaymentDefaults.currentPreferred != null) {
-                mPaymentDefaults.currentPreferred.dumpDebug(proto,
+                Utils.dumpDebugComponentName(
+                        mPaymentDefaults.currentPreferred, proto,
                         PreferredServicesProto.FOREGROUND_CURRENT);
             }
             if (mNextTapDefault != null) {
-                mNextTapDefault.dumpDebug(proto, PreferredServicesProto.NEXT_TAP_DEFAULT);
+                Utils.dumpDebugComponentName(
+                        mNextTapDefault, proto, PreferredServicesProto.NEXT_TAP_DEFAULT);
             }
             proto.write(PreferredServicesProto.FOREGROUND_UID, mForegroundUid);
             if (mForegroundRequested != null) {
@@ -515,7 +518,8 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
                         mForegroundRequested, proto, PreferredServicesProto.FOREGROUND_REQUESTED);
             }
             if (mPaymentDefaults.settingsDefault != null) {
-                mPaymentDefaults.settingsDefault.dumpDebug(proto,
+                Utils.dumpDebugComponentName(
+                        mPaymentDefaults.settingsDefault, proto,
                         PreferredServicesProto.SETTINGS_DEFAULT);
             }
             proto.write(PreferredServicesProto.PREFER_FOREGROUND, mPaymentDefaults.preferForeground);

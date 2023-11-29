@@ -20,6 +20,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.nfc.Constants;
 
 /**
  * Boot completed receiver. used to disable the application if the device doesn't
@@ -33,7 +34,7 @@ public class NfcBootCompletedReceiver extends BroadcastReceiver {
 
         if (Intent.ACTION_BOOT_COMPLETED.equals(action)) {
             PackageManager pm = context.getPackageManager();
-            if (!pm.hasSystemFeature(PackageManager.FEATURE_NFC_ANY)) {
+            if (!pm.hasSystemFeature(Constants.FEATURE_NFC_ANY)) {
                 pm.setApplicationEnabledSetting(context.getPackageName(),
                     PackageManager.COMPONENT_ENABLED_STATE_DISABLED, 0);
             }

@@ -44,6 +44,7 @@ import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.nfc.Constants;
 import android.nfc.INfcCardEmulation;
 import android.nfc.INfcFCardEmulation;
 import android.nfc.NfcAdapter;
@@ -355,7 +356,7 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
             PackageManager pm;
             try {
                 pm = mContext.createPackageContextAsUser("android", /*flags=*/0,
-                    new UserHandle(userId)).getPackageManager();
+                    UserHandle.of(userId)).getPackageManager();
             } catch (NameNotFoundException e) {
                 Log.e(TAG, "Could not create user package context");
                 return;
@@ -410,7 +411,7 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         // Load current payment default from settings
         String name = Settings.Secure.getString(
                 mContext.createContextAsUser(UserHandle.of(userId), 0).getContentResolver(),
-                Settings.Secure.NFC_PAYMENT_DEFAULT_COMPONENT);
+                Constants.SETTINGS_SECURE_NFC_PAYMENT_DEFAULT_COMPONENT);
         if (name != null) {
             ComponentName service = ComponentName.unflattenFromString(name);
             if (!validateInstalled || service == null) {
@@ -435,7 +436,7 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         if (service == null || mServiceCache.hasService(userId, service)) {
             Settings.Secure.putString(mContext
                     .createContextAsUser(UserHandle.of(userId), 0).getContentResolver(),
-                    Settings.Secure.NFC_PAYMENT_DEFAULT_COMPONENT,
+                    Constants.SETTINGS_SECURE_NFC_PAYMENT_DEFAULT_COMPONENT,
                     service != null ? service.flattenToString() : null);
         } else {
             Log.e(TAG, "Could not find default service to make default: " + service);
@@ -687,7 +688,7 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         @Override
         public boolean isDefaultPaymentRegistered() throws RemoteException {
             String defaultComponent = Settings.Secure.getString(mContext.getContentResolver(),
-                    Settings.Secure.NFC_PAYMENT_DEFAULT_COMPONENT);
+                    Constants.SETTINGS_SECURE_NFC_PAYMENT_DEFAULT_COMPONENT);
             return defaultComponent != null ? true : false;
         }
     }
