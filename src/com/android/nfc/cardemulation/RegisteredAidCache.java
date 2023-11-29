@@ -331,7 +331,7 @@ public class RegisteredAidCache {
                             serviceAidInfo.service.getComponent() +
                             " because it's not the payment default.)");
                 } else {
-                    if (serviceAidInfo.service.isSelectedOtherService()) {
+                    if (serviceAidInfo.service.isOtherServiceEnabled()) {
                         if (DBG) Log.d(TAG, serviceAidInfo.service.getComponent() +
                                 " is selected other service");
                         resolveInfo.services.add(serviceAidInfo.service);
