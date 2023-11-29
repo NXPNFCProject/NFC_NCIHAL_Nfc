@@ -326,7 +326,11 @@ public class RegisteredAidCache {
                             serviceAidInfo.service.getComponent() +
                             " because it's not the payment default.)");
                 } else {
-                    resolveInfo.services.add(serviceAidInfo.service);
+                    if (serviceAidInfo.service.isSelectedOtherService()) {
+                        if (DBG) Log.d(TAG, serviceAidInfo.service.getComponent() +
+                                " is selected other service");
+                        resolveInfo.services.add(serviceAidInfo.service);
+                    }
                 }
             }
         }
