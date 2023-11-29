@@ -841,4 +841,8 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         }
         return "";
     }
+
+    public boolean isRequiresScreenOnServiceExist() {
+        return mAidCache.isRequiresScreenOnServiceExist();
+    }
 }

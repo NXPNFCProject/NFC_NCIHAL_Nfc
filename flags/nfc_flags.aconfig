@@ -6,3 +6,10 @@ flag {
     description: "Test flag for NFC"
     bug: "295339053"
 }
+
+flag {
+    name: "reduce_state_transition"
+    namespace: "nfc"
+    description: "Flag for reducing NFCC state transition"
+    bug: "308890980"
+}
