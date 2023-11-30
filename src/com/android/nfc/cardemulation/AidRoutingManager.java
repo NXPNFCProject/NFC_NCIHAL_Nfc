@@ -108,6 +108,8 @@ public class AidRoutingManager {
 
     // Easy look-up what the route is for a certain AID
     HashMap<String, Integer> mRouteForAid = new HashMap<String, Integer>();
+    // Easy look-up what the power is for a certain AID
+    HashMap<String, Integer> mPowerForAid = new HashMap<String, Integer>();
 
     private native int doGetDefaultRouteDestination();
     private native int doGetDefaultOffHostRouteDestination();
@@ -289,8 +291,8 @@ public class AidRoutingManager {
         }
         SparseArray<Set<String>> aidRoutingTable = new SparseArray<Set<String>>(aidMap.size());
         HashMap<String, Integer> routeForAid = new HashMap<String, Integer>(aidMap.size());
-        HashMap<String, Integer> infoForAid = new HashMap<String, Integer>(aidMap.size());
         HashMap<String, Integer> powerForAid = new HashMap<String, Integer>(aidMap.size());
+        HashMap<String, Integer> infoForAid = new HashMap<String, Integer>(aidMap.size());
         HashMap<String, Integer> prevRouteForAid = new HashMap<String, Integer>();
 
         // Then, populate internal data structures first
@@ -329,7 +331,7 @@ public class AidRoutingManager {
 
         synchronized (mLock) {
             mLastCommitStatus = false;
-            if (routeForAid.equals(mRouteForAid) && !force) {
+            if (routeForAid.equals(mRouteForAid) && powerForAid.equals(mPowerForAid) && !force) {
                 NfcService.getInstance().addT4TNfceeAid();
                 if (DBG) Log.d(TAG, "Routing table unchanged, not updating");
                 return false;
@@ -340,6 +342,7 @@ public class AidRoutingManager {
             NfcService.getInstance().addT4TNfceeAid();
             prevRouteForAid = mRouteForAid;
             mRouteForAid = routeForAid;
+            mPowerForAid = powerForAid;
             mAidRoutingTable = aidRoutingTable;
             mMaxAidRoutingTableSize = NfcService.getInstance().getAidRoutingTableSize();
             if (DBG) Log.d(TAG, "mMaxAidRoutingTableSize: " + mMaxAidRoutingTableSize);
@@ -549,6 +552,7 @@ public class AidRoutingManager {
         synchronized (mLock) {
             mAidRoutingTable.clear();
             mRouteForAid.clear();
+            mPowerForAid.clear();
         }
     }
 
