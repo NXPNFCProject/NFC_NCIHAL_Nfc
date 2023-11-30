@@ -64,6 +64,7 @@ import com.nxp.nfc.NfcConstants;
 
 import com.android.internal.annotations.GuardedBy;
 import com.android.internal.util.FastXmlSerializer;
+import com.android.internal.util.XmlUtils;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -127,6 +128,7 @@ public class RegisteredServicesCache {
         public final int uid;
         public final HashMap<String, AidGroup> aidGroups = new HashMap<>();
         public String offHostSE;
+        public boolean defaultToObserveMode = false;
 
         DynamicSettings(int uid) {
             this.uid = uid;
@@ -523,6 +525,7 @@ public class RegisteredServicesCache {
                 ComponentName currentComponent = null;
                 int currentUid = -1;
                 String currentOffHostSE = null;
+                boolean defaultToObserveMode = false;
                 ArrayList<AidGroup> currentGroups = new ArrayList<AidGroup>();
                 while (eventType != XmlPullParser.END_DOCUMENT) {
                     tagName = parser.getName();
@@ -531,6 +534,8 @@ public class RegisteredServicesCache {
                             String compString = parser.getAttributeValue(null, "component");
                             String uidString = parser.getAttributeValue(null, "uid");
                             String offHostString = parser.getAttributeValue(null, "offHostSE");
+                            String defaultToObserveModeStr =
+                                parser.getAttributeValue(null, "defaultToObserveMode");
                             if (compString == null || uidString == null) {
                                 Log.e(TAG, "Invalid service attributes");
                             } else {
@@ -539,6 +544,9 @@ public class RegisteredServicesCache {
                                     currentComponent = ComponentName.unflattenFromString(compString);
                                     currentOffHostSE = offHostString;
                                     inService = true;
+                                    defaultToObserveMode =
+                                        XmlUtils.convertValueToBoolean(defaultToObserveModeStr,
+                                        false);
                                 } catch (NumberFormatException e) {
                                     Log.e(TAG, "Could not parse service uid");
                                 }
@@ -564,6 +572,7 @@ public class RegisteredServicesCache {
                                     dynSettings.aidGroups.put(group.getCategory(), group);
                                 }
                                 dynSettings.offHostSE = currentOffHostSE;
+                                dynSettings.defaultToObserveMode = defaultToObserveMode;
                                 UserServices services = findOrCreateUserLocked(userId);
                                 services.dynamicSettings.put(currentComponent, dynSettings);
                             }
@@ -685,6 +694,8 @@ public class RegisteredServicesCache {
                     if(service.getValue().offHostSE != null) {
                         out.attribute(null, "offHostSE", service.getValue().offHostSE);
                     }
+                    out.attribute(null,"defaultToObserveMode",
+                        Boolean.toString(service.getValue().defaultToObserveMode));
                     for (AidGroup group : service.getValue().aidGroups.values()) {
                         group.writeAsXml(out);
                     }
@@ -849,6 +860,35 @@ public class RegisteredServicesCache {
         return true;
     }
 
+    public boolean setServiceObserveModeDefault(int userId, int uid,
+            ComponentName componentName, boolean enable) {
+        synchronized (mLock) {
+            UserServices services = findOrCreateUserLocked(userId);
+            // Check if we can find this service
+            ApduServiceInfo serviceInfo = getService(userId, componentName);
+            if (serviceInfo == null) {
+                Log.e(TAG, "Service " + componentName + " does not exist.");
+                return false;
+            }
+            if (serviceInfo.getUid() != uid) {
+                // This is probably a good indication something is wrong here.
+                // Either newer service installed with different uid (but then
+                // we should have known about it), or somebody calling us from
+                // a different uid.
+                Log.e(TAG, "UID mismatch.");
+                return false;
+            }
+            DynamicSettings dynSettings = services.dynamicSettings.get(componentName);
+            if (dynSettings == null) {
+                dynSettings = new DynamicSettings(uid);
+                dynSettings.offHostSE = null;
+                services.dynamicSettings.put(componentName, dynSettings);
+            }
+            dynSettings.defaultToObserveMode = enable;
+        }
+        return true;
+    }
+
     public boolean registerAidGroupForService(int userId, int uid,
             ComponentName componentName, AidGroup aidGroup) {
         ArrayList<ApduServiceInfo> newServices = null;
@@ -993,6 +1033,12 @@ public class RegisteredServicesCache {
             mCallback.onServicesUpdated(userId, newServices, true);
         }
         return success;
+    }
+
+    boolean doesServiceDefaultToObserveMode(int userId, ComponentName service) {
+        UserServices services = findOrCreateUserLocked(userId);
+        DynamicSettings dynSettings = services.dynamicSettings.get(service);
+        return dynSettings != null && dynSettings.defaultToObserveMode;
     }
 
     private boolean updateOtherServiceStatus(int userId, ApduServiceInfo service, boolean checked) {

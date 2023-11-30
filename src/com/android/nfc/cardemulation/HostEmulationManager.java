@@ -39,6 +39,9 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.nfc.cardemulation.ApduServiceInfo;
 import android.nfc.cardemulation.CardEmulation;
 import android.nfc.cardemulation.HostApduService;
@@ -59,11 +62,12 @@ import android.util.proto.ProtoOutputStream;
 import com.android.nfc.NfcService;
 import com.android.nfc.NfcStatsLog;
 import com.android.nfc.cardemulation.RegisteredAidCache.AidResolveInfo;
+import com.android.nfc.cardemulation.RegisteredServicesCache.DynamicSettings;
 import com.android.nfc.flags.Flags;
-
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class HostEmulationManager {
     static final String TAG = "HostEmulationManager";
@@ -74,6 +78,7 @@ public class HostEmulationManager {
     static final int STATE_W4_SERVICE = 2;
     static final int STATE_W4_DEACTIVATE = 3;
     static final int STATE_XFER = 4;
+    static final int STATE_POLLING_LOOP = 5;
 
     /** Minimum AID length as per ISO7816 */
     static final int MINIMUM_AID_LENGTH = 5;
@@ -104,6 +109,7 @@ public class HostEmulationManager {
     boolean mServiceBound = false;
     ComponentName mServiceName = null;
     int mServiceUserId; // The UserId of the non-payment service
+    ArrayList<Bundle> mPendingPollingLoopFrames = null;
 
     // Variables below are for a payment service,
     // which is typically bound persistently to improve on
@@ -148,6 +154,38 @@ public class HostEmulationManager {
                 }
             }
         });
+    }
+
+    private Messenger getForegroundServiceOrDefault() {
+        PackageManager packageManager = mContext.getPackageManager();
+        ComponentName preferredServiceName = mAidCache.getPreferredService();
+        try {
+            ApplicationInfo preferredServiceInfo =
+                packageManager.getApplicationInfo(preferredServiceName.getPackageName(), 0);
+            UserHandle user = UserHandle.getUserHandleForUid(preferredServiceInfo.uid);
+            return bindServiceIfNeededLocked(user.getIdentifier(), preferredServiceName);
+        } catch (NameNotFoundException nnfe) {
+            Log.e(TAG, "Packange name not found, dropping polling frame", nnfe);
+            unbindServiceIfNeededLocked();
+        }
+        return bindServiceIfNeededLocked(mPaymentServiceUserId, mPaymentServiceName);
+    }
+
+    public void onPollingLoopDetected(Bundle pollingFrame) {
+        synchronized (mLock) {
+            mState = STATE_POLLING_LOOP;
+            Messenger service = getForegroundServiceOrDefault();
+            if (service != null) {
+                ArrayList<Bundle> frames = new ArrayList<Bundle>();
+                frames.add(pollingFrame);
+                sendPollingFramesToServiceLocked(service, frames);
+            } else {
+                if (mPendingPollingLoopFrames == null) {
+                    mPendingPollingLoopFrames = new ArrayList<Bundle>(1);
+                }
+                mPendingPollingLoopFrames.add(pollingFrame);
+            }
+        }
     }
 
     /**
@@ -409,6 +447,31 @@ public class HostEmulationManager {
         }
     }
 
+    void sendPollingFramesToServiceLocked(Messenger service, ArrayList<Bundle> frames) {
+        if (!Objects.equals(service, mActiveService)) {
+            sendDeactivateToActiveServiceLocked(HostApduService.DEACTIVATION_DESELECTED);
+            mActiveService = service;
+            if (service.equals(mPaymentService)) {
+                mActiveServiceName = mPaymentServiceName;
+                mActiveServiceUserId = mPaymentServiceUserId;
+            } else {
+                mActiveServiceName = mServiceName;
+                mActiveServiceUserId = mServiceUserId;
+            }
+        }
+        Message msg = Message.obtain(null, HostApduService.MSG_POLLING_LOOP);
+        Bundle msgData = new Bundle();
+        msgData.putParcelableArrayList(HostApduService.POLLING_LOOP_FRAMES_BUNDLE_KEY, frames);
+        msg.setData(msgData);
+        msg.replyTo = mMessenger;
+        mState = STATE_POLLING_LOOP;
+        try {
+            mActiveService.send(msg);
+        } catch (RemoteException e) {
+            Log.e(TAG, "Remote service has died, dropping frames");
+        }
+    }
+
     void sendDeactivateToActiveServiceLocked(int reason) {
         if (mActiveService == null) return;
         Message msg = Message.obtain(null, HostApduService.MSG_DEACTIVATED);
@@ -548,6 +611,9 @@ public class HostEmulationManager {
                 if (mSelectApdu != null) {
                     sendDataToServiceLocked(mService, mSelectApdu);
                     mSelectApdu = null;
+                } else if (mPendingPollingLoopFrames != null) {
+                    sendPollingFramesToServiceLocked(mService, mPendingPollingLoopFrames);
+                    mPendingPollingLoopFrames = null;
                 }
             }
         }

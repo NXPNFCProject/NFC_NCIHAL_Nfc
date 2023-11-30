@@ -48,11 +48,13 @@ import android.nfc.Constants;
 import android.nfc.INfcCardEmulation;
 import android.nfc.INfcFCardEmulation;
 import android.nfc.NfcAdapter;
+import android.nfc.NfcManager;
 import android.nfc.cardemulation.AidGroup;
 import android.nfc.cardemulation.ApduServiceInfo;
 import android.nfc.cardemulation.NfcFServiceInfo;
 import android.nfc.cardemulation.CardEmulation;
 import android.os.Binder;
+import android.os.Bundle;
 import android.os.RemoteException;
 import android.os.SystemClock;
 import android.os.UserHandle;
@@ -152,6 +154,10 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         // To get Object of RegisteredAidCache to get the Default Offhost service.
     public RegisteredAidCache getRegisteredAidCache() {
         return mAidCache;
+    }
+
+    public void onPollingLoopDetected(Bundle pollingFrame) {
+        mHostEmulationManager.onPollingLoopDetected(pollingFrame);
     }
 
     public void onHostCardEmulationActivated(int technology) {
@@ -566,6 +572,17 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         }
 
         @Override
+        public boolean setServiceObserveModeDefault(int userId,
+            ComponentName service, boolean enable) {
+            NfcPermissions.validateUserId(userId);
+            if (!isServiceRegistered(userId, service)) {
+                return false;
+            }
+            return mServiceCache.setServiceObserveModeDefault(userId, Binder.getCallingUid(),
+                service, enable);
+        }
+
+        @Override
         public boolean registerAidGroupForService(int userId,
                 ComponentName service, AidGroup aidGroup) throws RemoteException {
             NfcPermissions.validateUserId(userId);
@@ -813,6 +830,19 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
 
         NfcService.getInstance().onPreferredPaymentChanged(
                 NfcAdapter.PREFERRED_PAYMENT_CHANGED);
+
+        if (!android.nfc.Flags.nfcObserveMode()) {
+            ComponentName paymentService = getDefaultServiceForCategory(userId,
+                        CardEmulation.CATEGORY_PAYMENT, false);
+            NfcManager manager = mContext.getSystemService(NfcManager.class);
+            NfcAdapter adapter = manager.getDefaultAdapter();
+            if (mServiceCache.doesServiceDefaultToObserveMode(userId,
+                service != null ? service : paymentService)) {
+                adapter.disallowTransaction();
+            } else {
+                adapter.allowTransaction();
+            }
+        }
     }
 
     @Override

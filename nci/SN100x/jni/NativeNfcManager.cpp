@@ -68,6 +68,7 @@
 #endif
 #endif
 
+#include "android_nfc.h"
 #include "ce_api.h"
 #include "debug_lmrt.h"
 #include "nfa_api.h"
@@ -164,6 +165,7 @@ jmethodID gCachedNfcManagerNotifyHostEmuDeactivated;
 jmethodID gCachedNfcManagerNotifyRfFieldActivated;
 jmethodID gCachedNfcManagerNotifyRfFieldDeactivated;
 jmethodID gCachedNfcManagerNotifyHwErrorReported;
+jmethodID gCachedNfcManagerNotifyPollingLoopFrame;
 #if(NXP_EXTNS == TRUE)
 jmethodID gCachedNfcManagerNotifyLxDebugInfo;
 jmethodID gCachedNfcManagerNotifyTagAbortListeners;
@@ -212,6 +214,7 @@ static SyncEvent sNfaEnableDisablePollingEvent;  // event for
                                                  // NFA_DisablePolling()
 SyncEvent gNfaSetConfigEvent;                    // event for Set_Config....
 SyncEvent gNfaGetConfigEvent;                    // event for Get_Config....
+SyncEvent gNfaVsCommand;                         // event for VS commands
 #if(NXP_EXTNS == TRUE)
 static SyncEvent sNfaTransitConfigEvent;  // event for NFA_SetTransitConfig()
 bool suppressLogs = true;
@@ -303,6 +306,9 @@ static rssi_status_t nfcManager_doSetRssiMode(bool enable,
 static void nfcManager_restartRFDiscovery(JNIEnv* e, jobject o);
 static jboolean nfcManager_doSetULPDetMode(JNIEnv* e, jobject o, bool flag);
 #endif
+
+
+tNFA_STATUS gVSCmdStatus = NFA_STATUS_OK;
 uint16_t gCurrentConfigLen;
 uint8_t gConfig[256];
 static int NFA_SCREEN_POLLING_TAG_MASK = 0x10;
@@ -912,6 +918,8 @@ static jboolean nfcManager_initNativeStruc(JNIEnv* e, jobject o) {
       e->GetMethodID(cls.get(),"notifyEeUpdated", "()V");
   gCachedNfcManagerNotifyHwErrorReported =
       e->GetMethodID(cls.get(), "notifyHwErrorReported", "()V");
+  gCachedNfcManagerNotifyPollingLoopFrame =
+      e->GetMethodID(cls.get(), "notifyPollingLoopFrame", "(I[B)V");
 #if(NXP_EXTNS == TRUE)
   gCachedNfcManagerNotifyLxDebugInfo =
       e->GetMethodID(cls.get(), "notifyNfcDebugInfo", "(I[B)V");
@@ -1440,6 +1448,82 @@ static jboolean nfcManager_commitRouting(JNIEnv* e, jobject) {
 #endif
 }
 
+void static nfaVSCallback(uint8_t event, uint16_t param_len, uint8_t* p_param) {
+  switch (event & NCI_OID_MASK) {
+    case NCI_MSG_PROP_ANDROID:
+      if (p_param[2] < 0x8) {
+        struct nfc_jni_native_data* nat = getNative(NULL, NULL);
+        JNIEnv* e = NULL;
+        ScopedAttach attach(nat->vm, &e);
+        if (e == NULL) {
+          LOG(ERROR) << StringPrintf("jni env is null");
+          return;
+        }
+        ScopedLocalRef<jobject> dataJavaArray(e, e->NewByteArray(param_len));
+        if (dataJavaArray.get() == NULL) {
+          LOG(ERROR) << "fail allocate array";
+          return;
+        }
+        e->SetByteArrayRegion((jbyteArray)dataJavaArray.get(), 0, param_len,
+                              (jbyte*)(p_param));
+        if (e->ExceptionCheck()) {
+          e->ExceptionClear();
+          LOG(ERROR) << "failed to fill array";
+          return;
+        }
+        e->CallVoidMethod(nat->manager,
+                          android::gCachedNfcManagerNotifyPollingLoopFrame,
+                          (jint)param_len, dataJavaArray.get());
+      } else {
+        DLOG_IF(INFO, nfc_debug_enabled)
+            << StringPrintf("Unknown Android NFT %x", p_param[2]);
+        break;
+      }
+      break;
+    default:
+      DLOG_IF(INFO, nfc_debug_enabled)
+          << StringPrintf("Unknown NFC Proprietary opcode %x", event);
+      break;
+  }
+}
+
+static void nfaSendRawVsCmdCallback(uint8_t event, uint16_t param_len,
+                                    uint8_t* p_param) {
+  gVSCmdStatus = p_param[3];
+  SyncEventGuard guard(gNfaVsCommand);
+  gNfaVsCommand.notifyOne();
+}
+
+static jboolean nfcManager_setObserveMode(JNIEnv* e, jobject, jboolean enable) {
+  if (!android_nfc_nfc_observe_mode_st_shim()) {
+    return false;
+  }
+  bool reenbleDiscovery = false;
+  if (sRfEnabled) {
+    startRfDiscovery(false);
+    reenbleDiscovery = true;
+  }
+  uint8_t cmd[] = {
+      (NCI_MT_CMD << NCI_MT_SHIFT) | NCI_GID_PROP, NCI_MSG_PROP_ANDROID,
+      NCI_ANDROID_PASSIVE_OBSERVER_PARAM_SIZE, NCI_ANDROID_PASSIVE_OBSERVER,
+      static_cast<uint8_t>(enable != JNI_FALSE
+                               ? NCI_ANDROID_PASSIVE_OBSERVER_PARAM_ENABLE
+                               : NCI_ANDROID_PASSIVE_OBSERVER_PARAM_DISABLE)};
+  tNFA_STATUS status =
+      NFA_SendRawVsCommand(sizeof(cmd), cmd, nfaSendRawVsCmdCallback);
+  if (status == NFA_STATUS_OK) {
+    gNfaVsCommand.wait();
+  } else {
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s: Failed to set observe mode ", __FUNCTION__);
+    gVSCmdStatus = NFA_STATUS_FAILED;
+  }
+  if (reenbleDiscovery) {
+    startRfDiscovery(true);
+  }
+  return gVSCmdStatus == NFA_STATUS_OK;
+}
+
 /*******************************************************************************
 **
 ** Function:        nfcManager_doRegisterT3tIdentifier
@@ -1684,6 +1768,9 @@ static jboolean nfcManager_doInitialize(JNIEnv* e, jobject o) {
 TheEnd:
   if (sIsNfaEnabled) {
     PowerSwitch::getInstance().setLevel(PowerSwitch::LOW_POWER);
+    if (android_nfc_nfc_read_polling_loop()) {
+      NFA_RegVSCback(true, &nfaVSCallback);
+    }
 #if (NXP_EXTNS == TRUE)
   NxpNfc_GetHwInfo();
 #endif
@@ -3122,7 +3209,8 @@ static JNINativeMethod gMethods[] = {
 
     {"getMaxRoutingTableSize", "()I",
      (void*)nfcManager_doGetMaxRoutingTableSize},
-};
+
+    {"setObserveMode", "(Z)Z", (void*)nfcManager_setObserveMode}};
 
 /*******************************************************************************
 **

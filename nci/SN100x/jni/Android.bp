@@ -47,7 +47,13 @@ cc_library_shared {
             ],
         },
     },
-    static_libs: ["libxml2"],
+
+    static_libs: [
+        "android_nfc_flags_aconfig_c_lib",
+        "server_configurable_flags",
+        "libxml2"
+    ],
+
     sanitize: {
         integer_overflow: true,
         misc_undefined: ["bounds"],

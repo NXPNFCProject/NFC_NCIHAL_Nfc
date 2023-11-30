@@ -74,7 +74,9 @@ public interface DeviceHost {
         public void onEeUpdated();
 
         public void onHwErrorReported();
-        /**
+
+	public void onPollingLoopDetected(Bundle pollingFrame);
+	/**
          * Notifies SWP Reader Events.
          */
         public void onScrNotifyEvents(int event);
@@ -285,6 +287,10 @@ public interface DeviceHost {
     public boolean setNfcSecure(boolean enable);
 
     public String getNfaStorageDir();
+
+    public boolean isObserveModeSupported();
+
+    public boolean setObserveMode(boolean enable);
 
     /**
     * Get the committed listen mode routing configuration
