@@ -1891,7 +1891,7 @@ void nfcManager_disableDiscovery(JNIEnv* e, jobject o) {
 
   // Stop RF Discovery.
   startRfDiscovery(false);
-
+  sDiscoveryEnabled = false;
   if (sPollingEnabled) status = stopPolling_rfDiscoveryDisabled();
 
   // if nothing is active after this, then tell the controller to power down
