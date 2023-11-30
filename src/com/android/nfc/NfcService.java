@@ -874,7 +874,16 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         mActivityManager = mContext.getSystemService(ActivityManager.class);
         mVibrator = mContext.getSystemService(Vibrator.class);
         mVibrationEffect = VibrationEffect.createOneShot(200, VibrationEffect.DEFAULT_AMPLITUDE);
-        mVrManager = mContext.getSystemService(VrManager.class);
+
+        PackageManager pm = mContext.getPackageManager();
+        mIsWatchType = pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
+
+        if (pm.hasSystemFeature(PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE) &&
+                !mIsWatchType) {
+            mVrManager = mContext.getSystemService(VrManager.class);
+        } else {
+            mVrManager = null;
+        }
 
         mScreenState = mScreenStateHelper.checkScreenState();
         mPreviousScreenState = mScreenState;
@@ -913,9 +922,6 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
 
         updatePackageCache();
 
-        PackageManager pm = mContext.getPackageManager();
-
-        mIsWatchType = pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
         mIsHceCapable =
                 pm.hasSystemFeature(PackageManager.FEATURE_NFC_HOST_CARD_EMULATION) ||
                 pm.hasSystemFeature(PackageManager.FEATURE_NFC_HOST_CARD_EMULATION_NFCF);
