@@ -655,7 +655,6 @@ public class NativeNfcManager implements DeviceHost {
         }
         mListener.onPollingLoopDetected(frame);
     }
-}
 
     /**
      * Notifies Tag abort operation
