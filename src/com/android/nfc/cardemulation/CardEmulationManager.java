@@ -840,7 +840,11 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         NfcService.getInstance().onPreferredPaymentChanged(
                 NfcAdapter.PREFERRED_PAYMENT_CHANGED);
 
-        if (!android.nfc.Flags.nfcObserveMode()) {
+//      Commenting below code as we are facing crash issue because of permission denial
+//      for reading android.permission.READ_DEVICE_CONFIG in CTS verifier testcase -
+//      com.android.cts.verifier.nfc.hce.ForegroundPaymentEmulatorActivity
+
+/*        if (!android.nfc.Flags.nfcObserveMode()) {
             ComponentName paymentService = getDefaultServiceForCategory(userId,
                         CardEmulation.CATEGORY_PAYMENT, false);
             NfcManager manager = mContext.getSystemService(NfcManager.class);
@@ -851,7 +855,7 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
             } else {
                 adapter.allowTransaction();
             }
-        }
+        }*/
     }
 
     public void onRoutingTableChanged() {
