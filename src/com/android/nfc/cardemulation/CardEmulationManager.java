@@ -830,6 +830,15 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
 
         NfcService.getInstance().onPreferredPaymentChanged(
                 NfcAdapter.PREFERRED_PAYMENT_CHANGED);
+    }
+
+    @Override
+    public void onPreferredForegroundServiceChanged(int userId, ComponentName service) {
+        mAidCache.onPreferredForegroundServiceChanged(userId, service);
+        mHostEmulationManager.onPreferredForegroundServiceChanged(userId, service);
+
+        NfcService.getInstance().onPreferredPaymentChanged(
+                NfcAdapter.PREFERRED_PAYMENT_CHANGED);
 
         if (!android.nfc.Flags.nfcObserveMode()) {
             ComponentName paymentService = getDefaultServiceForCategory(userId,
@@ -843,15 +852,6 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
                 adapter.allowTransaction();
             }
         }
-    }
-
-    @Override
-    public void onPreferredForegroundServiceChanged(int userId, ComponentName service) {
-        mAidCache.onPreferredForegroundServiceChanged(userId, service);
-        mHostEmulationManager.onPreferredForegroundServiceChanged(userId, service);
-
-        NfcService.getInstance().onPreferredPaymentChanged(
-                NfcAdapter.PREFERRED_PAYMENT_CHANGED);
     }
 
     public void onRoutingTableChanged() {
