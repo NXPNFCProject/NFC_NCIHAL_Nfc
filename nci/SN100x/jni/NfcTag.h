@@ -33,7 +33,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  Copyright 2020-2023 NXP
+ *  Copyright 2020-2024 NXP
  *
  ******************************************************************************/
 #pragma once
@@ -57,12 +57,9 @@ typedef struct activationParams {
 
 class NfcTag {
   friend class NfcTagTest;
+
  public:
-#if (NXP_EXTNS == TRUE)
-  enum ActivationState { Idle, Sleep, Active, InActive };
-#else
   enum ActivationState { Idle, Sleep, Active };
-#endif
   static const int MAX_NUM_TECHNOLOGY =
       11;  // max number of technologies supported by one or more tags
 #if (NXP_EXTNS == TRUE)
@@ -193,16 +190,6 @@ class NfcTag {
   *******************************************************************************/
   void setActivationState();
 #if (NXP_EXTNS == TRUE)
-/*******************************************************************************
-**
-** Function:        resetActivationState
-**
-** Description:     Set the state to InActive due tag lost.
-**
-** Returns:         None.
-**
-*******************************************************************************/
-  void resetActivationState();
 
   /*******************************************************************************
    **

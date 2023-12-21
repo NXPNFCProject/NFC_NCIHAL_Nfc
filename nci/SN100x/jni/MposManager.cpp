@@ -12,7 +12,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  Copyright 2018-2020, 2022-2023 NXP
+ *  Copyright 2018-2020, 2022-2024 NXP
  *
  ******************************************************************************/
 
@@ -35,6 +35,7 @@ extern bool nfc_debug_enabled;
 namespace android {
 extern bool isDiscoveryStarted ();
 extern void startRfDiscovery (bool isStart);
+extern bool isSeRfActive();
 }
 
 MposManager MposManager::mMposMgr;
@@ -231,7 +232,7 @@ uint8_t MposManager::isReaderModeAllowed(const bool on, uint8_t rdrType) {
 
   if (on) {
     /* MPOS Reader mode shall not be started if CE or R/W mode is going on */
-    if (rdrType == NFA_SCR_MPOS && (se.isRfFieldOn() || se.mActivatedInListenMode)) {
+    if (rdrType == NFA_SCR_MPOS && (se.isRfFieldOn() || isSeRfActive())) {
       DLOG_IF(ERROR, nfc_debug_enabled)
           << StringPrintf("Payment is in progress");
       return NFA_STATUS_FAILED;

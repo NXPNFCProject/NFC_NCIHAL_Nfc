@@ -29,7 +29,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  Copyright 2018-2023 NXP
+ *  Copyright 2018-2024 NXP
  *
  ******************************************************************************/
 #include <android-base/stringprintf.h>
@@ -139,8 +139,7 @@ SyncEvent gDeactivatedEvent;
 SyncEvent sNfaSetPowerSubState;
 int recovery_option = 0;
 SyncEvent sChangeDiscTechEvent;
-#if(NXP_EXTNS == TRUE)
-bool sSeRfActive = false;  // whether RF with SE is likely active
+#if (NXP_EXTNS == TRUE)
 /*Structure to store  discovery parameters*/
 typedef struct discovery_Parameters
 {
@@ -224,9 +223,7 @@ static bool sDiscoveryEnabled = false;  // is polling or listening
 static bool sPollingEnabled = false;    // is polling for tag?
 static bool sIsDisabling = false;
 static bool sRfEnabled = false;   // whether RF discovery is enabled
-#if(NXP_EXTNS != TRUE)
 static bool sSeRfActive = false;  // whether RF with SE is likely active
-#endif
 static bool sReaderModeEnabled =
     false;  // whether we're only reading tags, not allowing P2p/card emu
 static bool sP2pEnabled = false;
@@ -569,6 +566,14 @@ static void nfaConnectionCallback(uint8_t connEvent,
                 (tNFA_INTF_TYPE)eventData->activated.activate_ntf.intf_param.type);
         nativeNfcTag_setActivatedRfProtocol(activatedProtocol);
       }
+      // If it activated in listen mode then it is likely for an
+      // SE transaction. Send the RF Event.
+      if (isListenMode(eventData->activated)) {
+        sSeRfActive = true;
+#if (NXP_EXTNS == TRUE)
+        SecureElement::getInstance().notifyListenModeState(true);
+#endif
+      }
       NfcTag::getInstance().setActive(true);
       if (sIsDisabling || !sIsNfaEnabled) break;
       gActivated = true;
@@ -631,16 +636,6 @@ static void nfaConnectionCallback(uint8_t connEvent,
           protocol to sleep . Select tag with next supported protocol after
           deactivation event is received*/
           NFA_Deactivate(true);
-        }
-
-        // We know it is not activating for P2P.  If it activated in
-        // listen mode then it is likely for an SE transaction.
-        // Send the RF Event.
-        if (isListenMode(eventData->activated)) {
-#if(NXP_EXTNS == TRUE)
-          SecureElement::getInstance().notifyListenModeState (true);
-#endif
-          sSeRfActive = true;
         }
       }
       break;
@@ -1199,6 +1194,11 @@ static jintArray nfcManager_getActiveSecureElementList(JNIEnv *e, jobject o)
     (void)o;
     return SecureElement::getInstance().getActiveSecureElementList(e);
 }
+
+bool isSeRfActive() { return sSeRfActive; }
+
+void setSeRfActive(bool seRfActive) { sSeRfActive = seRfActive; }
+
 #endif
 /*******************************************************************************
 **
@@ -3908,7 +3908,7 @@ static void waitIfRfStateActive() {
 
   SecureElement& se = SecureElement::getInstance();
 
-  while (se.isRfFieldOn() || se.mActivatedInListenMode) {
+  while (se.isRfFieldOn() || sSeRfActive) {
     /* Delay is required to avoid update routing during RF Field session*/
     usleep(delayInMs * 1000);
     delayLoopCount++;
