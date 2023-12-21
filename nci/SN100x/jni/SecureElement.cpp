@@ -1,20 +1,20 @@
 /******************************************************************************
-*
-*  Licensed under the Apache License, Version 2.0 (the "License");
-*  you may not use this file except in compliance with the License.
-*  You may obtain a copy of the License at
-*
-*  http://www.apache.org/licenses/LICENSE-2.0
-*
-*  Unless required by applicable law or agreed to in writing, software
-*  distributed under the License is distributed on an "AS IS" BASIS,
-*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-*  See the License for the specific language governing permissions and
-*  limitations under the License.
-*
-*  Copyright 2018-2023 NXP
-*
-******************************************************************************/
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ *  Copyright 2018-2024 NXP
+ *
+ ******************************************************************************/
 
 #include "SecureElement.h"
 #include <nativehelper/ScopedLocalRef.h>
@@ -58,48 +58,46 @@ uint8_t  SecureElement::mStaticPipeProp;
 ** Returns:         None
 **
 *******************************************************************************/
-SecureElement::SecureElement() :
-    mActiveEeHandle(NFA_HANDLE_INVALID),
-    mNewPipeId (0),
-    mIsWiredModeOpen (false),
-    mIsSeIntfActivated(false),
-    SmbTransceiveTimeOutVal(0),
-    mErrorRecovery(false),
-    EE_HANDLE_0xF4(0),
-    muicc2_selected(0),
-    mNativeData(NULL),
-    mthreadnative(NULL),
-    mbNewEE (true),
-    mIsInit (false),
-    mTransceiveWaitOk (false),
-    mGetAtrRspwait (false),
-    mAbortEventWaitOk (false),
-    mNewSourceGate (0),
-    mAtrStatus (0),
-    mAtrRespLen (0),
-    mNumEePresent (0),
-    mCreatedPipe (0),
-    mRfFieldIsOn(false),
-    mActivatedInListenMode (false)
-{
-    mPwrCmdstatus = NFA_STATUS_FAILED;
-    mModeSetNtfstatus = NFA_STATUS_FAILED;
-    mNfccPowerMode = 0;
-    mTransceiveStatus = NFA_STATUS_FAILED;
-    mCommandStatus = NFA_STATUS_FAILED;
-    mNfaHciHandle = NFA_HANDLE_INVALID;
-    mActualResponseSize = 0;
-    mAtrInfolen = 0;
-    mActualNumEe = 0;
-    memset (&mEeInfo, 0, MAX_NUM_EE *sizeof(tNFA_EE_INFO));
-    memset (mAidForEmptySelect, 0, sizeof(mAidForEmptySelect));
-    memset (mVerInfo, 0, sizeof(mVerInfo));
-    memset (mAtrInfo, 0, sizeof(mAtrInfo));
-    memset (mResponseData, 0, sizeof(mResponseData));
-    memset (mAtrRespData, 0, sizeof(mAtrRespData));
-    memset (&mHciCfg, 0, sizeof(mHciCfg));
-    memset (&mLastRfFieldToggle, 0, sizeof(mLastRfFieldToggle));
-    memset (&mNfceeData_t, 0, sizeof(mNfceeData));
+SecureElement::SecureElement()
+    : mActiveEeHandle(NFA_HANDLE_INVALID),
+      mNewPipeId(0),
+      mIsWiredModeOpen(false),
+      mIsSeIntfActivated(false),
+      SmbTransceiveTimeOutVal(0),
+      mErrorRecovery(false),
+      EE_HANDLE_0xF4(0),
+      muicc2_selected(0),
+      mNativeData(NULL),
+      mthreadnative(NULL),
+      mbNewEE(true),
+      mIsInit(false),
+      mTransceiveWaitOk(false),
+      mGetAtrRspwait(false),
+      mAbortEventWaitOk(false),
+      mNewSourceGate(0),
+      mAtrStatus(0),
+      mAtrRespLen(0),
+      mNumEePresent(0),
+      mCreatedPipe(0),
+      mRfFieldIsOn(false) {
+  mPwrCmdstatus = NFA_STATUS_FAILED;
+  mModeSetNtfstatus = NFA_STATUS_FAILED;
+  mNfccPowerMode = 0;
+  mTransceiveStatus = NFA_STATUS_FAILED;
+  mCommandStatus = NFA_STATUS_FAILED;
+  mNfaHciHandle = NFA_HANDLE_INVALID;
+  mActualResponseSize = 0;
+  mAtrInfolen = 0;
+  mActualNumEe = 0;
+  memset(&mEeInfo, 0, MAX_NUM_EE * sizeof(tNFA_EE_INFO));
+  memset(mAidForEmptySelect, 0, sizeof(mAidForEmptySelect));
+  memset(mVerInfo, 0, sizeof(mVerInfo));
+  memset(mAtrInfo, 0, sizeof(mAtrInfo));
+  memset(mResponseData, 0, sizeof(mResponseData));
+  memset(mAtrRespData, 0, sizeof(mAtrRespData));
+  memset(&mHciCfg, 0, sizeof(mHciCfg));
+  memset(&mLastRfFieldToggle, 0, sizeof(mLastRfFieldToggle));
+  memset(&mNfceeData_t, 0, sizeof(mNfceeData));
 }
 /*******************************************************************************
 **
@@ -142,7 +140,6 @@ bool SecureElement::initialize(nfc_jni_native_data* native) {
     memset (mEeInfo, 0, sizeof(mEeInfo));
     memset (&mHciCfg, 0, sizeof(mHciCfg));
     memset(mAidForEmptySelect, 0, sizeof(mAidForEmptySelect));
-    mActivatedInListenMode = false;
     muicc2_selected = NfcConfig::getUnsigned(NAME_NXP_DEFAULT_UICC2_SELECT, UICC2_ID);
 
     SmbTransceiveTimeOutVal = NfcConfig::getUnsigned(NAME_NXP_SMB_TRANSCEIVE_TIMEOUT, WIRED_MODE_TRANSCEIVE_TIMEOUT);
@@ -190,17 +187,7 @@ bool SecureElement::initialize(nfc_jni_native_data* native) {
     LOG(INFO) << StringPrintf("%s: exit", fn);
     return (true);
 }
-/*******************************************************************************
-**
-** Function:        isActivatedInListenMode
-**
-** Description:     Can be used to determine if the SE is activated in listen
-*mode
-**
-** Returns:         True if the SE is activated in listen mode
-**
-*******************************************************************************/
-bool SecureElement::isActivatedInListenMode() { return mActivatedInListenMode; }
+
 /*******************************************************************************
 **
 ** Function:        getGenericEseId
@@ -329,8 +316,6 @@ void SecureElement::notifyListenModeState (bool isActivated) {
                 << StringPrintf("%s: jni env is null", fn);
         return;
     }
-
-    mActivatedInListenMode = isActivated;
 
     if (mNativeData != NULL) {
         if (isActivated) {

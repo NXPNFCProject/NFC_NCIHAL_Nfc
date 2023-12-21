@@ -33,7 +33,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  Copyright 2018-2021, 2023 NXP
+ *  Copyright 2018-2021, 2023-2024 NXP
  *
  ******************************************************************************/
 #include <android-base/stringprintf.h>
@@ -56,7 +56,10 @@ using android::base::StringPrintf;
 
 extern bool gActivated;
 #if (NXP_EXTNS == TRUE)
-extern bool sSeRfActive;
+namespace android {
+extern bool isSeRfActive();
+extern void setSeRfActive(bool);
+}  // namespace android
 #endif
 extern SyncEvent gDeactivatedEvent;
 extern bool nfc_debug_enabled;
@@ -708,8 +711,8 @@ void RoutingManager::stackCallback(uint8_t event,
       SyncEventGuard g(gDeactivatedEvent);
       gActivated = false;  // guard this variable from multi-threaded access
 #if (NXP_EXTNS == TRUE)
-      if (sSeRfActive) {
-        sSeRfActive = false;
+      if (android::isSeRfActive()) {
+        android::setSeRfActive(false);
       }
 #endif
       gDeactivatedEvent.notifyOne();
