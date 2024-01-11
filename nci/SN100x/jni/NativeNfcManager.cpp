@@ -1489,7 +1489,11 @@ void static nfaVSCallback(uint8_t event, uint16_t param_len, uint8_t* p_param) {
 
 static void nfaSendRawVsCmdCallback(uint8_t event, uint16_t param_len,
                                     uint8_t* p_param) {
-  gVSCmdStatus = p_param[3];
+  if (param_len == 5) {
+    gVSCmdStatus = p_param[4];
+  } else {
+    gVSCmdStatus = NFA_STATUS_FAILED;
+  }
   SyncEventGuard guard(gNfaVsCommand);
   gNfaVsCommand.notifyOne();
 }
