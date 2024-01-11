@@ -21,6 +21,7 @@ android_app {
     ],
     uses_libs: ["com.nxp.nfc"],
     platform_apis: true,
+    privileged: true,
     certificate: "platform",
     jni_libs: ["libnfc_nci_jni"],
     libs: ["com.nxp.nfc"],
@@ -37,6 +38,7 @@ android_app {
         proguard_flags_files: ["proguard.flags"],
     },
     jarjar_rules: "jarjar-rules.txt",
+    privapp_allowlist: ":privapp_allowlist_com.android.nfc.xml",
 }
 
 filegroup {
@@ -48,4 +50,9 @@ filegroup {
     visibility: [
         "//packages/apps/Nfc/tests/unit",
     ],
+}
+
+filegroup {
+    name: "privapp_allowlist_com.android.nfc.xml",
+    srcs: ["com.android.nfc.xml"],
 }
