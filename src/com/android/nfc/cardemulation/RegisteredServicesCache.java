@@ -476,6 +476,8 @@ public class RegisteredServicesCache {
             Log.i(TAG, "current user: " + ActivityManager.getCurrentUser() +
                     ", is managed profile : " + isManagedProfile );
             boolean isChecked = !(isManagedProfile);
+            // TODO: b/313040065 temperatory set isChecked always true due to there's no UI in AOSP
+            isChecked = true;
 
             for (ApduServiceInfo service : validOtherServices) {
                 Log.d(TAG, "update valid otherService: " + service.getComponent()
