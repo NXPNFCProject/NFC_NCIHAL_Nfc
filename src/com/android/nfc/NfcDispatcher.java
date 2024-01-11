@@ -352,6 +352,7 @@ class NfcDispatcher {
             }
             // try other users when there is no Activity in current user to handle this intent
             List<UserHandle> userHandles = getCurrentActiveUserHandles();
+            userHandles.remove(UserHandle.of(ActivityManager.getCurrentUser()));
             for (UserHandle uh : userHandles) {
                 activities = packageManager.queryIntentActivitiesAsUser(intent,
                         ResolveInfoFlags.of(0), uh);
@@ -404,6 +405,7 @@ class NfcDispatcher {
             }
             // try other users when there is no Activity in current user to handle this intent
             List<UserHandle> userHandles = getCurrentActiveUserHandles();
+            userHandles.remove(UserHandle.of(ActivityManager.getCurrentUser()));
             for (UserHandle uh : userHandles) {
                 activities = packageManager.queryIntentActivitiesAsUser(intentToStart,
                         ResolveInfoFlags.of(0), uh);
