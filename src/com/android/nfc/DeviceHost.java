@@ -340,4 +340,9 @@ public interface DeviceHost {
      * Enable or Disable the ULPDet Mode based on flag
      */
     boolean setULPDetMode(boolean flag);
+
+    /**
+     * Enable or Disable the Power Saving Mode based on flag
+     */
+    boolean setPowerSavingMode(boolean flag);
 }

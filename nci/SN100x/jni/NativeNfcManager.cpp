@@ -283,6 +283,8 @@ static tNFA_STATUS startPolling_rfDiscoveryDisabled(
     tNFA_TECHNOLOGY_MASK tech_mask);
 static void nfcManager_doSetScreenState(JNIEnv* e, jobject o,
                                         jint screen_state_mask);
+static jboolean nfcManager_doSetPowerSavingMode(JNIEnv* e, jobject o,
+                                                bool flag);
 #if(NXP_EXTNS == TRUE)
 static jint nfcManager_getFwVersion(JNIEnv* e, jobject o);
 static bool nfcManager_isNfccBusy(JNIEnv*, jobject);
@@ -3205,6 +3207,7 @@ static JNINativeMethod gMethods[] = {
     {"doSetNfcSecure", "(Z)Z", (void*)nfcManager_doSetNfcSecure},
     {"getNfaStorageDir", "()Ljava/lang/String;",
      (void*)nfcManager_doGetNfaStorageDir},
+    {"doSetPowerSavingMode", "(Z)Z", (void*)nfcManager_doSetPowerSavingMode},
     {"getRoutingTable", "()[B", (void*)nfcManager_doGetRoutingTable},
 
     {"getMaxRoutingTableSize", "()I",
@@ -3473,6 +3476,27 @@ static tNFA_STATUS stopPolling_rfDiscoveryDisabled() {
   nativeNfcTag_releaseRfInterfaceMutexLock();
 
   return stat;
+}
+
+static jboolean nfcManager_doSetPowerSavingMode(JNIEnv* e, jobject o,
+                                                bool flag) {
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter; ", __func__);
+  uint8_t cmd[] = {(NCI_MT_CMD << NCI_MT_SHIFT) | NCI_GID_PROP,
+                   NCI_MSG_PROP_ANDROID, NCI_ANDROID_POWER_SAVING_PARAM_SIZE,
+                   NCI_ANDROID_POWER_SAVING,
+                   NCI_ANDROID_POWER_SAVING_PARAM_DISABLE};
+  cmd[4] = flag ? NCI_ANDROID_POWER_SAVING_PARAM_ENABLE
+                : NCI_ANDROID_POWER_SAVING_PARAM_DISABLE;
+  SyncEventGuard guard(gNfaVsCommand);
+  tNFA_STATUS status =
+      NFA_SendRawVsCommand(sizeof(cmd), cmd, nfaSendRawVsCmdCallback);
+  if (status == NFA_STATUS_OK) {
+    gNfaVsCommand.wait();
+  } else {
+    LOG(ERROR) << StringPrintf("%s: Failed to set power-saving mode", __func__);
+    gVSCmdStatus = NFA_STATUS_FAILED;
+  }
+  return gVSCmdStatus == NFA_STATUS_OK;
 }
 
 #if(NXP_EXTNS == TRUE)
