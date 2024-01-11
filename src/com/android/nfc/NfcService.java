@@ -1735,16 +1735,26 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
 
         @Override
         public boolean isObserveModeSupported() {
-            if (!android.nfc.Flags.nfcObserveMode()) {
-                return false;
+            long token = Binder.clearCallingIdentity();
+            try {
+                if (!android.nfc.Flags.nfcObserveMode()) {
+                    return false;
+                }
+            } finally {
+                Binder.restoreCallingIdentity(token);
             }
             return mDeviceHost.isObserveModeSupported();
         }
 
         @Override
         public boolean setObserveMode(boolean enable) {
-            if (!android.nfc.Flags.nfcObserveMode()) {
-                return false;
+            long token = Binder.clearCallingIdentity();
+            try {
+                if (!android.nfc.Flags.nfcObserveMode()) {
+                    return false;
+                }
+            } finally {
+                Binder.restoreCallingIdentity(token);
             }
             boolean privilegedCaller = false;
             int callingUid = Binder.getCallingUid();
@@ -1755,10 +1765,12 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                 String defaultPaymentService = Settings.Secure.getString(
                     mContext.createContextAsUser(user, 0).getContentResolver(),
                 Constants.SETTINGS_SECURE_NFC_PAYMENT_DEFAULT_COMPONENT);
-                String defaultPaymentPackage =
-                    ComponentName.unflattenFromString(defaultPaymentService).getPackageName();
-                privilegedCaller = (callingUid == Process.SYSTEM_UID
-                        || packageName.equals(defaultPaymentPackage));
+                if (defaultPaymentService != null) {
+                    String defaultPaymentPackage =
+                        ComponentName.unflattenFromString(defaultPaymentService).getPackageName();
+                    privilegedCaller = (callingUid == Process.SYSTEM_UID
+                            || packageName.equals(defaultPaymentPackage));
+                }
             } else {
                 privilegedCaller = (callingUid == Process.SYSTEM_UID);
             }
