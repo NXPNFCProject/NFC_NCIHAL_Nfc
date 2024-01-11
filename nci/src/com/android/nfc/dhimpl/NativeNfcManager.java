@@ -43,6 +43,8 @@ import android.util.Log;
 import com.android.nfc.DeviceHost;
 import com.android.nfc.NfcDiscoveryParameters;
 import java.io.FileDescriptor;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -651,12 +653,8 @@ public class NativeNfcManager implements DeviceHost {
             frame.putByte(HostApduService.POLLING_LOOP_GAIN_KEY, gain);
         }
         if (pos + TLV_timestamp_offset + 3 < data_len) {
-            long timestamp =
-                ((long) p_data[pos + TLV_timestamp_offset] << 24L) |
-                ((long) p_data[pos + TLV_timestamp_offset + 1] << 16L) |
-                ((long) p_data[pos + TLV_timestamp_offset + 2] << 8L) |
-                ((long) p_data[pos + TLV_timestamp_offset + 3]);
-            frame.putLong(HostApduService.POLLING_LOOP_TIMESTAMP_KEY, timestamp);
+            int timestamp = ByteBuffer.wrap(p_data, pos + TLV_timestamp_offset, 4).order(ByteOrder.LITTLE_ENDIAN).getInt();
+            frame.putInt(HostApduService.POLLING_LOOP_TIMESTAMP_KEY, timestamp);
         }
         pos += (length + 2);
         }
