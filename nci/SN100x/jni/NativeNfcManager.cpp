@@ -1450,36 +1450,39 @@ static jboolean nfcManager_commitRouting(JNIEnv* e, jobject) {
 
 void static nfaVSCallback(uint8_t event, uint16_t param_len, uint8_t* p_param) {
   switch (event & NCI_OID_MASK) {
-    case NCI_MSG_PROP_ANDROID:
-      if (p_param[2] < 0x8) {
-        struct nfc_jni_native_data* nat = getNative(NULL, NULL);
-        JNIEnv* e = NULL;
-        ScopedAttach attach(nat->vm, &e);
-        if (e == NULL) {
-          LOG(ERROR) << StringPrintf("jni env is null");
-          return;
-        }
-        ScopedLocalRef<jobject> dataJavaArray(e, e->NewByteArray(param_len));
-        if (dataJavaArray.get() == NULL) {
-          LOG(ERROR) << "fail allocate array";
-          return;
-        }
-        e->SetByteArrayRegion((jbyteArray)dataJavaArray.get(), 0, param_len,
-                              (jbyte*)(p_param));
-        if (e->ExceptionCheck()) {
-          e->ExceptionClear();
-          LOG(ERROR) << "failed to fill array";
-          return;
-        }
-        e->CallVoidMethod(nat->manager,
-                          android::gCachedNfcManagerNotifyPollingLoopFrame,
-                          (jint)param_len, dataJavaArray.get());
-      } else {
-        DLOG_IF(INFO, nfc_debug_enabled)
-            << StringPrintf("Unknown Android NFT %x", p_param[2]);
-        break;
+    case NCI_MSG_PROP_ANDROID: {
+      uint8_t android_sub_opcode = p_param[3];
+      switch (android_sub_opcode) {
+        case NCI_ANDROID_POLLING_FRAME_NTF: {
+          struct nfc_jni_native_data* nat = getNative(NULL, NULL);
+          JNIEnv* e = NULL;
+          ScopedAttach attach(nat->vm, &e);
+          if (e == NULL) {
+            LOG(ERROR) << StringPrintf("jni env is null");
+            return;
+          }
+          ScopedLocalRef<jobject> dataJavaArray(e, e->NewByteArray(param_len));
+          if (dataJavaArray.get() == NULL) {
+            LOG(ERROR) << "fail allocate array";
+            return;
+          }
+          e->SetByteArrayRegion((jbyteArray)dataJavaArray.get(), 0, param_len,
+                                (jbyte*)(p_param));
+          if (e->ExceptionCheck()) {
+            e->ExceptionClear();
+            LOG(ERROR) << "failed to fill array";
+            return;
+          }
+          e->CallVoidMethod(nat->manager,
+                            android::gCachedNfcManagerNotifyPollingLoopFrame,
+                            (jint)param_len, dataJavaArray.get());
+
+        } break;
+        default:
+          DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+              "Unknown Android sub opcode %x", android_sub_opcode);
       }
-      break;
+    } break;
     default:
       DLOG_IF(INFO, nfc_debug_enabled)
           << StringPrintf("Unknown NFC Proprietary opcode %x", event);
@@ -1499,9 +1502,6 @@ static void nfaSendRawVsCmdCallback(uint8_t event, uint16_t param_len,
 }
 
 static jboolean nfcManager_setObserveMode(JNIEnv* e, jobject, jboolean enable) {
-  if (!android_nfc_nfc_observe_mode_st_shim()) {
-    return false;
-  }
   bool reenbleDiscovery = false;
   if (sRfEnabled) {
     startRfDiscovery(false);

@@ -601,15 +601,15 @@ public class NativeNfcManager implements DeviceHost {
         Bundle frame = new Bundle();
         final int header_len = 2;
         int pos = header_len;
-        final int TLV_type_offset = 0;
-        final int TLV_len_offset = 1;
-        final int TLV_timestamp_offset = 2;
-        final int TLV_gain_offset = 6;
-        final int TLV_data_offset = 7;
+        final int TLV_len_offset = 0;
+        final int TLV_type_offset = 2;
+        final int TLV_timestamp_offset = 3;
+        final int TLV_gain_offset = 7;
+        final int TLV_data_offset = 8;
         while (pos + TLV_len_offset < data_len) {
         int type = p_data[pos + TLV_type_offset];
         int length = p_data[pos + TLV_len_offset];
-        if (pos + length + 2 > data_len) {
+        if (pos + length + 1 > data_len) {
             // Frame is bigger than buffer.
             Log.e(TAG, "Polling frame data is longer than buffer data length.");
             break;
