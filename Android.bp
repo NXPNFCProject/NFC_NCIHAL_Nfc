@@ -37,6 +37,10 @@ android_app {
     optimize: {
         proguard_flags_files: ["proguard.flags"],
     },
+    apex_available: [
+         "//apex_available:platform",
+         "com.android.nfcservices"
+    ],
     jarjar_rules: "jarjar-rules.txt",
     privapp_allowlist: ":privapp_allowlist_com.android.nfc.xml",
 }
