@@ -1,3 +1,5 @@
+# Used by com.android.nfc
+
 # android.se.omapi-V1-java
 rule android.se.omapi.** com.android.nfc.x.@0
 # Use our statically linked PlatformProperties library
@@ -8,3 +10,4 @@ rule androidx.annotation.** com.android.nfc.x.@0
 rule androidx.appcompat.app.** com.android.nfc.x.@0
 # com.google.android.material_material
 rule com.google.android.material.** com.android.nfc.x.@0
+rule com.android.internal.util.FastXmlSerializer* com.android.nfc.x.@0

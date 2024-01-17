@@ -10,6 +10,23 @@ genrule {
     out: ["com/android/nfc/NfcStatsLog.java"],
 }
 
+java_library {
+    name: "bluetooth-protos-nfc-enums-java-gen",
+    installable: false,
+    proto: {
+        type: "stream",
+    },
+    srcs: [
+        ":srcs_bluetooth_protos_nfc",
+    ],
+    apex_available: [
+        "//apex_available:platform",
+        "com.android.nfcservices",
+    ],
+    min_sdk_version: "VanillaIceCream",
+    sdk_version: "module_current",
+}
+
 // NCI Configuration
 //ALLOW_MISSING_DEPENDENCIES = ["true"]
 android_app {
@@ -17,19 +34,33 @@ android_app {
     srcs: [
         "src/**/*.java",
         "nci/**/*.java",
+        ":framework-nfc-javastream-protos",
         ":statslog-Nfc-java-gen",
     ],
     uses_libs: ["com.nxp.nfc"],
     platform_apis: true,
     privileged: true,
     certificate: "platform",
+    // TODO: This needs to change once framework-nfc is ready.
+    // min_sdk_version: "VanillaIceCream",
+    // sdk_version: "module_current",
     jni_libs: ["libnfc_nci_jni"],
-    libs: ["com.nxp.nfc"],
+    libs: [
+        "com.nxp.nfc",
+        "framework-annotations-lib",
+        "framework-bluetooth",
+        "framework-configinfrastructure",
+        "framework-statsd.stubs.module_lib",
+        "framework-wifi",
+        "unsupportedappusage"
+    ],
     static_libs: [
         "android.se.omapi-V1-java",
         "androidx.annotation_annotation",
         "androidx.appcompat_appcompat",
+        "bluetooth-protos-nfc-enums-java-gen",
         "com.google.android.material_material",
+        "modules-utils-fastxmlserializer",
         "android.hardware.secure_element-V1.0-java",
         "PlatformProperties",
         "nfc_flags_lib",
@@ -38,8 +69,8 @@ android_app {
         proguard_flags_files: ["proguard.flags"],
     },
     apex_available: [
-         "//apex_available:platform",
-         "com.android.nfcservices"
+        "//apex_available:platform",
+        "com.android.nfcservices"
     ],
     jarjar_rules: "jarjar-rules.txt",
     privapp_allowlist: ":privapp_allowlist_com.android.nfc.xml",
