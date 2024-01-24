@@ -15,7 +15,9 @@
  */
 package com.android.nfc.cardemulation;
 
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import android.bluetooth.BluetoothProtoEnums;
@@ -27,11 +29,16 @@ import android.content.pm.PackageManager;
 import android.nfc.cardemulation.ApduServiceInfo;
 import android.nfc.cardemulation.CardEmulation;
 import android.os.UserHandle;
+import android.platform.test.annotations.RequiresFlagsDisabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.util.Log;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.dx.mockito.inline.extended.ExtendedMockito;
+import com.android.nfc.flags.Flags;
+import com.android.nfc.NfcService;
 import com.android.nfc.cardemulation.RegisteredAidCache.AidResolveInfo;
 import com.android.nfc.NfcStatsLog;
 
@@ -41,10 +48,12 @@ import java.util.List;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.MockitoSession;
+import org.mockito.quality.Strictness;
 
 @RunWith(AndroidJUnit4.class)
 public final class NfcCardEmulationOccurredTest {
@@ -57,10 +66,15 @@ public final class NfcCardEmulationOccurredTest {
 
     private static final int UID_1 = 111;
 
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
+
     @Before
     public void setUp() {
         mStaticMockSession = ExtendedMockito.mockitoSession()
                 .mockStatic(NfcStatsLog.class)
+                .mockStatic(NfcService.class)
+                .strictness(Strictness.LENIENT)
                 .startMocking();
 
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
@@ -91,10 +105,11 @@ public final class NfcCardEmulationOccurredTest {
         aidResolveInfo.services = new ArrayList<ApduServiceInfo>();
         aidResolveInfo.services.add(apduServiceInfo);
         when(mockAidCache.resolveAid(anyString())).thenReturn(aidResolveInfo);
+        when(NfcService.getInstance()).thenReturn(mock(NfcService.class));
 
         InstrumentationRegistry.getInstrumentation().runOnMainSync(
               () -> mHostEmulation = new HostEmulationManager(mockContext, mockAidCache));
-        Assert.assertNotNull(mHostEmulation);
+        assertNotNull(mHostEmulation);
 
         mHostEmulation.onHostEmulationActivated();
     }
@@ -105,6 +120,8 @@ public final class NfcCardEmulationOccurredTest {
         mStaticMockSession.finishMocking();
     }
 
+    // TODO: Remove after aosp/2902507
+    // @RequiresFlagsDisabled(Flags.FLAG_STATSD_CE_EVENTS_FLAG)
     @Test
     public void testHCEOther() {
         if (!mNfcSupported) return;

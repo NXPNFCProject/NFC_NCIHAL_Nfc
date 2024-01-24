@@ -15,16 +15,23 @@
  */
 package com.android.nfc;
 
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
+import android.annotation.NonNull;
+import android.annotation.Nullable;
 import android.bluetooth.BluetoothProtoEnums;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.ContextWrapper;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.nfc.Tag;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.PowerManager;
 import android.util.Log;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -40,6 +47,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.MockitoSession;
+import org.mockito.quality.Strictness;
 
 @RunWith(AndroidJUnit4.class)
 public final class NfcTagOccurredTest {
@@ -54,6 +62,7 @@ public final class NfcTagOccurredTest {
     public void setUp() {
         mStaticMockSession = ExtendedMockito.mockitoSession()
                 .mockStatic(NfcStatsLog.class)
+                .strictness(Strictness.LENIENT)
                 .startMocking();
 
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
@@ -84,6 +93,13 @@ public final class NfcTagOccurredTest {
             public Resources getResources() {
                 Log.i(TAG, "[Mock] getResources");
                 return mockResources;
+            }
+            @Override
+            public Intent registerReceiverForAllUsers(@Nullable BroadcastReceiver receiver,
+                    @NonNull IntentFilter filter, @Nullable String broadcastPermission,
+                    @Nullable Handler scheduler){
+                Log.i(TAG, "[Mock] getIntent");
+                return Mockito.mock(Intent.class);
             }
         };
 
