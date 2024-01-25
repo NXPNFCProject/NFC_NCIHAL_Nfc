@@ -501,6 +501,13 @@ bool RoutingManager::addAidRouting(const uint8_t* aid, uint8_t aidLen,
 bool RoutingManager::removeAidRouting(const uint8_t* aid, uint8_t aidLen) {
   static const char fn[] = "RoutingManager::removeAidRouting";
   DLOG_IF(INFO, nfc_debug_enabled) << fn << ": enter";
+  if (aidLen != 0) {
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("%s : len=%d, 0x%x 0x%x 0x%x 0x%x 0x%x", fn, aidLen,
+                        *(aid), *(aid + 1), *(aid + 2), *(aid + 3), *(aid + 4));
+  } else {
+    DLOG_IF(INFO, nfc_debug_enabled) << fn << "Remove Empty aid";
+  }
 #if(NXP_EXTNS == TRUE)
   SyncEventGuard guard(mAidAddRemoveEvent);
 #else
@@ -781,7 +788,6 @@ void RoutingManager::updateDefaultProtocolRoute() {
       LOG(ERROR) << fn << "Fail to set default proto routing for T3T";
   }
 }
-
 void RoutingManager::updateDefaultRoute() {
   static const char fn[] = "RoutingManager::updateDefaultRoute";
   if (NFC_GetNCIVersion() != NCI_VERSION_2_0) return;
@@ -1303,6 +1309,70 @@ bool RoutingManager::setNfcSecure(bool enable) {
   return true;
 }
 
+void RoutingManager::clearRoutingEntry(int clearFlags) {
+  static const char fn[] = "RoutingManager::clearRoutingEntry";
+
+  DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("%s: Enter . Clear flags = %d", fn, clearFlags);
+  tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
+
+  if (clearFlags & CLEAR_AID_ENTRIES) {
+    DLOG_IF(INFO, nfc_debug_enabled)
+        << StringPrintf("clear all of aid based routing");
+    uint8_t clearAID[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+    uint8_t aidLen = 0x08;
+    RoutingManager::getInstance().removeAidRouting(clearAID, aidLen);
+  }
+
+  if (clearFlags & CLEAR_PROTOCOL_ENTRIES) {
+    for (uint8_t i = 0; i < mEeInfo.num_ee; i++) {
+      tNFA_HANDLE eeHandle = mEeInfo.ee_disc_info[i].ee_handle;
+      {
+        SyncEventGuard guard(mRoutingEvent);
+        nfaStat =
+            NFA_EeClearDefaultProtoRouting(eeHandle, NFA_PROTOCOL_MASK_ISO_DEP);
+        if (nfaStat == NFA_STATUS_OK) {
+          mRoutingEvent.wait();
+        }
+      }
+    }
+
+    {
+      SyncEventGuard guard(mRoutingEvent);
+      nfaStat =
+          NFA_EeClearDefaultProtoRouting(NFC_DH_ID, NFA_PROTOCOL_MASK_ISO_DEP);
+      if (nfaStat == NFA_STATUS_OK) {
+        mRoutingEvent.wait();
+      }
+    }
+  }
+
+  if (clearFlags & CLEAR_TECHNOLOGY_ENTRIES) {
+    for (uint8_t i = 0; i < mEeInfo.num_ee; i++) {
+      tNFA_HANDLE eeHandle = mEeInfo.ee_disc_info[i].ee_handle;
+      {
+        SyncEventGuard guard(mRoutingEvent);
+        nfaStat = NFA_EeClearDefaultTechRouting(
+            eeHandle, (NFA_TECHNOLOGY_MASK_A | NFA_TECHNOLOGY_MASK_B |
+                       NFA_TECHNOLOGY_MASK_F));
+        if (nfaStat == NFA_STATUS_OK) {
+          mRoutingEvent.wait();
+        }
+      }
+    }
+
+    {
+      SyncEventGuard guard(mRoutingEvent);
+      nfaStat = NFA_EeClearDefaultTechRouting(
+          NFC_DH_ID, (NFA_TECHNOLOGY_MASK_A | NFA_TECHNOLOGY_MASK_B |
+                      NFA_TECHNOLOGY_MASK_F));
+      if (nfaStat == NFA_STATUS_OK) {
+        mRoutingEvent.wait();
+      }
+    }
+  }
+}
+
 void RoutingManager::deinitialize() {
   onNfccShutdown();
   NFA_EeDeregister(nfaEeCallback);
@@ -1719,80 +1789,6 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
          }
     }
     return nfaStat;
-}
-
-bool RoutingManager::clearAidTable ()
-{
-    static const char fn [] = "RoutingManager::clearAidTable";
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", fn);
-    SyncEventGuard guard(RoutingManager::getInstance().mAidAddRemoveEvent);
-    tNFA_STATUS nfaStat = NFA_EeRemoveAidRouting(NFA_REMOVE_ALL_AID_LEN, (uint8_t*) NFA_REMOVE_ALL_AID);
-    if (nfaStat == NFA_STATUS_OK)
-    {
-        RoutingManager::getInstance().mAidAddRemoveEvent.wait();
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: removed AID", fn);
-        return true;
-    } else
-    {
-        DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf("%s: failed to remove AID", fn);
-        return false;
-    }
-}
-
-bool RoutingManager::clearRoutingEntry(int type)
-{
-    DLOG_IF(INFO, nfc_debug_enabled)
-            << StringPrintf("%s: Enter . Clear Routing Type = %d", __func__, type);
-    tNFA_STATUS nfaStat = NFA_STATUS_FAILED;
-    tNFA_HANDLE ee_handleList[nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED];
-    uint8_t i, count;
-    SyncEventGuard guard(mRoutingEvent);
-    SecureElement::getInstance().getEeHandleList(ee_handleList, &count);
-    if (count > nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED) {
-      count = nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED;
-      DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf(
-              "Count is more than SecureElement::MAX_NUM_EE,Forcing to "
-              "SecureElement::MAX_NUM_EE");
-    }
-
-    if(NFA_SET_TECHNOLOGY_ROUTING & type)
-    {
-      for (i = 0; i < count; i++) {
-        nfaStat = NFA_EeClearDefaultTechRouting(
-                ee_handleList[i], (NFA_TECHNOLOGY_MASK_A |
-                NFA_TECHNOLOGY_MASK_B | NFA_TECHNOLOGY_MASK_F));
-        if (nfaStat == NFA_STATUS_OK) {
-          mRoutingEvent.wait();
-        }
-      }
-      nfaStat = NFA_EeClearDefaultTechRouting(
-              NFA_EE_HANDLE_DH, (NFA_TECHNOLOGY_MASK_A | NFA_TECHNOLOGY_MASK_B |
-              NFA_TECHNOLOGY_MASK_F));
-      if (nfaStat == NFA_STATUS_OK) {
-        mRoutingEvent.wait();
-      }
-    }
-    if(NFA_SET_PROTOCOL_ROUTING & type)
-    {
-      for (i = 0; i < count; i++) {
-        nfaStat = NFA_EeClearDefaultProtoRouting( ee_handleList[i],
-                (NFA_PROTOCOL_MASK_ISO_DEP | NFC_PROTOCOL_MASK_ISO7816));
-        if (nfaStat == NFA_STATUS_OK) {
-          mRoutingEvent.wait();
-        }
-      }
-      nfaStat = NFA_EeClearDefaultProtoRouting( NFA_EE_HANDLE_DH,
-              (NFA_PROTOCOL_MASK_ISO_DEP | NFC_PROTOCOL_MASK_ISO7816));
-      if (nfaStat == NFA_STATUS_OK) {
-        mRoutingEvent.wait();
-      }
-    }
-
-    if (NFA_SET_AID_ROUTING & type)
-    {
-        clearAidTable();
-    }
-    return ((nfaStat == NFA_STATUS_OK)? true: false);
 }
 
 /*

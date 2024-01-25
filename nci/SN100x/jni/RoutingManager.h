@@ -124,6 +124,11 @@ class RoutingManager {
   int registerJniFunctions(JNIEnv* e);
   bool setNfcSecure(bool enable);
   void updateRoutingTable();
+  void clearRoutingEntry(int clearFlags);
+
+  static const int CLEAR_AID_ENTRIES = 0x01;
+  static const int CLEAR_PROTOCOL_ENTRIES = 0x02;
+  static const int CLEAR_TECHNOLOGY_ENTRIES = 0x04;
 #if(NXP_EXTNS == TRUE)
     void getRouting(uint16_t* routeLen, uint8_t* routingBuff);
     void processGetRoutingRsp(tNFA_DM_CBACK_DATA* eventData);
@@ -149,8 +154,6 @@ class RoutingManager {
                                  tNFA_PROTOCOL_MASK  protocols_screen_off_lock
                                  );
     bool setRoutingEntry(int type, int value, int route, int power);
-    bool clearRoutingEntry(int type);
-    bool clearAidTable ();
     void setEmptyAidEntry(int route);
     void processTechEntriesForFwdfunctionality(void);
     void configureOffHostNfceeTechMask(void);

@@ -270,10 +270,6 @@ static void nfaDeviceManagementCallback(uint8_t event,
                                         tNFA_DM_CBACK_DATA* eventData);
 static bool isPeerToPeer(tNFA_ACTIVATED& activated);
 static bool isListenMode(tNFA_ACTIVATED& activated);
-#if (NXP_EXTNS==TRUE)
-static jint nfcManager_changeDiscoveryTech(JNIEnv* e, jobject o, jint pollTech,
-                                           jint listenTech);
-#endif
 #if (NXP_EXTNS==FALSE)
 static void enableDisableLptd(bool enable);
 #endif
@@ -433,6 +429,14 @@ static void nfaConnectionCallback(uint8_t connEvent,
       "nfaConnectionCallback", (void*)&connEvent, (void*)eventData);
 #endif
   switch (connEvent) {
+    case NFA_LISTEN_ENABLED_EVT:  // whether listening successfully started
+    {
+      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+          "%s: NFA_LISTEN_ENABLED_EVT:status= %u", __func__, eventData->status);
+
+      SyncEventGuard guard(sNfaEnableDisablePollingEvent);
+      sNfaEnableDisablePollingEvent.notifyOne();
+    } break;
     case NFA_POLL_ENABLED_EVT:  // whether polling successfully started
     {
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
@@ -828,14 +832,6 @@ static void nfaConnectionCallback(uint8_t connEvent,
                           __func__, eventData->status);
       break;
 #if (NXP_EXTNS == TRUE)
-    case NFA_LISTEN_ENABLED_EVT: {
-      DLOG_IF(INFO, nfc_debug_enabled)
-          << StringPrintf("%s: NFA_LISTEN_ENABLED_EVT : status=0x%X", __func__,
-                          eventData->status);
-      SyncEventGuard guard(sChangeDiscTechEvent);
-      sChangeDiscTechEvent.notifyOne();
-      break;
-    }
     case NFA_T4TNFCEE_EVT:
     case NFA_T4TNFCEE_READ_CPLT_EVT:
     case NFA_T4TNFCEE_WRITE_CPLT_EVT:
@@ -1256,35 +1252,12 @@ static jboolean nfcManager_setRoutingEntry (JNIEnv*, jobject, jint type, jint va
 
 /*******************************************************************************
 **
-** Function:        nfcManager_clearRoutingEntry
+** Function:        nfcManager_setEmptyAidRoute
 **
 ** Description:     Set the routing entry in routing table
 **                  e: JVM environment.
 **                  o: Java object.
-**                  type:technology/protocol/aid clear routing
-**
-*******************************************************************************/
-
-static jboolean nfcManager_clearRoutingEntry (JNIEnv*, jobject, jint type)
-{
-    jboolean result = false;
-    if (sIsDisabling || !sIsNfaEnabled) {
-      LOG(ERROR) << StringPrintf("%s: sIsNfaEnabled or sIsDisabling", __func__);
-      return result;
-    }
-    //checkRecreatePipe(); TODO
-    result = RoutingManager::getInstance().clearRoutingEntry(type);
-    return result;
-}
-
-/*******************************************************************************
-**
-** Function:        nfcManager_clearRoutingEntry
-**
-** Description:     Set the routing entry in routing table
-**                  e: JVM environment.
-**                  o: Java object.
-**                  type:technology/protocol/aid clear routing
+**                  route: empty/default AID route.
 **
 *******************************************************************************/
 
@@ -2552,7 +2525,7 @@ static void nfcManager_doResonantFrequency(JNIEnv* e, jobject o,
 
   { /* Change the discovery tech mask as per the test */
     SyncEventGuard guard(sChangeDiscTechEvent);
-    status = NFA_ChangeDiscoveryTech(pollTech, uiccListenTech);
+    status = NFA_ChangeDiscoveryTech(pollTech, uiccListenTech, false, false);
     if (NFA_STATUS_OK == status) {
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
           "%s: waiting for nfcManager_changeDiscoveryTech", __func__);
@@ -3068,6 +3041,87 @@ static jbyteArray nfcManager_doGetRoutingTable(JNIEnv* e, jobject o) {
   return rtJavaArray;
 }
 
+static void nfcManager_clearRoutingEntry(JNIEnv* e, jobject o,
+                                         jint clearFlags) {
+#if(NXP_EXTNS == TRUE)
+  if (sIsDisabling || !sIsNfaEnabled) {
+      LOG(ERROR) << StringPrintf("%s: sIsNfaEnabled or sIsDisabling", __func__);
+      return;
+  }
+#endif
+  DLOG_IF(INFO, nfc_debug_enabled)
+      << StringPrintf("%s: clearFlags=0x%X", __func__, clearFlags);
+  RoutingManager::getInstance().disableRoutingToHost();
+  RoutingManager::getInstance().clearRoutingEntry(clearFlags);
+}
+
+/*******************************************************************************
+**
+** Function:        nfcManager_setDiscoveryTech
+**
+** Description:     Temporarily changes the RF parameter
+**                  pollTech: RF tech parameters for poll mode
+**                  listenTech: RF tech parameters for listen mode
+**
+** Returns:         None.
+**
+*******************************************************************************/
+static void nfcManager_setDiscoveryTech(JNIEnv* e, jobject o, jint pollTech,
+                                        jint listenTech) {
+  tNFA_STATUS nfaStat;
+  bool isRevertPoll = false;
+  bool isRevertListen = false;
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+      "%s  pollTech = 0x%x, listenTech = 0x%x", __func__, pollTech, listenTech);
+
+  if (pollTech < 0) isRevertPoll = true;
+  if (listenTech < 0) isRevertListen = true;
+
+  nativeNfcTag_acquireRfInterfaceMutexLock();
+  SyncEventGuard guard(sNfaEnableDisablePollingEvent);
+
+  nfaStat = NFA_ChangeDiscoveryTech(pollTech, listenTech, isRevertPoll,
+                                    isRevertListen);
+
+  if (nfaStat == NFA_STATUS_OK) {
+    // wait for NFA_LISTEN_DISABLED_EVT
+    sNfaEnableDisablePollingEvent.wait();
+  } else {
+    LOG(ERROR) << StringPrintf("%s: fail disable polling; error=0x%X", __func__,
+                               nfaStat);
+  }
+  nativeNfcTag_releaseRfInterfaceMutexLock();
+}
+
+/*******************************************************************************
+**
+** Function:        nfcManager_resetDiscoveryTech
+**
+** Description:     Restores the RF tech to the state before
+**                  nfcManager_setDiscoveryTech was called
+**
+** Returns:         None.
+**
+*******************************************************************************/
+static void nfcManager_resetDiscoveryTech(JNIEnv* e, jobject o) {
+  tNFA_STATUS nfaStat;
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s : enter", __func__);
+
+  nativeNfcTag_acquireRfInterfaceMutexLock();
+  SyncEventGuard guard(sNfaEnableDisablePollingEvent);
+
+  nfaStat = NFA_ChangeDiscoveryTech(0xFF, 0xFF, true, true);
+
+  if (nfaStat == NFA_STATUS_OK) {
+    // wait for NFA_LISTEN_DISABLED_EVT
+    sNfaEnableDisablePollingEvent.wait();
+  } else {
+    LOG(ERROR) << StringPrintf("%s: fail disable polling; error=0x%X", __func__,
+                               nfaStat);
+  }
+  nativeNfcTag_releaseRfInterfaceMutexLock();
+}
+
 /*****************************************************************************
 **
 ** JNI functions for android-4.0.1_r1
@@ -3090,9 +3144,6 @@ static JNINativeMethod gMethods[] = {
 
     {"doSetRoutingEntry", "(IIII)Z",
             (void*)nfcManager_setRoutingEntry},
-
-    {"doClearRoutingEntry", "(I)Z",
-            (void*)nfcManager_clearRoutingEntry},
 
     {"commitRouting", "()Z", (void*)nfcManager_commitRouting},
 
@@ -3175,8 +3226,6 @@ static JNINativeMethod gMethods[] = {
             (void*) nfcManager_getDefaultFelicaCLTRoute},
     {"doGetActiveSecureElementList", "()[I",
             (void *)nfcManager_getActiveSecureElementList},
-    {"doChangeDiscoveryTech", "(II)I",
-             (void *)nfcManager_changeDiscoveryTech},
     {"doPartialInitForEseCosUpdate", "()Z",
              (void*)nfcManager_doPartialInitForEseCosUpdate},
     {"doPartialDeinitForEseCosUpdate", "()Z",
@@ -3215,7 +3264,14 @@ static JNINativeMethod gMethods[] = {
     {"getMaxRoutingTableSize", "()I",
      (void*)nfcManager_doGetMaxRoutingTableSize},
 
-    {"setObserveMode", "(Z)Z", (void*)nfcManager_setObserveMode}};
+    {"setObserveMode", "(Z)Z", (void*)nfcManager_setObserveMode}
+
+    {"clearRoutingEntry", "(I)V", (void*)nfcManager_clearRoutingEntry},
+
+    {"setDiscoveryTech", "(II)V", (void*)nfcManager_setDiscoveryTech},
+
+    {"resetDiscoveryTech", "()V", (void*)nfcManager_resetDiscoveryTech},
+  };
 
 /*******************************************************************************
 **
@@ -3502,34 +3558,6 @@ static jboolean nfcManager_doSetPowerSavingMode(JNIEnv* e, jobject o,
 }
 
 #if(NXP_EXTNS == TRUE)
-/*******************************************************************************
-**
-** Function:        nfcManager_changeDiscoveryTech
-**
-** Description:     set listen mode
-**                  e: JVM environment.
-**                  o: Java object.
-**
-** Returns:         Returns status as below
-**                  NFA_STATUS_OK - If discovery tech update successful.
-**                  NFA_STATUS_FAILED - If discovery tech update successful.
-**                  NFA_STATUS_REJECTED - If discovery tech update not required
-**                                        in case of current tech same as
-**                                        requested tech.
-**
-*******************************************************************************/
-static jint nfcManager_changeDiscoveryTech(JNIEnv* e, jobject o, jint pollTech, jint listenTech)
-{
-    tNFA_STATUS status = NFA_STATUS_FAILED;
-    DLOG_IF(INFO, nfc_debug_enabled)<< StringPrintf("Enter :%s  pollTech = 0x%x, listenTech = 0x%x", __func__, pollTech, listenTech);
-    status = NFA_ChangeDiscoveryTech(pollTech, listenTech);
-    if (status == NFA_STATUS_FAILED) {
-    LOG(ERROR) << StringPrintf("%s: nfcManager_changeDiscoveryTech failed",
-                               __func__);
-    }
-    return status;
-}
-
 /*******************************************************************************
  **
  ** Function:        nfcManager_checkNfcStateBusy()

@@ -198,13 +198,6 @@ public class NativeNfcManager implements DeviceHost {
     @Override
     public native boolean sendRawFrame(byte[] data);
 
-    public native boolean doClearRoutingEntry(int type );
-
-    @Override
-    public boolean clearRoutingEntry( int type ) {
-        return(doClearRoutingEntry( type ));
-    }
-
     public native boolean doSetRoutingEntry(int type, int value, int route, int power);
     @Override
     public boolean setRoutingEntry(int type, int value, int route, int power) {
@@ -249,9 +242,6 @@ public class NativeNfcManager implements DeviceHost {
 
     @Override
     public native boolean commitRouting();
-
-    @Override
-    public native int doChangeDiscoveryTech(int pollTech, int listenTech);
 
     @Override
     public native void setEmptyAidRoute(int deafultAidroute);
@@ -660,6 +650,15 @@ public class NativeNfcManager implements DeviceHost {
         }
         mListener.onPollingLoopDetected(frame);
     }
+
+    @Override
+    public native void setDiscoveryTech(int pollTech, int listenTech);
+
+    @Override
+    public native void resetDiscoveryTech();
+
+    @Override
+    public native void clearRoutingEntry(int clearFlags);
 
     /**
      * Notifies Tag abort operation

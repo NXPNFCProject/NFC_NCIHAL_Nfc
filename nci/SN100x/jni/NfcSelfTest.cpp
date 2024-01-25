@@ -639,7 +639,7 @@ tNFA_STATUS NfcSelfTest::PerformTransacAB(uint8_t aType) {
 
   {
     SyncEventGuard gaurd(sChangeDiscTechEvent);
-    status = NFA_ChangeDiscoveryTech(0x00, 0x00);
+    status = NFA_ChangeDiscoveryTech(0x00, 0x00, false, false);
     if (status == NFA_STATUS_OK) sChangeDiscTechEvent.wait(2 * ONE_SECOND_MS);
   }
 
@@ -678,7 +678,7 @@ tNFA_STATUS NfcSelfTest::PerformTransacAB(uint8_t aType) {
   if (status == NFA_STATUS_OK) {
     NFA_SetEmvCoState(TRUE);
     SyncEventGuard gaurd(sChangeDiscTechEvent);
-    if ((status = NFA_ChangeDiscoveryTech(tech_mask, 0x00)) == NFA_STATUS_OK) {
+    if ((status = NFA_ChangeDiscoveryTech(tech_mask, 0x00, false, false)) == NFA_STATUS_OK) {
       sChangeDiscTechEvent.wait(2 * ONE_SECOND_MS);
       startRfDiscovery(true);
       {
@@ -688,7 +688,7 @@ tNFA_STATUS NfcSelfTest::PerformTransacAB(uint8_t aType) {
     }
   } else {
     SyncEventGuard gaurd(sChangeDiscTechEvent);
-    status = NFA_ChangeDiscoveryTech(tech_mask, 0x00);
+    status = NFA_ChangeDiscoveryTech(tech_mask, 0x00, false, false);
     if (status == NFA_STATUS_OK) sChangeDiscTechEvent.wait(2 * ONE_SECOND_MS);
     startRfDiscovery(true);
   }
