@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2023 NXP
+*  Copyright 2018-2024 NXP
 *
 ******************************************************************************/
 package com.android.nfc;
@@ -3506,6 +3506,12 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         }
     }
 
+    public boolean isNfcEnabledOrEnabling() {
+        synchronized (this) {
+            return (mState == NfcAdapter.STATE_ON || mState == NfcAdapter.STATE_TURNING_ON);
+        }
+    }
+
     boolean isReaderOptionEnabled() {
         synchronized (this) {
             return mIsReaderOptionEnabled || mReaderModeParams != null;
@@ -4398,7 +4404,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                   Log.e(TAG, "msg se init");
 
                   try {
-                    if (isNfcEnabled() && mIsHceCapable) {
+                    if (isNfcEnabledOrEnabling() && mIsHceCapable) {
                         // Dynamic routing Table update
                         Log.d(TAG, "Update routing table");
                         mAidRoutingManager.onNfccRoutingTableCleared();
