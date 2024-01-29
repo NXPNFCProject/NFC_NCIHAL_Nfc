@@ -3264,7 +3264,7 @@ static JNINativeMethod gMethods[] = {
     {"getMaxRoutingTableSize", "()I",
      (void*)nfcManager_doGetMaxRoutingTableSize},
 
-    {"setObserveMode", "(Z)Z", (void*)nfcManager_setObserveMode}
+    {"setObserveMode", "(Z)Z", (void*)nfcManager_setObserveMode},
 
     {"clearRoutingEntry", "(I)V", (void*)nfcManager_clearRoutingEntry},
 
