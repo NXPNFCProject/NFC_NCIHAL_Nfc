@@ -305,9 +305,9 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
     static final int EE_ERROR_EXT_FIELD = -5;
     static final int EE_ERROR_NFC_DISABLED = -6;
 
-    static final public int TECH_ENTRY = 1;
+    static final public int TECH_ENTRY = 4;
     static final public int PROTOCOL_ENTRY = 2;
-    static final public int AID_ENTRY = 4;          // it is dummy values;
+    static final public int AID_ENTRY = 1;          // it is dummy values;
 
     // minimum screen state that enables NFC polling
     static final int NFC_POLLING_MODE = ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED;

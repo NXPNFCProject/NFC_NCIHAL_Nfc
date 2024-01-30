@@ -33,7 +33,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2021, 2023 NXP
+*  Copyright 2018-2021, 2023-2024 NXP
 *
 ******************************************************************************/
 #pragma once
@@ -133,9 +133,6 @@ class RoutingManager {
     void getRouting(uint16_t* routeLen, uint8_t* routingBuff);
     void processGetRoutingRsp(tNFA_DM_CBACK_DATA* eventData);
     uint16_t getUiccRouteLocId(const int route);
-    static const int NFA_SET_AID_ROUTING = 4;
-    static const int NFA_SET_TECHNOLOGY_ROUTING = 1;
-    static const int NFA_SET_PROTOCOL_ROUTING = 2;
     // Fixed power states masks
     static const int PWR_SWTCH_ON_SCRN_UNLCK_MASK = 0x01;
     static const int PWR_SWTCH_OFF_MASK = 0x02;

@@ -1613,13 +1613,13 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
     power &= 0xFF;
 
     if ((ee_handle == ROUTE_LOC_HOST_ID) &&
-        (NFA_SET_PROTOCOL_ROUTING == type)) {
+        (CLEAR_PROTOCOL_ENTRIES == type)) {
       power &= ~(PWR_SWTCH_OFF_MASK | PWR_BATT_OFF_MASK);
     }
 
     max_tech_mask = SecureElement::getInstance().getSETechnology(ee_handle);
     DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter,max_tech_mask :%lx", fn, max_tech_mask);
-    if(NFA_SET_TECHNOLOGY_ROUTING == type)
+    if(CLEAR_TECHNOLOGY_ENTRIES == type)
     {
       /*  Masking with available SE Technologies */
       value &= max_tech_mask;
@@ -1713,7 +1713,7 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
                 DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf("Fail to set default tech routing");
             }
         }
-    }else if(NFA_SET_PROTOCOL_ROUTING == type)
+    }else if(CLEAR_PROTOCOL_ENTRIES == type)
     {
         value &= ~(0xF0);
         while(value)
