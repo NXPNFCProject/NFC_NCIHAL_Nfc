@@ -1687,6 +1687,20 @@ static jboolean nativeNfcTag_doPresenceCheck(JNIEnv*, jobject) {
       }
     }
 
+#if (NXP_EXTNS == TRUE)
+    if((sCurrentConnectedTargetProtocol == NFA_PROTOCOL_T2T) &&
+       (sCurrentRfInterface == NFA_INTERFACE_FRAME) &&
+       (!NfcTag::getInstance().isMifareUltralight())) {
+       /* Only applicable for Type2 tag which has SAK value other than 0
+        (as defined in NFC Digital Protocol, section 4.8.2(SEL_RES)) */
+      uint8_t RW_TAG_SLP_REQ[] = {0x50, 0x00};
+      status = NFA_SendRawFrame(RW_TAG_SLP_REQ, sizeof(RW_TAG_SLP_REQ), 0);
+      if (status != NFA_STATUS_OK) {
+        DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf(
+            "%s: failed to send RW_TAG_SLP_REQ, status=%d", __func__, status);
+      }
+    }
+#endif
     status = NFA_RwPresenceCheck(method);
     if (status == NFA_STATUS_OK) {
       isPresent = sPresenceCheckEvent.wait(2000);
