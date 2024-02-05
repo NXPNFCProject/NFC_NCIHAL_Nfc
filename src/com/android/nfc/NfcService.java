@@ -3282,6 +3282,12 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         }
     }
 
+    public boolean isNfcEnabledOrEnabling() {
+        synchronized (this) {
+            return (mState == NfcAdapter.STATE_ON || mState == NfcAdapter.STATE_TURNING_ON);
+        }
+    }
+
     class WatchDogThread extends Thread {
         final Object mCancelWaiter = new Object();
         final int mTimeout;
@@ -4170,7 +4176,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                   Log.e(TAG, "msg se init");
 
                   try {
-                    if (isNfcEnabled() && mIsHceCapable) {
+                    if (isNfcEnabledOrEnabling() && mIsHceCapable) {
                         // Dynamic routing Table update
                         Log.d(TAG, "Update routing table");
                         mAidRoutingManager.onNfccRoutingTableCleared();
