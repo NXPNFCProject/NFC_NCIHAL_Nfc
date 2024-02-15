@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- *  Copyright 2019-2023 NXP
+ *  Copyright 2019-2024 NXP
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ NfcSelfTest NfcSelfTest::sSelfTestMgr;
 
 nxp_selftest_data gselfTestData;
 extern bool nfc_debug_enabled;
-extern SyncEvent sChangeDiscTechEvent;
 static SyncEvent sNfaVscNtfEvent;
 
 using android::base::StringPrintf;
@@ -33,6 +32,7 @@ using namespace android;
 
 namespace android {
 extern SyncEvent gNfaSetConfigEvent;
+extern SyncEvent sNfaEnableDisablePollingEvent;
 extern bool nfcManager_isNfcActive();
 extern bool isDiscoveryStarted();
 extern void startRfDiscovery(bool isStart);
@@ -638,9 +638,9 @@ tNFA_STATUS NfcSelfTest::PerformTransacAB(uint8_t aType) {
   if (isDiscoveryStarted()) startRfDiscovery(false);
 
   {
-    SyncEventGuard gaurd(sChangeDiscTechEvent);
+    SyncEventGuard gaurd(sNfaEnableDisablePollingEvent);
     status = NFA_ChangeDiscoveryTech(0x00, 0x00, false, false);
-    if (status == NFA_STATUS_OK) sChangeDiscTechEvent.wait(2 * ONE_SECOND_MS);
+    if (status == NFA_STATUS_OK) sNfaEnableDisablePollingEvent.wait(2 * ONE_SECOND_MS);
   }
 
   if (aType == TEST_TYPE_TRANSAC_A) {
@@ -677,9 +677,13 @@ tNFA_STATUS NfcSelfTest::PerformTransacAB(uint8_t aType) {
 
   if (status == NFA_STATUS_OK) {
     NFA_SetEmvCoState(TRUE);
-    SyncEventGuard gaurd(sChangeDiscTechEvent);
-    if ((status = NFA_ChangeDiscoveryTech(tech_mask, 0x00, false, false)) == NFA_STATUS_OK) {
-      sChangeDiscTechEvent.wait(2 * ONE_SECOND_MS);
+    {
+      SyncEventGuard gaurd(sNfaEnableDisablePollingEvent);
+      if ((status = NFA_ChangeDiscoveryTech(tech_mask, 0x00, false, false)) == NFA_STATUS_OK) {
+        sNfaEnableDisablePollingEvent.wait(2 * ONE_SECOND_MS);
+      }
+    }
+    if (status == NFA_STATUS_OK) {
       startRfDiscovery(true);
       {
         SyncEventGuard gaurd(mSelfTestTransacAB);
@@ -687,9 +691,11 @@ tNFA_STATUS NfcSelfTest::PerformTransacAB(uint8_t aType) {
       }
     }
   } else {
-    SyncEventGuard gaurd(sChangeDiscTechEvent);
-    status = NFA_ChangeDiscoveryTech(tech_mask, 0x00, false, false);
-    if (status == NFA_STATUS_OK) sChangeDiscTechEvent.wait(2 * ONE_SECOND_MS);
+    {
+      SyncEventGuard gaurd(sNfaEnableDisablePollingEvent);
+      status = NFA_ChangeDiscoveryTech(tech_mask, 0x00, false, false);
+      if (status == NFA_STATUS_OK) sNfaEnableDisablePollingEvent.wait(2 * ONE_SECOND_MS);
+    }
     startRfDiscovery(true);
   }
 

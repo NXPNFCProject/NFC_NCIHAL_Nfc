@@ -138,7 +138,6 @@ bool gActivated = false;
 SyncEvent gDeactivatedEvent;
 SyncEvent sNfaSetPowerSubState;
 int recovery_option = 0;
-SyncEvent sChangeDiscTechEvent;
 #if (NXP_EXTNS == TRUE)
 /*Structure to store  discovery parameters*/
 typedef struct discovery_Parameters
@@ -208,8 +207,11 @@ namespace android {
 static jint sLastError = ERROR_BUFFER_TOO_SMALL;
 static SyncEvent sNfaEnableEvent;                // event for NFA_Enable()
 static SyncEvent sNfaDisableEvent;               // event for NFA_Disable()
+#if(NXP_EXTNS == TRUE)
+SyncEvent sNfaEnableDisablePollingEvent;
+#else
 static SyncEvent sNfaEnableDisablePollingEvent;  // event for
-                                                 // NFA_EnablePolling(),
+#endif                                           // NFA_EnablePolling(),
                                                  // NFA_DisablePolling()
 SyncEvent gNfaSetConfigEvent;                    // event for Set_Config....
 SyncEvent gNfaGetConfigEvent;                    // event for Get_Config....
@@ -2524,12 +2526,12 @@ static void nfcManager_doResonantFrequency(JNIEnv* e, jobject o,
     pollTech = 0x00; /* Activate only Card Emulation Mode */
 
   { /* Change the discovery tech mask as per the test */
-    SyncEventGuard guard(sChangeDiscTechEvent);
+    SyncEventGuard guard(sNfaEnableDisablePollingEvent);
     status = NFA_ChangeDiscoveryTech(pollTech, uiccListenTech, false, false);
     if (NFA_STATUS_OK == status) {
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
           "%s: waiting for nfcManager_changeDiscoveryTech", __func__);
-      sChangeDiscTechEvent.wait();
+      sNfaEnableDisablePollingEvent.wait();
     } else {
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
           "%s: nfcManager_changeDiscoveryTech failed", __func__);
