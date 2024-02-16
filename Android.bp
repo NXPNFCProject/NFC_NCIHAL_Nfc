@@ -35,13 +35,15 @@ android_app {
         "src/**/*.java",
         "nci/**/*.java",
         ":framework-nfc-javastream-protos",
+        // TODO(b/263565193): Temp hack until NFC APK can link against module_current.
+        ":framework-nfc-updatable-sources",
         ":statslog-Nfc-java-gen",
     ],
     uses_libs: ["com.nxp.nfc"],
     platform_apis: true,
     privileged: true,
     certificate: "platform",
-    // TODO: This needs to change once framework-nfc is ready.
+    // TODO(b/263565193): Change when NFC APK can link against module_current.
     // min_sdk_version: "VanillaIceCream",
     // sdk_version: "module_current",
     jni_libs: ["libnfc_nci_jni"],
@@ -50,6 +52,7 @@ android_app {
         "framework-annotations-lib",
         "framework-bluetooth",
         "framework-configinfrastructure",
+        "framework-nfc.impl",
         "framework-statsd.stubs.module_lib",
         "framework-wifi",
         "unsupportedappusage"
