@@ -29,7 +29,8 @@ public class NfcBackupAgent extends BackupAgentHelper {
     @Override
     public void onCreate() {
         SharedPreferencesBackupHelper helper =
-                new SharedPreferencesBackupHelper(this, NfcService.PREF);
+                new SharedPreferencesBackupHelper(
+                        this, NfcService.PREF, NfcService.PREF_TAG_APP_LIST);
         addHelper(SHARED_PREFS_BACKUP_KEY, helper);
     }
 
