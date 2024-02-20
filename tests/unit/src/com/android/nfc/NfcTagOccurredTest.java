@@ -15,12 +15,16 @@
  */
 package com.android.nfc;
 
+import static android.nfc.tech.Ndef.EXTRA_NDEF_MSG;
+
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import android.annotation.NonNull;
 import android.annotation.Nullable;
+import android.app.PendingIntent;
 import android.bluetooth.BluetoothProtoEnums;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -29,7 +33,10 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.nfc.NdefMessage;
+import android.nfc.NdefRecord;
 import android.nfc.Tag;
+import android.nfc.tech.Ndef;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.PowerManager;
@@ -58,10 +65,14 @@ public final class NfcTagOccurredTest {
     private MockitoSession mStaticMockSession;
     private NfcDispatcher mNfcDispatcher;
 
+    private Context mockContext;
+
     @Before
     public void setUp() {
         mStaticMockSession = ExtendedMockito.mockitoSession()
                 .mockStatic(NfcStatsLog.class)
+                .mockStatic(Ndef.class)
+                .mockStatic(NfcWifiProtectedSetup.class)
                 .strictness(Strictness.LENIENT)
                 .startMocking();
 
@@ -79,7 +90,7 @@ public final class NfcTagOccurredTest {
         when(mockResources.getBoolean(eq(R.bool.tag_intent_app_pref_supported)))
                 .thenReturn(false);
 
-        Context mockContext = new ContextWrapper(context) {
+        mockContext = new ContextWrapper(context) {
             @Override
             public Object getSystemService(String name) {
               if (Context.POWER_SERVICE.equals(name)) {
@@ -128,4 +139,32 @@ public final class NfcTagOccurredTest {
                 BluetoothProtoEnums.MAJOR_CLASS_UNCATEGORIZED,
                 ""));
     }
+        @Test
+        public void testSetForegroundDispatchForWifiConnect() {
+            if (!mNfcSupported) return;
+            PendingIntent pendingIntent = mock(PendingIntent.class);
+            mNfcDispatcher.setForegroundDispatch(pendingIntent, new IntentFilter[]{},
+                    new String[][]{});
+            Bundle bundle = mock(Bundle.class);
+            when(bundle.getParcelable(EXTRA_NDEF_MSG, android.nfc.NdefMessage.class)).thenReturn(
+                    mock(
+                            NdefMessage.class));
+            Tag tag = Tag.createMockTag(null, new int[]{1}, new Bundle[]{bundle}, 0L);
+            Ndef ndef = mock(Ndef.class);
+            when(Ndef.get(tag)).thenReturn(ndef);
+            NdefMessage ndefMessage = mock(NdefMessage.class);
+            when(ndef.getCachedNdefMessage()).thenReturn(ndefMessage);
+            NdefRecord ndefRecord = mock(NdefRecord.class);
+            NdefRecord[] records = {ndefRecord};
+            when(ndefMessage.getRecords()).thenReturn(records);
+            when(NfcWifiProtectedSetup.tryNfcWifiSetup(ndef, mockContext)).thenReturn(true);
+            mNfcDispatcher.dispatchTag(tag);
+            ExtendedMockito.verify(() -> NfcStatsLog.write(
+                    NfcStatsLog.NFC_TAG_OCCURRED,
+                    NfcStatsLog.NFC_TAG_OCCURRED__TYPE__WIFI_CONNECT,
+                    -1,
+                    tag.getTechCodeList(),
+                    BluetoothProtoEnums.MAJOR_CLASS_UNCATEGORIZED,
+                    ""));
+        }
 }

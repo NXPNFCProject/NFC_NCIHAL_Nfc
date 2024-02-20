@@ -898,7 +898,6 @@ class NfcDispatcher {
 
     public boolean tryPeripheralHandover(NdefMessage m, Tag tag) {
         if (m == null || !mDeviceSupportsBluetooth) return false;
-
         if (DBG) Log.d(TAG, "tryHandover(): " + m.toString());
 
         HandoverDataParser.BluetoothHandoverData handover = mHandoverDataParser.parseBluetooth(m);
