@@ -4069,9 +4069,11 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
      */
     public int GetT4TNfceePowerState() {
         int powerState = mDeviceHost.getT4TNfceePowerState();
-        if (mIsSecureNfcEnabled) {
-          /* Secure nfc on,Setting power state screen on unlocked */
-          powerState=0x01;
+        synchronized (NfcService.this) {
+            if (mIsSecureNfcEnabled) {
+            /* Secure nfc on,Setting power state screen on unlocked */
+                powerState=0x01;
+            }
         }
         if (DBG) Log.d(TAG, "T4TNfceePowerState : " + powerState);
         return powerState;
