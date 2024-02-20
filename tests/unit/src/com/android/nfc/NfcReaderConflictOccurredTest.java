@@ -173,6 +173,7 @@ public final class NfcReaderConflictOccurredTest {
                 .setPackageName(packageName)
                 .build();
         resolveInfo.activityInfo.applicationInfo.uid = uid;
+        resolveInfo.activityInfo.exported = true;
         return resolveInfo;
     }
 }
