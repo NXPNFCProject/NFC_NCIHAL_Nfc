@@ -56,10 +56,12 @@ import org.mockito.Mockito;
 import org.mockito.MockitoSession;
 import org.mockito.quality.Strictness;
 
-@RunWith(AndroidJUnit4.class)
-public final class NfcTagOccurredTest {
+import java.nio.charset.StandardCharsets;
 
-    private static final String TAG = NfcTagOccurredTest.class.getSimpleName();
+@RunWith(AndroidJUnit4.class)
+public final class NfcDispatcherTest {
+
+    private static final String TAG = NfcDispatcherTest.class.getSimpleName();
     private boolean mNfcSupported;
 
     private MockitoSession mStaticMockSession;
@@ -167,4 +169,32 @@ public final class NfcTagOccurredTest {
                     BluetoothProtoEnums.MAJOR_CLASS_UNCATEGORIZED,
                     ""));
         }
+
+    @Test
+    public void testPeripheralHandoverBTParing() {
+        if (!mNfcSupported) return;
+
+        String btOobPayload = "00060E4C00520100000000000000000000000000000000000000000001";
+        Bundle bundle = mock(Bundle.class);
+        when(bundle.getParcelable(EXTRA_NDEF_MSG, android.nfc.NdefMessage.class)).thenReturn(
+                mock(
+                        NdefMessage.class));
+        Tag tag = Tag.createMockTag(null, new int[]{1}, new Bundle[]{bundle}, 0L);
+        NdefMessage ndefMessage = mock(NdefMessage.class);
+        NdefRecord ndefRecord = mock(NdefRecord.class);
+        when(ndefRecord.getType()).thenReturn("application/vnd.bluetooth.ep.oob"
+                .getBytes(StandardCharsets.US_ASCII));
+        when(ndefRecord.getTnf()).thenReturn(NdefRecord.TNF_MIME_MEDIA);
+        when(ndefRecord.getPayload()).thenReturn(btOobPayload.getBytes(StandardCharsets.US_ASCII));
+        NdefRecord[] records = {ndefRecord};
+        when(ndefMessage.getRecords()).thenReturn(records);
+        mNfcDispatcher.tryPeripheralHandover(ndefMessage, tag);
+        ExtendedMockito.verify(() -> NfcStatsLog.write(
+                NfcStatsLog.NFC_TAG_OCCURRED,
+                NfcStatsLog.NFC_TAG_OCCURRED__TYPE__BT_PAIRING,
+                -1,
+                tag.getTechCodeList(),
+                BluetoothProtoEnums.MAJOR_CLASS_UNCATEGORIZED,
+                ""));
+    }
 }
