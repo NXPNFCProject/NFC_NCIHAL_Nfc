@@ -20,14 +20,22 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import android.annotation.NonNull;
+import android.annotation.RequiresPermission;
 import android.bluetooth.BluetoothProtoEnums;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
+import android.content.ServiceConnection;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.nfc.cardemulation.ApduServiceInfo;
 import android.nfc.cardemulation.CardEmulation;
+import android.nfc.cardemulation.HostApduService;
+import android.os.Binder;
+import android.os.Bundle;
+import android.os.IBinder;
 import android.os.UserHandle;
 import android.platform.test.annotations.RequiresFlagsDisabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
@@ -51,6 +59,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoSession;
 import org.mockito.quality.Strictness;
@@ -63,6 +72,9 @@ public final class NfcCardEmulationOccurredTest {
 
     private MockitoSession mStaticMockSession;
     private HostEmulationManager mHostEmulation;
+    private RegisteredAidCache mockAidCache;
+    private Context mockContext;
+    private PackageManager packageManager;
 
     private static final int UID_1 = 111;
 
@@ -78,21 +90,16 @@ public final class NfcCardEmulationOccurredTest {
                 .startMocking();
 
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        PackageManager pm = context.getPackageManager();
-        if (!pm.hasSystemFeature(PackageManager.FEATURE_NFC_HOST_CARD_EMULATION)) {
+        packageManager = context.getPackageManager();
+        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_NFC_HOST_CARD_EMULATION)) {
             mNfcSupported = false;
             return;
         }
         mNfcSupported = true;
 
-        Context mockContext = new ContextWrapper(context) {
-            @Override
-            public void sendBroadcastAsUser(Intent intent, UserHandle user) {
-                Log.i(TAG, "[Mock] sendBroadcastAsUser");
-            }
-        };
+        initMockContext(context);
 
-        RegisteredAidCache mockAidCache = Mockito.mock(RegisteredAidCache.class);
+        mockAidCache = Mockito.mock(RegisteredAidCache.class);
         ApduServiceInfo apduServiceInfo = Mockito.mock(ApduServiceInfo.class);
         when(apduServiceInfo.requiresUnlock()).thenReturn(false);
         when(apduServiceInfo.requiresScreenOn()).thenReturn(false);
@@ -110,8 +117,34 @@ public final class NfcCardEmulationOccurredTest {
         InstrumentationRegistry.getInstrumentation().runOnMainSync(
               () -> mHostEmulation = new HostEmulationManager(mockContext, mockAidCache));
         assertNotNull(mHostEmulation);
-
         mHostEmulation.onHostEmulationActivated();
+    }
+
+    private void initMockContext(Context context) {
+        mockContext = new ContextWrapper(context) {
+            @Override
+            public void sendBroadcastAsUser(Intent intent, UserHandle user) {
+                Log.i(TAG, "[Mock] sendBroadcastAsUser");
+            }
+
+            @Override
+            public PackageManager getPackageManager() {
+                Log.i(TAG, "[Mock] getPackageManager");
+                return packageManager;
+            }
+
+            public boolean bindServiceAsUser(
+                    @NonNull @RequiresPermission Intent service,
+                    @NonNull ServiceConnection conn, int flags,
+                    @NonNull UserHandle user) {
+                Log.i(TAG, "[Mock] bindServiceAsUser");
+                return true;
+            }
+
+            public void unbindService(@NonNull ServiceConnection conn){
+                Log.i(TAG, "[Mock] unbindService");
+            }
+        };
     }
 
     @After
@@ -161,5 +194,18 @@ public final class NfcCardEmulationOccurredTest {
                 0x00  // trailer
         };
         mHostEmulation.onHostEmulationData(aidBytes);
+    }
+
+    @Test
+    public void testOnPollingLoopDetected() {
+        if (!mNfcSupported) return;
+
+        Bundle pollingFrame = mock(Bundle.class);
+        ComponentName componentName = mock(ComponentName.class);
+        when(componentName.getPackageName()).thenReturn("com.android.nfc");
+        when(mockAidCache.getPreferredService()).thenReturn(componentName);
+        mHostEmulation.onPollingLoopDetected(pollingFrame);
+        Bundle resultBundle = mHostEmulation.mPendingPollingLoopFrames.get(0);
+        Assert.assertEquals(pollingFrame, resultBundle);
     }
 }
