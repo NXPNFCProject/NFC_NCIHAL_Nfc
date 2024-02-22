@@ -721,4 +721,17 @@ public class HostEmulationManager {
                     mServiceName, proto, HostEmulationManagerProto.SERVICE_NAME);
         }
     }
+
+    @VisibleForTesting
+    public ServiceConnection getServiceConnection(){
+        return mConnection;
+    }
+
+    @VisibleForTesting
+    public IBinder getMessenger(){
+        if (mActiveService != null) {
+            return mActiveService.getBinder();
+        }
+        return null;
+    }
 }

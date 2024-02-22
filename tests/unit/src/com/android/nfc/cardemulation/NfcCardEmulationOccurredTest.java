@@ -208,4 +208,29 @@ public final class NfcCardEmulationOccurredTest {
         Bundle resultBundle = mHostEmulation.mPendingPollingLoopFrames.get(0);
         Assert.assertEquals(pollingFrame, resultBundle);
     }
+
+    @Test
+    public void testOnPollingLoopDetectedServiceBound() {
+        if (!mNfcSupported) return;
+
+        Bundle pollingLoopTypeOnFrame = mock(Bundle.class);
+        Bundle pollingLoopTypeOffFrame = mock(Bundle.class);
+        when(pollingLoopTypeOnFrame.getChar(HostApduService.POLLING_LOOP_TYPE_KEY))
+                .thenReturn(HostApduService.POLLING_LOOP_TYPE_ON);
+        when(pollingLoopTypeOffFrame.getChar(HostApduService.POLLING_LOOP_TYPE_KEY))
+                .thenReturn(HostApduService.POLLING_LOOP_TYPE_OFF);
+        ComponentName componentName = mock(ComponentName.class);
+        when(componentName.getPackageName()).thenReturn("com.android.nfc");
+        when(mockAidCache.getPreferredService()).thenReturn(componentName);
+        IBinder iBinder = new Binder();
+        ServiceConnection serviceConnection = mHostEmulation.getServiceConnection();
+        serviceConnection.onServiceConnected(componentName, iBinder);
+        mHostEmulation.onPollingLoopDetected(pollingLoopTypeOnFrame);
+        mHostEmulation.onPollingLoopDetected(pollingLoopTypeOnFrame);
+        mHostEmulation.onPollingLoopDetected(pollingLoopTypeOffFrame);
+        mHostEmulation.onPollingLoopDetected(pollingLoopTypeOffFrame);
+        IBinder mActiveService = mHostEmulation.getMessenger();
+        Assert.assertNotNull(mActiveService);
+        Assert.assertEquals(iBinder, mActiveService);
+    }
 }
