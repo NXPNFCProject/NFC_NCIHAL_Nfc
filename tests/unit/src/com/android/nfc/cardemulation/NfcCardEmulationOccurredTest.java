@@ -16,7 +16,9 @@
 package com.android.nfc.cardemulation;
 
 import static com.android.nfc.cardemulation.HostEmulationManager.STATE_W4_SELECT;
+import static com.android.nfc.cardemulation.HostEmulationManager.STATE_W4_SERVICE;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -196,6 +198,17 @@ public final class NfcCardEmulationOccurredTest {
                 0x00  // trailer
         };
         mHostEmulation.onHostEmulationData(aidBytes);
+        state = mHostEmulation.getState();
+        assertEquals(state, STATE_W4_SERVICE);
+    }
+
+    @Test
+    public void testOnOffHostAidSelected() {
+        if (!mNfcSupported) return;
+
+        mHostEmulation.onOffHostAidSelected();
+        int state = mHostEmulation.getState();
+        assertEquals(state, STATE_W4_SELECT);
     }
 
     @Test
