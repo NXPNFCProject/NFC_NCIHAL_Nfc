@@ -1027,6 +1027,10 @@ void nfaDeviceManagementCallback(uint8_t dmEvent,
 #else
 if (!sP2pActive && eventData->rf_field.status == NFA_STATUS_OK) {
         struct nfc_jni_native_data* nat = getNative(NULL, NULL);
+        if (!nat) {
+          LOG(ERROR) << StringPrintf("cached nat is null");
+          return;
+        }
         JNIEnv* e = NULL;
         ScopedAttach attach(nat->vm, &e);
         if (e == NULL) {
@@ -1430,6 +1434,10 @@ void static nfaVSCallback(uint8_t event, uint16_t param_len, uint8_t* p_param) {
       switch (android_sub_opcode) {
         case NCI_ANDROID_POLLING_FRAME_NTF: {
           struct nfc_jni_native_data* nat = getNative(NULL, NULL);
+          if (!nat) {
+            LOG(ERROR) << StringPrintf("cached nat is null");
+            return;
+          }
           JNIEnv* e = NULL;
           ScopedAttach attach(nat->vm, &e);
           if (e == NULL) {
@@ -1693,13 +1701,13 @@ static jboolean nfcManager_doInitialize(JNIEnv* e, jobject o) {
               NfcConfig::getUnsigned(NAME_POLLING_TECH_MASK, DEFAULT_TECH_MASK);
           DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
               "%s: tag polling tech mask=0x%X", __func__, nat->tech_mask);
+          // if this value exists, set polling interval.
+          nat->discovery_duration = NfcConfig::getUnsigned(
+              NAME_NFA_DM_DISC_DURATION_POLL, DEFAULT_DISCOVERY_DURATION);
+          NFA_SetRfDiscoveryDuration(nat->discovery_duration);
+        } else {
+          LOG(ERROR) << StringPrintf("nat is null");
         }
-
-        // if this value exists, set polling interval.
-        nat->discovery_duration = NfcConfig::getUnsigned(
-            NAME_NFA_DM_DISC_DURATION_POLL, DEFAULT_DISCOVERY_DURATION);
-
-        NFA_SetRfDiscoveryDuration(nat->discovery_duration);
 
         // get LF_T3T_MAX
         {
@@ -1888,7 +1896,11 @@ static void nfcManager_enableDiscovery(JNIEnv* e, jobject o,
         // configure NFCC_CONFIG_CONTROL- NFCC allowed to manage RF configuration.
         nfcManager_configNfccConfigControl(true);
 
-        NFA_SetRfDiscoveryDuration(nat->discovery_duration);
+        if (nat) {
+          NFA_SetRfDiscoveryDuration(nat->discovery_duration);
+        } else {
+          LOG(ERROR) << StringPrintf("nat is null");
+        }
       }
     }
   } else {
@@ -1902,7 +1914,11 @@ static void nfcManager_enableDiscovery(JNIEnv* e, jobject o,
       // configure NFCC_CONFIG_CONTROL- NFCC allowed to manage RF configuration.
       nfcManager_configNfccConfigControl(true);
 
-      NFA_SetRfDiscoveryDuration(nat->discovery_duration);
+      if (nat) {
+        NFA_SetRfDiscoveryDuration(nat->discovery_duration);
+      } else {
+        LOG(ERROR) << StringPrintf("nat is null");
+      }
     }
     // No technologies configured, stop polling
     stopPolling_rfDiscoveryDisabled();
@@ -2904,6 +2920,10 @@ static void nfcManager_doSetP2pInitiatorModes(JNIEnv* e, jobject o,
       << StringPrintf("%s: modes=0x%X", __func__, modes);
   struct nfc_jni_native_data* nat = getNative(e, o);
 
+  if (nat == NULL) {
+    LOG(ERROR) << StringPrintf("nat is null");
+    return;
+  }
   tNFA_TECHNOLOGY_MASK mask = 0;
   if (modes & 0x01) mask |= NFA_TECHNOLOGY_MASK_A;
   if (modes & 0x02) mask |= NFA_TECHNOLOGY_MASK_F;
