@@ -37,6 +37,7 @@ public class NfcBackupAgent extends BackupAgentHelper {
     @Override
     public void onRestoreFinished() {
         NfcAdapter nfcAdapter = NfcAdapter.getDefaultAdapter(this);
+        NfcService.sIsNfcRestore = true;
 
         if (nfcAdapter != null) {
             SharedPreferences prefs = getSharedPreferences(NfcService.PREF,

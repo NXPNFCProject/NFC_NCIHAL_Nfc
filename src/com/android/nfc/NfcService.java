@@ -344,6 +344,9 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
             "com.android.nfc.action.ACTION_EXTENDED_FIELD_TIMEOUT";
 
     public static boolean sIsShortRecordLayout = false;
+
+    public static boolean sIsNfcRestore = false;
+
     // Default delay used for presence checks in ETSI mode
     static final int ETSI_PRESENCE_CHECK_DELAY = 1000;
     // for use with playSound()
@@ -1363,6 +1366,12 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
             switch (params[0].intValue()) {
                 case TASK_ENABLE:
                     enableInternal();
+                    if (sIsNfcRestore && mIsTagAppPrefSupported) {
+                        synchronized (NfcService.this) {
+                            initTagAppPrefList();
+                            sIsNfcRestore = false;
+                        }
+                    }
                     break;
                 case TASK_DISABLE:
                     disableInternal();
