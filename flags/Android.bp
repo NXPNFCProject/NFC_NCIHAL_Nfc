@@ -21,6 +21,7 @@ package {
 aconfig_declarations {
     name: "nfc_aconfig_flags",
     package: "com.android.nfc.flags",
+    container: "system",
     srcs: ["nfc_flags.aconfig"],
 }
 
@@ -29,8 +30,8 @@ java_aconfig_library {
     aconfig_declarations: "nfc_aconfig_flags",
     min_sdk_version: "33",
     apex_available: [
-         "//apex_available:platform",
-         "com.android.nfcservices"
+        "//apex_available:platform",
+        "com.android.nfcservices",
     ],
 }
 
@@ -49,7 +50,7 @@ java_library {
         "//packages/apps/Nfc:__subpackages__",
     ],
     apex_available: [
-         "//apex_available:platform",
-         "com.android.nfcservices"
+        "//apex_available:platform",
+        "com.android.nfcservices",
     ],
 }
