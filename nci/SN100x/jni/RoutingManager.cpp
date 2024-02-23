@@ -477,17 +477,16 @@ bool RoutingManager::addAidRouting(const uint8_t* aid, uint8_t aidLen,
           (route != 0x00) ? mOffHostAidRoutingPowerState & power : power;
     }
   }
-  SyncEventGuard guard(mRoutingEvent);
+  SyncEventGuard guard(mAidAddRemoveEvent);
   mAidRoutingConfigured = false;
   tNFA_STATUS nfaStat =
       NFA_EeAddAidRouting(route, aidLen, (uint8_t*)aid, powerState, aidInfo);
    #endif
   if (nfaStat == NFA_STATUS_OK) {
+    mAidAddRemoveEvent.wait();
 #if(NXP_EXTNS == TRUE)
     LOG(DEBUG) << fn << ": routed AID";
-    mAidAddRemoveEvent.wait();
 #else
-    mRoutingEvent.wait();
   }
   if (mAidRoutingConfigured) {
     LOG(DEBUG) << fn << ": routed AID";
@@ -510,16 +509,14 @@ bool RoutingManager::removeAidRouting(const uint8_t* aid, uint8_t aidLen) {
   } else {
     LOG(DEBUG) << fn << "Remove Empty aid";
   }
-#if(NXP_EXTNS == TRUE)
   SyncEventGuard guard(mAidAddRemoveEvent);
-#else
-  SyncEventGuard guard(mRoutingEvent);
+#if (NXP_EXTNS != TRUE)
   mAidRoutingConfigured = false;
 #endif
   tNFA_STATUS nfaStat = NFA_EeRemoveAidRouting(aidLen, (uint8_t*)aid);
   if (nfaStat == NFA_STATUS_OK) {
 #if(NXP_EXTNS != TRUE)
-    mRoutingEvent.wait();
+    mAidAddRemoveEvent.wait();
   }
   if (mAidRoutingConfigured) {
 #endif
@@ -746,13 +743,54 @@ void RoutingManager::updateRoutingTable() {
   updateDefaultRoute();
 }
 
+void RoutingManager::updateIsoDepProtocolRoute(int route) {
+  static const char fn[] = "RoutingManager::updateIsoDepProtocolRoute";
+  tNFA_PROTOCOL_MASK protoMask = NFA_PROTOCOL_MASK_ISO_DEP;
+  tNFA_STATUS nfaStat;
+
+  SyncEventGuard guard(mRoutingEvent);
+#if (NXP_EXTNS == TRUE)
+  int handleDefaultIsoDepRoute =
+      SecureElement::getInstance().getEseHandleFromGenericId(
+          mDefaultIsoDepRoute);
+  nfaStat = NFA_EeClearDefaultProtoRouting(handleDefaultIsoDepRoute, protoMask);
+#else
+  nfaStat = NFA_EeClearDefaultProtoRouting(mDefaultIsoDepRoute, protoMask);
+#endif
+  if (nfaStat == NFA_STATUS_OK)
+    mRoutingEvent.wait();
+  else
+    LOG(ERROR) << fn << "Fail to clear IsoDep route";
+
+  mDefaultIsoDepRoute = route;
+  updateDefaultProtocolRoute();
+}
+
 void RoutingManager::updateDefaultProtocolRoute() {
   static const char fn[] = "RoutingManager::updateDefaultProtocolRoute";
 
   // Default Routing for ISO-DEP
   tNFA_PROTOCOL_MASK protoMask = NFA_PROTOCOL_MASK_ISO_DEP;
   tNFA_STATUS nfaStat;
+#if (NXP_EXTNS == TRUE)
+  int handleDefaultIsoDepRoute =
+      SecureElement::getInstance().getEseHandleFromGenericId(
+          mDefaultIsoDepRoute);
+#endif
   if (mDefaultIsoDepRoute != NFC_DH_ID &&
+#if (NXP_EXTNS == TRUE)
+      isTypeATypeBTechSupportedInEe(handleDefaultIsoDepRoute)) {
+    nfaStat =
+        NFA_EeClearDefaultProtoRouting(handleDefaultIsoDepRoute, protoMask);
+    if (nfaStat == NFA_STATUS_OK)
+      mRoutingEvent.wait();
+    else
+      LOG(ERROR) << fn << "Fail to clear IsoDep route";
+    nfaStat = NFA_EeSetDefaultProtoRouting(
+        handleDefaultIsoDepRoute, protoMask, mSecureNfcEnabled ? 0 : protoMask,
+        0, mSecureNfcEnabled ? 0 : protoMask, mSecureNfcEnabled ? 0 : protoMask,
+        mSecureNfcEnabled ? 0 : protoMask);
+#else
       isTypeATypeBTechSupportedInEe(mDefaultIsoDepRoute |
                                     NFA_HANDLE_GROUP_EE)) {
     nfaStat = NFA_EeClearDefaultProtoRouting(mDefaultIsoDepRoute, protoMask);
@@ -760,6 +798,8 @@ void RoutingManager::updateDefaultProtocolRoute() {
         mDefaultIsoDepRoute, protoMask, mSecureNfcEnabled ? 0 : protoMask, 0,
         mSecureNfcEnabled ? 0 : protoMask, mSecureNfcEnabled ? 0 : protoMask,
         mSecureNfcEnabled ? 0 : protoMask);
+#endif
+
   } else {
     nfaStat = NFA_EeClearDefaultProtoRouting(NFC_DH_ID, protoMask);
     nfaStat = NFA_EeSetDefaultProtoRouting(
@@ -774,14 +814,25 @@ void RoutingManager::updateDefaultProtocolRoute() {
   if (!mIsScbrSupported) {
     SyncEventGuard guard(mRoutingEvent);
     tNFA_PROTOCOL_MASK protoMask = NFA_PROTOCOL_MASK_T3T;
+#if (NXP_EXTNS == TRUE)
+    int handleDefaultEe =
+        SecureElement::getInstance().getEseHandleFromGenericId(mDefaultEe);
+#endif
     if (mDefaultEe == NFC_DH_ID) {
       nfaStat =
           NFA_EeSetDefaultProtoRouting(NFC_DH_ID, protoMask, 0, 0, 0, 0, 0);
     } else {
+#if (NXP_EXTNS == TRUE)
+      nfaStat = NFA_EeClearDefaultProtoRouting(handleDefaultEe, protoMask);
+      nfaStat = NFA_EeSetDefaultProtoRouting(
+          handleDefaultEe, protoMask, 0, 0, mSecureNfcEnabled ? 0 : protoMask,
+          mSecureNfcEnabled ? 0 : protoMask, mSecureNfcEnabled ? 0 : protoMask);
+#else
       nfaStat = NFA_EeClearDefaultProtoRouting(mDefaultEe, protoMask);
       nfaStat = NFA_EeSetDefaultProtoRouting(
           mDefaultEe, protoMask, 0, 0, mSecureNfcEnabled ? 0 : protoMask,
           mSecureNfcEnabled ? 0 : protoMask, mSecureNfcEnabled ? 0 : protoMask);
+#endif
     }
     if (nfaStat == NFA_STATUS_OK)
       mRoutingEvent.wait();
@@ -845,6 +896,33 @@ void RoutingManager::updateDefaultRoute() {
       LOG(ERROR) << fn << ": failed to register zero length AID";
   }
 #endif
+}
+
+tNFA_TECHNOLOGY_MASK RoutingManager::updateTechnologyABRoute(int route) {
+  static const char fn[] = "RoutingManager::updateTechnologyABRoute";
+
+  tNFA_STATUS nfaStat;
+
+  SyncEventGuard guard(mRoutingEvent);
+#if (NXP_EXTNS == TRUE)
+  int handleDefaultOffHostRoute =
+      SecureElement::getInstance().getEseHandleFromGenericId(
+          mDefaultOffHostRoute);
+  nfaStat = NFA_EeClearDefaultTechRouting(
+      handleDefaultOffHostRoute,
+      NFA_TECHNOLOGY_MASK_A | NFA_TECHNOLOGY_MASK_B | NFA_TECHNOLOGY_MASK_F);
+#else
+  nfaStat = NFA_EeClearDefaultTechRouting(
+      mDefaultOffHostRoute,
+      NFA_TECHNOLOGY_MASK_A | NFA_TECHNOLOGY_MASK_B | NFA_TECHNOLOGY_MASK_F);
+#endif
+  if (nfaStat == NFA_STATUS_OK)
+    mRoutingEvent.wait();
+  else
+    LOG(ERROR) << fn << "Fail to clear Tech route";
+
+  mDefaultOffHostRoute = route;
+  return updateEeTechRouteSetting();
 }
 
 tNFA_TECHNOLOGY_MASK RoutingManager::updateEeTechRouteSetting() {
@@ -1101,15 +1179,13 @@ void RoutingManager::nfaEeCallback(tNFA_EE_EVT event,
     case NFA_EE_ADD_AID_EVT: {
       LOG(DEBUG) << StringPrintf("%s: NFA_EE_ADD_AID_EVT  status=%u", fn,
                                  eventData->status);
-#if(NXP_EXTNS == TRUE)
+
       SyncEventGuard guard(routingManager.mAidAddRemoveEvent);
-      routingManager.mAidAddRemoveEvent.notifyOne();
-#else
-      SyncEventGuard guard(routingManager.mRoutingEvent);
+#if (NXP_EXTNS != TRUE)
       routingManager.mAidRoutingConfigured =
           (eventData->status == NFA_STATUS_OK);
-      routingManager.mRoutingEvent.notifyOne();
 #endif
+      routingManager.mAidAddRemoveEvent.notifyOne();
     } break;
 
     case NFA_EE_ADD_SYSCODE_EVT: {
@@ -1129,15 +1205,13 @@ void RoutingManager::nfaEeCallback(tNFA_EE_EVT event,
     case NFA_EE_REMOVE_AID_EVT: {
       LOG(DEBUG) << StringPrintf("%s: NFA_EE_REMOVE_AID_EVT  status=%u", fn,
                                  eventData->status);
-#if(NXP_EXTNS == TRUE)
+
       SyncEventGuard guard(routingManager.mAidAddRemoveEvent);
-      routingManager.mAidAddRemoveEvent.notifyOne();
-#else
-      SyncEventGuard guard(routingManager.mRoutingEvent);
+#if (NXP_EXTNS != TRUE)
       routingManager.mAidRoutingConfigured =
           (eventData->status == NFA_STATUS_OK);
-      routingManager.mRoutingEvent.notifyOne();
 #endif
+      routingManager.mAidAddRemoveEvent.notifyOne();
     } break;
 
     case NFA_EE_NEW_EE_EVT: {
@@ -1366,7 +1440,7 @@ int RoutingManager::registerJniFunctions(JNIEnv* e) {
   static const char fn[] = "RoutingManager::registerJniFunctions";
   LOG(DEBUG) << StringPrintf("%s", fn);
   return jniRegisterNativeMethods(
-      e, "com/android/nfc/cardemulation/AidRoutingManager", sMethods,
+      e, "com/android/nfc/cardemulation/RoutingOptionManager", sMethods,
       NELEM(sMethods));
 }
 
@@ -1599,47 +1673,45 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
      * region*/
     power &= 0xFF;
 
-    if ((ee_handle == ROUTE_LOC_HOST_ID) &&
-        (CLEAR_PROTOCOL_ENTRIES == type)) {
-      power &= ~(PWR_SWTCH_OFF_MASK | PWR_BATT_OFF_MASK);
+    if ((ee_handle == ROUTE_LOC_HOST_ID) && (CLEAR_PROTOCOL_ENTRIES == type)) {
+        power &= ~(PWR_SWTCH_OFF_MASK | PWR_BATT_OFF_MASK);
     }
 
     max_tech_mask = SecureElement::getInstance().getSETechnology(ee_handle);
     LOG(DEBUG) << StringPrintf("%s: enter,max_tech_mask :%lx", fn,
                                max_tech_mask);
-    if(CLEAR_TECHNOLOGY_ENTRIES == type)
-    {
-      /*  Masking with available SE Technologies */
-      value &= max_tech_mask;
-      LOG(DEBUG) << StringPrintf(
-          "%s: enter >>>> max_tech_mask :%lx value :0x%x", fn, max_tech_mask,
-          value);
-      switch_on_mask = (power & 0x01) ? value : 0;
-      switch_off_mask = (power & 0x02) ? value : 0;
-      battery_off_mask = (power & 0x04) ? value : 0;
-      screen_off_mask = (power & 0x08) ? value : 0;
-      screen_lock_mask = (power & 0x10) ? value : 0;
-      screen_off_lock_mask = (power & 0x20) ? value : 0;
+    if (CLEAR_TECHNOLOGY_ENTRIES == type) {
+        /*  Masking with available SE Technologies */
+        value &= max_tech_mask;
+        LOG(DEBUG) << StringPrintf(
+            "%s: enter >>>> max_tech_mask :%lx value :0x%x", fn, max_tech_mask,
+            value);
+        switch_on_mask = (power & 0x01) ? value : 0;
+        switch_off_mask = (power & 0x02) ? value : 0;
+        battery_off_mask = (power & 0x04) ? value : 0;
+        screen_off_mask = (power & 0x08) ? value : 0;
+        screen_lock_mask = (power & 0x10) ? value : 0;
+        screen_off_lock_mask = (power & 0x20) ? value : 0;
 
-      if ((max_tech_mask != 0x01) && (max_tech_mask == 0x02) &&
-          value)  // type B only
-      {
-        switch_on_mask &= ~NFA_TECHNOLOGY_MASK_A;
-        switch_off_mask &= ~NFA_TECHNOLOGY_MASK_A;
-        battery_off_mask &= ~NFA_TECHNOLOGY_MASK_A;
-        screen_off_mask &= ~NFA_TECHNOLOGY_MASK_A;
-        screen_lock_mask &= ~NFA_TECHNOLOGY_MASK_A;
-        screen_off_lock_mask &= ~NFA_TECHNOLOGY_MASK_A;
-      } else if ((max_tech_mask == 0x01) && (max_tech_mask != 0x02) &&
-                 value)  // type A only
-      {
-        switch_on_mask &= ~NFA_TECHNOLOGY_MASK_B;
-        switch_off_mask &= ~NFA_TECHNOLOGY_MASK_B;
-        battery_off_mask &= ~NFA_TECHNOLOGY_MASK_B;
-        screen_off_mask &= ~NFA_TECHNOLOGY_MASK_B;
-        screen_lock_mask &= ~NFA_TECHNOLOGY_MASK_B;
-        screen_off_lock_mask &= ~NFA_TECHNOLOGY_MASK_B;
-      }
+        if ((max_tech_mask != 0x01) && (max_tech_mask == 0x02) &&
+            value)  // type B only
+        {
+            switch_on_mask &= ~NFA_TECHNOLOGY_MASK_A;
+            switch_off_mask &= ~NFA_TECHNOLOGY_MASK_A;
+            battery_off_mask &= ~NFA_TECHNOLOGY_MASK_A;
+            screen_off_mask &= ~NFA_TECHNOLOGY_MASK_A;
+            screen_lock_mask &= ~NFA_TECHNOLOGY_MASK_A;
+            screen_off_lock_mask &= ~NFA_TECHNOLOGY_MASK_A;
+        } else if ((max_tech_mask == 0x01) && (max_tech_mask != 0x02) &&
+                   value)  // type A only
+        {
+            switch_on_mask &= ~NFA_TECHNOLOGY_MASK_B;
+            switch_off_mask &= ~NFA_TECHNOLOGY_MASK_B;
+            battery_off_mask &= ~NFA_TECHNOLOGY_MASK_B;
+            screen_off_mask &= ~NFA_TECHNOLOGY_MASK_B;
+            screen_lock_mask &= ~NFA_TECHNOLOGY_MASK_B;
+            screen_off_lock_mask &= ~NFA_TECHNOLOGY_MASK_B;
+        }
 
         if ((mHostListnTechMask) && (mFwdFuntnEnable)) {
           if ((max_tech_mask != 0x01) && (max_tech_mask == 0x02) && value) {
@@ -1699,8 +1771,7 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
                 LOG(ERROR) << StringPrintf("Fail to set default tech routing");
             }
         }
-    }else if(CLEAR_PROTOCOL_ENTRIES == type)
-    {
+    } else if (CLEAR_PROTOCOL_ENTRIES == type) {
         value &= ~(0xF0);
         while(value)
         {

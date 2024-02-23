@@ -111,12 +111,7 @@ public class AidRoutingManager {
     // Easy look-up what the power is for a certain AID
     HashMap<String, Integer> mPowerForAid = new HashMap<String, Integer>();
 
-    private native int doGetDefaultRouteDestination();
-    private native int doGetDefaultOffHostRouteDestination();
-    private native byte[] doGetOffHostUiccDestination();
-    private native byte[] doGetOffHostEseDestination();
-    private native int doGetAidMatchingMode();
-    private native int doGetDefaultIsoDepRouteDestination();
+    RoutingOptionManager mRoutingOptionManager = RoutingOptionManager.getInstance();
     final ActivityManager mActivityManager;
     final class AidEntry {
         boolean isOnHost;
@@ -127,24 +122,24 @@ public class AidRoutingManager {
     }
 
     public AidRoutingManager() {
-        mDefaultRoute = doGetDefaultRouteDestination();
+        mDefaultRoute = mRoutingOptionManager.getDefaultRoute();
         if (DBG)
           Log.d(TAG, "mDefaultRoute=0x" + Integer.toHexString(mDefaultRoute));
-        mDefaultOffHostRoute = doGetDefaultOffHostRouteDestination();
+        mDefaultOffHostRoute = mRoutingOptionManager.getDefaultOffHostRoute();
         if (DBG)
           Log.d(TAG, "mDefaultOffHostRoute=0x" + Integer.toHexString(mDefaultOffHostRoute));
-        mOffHostRouteUicc = doGetOffHostUiccDestination();
+        mOffHostRouteUicc = mRoutingOptionManager.getOffHostRouteUicc();
         if (DBG)
             Log.d(TAG, "mOffHostRouteUicc=" + Arrays.toString(mOffHostRouteUicc));
-        mOffHostRouteEse = doGetOffHostEseDestination();
+        mOffHostRouteEse = mRoutingOptionManager.getOffHostRouteEse();
         if (DBG)
           Log.d(TAG, "mOffHostRouteEse=" + Arrays.toString(mOffHostRouteEse));
-        mAidMatchingSupport = doGetAidMatchingMode();
+        mAidMatchingSupport = mRoutingOptionManager.getAidMatchingSupport();
         if (DBG) Log.d(TAG, "mAidMatchingSupport=0x" + Integer.toHexString(mAidMatchingSupport));
         mDefaultAidRoute =   NfcService.getInstance().GetDefaultRouteEntry() >> 0x08;
         if (DBG)
           Log.d(TAG, "mDefaultAidRoute=0x" + Integer.toHexString(mDefaultAidRoute));
-        mDefaultIsoDepRoute = doGetDefaultIsoDepRouteDestination();
+        mDefaultIsoDepRoute = mRoutingOptionManager.getDefaultIsoDepRoute();
         if (DBG) Log.d(TAG, "mDefaultIsoDepRoute=0x" + Integer.toHexString(mDefaultIsoDepRoute));
         mLastCommitStatus = false;
 
@@ -291,8 +286,12 @@ public class AidRoutingManager {
         HashMap<String, AidEntry> aidRoutingTableCache = new HashMap<String, AidEntry>(aidMap.size());
         ArrayList<Integer> seList = new ArrayList<Integer>();
         mAidRoutingTableSize = NfcService.getInstance().getAidRoutingTableSize();
-        mDefaultAidRoute =   NfcService.getInstance().GetDefaultRouteEntry() >> 0x08;
-        mDefaultOffHostRoute = doGetDefaultOffHostRouteDestination();
+        if (mRoutingOptionManager.isRoutingTableOverrided()) {
+            mDefaultAidRoute = mRoutingOptionManager.getOverrideDefaultRoute();
+        } else {
+            mDefaultAidRoute = mRoutingOptionManager.getDefaultRoute();
+        }
+        mDefaultOffHostRoute = mRoutingOptionManager.getDefaultOffHostRoute();
         boolean isPowerStateUpdated = false;
         Log.e(TAG, "Size of routing table"+mAidRoutingTableSize);
         seList.add(mDefaultAidRoute);
@@ -497,7 +496,8 @@ public class AidRoutingManager {
                     }
                 }
 
-                if (calculateAidRouteSize(aidRoutingTableCache) <= mMaxAidRoutingTableSize) {
+                if (calculateAidRouteSize(aidRoutingTableCache) <= mMaxAidRoutingTableSize ||
+                    mRoutingOptionManager.isRoutingTableOverrided()) {
                     aidRouteResolved = true;
                     break;
                 }

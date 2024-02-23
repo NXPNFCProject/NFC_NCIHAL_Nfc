@@ -1105,6 +1105,12 @@ public class RegisteredAidCache {
         }
     }
 
+    public void onRoutingOverridedOrRecovered() {
+        synchronized (mLock) {
+            updateRoutingLocked(true);
+        }
+    }
+
     String dumpEntry(Map.Entry<String, AidResolveInfo> entry) {
         StringBuilder sb = new StringBuilder();
         String category = entry.getValue().category;

@@ -186,6 +186,11 @@ public class RegisteredServicesCache {
                 final int uid = intent.getIntExtra(Intent.EXTRA_UID, -1);
                 String action = intent.getAction();
                 if (DEBUG) Log.d(TAG, "Intent action: " + action);
+
+                if (RoutingOptionManager.getInstance().isRoutingTableOverrided()) {
+                    if (DEBUG) Log.d(TAG, "Routing table overrided. Skip invalidateCache()");
+                }
+
                 if (uid != -1) {
                     int currentUser = ActivityManager.getCurrentUser();
                     if (currentUser == getProfileParentId(UserHandle.

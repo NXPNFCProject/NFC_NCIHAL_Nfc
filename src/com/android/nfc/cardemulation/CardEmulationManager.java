@@ -39,6 +39,7 @@ import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.List;
 
+import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
@@ -60,6 +61,7 @@ import android.os.SystemClock;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.os.PowerManager;
+import android.os.Process;
 import android.os.SystemClock;
 import android.os.SystemProperties;
 import android.provider.Settings;
@@ -69,6 +71,7 @@ import android.util.proto.ProtoOutputStream;
 import java.util.Map;
 import java.util.HashMap;
 
+import com.android.nfc.ForegroundUtils;
 import com.android.nfc.NfcPermissions;
 import com.android.nfc.NfcService;
 
@@ -125,11 +128,18 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
     final NfcFCardEmulationInterface mNfcFCardEmulationInterface;
     final PowerManager mPowerManager;
     boolean mNotSkipAid;
+    final ForegroundUtils mForegroundUtils;
+    private int mForegroundUid;
+
+    RoutingOptionManager mRoutingOptionManager;
+    final byte[] mOffHostRouteUicc;
+    final byte[] mOffHostRouteEse;
 
     public CardEmulationManager(Context context) {
         mContext = context;
         mCardEmulationInterface = new CardEmulationInterface();
         mNfcFCardEmulationInterface = new NfcFCardEmulationInterface();
+        mForegroundUtils = ForegroundUtils.getInstance(context.getSystemService(ActivityManager.class));
         mAidCache = new RegisteredAidCache(context);
         mT3tIdentifiersCache = new RegisteredT3tIdentifiersCache(context);
         mHostEmulationManager = new HostEmulationManager(context, mAidCache);
@@ -142,6 +152,11 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         mServiceCache.initialize();
         mNfcFServicesCache.initialize();
         mPowerManager = context.getSystemService(PowerManager.class);
+        mRoutingOptionManager = RoutingOptionManager.getInstance();
+        mOffHostRouteEse = mRoutingOptionManager.getOffHostRouteEse();
+        mOffHostRouteUicc = mRoutingOptionManager.getOffHostRouteUicc();
+
+        mForegroundUid = Process.INVALID_UID;
     }
 
     public INfcCardEmulation getNfcCardEmulationInterface() {
@@ -720,6 +735,95 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
                     Constants.SETTINGS_SECURE_NFC_PAYMENT_DEFAULT_COMPONENT);
             return defaultComponent != null ? true : false;
         }
+    //}
+
+    @Override
+        public boolean overrideRoutingTable(int userHandle, String protocol, String technology) {
+
+            int callingUid = Binder.getCallingUid();
+            if (!mForegroundUtils.registerUidToBackgroundCallback(mForegroundCallback, callingUid)) {
+                Log.e(TAG, "overrideRoutingTable: Caller is not in foreground.");
+                return false;
+            }
+            mForegroundUid = callingUid;
+
+            int protocolRoute = getRouteForSecureElement(protocol);
+            int technologyRoute = getRouteForSecureElement(technology);
+            if (DBG) Log.d(TAG, "protocolRoute " + protocolRoute + ", technologyRoute " + technologyRoute);
+
+//            mRoutingOptionManager.overrideDefaultRoute(protocolRoute);
+            mRoutingOptionManager.overrideDefaultIsoDepRoute(protocolRoute);
+            mRoutingOptionManager.overrideDefaultOffHostRoute(technologyRoute);
+            mAidCache.onRoutingOverridedOrRecovered();
+//            NfcService.getInstance().commitRouting();
+
+            return true;
+        }
+
+        @Override
+        public boolean recoverRoutingTable(int userHandle) {
+            Log.d(TAG, "recoverRoutingTable. userHandle " + userHandle);
+
+            if (!mForegroundUtils.isInForeground(Binder.getCallingUid())) {
+                if (DBG) Log.d(TAG, "recoverRoutingTable : not in foreground.");
+                return false;
+            }
+            mForegroundUid = Process.INVALID_UID;
+
+            mRoutingOptionManager.recoverOverridedRoutingTable();
+            mAidCache.onRoutingOverridedOrRecovered();
+//            NfcService.getInstance().commitRouting();
+
+            return true;
+        }
+    }
+
+    final ForegroundUtils.Callback mForegroundCallback = new ForegroundCallbackImpl();
+
+    class ForegroundCallbackImpl implements ForegroundUtils.Callback {
+        @Override
+        public void onUidToBackground(int uid) {
+            synchronized (CardEmulationManager.this) {
+                if (mForegroundUid == uid) {
+                    if (DBG) Log.d(TAG, "Uid " + uid + " switch to background.");
+                    mForegroundUid = Process.INVALID_UID;
+                    mRoutingOptionManager.recoverOverridedRoutingTable();
+                }
+            }
+        }
+    }
+
+    private int getRouteForSecureElement(String se) {
+        String route = se;
+        if (route == null) {
+            return -1;
+        }
+
+        if (route.equals("DH")) {
+            return 0;
+        }
+
+        if (route.length() == 3) {
+            route = route + '1';
+        }
+
+        try {
+            if (route.startsWith("eSE") && mOffHostRouteEse != null) {
+                int index = Integer.parseInt(route.substring(3));
+                if (mOffHostRouteEse.length >= index && index > 0) {
+                    return mOffHostRouteEse[index - 1] & 0xFF;
+                }
+            } else if (route.startsWith("SIM") && mOffHostRouteUicc != null) {
+                int index = Integer.parseInt(route.substring(3));
+                if (mOffHostRouteUicc.length >= index && index > 0) {
+                    return mOffHostRouteUicc[index - 1] & 0xFF;
+                }
+            }
+            if (mOffHostRouteEse == null && mOffHostRouteUicc == null)
+                return -1;
+        } catch (NumberFormatException ignored) { }
+
+        return 0;
     }
 
     /**

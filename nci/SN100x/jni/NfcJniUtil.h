@@ -110,6 +110,20 @@
 #define NFCSTATUS_SUCCESS (0x0000)
 #define NFCSTATUS_FAILED (0x00FF)
 
+/* Pre-defined route type values. These must match the values in
+ * RoutingManager.cpp.
+ */
+#define ROUTE_TYPE_TECH 0x01
+#define ROUTE_TYPE_PROTO 0x02
+#define ROUTE_TYPE_AID 0x04
+
+#define ROUTE_SWITCH_ON 0x01
+#define ROUTE_SWITCH_OFF 0x02
+#define ROUTE_BATTERY_OFF 0x04
+#define ROUTE_SCREEN_OFF_UNLOCKED 0x08
+#define ROUTE_SCREEN_ON_LOCKED 0x10
+#define ROUTE_SCREEN_OFF_LOCKED 0x20
+
 #if (NXP_EXTNS == TRUE)
 #define NFC_CMD_TIMEOUT 2000 /* 2 sec timeout to wait on the semaphore for the response of command sent*/
 #endif

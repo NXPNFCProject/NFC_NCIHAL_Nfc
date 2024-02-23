@@ -660,6 +660,12 @@ public class NativeNfcManager implements DeviceHost {
     @Override
     public native void clearRoutingEntry(int clearFlags);
 
+    @Override
+    public native void setIsoDepProtocolRoute(int route);
+
+    @Override
+    public native void setTechnologyABRoute(int route);
+
     /**
      * Notifies Tag abort operation
      */

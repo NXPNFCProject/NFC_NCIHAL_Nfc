@@ -3029,6 +3029,18 @@ static void nfcManager_clearRoutingEntry(JNIEnv* e, jobject o,
   RoutingManager::getInstance().clearRoutingEntry(clearFlags);
 }
 
+static void nfcManager_updateIsoDepProtocolRoute(JNIEnv* e, jobject o,
+                                                 jint route) {
+  LOG(DEBUG) << StringPrintf("%s: clearFlags=0x%X", __func__, route);
+  RoutingManager::getInstance().updateIsoDepProtocolRoute(route);
+}
+
+static void nfcManager_updateTechnologyABRoute(JNIEnv* e, jobject o,
+                                               jint route) {
+  LOG(DEBUG) << StringPrintf("%s: clearFlags=0x%X", __func__, route);
+  RoutingManager::getInstance().updateTechnologyABRoute(route);
+}
+
 /*******************************************************************************
 **
 ** Function:        nfcManager_setDiscoveryTech
@@ -3116,8 +3128,7 @@ static JNINativeMethod gMethods[] = {
 
     {"unrouteAid", "([B)Z", (void*)nfcManager_unrouteAid},
 
-    {"doSetRoutingEntry", "(IIII)Z",
-            (void*)nfcManager_setRoutingEntry},
+    {"doSetRoutingEntry", "(IIII)Z", (void*)nfcManager_setRoutingEntry},
 
     {"commitRouting", "()Z", (void*)nfcManager_commitRouting},
 
@@ -3171,46 +3182,39 @@ static JNINativeMethod gMethods[] = {
     {"getIsoDepMaxTransceiveLength", "()I",
      (void*)nfcManager_getIsoDepMaxTransceiveLength},
 
-     {"getAidTableSize", "()I",
-             (void*) nfcManager_getAidTableSize},
+    {"getAidTableSize", "()I", (void*)nfcManager_getAidTableSize},
 
-     {"getDefaultAidRoute", "()I",
-            (void*) nfcManager_getDefaultAidRoute},
+    {"getDefaultAidRoute", "()I", (void*)nfcManager_getDefaultAidRoute},
 
-    {"getDefaultDesfireRoute", "()I",
-            (void*) nfcManager_getDefaultDesfireRoute},
+    {"getDefaultDesfireRoute", "()I", (void*)nfcManager_getDefaultDesfireRoute},
 
     {"getDefaultMifareCLTRoute", "()I",
-            (void*) nfcManager_getDefaultMifareCLTRoute},
+     (void*)nfcManager_getDefaultMifareCLTRoute},
 
     {"getDefaultAidPowerState", "()I",
-            (void*) nfcManager_getDefaultAidPowerState},
+     (void*)nfcManager_getDefaultAidPowerState},
 
     {"getDefaultDesfirePowerState", "()I",
-            (void*) nfcManager_getDefaultDesfirePowerState},
+     (void*)nfcManager_getDefaultDesfirePowerState},
 
     {"getDefaultMifareCLTPowerState", "()I",
-            (void*) nfcManager_getDefaultMifareCLTPowerState},
+     (void*)nfcManager_getDefaultMifareCLTPowerState},
 #if(NXP_EXTNS == TRUE)
-    {"getT4TNfceePowerState", "()I",
-            (void*) nfcManager_getT4TNfceePowerState},
+    {"getT4TNfceePowerState", "()I", (void*)nfcManager_getT4TNfceePowerState},
     {"getDefaultFelicaCLTPowerState", "()I",
-            (void*) nfcManager_getDefaultFelicaCLTPowerState},
+     (void*)nfcManager_getDefaultFelicaCLTPowerState},
     {"getDefaultFelicaCLTRoute", "()I",
-            (void*) nfcManager_getDefaultFelicaCLTRoute},
+     (void*)nfcManager_getDefaultFelicaCLTRoute},
     {"doGetActiveSecureElementList", "()[I",
-            (void *)nfcManager_getActiveSecureElementList},
+     (void*)nfcManager_getActiveSecureElementList},
     {"doPartialInitForEseCosUpdate", "()Z",
-             (void*)nfcManager_doPartialInitForEseCosUpdate},
+     (void*)nfcManager_doPartialInitForEseCosUpdate},
     {"doPartialDeinitForEseCosUpdate", "()Z",
-             (void*)nfcManager_doPartialDeinitForEseCosUpdate},
+     (void*)nfcManager_doPartialDeinitForEseCosUpdate},
 
-    {"doResonantFrequency", "(Z)V",
-              (void *)nfcManager_doResonantFrequency},
-    {"doSetFieldDetectMode", "(Z)I",
-              (void*)nfcManager_SetFieldDetectMode},
-    {"isFieldDetectEnabled", "()Z",
-              (void*)nfcManager_IsFieldDetectEnabled},
+    {"doResonantFrequency", "(Z)V", (void*)nfcManager_doResonantFrequency},
+    {"doSetFieldDetectMode", "(Z)I", (void*)nfcManager_SetFieldDetectMode},
+    {"isFieldDetectEnabled", "()Z", (void*)nfcManager_IsFieldDetectEnabled},
     {"doStartRssiMode", "(I)I", (void*)nfcManager_StartRssiMode},
     {"doStopRssiMode", "()I", (void*)nfcManager_StopRssiMode},
     {"isRssiEnabled", "()Z", (void*)nfcManager_IsRssiEnabled},
@@ -3218,14 +3222,14 @@ static JNINativeMethod gMethods[] = {
     {"getFWVersion", "()I", (void*)nfcManager_getFwVersion},
     {"isNfccBusy", "()Z", (void*)nfcManager_isNfccBusy},
     {"setTransitConfig", "(Ljava/lang/String;)I",
-                  (void*)nfcManager_setTransitConfig},
+     (void*)nfcManager_setTransitConfig},
     {"getRemainingAidTableSize", "()I",
-            (void*) nfcManager_getRemainingAidTableSize},
+     (void*)nfcManager_getRemainingAidTableSize},
     {"doselectUicc", "(I)I", (void*)nfcManager_doSelectUicc},
     {"doGetSelectedUicc", "()I", (void*)nfcManager_doGetSelectedUicc},
     {"setPreferredSimSlot", "(I)I", (void*)nfcManager_setPreferredSimSlot},
-    {"doNfcSelfTest", "(I)I", (void*) nfcManager_nfcSelfTest},
-    {"doEnableDebugNtf", "(B)I", (void*) nfcManager_enableDebugNtf},
+    {"doNfcSelfTest", "(I)I", (void*)nfcManager_nfcSelfTest},
+    {"doEnableDebugNtf", "(B)I", (void*)nfcManager_enableDebugNtf},
     {"doRestartRFDiscovery", "()V", (void*)nfcManager_restartRFDiscovery},
     {"doSetULPDetMode", "(Z)Z", (void*)nfcManager_doSetULPDetMode},
 #endif
@@ -3242,10 +3246,15 @@ static JNINativeMethod gMethods[] = {
 
     {"clearRoutingEntry", "(I)V", (void*)nfcManager_clearRoutingEntry},
 
+    {"setIsoDepProtocolRoute", "(I)V",
+     (void*)nfcManager_updateIsoDepProtocolRoute},
+
+    {"setTechnologyABRoute", "(I)V", (void*)nfcManager_updateTechnologyABRoute},
+
     {"setDiscoveryTech", "(II)V", (void*)nfcManager_setDiscoveryTech},
 
     {"resetDiscoveryTech", "()V", (void*)nfcManager_resetDiscoveryTech},
-  };
+};
 
 /*******************************************************************************
 **
