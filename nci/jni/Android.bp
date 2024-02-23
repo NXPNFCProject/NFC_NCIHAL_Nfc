@@ -21,12 +21,12 @@ cc_library_shared {
     include_dirs: [
         "external/libxml2/include",
         "frameworks/native/include",
-        "system/nfc/SN100x/src/include",
-        "system/nfc/SN100x/src/nfa/include",
-        "system/nfc/SN100x/src/nfc/include",
-        "system/nfc/SN100x/src/gki/ulinux",
-        "system/nfc/SN100x/src/gki/common",
-    ] + ["system/nfc/SN100x/utils/include"],
+        "system/nfc/src/include",
+        "system/nfc/src/nfa/include",
+        "system/nfc/src/nfc/include",
+        "system/nfc/src/gki/ulinux",
+        "system/nfc/src/gki/common",
+    ] + ["system/nfc/utils/include"],
 
     shared_libs: [
         "libnativehelper",
