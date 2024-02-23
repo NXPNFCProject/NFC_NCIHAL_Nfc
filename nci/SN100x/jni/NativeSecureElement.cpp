@@ -16,19 +16,20 @@
 *
 ******************************************************************************/
 
+#include <android-base/logging.h>
 #include <android-base/stringprintf.h>
-#include <base/logging.h>
-#include "PowerSwitch.h"
-#include "RoutingManager.h"
+#include <nativehelper/ScopedLocalRef.h>
 #include <nativehelper/ScopedPrimitiveArray.h>
 #include <nativehelper/ScopedUtfChars.h>
-#include <nativehelper/ScopedLocalRef.h>
+
 #include "JavaClassConstants.h"
-#include "NfcJniUtil.h"
-#include "config.h"
-#include "SecureElement.h"
-#include "NfcAdaptation.h"
 #include "NativeJniExtns.h"
+#include "NfcAdaptation.h"
+#include "NfcJniUtil.h"
+#include "PowerSwitch.h"
+#include "RoutingManager.h"
+#include "SecureElement.h"
+#include "config.h"
 #include "nfc_config.h"
 typedef uint16_t NFCSTATUS; /* Return values */
 

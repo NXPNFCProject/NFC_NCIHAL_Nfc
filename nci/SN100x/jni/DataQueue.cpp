@@ -20,11 +20,10 @@
 
 #include "DataQueue.h"
 
+#include <android-base/logging.h>
+#include <android-base/stringprintf.h>
 #include <malloc.h>
 #include <string.h>
-
-#include <android-base/stringprintf.h>
-#include <base/logging.h>
 
 using android::base::StringPrintf;
 /*******************************************************************************

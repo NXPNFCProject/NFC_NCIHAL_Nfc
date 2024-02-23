@@ -34,8 +34,8 @@
 ******************************************************************************/
 #include "NfcJniUtil.h"
 
+#include <android-base/logging.h>
 #include <android-base/stringprintf.h>
-#include <base/logging.h>
 #include <errno.h>
 #include <log/log.h>
 #include <nativehelper/JNIHelp.h>
@@ -46,8 +46,6 @@
 #include "NativeJniExtns.h"
 #endif
 using android::base::StringPrintf;
-
-extern bool nfc_debug_enabled;
 
 /*******************************************************************************
 **
@@ -61,7 +59,7 @@ extern bool nfc_debug_enabled;
 **
 *******************************************************************************/
 jint JNI_OnLoad(JavaVM* jvm, void*) {
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+  LOG(DEBUG) << StringPrintf("%s: enter", __func__);
   JNIEnv* e = NULL;
 
   LOG(INFO) << StringPrintf("NFC Service: loading nci JNI");
@@ -85,7 +83,7 @@ jint JNI_OnLoad(JavaVM* jvm, void*) {
     return JNI_ERR;
   NativeJniExtns::getInstance().initialize(e);
 #endif
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
+  LOG(DEBUG) << StringPrintf("%s: exit", __func__);
   return JNI_VERSION_1_6;
 }
 

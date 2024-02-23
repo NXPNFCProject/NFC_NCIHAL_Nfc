@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
+#include <android-base/logging.h>
 #include <android-base/stringprintf.h>
-#include <base/logging.h>
 #include <log/log.h>
 #include <nativehelper/JNIHelp.h>
 
@@ -24,32 +24,30 @@
 
 using android::base::StringPrintf;
 
-extern bool nfc_debug_enabled;
-
 namespace android {
 
 static jboolean nativeP2pDeviceDoConnect(JNIEnv*, jobject) {
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s", __func__);
+  LOG(DEBUG) << StringPrintf("%s", __func__);
   return JNI_TRUE;
 }
 
 static jboolean nativeP2pDeviceDoDisconnect(JNIEnv*, jobject) {
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s", __func__);
+  LOG(DEBUG) << StringPrintf("%s", __func__);
   return JNI_TRUE;
 }
 
 static jbyteArray nativeP2pDeviceDoTransceive(JNIEnv*, jobject, jbyteArray) {
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s", __func__);
+  LOG(DEBUG) << StringPrintf("%s", __func__);
   return NULL;
 }
 
 static jbyteArray nativeP2pDeviceDoReceive(JNIEnv*, jobject) {
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s", __func__);
+  LOG(DEBUG) << StringPrintf("%s", __func__);
   return NULL;
 }
 
 static jboolean nativeP2pDeviceDoSend(JNIEnv*, jobject, jbyteArray) {
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s", __func__);
+  LOG(DEBUG) << StringPrintf("%s", __func__);
   return JNI_TRUE;
 }
 

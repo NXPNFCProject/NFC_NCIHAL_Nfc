@@ -15,24 +15,23 @@
  *  limitations under the License.
  *
  ******************************************************************************/
+#include <android-base/logging.h>
 #include <android-base/stringprintf.h>
-#include <base/logging.h>
 #include <errno.h>
 #include <semaphore.h>
+
 #include "JavaClassConstants.h"
 #include "NfcAdaptation.h"
 #include "NfcJniUtil.h"
 #include "RoutingManager.h"
 #include "SyncEvent.h"
 #include "config.h"
-#include "nfc_config.h"
 #include "nfa_api.h"
 #include "nfa_rw_api.h"
+#include "nfc_config.h"
 
 #if (NXP_EXTNS == TRUE)
 using android::base::StringPrintf;
-
-extern bool nfc_debug_enabled;
 
 typedef struct nxp_feature_data {
   SyncEvent NxpFeatureConfigEvt;
@@ -65,7 +64,7 @@ tNFA_STATUS GetCbStatus(void) { return gnxpfeature_conf.wstatus; }
 static void NxpResponse_Cb(uint8_t event, uint16_t param_len,
                            uint8_t* p_param) {
   (void)event;
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+  LOG(DEBUG) << StringPrintf(
       "NxpResponse_Cb Received length data = 0x%x status = 0x%x", param_len,
       p_param[3]);
   if (p_param != NULL) {
@@ -99,8 +98,7 @@ tNFA_STATUS NxpNfc_Write_Cmd_Common(uint8_t retlen, uint8_t* buffer) {
   SyncEventGuard guard(gnxpfeature_conf.NxpFeatureConfigEvt);
   status = NFA_SendRawVsCommand(retlen, buffer, NxpResponse_Cb);
   if (status == NFA_STATUS_OK) {
-    DLOG_IF(INFO, nfc_debug_enabled)
-        << StringPrintf("%s: Success NFA_SendRawVsCommand", __func__);
+    LOG(DEBUG) << StringPrintf("%s: Success NFA_SendRawVsCommand", __func__);
     gnxpfeature_conf.NxpFeatureConfigEvt.wait(); /* wait for callback */
   } else {
     LOG(ERROR) << StringPrintf("%s: Failed NFA_SendRawVsCommand", __func__);
@@ -133,24 +131,23 @@ uint32_t getNumValue(const char* key ,uint32_t value) {
  **www
  *******************************************************************************/
 tNFA_STATUS send_flush_ram_to_flash() {
-  DLOG_IF(INFO, nfc_debug_enabled)
-    << StringPrintf("%s: enter", __func__);
+  LOG(DEBUG) << StringPrintf("%s: enter", __func__);
   tNFA_STATUS status = NFA_STATUS_OK;
   const uint8_t FW_ROM_VERSION_PN557 = 0x12;
   tNFC_FW_VERSION fw_version = nfc_ncif_getFWVersion();
   // Flash Sync command not applicable for PN557 , disable command only for
   // PN557
   if (fw_version.rom_code_version == FW_ROM_VERSION_PN557) {
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-        "%s: Skipping Flash sync cmd for PN557 chipset", __func__);
+    LOG(DEBUG) << StringPrintf("%s: Skipping Flash sync cmd for PN557 chipset",
+                               __func__);
     return status;
   }
   uint8_t cmd[] = {0x2F, 0x21, 0x00};
 
   status = NxpNfc_Write_Cmd_Common(sizeof(cmd), cmd);
   if(status != NFA_STATUS_OK) {
-    DLOG_IF(ERROR, nfc_debug_enabled)
-      << StringPrintf("%s: send_flush_ram_to_flash sending status %x", __func__,status);
+    LOG(ERROR) << StringPrintf("%s: send_flush_ram_to_flash sending status %x",
+                               __func__, status);
   }
   return status;
 }
@@ -165,6 +162,7 @@ tNFA_STATUS send_flush_ram_to_flash() {
  **
  *******************************************************************************/
 void enableDisableLog(bool type) {
+  bool nfc_debug_enabled = NfcConfig::getUnsigned(NAME_NFC_DEBUG_ENABLED, 1);
   static bool prev_trace_level = nfc_debug_enabled;
 
   NfcAdaptation& theInstance = NfcAdaptation::GetInstance();
@@ -198,8 +196,7 @@ void enableDisableLog(bool type) {
 *******************************************************************************/
 void nfaVSCNtfCallback(uint8_t event, uint16_t param_len, uint8_t *p_param) {
   (void)event;
-  DLOG_IF(INFO, nfc_debug_enabled)
-          << StringPrintf("%s: event = 0x%02X", __func__, event);
+  LOG(DEBUG) << StringPrintf("%s: event = 0x%02X", __func__, event);
   uint8_t op_code = (event & ~NCI_NTF_BIT);
   uint32_t len;
   uint8_t nciHdrLen = 3;
@@ -247,11 +244,10 @@ void nfaVSCNtfCallback(uint8_t event, uint16_t param_len, uint8_t *p_param) {
     break;
 
     default:
-      DLOG_IF(INFO, nfc_debug_enabled)
-          << StringPrintf("%s: unknown event ????", __func__);
+    LOG(DEBUG) << StringPrintf("%s: unknown event ????", __func__);
     break;
   }
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Exit", __func__);
+  LOG(DEBUG) << StringPrintf("%s: Exit", __func__);
 }
 
 

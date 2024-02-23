@@ -16,13 +16,13 @@
  *
  ******************************************************************************/
 #if (NXP_EXTNS == TRUE)
+#include <android-base/logging.h>
 #include <android-base/stringprintf.h>
-#include <base/logging.h>
 #include <nativehelper/ScopedPrimitiveArray.h>
+
 #include "JavaClassConstants.h"
 #include "NativeT4tNfcee.h"
 #include "NfcJniUtil.h"
-extern bool nfc_debug_enabled;
 using android::base::StringPrintf;
 
 namespace android {
@@ -38,7 +38,7 @@ namespace android {
 **
 *******************************************************************************/
 jint t4tNfceeManager_doClearNdefT4tData(JNIEnv* e, jobject o) {
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+  LOG(DEBUG) << StringPrintf("%s: enter", __func__);
 
   return t4tNfcEe.t4tClearData(e, o);
 }
@@ -54,7 +54,7 @@ jint t4tNfceeManager_doClearNdefT4tData(JNIEnv* e, jobject o) {
  *******************************************************************************/
 jint t4tNfceeManager_doWriteT4tData(JNIEnv* e, jobject o, jbyteArray fileId,
                                     jbyteArray data, jint length) {
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+  LOG(DEBUG) << StringPrintf("%s: enter", __func__);
 
   return t4tNfcEe.t4tWriteData(e, o, fileId, data, length);
 }
@@ -73,7 +73,7 @@ jint t4tNfceeManager_doWriteT4tData(JNIEnv* e, jobject o, jbyteArray fileId,
 *******************************************************************************/
 jbyteArray t4tNfceeManager_doReadT4tData(JNIEnv* e, jobject o,
                                          jbyteArray fileId) {
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+  LOG(DEBUG) << StringPrintf("%s: enter", __func__);
   return t4tNfcEe.t4tReadData(e, o, fileId);
 }
 /*******************************************************************************

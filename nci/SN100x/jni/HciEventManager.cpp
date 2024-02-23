@@ -32,15 +32,16 @@
 *
 ******************************************************************************/
 #include "HciEventManager.h"
+
+#include <android-base/logging.h>
 #include <android-base/stringprintf.h>
-#include <base/logging.h>
 #include <log/log.h>
 #include <nativehelper/ScopedLocalRef.h>
+
 #include "JavaClassConstants.h"
 #include "NfcJniUtil.h"
 #include "nfc_config.h"
 
-extern bool nfc_debug_enabled;
 const char* APP_NAME = "NfcNci";
 uint8_t HciEventManager::sEsePipe;
 uint8_t HciEventManager::sSimPipe;
@@ -130,7 +131,7 @@ std::vector<uint8_t> HciEventManager::getDataFromBerTlv(
     return std::vector<uint8_t>();
   }
   size_t lengthTag = berTlv[0];
-  DLOG_IF(INFO, nfc_debug_enabled) << "decodeBerTlv: berTlv[0]=" << berTlv[0];
+  LOG(DEBUG) << "decodeBerTlv: berTlv[0]=" << berTlv[0];
 
   /* As per ISO/IEC 7816, read the first byte to determine the length and
    * the start index accordingly
@@ -174,7 +175,7 @@ void HciEventManager::nfaHciCallback(tNFA_HCI_EVT event,
     return;
   }
 
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+  LOG(DEBUG) << StringPrintf(
       "event=%d code=%d pipe=%d len=%d", event, eventData->rcvd_evt.evt_code,
       eventData->rcvd_evt.pipe, eventData->rcvd_evt.evt_len);
 

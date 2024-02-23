@@ -34,7 +34,6 @@ cc_library_shared {
         "libutils",
         "liblog",
         "libnfc-nci",
-        "libchrome",
         "libbase",
         "libstatslog_nfc",
         "vendor.nxp.nxpnfc@2.0",

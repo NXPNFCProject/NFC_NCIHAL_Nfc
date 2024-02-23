@@ -17,9 +17,11 @@
  *
  ******************************************************************************/
 #include "NativeJniExtns.h"
+
+#include <android-base/logging.h>
 #include <android-base/stringprintf.h>
-#include <base/logging.h>
 #include <dlfcn.h>
+
 #include "SecureElement.h"
 #include "nfa_api.h"
 using android::base::StringPrintf;
@@ -33,7 +35,6 @@ void registerNfcNotifier(NativeNfcExtnsEvt* obj);
 ** public variables and functions
 **
 *****************************************************************************/
-extern bool nfc_debug_enabled;
 namespace android {
 extern bool isDiscoveryStarted();
 extern void startRfDiscovery(bool isStart);
@@ -56,7 +57,7 @@ NativeJniExtns& NativeJniExtns::getInstance() { return nativeExtnsObj; }
 NativeJniExtns::NativeJniExtns() : lib_handle(NULL) {
   memset(&regNfcExtnsFunc, 0, sizeof(fpRegisterNfcExtns));
   gNativeData = NULL;
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter", __func__);
+  LOG(DEBUG) << StringPrintf("%s: Enter", __func__);
   extns_jni_path = "/system/lib64/libnfc_jni_extns.so";
 }
 
@@ -71,32 +72,30 @@ NativeJniExtns::NativeJniExtns() : lib_handle(NULL) {
  **
  *******************************************************************************/
 bool NativeJniExtns::loadExtnsLibrary() {
-  DLOG_IF(INFO, true) << StringPrintf("%s: Enter", __func__);
+  LOG(INFO) << StringPrintf("%s: Enter", __func__);
   char* error;
   /*Clear the previous dlerrors if any*/
   if ((error = dlerror()) != NULL) {
-    DLOG_IF(ERROR, nfc_debug_enabled)
-      << StringPrintf("%s: Clear previous dlerror message = %s",
-           __func__, error);
+    LOG(ERROR) << StringPrintf("%s: Clear previous dlerror message = %s",
+                               __func__, error);
   }
   lib_handle = dlopen("/system/lib64/libnfc_jni_extns.so", RTLD_NOW);
 
   if (lib_handle == NULL) {
-    DLOG_IF(ERROR, nfc_debug_enabled)
-        << StringPrintf("%s: Unable to load library ", __func__);
+    LOG(ERROR) << StringPrintf("%s: Unable to load library ", __func__);
     return false;
   }
   if ((error = dlerror()) != NULL) {
-    DLOG_IF(ERROR, nfc_debug_enabled)
-        << StringPrintf("%s: Unable to load library %s", __func__, error);
+    LOG(ERROR) << StringPrintf("%s: Unable to load library %s", __func__,
+                               error);
     return false;
   }
 
   regNfcExtnsFunc.initNativeJni =
       (fp_InitNative_t)dlsym(lib_handle, "nfc_initNativeFunctions");
   if ((error = dlerror()) != NULL) {
-    DLOG_IF(ERROR, nfc_debug_enabled)
-        << StringPrintf("%s: Unable to link the symbol %s", __func__, error);
+    LOG(ERROR) << StringPrintf("%s: Unable to link the symbol %s", __func__,
+                               error);
     dlclose(lib_handle);
     lib_handle = NULL;
     return false;
@@ -115,7 +114,7 @@ bool NativeJniExtns::loadExtnsLibrary() {
  **
  *******************************************************************************/
 bool NativeJniExtns::unloadExtnsLibrary() {
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter", __func__);
+  LOG(DEBUG) << StringPrintf("%s: Enter", __func__);
   if (lib_handle != NULL) {
     dlclose(lib_handle);
     lib_handle = NULL;
@@ -134,8 +133,7 @@ bool NativeJniExtns::unloadExtnsLibrary() {
  *******************************************************************************/
 void NativeJniExtns::initialize(JNIEnv* e) {
   if (loadExtnsLibrary()) {
-    DLOG_IF(INFO, true) << StringPrintf("%s: Calling library initialize",
-                                        __func__);
+    LOG(INFO) << StringPrintf("%s: Calling library initialize", __func__);
     (*regNfcExtnsFunc.initNativeJni)(e);
   }
 }
@@ -175,8 +173,7 @@ void NativeJniExtns::initializeNativeData(nfc_jni_native_data* native) {
 NativeJniExtns::~NativeJniExtns() {
   try {
     if (!unloadExtnsLibrary()) {
-      DLOG_IF(ERROR, true) << StringPrintf("%s: Failed to unload the library",
-                                           __func__);
+      LOG(ERROR) << StringPrintf("%s: Failed to unload the library", __func__);
       throw false;
     }
   } catch (const std::length_error e) {

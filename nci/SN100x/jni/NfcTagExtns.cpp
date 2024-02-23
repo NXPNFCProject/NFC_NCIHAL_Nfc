@@ -20,8 +20,8 @@
  ******************************************************************************/
 #include "NfcTagExtns.h"
 
+#include <android-base/logging.h>
 #include <android-base/stringprintf.h>
-#include <base/logging.h>
 #include <errno.h>
 
 #include "nfc_config.h"
@@ -30,7 +30,6 @@ namespace android {
 extern void nativeNfcTag_setTransceiveFlag(bool state);
 extern void nativeNfcTag_abortWaits();
 extern SyncEvent sTransceiveEvent;
-extern bool nfc_debug_enabled;
 extern bool gIsSelectingRfInterface;
 extern void nativeNfcTag_doConnectStatus(jboolean is_connect_ok);
 extern bool isSeRfActive();
@@ -76,16 +75,15 @@ void NfcTagExtns::initialize() {
   if (NfcConfig::hasKey(NAME_NXP_NON_STD_CARD_TIMEDIFF)) {
     vector<uint8_t> timeDiff =
         NfcConfig::getBytes(NAME_NXP_NON_STD_CARD_TIMEDIFF);
-    DLOG_IF(INFO, android::nfc_debug_enabled)
-        << StringPrintf("%s: Non std card", __func__);
+    LOG(DEBUG) << StringPrintf("%s: Non std card", __func__);
     for (size_t i = 0; i < timeDiff.size(); i++) {
       mNonStdCardTimeDiff.at(i) = timeDiff.at(i) * TIME_MUL_100MS;
-      DLOG_IF(INFO, android::nfc_debug_enabled) << StringPrintf(
-          "%s: timediff[%zu] = %d", __func__, i, mNonStdCardTimeDiff.at(i));
+      LOG(DEBUG) << StringPrintf("%s: timediff[%zu] = %d", __func__, i,
+                                 mNonStdCardTimeDiff.at(i));
     }
   } else {
-    DLOG_IF(INFO, android::nfc_debug_enabled)
-        << StringPrintf("%s: timediff not defined taking default", __func__);
+    LOG(DEBUG) << StringPrintf("%s: timediff not defined taking default",
+                               __func__);
   }
   isNonStdCardSupported =
       (NfcConfig::getUnsigned(NAME_NXP_SUPPORT_NON_STD_CARD, 0) != 0) ? true
@@ -108,9 +106,9 @@ void NfcTagExtns::initialize() {
 tTagStatus NfcTagExtns::processNonStdTagOperation(TAG_API_REQUEST caller,
                                                   TAG_OPERATION operation) {
   tTagStatus status = TAG_STATUS_FAILED;
-  DLOG_IF(INFO, android::nfc_debug_enabled)
-      << StringPrintf("%s: processNonStdTagOperation caller :%d state :%d",
-                      __func__, caller, operation);
+  LOG(DEBUG) << StringPrintf(
+      "%s: processNonStdTagOperation caller :%d state :%d", __func__, caller,
+      operation);
   switch (caller) {
     case TAG_API_REQUEST::TAG_RESELECT_API:
       switch (operation) {
@@ -159,8 +157,8 @@ tTagStatus NfcTagExtns::processNonStdTagOperation(TAG_API_REQUEST caller,
 *******************************************************************************/
 void NfcTagExtns::processNonStdNtfHandler(EVENT_TYPE event,
                                           tNFA_CONN_EVT_DATA* eventDat) {
-  DLOG_IF(INFO, android::nfc_debug_enabled) << StringPrintf(
-      "%s: processNonStdNtfHandler event :%d ", __func__, event);
+  LOG(DEBUG) << StringPrintf("%s: processNonStdNtfHandler event :%d ", __func__,
+                             event);
 
   switch (event) {
     case EVENT_TYPE::NFA_SELECT_RESULT_EVENT:
@@ -265,8 +263,8 @@ void NfcTagExtns::processActivatedNtf(tNFA_CONN_EVT_DATA* data) {
     setRfProtocol((tNFA_INTF_TYPE)data->activated.activate_ntf.protocol,
                   data->activated.activate_ntf.rf_tech_param.mode);
     if (getActivatedMode() == TARGET_TYPE_ISO14443_3B) {
-      DLOG_IF(INFO, android::nfc_debug_enabled) << StringPrintf(
-          "%s: NFA_ACTIVATED_EVT: received typeB NFCID0", __func__);
+      LOG(DEBUG) << StringPrintf("%s: NFA_ACTIVATED_EVT: received typeB NFCID0",
+                                 __func__);
       updateNfcID0Param(
           data->activated.activate_ntf.rf_tech_param.param.pb.nfcid0);
     }
@@ -323,8 +321,7 @@ bool NfcTagExtns::isMfcTransFailed() { return isMfcTransceiveFailed; }
 *******************************************************************************/
 void NfcTagExtns::resetMfcTransceiveFlag() {
   if (!isNonStdCardSupported) {
-    DLOG_IF(INFO, android::nfc_debug_enabled)
-        << StringPrintf("%s:Non standard support disabled", __func__);
+    LOG(DEBUG) << StringPrintf("%s:Non standard support disabled", __func__);
     return;
   }
   isMfcTransceiveFailed = false;
@@ -344,8 +341,7 @@ void NfcTagExtns::resetMfcTransceiveFlag() {
 *******************************************************************************/
 void NfcTagExtns::processMfcTransFailed() {
   if (!isNonStdCardSupported) {
-    DLOG_IF(INFO, android::nfc_debug_enabled)
-        << StringPrintf("%s:Non standard support disabled", __func__);
+    LOG(DEBUG) << StringPrintf("%s:Non standard support disabled", __func__);
     return;
   }
   if (IS_MULTIPROTO_MFC_TAG()) {
@@ -375,7 +371,7 @@ bool NfcTagExtns::checkActivatedProtoParameters(
   } else {
     status = true;
   }
-  DLOG_IF(INFO, android::nfc_debug_enabled) << StringPrintf(
+  LOG(DEBUG) << StringPrintf(
       "%s: mCurrentRequestedProtocol %x rfDetail.protocol %x", __func__,
       natTag.mCurrentRequestedProtocol, rfDetail.protocol);
   return status;
@@ -424,8 +420,7 @@ bool NfcTagExtns::checkAndClearNonStdTagState() {
   bool ret = false;
   if (tagState & TAG_NON_STD_SAK_TYPE) {
     tagState &= ~TAG_NON_STD_SAK_TYPE;
-    DLOG_IF(INFO, android::nfc_debug_enabled)
-        << StringPrintf("%s: non std Tag", __func__);
+    LOG(DEBUG) << StringPrintf("%s: non std Tag", __func__);
     ret = true;
   }
   return ret;
@@ -443,8 +438,7 @@ bool NfcTagExtns::checkAndClearNonStdTagState() {
 void NfcTagExtns::storeNonStdTagData() {
   int ret = clock_gettime(CLOCK_MONOTONIC, &LastDetectedTime);
   if (ret == -1) {
-    DLOG_IF(ERROR, android::nfc_debug_enabled)
-        << StringPrintf("Log : clock_gettime failed");
+    LOG(DEBUG) << StringPrintf("Log : clock_gettime failed");
     clearNonStdTagData();
   } else {
     tNFC_RESULT_DEVT& nonStdTagInfo = discovery_ntf;
@@ -452,8 +446,8 @@ void NfcTagExtns::storeNonStdTagData() {
         NfcTag::getInstance().mTechHandles[sLastSelectedTagId];
     nonStdTagInfo.protocol =
         NfcTag::getInstance().mTechLibNfcTypes[sLastSelectedTagId];
-    DLOG_IF(INFO, android::nfc_debug_enabled)
-        << StringPrintf("%s: %u is stored", __func__, nonStdTagInfo.rf_disc_id);
+    LOG(DEBUG) << StringPrintf("%s: %u is stored", __func__,
+                               nonStdTagInfo.rf_disc_id);
   }
 }
 
@@ -468,8 +462,7 @@ void NfcTagExtns::storeNonStdTagData() {
  *******************************************************************************/
 void NfcTagExtns::processtagSelectEvent(tNFA_CONN_EVT_DATA* data) {
   if (!isNonStdCardSupported) {
-    DLOG_IF(INFO, android::nfc_debug_enabled)
-        << StringPrintf("%s:Non standard support disabled", __func__);
+    LOG(DEBUG) << StringPrintf("%s:Non standard support disabled", __func__);
     return;
   }
 
@@ -482,12 +475,10 @@ void NfcTagExtns::processtagSelectEvent(tNFA_CONN_EVT_DATA* data) {
     if (IS_MULTIPROTO_MFC_TAG()) {
       tagState |= TAG_MFC_NON_STD_TYPE;
 
-      DLOG_IF(INFO, android::nfc_debug_enabled)
-          << StringPrintf("%s: Non STD MFC sequence1", __func__);
+      LOG(DEBUG) << StringPrintf("%s: Non STD MFC sequence1", __func__);
       int ret = clock_gettime(CLOCK_MONOTONIC, &LastDetectedTime);
       if (ret == -1) {
-        DLOG_IF(ERROR, android::nfc_debug_enabled)
-            << StringPrintf("Log : clock_gettime failed");
+        LOG(DEBUG) << StringPrintf("Log : clock_gettime failed");
       }
     }
   }
@@ -508,16 +499,14 @@ void NfcTagExtns::processDiscoveryNtf(tNFA_CONN_EVT_DATA* data) {
   tNFC_RESULT_DEVT& discovery_ntf = data->disc_result.discovery_ntf;
 
   if (!isNonStdCardSupported) {
-    DLOG_IF(INFO, android::nfc_debug_enabled)
-        << StringPrintf("%s:Non standard support disabled", __func__);
+    LOG(DEBUG) << StringPrintf("%s:Non standard support disabled", __func__);
     return;
   }
-  DLOG_IF(INFO, android::nfc_debug_enabled)
-      << StringPrintf("%s:Non standard support enabled", __func__);
+  LOG(DEBUG) << StringPrintf("%s:Non standard support enabled", __func__);
   if (discovery_ntf.rf_tech_param.param.pa.sel_rsp == NON_STD_CARD_SAK) {
     // Non Standard Transit => ISO-DEP
-    DLOG_IF(INFO, android::nfc_debug_enabled) << StringPrintf(
-        "%s:Non standard Transit => change to ISO-DEP", __func__);
+    LOG(DEBUG) << StringPrintf("%s:Non standard Transit => change to ISO-DEP",
+                               __func__);
     // Shall be updated as part of callback
     NfcTag::getInstance()
         .mTechLibNfcTypesDiscData[NfcTag::getInstance().mNumDiscNtf] =
@@ -552,8 +541,8 @@ bool NfcTagExtns::shouldSkipProtoActivate(tNFC_PROTOCOL protocol) {
     memcpy(&(act_ntf.rf_tech_param), &(nonStdTagInfo.rf_tech_param),
            sizeof(tNFC_RF_TECH_PARAMS));
     memcpy(&(act_ntf.intf_param), &(intf_param), sizeof(tNFC_INTF_PARAMS));
-    DLOG_IF(INFO, android::nfc_debug_enabled)
-        << StringPrintf("%s: %u is skipped", __func__, act_ntf.rf_disc_id);
+    LOG(DEBUG) << StringPrintf("%s: %u is skipped", __func__,
+                               act_ntf.rf_disc_id);
     natTag.connectionEventHandler(NFA_ACTIVATED_EVT, &evt_data);
     // Shall be handled as part of NfcTag
     natTag.setNumDiscNtf((natTag.getNumDiscNtf() - 1));
@@ -577,14 +566,13 @@ bool NfcTagExtns::isTagDetectedInRefTime(uint32_t reference) {
   uint32_t timediff;
   int ret = clock_gettime(CLOCK_MONOTONIC, &end);
   if (ret == -1) {
-    DLOG_IF(ERROR, android::nfc_debug_enabled)
-        << StringPrintf("%s : clock_gettime failed", __func__);
+    LOG(DEBUG) << StringPrintf("%s : clock_gettime failed", __func__);
     return false;
   }
   timediff = TimeDiff(LastDetectedTime, end);
   if (timediff < reference) {
-    DLOG_IF(INFO, android::nfc_debug_enabled) << StringPrintf(
-        "%s: Non standard MFC tag detected, sequence-2", __func__);
+    LOG(DEBUG) << StringPrintf("%s: Non standard MFC tag detected, sequence-2",
+                               __func__);
     isNonStdCard = true;
   }
   return isNonStdCard;
@@ -661,7 +649,7 @@ void NfcTagExtns::clearNonStdMfcState() {
 **
 *******************************************************************************/
 void NfcTagExtns::clearNonStdTagData() {
-  DLOG_IF(INFO, android::nfc_debug_enabled) << StringPrintf("%s", __func__);
+  LOG(DEBUG) << StringPrintf("%s", __func__);
   memset(&discovery_ntf, 0, sizeof(discovery_ntf));
   memset(&intf_param, 0, sizeof(intf_param));
   tagState &= ~TAG_SKIP_ISODEP_ACT_TYPE;
@@ -698,14 +686,12 @@ tTagStatus NfcTagExtns::performHaltPICC() {
     SyncEventGuard g(android::sTransceiveEvent);
     status = NFA_SendRawFrame(halt_b, sizeof(halt_b), 0);
     if (status != NFA_STATUS_OK) {
-      DLOG_IF(ERROR, android::nfc_debug_enabled)
-          << StringPrintf("%s: fail send; error=%d", __func__, status);
+      LOG(DEBUG) << StringPrintf("%s: fail send; error=%d", __func__, status);
       ret = TAG_STATUS_FAILED;
     } else {
       if (android::sTransceiveEvent.wait(100) == false) {
         ret = TAG_STATUS_FAILED;
-        DLOG_IF(ERROR, android::nfc_debug_enabled)
-            << StringPrintf("%s: timeout on HALTB", __func__);
+        LOG(DEBUG) << StringPrintf("%s: timeout on HALTB", __func__);
       }
     }
     android::nativeNfcTag_setTransceiveFlag(false);
@@ -729,8 +715,7 @@ tTagStatus NfcTagExtns::performTagDeactivation() {
 
   if (tagState & TAG_CASHBEE_TYPE) {
     ret = TAG_STATUS_PROPRIETARY;
-    DLOG_IF(INFO, android::nfc_debug_enabled)
-        << StringPrintf("%s: Deactivate to IDLE", __func__);
+    LOG(DEBUG) << StringPrintf("%s: Deactivate to IDLE", __func__);
     if (NFA_STATUS_OK != (status = NFA_StopRfDiscovery())) {
       LOG(ERROR) << StringPrintf("%s: Deactivate failed, status = 0x%0X",
                                  __func__, status);
@@ -740,12 +725,10 @@ tTagStatus NfcTagExtns::performTagDeactivation() {
     if (android::isSeRfActive()) {
       tNFA_DEACTIVATED deactivated = {NFA_DEACTIVATE_TYPE_IDLE};
       NfcTag::getInstance().setDeactivationState(deactivated);
-      DLOG_IF(INFO, android::nfc_debug_enabled)
-          << StringPrintf("%s: card emulation on priotiy", __func__);
+      LOG(DEBUG) << StringPrintf("%s: card emulation on priotiy", __func__);
       ret = TAG_STATUS_LOST;
     } else {
-      DLOG_IF(INFO, android::nfc_debug_enabled)
-          << StringPrintf("%s: deactivate to sleep", __func__);
+      LOG(DEBUG) << StringPrintf("%s: deactivate to sleep", __func__);
       if (NFA_STATUS_OK !=
           (status = NFA_Deactivate(TRUE))) {  // deactivate to sleep state
         LOG(ERROR) << StringPrintf("%s: deactivate failed, status = %d",
@@ -783,16 +766,14 @@ tTagStatus NfcTagExtns::updateTagState() {
     return TAG_STATUS_LOST;
   }
   if (NfcTag::getInstance().getActivationState() == NfcTag::Idle) {
-    DLOG_IF(INFO, android::nfc_debug_enabled)
-        << StringPrintf("%s: Tag is in IDLE state", __func__);
+    LOG(DEBUG) << StringPrintf("%s: Tag is in IDLE state", __func__);
 
     if ((NfcTag::getInstance().mActivationParams_t.mTechLibNfcTypes ==
          NFC_PROTOCOL_ISO_DEP) &&
         (NfcTag::getInstance().mActivationParams_t.mTechParams ==
          NFC_DISCOVERY_TYPE_POLL_A)) {
       tagState |= TAG_CASHBEE_TYPE;
-      DLOG_IF(INFO, android::nfc_debug_enabled)
-          << StringPrintf("%s: CashBee Detected", __func__);
+      LOG(DEBUG) << StringPrintf("%s: CashBee Detected", __func__);
       ret = TAG_STATUS_PROPRIETARY;
     }
   }
@@ -814,8 +795,7 @@ tTagStatus NfcTagExtns::performTagReconnect() {
   tNFA_STATUS status = NFA_STATUS_OK;
   if (tagState & TAG_CASHBEE_TYPE) {
     ret = TAG_STATUS_PROPRIETARY;
-    DLOG_IF(INFO, android::nfc_debug_enabled)
-        << StringPrintf("%s: Start RF discovery", __func__);
+    LOG(DEBUG) << StringPrintf("%s: Start RF discovery", __func__);
     if (!(tagState & TAG_ISODEP_DEACTIVATE_FAIL) &&
         NFA_STATUS_OK != (status = NFA_StartRfDiscovery())) {
       LOG(ERROR) << StringPrintf("%s: deactivate failed, status = 0x%0X",
@@ -972,8 +952,7 @@ void NfcTagExtns::abortTagOperation() {
 **
 *******************************************************************************/
 void NfcTagExtns::updateNfcID0Param(uint8_t* nfcID0) {
-  DLOG_IF(INFO, android::nfc_debug_enabled)
-      << StringPrintf("%s: nfcID0 =%X%X%X%X", __func__, nfcID0[0], nfcID0[1],
-                      nfcID0[2], nfcID0[3]);
+  LOG(DEBUG) << StringPrintf("%s: nfcID0 =%X%X%X%X", __func__, nfcID0[0],
+                             nfcID0[1], nfcID0[2], nfcID0[3]);
   memcpy(mNfcID0, nfcID0, 4);
 }

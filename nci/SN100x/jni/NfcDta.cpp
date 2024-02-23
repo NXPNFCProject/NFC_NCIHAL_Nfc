@@ -16,15 +16,13 @@
 
 #include "NfcDta.h"
 
+#include <android-base/logging.h>
 #include <android-base/stringprintf.h>
-#include <base/logging.h>
 #include <cutils/properties.h>
 
 #include "SyncEvent.h"
 
 using android::base::StringPrintf;
-
-extern bool nfc_debug_enabled;
 
 namespace android {
 extern SyncEvent gNfaSetConfigEvent;
@@ -152,19 +150,17 @@ tNFA_STATUS NfcDta::getConfigParamValues(std::vector<uint8_t> paramIds) {
         uint16_t len = gCurrentConfigLen - 2;
         // First Config TLV starts from index 1 of gConfig
         uint16_t index = 1;
-        DLOG_IF(INFO, nfc_debug_enabled)
-            << StringPrintf("%s: default_config len: %d", __func__, len);
+        LOG(DEBUG) << StringPrintf("%s: default_config len: %d", __func__, len);
         while (index <= len) {
           mDefaultTlv.push_back(gConfig[index++]);
         }
       } else {
-        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-            "%s: getConfig failed len: %d", __func__, gCurrentConfigLen);
+        LOG(DEBUG) << StringPrintf("%s: getConfig failed len: %d", __func__,
+                                   gCurrentConfigLen);
         status = NFA_STATUS_FAILED;
       }
     } else {
-      DLOG_IF(INFO, nfc_debug_enabled)
-          << StringPrintf("%s: getConfig failed", __func__);
+      LOG(DEBUG) << StringPrintf("%s: getConfig failed", __func__);
     }
   }
   return status;
@@ -187,15 +183,14 @@ tNFA_STATUS NfcDta::setConfigParams(std::vector<uint8_t> configTlv) {
   while (index < configTlv.size()) {
     paramId = configTlv[index++];
     len = configTlv[index++];
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-        "%s: Param Id: %02X, Length: %02X", __func__, paramId, len);
+    LOG(DEBUG) << StringPrintf("%s: Param Id: %02X, Length: %02X", __func__,
+                               paramId, len);
     SyncEventGuard guard(gNfaSetConfigEvent);
     status = NFA_SetConfig(paramId, len, &configTlv[index]);
     if (status == NFA_STATUS_OK) {
       gNfaSetConfigEvent.wait();
     } else {
-      DLOG_IF(INFO, nfc_debug_enabled)
-          << StringPrintf("%s: setConfig failed", __func__);
+      LOG(DEBUG) << StringPrintf("%s: setConfig failed", __func__);
       break;
     }
     index += len;
@@ -217,11 +212,10 @@ void NfcDta::setNfccConfigParams() {
   int len = 0;
   len = property_get("nfc.dta.configTLV", sysPropTlvs, "");
   std::string configTlvs(sysPropTlvs);
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-      "%s: SysProperty nfc.configTLV: %s", __func__, configTlvs.c_str());
+  LOG(DEBUG) << StringPrintf("%s: SysProperty nfc.configTLV: %s", __func__,
+                             configTlvs.c_str());
   if (len <= 0 || (configTlvs.empty() && mDefaultTlv.empty())) {
-    DLOG_IF(INFO, nfc_debug_enabled)
-        << StringPrintf("%s: Config TLVs not available", __func__);
+    LOG(DEBUG) << StringPrintf("%s: Config TLVs not available", __func__);
     return;
   }
   tNFA_STATUS status = NFA_STATUS_FAILED;
@@ -230,8 +224,8 @@ void NfcDta::setNfccConfigParams() {
     if (status == NFA_STATUS_OK) {
       mDefaultTlv.clear();
       mUpdatedParamIds.clear();
-      DLOG_IF(INFO, nfc_debug_enabled)
-          << StringPrintf("%s: Restored default config params", __func__);
+      LOG(DEBUG) << StringPrintf("%s: Restored default config params",
+                                 __func__);
     }
     return;
   }
@@ -242,5 +236,5 @@ void NfcDta::setNfccConfigParams() {
   if (status == NFA_STATUS_OK) {
     setConfigParams(tlv);
   }
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Exit", __func__);
+  LOG(DEBUG) << StringPrintf("%s: Exit", __func__);
 }

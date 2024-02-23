@@ -16,13 +16,13 @@
  *
  ******************************************************************************/
 #if (NXP_EXTNS == TRUE)
+#include <android-base/logging.h>
 #include <android-base/stringprintf.h>
-#include <base/logging.h>
 #include <nativehelper/ScopedPrimitiveArray.h>
+
 #include "JavaClassConstants.h"
 #include "NativeExtFieldDetect.h"
 #include "NfcJniUtil.h"
-extern bool nfc_debug_enabled;
 using android::base::StringPrintf;
 
 namespace android {
@@ -43,7 +43,7 @@ namespace android {
 *******************************************************************************/
 jint nativeFieldMgr_startExtendedFieldDetectMode(JNIEnv* e, jobject o,
                                                  jint detectionTimeout) {
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+  LOG(DEBUG) << StringPrintf("%s: enter", __func__);
   return extFieldDetectMode.startExtendedFieldDetectMode(e, o,
                                                          detectionTimeout);
 }
@@ -61,7 +61,7 @@ jint nativeFieldMgr_startExtendedFieldDetectMode(JNIEnv* e, jobject o,
 **
 *******************************************************************************/
 jint nativeFieldMgr_stopExtendedFieldDetectMode(JNIEnv* e, jobject o) {
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+  LOG(DEBUG) << StringPrintf("%s: enter", __func__);
   return extFieldDetectMode.stopExtendedFieldDetectMode(e, o);
 }
 
@@ -78,7 +78,7 @@ jint nativeFieldMgr_stopExtendedFieldDetectMode(JNIEnv* e, jobject o) {
 **
 *******************************************************************************/
 jint nativeFieldMgr_startCardEmulation(JNIEnv* e, jobject o) {
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+  LOG(DEBUG) << StringPrintf("%s: enter", __func__);
   return extFieldDetectMode.startCardEmulation(e, o);
 }
 

@@ -17,9 +17,10 @@
  ******************************************************************************/
 #pragma once
 
+#include <android-base/logging.h>
 #include <android-base/stringprintf.h>
-#include <base/logging.h>
 #include <string.h>
+
 #include "SyncEvent.h"
 #include "data_types.h"
 #include "nfa_api.h"

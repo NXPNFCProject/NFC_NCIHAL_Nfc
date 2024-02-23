@@ -16,15 +16,16 @@
  *
  ******************************************************************************/
 #include "SecureDigitization.h"
+
+#include <android-base/logging.h>
 #include <android-base/stringprintf.h>
-#include <base/logging.h>
 #include <nativehelper/ScopedLocalRef.h>
+
 #include "JavaClassConstants.h"
 #include "nfa_srd_int.h"
 #if (NXP_EXTNS == TRUE && NXP_SRD == TRUE)
 using android::base::StringPrintf;
 
-extern bool nfc_debug_enabled;
 SecureDigitization SecureDigitization::sSecSrd;
 
 /*******************************************************************************
@@ -57,8 +58,7 @@ void SecureDigitization::notifySrdEvt(int event) {
   }
   ScopedAttach attach(mNativeData->vm, &e);
   if (e == NULL) {
-    DLOG_IF(ERROR, nfc_debug_enabled)
-        << StringPrintf("%s: jni env is null", __func__);
+    LOG(ERROR) << StringPrintf("%s: jni env is null", __func__);
     return;
   }
   e->CallVoidMethod(mNativeData->manager, gCachedNfcManagerNotifySrdEvt,

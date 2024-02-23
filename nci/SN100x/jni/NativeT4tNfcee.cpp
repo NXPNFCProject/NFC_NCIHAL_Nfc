@@ -17,9 +17,11 @@
  ******************************************************************************/
 #if (NXP_EXTNS == TRUE)
 #include "NativeT4tNfcee.h"
+
+#include <android-base/logging.h>
 #include <android-base/stringprintf.h>
-#include <base/logging.h>
 #include <nativehelper/ScopedPrimitiveArray.h>
+
 #include "MposManager.h"
 #include "NfcJniUtil.h"
 #include "nci_defs_extns.h"
@@ -28,7 +30,6 @@
 #include "nfc_config.h"
 
 using android::base::StringPrintf;
-extern bool nfc_debug_enabled;
 
 /*Considering NCI response timeout which is 2s, Timeout set 100ms more*/
 #define T4TNFCEE_TIMEOUT 2100
@@ -116,7 +117,7 @@ void NativeT4tNfcee::onNfccShutdown() {
 **
 *******************************************************************************/
 jboolean NativeT4tNfcee::t4tClearData(JNIEnv* e, jobject o) {
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:Enter: ", __func__);
+  LOG(DEBUG) << StringPrintf("%s:Enter: ", __func__);
 
   /*Local variable Initalization*/
   uint8_t pFileId[] = {0xE1, 0x04};
@@ -143,11 +144,11 @@ jboolean NativeT4tNfcee::t4tClearData(JNIEnv* e, jobject o) {
       }
       break;
     default:
-      DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf(
-          "%s:Exit: Returnig status : %d", __func__, clear_status);
+      LOG(ERROR) << StringPrintf("%s:Exit: Returnig status : %d", __func__,
+                                 clear_status);
       break;
   }
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:Exit: ", __func__);
+  LOG(DEBUG) << StringPrintf("%s:Exit: ", __func__);
   return clear_status;
 }
 /*******************************************************************************
@@ -204,21 +205,18 @@ jint NativeT4tNfcee::t4tWriteData(JNIEnv* e, jobject object, jbyteArray fileId,
 
   ScopedByteArrayRO bytes(e, fileId);
   if (bytes.size() < FILE_ID_LEN) {
-    DLOG_IF(ERROR, nfc_debug_enabled)
-        << StringPrintf("%s:Wrong File Id", __func__);
+    LOG(ERROR) << StringPrintf("%s:Wrong File Id", __func__);
     return ERROR_INVALID_FILE_ID;
   }
 
   ScopedByteArrayRO bytesData(e, data);
   if (bytesData.size() == 0x00) {
-    DLOG_IF(ERROR, nfc_debug_enabled)
-        << StringPrintf("%s:Empty Data", __func__);
+    LOG(ERROR) << StringPrintf("%s:Empty Data", __func__);
     return ERROR_EMPTY_PAYLOAD;
   }
 
   if ((int)bytesData.size() != length) {
-    DLOG_IF(ERROR, nfc_debug_enabled)
-        << StringPrintf("%s:Invalid Length", __func__);
+    LOG(ERROR) << StringPrintf("%s:Invalid Length", __func__);
     return ERROR_INVALID_LENGTH;
   }
 
@@ -256,8 +254,8 @@ jint NativeT4tNfcee::t4tWriteData(JNIEnv* e, jobject object, jbyteArray fileId,
 
   /*Close connection and start discovery*/
   cleanup();
-  DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf(
-      "%s:Exit: Returnig status : %d", __func__, t4tWriteReturn);
+  LOG(ERROR) << StringPrintf("%s:Exit: Returnig status : %d", __func__,
+                             t4tWriteReturn);
   return t4tWriteReturn;
 }
 
@@ -284,8 +282,7 @@ jbyteArray NativeT4tNfcee::t4tReadData(JNIEnv* e, jobject object,
   ScopedByteArrayRO bytes(e, fileId);
   ScopedLocalRef<jbyteArray> result(e, NULL);
   if (bytes.size() < FILE_ID_LEN) {
-    DLOG_IF(ERROR, nfc_debug_enabled)
-        << StringPrintf("%s:Wrong File Id", __func__);
+    LOG(ERROR) << StringPrintf("%s:Wrong File Id", __func__);
     return NULL;
   }
 
@@ -300,8 +297,8 @@ jbyteArray NativeT4tNfcee::t4tReadData(JNIEnv* e, jobject object,
     status = NFA_T4tNfcEeRead(pFileId);
     if ((status != NFA_STATUS_OK) ||
         (mT4tNfcEeRWEvent.wait(T4TNFCEE_TIMEOUT) == false)) {
-      DLOG_IF(ERROR, nfc_debug_enabled)
-          << StringPrintf("%s:Read Failed, status = 0x%X", __func__, status);
+      LOG(ERROR) << StringPrintf("%s:Read Failed, status = 0x%X", __func__,
+                                 status);
       cleanup();
       return NULL;
     }
@@ -341,7 +338,7 @@ jbyteArray NativeT4tNfcee::t4tReadData(JNIEnv* e, jobject object,
 *******************************************************************************/
 tNFA_STATUS NativeT4tNfcee::openConnection() {
   tNFA_STATUS status = NFA_STATUS_FAILED;
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter", __func__);
+  LOG(DEBUG) << StringPrintf("%s: Enter", __func__);
   SyncEventGuard g(mT4tNfcEeEvent);
   status = NFA_T4tNfcEeOpenConnection();
   if (status == NFA_STATUS_OK) {
@@ -350,8 +347,7 @@ tNFA_STATUS NativeT4tNfcee::openConnection() {
     else
       status = mT4tNfcEeEventStat;
   }
-  DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: Exit status = 0x%02x", __func__, status);
+  LOG(DEBUG) << StringPrintf("%s: Exit status = 0x%02x", __func__, status);
   return status;
 }
 
@@ -366,7 +362,7 @@ tNFA_STATUS NativeT4tNfcee::openConnection() {
 *******************************************************************************/
 tNFA_STATUS NativeT4tNfcee::closeConnection() {
   tNFA_STATUS status = NFA_STATUS_FAILED;
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter", __func__);
+  LOG(DEBUG) << StringPrintf("%s: Enter", __func__);
   {
     SyncEventGuard g(mT4tNfcEeEvent);
     status = NFA_T4tNfcEeCloseConnection();
@@ -378,8 +374,7 @@ tNFA_STATUS NativeT4tNfcee::closeConnection() {
     }
   }
 
-  DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: Exit status = 0x%02x", __func__, status);
+  LOG(DEBUG) << StringPrintf("%s: Exit status = 0x%02x", __func__, status);
   return status;
 }
 
@@ -401,8 +396,8 @@ tNFA_STATUS NativeT4tNfcee::setup(void) {
 
   status = openConnection();
   if (status != NFA_STATUS_OK) {
-    DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf(
-        "%s: openConnection Failed, status = 0x%X", __func__, status);
+    LOG(ERROR) << StringPrintf("%s: openConnection Failed, status = 0x%X",
+                               __func__, status);
     if (!android::isDiscoveryStarted()) android::startRfDiscovery(true);
     resetBusy();
   }
@@ -422,11 +417,11 @@ void NativeT4tNfcee::cleanup(void) {
   if(sIsNfcOffTriggered) {
     SyncEventGuard g(mT4tNfcOffEvent);
     mT4tNfcOffEvent.notifyOne();
-    DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf("%s: Nfc Off triggered", __func__);
+    LOG(ERROR) << StringPrintf("%s: Nfc Off triggered", __func__);
     return;
   }
   if (closeConnection() != NFA_STATUS_OK) {
-    DLOG_IF(ERROR, nfc_debug_enabled) << StringPrintf("%s: closeConnection Failed", __func__);
+    LOG(ERROR) << StringPrintf("%s: closeConnection Failed", __func__);
   }
   if (!android::isDiscoveryStarted() && !(MposManager::getInstance().isMposOngoing())) {
     android::startRfDiscovery(true);
@@ -461,8 +456,7 @@ T4TNFCEE_STATUS_t NativeT4tNfcee::validatePreCondition(T4TNFCEE_OPERATIONS_t op,
   } else if (MposManager::getInstance().isMposOngoing()) {
     t4tNfceeStatus = ERROR_MPOS_ON;
   } else if (fileId == NULL) {
-    DLOG_IF(ERROR, nfc_debug_enabled)
-        << StringPrintf("%s:Invalid File Id", __func__);
+    LOG(ERROR) << StringPrintf("%s:Invalid File Id", __func__);
     t4tNfceeStatus = ERROR_INVALID_FILE_ID;
   }
 
@@ -471,8 +465,7 @@ T4TNFCEE_STATUS_t NativeT4tNfcee::validatePreCondition(T4TNFCEE_OPERATIONS_t op,
       break;
     case OP_WRITE:
       if (data == NULL) {
-        DLOG_IF(ERROR, nfc_debug_enabled)
-            << StringPrintf("%s:Empty data", __func__);
+        LOG(ERROR) << StringPrintf("%s:Empty data", __func__);
         t4tNfceeStatus = ERROR_EMPTY_PAYLOAD;
       }
       break;
@@ -502,8 +495,8 @@ void NativeT4tNfcee::t4tReadComplete(tNFA_STATUS status, tNFA_RX_DATA data) {
   if (status == NFA_STATUS_OK) {
     if(data.len > 0) {
       sRxDataBuffer.append(data.p_data, data.len);
-      DLOG_IF(INFO, nfc_debug_enabled)
-        << StringPrintf("%s: Read Data len new: %d ", __func__, data.len);
+      LOG(DEBUG) << StringPrintf("%s: Read Data len new: %d ", __func__,
+                                 data.len);
     }
   }
   SyncEventGuard g(mT4tNfcEeRWEvent);
@@ -521,7 +514,7 @@ void NativeT4tNfcee::t4tReadComplete(tNFA_STATUS status, tNFA_RX_DATA data) {
  *******************************************************************************/
 void NativeT4tNfcee::t4tWriteComplete(tNFA_STATUS status, tNFA_RX_DATA data) {
   mReadData.len = 0x00;
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter", __func__);
+  LOG(DEBUG) << StringPrintf("%s: Enter", __func__);
   if (status == NFA_STATUS_OK) mReadData.len = data.len;
   mT4tOpStatus = status;
   SyncEventGuard g(mT4tNfcEeRWEvent);
@@ -537,7 +530,7 @@ void NativeT4tNfcee::t4tWriteComplete(tNFA_STATUS status, tNFA_RX_DATA data) {
  **
  *******************************************************************************/
 void NativeT4tNfcee::t4tClearComplete(tNFA_STATUS status) {
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Enter", __func__);
+  LOG(DEBUG) << StringPrintf("%s: Enter", __func__);
   mT4tOpStatus = status;
   SyncEventGuard g(mT4tNfcEeClrDataEvent);
   mT4tNfcEeClrDataEvent.notifyOne();
@@ -555,8 +548,7 @@ void NativeT4tNfcee::eventHandler(uint8_t event,
                                   tNFA_CONN_EVT_DATA* eventData) {
   switch (event) {
     case NFA_T4TNFCEE_EVT:
-      DLOG_IF(INFO, nfc_debug_enabled)
-          << StringPrintf("%s: NFA_T4TNFCEE_EVT", __func__);
+      LOG(DEBUG) << StringPrintf("%s: NFA_T4TNFCEE_EVT", __func__);
       {
         SyncEventGuard guard(mT4tNfcEeEvent);
         mT4tNfcEeEventStat = eventData->status;
@@ -565,26 +557,22 @@ void NativeT4tNfcee::eventHandler(uint8_t event,
       break;
 
     case NFA_T4TNFCEE_READ_CPLT_EVT:
-      DLOG_IF(INFO, nfc_debug_enabled)
-          << StringPrintf("%s: NFA_T4TNFCEE_READ_CPLT_EVT", __func__);
+      LOG(DEBUG) << StringPrintf("%s: NFA_T4TNFCEE_READ_CPLT_EVT", __func__);
       t4tReadComplete(eventData->status, eventData->data);
       break;
 
     case NFA_T4TNFCEE_WRITE_CPLT_EVT:
-      DLOG_IF(INFO, nfc_debug_enabled)
-          << StringPrintf("%s: NFA_T4TNFCEE_WRITE_CPLT_EVT", __func__);
+      LOG(DEBUG) << StringPrintf("%s: NFA_T4TNFCEE_WRITE_CPLT_EVT", __func__);
       t4tWriteComplete(eventData->status, eventData->data);
       break;
 
     case NFA_T4TNFCEE_CLEAR_CPLT_EVT:
-      DLOG_IF(INFO, nfc_debug_enabled)
-          << StringPrintf("%s: NFA_T4TNFCEE_CLEAR_CPLT_EVT", __func__);
+      LOG(DEBUG) << StringPrintf("%s: NFA_T4TNFCEE_CLEAR_CPLT_EVT", __func__);
       t4tClearComplete(eventData->status);
       break;
 
     default:
-      DLOG_IF(INFO, nfc_debug_enabled)
-          << StringPrintf("%s: unknown Event", __func__);
+      LOG(DEBUG) << StringPrintf("%s: unknown Event", __func__);
       break;
   }
 }
@@ -608,14 +596,14 @@ bool NativeT4tNfcee::doChangeT4tFileWritePerm(uint8_t& param_val, const bool& lo
       param_val &= ~(1 << MASK_LOCK_BIT); /* Reset bit6 to disable write permission */
       status = true;
     } else {
-      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Lock bit is already disable",__func__);
+      LOG(DEBUG) << StringPrintf("%s: Lock bit is already disable", __func__);
     }
   } else { /* Enable the lock bit*/
     if (!(param_val & (1 << MASK_LOCK_BIT))) {
       param_val |= (1 << MASK_LOCK_BIT); /* Set bit6 to enable write permission */
       status = true;
     } else {
-      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Lock bit is already set", __func__);
+      LOG(DEBUG) << StringPrintf("%s: Lock bit is already set", __func__);
     }
   }
   return status;
@@ -666,8 +654,7 @@ bool NativeT4tNfcee::doGetT4tConfVals(uint8_t& clNdefFileValue, uint8_t& cNdefFi
 **
 *******************************************************************************/
 bool NativeT4tNfcee::doLockT4tData(JNIEnv* e, jobject o, bool lock) {
-  DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: enter %d", __func__, lock);
+  LOG(DEBUG) << StringPrintf("%s: enter %d", __func__, lock);
 
   uint8_t ndef_fileId[] = {0xE1, 0x04};
   jbyteArray fileIdArray = e->NewByteArray(2);
@@ -715,7 +702,7 @@ bool NativeT4tNfcee::doLockT4tData(JNIEnv* e, jobject o, bool lock) {
   if (!android::isDiscoveryStarted()) android::startRfDiscovery(true);
   if (status != NFA_STATUS_OK) return false;
 
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Exit", __func__);
+  LOG(DEBUG) << StringPrintf("%s: Exit", __func__);
   return true;
 }
 
@@ -733,7 +720,7 @@ bool NativeT4tNfcee::doLockT4tData(JNIEnv* e, jobject o, bool lock) {
 **
 *******************************************************************************/
 bool NativeT4tNfcee::isLockedT4tData(JNIEnv* e, jobject o) {
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+  LOG(DEBUG) << StringPrintf("%s: enter", __func__);
 
   uint8_t ndef_fileId[] = {0xE1, 0x04};
   jbyteArray fileIdArray = e->NewByteArray(2);
@@ -746,7 +733,7 @@ bool NativeT4tNfcee::isLockedT4tData(JNIEnv* e, jobject o) {
   if(!doGetT4tConfVals(clNdefFileValue, cNdefFileValue))
     return false;
 
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Exit", __func__);
+  LOG(DEBUG) << StringPrintf("%s: Exit", __func__);
 
   return (((cNdefFileValue & (1 << MASK_LOCK_BIT)) == 0) ? true : false);
 }
@@ -764,7 +751,7 @@ bool NativeT4tNfcee::isLockedT4tData(JNIEnv* e, jobject o) {
 **
 *******************************************************************************/
 bool NativeT4tNfcee::isNdefWritePermission() {
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+  LOG(DEBUG) << StringPrintf("%s: enter", __func__);
   unsigned long num = 0x00;
   bool isNdefWriteAccess = false;
   if (NfcConfig::hasKey(NAME_NXP_T4T_NFCEE_ENABLE))
@@ -773,7 +760,7 @@ bool NativeT4tNfcee::isNdefWritePermission() {
   if ((num & MASK_T4T_FEATURE_BIT) && (num & (1 << MASK_PROP_NDEF_FILE_BIT)))
     isNdefWriteAccess = true;
 
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: Exit 0x%lx", __func__, num);
+  LOG(DEBUG) << StringPrintf("%s: Exit 0x%lx", __func__, num);
   return isNdefWriteAccess;
 }
 /*******************************************************************************
@@ -818,7 +805,7 @@ void NativeT4tNfcee::resetBusy() { mBusy = false; }
 **
 *******************************************************************************/
 vector<uint8_t> NativeT4tNfcee::getT4TNfceeAid() {
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:enter", __func__);
+  LOG(DEBUG) << StringPrintf("%s:enter", __func__);
 
   std::vector<uint8_t> t4tNfceeAidBuf{0xD2, 0x76, 0x00, 0x00, 0x85, 0x01, 0x01};
 
@@ -826,7 +813,7 @@ vector<uint8_t> NativeT4tNfcee::getT4TNfceeAid() {
     t4tNfceeAidBuf = NfcConfig::getBytes(NAME_NXP_T4T_NDEF_NFCEE_AID);
   }
 
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:Exit", __func__);
+  LOG(DEBUG) << StringPrintf("%s:Exit", __func__);
 
   return t4tNfceeAidBuf;
 }
@@ -852,7 +839,7 @@ bool NativeT4tNfcee::isFwSupportNonStdT4TAid() {
   const uint8_t FW_MINOR_VERSION_SN1XX = 0x54;
   const uint8_t FW_MAJOR_VERSION_SN3XX = 0x20;
   nfc_native_fw_version = nfc_ncif_getFWVersion();
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+  LOG(DEBUG) << StringPrintf(
       "FW Version: %x.%x.%x", nfc_native_fw_version.rom_code_version,
       nfc_native_fw_version.major_version, nfc_native_fw_version.minor_version);
 

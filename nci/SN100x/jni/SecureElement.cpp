@@ -17,20 +17,22 @@
  ******************************************************************************/
 
 #include "SecureElement.h"
-#include <nativehelper/ScopedLocalRef.h>
-#include "JavaClassConstants.h"
-#include "NfcJniUtil.h"
+
+#include <android-base/logging.h>
 #include <android-base/stringprintf.h>
-#include <base/logging.h>
-#include <semaphore.h>
 #include <errno.h>
+#include <nativehelper/ScopedLocalRef.h>
+#include <semaphore.h>
+
+#include "HciEventManager.h"
+#include "JavaClassConstants.h"
+#include "MposManager.h"
+#include "NativeJniExtns.h"
+#include "NfcJniUtil.h"
+#include "RoutingManager.h"
+#include "SyncEvent.h"
 #include "config.h"
 #include "nfc_config.h"
-#include "NativeJniExtns.h"
-#include "RoutingManager.h"
-#include "HciEventManager.h"
-#include "MposManager.h"
-#include "SyncEvent.h"
 #if (NXP_SRD == TRUE)
 #include "SecureDigitization.h"
 #endif
@@ -38,7 +40,6 @@ using android::base::StringPrintf;
 
 SecureElement SecureElement::sSecElem;
 const char* SecureElement::APP_NAME = "nfc_jni";
-extern bool nfc_debug_enabled;
 extern bool isDynamicUiccEnabled;
 #define ONE_SECOND_MS 1000
 
@@ -272,8 +273,7 @@ bool SecureElement::isRfFieldOn() {
     struct timespec now;
     int ret = clock_gettime(CLOCK_MONOTONIC, &now);
     if (ret == -1) {
-        DLOG_IF(ERROR, nfc_debug_enabled)
-                << StringPrintf("isRfFieldOn(): clock_gettime failed");
+        LOG(ERROR) << StringPrintf("isRfFieldOn(): clock_gettime failed");
         return false;
     }
     if (TimeDiff(mLastRfFieldToggle, now) < 50) {
@@ -298,22 +298,20 @@ bool SecureElement::isRfFieldOn() {
 void SecureElement::notifyListenModeState (bool isActivated) {
     static const char fn [] = "SecureElement::notifyListenMode";
 
-    DLOG_IF(INFO, nfc_debug_enabled)
-                << StringPrintf("%s: enter; listen mode active=%u", fn, isActivated);
+    LOG(DEBUG) << StringPrintf("%s: enter; listen mode active=%u", fn,
+                               isActivated);
 
     JNIEnv* e = NULL;
     if (mNativeData == NULL)
     {
-        DLOG_IF(ERROR, nfc_debug_enabled)
-                << StringPrintf("%s: mNativeData is null", fn);
+        LOG(ERROR) << StringPrintf("%s: mNativeData is null", fn);
         return;
     }
 
     ScopedAttach attach(mNativeData->vm, &e);
     if (e == NULL)
     {
-        DLOG_IF(ERROR, nfc_debug_enabled)
-                << StringPrintf("%s: jni env is null", fn);
+        LOG(ERROR) << StringPrintf("%s: jni env is null", fn);
         return;
     }
 
@@ -329,12 +327,10 @@ void SecureElement::notifyListenModeState (bool isActivated) {
     if (e->ExceptionCheck())
     {
         e->ExceptionClear();
-        DLOG_IF(ERROR, nfc_debug_enabled)
-                << StringPrintf("%s: fail notify", fn);
+        LOG(ERROR) << StringPrintf("%s: fail notify", fn);
     }
 
-    DLOG_IF(INFO, nfc_debug_enabled)
-                << StringPrintf("%s: exit", fn);
+    LOG(DEBUG) << StringPrintf("%s: exit", fn);
 }
 
 /*******************************************************************************
@@ -433,15 +429,12 @@ TheEnd:
 void SecureElement::notifyRfFieldEvent (bool isActive)
 {
     static const char fn [] = "SecureElement::notifyRfFieldEvent";
-    DLOG_IF(ERROR, nfc_debug_enabled)
-                << StringPrintf("%s: enter; is active=%u", fn, isActive);
-
+    LOG(ERROR) << StringPrintf("%s: enter; is active=%u", fn, isActive);
 
     mMutex.lock();
     JNIEnv* e = NULL;
     if (mNativeData == NULL) {
-        DLOG_IF(ERROR, nfc_debug_enabled)
-                << StringPrintf("%s: mNativeData is null", fn);
+        LOG(ERROR) << StringPrintf("%s: mNativeData is null", fn);
         mMutex.unlock();
         return;
     }
@@ -453,9 +446,8 @@ void SecureElement::notifyRfFieldEvent (bool isActive)
     }
     int ret = clock_gettime (CLOCK_MONOTONIC, &mLastRfFieldToggle);
     if (ret == -1) {
-        DLOG_IF(ERROR, nfc_debug_enabled)
-                << StringPrintf("%s: clock_gettime failed", fn);
-        // There is no good choice here...
+      LOG(ERROR) << StringPrintf("%s: clock_gettime failed", fn);
+      // There is no good choice here...
     }
     if (isActive) {
         mRfFieldIsOn = true;
@@ -467,8 +459,7 @@ void SecureElement::notifyRfFieldEvent (bool isActive)
                           android::gCachedNfcManagerNotifyRfFieldDeactivated);
     }
     mMutex.unlock();
-    DLOG_IF(ERROR, nfc_debug_enabled)
-                << StringPrintf("%s: exit", fn);
+    LOG(ERROR) << StringPrintf("%s: exit", fn);
 }
 /*******************************************************************************
 **
@@ -777,9 +768,8 @@ bool SecureElement::notifySeInitialized() {
     ScopedAttach attach(mNativeData->vm, &e);
     if (e == NULL)
     {
-        DLOG_IF(ERROR, nfc_debug_enabled)
-            << StringPrintf("%s: jni env is null", fn);
-        return false;
+      LOG(ERROR) << StringPrintf("%s: jni env is null", fn);
+      return false;
     }
     e->CallVoidMethod (mNativeData->manager, android::gCachedNfcManagerNotifyEeUpdated);
     CHECK(!e->ExceptionCheck());
@@ -1743,15 +1733,14 @@ uicc_stat_t SecureElement::getUiccStatus(uint8_t selected_uicc) {
 uint16_t SecureElement::getEeStatus(uint16_t eehandle) {
   int i;
   uint16_t ee_status = NFA_EE_STATUS_REMOVED;
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-      "%s  num_nfcee_present = %d", __func__, mNfceeData_t.mNfceePresent);
+  LOG(DEBUG) << StringPrintf("%s  num_nfcee_present = %d", __func__,
+                             mNfceeData_t.mNfceePresent);
 
   for (i = 0; i <= mNfceeData_t.mNfceePresent; i++) {
     if (mNfceeData_t.mNfceeHandle[i] == eehandle) {
       ee_status = mNfceeData_t.mNfceeStatus[i];
-      DLOG_IF(INFO, nfc_debug_enabled)
-          << StringPrintf("%s  EE is detected 0x%02x  status = 0x%02x",
-                          __func__, eehandle, ee_status);
+      LOG(DEBUG) << StringPrintf("%s  EE is detected 0x%02x  status = 0x%02x",
+                                 __func__, eehandle, ee_status);
       break;
     }
   }

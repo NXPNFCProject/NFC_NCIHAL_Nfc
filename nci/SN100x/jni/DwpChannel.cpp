@@ -15,9 +15,11 @@
  *  limitations under the License.
  *
  ******************************************************************************/
-#include <android-base/stringprintf.h>
-#include <base/logging.h>
 #include "DwpChannel.h"
+
+#include <android-base/logging.h>
+#include <android-base/stringprintf.h>
+
 #include "SecureElement.h"
 
 using android::base::StringPrintf;

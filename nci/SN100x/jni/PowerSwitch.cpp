@@ -18,11 +18,12 @@
  *  Adjust the controller's power states.
  */
 #include "PowerSwitch.h"
+
+#include <android-base/logging.h>
+#include <android-base/stringprintf.h>
+
 #include "NfcJniUtil.h"
 #include "nfc_config.h"
-
-#include <android-base/stringprintf.h>
-#include <base/logging.h>
 
 using android::base::StringPrintf;
 
@@ -31,7 +32,6 @@ void doStartupConfig();
 }
 
 extern bool gActivated;
-extern bool nfc_debug_enabled;
 extern SyncEvent gDeactivatedEvent;
 
 PowerSwitch PowerSwitch::sPowerSwitch;
@@ -92,13 +92,13 @@ void PowerSwitch::initialize(PowerLevel level) {
 
   mMutex.lock();
 
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-      "%s: level=%s (%u)", fn, powerLevelToString(level), level);
+  LOG(DEBUG) << StringPrintf("%s: level=%s (%u)", fn, powerLevelToString(level),
+                             level);
   if (NfcConfig::hasKey(NAME_SCREEN_OFF_POWER_STATE))
     mDesiredScreenOffPowerState =
         (int)NfcConfig::getUnsigned(NAME_SCREEN_OFF_POWER_STATE);
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-      "%s: desired screen-off state=%d", fn, mDesiredScreenOffPowerState);
+  LOG(DEBUG) << StringPrintf("%s: desired screen-off state=%d", fn,
+                             mDesiredScreenOffPowerState);
 
   switch (level) {
     case FULL_POWER:
@@ -151,8 +151,8 @@ bool PowerSwitch::setLevel(PowerLevel newLevel) {
 
   mMutex.lock();
 
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-      "%s: level=%s (%u)", fn, powerLevelToString(newLevel), newLevel);
+  LOG(DEBUG) << StringPrintf("%s: level=%s (%u)", fn,
+                             powerLevelToString(newLevel), newLevel);
   if (mCurrLevel == newLevel) {
     retval = true;
     goto TheEnd;
@@ -168,8 +168,7 @@ bool PowerSwitch::setLevel(PowerLevel newLevel) {
     mMutex.unlock();
     SyncEventGuard g(gDeactivatedEvent);
     if (gActivated) {
-      DLOG_IF(INFO, nfc_debug_enabled)
-          << StringPrintf("%s: wait for deactivation", fn);
+      LOG(DEBUG) << StringPrintf("%s: wait for deactivation", fn);
       gDeactivatedEvent.wait();
     }
     mMutex.lock();
@@ -198,8 +197,8 @@ bool PowerSwitch::setLevel(PowerLevel newLevel) {
       break;
   }
 
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-      "%s: actual power level=%s", fn, powerLevelToString(mCurrLevel));
+  LOG(DEBUG) << StringPrintf("%s: actual power level=%s", fn,
+                             powerLevelToString(mCurrLevel));
 
 TheEnd:
   mMutex.unlock();
@@ -207,9 +206,9 @@ TheEnd:
 }
 
 bool PowerSwitch::setScreenOffPowerState(ScreenOffPowerState newState) {
-  DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("PowerSwitch::setScreenOffPowerState: level=%s (%u)",
-                      screenOffPowerStateToString(newState), newState);
+  LOG(DEBUG) << StringPrintf(
+      "PowerSwitch::setScreenOffPowerState: level=%s (%u)",
+      screenOffPowerStateToString(newState), newState);
 
   mMutex.lock();
   mDesiredScreenOffPowerState = (int)newState;
@@ -233,7 +232,7 @@ bool PowerSwitch::setModeOff(PowerActivity deactivated) {
   mMutex.lock();
   mCurrActivity &= ~deactivated;
   retVal = mCurrActivity != 0;
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+  LOG(DEBUG) << StringPrintf(
       "PowerSwitch::setModeOff(deactivated=0x%x) : mCurrActivity=0x%x",
       deactivated, mCurrActivity);
   mMutex.unlock();
@@ -255,7 +254,7 @@ bool PowerSwitch::setModeOn(PowerActivity activated) {
   mMutex.lock();
   mCurrActivity |= activated;
   retVal = mCurrActivity != 0;
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+  LOG(DEBUG) << StringPrintf(
       "PowerSwitch::setModeOn(activated=0x%x) : mCurrActivity=0x%x", activated,
       mCurrActivity);
   mMutex.unlock();
@@ -274,8 +273,7 @@ bool PowerSwitch::setModeOn(PowerActivity activated) {
 *******************************************************************************/
 bool PowerSwitch::setPowerOffSleepState(bool sleep) {
   static const char fn[] = "PowerSwitch::setPowerOffSleepState";
-  DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: enter; sleep=%u", fn, sleep);
+  LOG(DEBUG) << StringPrintf("%s: enter; sleep=%u", fn, sleep);
   tNFA_STATUS stat = NFA_STATUS_FAILED;
   bool retval = false;
 
@@ -287,7 +285,7 @@ bool PowerSwitch::setPowerOffSleepState(bool sleep) {
       mExpectedDeviceMgtPowerState =
           NFA_DM_PWR_MODE_OFF_SLEEP;  // if power adjustment is ok, then this is
                                       // the expected state
-      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: try power off", fn);
+      LOG(DEBUG) << StringPrintf("%s: try power off", fn);
       stat = NFA_PowerOffSleepMode(TRUE);
       if (stat == NFA_STATUS_OK) {
         mPowerStateEvent.wait();
@@ -312,8 +310,7 @@ bool PowerSwitch::setPowerOffSleepState(bool sleep) {
       mExpectedDeviceMgtPowerState =
           NFA_DM_PWR_MODE_FULL;  // if power adjustment is ok, then this is the
                                  // expected state
-      DLOG_IF(INFO, nfc_debug_enabled)
-          << StringPrintf("%s: try full power", fn);
+      LOG(DEBUG) << StringPrintf("%s: try full power", fn);
       stat = NFA_PowerOffSleepMode(FALSE);
       if (stat == NFA_STATUS_OK) {
         mPowerStateEvent.wait();
@@ -341,8 +338,7 @@ bool PowerSwitch::setPowerOffSleepState(bool sleep) {
 
   retval = true;
 TheEnd:
-  DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: exit; return %u", fn, retval);
+  LOG(DEBUG) << StringPrintf("%s: exit; return %u", fn, retval);
   return retval;
 }
 
@@ -428,7 +424,7 @@ const char* PowerSwitch::screenOffPowerStateToString(
 *******************************************************************************/
 void PowerSwitch::abort() {
   static const char fn[] = "PowerSwitch::abort";
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s", fn);
+  LOG(DEBUG) << StringPrintf("%s", fn);
   SyncEventGuard guard(mPowerStateEvent);
   mPowerStateEvent.notifyOne();
 }
@@ -451,7 +447,7 @@ void PowerSwitch::deviceManagementCallback(uint8_t event,
   switch (event) {
     case NFA_DM_PWR_MODE_CHANGE_EVT: {
       tNFA_DM_PWR_MODE_CHANGE& power_mode = eventData->power_mode;
-      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+      LOG(DEBUG) << StringPrintf(
           "%s: NFA_DM_PWR_MODE_CHANGE_EVT; status=0x%X; device mgt power "
           "state=%s (0x%X)",
           fn, power_mode.status,

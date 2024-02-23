@@ -17,17 +17,17 @@
  ******************************************************************************/
 #if (NXP_EXTNS == TRUE)
 #include "NativeExtFieldDetect.h"
+
+#include <android-base/logging.h>
 #include <android-base/stringprintf.h>
-#include <base/logging.h>
 #include <string.h>
+
 #include "IntervalTimer.h"
 #include "nfa_api.h"
 #include "nfc_config.h"
 
 using android::base::StringPrintf;
 using namespace std;
-
-extern bool nfc_debug_enabled;
 
 NativeExtFieldDetect NativeExtFieldDetect::sNativeExtFieldDetectInstance;
 IntervalTimer mEfdmTimer;
@@ -72,7 +72,7 @@ NativeExtFieldDetect& NativeExtFieldDetect::getInstance() {
 *******************************************************************************/
 int NativeExtFieldDetect::startExtendedFieldDetectMode(JNIEnv* e, jobject o,
                                                        jint detectionTimeout) {
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+  LOG(DEBUG) << StringPrintf("%s: enter", __func__);
 
   mEfdmTimerValue = detectionTimeout;
 
@@ -119,8 +119,7 @@ int NativeExtFieldDetect::startExtendedFieldDetectMode(JNIEnv* e, jobject o,
 
   mFirstRffieldON = true;
 
-  DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: Exit 0x%2x", __func__, efdStatus);
+  LOG(DEBUG) << StringPrintf("%s: Exit 0x%2x", __func__, efdStatus);
 
   return efdStatus;
 }
@@ -142,8 +141,8 @@ int NativeExtFieldDetect::stopExtendedFieldDetectMode(JNIEnv* e, jobject o) {
 
   if (!android::nfcManager_isNfcActive() ||
       android::nfcManager_isNfcDisabling()) {
-    DLOG_IF(INFO, nfc_debug_enabled)
-      << StringPrintf("%s: Nfc is Disabled or currently being disabled", __func__);
+    LOG(DEBUG) << StringPrintf(
+        "%s: Nfc is Disabled or currently being disabled", __func__);
     mEfdmTimer.kill();
     mIsefdmStarted = false;
 
@@ -229,7 +228,7 @@ int NativeExtFieldDetect::startCardEmulation(JNIEnv* e, jobject o) {
 **
 *******************************************************************************/
 void NativeExtFieldDetect::startEfdmTimer() {
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+  LOG(DEBUG) << StringPrintf("%s: enter", __func__);
 
   JNIEnv* e = NULL;
 
@@ -238,8 +237,7 @@ void NativeExtFieldDetect::startEfdmTimer() {
   }
   ScopedAttach attach(mNativeData->vm, &e);
   if (e == NULL) {
-    DLOG_IF(ERROR, nfc_debug_enabled)
-        << StringPrintf("%s: jni env is null", __func__);
+    LOG(ERROR) << StringPrintf("%s: jni env is null", __func__);
     return;
   }
 
@@ -247,13 +245,14 @@ void NativeExtFieldDetect::startEfdmTimer() {
     /* Start efdm timer only for 1st RF ON*/
        mFirstRffieldON = false;
     /* Posting efdm timeout event to application */
-    DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-        "%s: Interval Timer started..0x%2x", __func__, mEfdmTimerValue);
-    mEfdmTimer.set(mEfdmTimerValue, NativeExtFieldDetect::postEfdmTimeoutEvt);
+       LOG(DEBUG) << StringPrintf("%s: Interval Timer started..0x%2x", __func__,
+                                  mEfdmTimerValue);
+       mEfdmTimer.set(mEfdmTimerValue,
+                      NativeExtFieldDetect::postEfdmTimeoutEvt);
   }
 
   CHECK(!e->ExceptionCheck());
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
+  LOG(DEBUG) << StringPrintf("%s: exit", __func__);
 }
 /*******************************************************************************
 **
@@ -266,7 +265,7 @@ void NativeExtFieldDetect::startEfdmTimer() {
 **
 *******************************************************************************/
 void NativeExtFieldDetect::postEfdmTimeoutEvt(union sigval) {
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+  LOG(DEBUG) << StringPrintf("%s: enter", __func__);
 
   NativeExtFieldDetect& nEfdm = NativeExtFieldDetect::getInstance();
   JNIEnv* e = NULL;
@@ -276,8 +275,7 @@ void NativeExtFieldDetect::postEfdmTimeoutEvt(union sigval) {
   }
   ScopedAttach attach(nEfdm.mNativeData->vm, &e);
   if (e == NULL) {
-    DLOG_IF(ERROR, nfc_debug_enabled)
-        << StringPrintf("%s: jni env is null", __func__);
+    LOG(ERROR) << StringPrintf("%s: jni env is null", __func__);
     return;
   }
 
@@ -291,7 +289,7 @@ void NativeExtFieldDetect::postEfdmTimeoutEvt(union sigval) {
                     EFDM_TIMEOUT_EVT);
 
   CHECK(!e->ExceptionCheck());
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
+  LOG(DEBUG) << StringPrintf("%s: exit", __func__);
 }
 
 /*******************************************************************************
@@ -344,8 +342,8 @@ void NativeExtFieldDetect::initialize(nfc_jni_native_data* native) {
 void NativeExtFieldDetect::deinitialize() {
   if (isextendedFieldDetectMode()) {
     if (stopExtendedFieldDetectMode(NULL, NULL) != EFDSTATUS_SUCCESS) {
-      DLOG_IF(INFO, nfc_debug_enabled)
-          << StringPrintf("%s : Failed Switching to Normal mode.", __func__);
+      LOG(DEBUG) << StringPrintf("%s : Failed Switching to Normal mode.",
+                                 __func__);
     }
   }
 }
