@@ -289,7 +289,7 @@ public class AidRoutingManager {
         if (mRoutingOptionManager.isRoutingTableOverrided()) {
             mDefaultAidRoute = mRoutingOptionManager.getOverrideDefaultRoute();
         } else {
-            mDefaultAidRoute = mRoutingOptionManager.getDefaultRoute();
+            mDefaultAidRoute = NfcService.getInstance().GetDefaultRouteEntry() >> 0x08;
         }
         mDefaultOffHostRoute = mRoutingOptionManager.getDefaultOffHostRoute();
         boolean isPowerStateUpdated = false;
