@@ -175,6 +175,8 @@ const char* gNativeP2pDeviceClassName =
 const char* gNativeNfcTagClassName = "com/android/nfc/dhimpl/NativeNfcTag";
 const char* gNativeNfcManagerClassName =
     "com/android/nfc/dhimpl/NativeNfcManager";
+const char* gNfcVendorNciResponseClassName =
+    "com/android/nfc/NfcVendorNciResponse";
 #if (NXP_EXTNS == TRUE)
 const char* gNativeNfcSecureElementClassName =
     "com/android/nfc/dhimpl/NativeNfcSecureElement";
@@ -216,6 +218,7 @@ static SyncEvent sNfaEnableDisablePollingEvent;  // event for
 SyncEvent gNfaSetConfigEvent;                    // event for Set_Config....
 SyncEvent gNfaGetConfigEvent;                    // event for Get_Config....
 SyncEvent gNfaVsCommand;                         // event for VS commands
+SyncEvent gSendRawVsCmdEvent;  // event for NFA_SendRawVsCommand()
 #if(NXP_EXTNS == TRUE)
 static SyncEvent sNfaTransitConfigEvent;  // event for NFA_SetTransitConfig()
 bool suppressLogs = true;
@@ -234,6 +237,7 @@ static bool sAbortConnlessWait = false;
 static jint sLfT3tMax = 0;
 static bool sRoutingInitialized = false;
 static bool sIsRecovering = false;
+static std::vector<uint8_t> sRawVendorCmdResponse;
 
 #define CONFIG_UPDATE_TECH_MASK (1 << 1)
 #define DEFAULT_TECH_MASK                                                  \
@@ -283,6 +287,8 @@ static void nfcManager_doSetScreenState(JNIEnv* e, jobject o,
                                         jint screen_state_mask);
 static jboolean nfcManager_doSetPowerSavingMode(JNIEnv* e, jobject o,
                                                 bool flag);
+static void sendRawVsCmdCallback(uint8_t event, uint16_t param_len,
+                                 uint8_t* p_param);
 #if(NXP_EXTNS == TRUE)
 static jint nfcManager_getFwVersion(JNIEnv* e, jobject o);
 static bool nfcManager_isNfccBusy(JNIEnv*, jobject);
@@ -3107,6 +3113,76 @@ static void nfcManager_resetDiscoveryTech(JNIEnv* e, jobject o) {
   }
   nativeNfcTag_releaseRfInterfaceMutexLock();
 }
+static jobject nfcManager_nativeSendRawVendorCmd(JNIEnv* env, jobject o,
+                                                 jint mt, jint gid, jint oid,
+                                                 jbyteArray payload) {
+  LOG(DEBUG) << StringPrintf("%s : enter", __func__);
+  ScopedByteArrayRO payloaBytes(env, payload);
+  ScopedLocalRef<jclass> cls(env,
+                             env->FindClass(gNfcVendorNciResponseClassName));
+  jmethodID responseConstructor =
+      env->GetMethodID(cls.get(), "<init>", "(BII[B)V");
+
+  jbyte mStatus = NFA_STATUS_FAILED;
+  jint resGid = 0;
+  jint resOid = 0;
+  jbyteArray resPayload = nullptr;
+
+  sRawVendorCmdResponse.clear();
+
+  std::vector<uint8_t> command;
+  command.push_back((uint8_t)((mt << NCI_MT_SHIFT) | gid));
+  command.push_back((uint8_t)oid);
+  if (payloaBytes.size() > 0) {
+    command.push_back((uint8_t)payloaBytes.size());
+    command.insert(command.end(), &payloaBytes[0],
+                   &payloaBytes[payloaBytes.size()]);
+  } else {
+    return env->NewObject(cls.get(), responseConstructor, mStatus, resGid,
+                          resOid, resPayload);
+  }
+
+  SyncEventGuard guard(gSendRawVsCmdEvent);
+  mStatus = NFA_SendRawVsCommand(command.size(), command.data(),
+                                 sendRawVsCmdCallback);
+  if (mStatus == NFA_STATUS_OK) {
+    if (gSendRawVsCmdEvent.wait(2000) == false) {
+      mStatus = NFA_STATUS_FAILED;
+      LOG(ERROR) << StringPrintf("%s: timeout ", __func__);
+    }
+
+    if (mStatus == NFA_STATUS_OK && sRawVendorCmdResponse.size() > 2) {
+      resGid = sRawVendorCmdResponse[0] & NCI_GID_MASK;
+      resOid = sRawVendorCmdResponse[1];
+      const jsize len = static_cast<jsize>(sRawVendorCmdResponse[2]);
+      if (sRawVendorCmdResponse.size() >= (sRawVendorCmdResponse[2] + 3)) {
+        resPayload = env->NewByteArray(len);
+        std::vector<uint8_t> payloadVec(sRawVendorCmdResponse.begin() + 3,
+                                        sRawVendorCmdResponse.end());
+        env->SetByteArrayRegion(
+            resPayload, 0, len,
+            reinterpret_cast<const jbyte*>(payloadVec.data()));
+      } else {
+        mStatus = NFA_STATUS_FAILED;
+        LOG(ERROR) << StringPrintf("%s: invalid payload data", __func__);
+      }
+    } else {
+      mStatus = NFA_STATUS_FAILED;
+    }
+  }
+
+  LOG(DEBUG) << StringPrintf("%s : exit", __func__);
+  return env->NewObject(cls.get(), responseConstructor, mStatus, resGid, resOid,
+                        resPayload);
+}
+
+static void sendRawVsCmdCallback(uint8_t event, uint16_t param_len,
+                                 uint8_t* p_param) {
+  sRawVendorCmdResponse = std::vector<uint8_t>(p_param, p_param + param_len);
+
+  SyncEventGuard guard(gSendRawVsCmdEvent);
+  gSendRawVsCmdEvent.notifyOne();
+} /* namespace android */
 
 /*****************************************************************************
 **
@@ -3254,6 +3330,8 @@ static JNINativeMethod gMethods[] = {
     {"setDiscoveryTech", "(II)V", (void*)nfcManager_setDiscoveryTech},
 
     {"resetDiscoveryTech", "()V", (void*)nfcManager_resetDiscoveryTech},
+    {"nativeSendRawVendorCmd", "(III[B)Lcom/android/nfc/NfcVendorNciResponse;",
+     (void*)nfcManager_nativeSendRawVendorCmd},
 };
 
 /*******************************************************************************

@@ -42,6 +42,7 @@ import android.os.Bundle;
 import android.util.Log;
 import com.android.nfc.DeviceHost;
 import com.android.nfc.NfcDiscoveryParameters;
+import com.android.nfc.NfcVendorNciResponse;
 import java.io.FileDescriptor;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -520,6 +521,16 @@ public class NativeNfcManager implements DeviceHost {
 
     @Override
     public native int getMaxRoutingTableSize();
+
+
+    private native NfcVendorNciResponse nativeSendRawVendorCmd(
+            int mt, int gid, int oid, byte[] payload);
+
+    @Override
+    public NfcVendorNciResponse sendRawVendorCmd(int mt, int gid, int oid, byte[] payload) {
+        NfcVendorNciResponse res= nativeSendRawVendorCmd(mt, gid, oid, payload);
+        return res;
+    }
 
     /** Notifies Ndef Message (TODO: rename into notifyTargetDiscovered) */
     private void notifyNdefMessageListeners(NativeNfcTag tag) {
