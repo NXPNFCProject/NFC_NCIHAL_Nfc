@@ -41,7 +41,7 @@
             <item name="device_foldable" type="bool" />
             <item name="antenna_x" type="array" />
             <item name="antenna_y" type="array" />
-            <item name="config_nfcObserveModeSupported" type="bool" />
+            <item name="nfc_observe_mode_supported" type="bool" />
           <!-- Params from config.xml that can be overlaid -->
 
           <!-- Params from strings.xml that can be overlaid -->

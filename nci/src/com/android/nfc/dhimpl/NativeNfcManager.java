@@ -180,7 +180,7 @@ public class NativeNfcManager implements DeviceHost {
         }
 
         return mContext.getResources().getBoolean(
-            com.android.nfc.R.bool.config_nfcObserveModeSupported);
+            com.android.nfc.R.bool.nfc_observe_mode_supported);
     }
 
     @Override

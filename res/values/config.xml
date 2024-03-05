@@ -28,5 +28,5 @@
     <bool name="device_foldable">false</bool>
     <integer-array name="antenna_x">0</integer-array>
     <integer-array name="antenna_y">0</integer-array>
-    <bool name="config_nfcObserveModeSupported">true</bool>
+    <bool name="nfc_observe_mode_supported">false</bool>
 </resources>
