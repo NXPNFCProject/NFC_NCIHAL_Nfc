@@ -123,7 +123,7 @@ static tNFA_INTF_TYPE sCurrentActivatedProtocl = NFC_PROTOCOL_UNKNOWN;
 #else
 static SyncEvent sTransceiveEvent;
 #endif
-static std::basic_string<uint8_t> sRxDataBuffer;
+static std::vector<uint8_t> sRxDataBuffer;
 static tNFA_STATUS sRxDataStatus = NFA_STATUS_OK;
 static bool sWaitingForTransceive = false;
 static bool sTransceiveRfTimeout = false;
@@ -1088,7 +1088,7 @@ void nativeNfcTag_doTransceiveStatus(tNFA_STATUS status, uint8_t* buf,
   }
   sRxDataStatus = status;
   if (sRxDataStatus == NFA_STATUS_OK || sRxDataStatus == NFC_STATUS_CONTINUE)
-    sRxDataBuffer.append(buf, bufLen);
+    sRxDataBuffer.insert(sRxDataBuffer.end(), buf, buf + bufLen);
 
   if (sRxDataStatus == NFA_STATUS_OK) sTransceiveEvent.notifyOne();
 
