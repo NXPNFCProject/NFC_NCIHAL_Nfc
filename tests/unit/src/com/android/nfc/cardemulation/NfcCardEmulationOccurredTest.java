@@ -20,6 +20,7 @@ import static com.android.nfc.cardemulation.HostEmulationManager.STATE_W4_SERVIC
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -39,8 +40,11 @@ import android.nfc.cardemulation.CardEmulation;
 import android.nfc.cardemulation.HostApduService;
 import android.os.Binder;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.UserHandle;
+import android.os.test.TestLooper;
 import android.platform.test.annotations.RequiresFlagsDisabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
@@ -79,6 +83,7 @@ public final class NfcCardEmulationOccurredTest {
     private RegisteredAidCache mockAidCache;
     private Context mockContext;
     private PackageManager packageManager;
+    private final TestLooper mTestLooper = new TestLooper();
 
     private static final int UID_1 = 111;
 
@@ -119,7 +124,8 @@ public final class NfcCardEmulationOccurredTest {
         when(NfcService.getInstance()).thenReturn(mock(NfcService.class));
 
         InstrumentationRegistry.getInstrumentation().runOnMainSync(
-                () -> mHostEmulation = new HostEmulationManager(mockContext, mockAidCache));
+                () -> mHostEmulation = new HostEmulationManager(
+                        mockContext, mTestLooper.getLooper(), mockAidCache));
         assertNotNull(mHostEmulation);
         mHostEmulation.onHostEmulationActivated();
     }
@@ -256,5 +262,32 @@ public final class NfcCardEmulationOccurredTest {
         mHostEmulation.onHostEmulationActivated();
         int value = mHostEmulation.getState();
         Assert.assertEquals(value, STATE_W4_SELECT);
+    }
+
+    @Test
+    public void testOnPreferredPaymentServiceChanged() {
+        if (!mNfcSupported) return;
+
+        ComponentName componentName = mock(ComponentName.class);
+        when(componentName.getPackageName()).thenReturn("com.android.nfc");
+        int userId = 0;
+        mHostEmulation.onPreferredPaymentServiceChanged(userId, componentName);
+        mTestLooper.dispatchAll();
+        ComponentName serviceName = mHostEmulation.getServiceName();
+        assertNotNull(serviceName);
+        assertEquals(componentName, serviceName);
+    }
+
+    @Test
+    public void testOnPreferredForegroundServiceChanged() {
+        if (!mNfcSupported) return;
+
+        ComponentName componentName = mock(ComponentName.class);
+        when(componentName.getPackageName()).thenReturn("com.android.nfc");
+        int userId = 0;
+        mHostEmulation.onPreferredForegroundServiceChanged(userId, componentName);
+        Boolean isServiceBounded = mHostEmulation.isServiceBounded();
+        assertNotNull(isServiceBounded);
+        assertTrue(isServiceBounded);
     }
 }

@@ -102,6 +102,7 @@ public class HostEmulationManager {
     final KeyguardManager mKeyguard;
     final Object mLock;
     final PowerManager mPowerManager;
+    private final Looper mLooper;
 
     // All variables below protected by mLock
 
@@ -134,8 +135,9 @@ public class HostEmulationManager {
     int mState;
     byte[] mSelectApdu;
 
-    public HostEmulationManager(Context context, RegisteredAidCache aidCache) {
+    public HostEmulationManager(Context context, Looper looper, RegisteredAidCache aidCache) {
         mContext = context;
+        mLooper = looper;
         mLock = new Object();
         mAidCache = aidCache;
         mState = STATE_IDLE;
@@ -147,7 +149,7 @@ public class HostEmulationManager {
      *  Preferred payment service changed
      */
     public void onPreferredPaymentServiceChanged(int userId, final ComponentName service) {
-        new Handler(Looper.getMainLooper()).post(() -> {
+        new Handler(mLooper).post(() -> {
             synchronized (mLock) {
                 if (service != null) {
                     bindPaymentServiceLocked(userId, service);
@@ -740,5 +742,15 @@ public class HostEmulationManager {
     @VisibleForTesting
     public int getState(){
         return mState;
+    }
+
+    @VisibleForTesting
+    public ComponentName getServiceName(){
+        return mLastBoundPaymentServiceName;
+    }
+
+    @VisibleForTesting
+    public Boolean isServiceBounded(){
+        return mServiceBound;
     }
 }

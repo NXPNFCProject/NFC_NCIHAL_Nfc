@@ -26,6 +26,7 @@ import android.content.pm.PackageManager;
 import android.nfc.cardemulation.ApduServiceInfo;
 import android.nfc.cardemulation.CardEmulation;
 import android.os.UserHandle;
+import android.os.test.TestLooper;
 import android.util.Log;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -37,6 +38,8 @@ import com.android.dx.mockito.inline.extended.ExtendedMockito;
 import com.android.nfc.cardemulation.RegisteredAidCache.AidResolveInfo;
 import com.android.nfc.NfcStatsLog;
 import com.android.nfc.flags.Flags;
+
+import junit.framework.TestListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,6 +63,7 @@ public final class NfcAidConflictOccurredTest {
     private HostEmulationManager mHostEmulation;
     @Rule
     public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
+    private final TestLooper mTestLooper = new TestLooper();
 
     @Before
     public void setUp() {
@@ -95,7 +99,8 @@ public final class NfcAidConflictOccurredTest {
             }
         };
         InstrumentationRegistry.getInstrumentation().runOnMainSync(
-              () -> mHostEmulation = new HostEmulationManager(mockContext, mockAidCache));
+              () -> mHostEmulation = new HostEmulationManager(
+                      mockContext, mTestLooper.getLooper(), mockAidCache));
         Assert.assertNotNull(mHostEmulation);
 
         mHostEmulation.onHostEmulationActivated();
