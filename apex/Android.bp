@@ -31,14 +31,14 @@ apex {
     name: "com.android.nfcservices",
     manifest: "manifest.json",
     // apps: ["NfcNci"],
-    // multilib: {
-    //    first: {
-    //        // Extractor process runs only with the primary ABI.
-    //        jni_libs: [
-    //            "libnfc_nci_jni",
-    //        ],
-    //    },
-    // },
+     multilib: {
+        first: {
+            // Extractor process runs only with the primary ABI.
+            jni_libs: [
+                "libnfc_nci_jni",
+            ],
+        },
+     },
     required: [
         // Provide a default libnfc-nci.conf in /system/etc for devices that
         // does not ship one in /product
