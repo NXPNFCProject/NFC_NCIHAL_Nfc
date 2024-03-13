@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2023 NXP
+*  Copyright 2018-2024 NXP
 *
 ******************************************************************************/
 package com.android.nfc;
@@ -347,10 +347,6 @@ public interface DeviceHost {
      * Restarts RF Discovery
      */
     void restartRFDiscovery();
-    /**
-     * Enable or Disable the ULPDet Mode based on flag
-     */
-    boolean setULPDetMode(boolean flag);
 
     /**
      * Enable or Disable the Power Saving Mode based on flag

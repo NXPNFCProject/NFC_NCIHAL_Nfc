@@ -538,7 +538,6 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
     private final int mPollDelayCountMax;
     private int mPollDelayCount;
     private boolean mPollDelayed;
-    private boolean mIsULPDetModeEnabled = false;
 
     boolean mNotifyDispatchFailed;
     boolean mNotifyReadFailed;
@@ -778,28 +777,6 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         public int presenceCheckDelay;
         public IBinder binder;
         public int uid;
-    }
-
-    /**
-     * Enable or Disable the ULPDet Mode based on flag
-     */
-    public boolean setULPDetMode(boolean flag) {
-        synchronized (NfcService.this) {
-            if ((flag && mState != NfcAdapter.STATE_ON)
-                    || (!flag && mState != NfcAdapter.STATE_OFF)) {
-                Log.d(TAG, "Enable ULPDet is allowed in Nfc On state or "
-                        + "Disable ULPDet is allowed only if it is enabled");
-                return false;
-            }
-        }
-        if ((mDeviceHost.setULPDetMode(flag))) {
-            Log.d(TAG, "setULPDetMode " + flag);
-            mIsULPDetModeEnabled = flag;
-            new EnableDisableTask().execute(flag ? TASK_DISABLE : TASK_ENABLE);
-            return true;
-        }
-        Log.d(TAG, (flag ? "Enable" : "Disable") + " ULPDetMode failed");
-        return false;
     }
 
     void saveNfcOnSetting(boolean on) {
@@ -1721,7 +1698,6 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         public boolean enable() throws RemoteException {
             NfcPermissions.enforceAdminPermissions(mContext);
 
-            mIsULPDetModeEnabled = false;
             saveNfcOnSetting(true);
 
             if (shouldEnableNfc()) {
@@ -1756,10 +1732,6 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
 
             if (saveState) {
                 saveNfcOnSetting(false);
-            }
-            if (mIsULPDetModeEnabled) {
-                mIsULPDetModeEnabled = false;
-                new EnableDisableTask().execute(TASK_ENABLE_FOR_ULPDET);
             }
 
             new EnableDisableTask().execute(TASK_DISABLE);
@@ -2000,9 +1972,6 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
 
         @Override
         public int getState() throws RemoteException {
-            if (mIsULPDetModeEnabled) {
-                return NfcAdapter.STATE_ON;
-            }
             synchronized (NfcService.this) {
                 return mState;
             }
@@ -3102,16 +3071,6 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         public int startCardEmulation() {
           NfcPermissions.enforceUserPermissions(mContext);
           return mDeviceHost.startCardEmulation();
-        }
-
-        public boolean setULPDetMode(boolean flag) {
-            NfcPermissions.enforceUserPermissions(mContext);
-            return NfcService.this.setULPDetMode(flag);
-        }
-
-        public boolean isULPDetModeEnabled() {
-            NfcPermissions.enforceUserPermissions(mContext);
-            return mIsULPDetModeEnabled;
         }
 
     }

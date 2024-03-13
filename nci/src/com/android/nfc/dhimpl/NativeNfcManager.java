@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2023 NXP
+*  Copyright 2018-2024 NXP
 *
 ******************************************************************************/
 package com.android.nfc.dhimpl;
@@ -155,13 +155,6 @@ public class NativeNfcManager implements DeviceHost {
     @Override
     public boolean setPowerSavingMode(boolean flag) {
         return doSetPowerSavingMode(flag);
-    }
-
-    private native boolean doSetULPDetMode(boolean flag);
-
-    @Override
-    public boolean setULPDetMode(boolean flag) {
-        return doSetULPDetMode(flag);
     }
 
     private native void doShutdown();
