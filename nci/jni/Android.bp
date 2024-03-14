@@ -41,6 +41,7 @@ cc_library_shared {
         "libstatssocket",
         "libz",
         "vendor.nxp.nxpnfc@2.0",
+        "vendor.nxp.nxpnfc_aidl-V1-ndk",
     ],
     product_variables: {
         debuggable: {
