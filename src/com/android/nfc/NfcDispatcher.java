@@ -297,6 +297,7 @@ class NfcDispatcher {
                         if (DBG) Log.d(TAG, "mute pkg:" + cmp.flattenToString());
                         muteAppCount++;
                         filtered.remove(resolveInfo);
+                        logMuteApp(activityInfo.applicationInfo.uid);
                     }
                 } else {
                     // Default sets allow to the preference list
@@ -461,6 +462,27 @@ class NfcDispatcher {
             }
             luh.removeAll(rluh);
             return luh;
+        }
+
+        private void logMuteApp(int uid) {
+            int muteType;
+            switch (intent.getAction()) {
+                case NfcAdapter.ACTION_NDEF_DISCOVERED:
+                    muteType = NfcStatsLog.NFC_TAG_OCCURRED__TYPE__APP_LAUNCH_NDEF_MUTE;
+                    break;
+                case NfcAdapter.ACTION_TECH_DISCOVERED:
+                    muteType = NfcStatsLog.NFC_TAG_OCCURRED__TYPE__APP_LAUNCH_TECH_MUTE;
+                    break;
+                case NfcAdapter.ACTION_TAG_DISCOVERED:
+                default:
+                    muteType = NfcStatsLog.NFC_TAG_OCCURRED__TYPE__APP_LAUNCH_TAG_MUTE;
+            }
+            NfcStatsLog.write(NfcStatsLog.NFC_TAG_OCCURRED,
+                    muteType,
+                    uid,
+                    tag.getTechCodeList(),
+                    BluetoothProtoEnums.MAJOR_CLASS_UNCATEGORIZED,
+                    "");
         }
     }
 

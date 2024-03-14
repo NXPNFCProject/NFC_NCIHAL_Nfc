@@ -14,3 +14,11 @@ flag {
     description: "Flag for reducing NFCC state transition"
     bug: "308890980"
 }
+
+
+flag {
+    name: "statsd_ce_events_flag"
+    namespace: "nfc"
+    description: "Additional Statsd CardEmulation Events flag for NFC"
+    bug: "308094195"
+}
