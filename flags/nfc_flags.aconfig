@@ -1,4 +1,5 @@
 package: "com.android.nfc.flags"
+container: "system"
 
 flag {
     name: "test_flag"
