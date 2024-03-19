@@ -829,6 +829,13 @@ static void nfaConnectionCallback(uint8_t connEvent,
     case NFA_T4TNFCEE_CLEAR_CPLT_EVT:
       t4tNfcEe.eventHandler(connEvent, eventData);
       break;
+    case NFA_CORE_GENERIC_ERROR_EVT:
+      if (NfcSelfTest::GetInstance().SelfTestType != TEST_TYPE_NONE &&
+          eventData->status == NCI_DISCOVERY_TARGET_ACTIVATION_FAILED) {
+        // For SelfTest both Activation success/Failure marks end of test loop.
+        NfcSelfTest::GetInstance().ActivatedNtf_Cb();
+      }
+      break;
 #endif
 
     default:
