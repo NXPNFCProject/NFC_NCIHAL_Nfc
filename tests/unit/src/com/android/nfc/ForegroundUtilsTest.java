@@ -83,4 +83,16 @@ public class ForegroundUtilsTest {
         boolean isRegistered = mForegroundUtils.registerUidToBackgroundCallback(callback, 0);
         Assert.assertTrue(isRegistered);
     }
+
+    @Test
+    public void testIsInForeground() {
+        if (!mNfcSupported) return;
+
+        when(mActivityManager.getUidImportance(0)).thenReturn(100);
+        when(mActivityManager.getUidImportance(10)).thenReturn(1);
+        boolean isInForegroundTrue = mForegroundUtils.isInForeground(0);
+        Assert.assertTrue(isInForegroundTrue);
+        isInForegroundTrue = mForegroundUtils.isInForeground(10);
+        Assert.assertFalse(isInForegroundTrue);
+    }
 }
