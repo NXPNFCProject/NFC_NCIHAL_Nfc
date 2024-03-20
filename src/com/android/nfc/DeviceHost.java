@@ -75,8 +75,10 @@ public interface DeviceHost {
 
         public void onHwErrorReported();
 
-	public void onPollingLoopDetected(Bundle pollingFrame);
-	/**
+        public void onPollingLoopDetected(Bundle pollingFrame);
+
+        public void onVendorSpecificEvent(int gid, int oid, byte[] payload);
+        /**
          * Notifies SWP Reader Events.
          */
         public void onScrNotifyEvents(int event);

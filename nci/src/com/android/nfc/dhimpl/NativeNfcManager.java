@@ -40,9 +40,11 @@ import android.nfc.tech.Ndef;
 import android.nfc.tech.TagTechnology;
 import android.os.Bundle;
 import android.util.Log;
+
 import com.android.nfc.DeviceHost;
 import com.android.nfc.NfcDiscoveryParameters;
 import com.android.nfc.NfcVendorNciResponse;
+
 import java.io.FileDescriptor;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -82,6 +84,10 @@ public class NativeNfcManager implements DeviceHost {
     private static final int TAG_NFC_B = 2;
     private static final int TAG_NFC_F = 3;
     private static final int TAG_NFC_UNKNOWN = 7;
+    private static final int NCI_HEADER_MIN_LEN = 3;
+    private static final int NCI_GID_INDEX = 0;
+    private static final int NCI_OID_INDEX = 1;
+    private static final int OP_CODE_INDEX = 3;
 
     public NativeNfcManager(Context context, DeviceHostListener listener) {
         mListener = listener;
@@ -653,6 +659,17 @@ public class NativeNfcManager implements DeviceHost {
         pos += (length + 2);
         }
         mListener.onPollingLoopDetected(frame);
+    }
+
+    private void notifyVendorSpecificEvent(int event, int dataLen, byte[] pData) {
+        if (pData.length < NCI_HEADER_MIN_LEN || dataLen != pData.length) {
+            Log.e(TAG, "Invalid data");
+            return;
+        }
+        if (android.nfc.Flags.nfcVendorCmd()) {
+            mListener.onVendorSpecificEvent(pData[NCI_GID_INDEX], pData[NCI_OID_INDEX],
+                    Arrays.copyOfRange(pData, OP_CODE_INDEX, pData.length));
+        }
     }
 
     @Override

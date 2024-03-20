@@ -737,6 +737,11 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         new EnableDisableTask().execute(TASK_ENABLE);
     }
 
+    @Override
+    public void onVendorSpecificEvent(int gid, int oid, byte[] payload) {
+        sendVendorNciNotification(gid, oid, payload);
+    }
+
     /**
      * Enable or Disable PowerSaving Mode based on flag
      */
@@ -3073,6 +3078,17 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
           return mDeviceHost.startCardEmulation();
         }
 
+    }
+
+    private void sendVendorNciNotification(int gid, int oid, byte[] payload) {
+        if (DBG) Log.i(TAG, "sendVendorNciNotification");
+        if (mNfcVendorNciCallBack != null) {
+            try {
+                mNfcVendorNciCallBack.onVendorNotificationReceived(gid, oid, payload);
+            } catch (RemoteException e) {
+                Log.e(TAG, "Failed to send vendor notification", e);
+            }
+        }
     }
 
     final class SeServiceDeathRecipient implements IBinder.DeathRecipient {
