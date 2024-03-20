@@ -18,7 +18,6 @@
         <!-- START VENDOR CUSTOMIZATION -->
         <policy type="product|system|vendor">
           <!-- Params from config.xml that can be overlaid -->
-            <item name="bluetooth_package" type="string" />
             <item name="enable_nfc_url_open_dialog" type="bool" />
             <item name="enable_auto_play" type="bool" />
             <item name="enable_notify_dispatch_failed" type="bool" />
