@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- *  Copyright 2018 NXP
+ *  Copyright 2018, 2024 NXP
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ bool IsWiredMode_Enable()
     SecureElement &se = SecureElement::getInstance();
     tNFA_STATUS stat = NFA_STATUS_FAILED;
 
-    uint8_t mActualNumEe  = nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED;
+    uint8_t mActualNumEe  = NFA_EE_MAX_EE_SUPPORTED;
     uint16_t meSE         = 0x4C0;
     tNFA_EE_INFO EeInfo[mActualNumEe];
 

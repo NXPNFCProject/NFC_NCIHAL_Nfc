@@ -1583,7 +1583,7 @@ void RoutingManager::configureOffHostNfceeTechMask(void)
     uint8_t           count           = 0x00;
     tNFA_HANDLE       preferredHandle = SecureElement::getInstance().EE_HANDLE_0xF4;
     tNFA_HANDLE       defaultHandle   = NFA_HANDLE_INVALID;
-    tNFA_HANDLE       ee_handleList[nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED];
+    tNFA_HANDLE       ee_handleList[NFA_EE_MAX_EE_SUPPORTED];
 
     //ALOGV("%s: enter", fn);
 

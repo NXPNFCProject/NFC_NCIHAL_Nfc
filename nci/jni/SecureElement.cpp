@@ -133,7 +133,7 @@ bool SecureElement::initialize(nfc_jni_native_data* native) {
 
     mNativeData     = native;
     mthreadnative    = native;
-    mActualNumEe    = nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED;
+    mActualNumEe    = NFA_EE_MAX_EE_SUPPORTED;
     mbNewEE         = true;
     mNewPipeId      = 0;
     mIsSeIntfActivated = false;
@@ -1372,7 +1372,7 @@ bool SecureElement::getEeInfo()
 
         memset (&mNfceeData_t, 0, sizeof (mNfceeData_t));
 
-        mActualNumEe = nfcFL.nfccFL._NFA_EE_MAX_EE_SUPPORTED;
+        mActualNumEe = NFA_EE_MAX_EE_SUPPORTED;
         if ((nfaStat = NFA_EeGetInfo(&mActualNumEe, mEeInfo)) != NFA_STATUS_OK)
         {
             LOG(ERROR) << StringPrintf("%s: fail get info; error=0x%X", fn, nfaStat);
