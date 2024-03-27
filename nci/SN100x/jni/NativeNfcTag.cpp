@@ -1610,7 +1610,8 @@ static jboolean nativeNfcTag_doPresenceCheck(JNIEnv*, jobject) {
   if (sCurrentConnectedTargetProtocol == TARGET_TYPE_KOVIO_BARCODE) {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s: Kovio, force deactivate handling", __func__);
-    tNFA_DEACTIVATED deactivated = {NFA_DEACTIVATE_TYPE_IDLE};
+    tNFA_DEACTIVATED deactivated = {NFA_DEACTIVATE_TYPE_IDLE,
+                                    NCI_DEACTIVATE_REASON_DH_REQ};
     {
       SyncEventGuard g(gDeactivatedEvent);
       gActivated = false;  // guard this variable from multi-threaded access

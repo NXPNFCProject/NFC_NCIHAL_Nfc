@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2023 NXP
+*  Copyright 2018-2024 NXP
 *
 ******************************************************************************/
 package com.android.nfc;
@@ -101,6 +101,8 @@ public interface DeviceHost {
         void startPresenceChecking(int presenceCheckDelay,
                                    @Nullable TagDisconnectedCallback callback);
         void stopPresenceChecking();
+        boolean isPresenceCheckStopped();
+        void prepareForRemovalDetectionMode();
 
         int[] getTechList();
         void removeTechnology(int tech); // TODO remove this one
@@ -334,4 +336,6 @@ public interface DeviceHost {
      * Enable or Disable the ULPDet Mode based on flag
      */
     boolean setULPDetMode(boolean flag);
+    public boolean isRemovalDetectionInPollModeSupported();
+    public void startRemovalDetectionProcedure(int waitTimeout);
 }

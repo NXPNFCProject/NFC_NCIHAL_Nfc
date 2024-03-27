@@ -70,7 +70,6 @@ static int sLastSelectedTagId = 0;
 uint32_t TimeDiff(timespec start, timespec end);
 int selectedId = 0;
 static bool isP2pDetected = false;
-IntervalTimer mTimer;
 namespace android {
   extern bool nfcManager_isReaderModeEnabled();
 }
@@ -562,26 +561,28 @@ TheEnd:
 ** Returns:         None
 **
 *******************************************************************************/
-void NfcTag::notifyNfcAbortTagops(union sigval) {
-  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: enter", __func__);
+void NfcTag::notifyNfcAbortTagops(tNFC_DEACT_REASON reason) {
+  DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: %d", __func__, reason);
 
-  if(!NfcTagExtns::getInstance().isNonStdMFCTagDetected()) {
+  if (NfcTagExtns::getInstance().isNonStdMFCTagDetected() ||
+      reason == NCI_DEACTIVATE_REASON_RF_REMOTE_ENDPOINT_REMOVED ||
+      reason == NCI_DEACTIVATE_REASON_RF_TIMEOUT_EXCEPTION) {
+    NfcTag& nTag = NfcTag::getInstance();
+    JNIEnv* e = NULL;
+    ScopedAttach attach(nTag.mNativeData->vm, &e);
+    if (e == NULL) {
+      LOG(ERROR) << StringPrintf("%s: jni env is null", __func__);
+      return;
+    }
+
+    e->CallVoidMethod(nTag.mNativeData->manager,
+                      android::gCachedNfcManagerNotifyTagAbortListeners);
+
+    CHECK(!e->ExceptionCheck());
+  } else {
     DLOG_IF(INFO, nfc_debug_enabled)
         << StringPrintf("%s:Standard card is Detected", __func__);
-    return;
   }
-  NfcTag& nTag = NfcTag::getInstance();
-  JNIEnv* e = NULL;
-  ScopedAttach attach(nTag.mNativeData->vm, &e);
-  if (e == NULL) {
-    LOG(ERROR) << StringPrintf("%s: jni env is null", __func__);
-    return;
-  }
-
-  e->CallVoidMethod(nTag.mNativeData->manager,
-                    android::gCachedNfcManagerNotifyTagAbortListeners);
-
-  CHECK(!e->ExceptionCheck());
   DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s: exit", __func__);
 }
 #endif
@@ -1692,13 +1693,22 @@ void NfcTag::connectionEventHandler(uint8_t event, tNFA_CONN_EVT_DATA* data) {
         createNativeNfcTag(activated);
       }
       break;
-
+#if (NXP_EXTNS == TRUE)
+    case NFA_RF_REMOVAL_DETECTION_FAIL_EVT:
+          [[fallthrough]];
+#endif
     case NFA_DEACTIVATED_EVT:
+ #if (NXP_EXTNS == TRUE)
+     if (!mIsActivated) {
+        LOG(ERROR) << StringPrintf("%s: Already deactivated", fn);
+        break;
+     }
+ #endif
       mIsActivated = false;
       mProtocol = NFC_PROTOCOL_UNKNOWN;
       resetTechnologies();
 #if (NXP_EXTNS == TRUE)
-      mTimer.set(1, NfcTag::notifyNfcAbortTagops);
+      notifyNfcAbortTagops(data->deactivated.reason);
 #endif
       break;
 

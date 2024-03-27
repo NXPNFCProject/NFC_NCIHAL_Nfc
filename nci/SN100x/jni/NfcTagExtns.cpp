@@ -739,7 +739,8 @@ tTagStatus NfcTagExtns::performTagDeactivation() {
     }
   } else {
     if (android::isSeRfActive()) {
-      tNFA_DEACTIVATED deactivated = {NFA_DEACTIVATE_TYPE_IDLE};
+      tNFA_DEACTIVATED deactivated = {NFA_DEACTIVATE_TYPE_IDLE,
+                                      NCI_DEACTIVATE_REASON_DH_REQ};
       NfcTag::getInstance().setDeactivationState(deactivated);
       DLOG_IF(INFO, android::nfc_debug_enabled)
           << StringPrintf("%s: card emulation on priotiy", __func__);

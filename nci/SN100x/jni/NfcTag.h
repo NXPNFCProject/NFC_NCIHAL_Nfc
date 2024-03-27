@@ -200,18 +200,18 @@ class NfcTag {
    ** Returns:         None
    **
    *******************************************************************************/
-  static void notifyNfcAbortTagops(union sigval);
+  static void notifyNfcAbortTagops(tNFC_DEACT_REASON reason);
 
-/*******************************************************************************
-**
-** Function         clearNonStdMfcState
-**
-** Description      Clear Non standard MFC states
-**
-** Returns          None
-**
-*******************************************************************************/
-void clearNonStdMfcState();
+  /*******************************************************************************
+  **
+  ** Function         clearNonStdMfcState
+  **
+  ** Description      Clear Non standard MFC states
+  **
+  ** Returns          None
+  **
+  *******************************************************************************/
+  void clearNonStdMfcState();
 
 #endif
   /*******************************************************************************

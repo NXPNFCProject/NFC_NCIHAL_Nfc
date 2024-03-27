@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2023 NXP
+*  Copyright 2018-2024 NXP
 *
 ******************************************************************************/
 package com.android.nfc.dhimpl;
@@ -589,4 +589,9 @@ public class NativeNfcManager implements DeviceHost {
     public native int doGetSelectedUicc();
     @Override
     public native int setPreferredSimSlot(int uiccSlot);
+
+    @Override
+    public native boolean isRemovalDetectionInPollModeSupported();
+    @Override
+    public native void startRemovalDetectionProcedure(int waitTimeout);
 }
