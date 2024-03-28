@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- *  Copyright 2019-2020 NXP
+ *  Copyright 2019-2020, 2024 NXP
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,10 +16,13 @@
  *
  ******************************************************************************/
 #if (NXP_EXTNS == TRUE)
+#include <nativehelper/ScopedLocalRef.h>
+
+#include <vector>
+
 #include "NfcJniUtil.h"
 #include "SyncEvent.h"
 #include "nfa_api.h"
-#include <nativehelper/ScopedLocalRef.h>
 #define t4tNfcEe (NativeT4tNfcee::getInstance())
 
 typedef enum { OP_READ = 0, OP_WRITE, OP_LOCK, OP_CLEAR } T4TNFCEE_OPERATIONS_t;
@@ -281,7 +284,7 @@ class NativeT4tNfcee {
   tNFA_RX_DATA mReadData;
   tNFA_STATUS mT4tOpStatus = NFA_STATUS_FAILED;
   tNFA_STATUS mT4tNfcEeEventStat = NFA_STATUS_FAILED;
-  std::basic_string<uint8_t> sRxDataBuffer;
+  std::vector<uint8_t> sRxDataBuffer;
   NativeT4tNfcee();
 
   /*******************************************************************************

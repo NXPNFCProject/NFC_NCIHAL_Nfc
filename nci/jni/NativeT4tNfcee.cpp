@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- *  Copyright 2019-2021, 2023 NXP
+ *  Copyright 2019-2021, 2023-2024 NXP
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -494,7 +494,8 @@ void NativeT4tNfcee::t4tReadComplete(tNFA_STATUS status, tNFA_RX_DATA data) {
   mT4tOpStatus = status;
   if (status == NFA_STATUS_OK) {
     if(data.len > 0) {
-      sRxDataBuffer.append(data.p_data, data.len);
+      sRxDataBuffer.insert(sRxDataBuffer.end(), data.p_data,
+                           data.p_data + data.len);
       LOG(DEBUG) << StringPrintf("%s: Read Data len new: %d ", __func__,
                                  data.len);
     }
