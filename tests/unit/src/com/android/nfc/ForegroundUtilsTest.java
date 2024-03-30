@@ -23,6 +23,7 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.util.Log;
+import android.util.SparseArray;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -36,6 +37,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.MockitoSession;
 import org.mockito.quality.Strictness;
+
+import java.util.List;
 
 @RunWith(AndroidJUnit4.class)
 public class ForegroundUtilsTest {
@@ -94,5 +97,64 @@ public class ForegroundUtilsTest {
         Assert.assertTrue(isInForegroundTrue);
         isInForegroundTrue = mForegroundUtils.isInForeground(10);
         Assert.assertFalse(isInForegroundTrue);
+    }
+
+    @Test
+    public void testOnUidImportance() {
+        if (!mNfcSupported) return;
+
+        mForegroundUtils.clearForegroundlist();
+        mForegroundUtils.onUidImportance(0,
+                ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND);
+        List<Integer> uids = mForegroundUtils.getForegroundUids();
+        Assert.assertNotNull(uids);
+        Assert.assertTrue(uids.size() > 0);
+        mForegroundUtils.onUidImportance(0,
+                ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE);
+        uids = mForegroundUtils.getForegroundUids();
+        Assert.assertNotNull(uids);
+        Assert.assertTrue(uids.isEmpty());
+    }
+
+    @Test
+    public void testOnUidImportanceBackground() {
+        if (!mNfcSupported) return;
+
+        mForegroundUtils.onUidImportance(0,
+                ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND);
+        List<Integer> uids = mForegroundUtils.getForegroundUids();
+        Assert.assertNotNull(uids);
+        Assert.assertTrue(uids.size() > 0);
+        ForegroundUtils.Callback callback = uid -> {
+            Log.d(TAG, "testOnUidImportanceBackground callback received");
+        };
+        mForegroundUtils.registerUidToBackgroundCallback(callback, 0);
+
+        SparseArray<List<ForegroundUtils.Callback>>
+                backGroundCallbacks = mForegroundUtils.getBackgroundCallbacks();
+        List<ForegroundUtils.Callback> callbacks = backGroundCallbacks.get(0);
+        Assert.assertNotNull(callbacks);
+        Assert.assertFalse(callbacks.isEmpty());
+        mForegroundUtils.onUidImportance(0,
+                ActivityManager.RunningAppProcessInfo.IMPORTANCE_BACKGROUND);
+        backGroundCallbacks = mForegroundUtils.getBackgroundCallbacks();
+        callbacks = backGroundCallbacks.get(0);
+        Assert.assertNull(callbacks);
+    }
+
+    @Test
+    public void testGetForegroundUids() {
+        if (!mNfcSupported) return;
+
+        mForegroundUtils.onUidImportance(0,
+                ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND);
+        mForegroundUtils.onUidImportance(1,
+                ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND);
+        mForegroundUtils.onUidImportance(2,
+                ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND);
+        List<Integer> uids = mForegroundUtils.getForegroundUids();
+        Assert.assertNotNull(uids);
+        int uid = uids.get(0);
+        Assert.assertEquals(0, uid);
     }
 }
