@@ -165,6 +165,7 @@ jmethodID gCachedNfcManagerNotifyRfFieldDeactivated;
 jmethodID gCachedNfcManagerNotifyHwErrorReported;
 jmethodID gCachedNfcManagerNotifyPollingLoopFrame;
 jmethodID gCachedNfcManagerNotifyVendorSpecificEvent;
+jmethodID gCachedNfcManagerNotifyCommandTimeout;
 #if(NXP_EXTNS == TRUE)
 jmethodID gCachedNfcManagerNotifyLxDebugInfo;
 jmethodID gCachedNfcManagerNotifyTagAbortListeners;
@@ -914,6 +915,8 @@ static jboolean nfcManager_initNativeStruc(JNIEnv* e, jobject o) {
       e->GetMethodID(cls.get(), "notifyPollingLoopFrame", "(I[B)V");
   gCachedNfcManagerNotifyVendorSpecificEvent =
       e->GetMethodID(cls.get(), "notifyVendorSpecificEvent", "(II[B)V");
+  gCachedNfcManagerNotifyCommandTimeout =
+      e->GetMethodID(cls.get(), "notifyCommandTimeout", "()V");
 #if(NXP_EXTNS == TRUE)
   gCachedNfcManagerNotifyLxDebugInfo =
       e->GetMethodID(cls.get(), "notifyNfcDebugInfo", "(I[B)V");
@@ -1051,13 +1054,13 @@ if (!sP2pActive && eventData->rf_field.status == NFA_STATUS_OK) {
         LOG(ERROR) << StringPrintf("%s: NFA_DM_NFCC_TRANSPORT_ERR_EVT; abort",
                                    __func__);
       struct nfc_jni_native_data* nat = getNative(NULL, NULL);
+      JNIEnv* e = NULL;
+      ScopedAttach attach(nat->vm, &e);
+      if (e == NULL) {
+        LOG(ERROR) << StringPrintf("jni env is null");
+        return;
+      }
       if (recovery_option && nat != NULL) {
-        JNIEnv* e = NULL;
-        ScopedAttach attach(nat->vm, &e);
-        if (e == NULL) {
-          LOG(ERROR) << StringPrintf("jni env is null");
-          return;
-        }
         LOG(ERROR) << StringPrintf("%s: toggle NFC state to recovery nfc",
                                    __func__);
         sIsRecovering = true;
@@ -1133,6 +1136,8 @@ if (!sP2pActive && eventData->rf_field.status == NFA_STATUS_OK) {
         }
         PowerSwitch::getInstance().initialize(PowerSwitch::UNKNOWN_LEVEL);
         LOG(ERROR) << StringPrintf("%s: crash NFC service", __func__);
+        e->CallVoidMethod(nat->manager,
+                          android::gCachedNfcManagerNotifyCommandTimeout);
         //////////////////////////////////////////////
         // crash the NFC service process so it can restart automatically
         abort();
