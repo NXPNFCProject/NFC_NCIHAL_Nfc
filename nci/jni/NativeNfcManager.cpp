@@ -642,7 +642,19 @@ static void nfaConnectionCallback(uint8_t connEvent,
         }
       }
       break;
-
+#if (NXP_EXTNS == TRUE)
+    case NFA_RF_REMOVAL_DETECTION_FAIL_EVT:
+      LOG(DEBUG) << StringPrintf("%s: NFA_RF_REMOVAL_DETECTION_FAIL_EVT "
+          "status = %d", __func__, eventData->status);
+      eventData->deactivated.type = NFA_DEACTIVATE_TYPE_DISCOVERY;
+      eventData->deactivated.reason = NCI_DEACTIVATE_REASON_RF_TIMEOUT_EXCEPTION;
+      LOG(DEBUG) << StringPrintf(
+          "%s: falling through NFA_DEACTIVATED_EVT to recover", __func__);
+      /* NFCC may be in RF_POLL_ACTIVE or RF_POLL_REMOVAL_DETECTION,
+         Anyways, DEACTIVATE_TO_DISCOVER is allowed in both of these states*/
+      NfcTag::getInstance().connectionEventHandler(connEvent, eventData);
+      break;
+#endif
     case NFA_DEACTIVATED_EVT:  // NFC link/protocol deactivated
       LOG(DEBUG) << StringPrintf(
           "%s: NFA_DEACTIVATED_EVT   Type: %u, gIsTagDeactivating: %d",
@@ -2371,6 +2383,45 @@ tNFA_STATUS getConfig(uint16_t* rspLen, uint8_t* configValue, uint8_t numParam,
     return num;
   }
 
+#if (NXP_EXTNS == TRUE)
+  /*******************************************************************************
+  **
+  ** Function:        nfcManager_isRemovalDetectionSupported
+  **
+  ** Description:     Check if the Removal Detection in Poll mode is supported.
+  **                  e: JVM environment.
+  **                  o: Java object.
+  **
+  ** Returns:         True if supports 'Removal Detection Mode'
+  **
+  *******************************************************************************/
+  static jboolean nfcManager_isRemovalDetectionSupported(JNIEnv* e, jobject o) {
+    return NFA_IsRfRemovalDetectionSupported();
+  }
+  /*******************************************************************************
+  **
+  ** Function:        nfcManager_startRemovalDetectionProcedure
+  **
+  ** Description:     Request NFCC to start the Removal Detection Procedure.
+  **                  e: JVM environment.
+  **                  o: Java object.
+  **
+  ** Returns:         None
+  **
+  *******************************************************************************/
+  static void nfcManager_startRemovalDetectionProcedure(JNIEnv* e, jobject o,
+                                                        jint waitTimeout) {
+  if (NfcTag::getInstance().isActivated()) {
+    if (NFA_SendRemovalDetectionCmd(waitTimeout) != NFA_STATUS_OK) {
+      LOG(ERROR) << StringPrintf("%s: failed", __func__);
+    }
+  } else {
+    LOG(ERROR) << StringPrintf("%s: Tag is deactivated", __func__);
+  }
+  return;
+}
+#endif
+
 /*******************************************************************************
 **
 ** Function:        nfcManager_getDefaultDesfirePowerState
@@ -3344,6 +3395,10 @@ static JNINativeMethod gMethods[] = {
     {"doNfcSelfTest", "(I)I", (void*)nfcManager_nfcSelfTest},
     {"doEnableDebugNtf", "(B)I", (void*)nfcManager_enableDebugNtf},
     {"doRestartRFDiscovery", "()V", (void*)nfcManager_restartRFDiscovery},
+    {"isRemovalDetectionInPollModeSupported", "()Z",
+     (void*)nfcManager_isRemovalDetectionSupported},
+    {"startRemovalDetectionProcedure", "(I)V",
+     (void*)nfcManager_startRemovalDetectionProcedure},
 #endif
     {"doSetNfcSecure", "(Z)Z", (void*)nfcManager_doSetNfcSecure},
     {"getNfaStorageDir", "()Ljava/lang/String;",

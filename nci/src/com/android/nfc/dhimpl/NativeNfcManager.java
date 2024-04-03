@@ -713,4 +713,9 @@ public class NativeNfcManager implements DeviceHost {
     public native int doGetSelectedUicc();
     @Override
     public native int setPreferredSimSlot(int uiccSlot);
+
+    @Override
+    public native boolean isRemovalDetectionInPollModeSupported();
+    @Override
+    public native void startRemovalDetectionProcedure(int waitTimeout);
 }

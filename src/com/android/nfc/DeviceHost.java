@@ -105,6 +105,8 @@ public interface DeviceHost {
         void startPresenceChecking(int presenceCheckDelay,
                                    @Nullable TagDisconnectedCallback callback);
         void stopPresenceChecking();
+        boolean isPresenceCheckStopped();
+        void prepareForRemovalDetectionMode();
 
         int[] getTechList();
         void removeTechnology(int tech); // TODO remove this one
@@ -354,4 +356,7 @@ public interface DeviceHost {
      * Enable or Disable the Power Saving Mode based on flag
      */
     boolean setPowerSavingMode(boolean flag);
+
+    public boolean isRemovalDetectionInPollModeSupported();
+    public void startRemovalDetectionProcedure(int waitTimeout);
 }

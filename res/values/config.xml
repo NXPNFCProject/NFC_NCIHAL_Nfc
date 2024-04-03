@@ -16,6 +16,8 @@
     <integer name="unknown_tag_polling_delay">2000</integer>
     <integer name="unknown_tag_polling_delay_count_max">5</integer>
     <integer name="unknown_tag_polling_delay_long">30000</integer>
+    <integer name="app_inactivity_detection_time">20000</integer>
+    <integer name="tag_removal_detection_wait_time">19</integer>
 
     <!-- List of SKUs where Secure NFC functionality is supported -->
     <string-array name="config_skuSupportsSecureNfc" translatable="false" />
