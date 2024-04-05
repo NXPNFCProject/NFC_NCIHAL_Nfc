@@ -24,7 +24,7 @@
     <string name="pairing_peripheral" msgid="6983626861540899365">"A sincronizar o <xliff:g id="DEVICE_NAME">%1$s</xliff:g>"</string>
     <string name="pairing_peripheral_failed" msgid="6087643307743264679">"Não foi possível sincronizar o <xliff:g id="DEVICE_NAME">%1$s</xliff:g>"</string>
     <string name="failed_to_enable_bt" msgid="7229153323594758077">"Não foi possível ativar o Bluetooth"</string>
-    <string name="confirm_pairing" msgid="4112568077038265363">"Tem a certeza de que pretende sincronizar o dispositivo Bluetooth <xliff:g id="DEVICE_NAME">%1$s</xliff:g>?"</string>
+    <string name="confirm_pairing" msgid="4112568077038265363">"Tem a certeza de que quer sincronizar o dispositivo Bluetooth <xliff:g id="DEVICE_NAME">%1$s</xliff:g>?"</string>
     <string name="pair_yes" msgid="3525614878559994448">"Sim"</string>
     <string name="pair_no" msgid="5022308368904055020">"Não"</string>
     <string name="tap_again_to_pay" msgid="5754988005412859897">"Toque novamente para pagar com <xliff:g id="APP">%1$s</xliff:g>"</string>
@@ -35,17 +35,17 @@
     <string name="could_not_use_app" msgid="8137587876138569083">"Não foi possível utilizar <xliff:g id="APP">%1$s</xliff:g>."</string>
     <string name="pay_with" msgid="5531545488795798945">"Pagar com"</string>
     <string name="complete_with" msgid="6797459104103012992">"Concluir com"</string>
-    <string name="default_pay_app_removed" msgid="4108250545457437360">"O serviço preferido para tocar e pagar foi removido. Pretende escolher outro?"</string>
+    <string name="default_pay_app_removed" msgid="4108250545457437360">"O serviço preferido para tocar e pagar foi removido. Quer escolher outro?"</string>
     <string name="ask_nfc_tap" msgid="2925239870458286340">"Toque noutro dispositivo para concluir."</string>
     <string name="wifi_connect" msgid="6250727951843550671">"Ligar"</string>
     <string name="status_unable_to_connect" msgid="9183908200295307657">"Não foi possível ligar à rede"</string>
     <string name="status_wifi_connected" msgid="5893022897732105739">"Ligado"</string>
     <string name="title_connect_to_network" msgid="2474034615817280146">"Ligar a uma rede"</string>
     <string name="prompt_connect_to_network" msgid="8511683573657516114">"Ligar à rede <xliff:g id="NETWORK_SSID">%1$s</xliff:g>?"</string>
-    <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"A ativação do Android Beam requer NFC. Pretende ativá-lo?"</string>
+    <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"A ativação do Android Beam requer NFC. Quer ativá-lo?"</string>
     <string name="android_beam" msgid="1666446406999492763">"Android Beam"</string>
     <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"A app não tem autorização de armazenamento externo. Esta é necessária para transmitir este ficheiro."</string>
-    <string name="title_confirm_url_open" msgid="8069968913244794478">"Pretende abrir o link?"</string>
+    <string name="title_confirm_url_open" msgid="8069968913244794478">"Quer abrir o link?"</string>
     <string name="summary_confirm_url_open" product="tablet" msgid="3353502750736192055">"O seu tablet recebeu um link através de NFC:"</string>
     <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"O seu telemóvel recebeu um link através de NFC:"</string>
     <string name="action_confirm_url_open" msgid="3458322738812921189">"Abrir link"</string>

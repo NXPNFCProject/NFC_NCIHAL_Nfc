@@ -50,7 +50,7 @@
     <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"Το τηλέφωνό σας έλαβε έναν σύνδεσμο μέσω NFC:"</string>
     <string name="action_confirm_url_open" msgid="3458322738812921189">"Άνοιγμα συνδέσμου"</string>
     <string name="tag_read_error" msgid="2485274498885877547">"Σφάλμα ανάγνωσης NFC. Δοκιμάστε ξανά."</string>
-    <string name="tag_dispatch_failed" msgid="3562984995049738400">"Δεν υπάρχει υποστηριζόμενη εφαρμογή για αυτήν την ετικέτα NFC"</string>
+    <string name="tag_dispatch_failed" msgid="3562984995049738400">"Δεν υπάρχει υποστηριζόμενη εφαρμογή για αυτή την ετικέτα NFC"</string>
     <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"Η λειτουργία NFC μπορεί να έχει αποκλειστεί."</string>
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Πατήστε για να μάθετε πώς μπορείτε να διορθώσετε το πρόβλημα."</string>
     <string name="nfc_logging_alert_title" msgid="5300867034660942987">"Τα δεδομένα NFC εγγράφονται"</string>

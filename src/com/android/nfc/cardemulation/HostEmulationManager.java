@@ -361,6 +361,7 @@ public class HostEmulationManager {
                                     statsdCategory,
                                     "HCE",
                                     uid);
+                            Log.d(TAG, "StatsdCeEventsFlag disabled logged: " + statsdCategory);
                         }
                     } else {
                         Log.d(TAG, "Dropping non-select APDU in STATE_W4_SELECT");

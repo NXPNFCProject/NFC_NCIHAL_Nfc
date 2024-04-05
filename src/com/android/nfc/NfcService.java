@@ -107,6 +107,8 @@ import android.os.Vibrator;
 import android.provider.Settings;
 import android.provider.Settings.SettingNotFoundException;
 import android.se.omapi.ISecureElementService;
+import android.se.omapi.SeFrameworkInitializer;
+import android.se.omapi.SeServiceManager;
 import android.sysprop.NfcProperties;
 import android.text.TextUtils;
 import android.util.EventLog;
@@ -1211,8 +1213,13 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
 
     private void connectToSeService() {
         try {
-            mSEService = ISecureElementService.Stub.asInterface(ServiceManager.getService(
-                  Context.SECURE_ELEMENT_SERVICE));
+            SeServiceManager manager = SeFrameworkInitializer.getSeServiceManager();
+            if (manager == null) {
+                Log.e(TAG, "SEServiceManager is null");
+                return;
+            }
+            mSEService = ISecureElementService.Stub.asInterface(
+                    manager.getSeManagerServiceRegisterer().get());
             if (mSEService != null) {
                 IBinder seServiceBinder = mSEService.asBinder();
                 seServiceBinder.linkToDeath(mSeServiceDeathRecipient, 0);
@@ -1702,9 +1709,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
     }
 
     public boolean isSecureNfcEnabled() {
-        synchronized (NfcService.this) {
-            return mIsSecureNfcEnabled;
-        }
+        return mIsSecureNfcEnabled;
     }
 
     final class NfcAdapterService extends INfcAdapter.Stub {

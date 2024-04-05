@@ -1,7 +1,7 @@
 # Used by com.android.nfc
 
 # android.se.omapi-V1-java
-rule android.se.omapi.** com.android.nfc.x.@0
+rule android.se.omapi.I** com.android.nfc.x.@0
 # Use our statically linked PlatformProperties library
 rule android.sysprop.** com.android.nfc.x.@0
 # androidx.annotation_annotation
