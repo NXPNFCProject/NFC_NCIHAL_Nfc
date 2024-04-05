@@ -19,6 +19,7 @@ package com.android.nfc;
 import android.content.Context;
 import android.os.Handler;
 import android.provider.DeviceConfig;
+import androidx.annotation.VisibleForTesting;
 
 /**
  * This class allows getting all configurable flags from DeviceConfig.
@@ -34,14 +35,15 @@ public class DeviceConfigFacade {
     private boolean mAntennaBlockedAlertEnabled;
 
     private static DeviceConfigFacade sInstance;
-    public static DeviceConfigFacade getInstance() {
+    public static DeviceConfigFacade getInstance(Context context, Handler handler) {
+        if (sInstance == null) {
+            sInstance = new DeviceConfigFacade(context, handler);
+        }
         return sInstance;
     }
 
+    @VisibleForTesting
     public DeviceConfigFacade(Context context, Handler handler) {
-        if (sInstance != null) {
-            throw new IllegalStateException("DeviceConfigFacade should be a singleton");
-        }
         mContext = context;
         updateDeviceConfigFlags();
         DeviceConfig.addOnPropertiesChangedListener(

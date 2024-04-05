@@ -48,6 +48,7 @@ public class DeviceConfigFacadeTest {
     private boolean mNfcSupported;
     private MockitoSession mStaticMockSession;
     private DeviceConfigFacade mDeviceConfigFacade;
+    private DeviceConfigFacade mDeviceConfigFacadeFalse;
 
     @Before
     public void setUp() throws Exception {
@@ -62,14 +63,24 @@ public class DeviceConfigFacadeTest {
             return;
         }
         mNfcSupported = true;
+        Handler handler = mock(Handler.class);
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(
+                () -> mDeviceConfigFacade = new DeviceConfigFacade(getMockedContext(
+                        true, context), handler));
+        Assert.assertNotNull(mDeviceConfigFacade);
 
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(
+                () -> mDeviceConfigFacadeFalse = new DeviceConfigFacade(getMockedContext(
+                        false, context), handler));
+        Assert.assertNotNull(mDeviceConfigFacadeFalse);
+    }
 
+    private Context getMockedContext(boolean isAntenaEnabled, Context context) {
         Resources mockResources = mock(Resources.class);
         when(mockResources.getBoolean(eq(R.bool.enable_antenna_blocked_alert)))
-                .thenReturn(true);
+                .thenReturn(isAntenaEnabled);
 
-
-        Context mockContext = new ContextWrapper(context) {
+        return new ContextWrapper(context) {
 
             @Override
             public Resources getResources() {
@@ -77,11 +88,6 @@ public class DeviceConfigFacadeTest {
                 return mockResources;
             }
         };
-
-        Handler handler = mock(Handler.class);
-        InstrumentationRegistry.getInstrumentation().runOnMainSync(
-                () -> mDeviceConfigFacade = new DeviceConfigFacade(mockContext, handler));
-        Assert.assertNotNull(mDeviceConfigFacade);
     }
 
     @After
@@ -96,5 +102,14 @@ public class DeviceConfigFacadeTest {
         boolean isAlertEnabled = mDeviceConfigFacade.isAntennaBlockedAlertEnabled();
         Log.d(TAG, "isAlertEnabled -" + isAlertEnabled);
         Assert.assertTrue(isAlertEnabled);
+    }
+
+    @Test
+    public void testIsAntennaBlockedAlertDisabled() {
+        if (!mNfcSupported) return;
+
+        boolean isAlertEnabled = mDeviceConfigFacadeFalse.isAntennaBlockedAlertEnabled();
+        Log.d(TAG, "isAlertEnabled -" + isAlertEnabled);
+        Assert.assertFalse(isAlertEnabled);
     }
 }
