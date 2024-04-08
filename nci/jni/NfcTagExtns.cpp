@@ -280,7 +280,8 @@ void NfcTagExtns::processActivatedNtf(tNFA_CONN_EVT_DATA* data) {
       // In case activated tag is a multiprotocol tag then store
       // activated tag data because sometimes sleep may not supported by
       // non standard tag during multiprotocol tag detection.
-      if (NfcTag::getInstance().mIsMultiProtocolTag) {
+      if (NfcTag::getInstance().mIsMultiProtocolTag &&
+          data->activated.activate_ntf.protocol == NFA_PROTOCOL_ISO_DEP) {
         clearNonStdTagData();
         memcpy(&(discovery_ntf.rf_tech_param),
                &(activated.activate_ntf.rf_tech_param),

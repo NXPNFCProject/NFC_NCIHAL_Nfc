@@ -1385,7 +1385,7 @@ void NfcTag::selectFirstTag() {
 #if (NXP_EXTNS == TRUE)
       if (NfcTagExtns::getInstance().shouldSkipProtoActivate(
               mTechLibNfcTypesDiscData[i]))
-        break;  // Non-standard tag detected
+        continue;  // Skip current, continue next
 #endif
         sLastSelectedTagId = i;
         foundIdx = i;
