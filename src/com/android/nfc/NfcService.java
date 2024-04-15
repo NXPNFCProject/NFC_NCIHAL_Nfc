@@ -3977,32 +3977,38 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         mHandler.sendEmptyMessage(MSG_COMPUTE_ROUTING_PARAMS);
     }
     private boolean isTagPresent() {
-        for (Object object : mObjectMap.values()) {
-            if (object instanceof TagEndpoint) {
-                return ((TagEndpoint) object).isPresent();
+        synchronized (this) {
+            for (Object object : mObjectMap.values()) {
+                if (object instanceof TagEndpoint) {
+                    return ((TagEndpoint) object).isPresent();
+                }
             }
+            return false;
         }
-        return false;
     }
 
     private void StopPresenceChecking() {
-        Object[] objectValues = mObjectMap.values().toArray();
-        for (Object object : objectValues) {
-            if (object instanceof TagEndpoint) {
-                TagEndpoint tag = (TagEndpoint)object;
-                ((TagEndpoint) object).stopPresenceChecking();
+        synchronized (this) {
+            Object[] objectValues = mObjectMap.values().toArray();
+            for (Object object : objectValues) {
+                if (object instanceof TagEndpoint) {
+                    TagEndpoint tag = (TagEndpoint)object;
+                    ((TagEndpoint) object).stopPresenceChecking();
+                }
             }
         }
     }
 
     private boolean IsPresenceCheckStopped() {
         boolean isStopped = false;
-        Object[] objectValues = mObjectMap.values().toArray();
-        for (Object object : objectValues) {
-            if (object instanceof TagEndpoint) {
-                TagEndpoint tag = (TagEndpoint)object;
-                if (((TagEndpoint) object).isPresenceCheckStopped()) {
-                    isStopped = true;
+        synchronized (this) {
+            Object[] objectValues = mObjectMap.values().toArray();
+            for (Object object : objectValues) {
+                if (object instanceof TagEndpoint) {
+                    TagEndpoint tag = (TagEndpoint)object;
+                    if (((TagEndpoint) object).isPresenceCheckStopped()) {
+                        isStopped = true;
+                    }
                 }
             }
         }
@@ -4014,11 +4020,13 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
      * Disconnect API and onTagDisconnect callback
      */
     private void PrepareForRemovalDetectionMode() {
-        Object[] objectValues = mObjectMap.values().toArray();
-        for (Object object : objectValues) {
-            if (object instanceof TagEndpoint) {
-                TagEndpoint tag = (TagEndpoint)object;
-                ((TagEndpoint) object).prepareForRemovalDetectionMode();
+        synchronized (this) {
+            Object[] objectValues = mObjectMap.values().toArray();
+            for (Object object : objectValues) {
+                if (object instanceof TagEndpoint) {
+                    TagEndpoint tag = (TagEndpoint)object;
+                    ((TagEndpoint) object).prepareForRemovalDetectionMode();
+                }
             }
         }
     }
