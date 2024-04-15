@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2023 NXP
+*  Copyright 2018-2024 NXP
 *
 ******************************************************************************/
 package com.android.nfc;
@@ -3785,9 +3785,11 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
      */
     public int GetT4TNfceePowerState() {
         int powerState = mDeviceHost.getT4TNfceePowerState();
-        if (mIsSecureNfcEnabled) {
-          /* Secure nfc on,Setting power state screen on unlocked */
-          powerState=0x01;
+        synchronized (NfcService.this) {
+            if (mIsSecureNfcEnabled) {
+            /* Secure nfc on,Setting power state screen on unlocked */
+            powerState=0x01;
+            }
         }
         if (DBG) Log.d(TAG, "T4TNfceePowerState : " + powerState);
         return powerState;
