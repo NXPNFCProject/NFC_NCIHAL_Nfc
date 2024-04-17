@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2022 NXP
+*  Copyright 2018-2022,2024 NXP
 *
 ******************************************************************************/
 package com.android.nfc.cardemulation;
@@ -172,6 +172,7 @@ public class HostEmulationManager {
     private Messenger getForegroundServiceOrDefault() {
         PackageManager packageManager = mContext.getPackageManager();
         ComponentName preferredServiceName = mAidCache.getPreferredService();
+        if (packageManager == null || preferredServiceName == null) return null;
         try {
             ApplicationInfo preferredServiceInfo =
                 packageManager.getApplicationInfo(preferredServiceName.getPackageName(), 0);
