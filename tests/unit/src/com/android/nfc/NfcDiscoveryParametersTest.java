@@ -38,7 +38,6 @@ public class NfcDiscoveryParametersTest {
     private static final String TAG = NfcDiscoveryParametersTest.class.getSimpleName();
     private boolean mNfcSupported;
     private MockitoSession mStaticMockSession;
-    private NfcDiscoveryParameters mNfcDiscoveryParameters;
 
     @Before
     public void setUp() throws Exception {
@@ -53,7 +52,6 @@ public class NfcDiscoveryParametersTest {
             return;
         }
         mNfcSupported = true;
-        mNfcDiscoveryParameters = computeDiscoveryParameters(false);
     }
 
     @After
@@ -66,6 +64,7 @@ public class NfcDiscoveryParametersTest {
         // Recompute discovery parameters based on screen state
         NfcDiscoveryParameters.Builder paramsBuilder = NfcDiscoveryParameters.newBuilder();
         paramsBuilder.setTechMask(1);
+        paramsBuilder.setEnableLowPowerDiscovery(true);
         paramsBuilder.setEnableHostRouting(true);
         if (isP2pEnable) {
             paramsBuilder.setEnableP2p(true);
@@ -79,7 +78,8 @@ public class NfcDiscoveryParametersTest {
     public void testGetTechMask() {
         if (!mNfcSupported) return;
 
-        int techMask = mNfcDiscoveryParameters.getTechMask();
+        NfcDiscoveryParameters nfcDiscoveryParameters = computeDiscoveryParameters(false);
+        int techMask = nfcDiscoveryParameters.getTechMask();
         Assert.assertEquals(1, techMask);
     }
 
@@ -87,9 +87,39 @@ public class NfcDiscoveryParametersTest {
     public void testShouldEnableP2p() {
         if (!mNfcSupported) return;
 
-        mNfcDiscoveryParameters = computeDiscoveryParameters(true);
-        boolean shouldP2pEnable = mNfcDiscoveryParameters.shouldEnableP2p();
-        Assert.assertTrue(shouldP2pEnable);
+        NfcDiscoveryParameters nfcDiscoveryParameters = computeDiscoveryParameters(false);
+        boolean shouldP2pEnable = nfcDiscoveryParameters.shouldEnableP2p();
+        Assert.assertFalse(shouldP2pEnable);
+    }
+
+    @Test
+    public void testDiscoveryParameters() {
+        if (!mNfcSupported) return;
+
+        NfcDiscoveryParameters.Builder paramsBuilder = NfcDiscoveryParameters.newBuilder();
+        NfcDiscoveryParameters nfcDiscoveryParameters = paramsBuilder.build();
+        boolean shouldEnableDiscovery = nfcDiscoveryParameters.shouldEnableDiscovery();
+        boolean shouldEnableLowPowerDiscovery =
+                nfcDiscoveryParameters.shouldEnableLowPowerDiscovery();
+        boolean shouldEnableReaderMode = nfcDiscoveryParameters.shouldEnableReaderMode();
+        boolean shouldEnableHostRouting = nfcDiscoveryParameters.shouldEnableHostRouting();
+
+        Assert.assertFalse(shouldEnableDiscovery);
+        Assert.assertTrue(shouldEnableLowPowerDiscovery);
+        Assert.assertFalse(shouldEnableReaderMode);
+        Assert.assertFalse(shouldEnableHostRouting);
+
+        nfcDiscoveryParameters = computeDiscoveryParameters(false);
+        shouldEnableDiscovery = nfcDiscoveryParameters.shouldEnableDiscovery();
+        shouldEnableLowPowerDiscovery = nfcDiscoveryParameters.shouldEnableLowPowerDiscovery();
+        shouldEnableReaderMode = nfcDiscoveryParameters.shouldEnableReaderMode();
+        shouldEnableHostRouting = nfcDiscoveryParameters.shouldEnableHostRouting();
+
+        Assert.assertTrue(shouldEnableDiscovery);
+        Assert.assertFalse(shouldEnableLowPowerDiscovery);
+        Assert.assertTrue(shouldEnableReaderMode);
+        Assert.assertTrue(shouldEnableHostRouting);
+
     }
 
 }
