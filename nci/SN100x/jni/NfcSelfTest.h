@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- *  Copyright 2019-2023 NXP
+ *  Copyright 2019-2024 NXP
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@
 #pragma once
 
 #include <android-base/stringprintf.h>
-#include <base/logging.h>
 #include <string.h>
 #include "SyncEvent.h"
 #include "data_types.h"
