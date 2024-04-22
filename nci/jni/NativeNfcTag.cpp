@@ -150,7 +150,7 @@ static bool sGotDeactivate = false;
 static uint32_t sCheckNdefMaxSize = 0;
 static bool sCheckNdefCardReadOnly = false;
 static jboolean sCheckNdefWaitingForComplete = JNI_FALSE;
-static bool sIsTagPresent = true;
+static bool sIsTagPresent = false;
 static tNFA_STATUS sMakeReadonlyStatus = NFA_STATUS_FAILED;
 static jboolean sMakeReadonlyWaitingForComplete = JNI_FALSE;
 static int sCurrentConnectedTargetType = TARGET_TYPE_UNKNOWN;
@@ -1527,7 +1527,7 @@ TheEnd:
 **
 *******************************************************************************/
 void nativeNfcTag_resetPresenceCheck() {
-  sIsTagPresent = true;
+  sIsTagPresent = false;
   sIsoDepPresCheckCnt = 0;
   sPresCheckErrCnt = 0;
   sIsoDepPresCheckAlternate = false;
