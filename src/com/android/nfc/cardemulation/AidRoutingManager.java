@@ -60,6 +60,8 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Hashtable;
+import androidx.annotation.VisibleForTesting;
+
 public class AidRoutingManager {
 
     static final String TAG = "AidRoutingManager";
@@ -115,7 +117,8 @@ public class AidRoutingManager {
 
     RoutingOptionManager mRoutingOptionManager = RoutingOptionManager.getInstance();
     final ActivityManager mActivityManager;
-    final class AidEntry {
+    @VisibleForTesting
+    public final class AidEntry {
         boolean isOnHost;
         String offHostSE;
         int route;
