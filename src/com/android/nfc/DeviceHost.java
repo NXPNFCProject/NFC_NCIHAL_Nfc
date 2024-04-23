@@ -288,8 +288,6 @@ public interface DeviceHost {
 
     public boolean setNfcSecure(boolean enable);
 
-    public String getNfaStorageDir();
-
     public boolean isObserveModeSupported();
 
     public boolean setObserveMode(boolean enable);

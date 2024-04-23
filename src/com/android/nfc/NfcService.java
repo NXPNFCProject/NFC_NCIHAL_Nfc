@@ -5588,10 +5588,6 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         }
     }
 
-    public String getNfaStorageDir() {
-        return mDeviceHost.getNfaStorageDir();
-    }
-
     static int stateToProtoEnum(int state) {
         switch (state) {
             case NfcAdapter.STATE_OFF:
