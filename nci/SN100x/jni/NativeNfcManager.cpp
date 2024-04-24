@@ -634,16 +634,18 @@ static void nfaConnectionCallback(uint8_t connEvent,
       }
       break;
 #if (NXP_EXTNS == TRUE)
-    case NFA_RF_REMOVAL_DETECTION_FAIL_EVT:
+    case NFA_RF_REMOVAL_DETECTION_EVT:
       DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf("%s:"
-         "NFA_RF_REMOVAL_DETECTION_FAIL_EVT status = %d", __func__, eventData->status);
-      eventData->deactivated.type = NFA_DEACTIVATE_TYPE_DISCOVERY;
-      eventData->deactivated.reason = NCI_DEACTIVATE_REASON_RF_TIMEOUT_EXCEPTION;
-      DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
-          "%s: falling through NFA_DEACTIVATED_EVT to recover", __func__);
-      /* NFCC may be in RF_POLL_ACTIVE or RF_POLL_REMOVAL_DETECTION,
-         Anyways, DEACTIVATE_TO_DISCOVER is allowed in both of these states*/
-      NfcTag::getInstance().connectionEventHandler(connEvent, eventData);
+         "NFA_RF_REMOVAL_DETECTION_EVT status = %d", __func__, eventData->status);
+      if (NFA_STATUS_OK != eventData->status) {
+        eventData->deactivated.type = NFA_DEACTIVATE_TYPE_DISCOVERY;
+        eventData->deactivated.reason = NCI_DEACTIVATE_REASON_RF_TIMEOUT_EXCEPTION;
+        DLOG_IF(INFO, nfc_debug_enabled) << StringPrintf(
+            "%s: falling through NFA_DEACTIVATED_EVT to recover", __func__);
+        /* NFCC may be in RF_POLL_ACTIVE or RF_POLL_REMOVAL_DETECTION,
+           Anyways, DEACTIVATE_TO_DISCOVER is allowed in both of these states*/
+        NfcTag::getInstance().connectionEventHandler(connEvent, eventData);
+      }
       break;
 #endif
     case NFA_DEACTIVATED_EVT:  // NFC link/protocol deactivated
