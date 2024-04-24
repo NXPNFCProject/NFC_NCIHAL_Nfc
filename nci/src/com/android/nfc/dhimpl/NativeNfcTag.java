@@ -165,12 +165,7 @@ public class NativeNfcTag implements TagEndpoint {
                 mIsPresent = false;
             }
 
-            if (mIsRemovalDetectionModeReq) {
-                Log.d(TAG, "Poll Removal Detection Mode Requested");
-                synchronized (NativeNfcTag.this) {
-                    mIsRemovalDetectionModeReq = false;
-                }
-            } else {
+            if (!resetIfRemoveDetectionModeReq()) {
                 // Restart the polling loop
                 Log.d(TAG, "Tag lost, restarting polling loop");
                 doDisconnect();
@@ -179,6 +174,16 @@ public class NativeNfcTag implements TagEndpoint {
                 tagDisconnectedCallback.onTagDisconnected(mConnectedHandle);
             }
             if (DBG) Log.d(TAG, "Stopping background presence check");
+        }
+    }
+
+    private synchronized boolean resetIfRemoveDetectionModeReq() {
+        if (mIsRemovalDetectionModeReq) {
+            Log.d(TAG, "Poll Removal Detection Mode Requested");
+            mIsRemovalDetectionModeReq = false;
+            return true;
+        } else {
+            return false;
         }
     }
 
