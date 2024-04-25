@@ -636,4 +636,9 @@ public class AidRoutingManager {
             }
         }
     }
+
+    @VisibleForTesting
+    public boolean isRoutingTableCleared() {
+        return mAidRoutingTable.size() == 0 && mRouteForAid.isEmpty() && mPowerForAid.isEmpty();
+    }
 }

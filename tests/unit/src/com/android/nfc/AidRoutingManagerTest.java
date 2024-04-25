@@ -110,4 +110,29 @@ public class AidRoutingManagerTest {
         size = mAidRoutingManager.calculateAidRouteSize(aidEntryMap);
         Assert.assertEquals(6, size);
     }
+
+    @Test
+    public void testOnNfccRoutingTableCleared() {
+        if (!mNfcSupported) return;
+
+        mAidRoutingManager.onNfccRoutingTableCleared();
+        boolean isTableCleared = mAidRoutingManager.isRoutingTableCleared();
+        Assert.assertTrue(isTableCleared);
+    }
+
+    @Test
+    public void testSupportsAidPrefixRouting() {
+        if (!mNfcSupported) return;
+
+        boolean isSupportPrefixRouting = mAidRoutingManager.supportsAidPrefixRouting();
+        Assert.assertFalse(isSupportPrefixRouting);
+    }
+
+    @Test
+    public void testSupportsAidSubsetRouting() {
+        if (!mNfcSupported) return;
+
+        boolean isSupportSubsetRouting = mAidRoutingManager.supportsAidSubsetRouting();
+        Assert.assertFalse(isSupportSubsetRouting);
+    }
 }
