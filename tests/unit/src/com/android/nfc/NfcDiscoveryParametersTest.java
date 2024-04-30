@@ -60,17 +60,13 @@ public class NfcDiscoveryParametersTest {
     }
 
 
-    private NfcDiscoveryParameters computeDiscoveryParameters(boolean isP2pEnable) {
+    private NfcDiscoveryParameters computeDiscoveryParameters() {
         // Recompute discovery parameters based on screen state
         NfcDiscoveryParameters.Builder paramsBuilder = NfcDiscoveryParameters.newBuilder();
         paramsBuilder.setTechMask(1);
         paramsBuilder.setEnableLowPowerDiscovery(true);
         paramsBuilder.setEnableHostRouting(true);
-        if (isP2pEnable) {
-            paramsBuilder.setEnableP2p(true);
-        } else {
-            paramsBuilder.setEnableReaderMode(true);
-        }
+        paramsBuilder.setEnableReaderMode(true);
         return paramsBuilder.build();
     }
 
@@ -78,18 +74,9 @@ public class NfcDiscoveryParametersTest {
     public void testGetTechMask() {
         if (!mNfcSupported) return;
 
-        NfcDiscoveryParameters nfcDiscoveryParameters = computeDiscoveryParameters(false);
+        NfcDiscoveryParameters nfcDiscoveryParameters = computeDiscoveryParameters();
         int techMask = nfcDiscoveryParameters.getTechMask();
         Assert.assertEquals(1, techMask);
-    }
-
-    @Test
-    public void testShouldEnableP2p() {
-        if (!mNfcSupported) return;
-
-        NfcDiscoveryParameters nfcDiscoveryParameters = computeDiscoveryParameters(false);
-        boolean shouldP2pEnable = nfcDiscoveryParameters.shouldEnableP2p();
-        Assert.assertFalse(shouldP2pEnable);
     }
 
     @Test
@@ -109,7 +96,7 @@ public class NfcDiscoveryParametersTest {
         Assert.assertFalse(shouldEnableReaderMode);
         Assert.assertFalse(shouldEnableHostRouting);
 
-        nfcDiscoveryParameters = computeDiscoveryParameters(false);
+        nfcDiscoveryParameters = computeDiscoveryParameters();
         shouldEnableDiscovery = nfcDiscoveryParameters.shouldEnableDiscovery();
         shouldEnableLowPowerDiscovery = nfcDiscoveryParameters.shouldEnableLowPowerDiscovery();
         shouldEnableReaderMode = nfcDiscoveryParameters.shouldEnableReaderMode();
