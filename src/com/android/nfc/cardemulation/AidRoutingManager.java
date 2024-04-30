@@ -54,6 +54,7 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.List;
 import java.util.ArrayList;
@@ -242,11 +243,13 @@ public class AidRoutingManager {
     //resolution, is routing required or not?
     private boolean isAidEntryUpdated(HashMap<String, Integer> currRouteForAid,
                                                 Map.Entry<String, Integer> aidEntry,
-                                                HashMap<String, Integer> prevPowerForAid){
-        if((currRouteForAid.get(aidEntry.getKey()) != aidEntry.getValue())||
-            (mPowerForAid.get(aidEntry.getKey()) != prevPowerForAid.get(aidEntry.getKey()))){
-                return true;
-            }
+                                                HashMap<String, Integer> prevPowerForAid) {
+        if(!Objects.equals(currRouteForAid.get(aidEntry.getKey()), aidEntry.getValue()) ||
+            !Objects.equals(
+                mPowerForAid.get(aidEntry.getKey()),
+                prevPowerForAid.get(aidEntry.getKey()))) {
+            return true;
+        }
         return false;
     }
 
