@@ -5276,7 +5276,8 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                     }
                 }
                 int dispatchResult = mNfcDispatcher.dispatchTag(tag);
-                if (dispatchResult == NfcDispatcher.DISPATCH_FAIL && !mInProvisionMode) {
+                if (dispatchResult == NfcDispatcher.DISPATCH_FAIL && !mInProvisionMode
+                        && !isEndPointRemovalDetectionSupported()) {
                     if (DBG) Log.d(TAG, "Tag dispatch failed");
                     unregisterObject(tagEndpoint.getHandle());
                     if (mPollDelayTime > NO_POLL_DELAY) {
@@ -5427,21 +5428,27 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         }
     }
 
-    void scheduleAppInactivityDetectionTask() {
+    boolean isEndPointRemovalDetectionSupported() {
         if(!mDeviceHost.isRemovalDetectionInPollModeSupported()) {
-            if (DBG) Log.d(TAG, "Removal Detection mode is not supported");
-            return;
+            Log.d(TAG, "Removal Detection mode is not supported");
+            return false;
         }
-        if (mAppInActivityDetectionTime >= MIN_RF_REMOVAL_DETECTION_TIMEOUT &&
+        if (!(mAppInActivityDetectionTime >= MIN_RF_REMOVAL_DETECTION_TIMEOUT &&
                 (mTagRemovalDetectionWaitTime >= MIN_RF_REMOVAL_DETECTION_TIMEOUT &&
-                 mTagRemovalDetectionWaitTime <= MAX_RF_REMOVAL_DETECTION_TIMEOUT)) {
+                 mTagRemovalDetectionWaitTime <= MAX_RF_REMOVAL_DETECTION_TIMEOUT))) {
+            Log.d(TAG, "Unexpected Removal Detection wait time");
+            return false;
+        }
+        return true;
+    }
+
+    void scheduleAppInactivityDetectionTask() {
+        if (isEndPointRemovalDetectionSupported()) {
             clearAppInactivityDetectionContext();
             mAppInActivityDetectionTimer = new Timer();
             AppInActivityHandlerTask task = new AppInActivityHandlerTask();
             mAppInActivityDetectionTimer.schedule(task,mAppInActivityDetectionTime);
             Log.d(TAG, "App Inactivity detection task is scheduled");
-        } else {
-            if (DBG) Log.d(TAG, "Unexpected Removal Detection wait time");
         }
     }
 
