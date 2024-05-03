@@ -1676,8 +1676,9 @@ void NfcTag::connectionEventHandler(uint8_t event, tNFA_CONN_EVT_DATA* data) {
       }
       break;
 #if (NXP_EXTNS == TRUE)
-    case NFA_RF_REMOVAL_DETECTION_FAIL_EVT:
-          [[fallthrough]];
+    case NFA_RF_REMOVAL_DETECTION_EVT:
+      if (NFA_STATUS_OK == data->status) return;
+      [[fallthrough]];
 #endif
     case NFA_DEACTIVATED_EVT:
  #if (NXP_EXTNS == TRUE)

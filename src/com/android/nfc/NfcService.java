@@ -1043,9 +1043,9 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
 
         mPollingDisableAllowed = mContext.getResources().getBoolean(R.bool.polling_disable_allowed);
         mAppInActivityDetectionTime =
-            mContext.getResources().getInteger(R.integer.app_inactivity_detection_time);
+            mContext.getResources().getInteger(R.integer.background_low_power_tag_removal_enable_time);
         mTagRemovalDetectionWaitTime =
-            mContext.getResources().getInteger(R.integer.tag_removal_detection_wait_time);
+            mContext.getResources().getInteger(R.integer.tag_removal_detection_max_wait_time);
         // Make sure this is only called when object construction is complete.
         NfcServiceManager manager = NfcFrameworkInitializer.getNfcServiceManager();
         if (manager == null) {

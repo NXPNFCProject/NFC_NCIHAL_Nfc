@@ -41,8 +41,8 @@
             <item name="antenna_x" type="array" />
             <item name="antenna_y" type="array" />
             <item name="nfc_observe_mode_supported" type="bool" />
-            <item name="app_inactivity_detection_time" type="integer" />
-            <item name="tag_removal_detection_wait_time" type="integer" />
+            <item name="background_low_power_tag_removal_enable_time" type="integer" />
+            <item name="tag_removal_detection_max_wait_time" type="integer" />
           <!-- Params from config.xml that can be overlaid -->
 
           <!-- Params from strings.xml that can be overlaid -->
