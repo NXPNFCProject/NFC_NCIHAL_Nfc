@@ -992,11 +992,13 @@ void NfcTag::fillNativeNfcTagMembers4(JNIEnv* e, jclass tag_cls, jobject tag,
       merge_sak = (merge_sak | mTechParams[i].param.pa.sel_rsp);
     }
     for (int i = 0; i < mNumTechList; i++) {
-      mTechParams[i].param.pa.sel_rsp = merge_sak;
-      actBytes.reset(e->NewByteArray(1));
-      e->SetByteArrayRegion(actBytes.get(), 0, 1,
-                            (jbyte*)&mTechParams[i].param.pa.sel_rsp);
-      e->SetObjectArrayElement(techActBytes.get(), i, actBytes.get());
+      if (TARGET_TYPE_ISO14443_3A == mTechList[i]) {
+        mTechParams[i].param.pa.sel_rsp = merge_sak;
+        actBytes.reset(e->NewByteArray(1));
+        e->SetByteArrayRegion(actBytes.get(), 0, 1,
+                              (jbyte*)&mTechParams[i].param.pa.sel_rsp);
+        e->SetObjectArrayElement(techActBytes.get(), i, actBytes.get());
+      }
     }
   }
 
