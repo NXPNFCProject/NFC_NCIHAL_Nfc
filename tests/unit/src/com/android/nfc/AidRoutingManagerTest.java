@@ -74,6 +74,7 @@ public class AidRoutingManagerTest {
         mStaticMockSession = ExtendedMockito.mockitoSession()
                 .mockStatic(RoutingOptionManager.class)
                 .mockStatic(NfcService.class)
+                .mockStatic(NfcStatsLog.class)
                 .strictness(Strictness.LENIENT)
                 .startMocking();
 
@@ -134,5 +135,22 @@ public class AidRoutingManagerTest {
 
         boolean isSupportSubsetRouting = mAidRoutingManager.supportsAidSubsetRouting();
         Assert.assertFalse(isSupportSubsetRouting);
+    }
+
+    @Test
+    public void testConfigureRoutingErrorOccurred() {
+        if (!mNfcSupported) return;
+
+        NfcService nfcService = mock(NfcService.class);
+        when(NfcService.getInstance()).thenReturn(nfcService);
+        when(nfcService.getNciVersion()).thenReturn(NfcService.NCI_VERSION_2_0);
+        HashMap<String, AidRoutingManager.AidEntry> aidEntryMap = new HashMap<>();
+        boolean isConfigureRouting = mAidRoutingManager.configureRouting(aidEntryMap, true);
+        Assert.assertTrue(isConfigureRouting);
+        ExtendedMockito.verify(() -> NfcStatsLog.write(
+                NfcStatsLog.NFC_ERROR_OCCURRED,
+                NfcStatsLog.NFC_ERROR_OCCURRED__TYPE__AID_OVERFLOW,
+                0,
+                0));
     }
 }
