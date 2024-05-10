@@ -2978,16 +2978,6 @@ static void nfcManager_doSetP2pTargetModes(JNIEnv*, jobject, jint modes) {
   LOG(DEBUG) << StringPrintf("%s: modes=0x%X", __func__, modes);
 }
 
-static void nfcManager_doEnableScreenOffSuspend(JNIEnv* e, jobject o) {
-  PowerSwitch::getInstance().setScreenOffPowerState(
-      PowerSwitch::POWER_STATE_FULL);
-}
-
-static void nfcManager_doDisableScreenOffSuspend(JNIEnv* e, jobject o) {
-  PowerSwitch::getInstance().setScreenOffPowerState(
-      PowerSwitch::POWER_STATE_OFF);
-}
-
 /*******************************************************************************
 **
 ** Function:        nfcManager_getIsoDepMaxTransceiveLength
@@ -3305,13 +3295,7 @@ static JNINativeMethod gMethods[] = {
 
     {"doSetP2pTargetModes", "(I)V", (void*)nfcManager_doSetP2pTargetModes},
 
-    {"doEnableScreenOffSuspend", "()V",
-     (void*)nfcManager_doEnableScreenOffSuspend},
-
     {"doSetScreenState", "(I)V", (void*)nfcManager_doSetScreenState},
-
-    {"doDisableScreenOffSuspend", "()V",
-     (void*)nfcManager_doDisableScreenOffSuspend},
 
     {"doDump", "(Ljava/io/FileDescriptor;)V", (void*)nfcManager_doDump},
 

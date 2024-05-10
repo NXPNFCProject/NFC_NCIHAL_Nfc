@@ -258,10 +258,6 @@ public interface DeviceHost {
 
     void dump(FileDescriptor fd);
 
-    boolean enableScreenOffSuspend();
-
-    boolean disableScreenOffSuspend();
-
     public void doSetScreenState(int screen_state_mask);
 
     public void doResonantFrequency(boolean isResonantFreq);
