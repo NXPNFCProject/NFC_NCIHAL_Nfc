@@ -47,6 +47,11 @@ android_app {
     // min_sdk_version: "VanillaIceCream",
     // sdk_version: "module_current",
     jni_libs: ["libnfc_nci_jni"],
+    required: [
+        // Provide a default libnfc-nci.conf in /system/etc for devices that
+        // does not ship one in /product
+        "libnfc-nci.conf-default",
+    ],
     libs: [
         "com.nxp.nfc",
         "framework-annotations-lib",
