@@ -29,7 +29,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  Copyright 2018-2024 NXP
+ *  Copyright 2018-2025 NXP
  *
  ******************************************************************************/
 
@@ -777,6 +777,9 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
           TAG_OPERATION::TAG_RECONNECT_OPERATION);
       if (tagStat == NfcTagExtns::TAG_STATUS_FAILED) break;
       if (tagStat == NfcTagExtns::TAG_STATUS_STANDARD) {
+          natTag.setLastSelectedTag(
+              natTag.mTechHandles[sCurrentConnectedHandle],
+              natTag.mTechLibNfcTypes[sCurrentConnectedHandle]);
 #endif
 
           LOG(DEBUG) << StringPrintf("%s: select interface %u", __func__,

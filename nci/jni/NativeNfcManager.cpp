@@ -29,7 +29,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  Copyright 2018-2024 NXP
+ *  Copyright 2018-2025 NXP
  *
  ******************************************************************************/
 #include <android-base/logging.h>
@@ -542,6 +542,11 @@ static void nfaConnectionCallback(uint8_t connEvent,
         LOG(ERROR) << StringPrintf(
             "%s: NFA_SELECT_RESULT_EVT error: status = %d", __func__,
             eventData->status);
+#if (NXP_EXTNS == TRUE)
+        if (NfcTag::getInstance().retrySelect() == NFA_STATUS_OK) {
+          break;
+        }
+#endif
         NFA_Deactivate(FALSE);
       }
       break;
@@ -566,6 +571,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
         NfcTag::getInstance().setNumDiscNtf(0);
       }
 #if (NXP_EXTNS == TRUE)
+      NfcTag::getInstance().mSelectRetryCount = 0;
       nfcTagExtns.resetMfcTransceiveFlag();
       if (NfcSelfTest::GetInstance().SelfTestType != TEST_TYPE_NONE) {
         NfcSelfTest::GetInstance().ActivatedNtf_Cb();

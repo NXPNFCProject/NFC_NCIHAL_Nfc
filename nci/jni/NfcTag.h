@@ -33,7 +33,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  Copyright 2020-2024 NXP
+ *  Copyright 2020-2025 NXP
  *
  ******************************************************************************/
 #pragma once
@@ -85,6 +85,7 @@ class NfcTag {
   bool mIsMultiProtocolTag;
   int  mCurrentRequestedProtocol;
   uint8_t mNfcID0[4];
+  int mSelectRetryCount;
 #endif
   NfcStatsUtil* mNfcStatsUtil;
 
@@ -259,6 +260,29 @@ class NfcTag {
   **
   *******************************************************************************/
   bool isNfcCombiCard();
+
+  /*******************************************************************************
+  **
+  ** Function:        setLastSelectedTag
+  **
+  ** Description:     Set the last selected tag in case of multiprotocol tag
+  **
+  ** Returns:         NFA_STATUS_FAILED if tag is not found.
+  **
+  *******************************************************************************/
+  tNFA_STATUS setLastSelectedTag(int targetHandle, int nfcType);
+
+  /*******************************************************************************
+  **
+  ** Function:        retrySelect
+  **
+  ** Description:     Retry select last tag in case of multiprotocol tag
+  **
+  ** Returns:         NFA_STATUS_FAILED if it is not a multiprotocol tag or
+  **                  retry is already done. Otherwise it returns Select status.
+  **
+  *******************************************************************************/
+  tNFA_STATUS retrySelect();
 #endif
 
   /*******************************************************************************
@@ -597,6 +621,18 @@ bool isNfcForumT2T();
   **
   *******************************************************************************/
   void storeActivationParams();
+
+  /*******************************************************************************
+  **
+  ** Function:        selectTagAtIndex
+  **
+  ** Description:     When multiple tags are discovered, selects a tag at
+  **                  specified index
+  **
+  ** Returns:         Select result
+  **
+  *******************************************************************************/
+  tNFA_STATUS selectTagAtIndex(int index);
 #endif
 
   /*******************************************************************************
