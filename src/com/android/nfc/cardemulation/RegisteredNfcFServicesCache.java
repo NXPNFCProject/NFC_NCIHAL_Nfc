@@ -60,6 +60,7 @@ import android.util.Xml;
 import android.util.proto.ProtoOutputStream;
 
 import com.android.internal.annotations.GuardedBy;
+import com.android.nfc.Utils;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -778,7 +779,7 @@ public class RegisteredNfcFServicesCache {
                 for (UserHandle uh : mUserHandles) {
                     UserManager um = mContext.createContextAsUser(
                             uh, /*flags=*/0).getSystemService(UserManager.class);
-                    pw.println("User " + um.getUserName() + " : ");
+                    pw.println("User " + Utils.maskSubstring(um.getUserName(), 3));
                     UserServices userServices = findOrCreateUserLocked(uh.getIdentifier());
                     for (NfcFServiceInfo service : userServices.services.values()) {
                         service.dump(pFd, pw, args);
