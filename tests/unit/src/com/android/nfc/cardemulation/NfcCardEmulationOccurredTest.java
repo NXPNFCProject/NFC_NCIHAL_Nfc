@@ -94,6 +94,7 @@ public final class NfcCardEmulationOccurredTest {
     public void setUp() {
         mStaticMockSession = ExtendedMockito.mockitoSession()
                 .mockStatic(NfcStatsLog.class)
+                .mockStatic(Flags.class)
                 .mockStatic(NfcService.class)
                 .strictness(Strictness.LENIENT)
                 .startMocking();
@@ -122,6 +123,7 @@ public final class NfcCardEmulationOccurredTest {
         aidResolveInfo.services.add(apduServiceInfo);
         when(mockAidCache.resolveAid(anyString())).thenReturn(aidResolveInfo);
         when(NfcService.getInstance()).thenReturn(mock(NfcService.class));
+        when(Flags.statsdCeEventsFlag()).thenReturn(false);
 
         InstrumentationRegistry.getInstrumentation().runOnMainSync(
                 () -> mHostEmulation = new HostEmulationManager(
