@@ -16,13 +16,17 @@
 
 package com.android.nfc;
 
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.pm.PackageManager;
+import android.nfc.cardemulation.NfcFServiceInfo;
+import android.os.UserHandle;
 import android.util.Log;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -49,7 +53,10 @@ public class EnableNfcFServiceTest {
     private static final String TAG = EnableNfcFServiceTest.class.getSimpleName();
     private boolean mNfcSupported;
     private MockitoSession mStaticMockSession;
+    private ComponentName mComponentName;
+    private NfcFServiceInfo mNfcFServiceInfo;
     private EnabledNfcFServices mEnabledNfcFServices;
+    private ForegroundUtils mForegroundUtils;
 
     @Before
     public void setUp() throws Exception {
@@ -57,6 +64,8 @@ public class EnableNfcFServiceTest {
                 .mockStatic(RoutingOptionManager.class)
                 .mockStatic(NfcService.class)
                 .mockStatic(NfcStatsLog.class)
+                .mockStatic(UserHandle.class)
+                .mockStatic(ForegroundUtils.class)
                 .strictness(Strictness.LENIENT)
                 .startMocking();
 
@@ -72,8 +81,15 @@ public class EnableNfcFServiceTest {
 
         };
 
+        mForegroundUtils = mock(ForegroundUtils.class);
+        when(ForegroundUtils.getInstance(
+                mockContext.getSystemService(ActivityManager.class))).thenReturn(mForegroundUtils);
         RegisteredNfcFServicesCache registeredNfcFServicesCache = mock(
                 RegisteredNfcFServicesCache.class);
+        mComponentName = mock(ComponentName.class);
+        mNfcFServiceInfo = mock(NfcFServiceInfo.class);
+        when(registeredNfcFServicesCache.getService(1, mComponentName)).thenReturn(
+                mNfcFServiceInfo);
         RegisteredT3tIdentifiersCache registeredT3tIdentifiersCache = mock(
                 RegisteredT3tIdentifiersCache.class);
 
@@ -115,5 +131,42 @@ public class EnableNfcFServiceTest {
         mEnabledNfcFServices.onHostEmulationDeactivated();
         isActivated = mEnabledNfcFServices.isActivated();
         Assert.assertFalse(isActivated);
+    }
+
+    @Test
+    public void testRegisterEnabledForegroundService() {
+        if (!mNfcSupported) return;
+
+        UserHandle userHandle = mock(UserHandle.class);
+        when(userHandle.getIdentifier()).thenReturn(1);
+        when(UserHandle.getUserHandleForUid(1)).thenReturn(userHandle);
+        when(mNfcFServiceInfo.getSystemCode()).thenReturn("Nfc");
+        when(mNfcFServiceInfo.getNfcid2()).thenReturn("NfcId");
+        when(mNfcFServiceInfo.getT3tPmm()).thenReturn("T3");
+        when(mForegroundUtils.registerUidToBackgroundCallback(mEnabledNfcFServices, 1)).thenReturn(
+                true);
+        boolean isRegistered = mEnabledNfcFServices.registerEnabledForegroundService(mComponentName,
+                1);
+        Assert.assertTrue(isRegistered);
+    }
+
+
+    @Test
+    public void testOnNfcDisabled() {
+        if (!mNfcSupported) return;
+
+        mEnabledNfcFServices.onNfcDisabled();
+        boolean isNfcDisabled = mEnabledNfcFServices.isNfcDisabled();
+        Assert.assertTrue(isNfcDisabled);
+    }
+
+    @Test
+    public void testOnUserSwitched() {
+        if (!mNfcSupported) return;
+
+        mEnabledNfcFServices.onUserSwitched(0);
+        boolean isUserSwitched = mEnabledNfcFServices.isUserSwitched();
+        Assert.assertTrue(isUserSwitched);
+
     }
 }

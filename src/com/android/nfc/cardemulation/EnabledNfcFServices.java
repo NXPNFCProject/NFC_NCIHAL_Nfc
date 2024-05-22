@@ -280,4 +280,14 @@ public class EnabledNfcFServices implements com.android.nfc.ForegroundUtils.Call
     public boolean isActivated() {
         return mActivated;
     }
+
+    @VisibleForTesting
+    public boolean isNfcDisabled() {
+        return !mActivated && mForegroundUid == -1;
+    }
+
+    @VisibleForTesting
+    public boolean isUserSwitched() {
+        return !mActivated && mForegroundUid == -1 && !mComputeFgRequested;
+    }
 }
