@@ -375,33 +375,24 @@ nfc_jni_native_data* getNative(JNIEnv* e, jobject o) {
 *******************************************************************************/
 static void handleRfDiscoveryEvent(tNFC_RESULT_DEVT* discoveredDevice) {
   NfcTag& natTag = NfcTag::getInstance();
-  natTag.setNumDiscNtf(natTag.getNumDiscNtf() + 1);
 
+  LOG(DEBUG) << StringPrintf("%s: ", __func__);
+
+  if (discoveredDevice->protocol != NFA_PROTOCOL_NFC_DEP) {
+    natTag.setNumDiscNtf(natTag.getNumDiscNtf() + 1);
+  }
   if (discoveredDevice->more == NCI_DISCOVER_NTF_MORE) {
     // there is more discovery notification coming
     return;
   }
 
-  bool isP2p = natTag.isP2pDiscovered();
-
   if (natTag.getNumDiscNtf() > 1) {
     natTag.setMultiProtocolTagSupport(true);
-    if (isP2p) {
-      // Remove NFC_DEP NTF count
-      // Skip NFC_DEP protocol in MultiProtocolTag select.
-      natTag.setNumDiscNtf(natTag.getNumDiscNtf() - 1);
-    }
   }
 
-  if (sP2pEnabled && !sReaderModeEnabled && isP2p) {
-    // select the peer that supports P2P
-    natTag.selectP2p();
-  }
-  else {
-    natTag.setNumDiscNtf(natTag.getNumDiscNtf() - 1);
-     // select the first of multiple tags that is discovered
-    natTag.selectFirstTag();
-  }
+  natTag.setNumDiscNtf(natTag.getNumDiscNtf() - 1);
+  // select the first of multiple tags that is discovered
+  natTag.selectFirstTag();
 }
 
 /*******************************************************************************
