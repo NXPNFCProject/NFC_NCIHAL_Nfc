@@ -153,4 +153,22 @@ public class AidRoutingManagerTest {
                 0,
                 0));
     }
+
+    @Test
+    public void testConfigureRouting() {
+        if (!mNfcSupported) return;
+
+        NfcService nfcService = mock(NfcService.class);
+        when(NfcService.getInstance()).thenReturn(nfcService);
+        when(nfcService.getNciVersion()).thenReturn(NfcService.NCI_VERSION_2_0);
+        HashMap<String, AidRoutingManager.AidEntry> aidEntryMap = new HashMap<>();
+        aidEntryMap.put("aidEntry", mock(AidRoutingManager.AidEntry.class));
+        boolean isConfigureRouting = mAidRoutingManager.configureRouting(aidEntryMap, true);
+        Assert.assertTrue(isConfigureRouting);
+        ExtendedMockito.verify(() -> NfcStatsLog.write(
+                NfcStatsLog.NFC_ERROR_OCCURRED,
+                NfcStatsLog.NFC_ERROR_OCCURRED__TYPE__AID_OVERFLOW,
+                0,
+                0));
+    }
 }

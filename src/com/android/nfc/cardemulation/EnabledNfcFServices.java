@@ -51,6 +51,7 @@ import com.android.nfc.ForegroundUtils;
 
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
+import androidx.annotation.VisibleForTesting;
 
 
 public class EnabledNfcFServices implements com.android.nfc.ForegroundUtils.Callback {
@@ -273,5 +274,10 @@ public class EnabledNfcFServices implements com.android.nfc.ForegroundUtils.Call
             proto.write(EnabledNfcFServicesProto.COMPUTE_FG_REQUESTED, mComputeFgRequested);
             proto.write(EnabledNfcFServicesProto.FOREGROUND_UID, mForegroundUid);
         }
+    }
+
+    @VisibleForTesting
+    public boolean isActivated() {
+        return mActivated;
     }
 }

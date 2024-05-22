@@ -65,7 +65,7 @@ public class ForegroundUtilsTest {
         mActivityManager = mock(ActivityManager.class);
 
         InstrumentationRegistry.getInstrumentation().runOnMainSync(
-                () -> mForegroundUtils = ForegroundUtils.getInstance(mActivityManager));
+                () -> mForegroundUtils = new ForegroundUtils(mActivityManager));
         Assert.assertNotNull(mForegroundUtils);
     }
 
