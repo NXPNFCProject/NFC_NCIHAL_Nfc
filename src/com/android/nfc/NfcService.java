@@ -4521,7 +4521,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                     DeviceHost.TagDisconnectedCallback callback =
                             new DeviceHost.TagDisconnectedCallback() {
                                 @Override
-                                public void onTagDisconnected(long handle) {
+                                public void onTagDisconnected() {
                                     mCookieUpToDate = -1;
                                     clearAppInactivityDetectionContext();
                                     if((mScreenState > ScreenStateHelper.SCREEN_STATE_ON_LOCKED)) {
