@@ -33,6 +33,8 @@
 ******************************************************************************/
 #pragma once
 
+#include <vector>
+
 #include "NfcJniUtil.h"
 #include "nfa_hci_api.h"
 #include "nfa_hci_defs.h"
