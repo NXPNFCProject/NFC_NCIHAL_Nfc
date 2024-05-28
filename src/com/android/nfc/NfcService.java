@@ -410,6 +410,8 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
 
     //Transit setconfig status
     public static final int TRANSIT_SETCONFIG_STAT_SUCCESS = 0x00;
+    public static final int TRANSIT_CONFIG_REQUIRE_NFC_RESET = 0x01;
+    public static final int TRANSIT_CONFIG_REQUIRE_RF_RESET = 0x02;
     public static final int TRANSIT_SETCONFIG_STAT_FAILED  = 0xFF;
 
     // Timeout to re-apply routing if a tag was present and we postponed it
@@ -3110,18 +3112,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
             return;
         }
 
-        @Override
-        public int setConfig(String configs , String pkg) {
-            Log.e(TAG, "Setting configs for Transit" );
-            /*Check permissions*/
-            NfcPermissions.enforceAdminPermissions(mContext);
-            /*Check if any NFC transactions are ongoing*/
-            if(mDeviceHost.isNfccBusy())
-            {
-                Log.e(TAG, "NFCC is busy.." );
-                return TRANSIT_SETCONFIG_STAT_FAILED;
-            }
-            /*check if format of configs is fine*/
+        private int updateConfigParamsToFile(String configs) {
             /*Save configurations to file*/
             FileWriter fw = null;
             try {
@@ -3129,19 +3120,18 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                 if(configs == null)
                 {
                     if(newTextFile.delete()){
-                        Log.e(TAG, "Removing transit config file. Taking default Value" );
-                    }else{
+                        if (DBG) Log.e(TAG,
+                            "Removing transit config file. Taking default Value" );
+                    } else {
                         System.out.println("Error taking defualt value");
                     }
-                }
-                else
-                {
+                } else {
                     fw = new FileWriter(newTextFile);
                     fw.write(configs);
-                    Log.e(TAG, "File Written to libnfc-nxpTransit.conf successfully" );
+                    if (DBG) Log.d(TAG,
+                        "File Written to libnfc-nxpTransit.conf successfully" );
                 }
                 newTextFile = null;
-                mDeviceHost.setTransitConfig(configs);
             } catch (Exception e) {
                 e.printStackTrace();
                 return TRANSIT_SETCONFIG_STAT_FAILED;
@@ -3155,15 +3145,74 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                 }
               }
             }
+            return TRANSIT_SETCONFIG_STAT_SUCCESS;
+        }
+        private int checkResetRequiredForSetConfig(String configs) {
+            if (DBG) Log.d(TAG, "Setting configs for Transit" );
+            if(configs == null ) {
+                updateConfigParamsToFile(configs);
+                return TRANSIT_CONFIG_REQUIRE_NFC_RESET;
+            }
+            if(configs.startsWith("UPDATE_") == true) {
+                String[] lines = configs.split("\n");
+                for (String token : lines) {
+                    if(token.startsWith("UPDATE_") == false) {
+                        if (DBG)
+                            Log.d(TAG,
+                                "Unexpected config parameters combination" + token);
+                        return TRANSIT_SETCONFIG_STAT_FAILED;
+                    }
+                }
+                return TRANSIT_CONFIG_REQUIRE_RF_RESET;
+            } else {
+                /*check if format of configs is fine*/
+                String[] lines = configs.split("\n");
+                for (String token : lines) {
+                    if(token.startsWith("UPDATE_") == true) {
+                        if (DBG) Log.e(TAG,
+                            "Unexpected config parameters combination" + token);
 
-            /*restart NFC service*/
+                        return TRANSIT_SETCONFIG_STAT_FAILED;
+                    }
+                }
+                int status = updateConfigParamsToFile(configs);
+                if (status != TRANSIT_SETCONFIG_STAT_SUCCESS)
+                    return TRANSIT_SETCONFIG_STAT_FAILED;
+
+                return TRANSIT_CONFIG_REQUIRE_NFC_RESET;
+            }
+        }
+
+        @Override
+        public int setConfig(String configs , String pkg) {
+            if (DBG) Log.d(TAG, "Setting configs for Transit" );
+            /*Check permissions*/
+            NfcPermissions.enforceAdminPermissions(mContext);
+            /*Check if any NFC transactions are ongoing*/
+            if(mDeviceHost.isNfccBusy())
+            {
+                if (DBG) Log.d(TAG, "NFCC is busy.." );
+                return TRANSIT_SETCONFIG_STAT_FAILED;
+            }
+            int status = checkResetRequiredForSetConfig(configs);
             try {
-                mNfcAdapter.disable(true);
-                WaitForAdapterChange(NfcAdapter.STATE_OFF);
-                mNfcAdapter.enable();
-                WaitForAdapterChange(NfcAdapter.STATE_ON);
+                if(status == TRANSIT_CONFIG_REQUIRE_RF_RESET) {
+                    mDeviceHost.disableDiscovery();
+                    mDeviceHost.setTransitConfig(configs);
+                    NfcDiscoveryParameters params = computeDiscoveryParameters(mScreenState);
+                    boolean shouldRestart = mCurrentDiscoveryParameters.shouldEnableDiscovery();
+                    mDeviceHost.enableDiscovery(params, shouldRestart);
+                } else if (status == TRANSIT_CONFIG_REQUIRE_NFC_RESET) {
+                    mDeviceHost.setTransitConfig(configs);
+                    mNfcAdapter.disable(true);
+                    WaitForAdapterChange(NfcAdapter.STATE_OFF);
+                    mNfcAdapter.enable();
+                    WaitForAdapterChange(NfcAdapter.STATE_ON);
+                } else {
+                    return TRANSIT_SETCONFIG_STAT_FAILED;
+                }
             } catch (Exception e) {
-                Log.e(TAG, "Unable to restart NFC Service");
+                if (DBG) Log.d(TAG, "Update set RF configurations failed");
                 e.printStackTrace();
                 return TRANSIT_SETCONFIG_STAT_FAILED;
             }
