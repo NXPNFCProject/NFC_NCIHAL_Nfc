@@ -1021,11 +1021,10 @@ tNFA_TECHNOLOGY_MASK RoutingManager::updateEeTechRouteSetting() {
     hostTechMask |= NFA_TECHNOLOGY_MASK_B;
     hostTechMask &= mHostListenTechMask;
 
-    nfaStat = NFA_EeSetDefaultTechRouting(
-        NFC_DH_ID, hostTechMask, mSecureNfcEnabled ? 0 : hostTechMask, 0,
-        mSecureNfcEnabled ? 0 : hostTechMask,
-        mSecureNfcEnabled ? 0 : hostTechMask,
-        mSecureNfcEnabled ? 0 : hostTechMask);
+    nfaStat = NFA_EeSetDefaultTechRouting(NFC_DH_ID, hostTechMask, 0, 0,
+                                          mSecureNfcEnabled ? 0 : hostTechMask,
+                                          mSecureNfcEnabled ? 0 : hostTechMask,
+                                          mSecureNfcEnabled ? 0 : hostTechMask);
     if (nfaStat != NFA_STATUS_OK)
       LOG(ERROR) << fn << "Failed to configure DH technology routing.";
     return hostTechMask;
