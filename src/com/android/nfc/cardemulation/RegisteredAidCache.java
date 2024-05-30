@@ -29,7 +29,7 @@
 *  See the License for the specific language governing permissions and
 *  limitations under the License.
 *
-*  Copyright 2018-2021 NXP
+*  Copyright 2018-2021, 2024 NXP
 *
 ******************************************************************************/
 package com.android.nfc.cardemulation;
@@ -176,7 +176,7 @@ public class RegisteredAidCache {
     boolean mRequiresScreenOnServiceExist = false;
 
     public RegisteredAidCache(Context context) {
-        this(context, new AidRoutingManager());
+        this(context, NfcService.getInstance().getAidRoutingCache());
     }
     @VisibleForTesting
     public RegisteredAidCache(Context context, AidRoutingManager routingManager) {
