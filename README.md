@@ -16,7 +16,7 @@
 | aosp-master              |  14.08.00 (PN557/PN560/SN100/SN110/SN220) |  NFC_AR_00_3E800_14.08.00_OpnSrc |
 | aosp-master              |  14.0B.00 (PN557/PN560/SN100/SN110/SN220) |  NFC_AR_00_3E800_14.0B.00_OpnSrc |
 | android-14.0.0_r2              |  14.0E.00 (PN557/PN560/SN100/SN110/SN220) |  NFC_AR_00_3E800_14.0E.00_OpnSrc |
-
+| android-14.0.0_r2              |  14.0F.00 (PN557/PN560/SN100/SN110/SN220/SN300) |  NFC_AR_00_3E800_14.0F.00_OpnSrc |
 
 
 
