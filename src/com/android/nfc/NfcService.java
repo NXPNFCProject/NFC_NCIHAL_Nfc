@@ -550,6 +550,8 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
     private Timer mAppInActivityDetectionTimer;
     private final int mPollDelayCountMax;
     private int mPollDelayCount;
+    private int mReadErrorCount;
+    private int mReadErrorCountMax;
     private boolean mPollDelayed;
 
     boolean mNotifyDispatchFailed;
@@ -1037,6 +1039,9 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         // Stage two: longer polling delay time after max_poll_delay_count
         mPollDelayTimeLong =
                 mContext.getResources().getInteger(R.integer.unknown_tag_polling_delay_long);
+        // Polling delay if read error found more than max count.
+        mReadErrorCountMax =
+                mContext.getResources().getInteger(R.integer.unknown_tag_read_error_count_max);
         mNotifyDispatchFailed =
             mContext.getResources().getBoolean(R.bool.enable_notify_dispatch_failed);
         mNotifyReadFailed = mContext.getResources().getBoolean(R.bool.enable_notify_read_failed);
@@ -1635,6 +1640,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                 // Disable delay polling when disabling
                 mPollDelayed = false;
                 mPollDelayCount = 0;
+                mReadErrorCount = 0;
                 mHandler.removeMessages(MSG_DELAY_POLLING);
                 mPollingDisableDeathRecipients.clear();
                 mReaderModeParams = null;
@@ -2151,6 +2157,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                         if (mPollDelayed) {
                             mHandler.removeMessages(MSG_DELAY_POLLING);
                             mPollDelayCount = 0;
+                            mReadErrorCount = 0;
                             mPollDelayed = false;
                             mDeviceHost.startStopPolling(true);
                             if (DBG) Log.d(TAG, "setReaderMode() polling is started");
@@ -4569,7 +4576,13 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                         // First try to see if this was a bad tag read
                         if (!tag.reconnect()) {
                             tag.disconnect();
+                            if (DBG) Log.d(TAG, "Read NDEF error");
                             if (mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED) {
+                                if (mReadErrorCount < mReadErrorCountMax) {
+                                    mReadErrorCount++;
+                                } else {
+                                    pollingDelay();
+                                }
                                 if (!sToast_debounce && mNotifyReadFailed) {
                                     Toast.makeText(mContext, R.string.tag_read_error,
                                                    Toast.LENGTH_SHORT).show();
@@ -5247,6 +5260,27 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
             }
         }
 
+        private void pollingDelay() {
+            if (mPollDelayTime <= NO_POLL_DELAY) return;
+            synchronized (NfcService.this) {
+                if (!mPollDelayed) {
+                    mPollDelayed = true;
+                    mDeviceHost.startStopPolling(false);
+                    int delayTime = mPollDelayTime;
+                    if (mPollDelayCount < mPollDelayCountMax) {
+                        mPollDelayCount++;
+                    } else {
+                        delayTime = mPollDelayTimeLong;
+                    }
+                    if (DBG) Log.d(TAG, "Polling delayed " + delayTime);
+                    mHandler.sendMessageDelayed(
+                            mHandler.obtainMessage(MSG_DELAY_POLLING), delayTime);
+                } else {
+                    if (DBG) Log.d(TAG, "Keep waiting for polling delay");
+                }
+            }
+        }
+
         private void dispatchTagEndpoint(TagEndpoint tagEndpoint, ReaderModeParams readerParams) {
             try {
                 /* Avoid setting mCookieUpToDate to negative values */
@@ -5288,23 +5322,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                     unregisterObject(tagEndpoint.getHandle());
                     if (mPollDelayTime > NO_POLL_DELAY) {
                         tagEndpoint.stopPresenceChecking();
-                        synchronized (NfcService.this) {
-                            if (!mPollDelayed) {
-                                int delayTime = mPollDelayTime;
-                                mPollDelayed = true;
-                                mDeviceHost.startStopPolling(false);
-                                if (mPollDelayCount < mPollDelayCountMax) {
-                                    mPollDelayCount++;
-                                } else {
-                                    delayTime = mPollDelayTimeLong;
-                                }
-                                if (DBG) Log.d(TAG, "Polling delayed " + delayTime);
-                                mHandler.sendMessageDelayed(
-                                        mHandler.obtainMessage(MSG_DELAY_POLLING), delayTime);
-                            } else {
-                                if (DBG) Log.d(TAG, "Keep waiting for polling delay");
-                            }
-                        }
+                        pollingDelay();
                     } else {
                         Log.d(TAG, "Keep presence checking.");
                     }
@@ -5332,6 +5350,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                 } else if (dispatchResult == NfcDispatcher.DISPATCH_SUCCESS) {
                     synchronized (NfcService.this) {
                         mPollDelayCount = 0;
+                        mReadErrorCount = 0;
                     }
                     if (mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED) {
                         mPowerManager.userActivity(SystemClock.uptimeMillis(),
@@ -5509,6 +5528,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                 if (action.equals(Intent.ACTION_SCREEN_ON)) {
                     synchronized (NfcService.this) {
                         mPollDelayCount = 0;
+                        mReadErrorCount = 0;
                     }
                 }
                 applyScreenState(mScreenStateHelper.checkScreenState());

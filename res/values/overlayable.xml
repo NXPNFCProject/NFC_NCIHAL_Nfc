@@ -32,6 +32,7 @@
             <item name="toast_debounce_time_ms" type="integer" />
             <item name="unknown_tag_polling_delay" type="integer" />
             <item name="unknown_tag_polling_delay_count_max" type="integer" />
+            <item name="unknown_tag_read_error_count_max" type="integer" />
             <item name="unknown_tag_polling_delay_long" type="integer" />
             <item name="config_skuSupportsSecureNfc" type="array" />
             <item name="antenna_blocked_alert_link" type="string" />

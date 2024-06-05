@@ -15,6 +15,7 @@
     <integer name="toast_debounce_time_ms">3000</integer>
     <integer name="unknown_tag_polling_delay">2000</integer>
     <integer name="unknown_tag_polling_delay_count_max">5</integer>
+    <integer name="unknown_tag_read_error_count_max">5</integer>
     <integer name="unknown_tag_polling_delay_long">30000</integer>
     <integer name="background_low_power_tag_removal_enable_time">20000</integer>
     <integer name="tag_removal_detection_max_wait_time">19</integer>
