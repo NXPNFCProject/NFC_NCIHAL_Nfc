@@ -32,7 +32,10 @@ android_test {
 
     platform_apis: true,
 
-    test_suites: ["device-tests"],
+    test_suites: [
+        "device-tests",
+        "device-platinum-tests",
+    ],
 
     instrumentation_for: "NfcNci",
 }
