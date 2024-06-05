@@ -16,6 +16,7 @@
 
 package com.android.nfc;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
@@ -207,6 +208,22 @@ public class HostNfcFEmulationManagerTest {
         userId = mHostNfcFEmulationManager.getServiceUserId();
         Assert.assertEquals(-1, userId);
         ExtendedMockito.verify(() -> Message.obtain(null, HostNfcFService.MSG_COMMAND_PACKET));
+    }
+
+    @Test
+    public void testOnHostEmulationDeactivated() {
+        if (!mNfcSupported) return;
+
+        testOnHostEmulationData();
+        ServiceConnection serviceConnection = mHostNfcFEmulationManager.getServiceConnection();
+        Message message = mock(Message.class);
+        when(Message.obtain(null, HostNfcFService.MSG_COMMAND_PACKET)).thenReturn(message);
+        serviceConnection.onServiceConnected(mock(ComponentName.class), mock(IBinder.class));
+        ComponentName serviceName = mHostNfcFEmulationManager.getServiceName();
+        Assert.assertNotNull(serviceName);
+        mHostNfcFEmulationManager.onHostEmulationDeactivated();
+        serviceName = mHostNfcFEmulationManager.getServiceName();
+        Assert.assertNull(serviceName);
     }
 }
 

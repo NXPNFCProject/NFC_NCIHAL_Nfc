@@ -487,4 +487,9 @@ public class HostNfcFEmulationManager {
         return mConnection;
     }
 
+    @VisibleForTesting
+    public ComponentName getServiceName() {
+        return mServiceName;
+    }
+
 }
