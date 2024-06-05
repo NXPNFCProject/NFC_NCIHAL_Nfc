@@ -470,4 +470,21 @@ public class HostNfcFEmulationManager {
         return null;
     }
 
+    @VisibleForTesting
+    public boolean isUserSwitched() {
+        if (mEnabledFgServiceName == null && mActiveService == null && mState == STATE_IDLE)
+            return true;
+        return false;
+    }
+
+    @VisibleForTesting
+    public int getServiceUserId() {
+        return mServiceUserId;
+    }
+
+    @VisibleForTesting
+    public ServiceConnection getServiceConnection() {
+        return mConnection;
+    }
+
 }
