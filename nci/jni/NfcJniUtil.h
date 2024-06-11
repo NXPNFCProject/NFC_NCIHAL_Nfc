@@ -135,7 +135,6 @@ struct nfc_jni_native_data {
 
   /* Cached objects */
   jobject cached_NfcTag;
-  jobject cached_P2pDevice;
 
   /* Secure Element selected */
   int seId;
@@ -173,7 +172,6 @@ int nfc_jni_get_nfc_socket_handle(JNIEnv* e, jobject o);
 struct nfc_jni_native_data* nfc_jni_get_nat(JNIEnv* e, jobject o);
 int register_com_android_nfc_NativeNfcManager(JNIEnv* e);
 int register_com_android_nfc_NativeNfcTag(JNIEnv* e);
-int register_com_android_nfc_NativeP2pDevice(JNIEnv* e);
 #if (NXP_EXTNS == TRUE)
 int register_com_android_nfc_NativeNfcSecureElement (JNIEnv *e);
 int register_com_android_nfc_NativeNfcMposManager (JNIEnv *e);
