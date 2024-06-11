@@ -2387,10 +2387,6 @@ static bool isListenMode(tNFA_ACTIVATED& activated) {
        activated.activate_ntf.rf_tech_param.mode) ||
       (NFC_DISCOVERY_TYPE_LISTEN_F ==
        activated.activate_ntf.rf_tech_param.mode) ||
-      (NFC_DISCOVERY_TYPE_LISTEN_A_ACTIVE ==
-       activated.activate_ntf.rf_tech_param.mode) ||
-      (NFC_DISCOVERY_TYPE_LISTEN_F_ACTIVE ==
-       activated.activate_ntf.rf_tech_param.mode) ||
       (NFC_DISCOVERY_TYPE_LISTEN_ISO15693 ==
        activated.activate_ntf.rf_tech_param.mode) ||
       (NFC_DISCOVERY_TYPE_LISTEN_B_PRIME ==

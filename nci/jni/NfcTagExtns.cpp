@@ -396,10 +396,6 @@ bool NfcTagExtns::isListenMode(tNFA_ACTIVATED& activated) {
        activated.activate_ntf.rf_tech_param.mode) ||
       (NFC_DISCOVERY_TYPE_LISTEN_F ==
        activated.activate_ntf.rf_tech_param.mode) ||
-      (NFC_DISCOVERY_TYPE_LISTEN_A_ACTIVE ==
-       activated.activate_ntf.rf_tech_param.mode) ||
-      (NFC_DISCOVERY_TYPE_LISTEN_F_ACTIVE ==
-       activated.activate_ntf.rf_tech_param.mode) ||
       (NFC_DISCOVERY_TYPE_LISTEN_ISO15693 ==
        activated.activate_ntf.rf_tech_param.mode) ||
       (NFC_DISCOVERY_TYPE_LISTEN_B_PRIME ==
@@ -882,8 +878,7 @@ tTagStatus NfcTagExtns::checkAndSkipNdef() {
  *******************************************************************************/
 void NfcTagExtns::setRfProtocol(tNFA_INTF_TYPE rfProtocol, uint8_t mode) {
   sTagActivatedProtocol = rfProtocol;
-  if (mode == NFC_DISCOVERY_TYPE_POLL_A ||
-      mode == NFC_DISCOVERY_TYPE_POLL_A_ACTIVE)
+  if (mode == NFC_DISCOVERY_TYPE_POLL_A)
     sTagActivatedMode = TARGET_TYPE_ISO14443_3A;
   else if (mode == NFC_DISCOVERY_TYPE_POLL_B ||
            mode == NFC_DISCOVERY_TYPE_POLL_B_PRIME)

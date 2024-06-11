@@ -406,8 +406,7 @@ void NfcTag::discoverTechnologies(tNFA_ACTIVATED& activationData) {
     // type-4 tag uses technology ISO-DEP and technology A or B
     mTechList[mNumTechList] =
         TARGET_TYPE_ISO14443_4;  // is TagTechnology.ISO_DEP by Java API
-    if ((NFC_DISCOVERY_TYPE_POLL_A == rfDetail.rf_tech_param.mode) ||
-        (NFC_DISCOVERY_TYPE_POLL_A_ACTIVE == rfDetail.rf_tech_param.mode)) {
+    if ((NFC_DISCOVERY_TYPE_POLL_A == rfDetail.rf_tech_param.mode)) {
       uint8_t fwi = rfDetail.intf_param.intf_param.pa_iso.fwi;
       if (fwi >= MIN_FWI && fwi <= MAX_FWI) {
         //2^MIN_FWI * 256 * 16 * 1000 / 13560000 is approximately 618
@@ -423,10 +422,7 @@ void NfcTag::discoverTechnologies(tNFA_ACTIVATED& activationData) {
     } else
 #endif
         if ((rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_POLL_A) ||
-            (rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_POLL_A_ACTIVE) ||
-            (rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_LISTEN_A) ||
-            (rfDetail.rf_tech_param.mode ==
-             NFC_DISCOVERY_TYPE_LISTEN_A_ACTIVE)) {
+            (rfDetail.rf_tech_param.mode == NFC_DISCOVERY_TYPE_LISTEN_A)) {
       mNumTechList++;
       mTechHandles[mNumTechList] = rfDetail.rf_disc_id;
       mTechLibNfcTypes[mNumTechList] = rfDetail.protocol;
@@ -839,9 +835,7 @@ void NfcTag::fillNativeNfcTagMembers3(JNIEnv* e, jclass tag_cls, jobject tag,
     LOG(DEBUG) << StringPrintf("%s: index=%d; rf tech params mode=%u", fn, i,
                                mTechParams[i].mode);
     if (NFC_DISCOVERY_TYPE_POLL_A == mTechParams[i].mode ||
-        NFC_DISCOVERY_TYPE_POLL_A_ACTIVE == mTechParams[i].mode ||
-        NFC_DISCOVERY_TYPE_LISTEN_A == mTechParams[i].mode ||
-        NFC_DISCOVERY_TYPE_LISTEN_A_ACTIVE == mTechParams[i].mode
+        NFC_DISCOVERY_TYPE_LISTEN_A == mTechParams[i].mode
 #if (NXP_EXTNS == TRUE)
         || NFC_DISCOVERY_TYPE_POLL_WLC == mTechParams[i].mode
 #endif
@@ -891,9 +885,7 @@ void NfcTag::fillNativeNfcTagMembers3(JNIEnv* e, jclass tag_cls, jobject tag,
         pollBytes.reset(e->NewByteArray(0));
       }
     } else if (NFC_DISCOVERY_TYPE_POLL_F == mTechParams[i].mode ||
-               NFC_DISCOVERY_TYPE_POLL_F_ACTIVE == mTechParams[i].mode ||
-               NFC_DISCOVERY_TYPE_LISTEN_F == mTechParams[i].mode ||
-               NFC_DISCOVERY_TYPE_LISTEN_F_ACTIVE == mTechParams[i].mode) {
+               NFC_DISCOVERY_TYPE_LISTEN_F == mTechParams[i].mode) {
       /****************
       see NFC Forum Type 3 Tag Operation Specification; sections 2.3.2, 2.3.1.2;
       see NFC Forum Digital Protocol Specification; sections 6.6.2;
@@ -1043,9 +1035,7 @@ void NfcTag::fillNativeNfcTagMembers4(JNIEnv* e, jclass tag_cls, jobject tag,
           TARGET_TYPE_ISO14443_4)  // is TagTechnology.ISO_DEP by Java API
       {
         if ((mTechParams[i].mode == NFC_DISCOVERY_TYPE_POLL_A) ||
-            (mTechParams[i].mode == NFC_DISCOVERY_TYPE_POLL_A_ACTIVE) ||
-            (mTechParams[i].mode == NFC_DISCOVERY_TYPE_LISTEN_A) ||
-            (mTechParams[i].mode == NFC_DISCOVERY_TYPE_LISTEN_A_ACTIVE)) {
+            (mTechParams[i].mode == NFC_DISCOVERY_TYPE_LISTEN_A)) {
           // see NFC Forum Digital Protocol specification, section 11.6.2, "RATS
           // Response"; search for "historical bytes";  copy historical bytes
           // into Java object;  the public API, IsoDep.getHistoricalBytes(),
@@ -1181,9 +1171,7 @@ void NfcTag::fillNativeNfcTagMembers5(JNIEnv* e, jclass tag_cls, jobject tag,
     e->SetByteArrayRegion(uid.get(), 0, len,
                           (jbyte*)&mTechParams[0].param.pk.uid);
   } else if (NFC_DISCOVERY_TYPE_POLL_A == mTechParams[0].mode ||
-             NFC_DISCOVERY_TYPE_POLL_A_ACTIVE == mTechParams[0].mode ||
-             NFC_DISCOVERY_TYPE_LISTEN_A == mTechParams[0].mode ||
-             NFC_DISCOVERY_TYPE_LISTEN_A_ACTIVE == mTechParams[0].mode) {
+             NFC_DISCOVERY_TYPE_LISTEN_A == mTechParams[0].mode) {
     LOG(DEBUG) << StringPrintf("%s: tech A", fn);
     len = mTechParams[0].param.pa.nfcid1_len;
     uid.reset(e->NewByteArray(len));
@@ -1229,9 +1217,7 @@ void NfcTag::fillNativeNfcTagMembers5(JNIEnv* e, jclass tag_cls, jobject tag,
     }
 #endif
   } else if (NFC_DISCOVERY_TYPE_POLL_F == mTechParams[0].mode ||
-             NFC_DISCOVERY_TYPE_POLL_F_ACTIVE == mTechParams[0].mode ||
-             NFC_DISCOVERY_TYPE_LISTEN_F == mTechParams[0].mode ||
-             NFC_DISCOVERY_TYPE_LISTEN_F_ACTIVE == mTechParams[0].mode) {
+             NFC_DISCOVERY_TYPE_LISTEN_F == mTechParams[0].mode) {
     uid.reset(e->NewByteArray(NFC_NFCID2_LEN));
     e->SetByteArrayRegion(uid.get(), 0, NFC_NFCID2_LEN,
                           (jbyte*)&mTechParams[0].param.pf.nfcid2);
@@ -1501,8 +1487,7 @@ bool NfcTag::isMifareDESFire() {
 
   for (int i = 0; i < mNumTechList; i++) {
     if ((mTechParams[i].mode == NFC_DISCOVERY_TYPE_POLL_A) ||
-        (mTechParams[i].mode == NFC_DISCOVERY_TYPE_LISTEN_A) ||
-        (mTechParams[i].mode == NFC_DISCOVERY_TYPE_LISTEN_A_ACTIVE)) {
+        (mTechParams[i].mode == NFC_DISCOVERY_TYPE_LISTEN_A)) {
       /* DESfire has one sak byte and 2 ATQA bytes */
       if ((mTechParams[i].param.pa.sens_res[0] == 0x44) &&
           (mTechParams[i].param.pa.sens_res[1] == 0x03) &&
