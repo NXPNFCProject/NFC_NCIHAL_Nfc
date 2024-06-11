@@ -227,28 +227,6 @@ class NfcTag {
 
   /*******************************************************************************
   **
-  ** Function:        isP2pDiscovered
-  **
-  ** Description:     Does the peer support P2P?
-  **
-  ** Returns:         True if the peer supports P2P.
-  **
-  *******************************************************************************/
-  bool isP2pDiscovered();
-
-  /*******************************************************************************
-  **
-  ** Function:        selectP2p
-  **
-  ** Description:     Select the preferred P2P technology if there is a choice.
-  **
-  ** Returns:         None
-  **
-  *******************************************************************************/
-  void selectP2p();
-
-  /*******************************************************************************
-  **
   ** Function:        selectFirstTag
   **
   ** Description:     When multiple tags are discovered, just select the first
