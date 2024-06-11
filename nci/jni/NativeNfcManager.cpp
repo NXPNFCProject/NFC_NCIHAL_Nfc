@@ -1892,10 +1892,7 @@ static void nfcManager_enableDiscovery(JNIEnv* e, jobject o,
 #endif
     startPolling_rfDiscoveryDisabled(tech_mask);
 
-    // Start P2P listening if tag polling was enabled
     if (sPollingEnabled) {
-      LOG(DEBUG) << StringPrintf("%s: Enable p2pListening", __func__);
-
       if (reader_mode && !sReaderModeEnabled) {
         sReaderModeEnabled = true;
         NFA_DisableListening();

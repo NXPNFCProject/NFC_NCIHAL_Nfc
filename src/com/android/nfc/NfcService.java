@@ -4106,16 +4106,6 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                 // Disconnect from tags
                 TagEndpoint tag = (TagEndpoint) o;
                 tag.disconnect();
-            } else if (o instanceof NfcDepEndpoint) {
-                // Disconnect from P2P devices
-                NfcDepEndpoint device = (NfcDepEndpoint) o;
-                if (device.getMode() == NfcDepEndpoint.MODE_P2P_TARGET) {
-                    // Remote peer is target, request disconnection
-                    device.disconnect();
-                } else {
-                    // Remote peer is initiator, we cannot disconnect
-                    // Just wait for field removal
-                }
             }
         }
     }
