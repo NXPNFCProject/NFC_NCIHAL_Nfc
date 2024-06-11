@@ -57,17 +57,7 @@ public final class NfcDiscoveryParameters {
             return this;
         }
 
-        public NfcDiscoveryParameters.Builder setEnableP2p(boolean enable) {
-            mParameters.mEnableP2p = enable;
-            return this;
-        }
-
         public NfcDiscoveryParameters build() {
-            if (mParameters.mEnableReaderMode &&
-                    (mParameters.mEnableLowPowerDiscovery || mParameters.mEnableP2p)) {
-                throw new IllegalStateException("Can't enable LPTD/P2P and reader mode " +
-                        "simultaneously");
-            }
             return mParameters;
         }
     }
@@ -79,7 +69,6 @@ public final class NfcDiscoveryParameters {
     private boolean mEnableLowPowerDiscovery = true;
     private boolean mEnableReaderMode = false;
     private boolean mEnableHostRouting = false;
-    private boolean mEnableP2p = false;
 
     public NfcDiscoveryParameters() {}
 
@@ -103,10 +92,6 @@ public final class NfcDiscoveryParameters {
         return mTechMask != 0 || mEnableHostRouting;
     }
 
-    public boolean shouldEnableP2p() {
-        return mEnableP2p;
-    }
-
     @Override
     public boolean equals(Object obj) {
         if (obj == this) {
@@ -120,8 +105,7 @@ public final class NfcDiscoveryParameters {
         return mTechMask == params.mTechMask &&
                 (mEnableLowPowerDiscovery == params.mEnableLowPowerDiscovery) &&
                 (mEnableReaderMode == params.mEnableReaderMode) &&
-                (mEnableHostRouting == params.mEnableHostRouting)
-                && (mEnableP2p == params.mEnableP2p);
+                (mEnableHostRouting == params.mEnableHostRouting);
     }
 
     @Override
@@ -135,7 +119,6 @@ public final class NfcDiscoveryParameters {
         sb.append("mEnableLPD: " + Boolean.toString(mEnableLowPowerDiscovery) + "\n");
         sb.append("mEnableReader: " + Boolean.toString(mEnableReaderMode) + "\n");
         sb.append("mEnableHostRouting: " + Boolean.toString(mEnableHostRouting) + "\n");
-        sb.append("mEnableP2p: " + Boolean.toString(mEnableP2p));
         return sb.toString();
     }
 
@@ -145,7 +128,6 @@ public final class NfcDiscoveryParameters {
         proto.write(DiscoveryParamsProto.ENABLE_LPD, mEnableLowPowerDiscovery);
         proto.write(DiscoveryParamsProto.ENABLE_READER, mEnableReaderMode);
         proto.write(DiscoveryParamsProto.ENABLE_HOST_ROUTING, mEnableHostRouting);
-        proto.write(DiscoveryParamsProto.ENABLE_P2P, mEnableP2p);
     }
 
     public static NfcDiscoveryParameters.Builder newBuilder() {

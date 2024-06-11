@@ -191,7 +191,7 @@ const char* gNativeExtFieldDetectClassName =
 void enableLastRfDiscovery();
 void storeLastDiscoveryParams(int technologies_mask, bool enable_lptd,
                               bool reader_mode, bool enable_host_routing,
-                              bool enable_p2p, bool restart);
+                              bool restart);
 #endif
 jmethodID  gCachedNfcManagerNotifySeListenActivated;
 jmethodID  gCachedNfcManagerNotifySeListenDeactivated;
@@ -1787,7 +1787,7 @@ static void nfcManager_enableDiscovery(JNIEnv* e, jobject o,
                                        jboolean enable_lptd,
                                        jboolean reader_mode,
                                        jboolean enable_host_routing,
-                                       jboolean enable_p2p, jboolean restart) {
+                                       jboolean restart) {
   tNFA_TECHNOLOGY_MASK tech_mask = DEFAULT_TECH_MASK;
   struct nfc_jni_native_data* nat = getNative(e, o);
 #if(NXP_EXTNS == TRUE)
@@ -1797,7 +1797,7 @@ static void nfcManager_enableDiscovery(JNIEnv* e, jobject o,
 
   waitIfRfStateActive();
   storeLastDiscoveryParams(technologies_mask, enable_lptd,
-        reader_mode, enable_host_routing ,enable_p2p, restart);
+        reader_mode, enable_host_routing, restart);
 #endif
   if (technologies_mask == -1 && nat)
     tech_mask = (tNFA_TECHNOLOGY_MASK)nat->tech_mask;
@@ -3149,7 +3149,7 @@ static JNINativeMethod gMethods[] = {
 
     {"getLfT3tMax", "()I", (void*)nfcManager_getLfT3tMax},
 
-    {"doEnableDiscovery", "(IZZZZZ)V", (void*)nfcManager_enableDiscovery},
+    {"doEnableDiscovery", "(IZZZZ)V", (void*)nfcManager_enableDiscovery},
 
     {"doStartStopPolling", "(Z)V", (void*)nfcManager_doStartStopPolling},
 
@@ -3559,18 +3559,16 @@ void enableLastRfDiscovery()
         mDiscParams.enable_lptd,
         mDiscParams.reader_mode,
         mDiscParams.enable_host_routing,
-        mDiscParams.enable_p2p,
         true);
 }
 
 void storeLastDiscoveryParams(int technologies_mask, bool enable_lptd,
-    bool reader_mode, bool enable_host_routing ,bool enable_p2p, bool restart)
+    bool reader_mode, bool enable_host_routing, bool restart)
 {
     LOG(DEBUG) << StringPrintf("%s: enter", __FUNCTION__);
     mDiscParams.technologies_mask = technologies_mask;
     mDiscParams.enable_lptd = enable_lptd;
     mDiscParams.reader_mode = reader_mode;
-    mDiscParams.enable_p2p = enable_p2p;
     mDiscParams.enable_host_routing = enable_host_routing;
     mDiscParams.restart = restart;
 }
