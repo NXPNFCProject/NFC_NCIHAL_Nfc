@@ -250,10 +250,6 @@ public interface DeviceHost {
 
     public int getAidTableSize();
 
-    void setP2pInitiatorModes(int modes);
-
-    void setP2pTargetModes(int modes);
-
     boolean getExtendedLengthApdusSupported();
 
     void dump(FileDescriptor fd);

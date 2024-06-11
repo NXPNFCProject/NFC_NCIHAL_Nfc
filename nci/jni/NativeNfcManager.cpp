@@ -2919,55 +2919,6 @@ static void nfcManager_doSetScreenState(JNIEnv* e, jobject o,
 
   prevScreenState = state;
 }
-/*******************************************************************************
-**
-** Function:        nfcManager_doSetP2pInitiatorModes
-**
-** Description:     Set P2P initiator's activation modes.
-**                  e: JVM environment.
-**                  o: Java object.
-**                  modes: Active and/or passive modes.  The values are
-*specified
-**                          in external/libnfc-nxp/inc/phNfcTypes.h.  See
-**                          enum phNfc_eP2PMode_t.
-**
-** Returns:         None.
-**
-*******************************************************************************/
-static void nfcManager_doSetP2pInitiatorModes(JNIEnv* e, jobject o,
-                                              jint modes) {
-  LOG(DEBUG) << StringPrintf("%s: modes=0x%X", __func__, modes);
-  struct nfc_jni_native_data* nat = getNative(e, o);
-
-  if (nat == NULL) {
-    LOG(ERROR) << StringPrintf("nat is null");
-    return;
-  }
-  tNFA_TECHNOLOGY_MASK mask = 0;
-  if (modes & 0x01) mask |= NFA_TECHNOLOGY_MASK_A;
-  if (modes & 0x02) mask |= NFA_TECHNOLOGY_MASK_F;
-  if (modes & 0x04) mask |= NFA_TECHNOLOGY_MASK_F;
-  if (modes & 0x08) mask |= NFA_TECHNOLOGY_MASK_A_ACTIVE;
-  if (modes & 0x10) mask |= NFA_TECHNOLOGY_MASK_F_ACTIVE;
-  if (modes & 0x20) mask |= NFA_TECHNOLOGY_MASK_F_ACTIVE;
-  nat->tech_mask = mask;
-}
-
-/*******************************************************************************
-**
-** Function:        nfcManager_doSetP2pTargetModes
-**
-** Description:     Set P2P target's activation modes.
-**                  e: JVM environment.
-**                  o: Java object.
-**                  modes: Active and/or passive modes.
-**
-** Returns:         None.
-**
-*******************************************************************************/
-static void nfcManager_doSetP2pTargetModes(JNIEnv*, jobject, jint modes) {
-  LOG(DEBUG) << StringPrintf("%s: modes=0x%X", __func__, modes);
-}
 
 /*******************************************************************************
 **
@@ -3280,11 +3231,6 @@ static JNINativeMethod gMethods[] = {
     {"doResetTimeouts", "()V", (void*)nfcManager_doResetTimeouts},
 
     {"doAbort", "(Ljava/lang/String;)V", (void*)nfcManager_doAbort},
-
-    {"doSetP2pInitiatorModes", "(I)V",
-     (void*)nfcManager_doSetP2pInitiatorModes},
-
-    {"doSetP2pTargetModes", "(I)V", (void*)nfcManager_doSetP2pTargetModes},
 
     {"doSetScreenState", "(I)V", (void*)nfcManager_doSetScreenState},
 
