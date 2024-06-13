@@ -78,11 +78,11 @@ public class AidRoutingManager {
     static final int AID_MATCHING_PREFIX_ONLY = 0x02;
     // Every routing table entry can be matched either exact or prefix or subset only
     static final int AID_MATCHING_EXACT_OR_SUBSET_OR_PREFIX = 0x03;
-
+    static final int INVALID_POWER_STATE = -1;
     int mDefaultIsoDepRoute;
     //Let mDefaultRoute as default aid route
     int mDefaultRoute;
-
+    int mPower_empty_AID = INVALID_POWER_STATE;
     int mMaxAidRoutingTableSize;
     int mDefaultAidRoute;
     final byte[] mOffHostRouteUicc;
@@ -469,6 +469,9 @@ public class AidRoutingManager {
                             entry.isOnHost = false;
                             default_route_power_state = RegisteredAidCache.POWER_STATE_ALL;
                         }
+                        if((mPower_empty_AID != INVALID_POWER_STATE) && (mPower_empty_AID != default_route_power_state))
+                            isPowerStateUpdated = true;
+                        mPower_empty_AID = default_route_power_state;
                         entry.aidInfo = RegisteredAidCache.AID_ROUTE_QUAL_PREFIX;
                         entry.power = default_route_power_state;
 
