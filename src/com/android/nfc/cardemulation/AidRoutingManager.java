@@ -82,7 +82,7 @@ public class AidRoutingManager {
     int mDefaultIsoDepRoute;
     //Let mDefaultRoute as default aid route
     int mDefaultRoute;
-    int mPower_empty_AID = INVALID_POWER_STATE;
+    int mPowerEmptyAid = INVALID_POWER_STATE;
     int mMaxAidRoutingTableSize;
     int mDefaultAidRoute;
     final byte[] mOffHostRouteUicc;
@@ -469,9 +469,9 @@ public class AidRoutingManager {
                             entry.isOnHost = false;
                             default_route_power_state = RegisteredAidCache.POWER_STATE_ALL;
                         }
-                        if((mPower_empty_AID != INVALID_POWER_STATE) && (mPower_empty_AID != default_route_power_state))
+                        if((mPowerEmptyAid != INVALID_POWER_STATE) && (mPowerEmptyAid != default_route_power_state))
                             isPowerStateUpdated = true;
-                        mPower_empty_AID = default_route_power_state;
+                        mPowerEmptyAid = default_route_power_state;
                         entry.aidInfo = RegisteredAidCache.AID_ROUTE_QUAL_PREFIX;
                         entry.power = default_route_power_state;
 
