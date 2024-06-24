@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- *  Copyright 2015-2023 NXP
+ *  Copyright 2015-2024 NXP
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,12 +33,19 @@
 #if (NXP_EXTNS == TRUE)
 using android::base::StringPrintf;
 
+typedef enum {
+  INVALID_LOG_LEVEL = -1,
+  LOG_TRACE_DISABLED,
+  LOG_TRACE_ENABLED,
+} logTraceLevel_t;
+
 typedef struct nxp_feature_data {
   SyncEvent NxpFeatureConfigEvt;
   Mutex mMutex;
   tNFA_STATUS wstatus;
   uint8_t rsp_data[255];
   uint8_t rsp_len;
+  uint8_t prev_trace_level = INVALID_LOG_LEVEL;
 } Nxp_Feature_Data_t;
 
 typedef enum {
@@ -163,21 +170,21 @@ tNFA_STATUS send_flush_ram_to_flash() {
  *******************************************************************************/
 void enableDisableLog(bool type) {
   bool nfc_debug_enabled = NfcConfig::getUnsigned(NAME_NFC_DEBUG_ENABLED, 1);
-  static bool prev_trace_level = nfc_debug_enabled;
-
+  if (gnxpfeature_conf.prev_trace_level == (uint8_t)INVALID_LOG_LEVEL)
+    gnxpfeature_conf.prev_trace_level = (uint8_t)nfc_debug_enabled;
   NfcAdaptation& theInstance = NfcAdaptation::GetInstance();
-
   if (android::suppressLogs) {
-    if (true == type) {
-      if (nfc_debug_enabled != prev_trace_level) {
-        nfc_debug_enabled = prev_trace_level;
-        theInstance.HalSetProperty("nfc.debug_enabled", "1");
+    if ((uint8_t)type != gnxpfeature_conf.prev_trace_level) {
+      if (true == type) {
+          nfc_debug_enabled = (uint8_t)LOG_TRACE_ENABLED;
+          theInstance.HalSetProperty("nfc.debug_enabled", "1");
+      } else if (false == type) {
+        if ((uint8_t)LOG_TRACE_DISABLED != nfc_debug_enabled) {
+          nfc_debug_enabled = (uint8_t)LOG_TRACE_DISABLED;
+          theInstance.HalSetProperty("nfc.debug_enabled", "0");
+        }
       }
-    } else if (false == type) {
-      if (0 != nfc_debug_enabled) {
-        nfc_debug_enabled = 0;
-        theInstance.HalSetProperty("nfc.debug_enabled", "0");
-      }
+      gnxpfeature_conf.prev_trace_level = nfc_debug_enabled;
     }
   }
 }
