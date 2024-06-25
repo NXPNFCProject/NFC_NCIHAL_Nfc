@@ -129,6 +129,7 @@ import com.android.nfc.cardemulation.AidRoutingManager;
 import com.android.nfc.cardemulation.CardEmulationManager;
 import com.android.nfc.cardemulation.util.StatsdUtils;
 import com.android.nfc.cardemulation.RegisteredAidCache;
+import com.android.nfc.cardemulation.RoutingOptionManager;
 import com.android.nfc.DeviceHost.DeviceHostListener;
 import com.android.nfc.DeviceHost.NfcDepEndpoint;
 import com.android.nfc.DeviceHost.TagEndpoint;
@@ -6184,6 +6185,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
     }
 
     public void updateDefaultAidRoute(int routeLoc) {
+        RoutingOptionManager mRoutingOptionManager = RoutingOptionManager.getInstance();
         Log.d(TAG, "updateDefaultAidRoute routeLoc:" + routeLoc);
         boolean isOverflow = (routeLoc != (GetDefaultRouteEntry() >> ROUTE_LOC_MASK));
 
@@ -6202,7 +6204,9 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                 mOverflowDefaultRoute &= 0xF9;
             }
         }
-        mHandler.sendEmptyMessage(MSG_RESET_AND_UPDATE_ROUTING_PARAMS);
+        if (!mRoutingOptionManager.isRoutingTableOverrided()) {
+           mHandler.sendEmptyMessage(MSG_RESET_AND_UPDATE_ROUTING_PARAMS);
+        }
     }
 
     public void addT4TNfceeAid() {
