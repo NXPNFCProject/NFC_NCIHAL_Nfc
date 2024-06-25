@@ -113,6 +113,7 @@ void getEeHandleList(tNFA_HANDLE *list, uint8_t* count);
   static const char* APP_NAME;
   static const tNFA_HANDLE EE_HANDLE_ESE = 0x4C0;
   static const tNFA_HANDLE EE_HANDLE_UICC = 0x480;
+  static const tNFA_HANDLE EE_HANDLE_DH = 0x400;
   static const uint8_t NFCEE_ID_ESE = 0x01;
   static const uint8_t NFCEE_ID_UICC = 0x02;
 

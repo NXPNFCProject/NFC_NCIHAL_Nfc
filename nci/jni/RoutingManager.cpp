@@ -911,6 +911,17 @@ tNFA_TECHNOLOGY_MASK RoutingManager::updateTechnologyABRoute(int route) {
   nfaStat = NFA_EeClearDefaultTechRouting(
       handleDefaultOffHostRoute,
       NFA_TECHNOLOGY_MASK_A | NFA_TECHNOLOGY_MASK_B | NFA_TECHNOLOGY_MASK_F);
+  int handleDefaultFelicaRoute =
+      SecureElement::getInstance().getEseHandleFromGenericId(
+          mDefaultFelicaRoute);
+  nfaStat = NFA_EeClearDefaultTechRouting(handleDefaultFelicaRoute,
+                                          NFA_TECHNOLOGY_MASK_F);
+  unsigned long num = 0;
+  num = NfcConfig::getUnsigned(NAME_DEFAULT_MIFARE_CLT_ROUTE, 0x00);
+  int handleDefaultMifareRoute =
+      SecureElement::getInstance().getEseHandleFromGenericId(num);
+  nfaStat = NFA_EeClearDefaultTechRouting(
+      handleDefaultMifareRoute, NFA_TECHNOLOGY_MASK_A | NFA_TECHNOLOGY_MASK_B);
 #else
   nfaStat = NFA_EeClearDefaultTechRouting(
       mDefaultOffHostRoute,
@@ -964,16 +975,17 @@ tNFA_TECHNOLOGY_MASK RoutingManager::updateEeTechRouteSetting() {
         seTechMask |= NFA_TECHNOLOGY_MASK_A;
       if (mEeInfo.ee_disc_info[i].lb_protocol != 0)
         seTechMask |= NFA_TECHNOLOGY_MASK_B;
-    }
-    if ((mDefaultFelicaRoute != 0) &&
-#if(NXP_EXTNS != TRUE)
-        (eeHandle == (mDefaultFelicaRoute | NFA_HANDLE_GROUP_EE))) {
-#else
-        (eeHandle == handleDefaultFelicaRoute)) {
-#endif
       if (mEeInfo.ee_disc_info[i].lf_protocol != 0)
         seTechMask |= NFA_TECHNOLOGY_MASK_F;
     }
+
+#if(NXP_EXTNS != TRUE)
+    if ((mDefaultFelicaRoute != 0) &&
+        (eeHandle == (mDefaultFelicaRoute | NFA_HANDLE_GROUP_EE))) {
+      if (mEeInfo.ee_disc_info[i].lf_protocol != 0)
+        seTechMask |= NFA_TECHNOLOGY_MASK_F;
+    }
+#endif
 
     // If OFFHOST_LISTEN_TECH_MASK exists,
     // filter out the unspecified technologies
@@ -1016,9 +1028,10 @@ tNFA_TECHNOLOGY_MASK RoutingManager::updateEeTechRouteSetting() {
   if (mDefaultOffHostRoute == NFC_DH_ID) {
     tNFA_TECHNOLOGY_MASK hostTechMask = 0;
     LOG(DEBUG) << StringPrintf(
-        "%s: Setting technology route to host with A and B type", fn);
+        "%s: Setting technology route to host with A,B and F type", fn);
     hostTechMask |= NFA_TECHNOLOGY_MASK_A;
     hostTechMask |= NFA_TECHNOLOGY_MASK_B;
+    hostTechMask |= NFA_TECHNOLOGY_MASK_F;
     hostTechMask &= mHostListenTechMask;
 
     nfaStat = NFA_EeSetDefaultTechRouting(NFC_DH_ID, hostTechMask, 0, 0,
@@ -1714,8 +1727,10 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
             "%s: enter >>>> max_tech_mask :%lx value :0x%x", fn, max_tech_mask,
             value);
         switch_on_mask = (power & 0x01) ? value : 0;
-        switch_off_mask = (power & 0x02) ? value : 0;
-        battery_off_mask = (power & 0x04) ? value : 0;
+        if (ee_handle != SecureElement::EE_HANDLE_0xF0) {
+          switch_off_mask = (power & 0x02) ? value : 0;
+          battery_off_mask = (power & 0x04) ? value : 0;
+        }
         screen_off_mask = (power & 0x08) ? value : 0;
         screen_lock_mask = (power & 0x10) ? value : 0;
         screen_off_lock_mask = (power & 0x20) ? value : 0;

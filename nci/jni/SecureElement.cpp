@@ -1078,36 +1078,34 @@ tNFA_STATUS SecureElement::SecElem_EeModeSet(uint16_t handle, uint8_t mode)
 ** Returns:         Information about an execution environment.
 **
 *******************************************************************************/
-jint SecureElement::getSETechnology(tNFA_HANDLE eeHandle)
-{
-    int tech_mask = 0x00;
-    //static const char fn [] = "SecureElement::getSETechnology";
-    // Get Fresh EE info.
-    if (! getEeInfo())
-    {
-        //ALOGE("%s: No updated eeInfo available", fn);
-    }
-
+jint SecureElement::getSETechnology(tNFA_HANDLE eeHandle) {
+  int tech_mask = 0x00;
+  // static const char fn [] = "SecureElement::getSETechnology";
+  // Get Fresh EE info.
+  if (!getEeInfo()) {
+    // ALOGE("%s: No updated eeInfo available", fn);
+  }
+  if (eeHandle == EE_HANDLE_DH) {
+    tech_mask = NfcConfig::getUnsigned(NAME_HOST_LISTEN_TECH_MASK, 0x07);
+  } else {
     tNFA_EE_INFO* eeinfo = findEeByHandle(eeHandle);
 
-    if(eeinfo!=NULL){
-        if(eeinfo->la_protocol != 0x00)
-        {
-            tech_mask |= 0x01;
-        }
+    if (eeinfo != NULL) {
+      if (eeinfo->la_protocol != 0x00) {
+        tech_mask |= 0x01;
+      }
 
-        if(eeinfo->lb_protocol != 0x00)
-        {
-            tech_mask |= 0x02;
-        }
+      if (eeinfo->lb_protocol != 0x00) {
+        tech_mask |= 0x02;
+      }
 
-        if(eeinfo->lf_protocol != 0x00)
-        {
-            tech_mask |= 0x04;
-        }
+      if (eeinfo->lf_protocol != 0x00) {
+        tech_mask |= 0x04;
+      }
     }
+  }
 
-    return tech_mask;
+  return tech_mask;
 }
 /*******************************************************************************
  **
