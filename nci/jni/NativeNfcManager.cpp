@@ -3520,6 +3520,14 @@ static jboolean nfcManager_doSetPowerSavingMode(JNIEnv* e, jobject o,
 }
 
 #if(NXP_EXTNS == TRUE)
+void setPollingEnabled(bool isPollingEnabled) {
+  sPollingEnabled = isPollingEnabled;
+}
+
+void setReaderModeEnabled(bool isReaderModeEnabled) {
+  sReaderModeEnabled = isReaderModeEnabled;
+}
+
 /*******************************************************************************
  **
  ** Function:        nfcManager_checkNfcStateBusy()
