@@ -46,8 +46,8 @@
     <string name="android_beam" msgid="1666446406999492763">"Android ബീം"</string>
     <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"ആപ്പിന് എക്‌സ്‌റ്റേണൽ സ്‌റ്റോറേജ് അനുമതി ഇല്ല. ഈ ഫയൽ ബീംചെയ്യാൻ ഇത് ആവശ്യമാണ്"</string>
     <string name="title_confirm_url_open" msgid="8069968913244794478">"ലിങ്ക് തുറക്കണോ?"</string>
-    <string name="summary_confirm_url_open" product="tablet" msgid="3353502750736192055">"നിങ്ങളുടെ ടാബ്‌ലെറ്റിന് NFC വഴി ഒരു ലിങ്ക് ലഭിച്ചു:"</string>
-    <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"നിങ്ങളുടെ ഫോണിന് NFC വഴി ഒരു ലിങ്ക് ലഭിച്ചു:"</string>
+    <string name="summary_confirm_url_open" msgid="1246398412196449226">"നിങ്ങളുടെ ഫോണിന് NFC വഴി ഒരു ലിങ്ക് ലഭിച്ചു:"</string>
+    <string name="summary_confirm_url_open_tablet" msgid="771152442325809851">"നിങ്ങളുടെ ടാബ്‌ലെറ്റിന് NFC വഴി ഒരു ലിങ്ക് ലഭിച്ചു:"</string>
     <string name="action_confirm_url_open" msgid="3458322738812921189">"ലിങ്ക് തുറക്കുക"</string>
     <string name="tag_read_error" msgid="2485274498885877547">"NFC റീഡ് ചെയ്യുന്നതിൽ പിശക്. വീണ്ടും ശ്രമിക്കുക."</string>
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"ഈ NFC ടാഗിനെ പിന്തുണയ്ക്കുന്ന ആപ്പുകളൊന്നുമില്ല"</string>

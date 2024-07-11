@@ -46,8 +46,8 @@
     <string name="android_beam" msgid="1666446406999492763">"Андройд Цацраг"</string>
     <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"Аппад Гадаад сангийн зөвшөөрөл алга. Энэ файлыг дамжуулахад энэ зөвшөөрөл шаардлагатай"</string>
     <string name="title_confirm_url_open" msgid="8069968913244794478">"Холбоосыг нээх үү?"</string>
-    <string name="summary_confirm_url_open" product="tablet" msgid="3353502750736192055">"Таны таблет NFC-р холбоос авсан байна:"</string>
-    <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"Таны утас NFC-р холбоос авсан байна:"</string>
+    <string name="summary_confirm_url_open" msgid="1246398412196449226">"Таны утас NFC-р холбоос авсан байна:"</string>
+    <string name="summary_confirm_url_open_tablet" msgid="771152442325809851">"Таны таблет NFC-р дамжуулан холбоос хүлээн авсан:"</string>
     <string name="action_confirm_url_open" msgid="3458322738812921189">"Холбоосыг нээх"</string>
     <string name="tag_read_error" msgid="2485274498885877547">"NFC-г уншихад алдаа гарлаа. Дахин оролдоно уу."</string>
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"Энэ NFC Шошгыг зохицуулах боломжтой дэмжигдсэн апп алга"</string>

@@ -46,8 +46,8 @@
     <string name="android_beam" msgid="1666446406999492763">"Android Лъч"</string>
     <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"Приложението няма разрешение за външно хранилище. То се изисква за излъчването на този файл"</string>
     <string name="title_confirm_url_open" msgid="8069968913244794478">"Да се отвори ли връзката?"</string>
-    <string name="summary_confirm_url_open" product="tablet" msgid="3353502750736192055">"Таблетът ви получи връзка през NFC:"</string>
-    <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"Телефонът ви получи връзка през NFC:"</string>
+    <string name="summary_confirm_url_open" msgid="1246398412196449226">"Телефонът ви получи връзка през NFC:"</string>
+    <string name="summary_confirm_url_open_tablet" msgid="771152442325809851">"Таблетът ви получи връзка през NFC:"</string>
     <string name="action_confirm_url_open" msgid="3458322738812921189">"Отваряне на връзката"</string>
     <string name="tag_read_error" msgid="2485274498885877547">"Грешка при четене за NFC. Опитайте отново."</string>
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"Няма приложение, което поддържа този маркер за NFC"</string>

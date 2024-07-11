@@ -13,6 +13,7 @@
 // limitations under the License.
 
 package {
+    default_team: "trendy_team_fwk_nfc",
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
@@ -27,18 +28,36 @@ android_app_certificate {
     certificate: "com.android.nfcservices",
 }
 
-apex {
+soong_config_module_type {
+    name: "custom_apex",
+    module_type: "apex",
+    config_namespace: "bootclasspath",
+    bool_variables: [
+        "nfc_apex_bootclasspath_fragment",
+    ],
+    properties: [
+        "bootclasspath_fragments",
+    ],
+}
+
+custom_apex {
     name: "com.android.nfcservices",
     manifest: "manifest.json",
-    // apps: ["NfcNci"],
-     multilib: {
+    // apps: ["NfcNciApex"],
+    multilib: {
         first: {
             // Extractor process runs only with the primary ABI.
             jni_libs: [
                 "libnfc_nci_jni",
             ],
         },
-     },
+    },
+    soong_config_variables: {
+        nfc_apex_bootclasspath_fragment: {
+            bootclasspath_fragments: ["com.android.nfcservices-bootclasspath-fragment"],
+        },
+    },
+
     required: [
         // Provide a default libnfc-nci.conf in /system/etc for devices that
         // does not ship one in /product
@@ -47,4 +66,78 @@ apex {
     key: "com.android.nfcservices.key",
     certificate: ":com.android.nfcservices.certificate",
     updatable: false,
+}
+
+soong_config_module_type {
+    name: "custom_bootclasspath_fragment",
+    module_type: "bootclasspath_fragment",
+    config_namespace: "bootclasspath",
+    bool_variables: [
+        "nfc_apex_bootclasspath_fragment",
+    ],
+    properties: [
+        "enabled",
+    ],
+}
+
+// Encapsulate the contributions made by the com.android.nfc to the bootclasspath.
+custom_bootclasspath_fragment {
+    name: "com.android.nfcservices-bootclasspath-fragment",
+    contents: ["framework-nfc"],
+    apex_available: ["com.android.nfcservices"],
+    // This is disabled for now since the build system does not allow for adding a bootclasspath
+    // fragment and conditionally adding it to PRODUCT_APEX_BOOT_JARS.
+    // When `RELEASE_PACKAGE_NFC_STACK` is set to `com.android.nfcservices`, this needs to be
+    // set to true.
+    enabled: false,
+    soong_config_variables: {
+        nfc_apex_bootclasspath_fragment: {
+            enabled: true,
+        },
+    },
+
+    // The bootclasspath_fragments that provide APIs on which this depends.
+    fragments: [
+        // Needed to access core java APIs.
+        {
+            apex: "com.android.art",
+            module: "art-bootclasspath-fragment",
+        },
+    ],
+
+    // Additional stubs libraries that this fragment's contents use which are
+    // not provided by another bootclasspath_fragment.
+    additional_stubs: [
+        // Needed to access platform APIs.
+        "android-non-updatable",
+    ],
+    hidden_api: {
+        // Additional hidden API flag files to override the defaults. This must only be
+        // modified by the Soong or platform compat team.
+        max_target_o_low_priority: ["hiddenapi/hiddenapi-max-target-o.txt"],
+        max_target_r_low_priority: ["hiddenapi/hiddenapi-max-target-r-loprio.txt"],
+
+        // The following packages contain classes from other modules on the
+        // bootclasspath. That means that the hidden API flags for this module
+        // has to explicitly list every single class this module provides in
+        // that package to differentiate them from the classes provided by other
+        // modules. That can include private classes that are not part of the
+        // API.
+        split_packages: [
+            "android.nfc",
+            "android.nfc.cardemulation",
+        ],
+
+        // The following packages and all their subpackages currently only
+        // contain classes from this bootclasspath_fragment. Listing a package
+        // here won't prevent other bootclasspath modules from adding classes in
+        // any of those packages but it will prevent them from adding those
+        // classes into an API surface, e.g. public, system, etc.. Doing so will
+        // result in a build failure due to inconsistent flags.
+        package_prefixes: [
+            "android.nfc.dta",
+            "android.nfc.tech",
+            "com.android.nfc",
+        ],
+    },
 }

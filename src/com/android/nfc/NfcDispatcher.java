@@ -16,6 +16,8 @@
 
 package com.android.nfc;
 
+import static android.nfc.Flags.enableNfcMainline;
+
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
@@ -47,6 +49,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.Process;
+import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.sysprop.NfcProperties;
@@ -79,7 +82,7 @@ import java.util.stream.Collectors;
  */
 class NfcDispatcher {
     private static final boolean DBG =
-            NfcProperties.debug_enabled().orElse(false);
+            NfcProperties.debug_enabled().orElse(true);
     private static final String TAG = "NfcDispatcher";
 
     static final int DISPATCH_SUCCESS = 1;
@@ -184,6 +187,19 @@ class NfcDispatcher {
        mProvisioningOnly = false;
     }
 
+    private static Intent createNfcResolverIntent(
+            Intent target,
+            CharSequence title,
+            List<ResolveInfo> resolutionList) {
+        Intent resolverIntent = new Intent(NfcAdapter.ACTION_SHOW_NFC_RESOLVER);
+        resolverIntent.putExtra(Intent.EXTRA_INTENT, target);
+        resolverIntent.putExtra(Intent.EXTRA_TITLE, title);
+        resolverIntent.putParcelableArrayListExtra(
+                NfcAdapter.EXTRA_RESOLVE_INFOS, new ArrayList<>(resolutionList));
+        resolverIntent.setFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        return resolverIntent;
+    }
     /**
      * Helper for re-used objects and methods during a single tag dispatch.
      */
@@ -191,7 +207,7 @@ class NfcDispatcher {
         public final Intent intent;
         public final Tag tag;
 
-        final Intent rootIntent;
+        Intent rootIntent;
         final Uri ndefUri;
         final String ndefMimeType;
         final PackageManager packageManager;
@@ -308,10 +324,14 @@ class NfcDispatcher {
             if (muteAppCount > 0) {
                 if (DBG) Log.d(TAG, "muteAppCount = " + muteAppCount);
                 if (filtered.size() > 0) {
-                    rootIntent.setClass(context, TechListChooserActivity.class);
-                    rootIntent.putExtra(Intent.EXTRA_INTENT, intent);
-                    rootIntent.putParcelableArrayListExtra(
-                            TechListChooserActivity.EXTRA_RESOLVE_INFOS, filtered);
+                    if (enableNfcMainline()) {
+                        rootIntent = createNfcResolverIntent(intent, null, filtered);
+                    } else {
+                        rootIntent.setClass(context, TechListChooserActivity.class);
+                        rootIntent.putExtra(Intent.EXTRA_INTENT, intent);
+                        rootIntent.putParcelableArrayListExtra(
+                                TechListChooserActivity.EXTRA_RESOLVE_INFOS, filtered);
+                    }
                 }
             }
             return filtered;
@@ -920,11 +940,15 @@ class NfcDispatcher {
             dispatch.intent.setComponent(null);
         } else if (matches.size() > 1) {
             // Multiple matches, show a custom activity chooser dialog
-            Intent intent = new Intent(mContext, TechListChooserActivity.class);
-            intent.putExtra(Intent.EXTRA_INTENT, dispatch.intent);
-            intent.putParcelableArrayListExtra(TechListChooserActivity.EXTRA_RESOLVE_INFOS,
-                    matches);
-
+            Intent intent;
+            if (enableNfcMainline()) {
+                intent = createNfcResolverIntent(dispatch.intent, null, matches);
+            } else {
+                intent = new Intent(mContext, TechListChooserActivity.class);
+                intent.putExtra(Intent.EXTRA_INTENT, dispatch.intent);
+                intent.putParcelableArrayListExtra(TechListChooserActivity.EXTRA_RESOLVE_INFOS,
+                        matches);
+            }
             if (DBG) Log.i(TAG, "matched multiple TECH");
             NfcStatsLog.write(NfcStatsLog.NFC_READER_CONFLICT_OCCURRED);
             return dispatch.tryStartActivity(intent);
@@ -1068,6 +1092,11 @@ class NfcDispatcher {
         return enabled;
     }
 
+    private boolean isTablet() {
+        return Arrays.asList(SystemProperties.get("ro.build.characteristics").split(","))
+                .contains("tablet");
+    }
+
     boolean showWebLinkConfirmation(DispatchInfo dispatch) {
         if (!mContext.getResources().getBoolean(R.bool.enable_nfc_url_open_dialog)) {
             return dispatch.tryStartActivity();
@@ -1077,7 +1106,9 @@ class NfcDispatcher {
                 R.style.DialogAlertDayNight);
         builder.setTitle(R.string.title_confirm_url_open);
         LayoutInflater inflater = LayoutInflater.from(mContext);
-        View view = inflater.inflate(R.layout.url_open_confirmation, null);
+        View view = inflater.inflate(
+            isTablet() ? R.layout.url_open_confirmation_tablet : R.layout.url_open_confirmation,
+            null);
         if (view != null) {
             TextView url = view.findViewById(R.id.url_open_confirmation_link);
             if (url != null) {

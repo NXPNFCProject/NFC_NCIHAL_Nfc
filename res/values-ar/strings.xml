@@ -46,8 +46,8 @@
     <string name="android_beam" msgid="1666446406999492763">"‏شعاع Android"</string>
     <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"لا يحتوي التطبيق على إذن مساحة تخزين خارجية، إلا أنه مطلوب لإرسال هذا الملف"</string>
     <string name="title_confirm_url_open" msgid="8069968913244794478">"هل تريد فتح الرابط؟"</string>
-    <string name="summary_confirm_url_open" product="tablet" msgid="3353502750736192055">"‏تلقى جهازك اللوحي رابطًا عبر ميزة NFC:"</string>
-    <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"‏تلقى هاتفك رابطًا عبر ميزة NFC:"</string>
+    <string name="summary_confirm_url_open" msgid="1246398412196449226">"‏تلقى هاتفك رابطًا عبر ميزة NFC:"</string>
+    <string name="summary_confirm_url_open_tablet" msgid="771152442325809851">"‏تلقّى جهازك اللوحي رابطًا من خلال تقنية NFC:"</string>
     <string name="action_confirm_url_open" msgid="3458322738812921189">"فتح الرابط"</string>
     <string name="tag_read_error" msgid="2485274498885877547">"‏حدث خطأ NFC. يُرجى إعادة المحاولة."</string>
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"‏ليس هناك تطبيق متوافق مع علامة NFC هذه."</string>

@@ -1,5 +1,7 @@
 package com.android.nfc;
 
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+
 import android.app.ActivityManager;
 import android.content.Context;
 import android.os.Binder;
@@ -67,6 +69,9 @@ public class NfcPermissions {
         context.enforceCallingOrSelfPermission(ADMIN_PERM, ADMIN_PERM_ERROR);
     }
 
+    public static boolean checkAdminPermissions(Context context) {
+        return context.checkCallingPermission(ADMIN_PERM) == PERMISSION_GRANTED;
+    }
 
     public static void enforceUserPermissions(Context context) {
         context.enforceCallingOrSelfPermission(NFC_PERMISSION, NFC_PERM_ERROR);

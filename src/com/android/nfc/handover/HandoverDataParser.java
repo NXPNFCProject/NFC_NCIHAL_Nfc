@@ -42,7 +42,7 @@ import java.util.Random;
 public class HandoverDataParser {
     private static final String TAG = "NfcHandover";
     private static final boolean DBG =
-            NfcProperties.debug_enabled().orElse(false);
+            NfcProperties.debug_enabled().orElse(true);
 
     private static final byte[] TYPE_BT_OOB = "application/vnd.bluetooth.ep.oob"
             .getBytes(StandardCharsets.US_ASCII);

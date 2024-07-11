@@ -46,8 +46,8 @@
     <string name="android_beam" msgid="1666446406999492763">"Android බීම්"</string>
     <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"යෙදුමට බාහිර ගබඩා අවසරය නොමැත. මෙය මෙම ගොනුව කදම්බ කිරීමට අවශ්‍යයි"</string>
     <string name="title_confirm_url_open" msgid="8069968913244794478">"සබැදිය විවෘත කරන්නද?"</string>
-    <string name="summary_confirm_url_open" product="tablet" msgid="3353502750736192055">"ඔබගේ ටැබ්ලට් පරිගණකයට NFC හරහා සබැඳියක් ලැබුණි:"</string>
-    <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"ඔබගේ දුරකථනයට NFC හරහා සබැඳියක් ලැබුණි:"</string>
+    <string name="summary_confirm_url_open" msgid="1246398412196449226">"ඔබගේ දුරකථනයට NFC හරහා සබැඳියක් ලැබුණි:"</string>
+    <string name="summary_confirm_url_open_tablet" msgid="771152442325809851">"ඔබේ ටැබ්ලටයට NFC හරහා සබැඳියක් ලැබුණි:"</string>
     <string name="action_confirm_url_open" msgid="3458322738812921189">"සබැඳිය විවෘත කරන්න"</string>
     <string name="tag_read_error" msgid="2485274498885877547">"NFC කියවීමේ දෝෂයකි. නැවත උත්සාහ කරන්න."</string>
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"මෙම NFC ටැගය සඳහා සහාය දක්වන යෙදුම් නැත"</string>

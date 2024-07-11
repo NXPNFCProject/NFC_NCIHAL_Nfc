@@ -90,8 +90,9 @@
     <!-- Title of the dialog -->
     <string name="title_confirm_url_open">Open link?</string>
     <!-- Summary text appearing before the URL -->
-    <string name="summary_confirm_url_open" product="tablet">Your tablet received a link through NFC:</string>
-    <string name="summary_confirm_url_open" product="default">Your phone received a link through NFC:</string>
+    <string name="summary_confirm_url_open">Your phone received a link through NFC:</string>
+    <!-- Summary text appearing before the URL, for tablet -->
+    <string name="summary_confirm_url_open_tablet">Your tablet received a link through NFC:</string>
     <!-- Label for the button which causes the URL to be opened -->
     <string name="action_confirm_url_open">Open link</string>
 

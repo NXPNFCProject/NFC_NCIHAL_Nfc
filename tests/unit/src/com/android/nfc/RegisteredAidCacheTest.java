@@ -59,6 +59,7 @@ import com.android.dx.mockito.inline.extended.ExtendedMockito;
 import com.android.nfc.NfcService;
 import com.android.nfc.cardemulation.AidRoutingManager;
 import com.android.nfc.cardemulation.RegisteredAidCache;
+import com.android.nfc.cardemulation.WalletRoleObserver;
 
 @RunWith(AndroidJUnit4.class)
 public class RegisteredAidCacheTest {
@@ -68,6 +69,8 @@ public class RegisteredAidCacheTest {
     private MockitoSession mStaticMockSession;
     private RegisteredAidCache mRegisteredAidCache;
     private Context mockContext;
+    @Mock
+    private WalletRoleObserver mWalletRoleObserver;
 
     @Before
     public void setUp() throws Exception {
@@ -91,7 +94,8 @@ public class RegisteredAidCacheTest {
         when(NfcService.getInstance()).thenReturn(mock(NfcService.class));
         AidRoutingManager routingManager = mock(AidRoutingManager.class);
         InstrumentationRegistry.getInstrumentation().runOnMainSync(
-                () -> mRegisteredAidCache = new RegisteredAidCache(mockContext, routingManager));
+                () -> mRegisteredAidCache = new RegisteredAidCache(
+                        mockContext, mWalletRoleObserver, routingManager));
         Assert.assertNotNull(mRegisteredAidCache);
     }
 

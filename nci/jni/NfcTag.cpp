@@ -538,7 +538,6 @@ void NfcTag::discoverTechnologies(tNFA_DISC_RESULT& discoveryData) {
     }
   }
   LOG(DEBUG) << StringPrintf("%s; mNumDiscTechList=%x", fn, mNumDiscTechList);
-
 TheEnd:
   LOG(DEBUG) << StringPrintf("%s: exit", fn);
 }

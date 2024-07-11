@@ -46,8 +46,8 @@
     <string name="android_beam" msgid="1666446406999492763">"Android ବିମ୍‌"</string>
     <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"ଆପ୍ଲୀକେଶନ୍‌କୁ ଏକ୍ସଟର୍ନଲ୍‌ ଷ୍ଟୋରେଜ୍‌ରେ ଲେଖିବାର ଅନୁମତି ନାହିଁ। ଏହି ଫାଇଲ୍‌କୁ ବିମ୍‌ କରିବା ଲାଗି ଏହାର ଅନୁମତି ଆବଶ୍ୟକ"</string>
     <string name="title_confirm_url_open" msgid="8069968913244794478">"ଲିଙ୍କ ଖୋଲିବେ?"</string>
-    <string name="summary_confirm_url_open" product="tablet" msgid="3353502750736192055">"ଆପଣଙ୍କ ଟାବଲେଟ୍‌କୁ NFC ମାଧ୍ୟମରେ ଏକ ଲିଙ୍କ ଆସିଛି:"</string>
-    <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"ଆପଣଙ୍କ ଫୋନ୍‌କୁ NFC ମାଧ୍ୟମରେ ଏକ ଲିଙ୍କ ଆସିଛି:"</string>
+    <string name="summary_confirm_url_open" msgid="1246398412196449226">"ଆପଣଙ୍କ ଫୋନ୍‌କୁ NFC ମାଧ୍ୟମରେ ଏକ ଲିଙ୍କ ଆସିଛି:"</string>
+    <string name="summary_confirm_url_open_tablet" msgid="771152442325809851">"ଆପଣଙ୍କ ଟାବଲେଟ୍‌କୁ NFC ମାଧ୍ୟମରେ ଏକ ଲିଙ୍କ ଆସିଛି:"</string>
     <string name="action_confirm_url_open" msgid="3458322738812921189">"ଲିଙ୍କ ଖୋଲନ୍ତୁ"</string>
     <string name="tag_read_error" msgid="2485274498885877547">"NFC ରିଡ୍‌ କରିବା ବେଳେ ତ୍ରୁଟି। ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।"</string>
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"ଏହି NFC ଟ୍ୟାଗ୍‌ ପାଇଁ କୌଣସି ସାମର୍ଥିତ ଆପ୍ଲିକେସନ୍‌ ନାହିଁ"</string>

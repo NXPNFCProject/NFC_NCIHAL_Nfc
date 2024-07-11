@@ -57,7 +57,7 @@ import java.util.Map;
 public class RegisteredT3tIdentifiersCache {
     static final String TAG = "RegisteredT3tIdentifiersCache";
 
-    static final boolean DBG = NfcProperties.debug_enabled().orElse(false);
+    static final boolean DBG = NfcProperties.debug_enabled().orElse(true);
 
     // All NFC-F services that have registered
     final Map<Integer, List<NfcFServiceInfo>> mUserNfcFServiceInfo =

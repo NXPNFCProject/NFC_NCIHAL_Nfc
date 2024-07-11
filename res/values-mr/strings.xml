@@ -46,8 +46,8 @@
     <string name="android_beam" msgid="1666446406999492763">"Android बीम"</string>
     <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"ॲप्लिकेशनला बाह्य स्टोरेज परवानगी नाही. ही फाइल बीम करण्यासाठी हे आवश्यक आहे"</string>
     <string name="title_confirm_url_open" msgid="8069968913244794478">"लिंक उघडायची का?"</string>
-    <string name="summary_confirm_url_open" product="tablet" msgid="3353502750736192055">"तुमच्या टॅबलेटला NFC वरून एक लिंक मिळाली आहे:"</string>
-    <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"तुमच्या फोनला NFC वरून एक लिंक मिळाली आहे:"</string>
+    <string name="summary_confirm_url_open" msgid="1246398412196449226">"तुमच्या फोनला NFC वरून एक लिंक मिळाली आहे:"</string>
+    <string name="summary_confirm_url_open_tablet" msgid="771152442325809851">"तुमच्या टॅबलेटवर NFC द्वारे लिंक मिळाली आहे:"</string>
     <string name="action_confirm_url_open" msgid="3458322738812921189">"लिंक उघडा"</string>
     <string name="tag_read_error" msgid="2485274498885877547">"NFC वाचण्यात एरर आली. पुन्हा प्रयत्न करा."</string>
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"या NFC टॅग साठी कोणतेही सपोर्ट करणारे ॲप्लिकेशन नाही"</string>

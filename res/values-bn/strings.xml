@@ -46,8 +46,8 @@
     <string name="android_beam" msgid="1666446406999492763">"Android বীম"</string>
     <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"ডিভাইসের বাইরের মেমরি ব্যবহার করার অনুমতি এই অ্যাপ্লিকেশানটিকে দেওয়া হয়নি। এই ফাইলটি বিম করার জন্য অনুমতিটি প্রয়োজন"</string>
     <string name="title_confirm_url_open" msgid="8069968913244794478">"লিঙ্কটি খুলবেন?"</string>
-    <string name="summary_confirm_url_open" product="tablet" msgid="3353502750736192055">"আপনার ট্যাবলেট NFC এর মাধ্যমে একটি লিঙ্ক পেয়েছে:"</string>
-    <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"আপনার ফোন NFC এর মাধ্যমে একটি লিঙ্ক পেয়েছে:"</string>
+    <string name="summary_confirm_url_open" msgid="1246398412196449226">"আপনার ফোন NFC এর মাধ্যমে একটি লিঙ্ক পেয়েছে:"</string>
+    <string name="summary_confirm_url_open_tablet" msgid="771152442325809851">"আপনার ট্যাবলেট NFC-এর মাধ্যমে একটি লিঙ্ক পেয়েছে:"</string>
     <string name="action_confirm_url_open" msgid="3458322738812921189">"লিঙ্ক খুলুন"</string>
     <string name="tag_read_error" msgid="2485274498885877547">"NFC পড়তে সমস্যা হয়েছে। আবার চেষ্টা করুন।"</string>
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"এই NFC ট্যাগ ব্যবহার করার মতো কোনও অ্যাপ্লিকেশন নেই"</string>

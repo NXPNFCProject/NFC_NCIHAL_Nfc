@@ -31,5 +31,6 @@
         <permission name="android.permission.DISPATCH_NFC_MESSAGE"/>
         <permission name="android.permission.NFC_SET_CONTROLLER_ALWAYS_ON"/>
         <permission name="android.permission.OVERRIDE_WIFI_CONFIG"/>
+        <permission name="android.permission.SHOW_CUSTOMIZED_RESOLVER"/>
     </privapp-permissions>
 </permissions>

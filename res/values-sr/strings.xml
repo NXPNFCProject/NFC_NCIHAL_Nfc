@@ -46,8 +46,8 @@
     <string name="android_beam" msgid="1666446406999492763">"Android пребацивање"</string>
     <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"Апликација нема дозволу за спољну меморију. То је потребно за пребацивање ове датотеке"</string>
     <string name="title_confirm_url_open" msgid="8069968913244794478">"Желите ли да отворите линк?"</string>
-    <string name="summary_confirm_url_open" product="tablet" msgid="3353502750736192055">"Таблет је примио линк преко NFC-а:"</string>
-    <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"Телефон је примио линк преко NFC-а:"</string>
+    <string name="summary_confirm_url_open" msgid="1246398412196449226">"Телефон је примио линк преко NFC-а:"</string>
+    <string name="summary_confirm_url_open_tablet" msgid="771152442325809851">"Таблет је примио линк преко NFC-а:"</string>
     <string name="action_confirm_url_open" msgid="3458322738812921189">"Отвори линк"</string>
     <string name="tag_read_error" msgid="2485274498885877547">"Дошло је до грешке у читању NFC ознаке. Пробајте поново."</string>
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"Ниједна апликација не подржава ову NFC ознаку"</string>

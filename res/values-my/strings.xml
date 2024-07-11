@@ -46,8 +46,8 @@
     <string name="android_beam" msgid="1666446406999492763">"Android Beam"</string>
     <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"အပလီကေးရှင်းတွင် ပြင်ပတွင်သိုလှောင်ခွင့် မပါဝင်ပါ။ ဤဖိုင်ကို လှိုင်းလွှင့်ရန် ၎င်းလိုအပ်ပါသည်"</string>
     <string name="title_confirm_url_open" msgid="8069968913244794478">"လင့်ခ်ကို ဖွင့်လိုပါသလား။"</string>
-    <string name="summary_confirm_url_open" product="tablet" msgid="3353502750736192055">"သင့်တက်ဘလက်သည် NFC မှတစ်ဆင့် လင့်ခ်တစ်ခု လက်ခံရရှိထားပါသည်-"</string>
-    <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"သင့်ဖုန်းသည် NFC မှတစ်ဆင့် လင့်ခ်တစ်ခု လက်ခံရရှိထားပါသည်-"</string>
+    <string name="summary_confirm_url_open" msgid="1246398412196449226">"သင့်ဖုန်းသည် NFC မှတစ်ဆင့် လင့်ခ်တစ်ခု လက်ခံရရှိထားပါသည်-"</string>
+    <string name="summary_confirm_url_open_tablet" msgid="771152442325809851">"သင့်တက်ဘလက်သည် NFC မှတစ်ဆင့် လင့်ခ်တစ်ခု လက်ခံရရှိထားပါသည်-"</string>
     <string name="action_confirm_url_open" msgid="3458322738812921189">"လင့်ခ်ဖွင့်ရန်"</string>
     <string name="tag_read_error" msgid="2485274498885877547">"NFC ဖတ်ရှုမှု အမှားရှိနေသည်။ ထပ်စမ်းကြည့်ပါ။"</string>
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"ဤ \'NFC တဂ်\' အတွက် ပံ့ပိုးထားသော အပလီကေးရှင်း မရှိပါ"</string>

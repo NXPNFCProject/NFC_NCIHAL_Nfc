@@ -46,8 +46,8 @@
     <string name="android_beam" msgid="1666446406999492763">"Передавання даних Android"</string>
     <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"Додаток не має доступу до зовнішньої пам’яті. Доступ потрібен для передавання файлу"</string>
     <string name="title_confirm_url_open" msgid="8069968913244794478">"Відкрити посилання?"</string>
-    <string name="summary_confirm_url_open" product="tablet" msgid="3353502750736192055">"На планшет надіслано посилання через зв’язок малого радіуса дії (NFC):"</string>
-    <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"На телефон надіслано посилання через зв’язок малого радіуса дії (NFC):"</string>
+    <string name="summary_confirm_url_open" msgid="1246398412196449226">"На телефон надіслано посилання через зв’язок малого радіуса дії (NFC):"</string>
+    <string name="summary_confirm_url_open_tablet" msgid="771152442325809851">"На планшеті отримано посилання через NFC:"</string>
     <string name="action_confirm_url_open" msgid="3458322738812921189">"Відкрити посилання"</string>
     <string name="tag_read_error" msgid="2485274498885877547">"NFC-пристрій не розпізнано. Повторіть спробу."</string>
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"Немає підтримуваного додатка для цієї NFC-мітки"</string>

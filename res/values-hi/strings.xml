@@ -46,8 +46,8 @@
     <string name="android_beam" msgid="1666446406999492763">"Android बीम"</string>
     <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"ऐप्लिकेशन में बाहरी जगह की अनुमति नहीं है. इस फ़ाइल को बीम करने के लिए यह अनुमति ज़रूरी है"</string>
     <string name="title_confirm_url_open" msgid="8069968913244794478">"लिंक को खोलें?"</string>
-    <string name="summary_confirm_url_open" product="tablet" msgid="3353502750736192055">"आपके टैबलेट पर NFC के ज़रिए एक लिंक आया है:"</string>
-    <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"आपके फ़ोन पर NFC के ज़रिए एक लिंक आया है:"</string>
+    <string name="summary_confirm_url_open" msgid="1246398412196449226">"आपके फ़ोन पर NFC के ज़रिए एक लिंक आया है:"</string>
+    <string name="summary_confirm_url_open_tablet" msgid="771152442325809851">"आपके टैबलेट पर एनएफ़सी के ज़रिए एक लिंक आया है:"</string>
     <string name="action_confirm_url_open" msgid="3458322738812921189">"लिंक को खोलें"</string>
     <string name="tag_read_error" msgid="2485274498885877547">"NFC की जानकारी नहीं पता की जा सकी. कृपया फिर से कोशिश करें."</string>
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"ऐसा कोई ऐप्लिकेशन मौजूद नहीं है, जिससे यह एनएफ़सी टैग इस्तेमाल किया जा सके"</string>

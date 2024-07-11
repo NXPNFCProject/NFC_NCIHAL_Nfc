@@ -83,6 +83,9 @@
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SUBSCRIBE_TO_KEYGUARD_LOCKED_STATE" />
+    <uses-permission android:name="android.permission.SHOW_CUSTOMIZED_RESOLVER" />
+    <uses-permission android:name="android.permission.MANAGE_ROLE_HOLDERS" />
+    <uses-permission android:name="android.permission.OBSERVE_ROLE_HOLDERS"/>
 
     <protected-broadcast android:name="com.nxp.nfc_extras.action.NFC_MPOS_READER_MODE_START_SUCCESS" />
     <protected-broadcast android:name="com.nxp.nfc_extras.action.NFC_MPOS_READER_MODE_START_FAIL" />
@@ -109,6 +112,7 @@
                  android:theme="@android:style/Theme.Material.Light"
                  android:persistent="true"
                  android:persistentWhenFeatureAvailable="android.hardware.nfc.any"
+                 android:restoreAnyVersion="true"
                  android:backupAgent="com.android.nfc.NfcBackupAgent"
                  android:killAfterRestore="false"
                  android:usesCleartextTraffic="false"

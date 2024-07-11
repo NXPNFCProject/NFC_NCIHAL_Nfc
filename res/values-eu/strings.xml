@@ -46,13 +46,13 @@
     <string name="android_beam" msgid="1666446406999492763">"Android Beam"</string>
     <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"Aplikazioak ez dauka kanpoko memoria atzitzeko baimenik. Fitxategia NFC bidez partekatzeko da beharrezkoa baimen hori."</string>
     <string name="title_confirm_url_open" msgid="8069968913244794478">"Esteka ireki nahi duzu?"</string>
-    <string name="summary_confirm_url_open" product="tablet" msgid="3353502750736192055">"Esteka bat jaso duzu tabletan NFC bidez:"</string>
-    <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"Esteka bat jaso duzu telefonoan NFC bidez:"</string>
+    <string name="summary_confirm_url_open" msgid="1246398412196449226">"Esteka bat jaso duzu telefonoan NFC bidez:"</string>
+    <string name="summary_confirm_url_open_tablet" msgid="771152442325809851">"Esteka bat jaso duzu tabletan NFC bidez:"</string>
     <string name="action_confirm_url_open" msgid="3458322738812921189">"Ireki esteka"</string>
     <string name="tag_read_error" msgid="2485274498885877547">"Errore bat gertatu da NFC etiketa irakurtzean. Saiatu berriro."</string>
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"Ez dago NFC etiketa hau onartzen duen aplikaziorik"</string>
     <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"Baliteke NFC bidezko konexioa blokeatzea"</string>
-    <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Sakatu hau konponbideei buruzko informazioa lortzeko."</string>
+    <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Sakatu hau arazoa konpontzeko argibideak lortzeko."</string>
     <string name="nfc_logging_alert_title" msgid="5300867034660942987">"NFCari buruzko datuak erregistratzen"</string>
     <string name="nfc_logging_alert_message" msgid="1550187184825467942">"Sakatu hau grabatzeari uzteko."</string>
 </resources>

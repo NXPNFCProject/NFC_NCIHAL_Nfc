@@ -46,8 +46,8 @@
     <string name="android_beam" msgid="1666446406999492763">"Android Beam"</string>
     <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"У приложения нет разрешения на использование внешнего хранилища. Без этого передать файл невозможно."</string>
     <string name="title_confirm_url_open" msgid="8069968913244794478">"Открыть ссылку?"</string>
-    <string name="summary_confirm_url_open" product="tablet" msgid="3353502750736192055">"На ваш планшет по NFC поступила ссылка:"</string>
-    <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"На ваш телефон по NFC поступила ссылка:"</string>
+    <string name="summary_confirm_url_open" msgid="1246398412196449226">"На ваш телефон по NFC поступила ссылка:"</string>
+    <string name="summary_confirm_url_open_tablet" msgid="771152442325809851">"На ваш планшет пришла по NFC ссылка:"</string>
     <string name="action_confirm_url_open" msgid="3458322738812921189">"Открыть"</string>
     <string name="tag_read_error" msgid="2485274498885877547">"Ошибка чтения NFC-метки. Повторите попытку."</string>
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"Для этой NFC-метки нет поддерживаемых приложений"</string>

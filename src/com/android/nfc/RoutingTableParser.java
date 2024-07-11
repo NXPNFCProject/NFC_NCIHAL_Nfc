@@ -30,7 +30,7 @@ import java.util.Vector;
 * Parse the Routing Table from the last backup lmrt cmd and dump it with a clear typography
 */
 public class RoutingTableParser {
-    static final boolean DBG = NfcProperties.debug_enabled().orElse(false);
+    static final boolean DBG = NfcProperties.debug_enabled().orElse(true);
     private static final String TAG = "RoutingTableParser";
     private static int sRoutingTableSize = 0;
     private static int sRoutingTableMaxSize = 0;

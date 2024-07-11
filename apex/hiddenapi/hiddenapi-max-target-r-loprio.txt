@@ -1,0 +1,1 @@
+Landroid/nfc/INfcAdapter$Stub;->TRANSACTION_enable:I

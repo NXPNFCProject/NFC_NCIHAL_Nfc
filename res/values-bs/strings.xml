@@ -46,8 +46,8 @@
     <string name="android_beam" msgid="1666446406999492763">"Android Beam"</string>
     <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"Aplikacija nema odobrenje za vanjsku pohranu. Ovo je potrebno kako biste ovaj fajl mogli prenijeti koristeći funkciju Beam."</string>
     <string name="title_confirm_url_open" msgid="8069968913244794478">"Otvoriti link?"</string>
-    <string name="summary_confirm_url_open" product="tablet" msgid="3353502750736192055">"Vaš tablet je primio link preko NFC-a:"</string>
-    <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"Vaš telefon je primio link preko NFC-a:"</string>
+    <string name="summary_confirm_url_open" msgid="1246398412196449226">"Vaš telefon je primio link preko NFC-a:"</string>
+    <string name="summary_confirm_url_open_tablet" msgid="771152442325809851">"Tablet je primio link putem NFC-a:"</string>
     <string name="action_confirm_url_open" msgid="3458322738812921189">"Otvori link"</string>
     <string name="tag_read_error" msgid="2485274498885877547">"Greška prilikom čitanja NFC-a. Pokušajte ponovo."</string>
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"Nema podržane aplikacije za ovu NFC oznaku"</string>

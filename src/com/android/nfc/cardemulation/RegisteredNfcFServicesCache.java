@@ -83,7 +83,8 @@ import androidx.annotation.VisibleForTesting;
 public class RegisteredNfcFServicesCache {
     static final String XML_INDENT_OUTPUT_FEATURE = "http://xmlpull.org/v1/doc/features.html#indent-output";
     static final String TAG = "RegisteredNfcFServicesCache";
-    static final boolean DBG = NfcProperties.debug_enabled().orElse(false);
+    static final boolean DBG = NfcProperties.debug_enabled().orElse(true);
+    private static final boolean VDBG = false; // turn on for local testing.
 
     final Context mContext;
     final AtomicReference<BroadcastReceiver> mReceiver;
@@ -309,14 +310,14 @@ public class RegisteredNfcFServicesCache {
             return;
         }
         ArrayList<NfcFServiceInfo> newServices = null;
+        ArrayList<NfcFServiceInfo> toBeAdded = new ArrayList<>();
+        ArrayList<NfcFServiceInfo> toBeRemoved = new ArrayList<>();
         synchronized (mLock) {
             UserServices userServices = findOrCreateUserLocked(userId);
 
             // Check update
             ArrayList<NfcFServiceInfo> cachedServices =
                     new ArrayList<NfcFServiceInfo>(userServices.services.values());
-            ArrayList<NfcFServiceInfo> toBeAdded = new ArrayList<NfcFServiceInfo>();
-            ArrayList<NfcFServiceInfo> toBeRemoved = new ArrayList<NfcFServiceInfo>();
             boolean matched = false;
             for (NfcFServiceInfo validService : validServices) {
                 for (NfcFServiceInfo cachedService : cachedServices) {
@@ -353,11 +354,9 @@ public class RegisteredNfcFServicesCache {
             // Update cache
             for (NfcFServiceInfo service : toBeAdded) {
                 userServices.services.put(service.getComponent(), service);
-                if (DBG) Log.d(TAG, "Added service: " + service.getComponent());
             }
             for (NfcFServiceInfo service : toBeRemoved) {
                 userServices.services.remove(service.getComponent());
-                if (DBG) Log.d(TAG, "Removed service: " + service.getComponent());
             }
             // Apply dynamic System Code mappings
             ArrayList<ComponentName> toBeRemovedDynamicSystemCode =
@@ -426,7 +425,16 @@ public class RegisteredNfcFServicesCache {
             newServices = new ArrayList<NfcFServiceInfo>(userServices.services.values());
         }
         mCallback.onNfcFServicesUpdated(userId, Collections.unmodifiableList(newServices));
-        if (DBG) dump(newServices);
+        if (VDBG) {
+            Log.i(TAG, "Services => ");
+            dump(newServices);
+        } else {
+            // dump only new services added or removed
+            Log.i(TAG, "New Services => ");
+            dump(toBeAdded);
+            Log.i(TAG, "Removed Services => ");
+            dump(toBeRemoved);
+        }
     }
 
     private void readDynamicSystemCodeNfcid2Locked() {

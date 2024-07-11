@@ -26,7 +26,7 @@ import com.android.nfc.flags.Flags;
 
 @FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG)
 public class StatsdUtils {
-    static final boolean DBG = NfcProperties.debug_enabled().orElse(false);
+    static final boolean DBG = NfcProperties.debug_enabled().orElse(true);
     private final String TAG = "StatsdUtils";
 
     public static final String SE_NAME_HCE = "HCE";

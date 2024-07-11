@@ -37,7 +37,9 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -46,7 +48,8 @@ import java.util.concurrent.atomic.AtomicReference;
 public class RegisteredComponentCache {
     private static final String TAG = "RegisteredComponentCache";
     private static final boolean DEBUG =
-            NfcProperties.debug_enabled().orElse(false);
+            NfcProperties.debug_enabled().orElse(true);
+    private static final boolean VDBG = false; // turn on for local testing.
 
     final Context mContext;
     final String mAction;
@@ -54,7 +57,7 @@ public class RegisteredComponentCache {
     final AtomicReference<BroadcastReceiver> mReceiver;
 
     // synchronized on this
-    private ArrayList<ComponentInfo> mComponents;
+    private ArrayList<ComponentInfo> mComponents = new ArrayList<>();
 
     public RegisteredComponentCache(Context context, String action, String metaDataName) {
         mContext = context;
@@ -106,6 +109,21 @@ public class RegisteredComponentCache {
                 out.append(", ");
             }
             return out.toString();
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (other instanceof ComponentInfo) {
+                ComponentInfo oCI = (ComponentInfo) other;
+                return Objects.equals(resolveInfo.activityInfo, oCI.resolveInfo.activityInfo)
+                        && Arrays.equals(techs, oCI.techs);
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(Arrays.hashCode(techs), resolveInfo.activityInfo);
         }
     }
 
@@ -170,8 +188,19 @@ public class RegisteredComponentCache {
             }
         }
 
-        if (DEBUG) {
+        if (VDBG) {
+            Log.i(TAG, "Components => ");
             dump(components);
+        } else {
+            // dump only new components added or removed
+            ArrayList<ComponentInfo> newComponents = new ArrayList<>(components);
+            newComponents.removeAll(mComponents);
+            ArrayList<ComponentInfo> removedComponents = new ArrayList<>(mComponents);
+            removedComponents.removeAll(components);
+            Log.i(TAG, "New Components => ");
+            dump(newComponents);
+            Log.i(TAG, "Removed Components => ");
+            dump(removedComponents);
         }
 
         synchronized (this) {

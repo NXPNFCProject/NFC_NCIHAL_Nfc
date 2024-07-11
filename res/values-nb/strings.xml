@@ -46,8 +46,8 @@
     <string name="android_beam" msgid="1666446406999492763">"Android Beam"</string>
     <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"Appen har ikke tillatelse for ekstern lagring. Dette er påkrevd for å beame denne filen."</string>
     <string name="title_confirm_url_open" msgid="8069968913244794478">"Vil du åpne linken?"</string>
-    <string name="summary_confirm_url_open" product="tablet" msgid="3353502750736192055">"Nettbrettet ditt mottok en link via NFC:"</string>
-    <string name="summary_confirm_url_open" product="default" msgid="1246398412196449226">"Telefonen din mottok en link via NFC:"</string>
+    <string name="summary_confirm_url_open" msgid="1246398412196449226">"Telefonen din mottok en link via NFC:"</string>
+    <string name="summary_confirm_url_open_tablet" msgid="771152442325809851">"Nettbrettet mottok en link via NFC:"</string>
     <string name="action_confirm_url_open" msgid="3458322738812921189">"Åpne link"</string>
     <string name="tag_read_error" msgid="2485274498885877547">"NFC-lesefeil. Prøv på nytt."</string>
     <string name="tag_dispatch_failed" msgid="3562984995049738400">"Ingen apper støttes for denne NFC-brikken"</string>
