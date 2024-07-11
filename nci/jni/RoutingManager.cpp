@@ -940,10 +940,8 @@ tNFA_TECHNOLOGY_MASK RoutingManager::updateEeTechRouteSetting() {
   static const char fn[] = "RoutingManager::updateEeTechRouteSetting";
   tNFA_TECHNOLOGY_MASK allSeTechMask = 0x00;
 
-#if(NXP_EXTNS == TRUE)
   int handleDefaultOffHost = SecureElement::getInstance().getEseHandleFromGenericId(mDefaultOffHostRoute);
   int handleDefaultFelicaRoute = SecureElement::getInstance().getEseHandleFromGenericId(mDefaultFelicaRoute);
-#endif
 
 #if(NXP_EXTNS != TRUE)
   if (mDefaultOffHostRoute == 0 && mDefaultFelicaRoute == 0)
@@ -1024,7 +1022,6 @@ tNFA_TECHNOLOGY_MASK RoutingManager::updateEeTechRouteSetting() {
     }
   }
 
-#if(NXP_EXTNS == TRUE)
   if (mDefaultOffHostRoute == NFC_DH_ID) {
     tNFA_TECHNOLOGY_MASK hostTechMask = 0;
     LOG(DEBUG) << StringPrintf(
@@ -1042,7 +1039,6 @@ tNFA_TECHNOLOGY_MASK RoutingManager::updateEeTechRouteSetting() {
       LOG(ERROR) << fn << "Failed to configure DH technology routing.";
     return hostTechMask;
   }
-#endif
 
   // Clear DH technology route on NFC-A
   if ((mHostListenTechMask & NFA_TECHNOLOGY_MASK_A) &&
