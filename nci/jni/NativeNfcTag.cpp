@@ -1652,7 +1652,7 @@ static jboolean nativeNfcTag_doPresenceCheck(JNIEnv*, jobject) {
 #if (NXP_EXTNS == TRUE)
     if((sCurrentConnectedTargetProtocol == NFA_PROTOCOL_T2T) &&
        (sCurrentRfInterface == NFA_INTERFACE_FRAME) &&
-       (!NfcTag::getInstance().isMifareUltralight())) {
+       (!NfcTag::getInstance().isNfcForumT2T())) {
        /* Only applicable for Type2 tag which has SAK value other than 0
         (as defined in NFC Digital Protocol, section 4.8.2(SEL_RES)) */
       uint8_t RW_TAG_SLP_REQ[] = {0x50, 0x00};

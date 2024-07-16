@@ -1441,6 +1441,31 @@ void NfcTag::calculateT1tMaxMessageSize(tNFA_ACTIVATED& activate) {
 
 /*******************************************************************************
 **
+** Function:        isNfcForumT2T
+**
+** Description:     Whether tag is Nfc-Forum based and uses read command for
+**                  presence check.
+**
+** Returns:         True if tag is isNfcForumT2T.
+**
+*******************************************************************************/
+bool NfcTag::isNfcForumT2T() {
+  static const char fn[] = "NfcTag::isNfcForumT2T";
+  bool retval = false;
+
+  for (int i = 0; i < mNumTechList; i++) {
+    if (mTechParams[i].mode == NFC_DISCOVERY_TYPE_POLL_A) {
+      if (mTechParams[i].param.pa.sel_rsp == 0)
+        retval = true;
+
+      break;
+    }
+  }
+  LOG(DEBUG) << StringPrintf("%s: return=%u", fn, retval);
+  return retval;
+}
+/*******************************************************************************
+**
 ** Function:        isMifareUltralight
 **
 ** Description:     Whether the currently activated tag is Mifare Ultralight.
