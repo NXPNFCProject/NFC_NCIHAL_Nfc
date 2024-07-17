@@ -1505,9 +1505,9 @@ static jboolean nfcManager_setObserveMode(JNIEnv* e, jobject o,
       static_cast<uint8_t>(enable != JNI_FALSE
                                ? NCI_ANDROID_PASSIVE_OBSERVE_PARAM_ENABLE
                                : NCI_ANDROID_PASSIVE_OBSERVE_PARAM_DISABLE)};
+  SyncEventGuard guard(gNfaVsCommand);
   tNFA_STATUS status = NFA_SendRawVsCommand(sizeof(cmd), cmd, nfaVSCallback);
 
-  SyncEventGuard guard(gNfaVsCommand);
   if (status == NFA_STATUS_OK) {
     if (!gNfaVsCommand.wait(1000)) {
       LOG(ERROR) << StringPrintf(
