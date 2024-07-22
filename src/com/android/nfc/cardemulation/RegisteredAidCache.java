@@ -189,7 +189,7 @@ public class RegisteredAidCache {
     boolean mRequiresScreenOnServiceExist = false;
 
     public RegisteredAidCache(Context context, WalletRoleObserver walletRoleObserver) {
-        this(context, walletRoleObserver, new AidRoutingManager());
+        this(context, walletRoleObserver, NfcService.getInstance().getAidRoutingCache());
     }
 
     @VisibleForTesting
