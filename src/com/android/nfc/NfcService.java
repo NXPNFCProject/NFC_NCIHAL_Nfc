@@ -1851,6 +1851,10 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
 
         @Override
         public boolean setObserveMode(boolean enable) {
+            if (!isNfcEnabled()) {
+                Log.e(TAG, "NFC is not enabled.");
+                return false;
+            }
             int callingUid = Binder.getCallingUid();
             UserHandle user = Binder.getCallingUserHandle();
             long token = Binder.clearCallingIdentity();
