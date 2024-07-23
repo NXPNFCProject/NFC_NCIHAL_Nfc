@@ -169,8 +169,6 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         mOffHostRouteUicc = mRoutingOptionManager.getOffHostRouteUicc();
         mForegroundUid = Process.INVALID_UID;
         int currentUser = ActivityManager.getCurrentUser();
-        mAidCache.onWalletRoleHolderChanged(
-                mWalletRoleObserver.getDefaultWalletRoleHolder(currentUser), currentUser);
     }
 
     public INfcCardEmulation getNfcCardEmulationInterface() {
@@ -337,8 +335,10 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
     @Override
     public void onServicesUpdated(int userId, List<ApduServiceInfo> services,
             boolean validateInstalled) {
-        // Verify defaults are still the same
-        verifyDefaults(userId, services, validateInstalled);
+        if (!mWalletRoleObserver.isWalletRoleFeatureEnabled()) {
+            // Verify defaults are still the same
+            verifyDefaults(userId, services, validateInstalled);
+        }
         // Update the AID cache
         mAidCache.onServicesUpdated(userId, services);
         // Update the preferred services list

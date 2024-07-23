@@ -78,8 +78,6 @@ public class WalletRoleObserver {
 
     public void onUserSwitched(int userId) {
         String roleHolder = getDefaultWalletRoleHolder(userId);
-        if(!TextUtils.isEmpty(roleHolder)) {
-            mCallback.onWalletRoleHolderChanged(roleHolder, userId);
-        }
+        mCallback.onWalletRoleHolderChanged(roleHolder, userId);
     }
 }
