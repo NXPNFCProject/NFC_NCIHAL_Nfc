@@ -187,8 +187,8 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
 
     @TargetApi(35)
     @FlaggedApi(android.nfc.Flags.FLAG_NFC_READ_POLLING_LOOP)
-    public void onPollingLoopDetected(Bundle pollingFrame) {
-        mHostEmulationManager.onPollingLoopDetected(pollingFrame);
+    public void onPollingLoopDetected(List<Bundle> pollingFrames) {
+        mHostEmulationManager.onPollingLoopDetected(pollingFrames);
     }
 
     public void onHostCardEmulationActivated(int technology) {

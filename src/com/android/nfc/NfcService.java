@@ -746,9 +746,9 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
     }
 
     @Override
-    public void onPollingLoopDetected(Bundle pollingFrame) {
+    public void onPollingLoopDetected(List<Bundle> pollingFrames) {
         if (mCardEmulationManager != null) {
-            mCardEmulationManager.onPollingLoopDetected(pollingFrame);
+            mCardEmulationManager.onPollingLoopDetected(pollingFrames);
         }
     }
 
@@ -2579,7 +2579,9 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         @Override
         public void notifyPollingLoop(Bundle frame) {
             try {
-                onPollingLoopDetected(frame);
+                ArrayList<Bundle> frames = new ArrayList<Bundle>();
+                frames.add(frame);
+                onPollingLoopDetected(frames);
             } catch (Exception ex) {
                 Log.e(TAG, "error when notifying polling loop", ex);
             }

@@ -223,10 +223,12 @@ public final class NfcCardEmulationOccurredTest {
         if (!mNfcSupported) return;
 
         Bundle pollingFrame = mock(Bundle.class);
+        ArrayList<Bundle> pollingFrames = new ArrayList<Bundle>();
+        pollingFrames.add(pollingFrame);
         ComponentName componentName = mock(ComponentName.class);
         when(componentName.getPackageName()).thenReturn("com.android.nfc");
         when(mockAidCache.getPreferredService()).thenReturn(componentName);
-        mHostEmulation.onPollingLoopDetected(pollingFrame);
+        mHostEmulation.onPollingLoopDetected(pollingFrames);
         Bundle resultBundle = mHostEmulation.mPendingPollingLoopFrames.get(0);
         Assert.assertEquals(pollingFrame, resultBundle);
     }
@@ -236,7 +238,11 @@ public final class NfcCardEmulationOccurredTest {
         if (!mNfcSupported) return;
 
         Bundle pollingLoopTypeOnFrame = mock(Bundle.class);
+        ArrayList<Bundle> pollingLoopTypeOnFrames = new ArrayList<Bundle>();
+        pollingLoopTypeOnFrames.add(pollingLoopTypeOnFrame);
         Bundle pollingLoopTypeOffFrame = mock(Bundle.class);
+        ArrayList<Bundle> pollingLoopTypeOffFrames = new ArrayList<Bundle>();
+        pollingLoopTypeOffFrames.add(pollingLoopTypeOffFrame);
         when(pollingLoopTypeOnFrame.getInt(PollingFrame.KEY_POLLING_LOOP_TYPE))
                 .thenReturn(PollingFrame.POLLING_LOOP_TYPE_ON);
         when(pollingLoopTypeOffFrame.getInt(PollingFrame.KEY_POLLING_LOOP_TYPE))
@@ -247,10 +253,10 @@ public final class NfcCardEmulationOccurredTest {
         IBinder iBinder = new Binder();
         ServiceConnection serviceConnection = mHostEmulation.getServiceConnection();
         serviceConnection.onServiceConnected(componentName, iBinder);
-        mHostEmulation.onPollingLoopDetected(pollingLoopTypeOnFrame);
-        mHostEmulation.onPollingLoopDetected(pollingLoopTypeOnFrame);
-        mHostEmulation.onPollingLoopDetected(pollingLoopTypeOffFrame);
-        mHostEmulation.onPollingLoopDetected(pollingLoopTypeOffFrame);
+        mHostEmulation.onPollingLoopDetected(pollingLoopTypeOnFrames);
+        mHostEmulation.onPollingLoopDetected(pollingLoopTypeOnFrames);
+        mHostEmulation.onPollingLoopDetected(pollingLoopTypeOffFrames);
+        mHostEmulation.onPollingLoopDetected(pollingLoopTypeOffFrames);
         IBinder mActiveService = mHostEmulation.getMessenger();
         Assert.assertNotNull(mActiveService);
         Assert.assertEquals(iBinder, mActiveService);

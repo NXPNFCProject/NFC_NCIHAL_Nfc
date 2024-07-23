@@ -49,6 +49,7 @@ import com.android.nfc.NfcVendorNciResponse;
 import java.io.FileDescriptor;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HexFormat;
@@ -567,7 +568,6 @@ public class NativeNfcManager implements DeviceHost {
         if (data_len < MIN_POLLING_FRAME_TLV_SIZE) {
             return;
         }
-        Bundle frame = new Bundle();
         final int header_len = 4;
         int pos = header_len;
         final int TLV_header_len = 3;
@@ -576,18 +576,20 @@ public class NativeNfcManager implements DeviceHost {
         final int TLV_timestamp_offset = 3;
         final int TLV_gain_offset = 7;
         final int TLV_data_offset = 8;
+        ArrayList<Bundle> frames = new ArrayList<Bundle>();
         while (pos + TLV_len_offset < data_len) {
+            Bundle frame = new Bundle();
             int type = p_data[pos + TLV_type_offset];
             int length = p_data[pos + TLV_len_offset];
             if (TLV_len_offset + length < TLV_gain_offset ) {
                 Log.e(TAG, "Length (" + length + ") is less than a polling frame, dropping.");
-                return;
+                break;
             }
             if (pos + TLV_header_len + length > data_len) {
                 // Frame is bigger than buffer.
                 Log.e(TAG, "Polling frame data ("+ pos + ", " + length
                         + ") is longer than buffer data length (" + data_len + ").");
-                return;
+                break;
             }
             switch (type) {
                 case TAG_FIELD_CHANGE:
@@ -639,8 +641,9 @@ public class NativeNfcManager implements DeviceHost {
                 frame.putInt(PollingFrame.KEY_POLLING_LOOP_TIMESTAMP, timestamp);
             }
             pos += (TLV_header_len + length);
+            frames.add(frame);
         }
-        mListener.onPollingLoopDetected(frame);
+        mListener.onPollingLoopDetected(frames);
     }
 
     private void notifyVendorSpecificEvent(int event, int dataLen, byte[] pData) {

@@ -223,72 +223,71 @@ public class HostEmulationManager {
 
     @TargetApi(35)
     @FlaggedApi(android.nfc.Flags.FLAG_NFC_READ_POLLING_LOOP)
-    public void onPollingLoopDetected(Bundle pollingFrame) {
+    public void onPollingLoopDetected(List<Bundle> pollingFrames) {
         synchronized (mLock) {
             if (mState == STATE_IDLE) {
                 mState = STATE_POLLING_LOOP;
             }
+            int onCount = 0;
+            int offCount = 0;
+            if (mPendingPollingLoopFrames == null) {
+                mPendingPollingLoopFrames = new ArrayList<Bundle>(1);
+            }
             Messenger service = null;
-            if (pollingFrame.getInt(PollingFrame.KEY_POLLING_LOOP_TYPE)
-                    == PollingFrame.POLLING_LOOP_TYPE_UNKNOWN) {
-                byte[] data = pollingFrame.getByteArray(PollingFrame.KEY_POLLING_LOOP_DATA);
-                String dataStr = HexFormat.of().formatHex(data).toUpperCase(Locale.ROOT);
-                List<ApduServiceInfo> serviceInfos =
-                        mPollingLoopFilters.get(ActivityManager.getCurrentUser()).get(dataStr);
-                if (serviceInfos != null && serviceInfos.size() > 0) {
-                    ApduServiceInfo serviceInfo;
-                    if (serviceInfos.size() == 1) {
-                        serviceInfo = serviceInfos.get(0);
-                    } else {
-                        serviceInfo = mAidCache.resolvePollingLoopFilterConflict(serviceInfos);
-                        if (serviceInfo == null) {
-                            /*  If neither the foreground or payments service can handle the plf,
-                             *  pick the first in the list. */
+            for (Bundle pollingFrame : pollingFrames) {
+                mPendingPollingLoopFrames.add(pollingFrame);
+                if (pollingFrame.getInt(PollingFrame.KEY_POLLING_LOOP_TYPE)
+                        == PollingFrame.POLLING_LOOP_TYPE_UNKNOWN) {
+                    byte[] data = pollingFrame.getByteArray(PollingFrame.KEY_POLLING_LOOP_DATA);
+                    String dataStr = HexFormat.of().formatHex(data).toUpperCase(Locale.ROOT);
+                    List<ApduServiceInfo> serviceInfos =
+                            mPollingLoopFilters.get(ActivityManager.getCurrentUser()).get(dataStr);
+                    if (serviceInfos != null && serviceInfos.size() > 0) {
+                        ApduServiceInfo serviceInfo;
+                        if (serviceInfos.size() == 1) {
                             serviceInfo = serviceInfos.get(0);
-                        }
-                    }
-                    if (serviceInfo.getShouldAutoTransact(dataStr)) {
-                        allowOneTransaction();
-                    }
-                    UserHandle user = UserHandle.getUserHandleForUid(serviceInfo.getUid());
-                    service = bindServiceIfNeededLocked(user.getIdentifier(),
-                            serviceInfo.getComponent());
-                } else {
-                    service = getForegroundServiceOrDefault();
-                }
-            } else {
-                if (mActiveService != null) {
-                    service = mActiveService;
-                } else if (mPendingPollingLoopFrames != null) {
-                    int type = pollingFrame.getInt(PollingFrame.KEY_POLLING_LOOP_TYPE);
-                    int onCount = type == PollingFrame.POLLING_LOOP_TYPE_ON ? 1 : 0;
-                    int offCount = type == PollingFrame.POLLING_LOOP_TYPE_OFF ? 1 : 0;
-                    if (onCount == 1 || offCount == 1) {
-                        for (Bundle frame : mPendingPollingLoopFrames) {
-                            type = frame.getInt(PollingFrame.KEY_POLLING_LOOP_TYPE);
-                            switch (type) {
-                                case PollingFrame.POLLING_LOOP_TYPE_ON:
-                                    onCount++;
-                                    break;
-                                case PollingFrame.POLLING_LOOP_TYPE_OFF:
-                                    offCount++;
-                                    break;
-                                default:
+                        } else {
+                            serviceInfo = mAidCache.resolvePollingLoopFilterConflict(serviceInfos);
+                            if (serviceInfo == null) {
+                                /*  If neither the foreground or payments service can handle the plf,
+                                *  pick the first in the list. */
+                                serviceInfo = serviceInfos.get(0);
                             }
                         }
-                        if (onCount >=2 && offCount >=2) {
-                            service = getForegroundServiceOrDefault();
-                        } else {
-                            service = null;
+                        if (serviceInfo.getShouldAutoTransact(dataStr)) {
+                            allowOneTransaction();
                         }
+                        UserHandle user = UserHandle.getUserHandleForUid(serviceInfo.getUid());
+                        service = bindServiceIfNeededLocked(user.getIdentifier(),
+                                serviceInfo.getComponent());
+                    } else {
+                        service = getForegroundServiceOrDefault();
                     }
                 }
             }
 
-            if (mPendingPollingLoopFrames == null) {
-                mPendingPollingLoopFrames = new ArrayList<Bundle>(1);
+            if (service == null) {
+                if (mActiveService != null) {
+                        service = mActiveService;
+                } else if (mPendingPollingLoopFrames.size() >= 4) {
+                    for (Bundle frame : mPendingPollingLoopFrames) {
+                        int type = frame.getInt(PollingFrame.KEY_POLLING_LOOP_TYPE);
+                        switch (type) {
+                            case PollingFrame.POLLING_LOOP_TYPE_ON:
+                                onCount++;
+                                break;
+                            case PollingFrame.POLLING_LOOP_TYPE_OFF:
+                                offCount++;
+                                break;
+                            default:
+                        }
+                    }
+                    if (onCount >=2 && offCount >=2) {
+                        service = getForegroundServiceOrDefault();
+                    }
+                }
             }
-            mPendingPollingLoopFrames.add(pollingFrame);
+
             if (service != null) {
                 sendPollingFramesToServiceLocked(service, mPendingPollingLoopFrames);
                 mPendingPollingLoopFrames = null;
