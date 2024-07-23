@@ -1037,6 +1037,10 @@ tNFA_TECHNOLOGY_MASK RoutingManager::updateEeTechRouteSetting() {
                                           mSecureNfcEnabled ? 0 : hostTechMask);
     if (nfaStat != NFA_STATUS_OK)
       LOG(ERROR) << fn << "Failed to configure DH technology routing.";
+
+    nfaStat = NFA_CeConfigureUiccListenTech(NFC_DH_ID, hostTechMask);
+      if (nfaStat != NFA_STATUS_OK)
+        LOG(ERROR) << fn << "Failed to configure DH UICC listen technologies.";
     return hostTechMask;
   }
 
