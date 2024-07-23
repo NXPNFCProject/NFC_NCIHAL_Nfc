@@ -301,7 +301,6 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
     static final int TASK_ENABLE = 1;
     static final int TASK_DISABLE = 2;
     static final int TASK_BOOT = 3;
-    static final int TASK_ENABLE_FOR_ULPDET = 4;
 
     // Listen Protocol
     public static final int NFC_LISTEN_PROTO_ISO_DEP = 0x01;    // This values is need to move from this to CardEmulationManager
@@ -1451,9 +1450,6 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                 case TASK_DISABLE:
                     disableInternal();
                     break;
-                case TASK_ENABLE_FOR_ULPDET:
-                    enableInternalForULPDet();
-                    break;
                 case TASK_BOOT:
                     boolean initialized;
                     if (mPrefs.getBoolean(PREF_FIRST_BOOT, true)) {
@@ -1595,35 +1591,6 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                 mIsPowerSavingModeEnabled = false;
             }
 
-            return true;
-        }
-
-        boolean enableInternalForULPDet() {
-            synchronized (NfcService.this) {
-                Log.i(TAG, "Disabling NFC requires NFCC to be out of ULPDET mode."
-                        + " Enabling NFC stack.");
-                mState = NfcAdapter.STATE_TURNING_ON;
-            }
-            WatchDogThread watchDog = new WatchDogThread("enableInternal", INIT_WATCHDOG_MS);
-            watchDog.start();
-            try {
-                mRoutingWakeLock.acquire();
-                try {
-                    if (!mDeviceHost.initialize()) {
-                        Log.w(TAG, "Error enabling NFC");
-                        updateState(NfcAdapter.STATE_OFF);
-                        return false;
-                    }
-                } finally {
-                    mRoutingWakeLock.release();
-                }
-            } finally {
-                watchDog.cancel();
-            }
-
-            synchronized (NfcService.this) {
-                mState = NfcAdapter.STATE_ON;
-            }
             return true;
         }
 
