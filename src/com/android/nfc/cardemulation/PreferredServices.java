@@ -338,7 +338,7 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
     public void onServicesUpdated() {
         // If this service is the current foreground service, verify
         // there are no conflicts
-        boolean changed = false;
+        boolean foregroundChanged = false;
         synchronized (mLock) {
             // Check if the current foreground service is still allowed to override;
             // it could have registered new AIDs that make it conflict with user
@@ -349,14 +349,21 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
                     mForegroundRequested = null;
                     mForegroundUid = -1;
                     mForegroundCurrentUid = -1;
-                    changed = true;
+                    foregroundChanged = true;
                 }
             } else {
                 // Don't care about this service
             }
         }
-        if (changed) {
+        if (foregroundChanged) {
             computePreferredForegroundService();
+        }
+
+        if(mWalletRoleObserver.isWalletRoleFeatureEnabled()
+                && mUserIdDefaultWalletHolder >= 0) {
+            onWalletRoleHolderChanged(mWalletRoleObserver
+                            .getDefaultWalletRoleHolder(mUserIdDefaultWalletHolder),
+                    mUserIdDefaultWalletHolder);
         }
     }
 
