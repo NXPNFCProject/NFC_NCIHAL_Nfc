@@ -38,6 +38,7 @@ import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import android.annotation.TargetApi;
 import android.annotation.FlaggedApi;
@@ -975,23 +976,30 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
     @Override
     public void onPreferredPaymentServiceChanged(int userId, ComponentName service) {
         Log.i(TAG, "onPreferredPaymentServiceChanged");
+        ComponentName oldPreferredService = mAidCache.getPreferredService();
         mAidCache.onPreferredPaymentServiceChanged(userId, service);
         mHostEmulationManager.onPreferredPaymentServiceChanged(userId, service);
 
-        NfcService.getInstance().onPreferredPaymentChanged(
-                NfcAdapter.PREFERRED_PAYMENT_CHANGED);
-        updateForShouldDefaultToObserveMode(userId);
+            NfcService.getInstance().onPreferredPaymentChanged(
+                    NfcAdapter.PREFERRED_PAYMENT_CHANGED);
+
+        if (!Objects.equals(oldPreferredService, service)) {
+            updateForShouldDefaultToObserveMode(userId);
+        }
     }
 
     @Override
     public void onPreferredForegroundServiceChanged(int userId, ComponentName service) {
         Log.i(TAG, "onPreferredForegroundServiceChanged");
+        ComponentName oldPreferredService = mAidCache.getPreferredService();
         mAidCache.onPreferredForegroundServiceChanged(userId, service);
         mHostEmulationManager.onPreferredForegroundServiceChanged(userId, service);
 
         NfcService.getInstance().onPreferredPaymentChanged(
                 NfcAdapter.PREFERRED_PAYMENT_CHANGED);
-        updateForShouldDefaultToObserveMode(userId);
+        if (!Objects.equals(oldPreferredService, service)) {
+            updateForShouldDefaultToObserveMode(userId);
+        }
     }
     private void updateForShouldDefaultToObserveMode(int userId) {
         long token = Binder.clearCallingIdentity();
