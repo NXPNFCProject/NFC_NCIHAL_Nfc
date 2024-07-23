@@ -177,6 +177,7 @@ public class HostEmulationManager {
     public void onPreferredPaymentServiceChanged(int userId, final ComponentName service) {
         mHandler.post(() -> {
             synchronized (mLock) {
+                resetActiveService();
                 if (service != null) {
                     bindPaymentServiceLocked(userId, service);
                 } else {
@@ -311,6 +312,7 @@ public class HostEmulationManager {
      */
     public void onPreferredForegroundServiceChanged(int userId, ComponentName service) {
         synchronized (mLock) {
+            resetActiveService();
             if (service != null) {
                 bindServiceIfNeededLocked(userId, service);
             } else {
@@ -505,9 +507,7 @@ public class HostEmulationManager {
                 Log.e(TAG, "Got deactivation event while in idle state");
             }
             sendDeactivateToActiveServiceLocked(HostApduService.DEACTIVATION_LINK_LOSS);
-            mActiveService = null;
-            mActiveServiceName = null;
-            mActiveServiceUserId = -1;
+            resetActiveService();
             mPendingPollingLoopFrames = null;
             unbindServiceIfNeededLocked();
             mState = STATE_IDLE;
@@ -533,9 +533,7 @@ public class HostEmulationManager {
             } else {
                 sendDeactivateToActiveServiceLocked(HostApduService.DEACTIVATION_DESELECTED);
             }
-            mActiveService = null;
-            mActiveServiceName = null;
-            mActiveServiceUserId = -1;
+            resetActiveService();
             unbindServiceIfNeededLocked();
             mState = STATE_W4_SELECT;
 
@@ -730,6 +728,12 @@ public class HostEmulationManager {
             return bytesToString(data, SELECT_APDU_HDR_LENGTH, aidLength);
         }
         return null;
+    }
+
+    private void resetActiveService() {
+        mActiveService = null;
+        mActiveServiceName = null;
+        mActiveServiceUserId = -1;
     }
 
     private ServiceConnection mPaymentConnection = new ServiceConnection() {
