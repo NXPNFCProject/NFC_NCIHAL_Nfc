@@ -156,10 +156,12 @@ public class HostEmulationManager {
     String mLastSelectedAid;
     int mState;
     byte[] mSelectApdu;
+    Handler mHandler;
 
     public HostEmulationManager(Context context, Looper looper, RegisteredAidCache aidCache) {
         mContext = context;
         mLooper = looper;
+        mHandler = new Handler(looper);
         mLock = new Object();
         mAidCache = aidCache;
         mState = STATE_IDLE;
@@ -173,7 +175,7 @@ public class HostEmulationManager {
      *  Preferred payment service changed
      */
     public void onPreferredPaymentServiceChanged(int userId, final ComponentName service) {
-        new Handler(mLooper).post(() -> {
+        mHandler.post(() -> {
             synchronized (mLock) {
                 if (service != null) {
                     bindPaymentServiceLocked(userId, service);
@@ -258,8 +260,10 @@ public class HostEmulationManager {
                             allowOneTransaction();
                         }
                         UserHandle user = UserHandle.getUserHandleForUid(serviceInfo.getUid());
-                        service = bindServiceIfNeededLocked(user.getIdentifier(),
-                                serviceInfo.getComponent());
+                        if (serviceInfo.isOnHost()) {
+                            service = bindServiceIfNeededLocked(user.getIdentifier(),
+                                    serviceInfo.getComponent());
+                        }
                     } else {
                         service = getForegroundServiceOrDefault();
                     }
@@ -299,7 +303,7 @@ public class HostEmulationManager {
         Log.d(TAG, "disabling observe mode for one transaction.");
         mEnableObserveModeAfterTransaction = true;
         NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
-        adapter.setObserveModeEnabled(false);
+        mHandler.post(() -> adapter.setObserveModeEnabled(false));
     }
 
     /**
@@ -512,7 +516,7 @@ public class HostEmulationManager {
                 Log.d(TAG, "re-enabling observe mode after HCE deactivation");
                 mEnableObserveModeAfterTransaction = false;
                 NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
-                adapter.setObserveModeEnabled(true);
+                mHandler.post(() -> adapter.setObserveModeEnabled(true));
             }
 
             if (mStatsdUtils != null) {
