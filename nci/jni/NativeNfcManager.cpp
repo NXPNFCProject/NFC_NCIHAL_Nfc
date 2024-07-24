@@ -138,6 +138,7 @@ bool gActivated = false;
 SyncEvent gDeactivatedEvent;
 SyncEvent sNfaSetPowerSubState;
 int recovery_option = 0;
+int nfcee_power_and_link_conf = 0;
 #if (NXP_EXTNS == TRUE)
 /*Structure to store  discovery parameters*/
 typedef struct discovery_Parameters
@@ -341,6 +342,14 @@ void initializeRecoveryOption() {
   recovery_option = NfcConfig::getUnsigned(NAME_RECOVERY_OPTION, 0);
 
   LOG(DEBUG) << __func__ << ": recovery option=" << recovery_option;
+}
+
+void initializeNfceePowerAndLinkConf() {
+  nfcee_power_and_link_conf =
+      NfcConfig::getUnsigned(NAME_ALWAYS_ON_SET_EE_POWER_AND_LINK_CONF, 0);
+
+  LOG(DEBUG) << __func__ << ": Always on set NFCEE_POWER_AND_LINK_CONF="
+             << nfcee_power_and_link_conf;
 }
 }  // namespace
 
@@ -814,6 +823,7 @@ static void nfaConnectionCallback(uint8_t connEvent,
 static jboolean nfcManager_initNativeStruc(JNIEnv* e, jobject o) {
   initializeGlobalDebugEnabledFlag();
   initializeRecoveryOption();
+  initializeNfceePowerAndLinkConf();
   LOG(DEBUG) << StringPrintf("%s: enter", __func__);
 
   nfc_jni_native_data* nat =
@@ -2984,6 +2994,16 @@ static jint nfcManager_doGetMaxRoutingTableSize(JNIEnv* e, jobject o) {
   return lmrt_get_max_size();
 }
 
+static void nfcManager_doSetNfceePowerAndLinkCtrl(JNIEnv* e, jobject o,
+                                                  jboolean enable) {
+  RoutingManager& routingManager = RoutingManager::getInstance();
+  if (enable) {
+    routingManager.eeSetPwrAndLinkCtrl((uint8_t)nfcee_power_and_link_conf);
+  } else {
+    routingManager.eeSetPwrAndLinkCtrl(0);
+  }
+}
+
 /*******************************************************************************
 **
 ** Function:        nfcManager_doGetRoutingTable
@@ -3247,6 +3267,9 @@ static JNINativeMethod gMethods[] = {
 
     {"getDefaultMifareCLTPowerState", "()I",
      (void*)nfcManager_getDefaultMifareCLTPowerState},
+
+    {"doSetNfceePowerAndLinkCtrl", "(Z)V",
+     (void*)nfcManager_doSetNfceePowerAndLinkCtrl},
 #if(NXP_EXTNS == TRUE)
     {"getT4TNfceePowerState", "()I", (void*)nfcManager_getT4TNfceePowerState},
     {"getDefaultFelicaCLTPowerState", "()I",

@@ -678,6 +678,12 @@ public class NativeNfcManager implements DeviceHost {
         NfcService.getInstance().storeNativeCrashLogs();
     }
 
+    private native void doSetNfceePowerAndLinkCtrl(boolean enable);
+    @Override
+    public void setNfceePowerAndLinkCtrl(boolean enable) {
+        doSetNfceePowerAndLinkCtrl(enable);
+    }
+
     /**
      * Notifies Tag abort operation
      */

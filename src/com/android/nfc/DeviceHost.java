@@ -270,6 +270,11 @@ public interface DeviceHost {
 
     public void shutdown();
 
+    /**
+    * Set NFCC power state by sending NFCEE_POWER_AND_LINK_CNTRL_CMD
+    */
+    void setNfceePowerAndLinkCtrl(boolean enable);
+
     public boolean setNfcSecure(boolean enable);
 
     public boolean isObserveModeSupported();
