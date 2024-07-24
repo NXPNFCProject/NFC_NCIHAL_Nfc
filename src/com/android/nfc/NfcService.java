@@ -1521,6 +1521,10 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                     if (!mIsAlwaysOnSupported
                             || mAlwaysOnState != NfcAdapter.STATE_ON
                             || mAlwaysOnState != NfcAdapter.STATE_TURNING_OFF) {
+                        if (mIsRecovering) {
+                            // Recovering needs the full init. Put default value
+                            mAlwaysOnState = NfcAdapter.STATE_OFF;
+                        }
                         if (!mDeviceHost.initialize()) {
                             Log.w(TAG, "Error enabling NFC");
                             updateState(NfcAdapter.STATE_OFF);
