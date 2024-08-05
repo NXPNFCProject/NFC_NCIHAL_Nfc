@@ -75,10 +75,8 @@
     <uses-permission android:name="android.permission.DEVICE_POWER" />
     <uses-permission android:name="android.permission.ACCESS_VR_STATE"/>
     <uses-permission android:name="android.permission.USER_ACTIVITY" />
-    <uses-permission android:name="android.permission.BIND_RESOLVER_RANKER_SERVICE" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.START_ACTIVITIES_FROM_BACKGROUND" />
-    <uses-permission android:name="android.permission.NETWORK_SETTINGS" />
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -86,6 +84,9 @@
     <uses-permission android:name="android.permission.SHOW_CUSTOMIZED_RESOLVER" />
     <uses-permission android:name="android.permission.MANAGE_ROLE_HOLDERS" />
     <uses-permission android:name="android.permission.OBSERVE_ROLE_HOLDERS"/>
+    <uses-permission android:name="android.permission.DUMP"/>
+    <uses-permission android:name="android.permission.QUERY_CLONED_APPS"/>
+    <uses-permission android:name="android.permission.READ_PRIVILEGED_PHONE_STATE"/>
 
     <protected-broadcast android:name="com.nxp.nfc_extras.action.NFC_MPOS_READER_MODE_START_SUCCESS" />
     <protected-broadcast android:name="com.nxp.nfc_extras.action.NFC_MPOS_READER_MODE_START_FAIL" />
@@ -168,6 +169,10 @@
         <activity android:name=".ConfirmConnectToWifiNetworkActivity"
             android:finishOnCloseSystemDialogs="true"
             android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:noHistory="true"
+        />
+        <activity android:name=".NfcEnableAllowlistActivity"
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
             android:noHistory="true"
         />

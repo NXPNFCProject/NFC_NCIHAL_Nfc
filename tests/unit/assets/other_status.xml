@@ -1,0 +1,6 @@
+<services>
+    <service component="com.android.test.another/com.android.test.another.OffHostApduService"
+        uid="1"
+        checked="true">
+    </service>
+</services>

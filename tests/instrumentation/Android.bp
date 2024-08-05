@@ -21,6 +21,8 @@ android_test {
         "androidx.test.rules",
         "androidx.test.ext.junit",
         "truth",
+        "androidx.test.espresso.core",
+        "androidx.test.espresso.intents-nodeps",
     ],
 
     // Include all test java files.

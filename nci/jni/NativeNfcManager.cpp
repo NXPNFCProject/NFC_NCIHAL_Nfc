@@ -138,7 +138,8 @@ bool gActivated = false;
 SyncEvent gDeactivatedEvent;
 SyncEvent sNfaSetPowerSubState;
 int recovery_option = 0;
-int nfcee_power_and_link_conf = 0;
+int always_on_nfcee_power_and_link_conf = 0;
+int disable_always_on_nfcee_power_and_link_conf = 0;
 #if (NXP_EXTNS == TRUE)
 /*Structure to store  discovery parameters*/
 typedef struct discovery_Parameters
@@ -236,6 +237,7 @@ static jint sLfT3tMax = 0;
 static bool sRoutingInitialized = false;
 static bool sIsRecovering = false;
 static std::vector<uint8_t> sRawVendorCmdResponse;
+static bool sEnableVendorNciNotifications = false;
 
 #define CONFIG_UPDATE_TECH_MASK (1 << 1)
 #define DEFAULT_TECH_MASK                                                  \
@@ -245,6 +247,7 @@ static std::vector<uint8_t> sRawVendorCmdResponse;
    NFA_TECHNOLOGY_MASK_KOVIO)
 #define DEFAULT_DISCOVERY_DURATION 500
 #define READER_MODE_DISCOVERY_DURATION 200
+#define FLAG_SET_DEFAULT_TECH 0x40000000
 
 #if(NXP_EXTNS == TRUE)
 #define DUAL_UICC_FEATURE_NOT_AVAILABLE 0xED;
@@ -345,11 +348,19 @@ void initializeRecoveryOption() {
 }
 
 void initializeNfceePowerAndLinkConf() {
-  nfcee_power_and_link_conf =
+  always_on_nfcee_power_and_link_conf =
       NfcConfig::getUnsigned(NAME_ALWAYS_ON_SET_EE_POWER_AND_LINK_CONF, 0);
 
   LOG(DEBUG) << __func__ << ": Always on set NFCEE_POWER_AND_LINK_CONF="
-             << nfcee_power_and_link_conf;
+             << always_on_nfcee_power_and_link_conf;
+}
+
+void initializeDisableAlwaysOnNfceePowerAndLinkConf() {
+  disable_always_on_nfcee_power_and_link_conf = NfcConfig::getUnsigned(
+      NAME_DISABLE_ALWAYS_ON_SET_EE_POWER_AND_LINK_CONF, 0);
+
+  LOG(DEBUG) << __func__ << ": Always on set NFCEE_POWER_AND_LINK_CONF="
+             << disable_always_on_nfcee_power_and_link_conf;
 }
 }  // namespace
 
@@ -824,6 +835,7 @@ static jboolean nfcManager_initNativeStruc(JNIEnv* e, jobject o) {
   initializeGlobalDebugEnabledFlag();
   initializeRecoveryOption();
   initializeNfceePowerAndLinkConf();
+  initializeDisableAlwaysOnNfceePowerAndLinkConf();
   LOG(DEBUG) << StringPrintf("%s: enter", __func__);
 
   nfc_jni_native_data* nat =
@@ -1013,13 +1025,13 @@ if (eventData->rf_field.status == NFA_STATUS_OK) {
         LOG(ERROR) << StringPrintf("%s: NFA_DM_NFCC_TRANSPORT_ERR_EVT; abort",
                                    __func__);
       struct nfc_jni_native_data* nat = getNative(NULL, NULL);
-      JNIEnv* e = NULL;
-      ScopedAttach attach(nat->vm, &e);
-      if (e == NULL) {
-        LOG(ERROR) << StringPrintf("jni env is null");
-        return;
-      }
       if (recovery_option && nat != NULL) {
+        JNIEnv* e = NULL;
+        ScopedAttach attach(nat->vm, &e);
+        if (e == NULL) {
+          LOG(ERROR) << StringPrintf("jni env is null");
+          return;
+        }
         LOG(ERROR) << StringPrintf("%s: toggle NFC state to recovery nfc",
                                    __func__);
         sIsRecovering = true;
@@ -1095,8 +1107,14 @@ if (eventData->rf_field.status == NFA_STATUS_OK) {
         }
         PowerSwitch::getInstance().initialize(PowerSwitch::UNKNOWN_LEVEL);
         LOG(ERROR) << StringPrintf("%s: crash NFC service", __func__);
-        e->CallVoidMethod(nat->manager,
-                          android::gCachedNfcManagerNotifyCommandTimeout);
+        if (nat != NULL) {
+          JNIEnv* e = NULL;
+          ScopedAttach attach(nat->vm, &e);
+          if (e != NULL) {
+            e->CallVoidMethod(nat->manager,
+                              android::gCachedNfcManagerNotifyCommandTimeout);
+          }
+        }
         //////////////////////////////////////////////
         // crash the NFC service process so it can restart automatically
         abort();
@@ -1386,6 +1404,12 @@ void static nfaVSCallback(uint8_t event, uint16_t param_len, uint8_t* p_param) {
     case NCI_MSG_PROP_ANDROID: {
       uint8_t android_sub_opcode = p_param[3];
       switch (android_sub_opcode) {
+        case NCI_QUERY_ANDROID_PASSIVE_OBSERVE: {
+          gObserveModeEnabled = p_param[5];
+          LOG(INFO) << StringPrintf("Query Observe mode state is %s",
+                                    gObserveModeEnabled ? "TRUE" : "FALSE");
+        }
+          FALLTHROUGH_INTENDED;
         case NCI_ANDROID_PASSIVE_OBSERVE: {
           gVSCmdStatus = p_param[4];
           LOG(INFO) << StringPrintf("Observe mode RSP: status: %x",
@@ -1395,9 +1419,9 @@ void static nfaVSCallback(uint8_t event, uint16_t param_len, uint8_t* p_param) {
         } break;
         case NCI_ANDROID_GET_CAPS: {
           gVSCmdStatus = p_param[4];
-          u_int16_t android_version = *(u_int16_t*)&p_param[5];
-          u_int8_t len = p_param[7];
-          gCaps.assign(p_param + 8, p_param + 8 + len);
+          SyncEventGuard guard(gNfaVsCommand);
+          gCaps.assign(p_param + 8, p_param + param_len);
+          gNfaVsCommand.notifyOne();
         } break;
         case NCI_ANDROID_POLLING_FRAME_NTF: {
           struct nfc_jni_native_data* nat = getNative(NULL, NULL);
@@ -1434,31 +1458,51 @@ void static nfaVSCallback(uint8_t event, uint16_t param_len, uint8_t* p_param) {
       }
     } break;
     default: {
-      struct nfc_jni_native_data* nat = getNative(NULL, NULL);
-      if (!nat) {
-        LOG(ERROR) << StringPrintf("%s: cached nat is null", __FUNCTION__);
-        return;
+      if (sEnableVendorNciNotifications) {
+        struct nfc_jni_native_data* nat = getNative(NULL, NULL);
+        if (!nat) {
+          LOG(ERROR) << StringPrintf("%s: cached nat is null", __FUNCTION__);
+          return;
+        }
+        JNIEnv* e = NULL;
+        ScopedAttach attach(nat->vm, &e);
+        if (e == NULL) {
+          LOG(ERROR) << StringPrintf("%s: jni env is null", __FUNCTION__);
+          return;
+        }
+        ScopedLocalRef<jobject> dataJavaArray(e, e->NewByteArray(param_len));
+        if (dataJavaArray.get() == NULL) {
+          LOG(ERROR) << StringPrintf("%s: fail allocate array", __FUNCTION__);
+          return;
+        }
+        e->SetByteArrayRegion((jbyteArray)dataJavaArray.get(), 0, param_len,
+                              (jbyte*)(p_param));
+        if (e->ExceptionCheck()) {
+          e->ExceptionClear();
+          LOG(ERROR) << StringPrintf("%s failed to fill array", __FUNCTION__);
+          return;
+        }
+        e->CallVoidMethod(nat->manager,
+                          android::gCachedNfcManagerNotifyVendorSpecificEvent,
+                          (jint)event, (jint)param_len, dataJavaArray.get());
       }
-      JNIEnv* e = NULL;
-      ScopedAttach attach(nat->vm, &e);
-      if (e == NULL) {
-        LOG(ERROR) << StringPrintf("%s: jni env is null", __FUNCTION__);
-      return;
-      }
-      ScopedLocalRef<jobject> dataJavaArray(e, e->NewByteArray(param_len));
-      if (dataJavaArray.get() == NULL) {
-        LOG(ERROR) << StringPrintf("%s: fail allocate array", __FUNCTION__);
-        return;
-      }
-      e->SetByteArrayRegion((jbyteArray)dataJavaArray.get(), 0, param_len, (jbyte*)(p_param));
-      if (e->ExceptionCheck()) {
-        e->ExceptionClear();
-        LOG(ERROR) << StringPrintf("%s failed to fill array", __FUNCTION__);
-        return;
-      }
-      e->CallVoidMethod(nat->manager, android::gCachedNfcManagerNotifyVendorSpecificEvent,
-                        (jint)event, (jint)param_len, dataJavaArray.get());
     } break;
+  }
+}
+
+static void nfcManager_injectNtf(JNIEnv* e, jobject, jbyteArray data) {
+  ScopedByteArrayRO bytes(e, data);
+  size_t bufLen = bytes.size();
+  tNFC_HAL_EVT_MSG* p_msg;
+  p_msg = (tNFC_HAL_EVT_MSG*)GKI_getbuf(sizeof(tNFC_HAL_EVT_MSG) + bufLen + 1);
+  if (p_msg != NULL) {
+    p_msg->hdr.len = bufLen + 3;
+    p_msg->hdr.event = BT_EVT_TO_NFC_NCI;
+    p_msg->hdr.offset = sizeof(tNFC_HAL_EVT_MSG) - 7;
+    p_msg->hdr.layer_specific = 0;
+    memcpy(((uint8_t*)p_msg) + sizeof(tNFC_HAL_EVT_MSG) + 1, bytes.get(),
+           bufLen);
+    GKI_send_msg(NFC_TASK, NFC_MBOX_ID, p_msg);
   }
 }
 
@@ -1472,6 +1516,22 @@ static jboolean isObserveModeSupported(JNIEnv* e, jobject o) {
 static jboolean nfcManager_isObserveModeEnabled(JNIEnv* e, jobject o) {
   if (isObserveModeSupported(e, o) == JNI_FALSE) {
     return false;
+  }
+
+  uint8_t cmd[] = {NCI_QUERY_ANDROID_PASSIVE_OBSERVE};
+  SyncEventGuard guard(gNfaVsCommand);
+  tNFA_STATUS status =
+      NFA_SendVsCommand(NCI_MSG_PROP_ANDROID, sizeof(cmd), cmd, nfaVSCallback);
+
+  if (status == NFA_STATUS_OK) {
+    if (!gNfaVsCommand.wait(1000)) {
+      LOG(ERROR) << StringPrintf(
+          "%s: Timed out waiting for a response to get observe mode ",
+          __FUNCTION__);
+      gVSCmdStatus = NFA_STATUS_FAILED;
+    }
+  } else {
+    LOG(DEBUG) << StringPrintf("%s: Failed to get observe mode ", __FUNCTION__);
   }
   LOG(DEBUG) << StringPrintf(
       "%s: returning %s", __FUNCTION__,
@@ -1496,8 +1556,9 @@ static jboolean nfcManager_setObserveMode(JNIEnv* e, jobject o,
     return false;
   }
 
-  if ((enable != JNI_FALSE) ==
-      (nfcManager_isObserveModeEnabled(e, o) != JNI_FALSE)) {
+  if ((gObserveModeEnabled == enable) &&
+      ((enable != JNI_FALSE) ==
+       (nfcManager_isObserveModeEnabled(e, o) != JNI_FALSE))) {
     LOG(DEBUG) << StringPrintf(
         "%s: called with %s but it is already %s, returning early",
         __FUNCTION__, (enable != JNI_FALSE ? "TRUE" : "FALSE"),
@@ -1510,24 +1571,27 @@ static jboolean nfcManager_setObserveMode(JNIEnv* e, jobject o,
     reenbleDiscovery = true;
   }
   uint8_t cmd[] = {
-      (NCI_MT_CMD << NCI_MT_SHIFT) | NCI_GID_PROP, NCI_MSG_PROP_ANDROID,
-      NCI_ANDROID_PASSIVE_OBSERVE_PARAM_SIZE, NCI_ANDROID_PASSIVE_OBSERVE,
+      NCI_ANDROID_PASSIVE_OBSERVE,
       static_cast<uint8_t>(enable != JNI_FALSE
                                ? NCI_ANDROID_PASSIVE_OBSERVE_PARAM_ENABLE
                                : NCI_ANDROID_PASSIVE_OBSERVE_PARAM_DISABLE)};
-  SyncEventGuard guard(gNfaVsCommand);
-  tNFA_STATUS status = NFA_SendRawVsCommand(sizeof(cmd), cmd, nfaVSCallback);
+  {
+    SyncEventGuard guard(gNfaVsCommand);
+    tNFA_STATUS status = NFA_SendVsCommand(NCI_MSG_PROP_ANDROID, sizeof(cmd),
+                                           cmd, nfaVSCallback);
 
-  if (status == NFA_STATUS_OK) {
-    if (!gNfaVsCommand.wait(1000)) {
-      LOG(ERROR) << StringPrintf(
-          "%s: Timed out waiting for a response to set observe mode ",
-          __FUNCTION__);
+    if (status == NFA_STATUS_OK) {
+      if (!gNfaVsCommand.wait(1000)) {
+        LOG(ERROR) << StringPrintf(
+            "%s: Timed out waiting for a response to set observe mode ",
+            __FUNCTION__);
+        gVSCmdStatus = NFA_STATUS_FAILED;
+      }
+    } else {
+      LOG(DEBUG) << StringPrintf("%s: Failed to set observe mode ",
+                                 __FUNCTION__);
       gVSCmdStatus = NFA_STATUS_FAILED;
     }
-  } else {
-    LOG(DEBUG) << StringPrintf("%s: Failed to set observe mode ", __FUNCTION__);
-    gVSCmdStatus = NFA_STATUS_FAILED;
   }
   if (reenbleDiscovery) {
     startRfDiscovery(true);
@@ -2998,9 +3062,11 @@ static void nfcManager_doSetNfceePowerAndLinkCtrl(JNIEnv* e, jobject o,
                                                   jboolean enable) {
   RoutingManager& routingManager = RoutingManager::getInstance();
   if (enable) {
-    routingManager.eeSetPwrAndLinkCtrl((uint8_t)nfcee_power_and_link_conf);
+    routingManager.eeSetPwrAndLinkCtrl(
+        (uint8_t)always_on_nfcee_power_and_link_conf);
   } else {
-    routingManager.eeSetPwrAndLinkCtrl(0);
+    routingManager.eeSetPwrAndLinkCtrl(
+        (uint8_t)disable_always_on_nfcee_power_and_link_conf);
   }
 }
 
@@ -3068,17 +3134,24 @@ static void nfcManager_setDiscoveryTech(JNIEnv* e, jobject o, jint pollTech,
   tNFA_STATUS nfaStat;
   bool isRevertPoll = false;
   bool isRevertListen = false;
+  bool changeDefaultTech = false;
   LOG(DEBUG) << StringPrintf("%s  pollTech = 0x%x, listenTech = 0x%x", __func__,
                              pollTech, listenTech);
 
   if (pollTech < 0) isRevertPoll = true;
   if (listenTech < 0) isRevertListen = true;
+  if (pollTech & FLAG_SET_DEFAULT_TECH || listenTech & FLAG_SET_DEFAULT_TECH)
+    changeDefaultTech = true;
+
+  // Need listen tech routing update in routing table
+  // for addition of blocking bit
+  RoutingManager::getInstance().setEeTechRouteUpdateRequired();
 
   nativeNfcTag_acquireRfInterfaceMutexLock();
   SyncEventGuard guard(sNfaEnableDisablePollingEvent);
 
   nfaStat = NFA_ChangeDiscoveryTech(pollTech, listenTech, isRevertPoll,
-                                    isRevertListen);
+                                    isRevertListen, changeDefaultTech);
 
   if (nfaStat == NFA_STATUS_OK) {
     // wait for NFA_LISTEN_DISABLED_EVT
@@ -3104,10 +3177,14 @@ static void nfcManager_resetDiscoveryTech(JNIEnv* e, jobject o) {
   tNFA_STATUS nfaStat;
   LOG(DEBUG) << StringPrintf("%s : enter", __func__);
 
+  // Need listen tech routing update in routing table
+  // for addition of blocking bit
+  RoutingManager::getInstance().setEeTechRouteUpdateRequired();
+
   nativeNfcTag_acquireRfInterfaceMutexLock();
   SyncEventGuard guard(sNfaEnableDisablePollingEvent);
 
-  nfaStat = NFA_ChangeDiscoveryTech(0xFF, 0xFF, true, true);
+  nfaStat = NFA_ChangeDiscoveryTech(0xFF, 0xFF, true, true, false);
 
   if (nfaStat == NFA_STATUS_OK) {
     // wait for NFA_LISTEN_DISABLED_EVT
@@ -3118,6 +3195,13 @@ static void nfcManager_resetDiscoveryTech(JNIEnv* e, jobject o) {
   }
   nativeNfcTag_releaseRfInterfaceMutexLock();
 }
+
+static void ncfManager_nativeEnableVendorNciNotifications(JNIEnv* env,
+                                                          jobject o,
+                                                          jboolean enable) {
+  sEnableVendorNciNotifications = (enable == JNI_TRUE);
+}
+
 static jobject nfcManager_nativeSendRawVendorCmd(JNIEnv* env, jobject o,
                                                  jint mt, jint gid, jint oid,
                                                  jbyteArray payload) {
@@ -3332,6 +3416,9 @@ static JNINativeMethod gMethods[] = {
      (void*)nfcManager_nativeSendRawVendorCmd},
 
     {"getProprietaryCaps", "()[B", (void*)nfcManager_getProprietaryCaps},
+    {"enableVendorNciNotifications", "(Z)V",
+     (void*)ncfManager_nativeEnableVendorNciNotifications},
+    {"injectNtf", "([B)V", (void*)nfcManager_injectNtf},
 };
 
 /*******************************************************************************
@@ -3614,12 +3701,18 @@ static jboolean nfcManager_doSetPowerSavingMode(JNIEnv* e, jobject o,
 static jbyteArray nfcManager_getProprietaryCaps(JNIEnv* e, jobject o) {
   LOG(DEBUG) << StringPrintf("%s: enter; ", __func__);
   uint8_t cmd[] = {(NCI_MT_CMD << NCI_MT_SHIFT) | NCI_GID_PROP,
-                   NCI_MSG_PROP_ANDROID, 0, NCI_ANDROID_GET_CAPS};
+                   NCI_MSG_PROP_ANDROID, NCI_ANDROID_GET_CAPS_PARAM_SIZE,
+                   NCI_ANDROID_GET_CAPS};
   SyncEventGuard guard(gNfaVsCommand);
-  tNFA_STATUS status =
-      NFA_SendRawVsCommand(sizeof(cmd), cmd, nfaSendRawVsCmdCallback);
+
+  tNFA_STATUS status = NFA_SendRawVsCommand(sizeof(cmd), cmd, nfaVSCallback);
   if (status == NFA_STATUS_OK) {
-    gNfaVsCommand.wait();
+    if (!gNfaVsCommand.wait(1000)) {
+      LOG(ERROR) << StringPrintf(
+          "%s: Timed out waiting for a response to get caps ",
+          __FUNCTION__);
+      gVSCmdStatus = NFA_STATUS_FAILED;
+    }
   } else {
     LOG(ERROR) << StringPrintf("%s: Failed to get caps", __func__);
     gVSCmdStatus = NFA_STATUS_FAILED;

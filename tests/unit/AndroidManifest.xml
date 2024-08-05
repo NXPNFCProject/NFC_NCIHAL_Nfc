@@ -48,6 +48,11 @@
             android:required="true"
         />
         <uses-library android:name="android.test.runner" />
+        <activity
+            android:name="com.android.nfc.cardemulation.AppChooserActivity"
+            android:theme="@style/Theme.AppCompat"
+            android:exported="false"
+            />
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

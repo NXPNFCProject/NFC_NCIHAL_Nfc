@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright (C) 2024 The Android Open Source Project
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~      http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+   -->
+
+<resources xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="transportService1" msgid="7110581386972746468">"Dopravná služba č. 1"</string>
+    <string name="transportService2" msgid="1627086442493069484">"Dopravná služba č. 2"</string>
+    <string name="paymentService1" msgid="5034369200915462734">"Platobná služba č. 1"</string>
+    <string name="paymentService2" msgid="7677362631959614876">"Platobná služba č. 2"</string>
+    <string name="offhostService" msgid="2153585078114315278">"Služba OffHost"</string>
+    <string name="accessService" msgid="169603026393620416">"Služba poskytujúca prístup"</string>
+    <string name="screenOffPaymentService" msgid="4807235640853231967">"Obrazovka platobnej služby je vypnutá"</string>
+    <string name="screenOnOnlyOffHostService" msgid="1209570782652205407">"Ja zapnutá iba obrazovka služby OffHost"</string>
+    <string name="ppse" msgid="3369197818756940218">"PPSE"</string>
+    <string name="mastercard" msgid="2202161212986753725">"MasterCard"</string>
+    <string name="visa" msgid="8369831032637923417">"Visa"</string>
+</resources>

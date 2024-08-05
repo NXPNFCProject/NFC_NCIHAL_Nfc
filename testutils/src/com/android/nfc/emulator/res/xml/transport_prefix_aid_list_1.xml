@@ -1,0 +1,3 @@
+<host-apdu-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/transportService1">
+</host-apdu-service>

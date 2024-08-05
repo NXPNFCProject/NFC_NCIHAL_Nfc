@@ -30,7 +30,7 @@
     <string name="tap_again_to_pay" msgid="5754988005412859897">"Touchez à nouveau pour payer avec <xliff:g id="APP">%1$s</xliff:g>"</string>
     <string name="tap_again_to_complete" msgid="5423640945118279123">"Touchez à nouveau pour terminer la transaction avec <xliff:g id="APP">%1$s</xliff:g>"</string>
     <string name="tap_again_description" msgid="3019101527041529661">"Maintenez l\'appareil contre le lecteur"</string>
-    <string name="appchooser_description" msgid="2554187931814833244">"Choisissez l\'application à utiliser pour numériser"</string>
+    <string name="appchooser_description" msgid="2554187931814833244">"Choisissez l\'appli à utiliser pour numériser"</string>
     <string name="transaction_failure" msgid="7828102078637936513">"Cette transaction n\'a pas pu être effectuée avec <xliff:g id="APP">%1$s</xliff:g>."</string>
     <string name="could_not_use_app" msgid="8137587876138569083">"Impossible d\'utiliser <xliff:g id="APP">%1$s</xliff:g>."</string>
     <string name="pay_with" msgid="5531545488795798945">"Payer avec"</string>
@@ -44,15 +44,18 @@
     <string name="prompt_connect_to_network" msgid="8511683573657516114">"Se connecter au réseau <xliff:g id="NETWORK_SSID">%1$s</xliff:g>?"</string>
     <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"L\'activation de la technologie CCP est nécessaire pour utiliser Android Beam. Voulez-vous l\'activer?"</string>
     <string name="android_beam" msgid="1666446406999492763">"Android Beam"</string>
-    <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"L\'application ne possède pas l\'autorisation d\'accès aux dispositifs de stockage externes. Cela est nécessaire pour partager ce fichier."</string>
+    <string name="beam_requires_external_storage_permission" msgid="8798337545702206901">"L\'appli ne possède pas l\'autorisation d\'accès aux dispositifs de stockage externes. Cela est nécessaire pour partager ce fichier."</string>
     <string name="title_confirm_url_open" msgid="8069968913244794478">"Ouvrir le lien?"</string>
-    <string name="summary_confirm_url_open" msgid="1246398412196449226">"Votre téléphone a reçu un lien par CCP :"</string>
-    <string name="summary_confirm_url_open_tablet" msgid="771152442325809851">"Votre tablette a reçu un lien par CCP :"</string>
+    <string name="summary_confirm_url_open" msgid="1246398412196449226">"Votre téléphone a reçu un lien par CCP :"</string>
+    <string name="summary_confirm_url_open_tablet" msgid="771152442325809851">"Votre tablette a reçu un lien par CCP :"</string>
     <string name="action_confirm_url_open" msgid="3458322738812921189">"Ouvrir le lien"</string>
     <string name="tag_read_error" msgid="2485274498885877547">"Erreur de lecture CCP. Réessayez."</string>
-    <string name="tag_dispatch_failed" msgid="3562984995049738400">"Aucune application prise en charge pour cette balise CCP"</string>
+    <string name="tag_dispatch_failed" msgid="3562984995049738400">"Aucune appli prise en charge pour cette balise CCP"</string>
     <string name="nfc_blocking_alert_title" msgid="1086172436984457085">"La CCP est peut-être bloquée"</string>
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Touchez pour apprendre comment la débloquer."</string>
     <string name="nfc_logging_alert_title" msgid="5300867034660942987">"Les données CCP sont enregistrées"</string>
     <string name="nfc_logging_alert_message" msgid="1550187184825467942">"Touchez pour cesser l\'enregistrement."</string>
+    <string name="title_package_enabling_nfc" msgid="5736481508428918024">"Autoriser <xliff:g id="PKG">%1$s</xliff:g> à activer la CCP?"</string>
+    <string name="enable_nfc_yes" msgid="694867197186062792">"Oui"</string>
+    <string name="enable_nfc_no" msgid="6549033065900624599">"Non"</string>
 </resources>

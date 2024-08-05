@@ -109,13 +109,13 @@ public class RegisteredAidCacheTest {
     public void testOnPreferredForegroundServiceChanged() {
         if (!mNfcSupported) return;
 
-        ComponentName componentName = mRegisteredAidCache.getPreferredService();
+        ComponentName componentName = mRegisteredAidCache.getPreferredService().second;
         Assert.assertNull(componentName);
 
         componentName = new ComponentName("com.android.nfc",
                 RegisteredAidCacheTest.class.getName());
         mRegisteredAidCache.onPreferredForegroundServiceChanged(0, componentName);
-        ComponentName preferredService = mRegisteredAidCache.getPreferredService();
+        ComponentName preferredService = mRegisteredAidCache.getPreferredService().second;
 
         Assert.assertNotNull(preferredService);
         Assert.assertEquals(componentName.getClassName(), preferredService.getClassName());

@@ -40,7 +40,7 @@
     <string name="wifi_connect" msgid="6250727951843550671">"Connecta"</string>
     <string name="status_unable_to_connect" msgid="9183908200295307657">"No es pot connectar a la xarxa."</string>
     <string name="status_wifi_connected" msgid="5893022897732105739">"Connexió correcta"</string>
-    <string name="title_connect_to_network" msgid="2474034615817280146">"Connexió a la xarxa"</string>
+    <string name="title_connect_to_network" msgid="2474034615817280146">"Connexió de xarxa"</string>
     <string name="prompt_connect_to_network" msgid="8511683573657516114">"Vols connectar-te a la xarxa <xliff:g id="NETWORK_SSID">%1$s</xliff:g>?"</string>
     <string name="beam_requires_nfc_enabled" msgid="2800366967218600534">"Android Beam requereix que s\'activi NFC. Vols activar-lo?"</string>
     <string name="android_beam" msgid="1666446406999492763">"Android Beam"</string>
@@ -55,4 +55,7 @@
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Toca per obtenir informació sobre com pots resoldre-ho."</string>
     <string name="nfc_logging_alert_title" msgid="5300867034660942987">"S\'estan gravant les dades de l\'NFC"</string>
     <string name="nfc_logging_alert_message" msgid="1550187184825467942">"Toca per aturar la gravació."</string>
+    <string name="title_package_enabling_nfc" msgid="5736481508428918024">"Vols permetre que <xliff:g id="PKG">%1$s</xliff:g> activi la funció NFC?"</string>
+    <string name="enable_nfc_yes" msgid="694867197186062792">"Sí"</string>
+    <string name="enable_nfc_no" msgid="6549033065900624599">"No"</string>
 </resources>

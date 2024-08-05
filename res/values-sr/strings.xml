@@ -55,4 +55,7 @@
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Додирните да бисте сазнали како да решите проблем."</string>
     <string name="nfc_logging_alert_title" msgid="5300867034660942987">"NFC подаци се снимају"</string>
     <string name="nfc_logging_alert_message" msgid="1550187184825467942">"Додирните да бисте зауставили снимање."</string>
+    <string name="title_package_enabling_nfc" msgid="5736481508428918024">"Желите да дозволите да <xliff:g id="PKG">%1$s</xliff:g> омогући NFC?"</string>
+    <string name="enable_nfc_yes" msgid="694867197186062792">"Да"</string>
+    <string name="enable_nfc_no" msgid="6549033065900624599">"Не"</string>
 </resources>

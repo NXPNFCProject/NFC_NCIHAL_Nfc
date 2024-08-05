@@ -55,4 +55,7 @@
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Нажмите, чтобы узнать, как устранить эту проблему."</string>
     <string name="nfc_logging_alert_title" msgid="5300867034660942987">"Выполняется запись данных NFC"</string>
     <string name="nfc_logging_alert_message" msgid="1550187184825467942">"Нажмите, чтобы остановить ее."</string>
+    <string name="title_package_enabling_nfc" msgid="5736481508428918024">"Разрешить пакету \"<xliff:g id="PKG">%1$s</xliff:g>\" включить NFC?"</string>
+    <string name="enable_nfc_yes" msgid="694867197186062792">"Да"</string>
+    <string name="enable_nfc_no" msgid="6549033065900624599">"Нет"</string>
 </resources>

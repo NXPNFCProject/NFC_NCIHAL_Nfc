@@ -108,4 +108,8 @@
     <string name="nfc_logging_alert_title">NFC data is being recorded</string>
     <!-- Notification message string informing the user that NFC data is being recorded -->
     <string name="nfc_logging_alert_message">Tap to stop recording.</string>
+    <!-- Title of the dialog to allow the package to enable NFC -->
+    <string name="title_package_enabling_nfc">Allow <xliff:g id="pkg">%1$s</xliff:g> to enable NFC?</string>
+    <string name="enable_nfc_yes">Yes</string>
+    <string name="enable_nfc_no">No</string>
 </resources>

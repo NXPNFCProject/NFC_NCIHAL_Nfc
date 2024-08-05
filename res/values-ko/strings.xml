@@ -55,4 +55,7 @@
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"탭하여 해결 방법을 확인하세요."</string>
     <string name="nfc_logging_alert_title" msgid="5300867034660942987">"NFC 데이터를 기록 중입니다"</string>
     <string name="nfc_logging_alert_message" msgid="1550187184825467942">"기록을 중지하려면 탭하세요."</string>
+    <string name="title_package_enabling_nfc" msgid="5736481508428918024">"<xliff:g id="PKG">%1$s</xliff:g>에서 NFC를 사용하도록 허용하시겠습니까?"</string>
+    <string name="enable_nfc_yes" msgid="694867197186062792">"예"</string>
+    <string name="enable_nfc_no" msgid="6549033065900624599">"아니요"</string>
 </resources>

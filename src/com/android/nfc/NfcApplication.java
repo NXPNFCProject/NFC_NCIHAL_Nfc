@@ -21,6 +21,7 @@ import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.Application;
 import android.content.pm.PackageManager;
 import android.nfc.Constants;
+import android.os.Looper;
 import android.os.Process;
 import android.os.UserHandle;
 
@@ -63,7 +64,7 @@ public class NfcApplication extends Application {
             }
         }
         if (UserHandle.myUserId() == 0 && isMainProcess) {
-            mNfcService = new NfcService(this);
+            mNfcService = new NfcService(this, new NfcInjector(this, Looper.myLooper()));
         }
     }
 }

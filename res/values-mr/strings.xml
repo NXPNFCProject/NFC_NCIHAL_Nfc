@@ -55,4 +55,7 @@
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"निराकरण कसे करायचे ते जाणून घेण्यासाठी टॅप करा."</string>
     <string name="nfc_logging_alert_title" msgid="5300867034660942987">"NFC डेटा रेकॉर्ड केला जात आहे"</string>
     <string name="nfc_logging_alert_message" msgid="1550187184825467942">"रेकॉर्डिंग थांबवण्यासाठी टॅप करा."</string>
+    <string name="title_package_enabling_nfc" msgid="5736481508428918024">"<xliff:g id="PKG">%1$s</xliff:g> ला NFC सुरू करण्याची अनुमती द्यायची आहे का?"</string>
+    <string name="enable_nfc_yes" msgid="694867197186062792">"होय"</string>
+    <string name="enable_nfc_no" msgid="6549033065900624599">"नाही"</string>
 </resources>

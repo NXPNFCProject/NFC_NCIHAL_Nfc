@@ -59,6 +59,8 @@ import android.util.SparseArray;
 import android.util.Xml;
 import android.util.proto.ProtoOutputStream;
 
+import androidx.annotation.VisibleForTesting;
+
 import com.android.internal.annotations.GuardedBy;
 import com.android.nfc.Utils;
 
@@ -127,7 +129,8 @@ public class RegisteredNfcFServicesCache {
         }
     };
 
-    private static class UserServices {
+    @VisibleForTesting
+    static class UserServices {
         /**
          * All services that have registered
          */
@@ -148,15 +151,23 @@ public class RegisteredNfcFServicesCache {
         return userServices;
     }
 
-    private int getProfileParentId(int userId) {
-        UserManager um = mContext.createContextAsUser(
-                UserHandle.of(userId), /*flags=*/0)
-                .getSystemService(UserManager.class);
+    private int getProfileParentId(Context context, int userId) {
+        UserManager um = context.getSystemService(UserManager.class);
         UserHandle uh = um.getProfileParent(UserHandle.of(userId));
         return uh == null ? userId : uh.getIdentifier();
     }
 
+    private int getProfileParentId(int userId) {
+        return getProfileParentId(mContext.createContextAsUser(
+                UserHandle.of(userId), /*flags=*/0), userId);
+    }
+
     public RegisteredNfcFServicesCache(Context context, Callback callback) {
+        this(context, callback, null);
+    }
+
+    @VisibleForTesting
+    RegisteredNfcFServicesCache(Context context, Callback callback, AtomicFile atomicFile) {
         mContext = context;
         mCallback = callback;
 
@@ -167,23 +178,29 @@ public class RegisteredNfcFServicesCache {
             public void onReceive(Context context, Intent intent) {
                 final int uid = intent.getIntExtra(Intent.EXTRA_UID, -1);
                 String action = intent.getAction();
-                if (DBG) Log.d(TAG, "Intent action: " + action);
-                if (uid != -1) {
-                    boolean replaced = intent.getBooleanExtra(Intent.EXTRA_REPLACING, false) &&
-                            (Intent.ACTION_PACKAGE_ADDED.equals(action) ||
-                             Intent.ACTION_PACKAGE_REMOVED.equals(action));
-                    if (!replaced) {
-                        int currentUser = ActivityManager.getCurrentUser();
-                        if (currentUser == getProfileParentId(UserHandle.
-                                getUserHandleForUid(uid).getIdentifier())) {
-                            invalidateCache(UserHandle.getUserHandleForUid(uid).getIdentifier());
-                        } else {
-                            // Cache will automatically be updated on user switch
-                        }
-                    } else {
-                        if (DBG) Log.d(TAG,
-                                "Ignoring package intent due to package being replaced.");
-                    }
+                if (VDBG) Log.d(TAG, "Intent action: " + action);
+                if (uid == -1) return;
+                int userId = UserHandle.getUserHandleForUid(uid).getIdentifier();
+                int currentUser = ActivityManager.getCurrentUser();
+                if (currentUser != getProfileParentId(context, userId)) {
+                    // Cache will automatically be updated on user switch
+                    if (VDBG) Log.d(TAG, "Ignoring package change intent from non-current user");
+                    return;
+                }
+                // If app not removed, check if the app has any valid CE services.
+                if (!Intent.ACTION_PACKAGE_REMOVED.equals(action) &&
+                        !Utils.hasCeServicesWithValidPermissions(mContext, intent, userId)) {
+                    if (VDBG) Log.d(TAG, "Ignoring package change intent from non-CE app");
+                    return;
+                }
+                boolean replaced = intent.getBooleanExtra(Intent.EXTRA_REPLACING, false) &&
+                        (Intent.ACTION_PACKAGE_ADDED.equals(action) ||
+                                Intent.ACTION_PACKAGE_REMOVED.equals(action));
+                if (!replaced) {
+                    invalidateCache(UserHandle.getUserHandleForUid(uid).getIdentifier());
+                } else {
+                    if (DBG) Log.d(TAG,
+                            "Ignoring package intent due to package being replaced.");
                 }
             }
         };
@@ -206,8 +223,12 @@ public class RegisteredNfcFServicesCache {
         mContext.registerReceiverForAllUsers(mReceiver.get(), sdFilter, null, null);
 
         File dataDir = mContext.getFilesDir();
-        mDynamicSystemCodeNfcid2File =
+        if (atomicFile == null) {
+            mDynamicSystemCodeNfcid2File =
                 new AtomicFile(new File(dataDir, "dynamic_systemcode_nfcid2.xml"));
+        } else {
+            mDynamicSystemCodeNfcid2File = atomicFile;
+        }
     }
 
     void initialize() {
@@ -437,7 +458,8 @@ public class RegisteredNfcFServicesCache {
         }
     }
 
-    private void readDynamicSystemCodeNfcid2Locked() {
+    @VisibleForTesting
+    void readDynamicSystemCodeNfcid2Locked() {
         if (DBG) Log.d(TAG, "readDynamicSystemCodeNfcid2Locked");
         FileInputStream fis = null;
         try {
@@ -525,7 +547,8 @@ public class RegisteredNfcFServicesCache {
         }
     }
 
-    private boolean writeDynamicSystemCodeNfcid2Locked() {
+    @VisibleForTesting
+    boolean writeDynamicSystemCodeNfcid2Locked() {
         if (DBG) Log.d(TAG, "writeDynamicSystemCodeNfcid2Locked");
         FileOutputStream fos = null;
         try {

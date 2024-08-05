@@ -1,0 +1,7 @@
+<host-apdu-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/accessService">
+    <aid-group>
+        <aid-filter android:name="F005060708"/>
+    </aid-group>
+    <polling-loop-filter android:name="41fbc7b9" android:autoTransact="true"/>
+</host-apdu-service>

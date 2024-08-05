@@ -55,4 +55,7 @@
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"इस समस्या को ठीक करने का तरीका जानने के लिए टैप करें."</string>
     <string name="nfc_logging_alert_title" msgid="5300867034660942987">"एनएफ़सी का डेटा रिकाॅर्ड किया जा रहा है"</string>
     <string name="nfc_logging_alert_message" msgid="1550187184825467942">"रिकॉर्डिंग बंद करने के लिए टैप करें."</string>
+    <string name="title_package_enabling_nfc" msgid="5736481508428918024">"क्या एनएफ़सी को चालू करने के लिए <xliff:g id="PKG">%1$s</xliff:g> को अनुमति देनी है?"</string>
+    <string name="enable_nfc_yes" msgid="694867197186062792">"हां"</string>
+    <string name="enable_nfc_no" msgid="6549033065900624599">"नहीं"</string>
 </resources>

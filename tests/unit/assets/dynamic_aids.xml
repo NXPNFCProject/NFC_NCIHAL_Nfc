@@ -1,0 +1,28 @@
+<services>
+    <service component="com.android.test.walletroleholder/com.android.test.walletroleholder.OnHostApduService"
+        uid="1"
+        offHostSE="offhostse1"
+        shouldDefaultToObserveMode="true">
+        <aid-group category="payment">
+            <aid value="A000000004101011"/>
+            <aid value="A000000004101012"/>
+            <aid value="A000000004101013"/>
+        </aid-group>
+    </service>
+    <service component="com.android.test.nonpaymentnfc/com.android.test.nonpaymentnfc.NonPaymentApduService"
+        uid="1"
+        offHostSE="offhostse2"
+        shouldDefaultToObserveMode="false">
+        <aid-group category="other">
+            <aid value="F053414950454D"/>
+        </aid-group>
+    </service>
+    <service component="com.android.test.another/com.android.test.another.OffHostApduService"
+        uid="1"
+        offHostSE="offhostse3"
+        shouldDefaultToObserveMode="false">
+        <aid-group category="other">
+            <aid value="F053414950454D"/>
+        </aid-group>
+    </service>
+</services>

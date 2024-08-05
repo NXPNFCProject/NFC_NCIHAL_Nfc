@@ -55,4 +55,7 @@
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Puudutage, et hankida parandamise kohta lisateavet."</string>
     <string name="nfc_logging_alert_title" msgid="5300867034660942987">"NFC andmeid salvestatakse"</string>
     <string name="nfc_logging_alert_message" msgid="1550187184825467942">"Puudutage salvestamise alustamiseks."</string>
+    <string name="title_package_enabling_nfc" msgid="5736481508428918024">"Kas lubada paketil <xliff:g id="PKG">%1$s</xliff:g> võimaldada NFC kasutamine?"</string>
+    <string name="enable_nfc_yes" msgid="694867197186062792">"Jah"</string>
+    <string name="enable_nfc_no" msgid="6549033065900624599">"Ei"</string>
 </resources>

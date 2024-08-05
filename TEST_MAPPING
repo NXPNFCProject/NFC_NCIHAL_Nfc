@@ -12,6 +12,9 @@
   ],
   "postsubmit": [
     {
+      "name": "NfcTestCases"
+    },
+    {
       "name": "NfcNciInstrumentationTests",
       "keywords": ["primary-device"]
     },

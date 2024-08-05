@@ -1,0 +1,13 @@
+<host-apdu-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/CustomPaymentService">
+    <aid-group android:description="@string/CustomPaymentService" android:category="payment">
+        <aid-filter android:name="A000000004101018"/>
+    </aid-group>
+    <polling-loop-filter android:name="9464965c"/>
+    <polling-loop-filter android:name="b652c8f0"/>
+    <polling-loop-filter android:name="70dca719"/>
+    <polling-loop-filter android:name="261c0050"/>
+    <polling-loop-filter android:name="7f71156b" android:autoTransact="true"/>"
+    <polling-loop-filter android:name="b0343a5e" android:autoTransact="true"/>
+    <polling-loop-pattern-filter android:name="ae24db68.*"/>
+</host-apdu-service>

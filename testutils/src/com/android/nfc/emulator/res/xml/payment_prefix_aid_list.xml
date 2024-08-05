@@ -1,0 +1,11 @@
+<host-apdu-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/paymentService1" android:apduServiceBanner="@drawable/nfc_hce_banner">
+    <aid-group android:description="@string/paymentService1" android:category="payment">
+        <aid-filter android:name="325041592E5359532E4444463031"
+            android:description="@string/ppse"/>
+        <aid-prefix-filter android:name="A000000004"
+            android:description="@string/mastercard"/>
+        <aid-prefix-filter android:name="A000000003"
+            android:description="@string/visa"/>
+    </aid-group>
+</host-apdu-service>

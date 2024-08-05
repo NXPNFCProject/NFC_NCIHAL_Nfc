@@ -55,4 +55,7 @@
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Necə düzəldəcəyinizi öyrənmək üçün toxunun."</string>
     <string name="nfc_logging_alert_title" msgid="5300867034660942987">"NFC datası qeydə alınır"</string>
     <string name="nfc_logging_alert_message" msgid="1550187184825467942">"Qeydə almanı dayandırmaq üçün toxunun."</string>
+    <string name="title_package_enabling_nfc" msgid="5736481508428918024">"<xliff:g id="PKG">%1$s</xliff:g> üçün NFC-ni aktivləşdirmək icazəsi verilsin?"</string>
+    <string name="enable_nfc_yes" msgid="694867197186062792">"Bəli"</string>
+    <string name="enable_nfc_no" msgid="6549033065900624599">"Xeyr"</string>
 </resources>

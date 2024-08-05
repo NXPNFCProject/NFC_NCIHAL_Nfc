@@ -3,3 +3,4 @@
 # Keep NfcCharging class since it's usage is behind a trunk stable flag (which is disabled in `-next` config).
 -keep class com.android.nfc.wlc.NfcCharging { *; }
 -keep class com.android.nfc.NfcVendorNciResponse { *; }
+-keep class com.android.nfc.proto.** { *; }

@@ -56,4 +56,10 @@
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Tap to learn how to fix."</string>
     <string name="nfc_logging_alert_title" msgid="5300867034660942987">"NFC data is being recorded"</string>
     <string name="nfc_logging_alert_message" msgid="1550187184825467942">"Tap to stop recording."</string>
+    <!-- no translation found for title_package_enabling_nfc (5736481508428918024) -->
+    <skip />
+    <!-- no translation found for enable_nfc_yes (694867197186062792) -->
+    <skip />
+    <!-- no translation found for enable_nfc_no (6549033065900624599) -->
+    <skip />
 </resources>

@@ -55,4 +55,7 @@
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Sakatu hau arazoa konpontzeko argibideak lortzeko."</string>
     <string name="nfc_logging_alert_title" msgid="5300867034660942987">"NFCari buruzko datuak erregistratzen"</string>
     <string name="nfc_logging_alert_message" msgid="1550187184825467942">"Sakatu hau grabatzeari uzteko."</string>
+    <string name="title_package_enabling_nfc" msgid="5736481508428918024">"NFC gaitzeko baimena eman nahi diozu <xliff:g id="PKG">%1$s</xliff:g> zerbitzuari?"</string>
+    <string name="enable_nfc_yes" msgid="694867197186062792">"Bai"</string>
+    <string name="enable_nfc_no" msgid="6549033065900624599">"Ez"</string>
 </resources>

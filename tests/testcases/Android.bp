@@ -1,0 +1,51 @@
+package {
+    default_team: "trendy_team_fwk_nfc",
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+android_test {
+    name: "NfcTestCases",
+    defaults: ["NfcNciDefaults"],
+    platform_apis: true,
+
+    libs: [
+        "android.test.runner",
+        "android.test.base",
+        "framework-nfc.impl",
+        "flag-junit",
+        "platform-test-annotations",
+        "testables",
+        "testng",
+        "unsupportedappusage",
+    ],
+
+    static_libs: [
+        "androidx.test.ext.junit",
+        "androidx.test.uiautomator_uiautomator",
+        "flag-junit",
+        "androidx.test.core",
+        "androidx.test.rules",
+        "androidx.test.ext.junit",
+        "frameworks-base-testutils",
+        "truth",
+        "androidx.annotation_annotation",
+        "androidx.appcompat_appcompat",
+        "com.google.android.material_material",
+        "nfc-event-log-proto",
+        "nfc_flags_lib",
+        "flag-junit",
+        "platform-test-annotations",
+        "testables",
+        "compatibility-common-util-devicesidelib",
+        "compatibility-device-util-axt",
+    ],
+
+    // Include all test java files.
+    srcs: [
+        "src/**/*.java",
+        ":framework-nfc-updatable-sources",
+    ],
+
+    test_suites: ["general-tests"],
+
+}

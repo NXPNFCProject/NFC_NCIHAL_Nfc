@@ -1,0 +1,12 @@
+<host-apdu-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/screenOffPaymentService"
+    android:requireDeviceScreenOn="false"
+    android:requireDeviceUnlock="false"
+    android:apduServiceBanner="@drawable/nfc_hce_banner">
+    <aid-group android:description="@string/screenOffPaymentService" android:category="payment">
+        <aid-filter android:name="325041592E5359532E4444463031"
+            android:description="@string/ppse"/>
+        <aid-filter android:name="A0000000041010"
+            android:description="@string/mastercard"/>
+    </aid-group>
+</host-apdu-service>

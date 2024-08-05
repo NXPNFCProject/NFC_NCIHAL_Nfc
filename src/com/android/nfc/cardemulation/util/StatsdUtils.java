@@ -15,14 +15,23 @@
  */
 package com.android.nfc.cardemulation.util;
 
+import static com.android.nfc.NfcStatsLog.NFC_POLLING_LOOP_NOTIFICATION_REPORTED__PROPRIETARY_FRAME_TYPE__ECP_V1;
+import static com.android.nfc.NfcStatsLog.NFC_POLLING_LOOP_NOTIFICATION_REPORTED__PROPRIETARY_FRAME_TYPE__ECP_V2;
+import static com.android.nfc.NfcStatsLog.NFC_POLLING_LOOP_NOTIFICATION_REPORTED__PROPRIETARY_FRAME_TYPE__PROPRIETARY_FRAME_UNKNOWN;
+
 import android.annotation.FlaggedApi;
 import android.nfc.cardemulation.CardEmulation;
+import android.nfc.cardemulation.PollingFrame;
+import android.os.Bundle;
 import android.os.SystemClock;
 import android.sysprop.NfcProperties;
 import android.util.Log;
 
 import com.android.nfc.NfcStatsLog;
 import com.android.nfc.flags.Flags;
+
+import java.util.HashMap;
+import java.util.Objects;
 
 @FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG)
 public class StatsdUtils {
@@ -78,6 +87,14 @@ public class StatsdUtils {
     private String mTransactionCategory = CardEmulation.EXTRA_CATEGORY;
     /** Current transaction's uid to log in statsd */
     private int mTransactionUid = -1;
+
+    private static final byte FRAME_HEADER_ECP = 0x6A;
+    private static final byte FRAME_ECP_V1 = 0x01;
+    private static final byte FRAME_ECP_V2 = 0x02;
+    private static final int FRAME_ECP_MIN_SIZE = 5;
+
+    private static final int NO_GAIN_INFORMATION = -1;
+    private int mLastGainLevel = NO_GAIN_INFORMATION;
 
     /** Result constants for statsd usage */
     static enum StatsdResult {
@@ -250,5 +267,109 @@ public class StatsdUtils {
                 statsdCategory = CE_OFFHOST;
         };
         logCardEmulationEvent(statsdCategory);
+    }
+
+    public void logFieldChanged(boolean isOn, int fieldStrength) {
+        NfcStatsLog.write(NfcStatsLog.NFC_FIELD_CHANGED,
+                isOn ? NfcStatsLog.NFC_FIELD_CHANGED__FIELD_STATUS__FIELD_ON
+                : NfcStatsLog.NFC_FIELD_CHANGED__FIELD_STATUS__FIELD_OFF, fieldStrength);
+
+        if (!isOn) {
+            mLastGainLevel = NO_GAIN_INFORMATION;
+        }
+    }
+
+    public void logObserveModeStateChanged(boolean enabled, int triggerSource, int latency) {
+        NfcStatsLog.write(NfcStatsLog.NFC_OBSERVE_MODE_STATE_CHANGED,
+                enabled ? NfcStatsLog.NFC_OBSERVE_MODE_STATE_CHANGED__STATE__OBSERVE_MODE_ENABLED
+                        : NfcStatsLog.NFC_OBSERVE_MODE_STATE_CHANGED__STATE__OBSERVE_MODE_DISABLED,
+                triggerSource, latency);
+    }
+
+    private final HashMap<String, PollingFrameLog> pollingFrameMap = new HashMap<>();
+
+    public void tallyPollingFrame(String frameDataHex, PollingFrame frame) {
+        int type = frame.getType();
+
+        int gainLevel = frame.getVendorSpecificGain();
+        if (gainLevel != -1) {
+            if (mLastGainLevel != gainLevel) {
+                logFieldChanged(true, gainLevel);
+                mLastGainLevel = gainLevel;
+            }
+        }
+
+        if (type == PollingFrame.POLLING_LOOP_TYPE_UNKNOWN) {
+            byte[] data = frame.getData();
+
+            PollingFrameLog log = pollingFrameMap.getOrDefault(frameDataHex, null);
+
+            if (log == null) {
+                PollingFrameLog frameLog = new PollingFrameLog(data);
+
+                pollingFrameMap.put(frameDataHex, frameLog);
+            } else {
+                log.repeatCount++;
+            }
+        }
+    }
+
+    public void logPollingFrames() {
+        for (PollingFrameLog log : pollingFrameMap.values()) {
+            writeToStatsd(log);
+        }
+        pollingFrameMap.clear();
+    }
+
+    protected static int getFrameType(byte[] data) {
+        int frameType =
+          NFC_POLLING_LOOP_NOTIFICATION_REPORTED__PROPRIETARY_FRAME_TYPE__PROPRIETARY_FRAME_UNKNOWN;
+
+        if (data != null && data.length >= FRAME_ECP_MIN_SIZE && data[0] == FRAME_HEADER_ECP) {
+            frameType = switch (data[1]) {
+                case FRAME_ECP_V1 ->
+                        NFC_POLLING_LOOP_NOTIFICATION_REPORTED__PROPRIETARY_FRAME_TYPE__ECP_V1;
+                case FRAME_ECP_V2 ->
+                        NFC_POLLING_LOOP_NOTIFICATION_REPORTED__PROPRIETARY_FRAME_TYPE__ECP_V2;
+                default -> frameType;
+            };
+        }
+        return frameType;
+    }
+
+    protected void writeToStatsd(PollingFrameLog frameLog) {
+        NfcStatsLog.write(NfcStatsLog.NFC_POLLING_LOOP_NOTIFICATION_REPORTED,
+                frameLog.frameType,
+                frameLog.repeatCount);
+    }
+
+    protected static class PollingFrameLog {
+        int repeatCount = 1;
+        final int frameType;
+
+        public PollingFrameLog(byte[] data) {
+            frameType = getFrameType(data);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof PollingFrameLog)) return false;
+            PollingFrameLog that = (PollingFrameLog) o;
+            return repeatCount == that.repeatCount && frameType == that.frameType;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(repeatCount, frameType);
+        }
+
+        @Override
+        public String toString() {
+            return "PollingFrameLog{" +
+                    "repeatCount=" + repeatCount +
+                    ", frameType=" + frameType +
+                    '}';
+        }
     }
 }

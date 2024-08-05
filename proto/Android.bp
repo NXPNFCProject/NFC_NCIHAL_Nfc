@@ -1,0 +1,18 @@
+package {
+    default_team: "trendy_team_fwk_nfc",
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+java_library {
+    name: "nfc-event-log-proto",
+    proto: {
+        type: "lite",
+    },
+    sdk_version: "system_current",
+    min_sdk_version: "35",
+    srcs: ["event.proto"],
+    apex_available: [
+        "//apex_available:platform",
+        "com.android.nfcservices",
+    ],
+}

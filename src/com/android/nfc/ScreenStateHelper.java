@@ -41,6 +41,20 @@ class ScreenStateHelper {
         }
     }
 
+    int checkScreenStateProvisionMode() {
+        if (!mPowerManager.isInteractive()) {
+            if (mKeyguardManager.isDeviceLocked()) {
+                return SCREEN_STATE_OFF_LOCKED;
+            } else {
+                return SCREEN_STATE_OFF_UNLOCKED;
+            }
+        } else if (mKeyguardManager.isDeviceLocked()) {
+            return SCREEN_STATE_ON_LOCKED;
+        } else {
+            return SCREEN_STATE_ON_UNLOCKED;
+        }
+    }
+
     /**
      * For debugging only - no i18n
      */

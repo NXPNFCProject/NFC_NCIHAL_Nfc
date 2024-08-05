@@ -20,7 +20,7 @@
     <string name="connected_peripheral" msgid="20748648543160091">"जडित <xliff:g id="DEVICE_NAME">%1$s</xliff:g>"</string>
     <string name="connect_peripheral_failed" msgid="7925702596242839275">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g> जडान गर्न सकेन"</string>
     <string name="disconnecting_peripheral" msgid="1443699384809097200">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g> विच्छेदन गर्दै"</string>
-    <string name="disconnected_peripheral" msgid="4470578100296504366">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g> विच्छेद गरियो"</string>
+    <string name="disconnected_peripheral" msgid="4470578100296504366">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g> डिस्कनेक्ट गरियो"</string>
     <string name="pairing_peripheral" msgid="6983626861540899365">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g> जोडा गर्दै"</string>
     <string name="pairing_peripheral_failed" msgid="6087643307743264679">"<xliff:g id="DEVICE_NAME">%1$s</xliff:g> जोडा गर्न सकेन"</string>
     <string name="failed_to_enable_bt" msgid="7229153323594758077">"ब्लुटुथ सक्षम पार्न सकेन"</string>
@@ -55,4 +55,7 @@
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"यो ब्लक हटाउने तरिका जान्न ट्याप गर्नुहोस्।"</string>
     <string name="nfc_logging_alert_title" msgid="5300867034660942987">"NFC डेटा रेकर्ड गरिँदै छ"</string>
     <string name="nfc_logging_alert_message" msgid="1550187184825467942">"रेकर्ड गर्न छाड्न ट्याप गर्नुहोस्।"</string>
+    <string name="title_package_enabling_nfc" msgid="5736481508428918024">"<xliff:g id="PKG">%1$s</xliff:g> लाई NFC अन गर्न दिने हो?"</string>
+    <string name="enable_nfc_yes" msgid="694867197186062792">"अँ"</string>
+    <string name="enable_nfc_no" msgid="6549033065900624599">"अहँ"</string>
 </resources>

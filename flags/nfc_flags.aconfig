@@ -22,3 +22,14 @@ flag {
     description: "Additional Statsd CardEmulation Events flag for NFC"
     bug: "308094195"
 }
+
+
+flag {
+    name: "auto_disable_observe_mode"
+    namespace: "nfc"
+    description: "Automatically disable observe mode if preferred service is misbehaving"
+    bug: "347728416"
+        metadata {
+        purpose: PURPOSE_BUGFIX
+  }
+}

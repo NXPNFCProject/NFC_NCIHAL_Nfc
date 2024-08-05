@@ -1,0 +1,120 @@
+//
+// Copyright (C) 2024 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+syntax = "proto2";
+
+package com_android_nfc;
+
+option java_package = "com.android.nfc.proto";
+option java_outer_classname = "NfcEventProto";
+
+// Proto used to format NFC event logs.
+message EventList {
+  repeated Event events = 1;
+}
+
+message Event {
+  required string timestamp = 1;
+  required EventType event_type = 2;
+}
+
+// Union of events.
+message EventType {
+  oneof _EventType {
+    NfcBootupState bootup_state = 1;
+    NfcStateChange state_change = 2;
+    NfcReaderModeChange reader_mode_change = 3;
+    NfcCeUnroutableAid ce_unroutable_aid = 4;
+    NfcObserveModeChange observe_mode_change = 5;
+    NfcWalletRoleHolderChange wallet_role_holder_change = 6;
+    NfcHostCardEmulationStateChange host_card_emulation_state_change = 7;
+    NfcHostCardEmulationData host_card_emulation_data = 8;
+    NfcRemoteFieldStateChange remote_field_state_change = 9;
+    NfcDiscoveryTechnologyUpdate discovery_technology_update = 10;
+    NfcSecureChange secure_change = 11;
+    NfcWlcStateChange wlc_state_change = 12;
+    NfcReaderOptionChange reader_option_change = 13;
+    NfcClearPreference clear_preference = 14;
+  }
+}
+
+message NfcBootupState {
+  required bool enabled = 1;
+}
+
+message NfcAppInfo {
+  optional string package_name = 1;
+  optional int32 uid = 2;
+}
+
+message NfcStateChange {
+  required NfcAppInfo app_info = 1;
+  required bool enabled = 2;
+}
+
+message NfcReaderModeChange {
+  optional NfcAppInfo app_info = 1;
+  required int32 flags = 2;
+}
+
+message NfcCeUnroutableAid {
+  required string aid = 1;
+}
+
+message NfcObserveModeChange {
+  optional NfcAppInfo app_info = 1;
+  required bool enable = 2;
+  required bool result = 3;
+  required int32 latency_ms = 4;
+}
+
+message NfcWalletRoleHolderChange {
+  optional string package_name = 1;
+}
+
+message NfcHostCardEmulationStateChange {
+  required int32 technology = 1;
+  required bool enable = 2;
+}
+
+message NfcHostCardEmulationData {
+  required int32 technology = 1;
+  required bytes data = 2;
+}
+
+message NfcRemoteFieldStateChange {
+  required bool enable = 1;
+}
+
+message NfcDiscoveryTechnologyUpdate {
+  required NfcAppInfo app_info = 1;
+  required int32 poll_tech = 2;
+  required int32 listen_tech = 3;
+}
+
+message NfcSecureChange {
+  required bool enable = 1;
+}
+
+message NfcWlcStateChange {
+  required bool enable = 1;
+}
+
+message NfcReaderOptionChange {
+  required bool enable = 1;
+}
+
+message NfcClearPreference {}

@@ -34,19 +34,22 @@
 ******************************************************************************/
 package com.android.nfc;
 
+import static com.android.nfc.NfcStatsLog.NFC_OBSERVE_MODE_STATE_CHANGED__TRIGGER_SOURCE__FOREGROUND_APP;
+import static com.android.nfc.NfcStatsLog.NFC_OBSERVE_MODE_STATE_CHANGED__TRIGGER_SOURCE__TRIGGER_SOURCE_UNKNOWN;
+import static com.android.nfc.NfcStatsLog.NFC_OBSERVE_MODE_STATE_CHANGED__TRIGGER_SOURCE__WALLET_ROLE_HOLDER;
+
 import android.annotation.NonNull;
 import android.app.ActivityManager;
+import android.app.AlarmManager;
 import android.app.Application;
 import android.app.BroadcastOptions;
 import android.app.KeyguardManager;
 import android.app.KeyguardManager.KeyguardLockedStateListener;
 import android.app.PendingIntent;
 import android.app.VrManager;
-import android.app.admin.DevicePolicyManager;
 import android.app.backup.BackupManager;
 import android.app.role.RoleManager;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
@@ -55,16 +58,12 @@ import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.res.Resources.NotFoundException;
 import android.database.ContentObserver;
 import android.media.AudioAttributes;
 import android.media.SoundPool;
 import android.net.Uri;
 import android.nfc.AvailableNfcAntenna;
 import android.nfc.Constants;
-import android.nfc.NfcFrameworkInitializer;
-import android.nfc.NfcServiceManager;
-import android.nfc.cardemulation.CardEmulation;
 import android.nfc.ErrorCodes;
 import android.nfc.FormatException;
 import android.nfc.IAppCallback;
@@ -72,12 +71,12 @@ import android.nfc.INfcAdapter;
 import android.nfc.INfcAdapterExtras;
 import android.nfc.INfcCardEmulation;
 import android.nfc.INfcControllerAlwaysOnListener;
-import android.nfc.INfcVendorNciCallback;
 import android.nfc.INfcDta;
 import android.nfc.INfcFCardEmulation;
 import android.nfc.INfcOemExtensionCallback;
 import android.nfc.INfcTag;
 import android.nfc.INfcUnlockHandler;
+import android.nfc.INfcVendorNciCallback;
 import android.nfc.INfcWlcStateListener;
 import android.nfc.ITagRemovedCallback;
 import android.nfc.NdefMessage;
@@ -88,6 +87,8 @@ import android.nfc.TechListParcel;
 import android.nfc.TransceiveResult;
 
 import android.nfc.WlcListenerDeviceInfo;
+import android.nfc.cardemulation.CardEmulation;
+import android.nfc.cardemulation.PollingFrame;
 import android.nfc.tech.Ndef;
 import android.nfc.tech.TagTechnology;
 import android.os.AsyncTask;
@@ -97,32 +98,29 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HwBinder;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.Message;
 import android.os.ParcelFileDescriptor;
 import android.os.PowerManager;
 import android.os.PowerManager.OnThermalStatusChangedListener;
 import android.os.Process;
 import android.os.RemoteException;
-import android.os.ServiceManager;
 import android.os.SystemClock;
-import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.os.VibrationAttributes;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
-import android.permission.flags.Flags;
 import android.provider.Settings;
 import android.provider.Settings.SettingNotFoundException;
 import android.se.omapi.ISecureElementService;
-import android.se.omapi.SeFrameworkInitializer;
-import android.se.omapi.SeServiceManager;
 import android.sysprop.NfcProperties;
-import android.text.TextUtils;
 import android.util.EventLog;
 import android.util.Log;
 import android.util.proto.ProtoOutputStream;
 import android.widget.Toast;
+
+import androidx.annotation.VisibleForTesting;
 
 import com.android.internal.logging.MetricsLogger;
 import com.android.nfc.cardemulation.AidRoutingManager;
@@ -131,13 +129,15 @@ import com.android.nfc.cardemulation.util.StatsdUtils;
 import com.android.nfc.cardemulation.RegisteredAidCache;
 import com.android.nfc.cardemulation.RoutingOptionManager;
 import com.android.nfc.DeviceHost.DeviceHostListener;
-import com.android.nfc.DeviceHost.NfcDepEndpoint;
 import com.android.nfc.DeviceHost.TagEndpoint;
 import com.android.nfc.dhimpl.NativeNfcManager;
 import com.android.nfc.dhimpl.NativeNfcSecureElement;
 import com.android.nfc.flags.FeatureFlags;
-import com.android.nfc.Utils;
 import com.android.nfc.handover.HandoverDataParser;
+import com.android.nfc.proto.NfcEventProto;
+
+import com.google.protobuf.ByteString;
+
 import com.nxp.nfc.INxpNfcAdapter;
 import com.nxp.nfc.INxpNfcAdapterExtras;
 import com.nxp.nfc.INxpWlcAdapter;
@@ -168,32 +168,32 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.security.SecureRandom;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.HexFormat;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.FutureTask;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 import java.util.TimerTask;
 import java.util.Timer;
 
 public class NfcService implements DeviceHostListener, ForegroundUtils.Callback {
     static final boolean DBG = NfcProperties.debug_enabled().orElse(true);
+    private static final boolean VDBG = false; // turn on for local testing.
     static final String TAG = "NfcService";
     private static final int APP_INFO_FLAGS_SYSTEM_APP =
             ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP;
@@ -229,6 +229,9 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
     static final String NATIVE_LOG_FILE_PATH = "/data/misc/nfc/logs";
     static final String NATIVE_LOG_FILE_NAME = "native_crash_logs";
     static final int NATIVE_CRASH_FILE_SIZE = 1024 * 1024;
+    private static final String WAIT_FOR_OEM_ALLOW_BOOT_TIMER_TAG = "NfcWaitForSimTag";
+    @VisibleForTesting
+    public static final int WAIT_FOR_OEM_ALLOW_BOOT_TIMEOUT_MS = 5_000;
     static final String T4T_NFCEE_AID = "D2760000850101";
     static final int TECH_TYPE_A= 0x01;
     static final int TECH_TYPE_F= 0x04;
@@ -338,6 +341,21 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
     static final public int PROTOCOL_ENTRY = 2;
     static final public int AID_ENTRY = 1;          // it is dummy values;
 
+    // Listen technology masks
+    static final int NFC_LISTEN_A = 0x01;
+    static final int NFC_LISTEN_B = 0x02;
+    static final int NFC_LISTEN_F = 0x04;
+    static final int NFC_LISTEN_V = 0x08;
+
+    static final String PREF_POLL_TECH = "polling_tech_dfl";
+
+    // Default polling tech mask
+    static final int DEFAULT_POLL_TECH = 0x2f; // See: Polling technology masks above
+
+    static final String PREF_LISTEN_TECH = "listen_tech_dfl";
+    // Default listening tech mask
+    static final int DEFAULT_LISTEN_TECH = 0xf; // See: Listen technology masks above
+
     // minimum screen state that enables NFC polling
     static final int NFC_POLLING_MODE = ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED;
 
@@ -375,6 +393,9 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
 
     public static final String ACTION_EXTENDED_FIELD_TIMEOUT =
             "com.android.nfc.action.ACTION_EXTENDED_FIELD_TIMEOUT";
+
+    public static final String APP_NAME_ENABLING_NFC =
+            "com.android.nfc.PACKAGE_NAME_ENABLING_NFC";
 
     public static boolean sIsShortRecordLayout = false;
 
@@ -442,6 +463,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
     private static final int NCI_MSG_PROP_ANDROID = 0x0C;
     private static final int NCI_MSG_PROP_ANDROID_POWER_SAVING = 0x01;
 
+    private final Looper mLooper;
     private final UserManager mUserManager;
     private final ActivityManager mActivityManager;
 
@@ -525,6 +547,8 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
     boolean mIsReaderOptionEnabled = true;
     boolean mReaderOptionCapable;
     Context mContext;
+    NfcInjector mNfcInjector;
+    NfcEventLog mNfcEventLog;
     private DeviceHost mDeviceHost;
     private SharedPreferences mPrefs;
     private SharedPreferences.Editor mPrefsEditor;
@@ -555,12 +579,14 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
     boolean mIsRequestUnlockShowed;
     boolean mIsRecovering;
     boolean mIsNfcUserRestricted;
+    boolean mIsNfcUserChangeRestricted;
     boolean mIsWatchType;
     boolean mPendingPowerStateUpdate;
     boolean mIsWlcCapable;
     boolean mIsWlcEnabled;
     boolean mIsRWCapable;
     WlcListenerDeviceInfo mWlcListenerDeviceInfo;
+    public NfcDiagnostics  mNfcDiagnostics;
 
     // polling delay control variables
     private final int mPollDelayTime;
@@ -593,10 +619,12 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
     private VibrationEffect mVibrationEffect;
     private ISecureElementService mSEService;
     private VrManager mVrManager;
+    private final AlarmManager mAlarmManager;
 
     private ScreenStateHelper mScreenStateHelper;
     private ForegroundUtils mForegroundUtils;
 
+    private final NfcPermissions mNfcPermissions;
     private static NfcService sService;
     private static boolean sToast_debounce = false;
     private static int sToast_debounce_time_ms = 3000;
@@ -633,10 +661,9 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
     private int SELFTEST_PRBS = 0x06;
     private int SELFTEST_SWP = 0x07;
 
-    private final FeatureFlags mFeatureFlags = new com.android.nfc.flags.FeatureFlagsImpl();
+    private final FeatureFlags mFeatureFlags;
     private final Set<INfcWlcStateListener> mWlcStateListener =
             Collections.synchronizedSet(new HashSet<>());
-
     private final StatsdUtils mStatsdUtils;
 
     private  INfcVendorNciCallback mNfcVendorNciCallBack = null;
@@ -671,6 +698,16 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
     public void onHostCardEmulationActivated(int technology) {
         if (mCardEmulationManager != null) {
             mCardEmulationManager.onHostCardEmulationActivated(technology);
+            if (android.nfc.Flags.nfcPersistLog()) {
+                mNfcEventLog.logEvent(
+                        NfcEventProto.EventType.newBuilder()
+                                .setHostCardEmulationStateChange(
+                                        NfcEventProto.NfcHostCardEmulationStateChange.newBuilder()
+                                                .setTechnology(technology)
+                                                .setEnable(true)
+                                                .build())
+                                .build());
+            }
         }
     }
     @Override
@@ -690,6 +727,16 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
     public void onHostCardEmulationData(int technology, byte[] data) {
         if (mCardEmulationManager != null) {
             mCardEmulationManager.onHostCardEmulationData(technology, data);
+            if (android.nfc.Flags.nfcPersistLog()) {
+                mNfcEventLog.logEvent(
+                        NfcEventProto.EventType.newBuilder()
+                                .setHostCardEmulationData(
+                                        NfcEventProto.NfcHostCardEmulationData.newBuilder()
+                                                .setTechnology(technology)
+                                                .setData(ByteString.copyFrom(data))
+                                                .build())
+                                .build());
+            }
         }
     }
 
@@ -697,6 +744,16 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
     public void onHostCardEmulationDeactivated(int technology) {
         if (mCardEmulationManager != null) {
             mCardEmulationManager.onHostCardEmulationDeactivated(technology);
+            if (android.nfc.Flags.nfcPersistLog()) {
+                mNfcEventLog.logEvent(
+                        NfcEventProto.EventType.newBuilder()
+                                .setHostCardEmulationStateChange(
+                                        NfcEventProto.NfcHostCardEmulationStateChange.newBuilder()
+                                                .setTechnology(technology)
+                                                .setEnable(false)
+                                                .build())
+                                .build());
+            }
         }
     }
 
@@ -716,6 +773,19 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
     @Override
     public void onRemoteFieldDeactivated() {
         sendMessage(NfcService.MSG_RF_FIELD_DEACTIVATED, null);
+
+        if (mStatsdUtils != null) {
+            mStatsdUtils.logFieldChanged(false, 0);
+        }
+        if (android.nfc.Flags.nfcPersistLog()) {
+            mNfcEventLog.logEvent(
+                    NfcEventProto.EventType.newBuilder()
+                            .setRemoteFieldStateChange(
+                                    NfcEventProto.NfcRemoteFieldStateChange.newBuilder()
+                                            .setEnable(false)
+                                            .build())
+                            .build());
+        }
     }
 
     @Override
@@ -748,9 +818,9 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
     }
 
     @Override
-    public void onPollingLoopDetected(List<Bundle> pollingFrames) {
-        if (mCardEmulationManager != null) {
-            mCardEmulationManager.onPollingLoopDetected(pollingFrames);
+    public void onPollingLoopDetected(List<PollingFrame> frames) {
+        if (mCardEmulationManager != null && android.nfc.Flags.nfcReadPollingLoop()) {
+            mCardEmulationManager.onPollingLoopDetected(frames);
         }
     }
 
@@ -766,9 +836,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
       sendMessage(event , null);
     }
 
-
-    @Override
-    public void onHwErrorReported() {
+    private void restartStack() {
         try {
             mContext.unregisterReceiver(mReceiver);
         } catch (IllegalArgumentException e) {
@@ -780,8 +848,13 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
     }
 
     @Override
+    public void onHwErrorReported() {
+        restartStack();
+    }
+
+    @Override
     public void onVendorSpecificEvent(int gid, int oid, byte[] payload) {
-        sendVendorNciNotification(gid, oid, payload);
+        mHandler.post(() -> mNfcAdapter.sendVendorNciNotification(gid, oid, payload));
     }
 
     /**
@@ -845,27 +918,33 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         }
     }
 
-    /**
-     * @hide constant copied from {@link Settings.Global}
-     * TODO(b/274636414): Migrate to official API in Android V.
-     */
-    private static final String SETTINGS_SATELLITE_MODE_RADIOS = "satellite_mode_radios";
-    /**
-     * @hide constant copied from {@link Settings.Global}
-     * TODO(b/274636414): Migrate to official API in Android V.
-     */
-    private static final String SETTINGS_SATELLITE_MODE_ENABLED = "satellite_mode_enabled";
-
-    private boolean isSatelliteModeSensitive() {
-        final String satelliteRadios =
-                Settings.Global.getString(mContentResolver, SETTINGS_SATELLITE_MODE_RADIOS);
-        return satelliteRadios == null || satelliteRadios.contains(Settings.Global.RADIO_NFC);
+    void saveNfcListenTech(int tech) {
+        synchronized (NfcService.this) {
+            mPrefsEditor.putInt(PREF_LISTEN_TECH, tech);
+            mPrefsEditor.apply();
+            mBackupManager.dataChanged();
+        }
     }
 
-    /** Returns true if satellite mode is turned on. */
-    private boolean isSatelliteModeOn() {
-        if (!isSatelliteModeSensitive()) return false;
-        return Settings.Global.getInt(mContentResolver, SETTINGS_SATELLITE_MODE_ENABLED, 0) == 1;
+    int getNfcListenTech() {
+        synchronized (NfcService.this) {
+            return mPrefs.getInt(PREF_LISTEN_TECH, DEFAULT_LISTEN_TECH);
+        }
+    }
+
+
+    void saveNfcPollTech(int tech) {
+        synchronized (NfcService.this) {
+            mPrefsEditor.putInt(PREF_POLL_TECH, tech);
+            mPrefsEditor.apply();
+            mBackupManager.dataChanged();
+        }
+    }
+
+    int getNfcPollTech() {
+        synchronized (NfcService.this) {
+            return mPrefs.getInt(PREF_POLL_TECH, DEFAULT_POLL_TECH);
+        }
     }
 
     /** Returns true if NFC has user restriction set. */
@@ -874,17 +953,37 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                 UserManager.DISALLOW_NEAR_FIELD_COMMUNICATION_RADIO);
     }
 
-    boolean shouldEnableNfc() {
-        return getNfcOnSetting() && !isSatelliteModeOn() && !isNfcUserRestricted();
+    /** Returns true if NFC state change by user is restricted. */
+    private boolean isNfcUserChangeRestricted() {
+        return mUserManager.getUserRestrictions().getBoolean(
+                UserManager.DISALLOW_CHANGE_NEAR_FIELD_COMMUNICATION_RADIO
+        );
     }
 
-    public NfcService(Application nfcApplication) {
+    boolean shouldEnableNfc() {
+        return getNfcOnSetting() && !mNfcInjector.isSatelliteModeOn() && !isNfcUserRestricted();
+    }
+
+    private void registerGlobalBroadcastsReceiver() {
+        IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_OFF);
+        filter.addAction(Intent.ACTION_SCREEN_ON);
+        filter.addAction(Intent.ACTION_USER_PRESENT);
+        filter.addAction(Intent.ACTION_USER_SWITCHED);
+        filter.addAction(Intent.ACTION_USER_ADDED);
+        mContext.registerReceiverForAllUsers(mReceiver, filter, null, null);
+    }
+
+    public NfcService(Application nfcApplication, NfcInjector nfcInjector) {
         mUserId = ActivityManager.getCurrentUser();
         mContext = nfcApplication;
+        mNfcInjector = nfcInjector;
+        mLooper = mNfcInjector.getMainLooper();
+        mHandler = new NfcServiceHandler(mLooper);
+        mNfcEventLog = mNfcInjector.getNfcEventLog();
 
         mNfcTagService = new TagService();
         mNfcAdapter = new NfcAdapterService();
-        mRoutingTableParser = new RoutingTableParser();
+        mRoutingTableParser = mNfcInjector.getRoutingTableParser();
 
         mNxpNfcAdapter = new NxpNfcAdapterService();
         mNxpExtrasService = new NxpNfcAdapterExtrasService();
@@ -900,9 +999,9 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         }
         sService = this;
 
-        mScreenStateHelper = new ScreenStateHelper(mContext);
+        mScreenStateHelper = mNfcInjector.getScreenStateHelper();
         mContentResolver = mContext.getContentResolver();
-        mDeviceHost = new NativeNfcManager(mContext, this);
+        mDeviceHost = mNfcInjector.makeDeviceHost(this);
 
         try {
             Object[] objargs = new Object[] {mContext};
@@ -919,25 +1018,12 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
             Log.e(TAG, " InvocationTargetException");
         }
 
-        mNfcUnlockManager = NfcUnlockManager.getInstance();
+        mNfcUnlockManager = mNfcInjector.getNfcUnlockManager();
 
-        mHandoverDataParser = new HandoverDataParser();
-        boolean isNfcProvisioningEnabled = false;
-        try {
-            isNfcProvisioningEnabled = mContext.getResources().getBoolean(
-                    R.bool.enable_nfc_provisioning);
-        } catch (NotFoundException e) {
-        }
-
-        if (isNfcProvisioningEnabled) {
-            mInProvisionMode = Settings.Global.getInt(mContentResolver,
-                    Settings.Global.DEVICE_PROVISIONED, 0) == 0;
-        } else {
-            mInProvisionMode = false;
-        }
-        mDeviceConfigFacade = new DeviceConfigFacade(mContext, mHandler);
-
-        mNfcDispatcher = new NfcDispatcher(mContext, mHandoverDataParser, mInProvisionMode);
+        mHandoverDataParser = mNfcInjector.getHandoverDataParser();
+        mInProvisionMode = mNfcInjector.isInProvisionMode();
+        mDeviceConfigFacade = mNfcInjector.getDeviceConfigFacade();
+        mNfcDispatcher = mNfcInjector.getNfcDispatcher();
 
         mSecureElement = new NativeNfcSecureElement(mContext);
         mToastHandler = new ToastHandler(mContext);
@@ -965,10 +1051,12 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         mUserManager = mContext.getSystemService(UserManager.class);
         mActivityManager = mContext.getSystemService(ActivityManager.class);
         mVibrator = mContext.getSystemService(Vibrator.class);
-        mVibrationEffect = VibrationEffect.createOneShot(200, VibrationEffect.DEFAULT_AMPLITUDE);
+        mVibrationEffect = mNfcInjector.getVibrationEffect();
 
         PackageManager pm = mContext.getPackageManager();
         mIsWatchType = pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
+
+        mNfcDiagnostics = mNfcInjector.getNfcDiagnostics();
 
         if (pm.hasSystemFeature(PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE) &&
                 !mIsWatchType) {
@@ -976,21 +1064,22 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         } else {
             mVrManager = null;
         }
+        mAlarmManager = mContext.getSystemService(AlarmManager.class);
 
-        mScreenState = mScreenStateHelper.checkScreenState();
+        if (mInProvisionMode) {
+            mScreenState = mScreenStateHelper.checkScreenStateProvisionMode();
+        } else {
+            mScreenState = mScreenStateHelper.checkScreenState();
+        }
         mPreviousScreenState = mScreenState;
 
-        mBackupManager = new BackupManager(mContext);
+        mBackupManager = mNfcInjector.getBackupManager();
 
-        mStatsdUtils = mFeatureFlags.statsdCeEventsFlag() ? new StatsdUtils() : null;
+        mFeatureFlags = mNfcInjector.getFeatureFlags();
+        mStatsdUtils = mNfcInjector.getStatsdUtils();
 
         // Intents for all users
-        IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_OFF);
-        filter.addAction(Intent.ACTION_SCREEN_ON);
-        filter.addAction(Intent.ACTION_USER_PRESENT);
-        filter.addAction(Intent.ACTION_USER_SWITCHED);
-        filter.addAction(Intent.ACTION_USER_ADDED);
-        mContext.registerReceiverForAllUsers(mReceiver, filter, null, null);
+        registerGlobalBroadcastsReceiver();
 
         // Listen for work profile adds or removes.
         IntentFilter managedProfileFilter = new IntentFilter();
@@ -1035,12 +1124,12 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                 pm.hasSystemFeature(PackageManager.FEATURE_NFC_HOST_CARD_EMULATION_NFCF);
         if (mIsHceCapable) {
             mAidRoutingManager = new AidRoutingManager();
-            mCardEmulationManager = new CardEmulationManager(mContext);
+            mCardEmulationManager = new CardEmulationManager(mContext, mNfcInjector);
             mAidCache = mCardEmulationManager.getRegisteredAidCache();
         }
-        mForegroundUtils = ForegroundUtils.getInstance(mActivityManager);
 
-        mIsSecureNfcCapable = mNfcAdapter.deviceSupportsNfcSecure();
+        mForegroundUtils = mNfcInjector.getForegroundUtils();
+        mIsSecureNfcCapable = mNfcInjector.checkIsSecureNfcCapable();
         mIsSecureNfcEnabled =
             // To be reverted once device support added for secure NFC.
             //mPrefs.getBoolean(PREF_SECURE_NFC_ON, SECURE_NFC_ON_DEFAULT) &&
@@ -1086,12 +1175,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         mTagRemovalDetectionWaitTime =
             mContext.getResources().getInteger(R.integer.tag_removal_detection_max_wait_time);
         // Make sure this is only called when object construction is complete.
-        NfcServiceManager manager = NfcFrameworkInitializer.getNfcServiceManager();
-        if (manager == null) {
-            Log.e(TAG, "NfcServiceManager is null");
-            throw new UnsupportedOperationException();
-        }
-        manager.getNfcManagerServiceRegisterer().register(mNfcAdapter);
+        mNfcInjector.getNfcManagerRegisterer().register(mNfcAdapter);
 
         mIsAlwaysOnSupported =
             mContext.getResources().getBoolean(R.bool.nfcc_always_on_allowed);
@@ -1099,7 +1183,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         mIsTagAppPrefSupported =
             mContext.getResources().getBoolean(R.bool.tag_intent_app_pref_supported);
 
-        Uri uri = Settings.Global.getUriFor(SETTINGS_SATELLITE_MODE_ENABLED);
+        Uri uri = Settings.Global.getUriFor(Constants.SETTINGS_SATELLITE_MODE_ENABLED);
         if (uri == null) {
             Log.e(TAG, "satellite mode key does not exist in Settings");
         } else {
@@ -1109,7 +1193,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                     new ContentObserver(null) {
                         @Override
                         public void onChange(boolean selfChange) {
-                            if (isSatelliteModeSensitive()) {
+                            if (mNfcInjector.isSatelliteModeSensitive()) {
                                 Log.i(TAG, "Satellite mode change detected");
                                 if (shouldEnableNfc()) {
                                     new EnableDisableTask().execute(TASK_ENABLE);
@@ -1121,6 +1205,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                     });
         }
 
+        mNfcPermissions = new NfcPermissions(mContext);
         mReaderOptionCapable =
                 mContext.getResources().getBoolean(R.bool.enable_reader_option_support);
 
@@ -1130,6 +1215,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         }
 
         mIsNfcUserRestricted = isNfcUserRestricted();
+        mIsNfcUserChangeRestricted = isNfcUserChangeRestricted();
         mContext.registerReceiver(
                 new BroadcastReceiver() {
                     @Override
@@ -1140,6 +1226,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                         Log.i(TAG, "Disallow NFC user restriction changed from "
                             + mIsNfcUserRestricted + " to " + !mIsNfcUserRestricted + ".");
                         mIsNfcUserRestricted = !mIsNfcUserRestricted;
+                        mIsNfcUserChangeRestricted = isNfcUserChangeRestricted();
                         if (shouldEnableNfc()) {
                             new EnableDisableTask().execute(TASK_ENABLE);
                         } else {
@@ -1150,7 +1237,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                 new IntentFilter(UserManager.ACTION_USER_RESTRICTIONS_CHANGED)
         );
 
-        new EnableDisableTask().execute(TASK_BOOT);  // do blocking boot tasks
+        executeTaskBoot();  // do blocking boot tasks
 
         if (NFC_SNOOP_LOG_MODE.equals(NfcProperties.snoop_log_mode_values.FULL) ||
             NFC_VENDOR_DEBUG_ENABLED) {
@@ -1164,6 +1251,27 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         } catch (Exception e) {
           Log.e(TAG, "Error Initializing WLC service module");
         }
+    }
+
+    private AlarmManager.OnAlarmListener mDelayedBootAlarmListener =
+            () -> {
+                Log.i(TAG, "Executing delayed boot");
+                mDelayedBootAlarmListenerSet = false;
+                new EnableDisableTask().execute(TASK_BOOT);
+            };
+    private boolean mDelayedBootAlarmListenerSet = false;
+
+    private void executeTaskBoot() {
+        // If overlay is set, delay the NFC boot up until the OEM extension indicates it is ready to
+        // proceed with NFC bootup.
+        if (mContext.getResources().getBoolean(R.bool.enable_oem_extension)) {
+            mAlarmManager.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                    mNfcInjector.getElapsedSinceBootMillis() + WAIT_FOR_OEM_ALLOW_BOOT_TIMEOUT_MS,
+                    WAIT_FOR_OEM_ALLOW_BOOT_TIMER_TAG, mDelayedBootAlarmListener, mHandler);
+            mDelayedBootAlarmListenerSet = true;
+            return;
+        }
+        new EnableDisableTask().execute(TASK_BOOT);
     }
 
     private void initTagAppPrefList() {
@@ -1269,13 +1377,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
 
     private void connectToSeService() {
         try {
-            SeServiceManager manager = SeFrameworkInitializer.getSeServiceManager();
-            if (manager == null) {
-                Log.e(TAG, "SEServiceManager is null");
-                return;
-            }
-            mSEService = ISecureElementService.Stub.asInterface(
-                    manager.getSeManagerServiceRegisterer().get());
+            mSEService = mNfcInjector.connectToSeService();
             if (mSEService != null) {
                 IBinder seServiceBinder = mSEService.asBinder();
                 seServiceBinder.linkToDeath(mSeServiceDeathRecipient, 0);
@@ -1453,6 +1555,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                     disableInternal();
                     break;
                 case TASK_BOOT:
+                    // Initialize the event log cache.
                     boolean initialized;
                     if (mPrefs.getBoolean(PREF_FIRST_BOOT, true)) {
                         Log.i(TAG, "First Boot");
@@ -1462,13 +1565,20 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                         setPaymentForegroundPreference(mUserId);
                     }
                     Log.d(TAG, "checking on firmware download");
-                    if (shouldEnableNfc()) {
+                    boolean enableNfc = shouldEnableNfc();
+                    if (enableNfc) {
                         Log.d(TAG, "NFC is on. Doing normal stuff");
                         initialized = enableInternal();
                     } else {
                         Log.d(TAG, "NFC is off.  Checking firmware version");
                         initialized = mDeviceHost.checkFirmware();
                     }
+                    mNfcEventLog.logEvent(
+                            NfcEventProto.EventType.newBuilder()
+                                    .setBootupState(NfcEventProto.NfcBootupState.newBuilder()
+                                            .setEnabled(enableNfc)
+                                            .build())
+                            .build());
 
                     if (initialized) {
                         // TODO(279846422) The system property will be temporary
@@ -1579,7 +1689,11 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
 
             initSoundPool();
 
-            mScreenState = mScreenStateHelper.checkScreenState();
+            if (mInProvisionMode) {
+                mScreenState = mScreenStateHelper.checkScreenStateProvisionMode();
+            } else {
+                mScreenState = mScreenStateHelper.checkScreenState();
+            }
             int screen_state_mask = (mNfcUnlockManager.isLockscreenPollingEnabled()) ?
                              (ScreenStateHelper.SCREEN_POLLING_TAG_MASK | mScreenState) : mScreenState;
             /*
@@ -1595,6 +1709,23 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
 
             sToast_debounce = false;
 
+            int pollTech = -1;
+            if (mPrefs.contains(PREF_POLL_TECH)) {
+                pollTech = getNfcPollTech();
+            }
+            int listenTech = -1;
+            if (mPrefs.contains(PREF_LISTEN_TECH)) {
+                listenTech = getNfcListenTech();
+            }
+            if (listenTech == -1 || listenTech == DEFAULT_LISTEN_TECH)
+                listenTech = (NfcAdapter.FLAG_LISTEN_KEEP|NfcAdapter.FLAG_USE_ALL_TECH);
+
+            if (pollTech == -1 || pollTech == DEFAULT_POLL_TECH)
+                pollTech = (NfcAdapter.FLAG_READER_KEEP|NfcAdapter.FLAG_USE_ALL_TECH);
+
+            mDeviceHost.setDiscoveryTech(pollTech|NfcAdapter.FLAG_SET_DEFAULT_TECH,
+                             listenTech|NfcAdapter.FLAG_SET_DEFAULT_TECH);
+
             /* Skip applyRouting if always on state is switching */
             if (!mIsAlwaysOnSupported
                     || (mAlwaysOnState != NfcAdapter.STATE_TURNING_ON
@@ -1602,6 +1733,12 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                 /* Start polling loop */
                 applyRouting(true);
             }
+
+            if (mIsHceCapable) {
+                // Generate the initial card emulation routing table
+                mCardEmulationManager.onNfcEnabled();
+            }
+
             /*
              * Perfrom mState checking in applyRouting
              * requests from hereon
@@ -1674,7 +1811,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                 mReaderModeParams = null;
                 mDiscoveryTechParams = null;
             }
-            mNfcDispatcher.setForegroundDispatch(null, null, null);
+            mNfcDispatcher.resetForegroundDispatch();
 
 
             boolean result;
@@ -1774,10 +1911,15 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                     return;
                 }
                 mState = newState;
-                Intent intent = new Intent(NfcAdapter.ACTION_ADAPTER_STATE_CHANGED);
-                intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY_BEFORE_BOOT);
-                intent.putExtra(NfcAdapter.EXTRA_ADAPTER_STATE, mState);
-                mContext.sendBroadcastAsUser(intent, UserHandle.CURRENT);
+                if (mState == NfcAdapter.STATE_ON && mCardEmulationManager != null) {
+                    mCardEmulationManager.updateForShouldDefaultToObserveMode(getUserId());
+                }
+                if (mAlwaysOnState != NfcAdapter.STATE_TURNING_ON) {
+                    Intent intent = new Intent(NfcAdapter.ACTION_ADAPTER_STATE_CHANGED);
+                    intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY_BEFORE_BOOT);
+                    intent.putExtra(NfcAdapter.EXTRA_ADAPTER_STATE, mState);
+                    mContext.sendBroadcastAsUser(intent, UserHandle.CURRENT);
+                }
             }
         }
 
@@ -1850,6 +1992,12 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                 Log.d(TAG, "Disabling reader mode because app died or moved to background");
                 mReaderModeParams = null;
                 StopPresenceChecking();
+                mNfcEventLog.logEvent(
+                        NfcEventProto.EventType.newBuilder()
+                                .setReaderModeChange(NfcEventProto.NfcReaderModeChange.newBuilder()
+                                        .setFlags(0)
+                                        .build())
+                                .build());
                 if (isNfcEnabled()) {
                     applyRouting(false);
                 }
@@ -1878,8 +2026,45 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         }
     }
 
+    public void enableNfc() {
+        saveNfcOnSetting(true);
+
+        if (shouldEnableNfc()) {
+            new EnableDisableTask().execute(TASK_ENABLE);
+        }
+
+        if (mIsRecovering) {
+            // Intents for all users
+            IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_OFF);
+            filter.addAction(Intent.ACTION_SCREEN_ON);
+            filter.addAction(Intent.ACTION_USER_PRESENT);
+            filter.addAction(Intent.ACTION_USER_SWITCHED);
+            filter.addAction(Intent.ACTION_USER_ADDED);
+            mContext.registerReceiverForAllUsers(mReceiver, filter, null, null);
+            mIsRecovering = false;
+        }
+    }
+
+    private @NonNull CharSequence getAppName(@NonNull String packageName, int uid) {
+        ApplicationInfo applicationInfo = null;
+        try {
+            applicationInfo = mContext.getPackageManager().getApplicationInfoAsUser(
+                    packageName, 0, UserHandle.getUserHandleForUid(uid));
+        } catch (PackageManager.NameNotFoundException e) {
+            Log.e(TAG, "Failed to find app name for " + packageName);
+            return "";
+        }
+        return mContext.getPackageManager().getApplicationLabel(applicationInfo);
+    }
+
     public boolean isSecureNfcEnabled() {
         return mIsSecureNfcEnabled;
+    }
+
+    /** Helper method to check if the entity initiating the binder call is a DO/PO app. */
+    private boolean isDeviceOrProfileOwner(int uid, String packageName) {
+        return mNfcPermissions.isDeviceOwner(uid, packageName)
+                || mNfcPermissions.isProfileOwner(uid, packageName);
     }
 
     final class NfcAdapterService extends INfcAdapter.Stub {
@@ -1891,45 +2076,78 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         }
 
         @Override
-        public boolean enable() throws RemoteException {
-            NfcPermissions.enforceAdminPermissions(mContext);
-
-            saveNfcOnSetting(true);
-
-            if (shouldEnableNfc()) {
-                new EnableDisableTask().execute(TASK_ENABLE);
+        public boolean enable(String pkg) throws RemoteException {
+            boolean isDeviceOrProfileOwner = isDeviceOrProfileOwner(Binder.getCallingUid(), pkg);
+            if (!NfcPermissions.checkAdminPermissions(mContext)
+                    && !isDeviceOrProfileOwner) {
+                throw new SecurityException(
+                        "caller is not a system app, device owner or profile owner!");
+            }
+            if (!isDeviceOrProfileOwner && mIsNfcUserChangeRestricted) {
+                throw new SecurityException("Change nfc state by system app is not allowed!");
             }
 
-            if (mIsRecovering) {
-              // Intents for all users
-              IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_OFF);
-              filter.addAction(Intent.ACTION_SCREEN_ON);
-              filter.addAction(Intent.ACTION_USER_PRESENT);
-              filter.addAction(Intent.ACTION_USER_SWITCHED);
-              filter.addAction(Intent.ACTION_USER_ADDED);
-              mContext.registerReceiverForAllUsers(mReceiver, filter, null, null);
-              mIsRecovering = false;
-            }
+            Log.i(TAG, "Enabling Nfc service. Package:" + pkg);
+            List<String> allowlist = new ArrayList<>(
+                    Arrays.asList(mContext.getResources().getStringArray(R.array.nfc_allow_list)));
+            if (!allowlist.isEmpty() && !allowlist.contains(pkg)) {
+                Intent allowUsingNfcIntent = new Intent()
+                        .putExtra(APP_NAME_ENABLING_NFC, getAppName(pkg, mUserId))
+                        .setClass(mContext, NfcEnableAllowlistActivity.class);
 
+                mContext.startActivityAsUser(allowUsingNfcIntent, UserHandle.CURRENT);
+                return true;
+            }
+            mNfcEventLog.logEvent(
+                    NfcEventProto.EventType.newBuilder()
+                            .setStateChange(NfcEventProto.NfcStateChange.newBuilder()
+                                    .setAppInfo(NfcEventProto.NfcAppInfo.newBuilder()
+                                            .setPackageName(pkg)
+                                            .setUid(Binder.getCallingUid())
+                                            .build())
+                                    .setEnabled(true)
+                                    .build())
+                            .build());
+            enableNfc();
             return true;
         }
 
-       public void resonantFrequency(int isResonantFreq)
-       {
+        public void resonantFrequency(int isResonantFreq)
+        {
             Log.d(TAG, "resonantFrequency");
             if(0x00 != isResonantFreq)
                 mDeviceHost.doResonantFrequency(true);
             else
                 mDeviceHost.doResonantFrequency(false);
-       }
-        @Override
-        public boolean disable(boolean saveState) throws RemoteException {
-            NfcPermissions.enforceAdminPermissions(mContext);
+        }
 
+        @Override
+        public boolean disable(boolean saveState, String pkg) throws RemoteException {
+            boolean isDeviceOrProfileOwner = isDeviceOrProfileOwner(Binder.getCallingUid(), pkg);
+            if (!NfcPermissions.checkAdminPermissions(mContext)
+                    && !isDeviceOrProfileOwner) {
+                throw new SecurityException(
+                        "caller is not a system app, device owner or profile owner!");
+            }
+            if (!isDeviceOrProfileOwner && mIsNfcUserChangeRestricted) {
+                throw new SecurityException("Change nfc state by system app is not allowed!");
+            }
+
+            Log.i(TAG, "Disabling Nfc service. Package:" + pkg);
             if (saveState) {
                 saveNfcOnSetting(false);
             }
 
+            mNfcEventLog.logEvent(
+                    NfcEventProto.EventType.newBuilder()
+                            .setStateChange(NfcEventProto.NfcStateChange.newBuilder()
+                                    .setAppInfo(NfcEventProto.NfcAppInfo.newBuilder()
+                                            .setPackageName(pkg)
+                                            .setUid(Binder.getCallingUid())
+                                            .build())
+                                    .setEnabled(false)
+                                    .build())
+                            .build());
             new EnableDisableTask().execute(TASK_DISABLE);
 
             return true;
@@ -1937,6 +2155,10 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
 
         @Override
         public boolean isObserveModeSupported() {
+            if (!isNfcEnabled()) {
+                Log.e(TAG, "isObserveModeSupported: NFC must be enabled but is: " + mState);
+                return false;
+            }
             long token = Binder.clearCallingIdentity();
             try {
                 if (!android.nfc.Flags.nfcObserveMode()) {
@@ -1950,63 +2172,79 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
 
         @Override
         public synchronized boolean isObserveModeEnabled() {
+            if (!isNfcEnabled()) {
+                Log.e(TAG, "isObserveModeEnabled: NFC must be enabled but is: " + mState);
+                return false;
+            }
             NfcPermissions.enforceUserPermissions(mContext);
             return mDeviceHost.isObserveModeEnabled();
         }
 
         @Override
-        public synchronized boolean setObserveMode(boolean enable) {
+        public synchronized boolean setObserveMode(boolean enable, String packageName) {
             if (!isNfcEnabled()) {
-                Log.e(TAG, "NFC is not enabled.");
+                Log.e(TAG, "setObserveMode: NFC must be enabled but is: " + mState);
+                return false;
+            }
+            int callingUid = Binder.getCallingUid();
+            int triggerSource =
+                    NFC_OBSERVE_MODE_STATE_CHANGED__TRIGGER_SOURCE__TRIGGER_SOURCE_UNKNOWN;
+            if (!isPrivileged(callingUid)) {
+                NfcPermissions.enforceUserPermissions(mContext);
+                if (packageName == null) {
+                    Log.e(TAG, "no package name associated with non-privileged calling UID");
+                }
+                if (mCardEmulationManager.isPreferredServicePackageNameForUser(packageName,
+                        UserHandle.getUserHandleForUid(callingUid).getIdentifier())) {
+                    if (android.permission.flags.Flags.walletRoleEnabled()) {
+                        UserHandle user = Binder.getCallingUserHandle();
+                        if (packageName != null) {
+                            triggerSource = packageName.equals(getWalletRoleHolder(user))
+                                ? NFC_OBSERVE_MODE_STATE_CHANGED__TRIGGER_SOURCE__WALLET_ROLE_HOLDER
+                                : NFC_OBSERVE_MODE_STATE_CHANGED__TRIGGER_SOURCE__FOREGROUND_APP;
+                        }
+                    } else {
+                        if (mForegroundUtils.isInForeground(callingUid)) {
+                            triggerSource =
+                                NFC_OBSERVE_MODE_STATE_CHANGED__TRIGGER_SOURCE__FOREGROUND_APP;
+                        }
+                    }
+                } else {
+                    Log.e(TAG, "setObserveMode: Caller not preferred NFC service.");
+                    return false;
+                }
+            }
+
+            if (mCardEmulationManager.isHostCardEmulationActivated()) {
+                Log.w(TAG, "setObserveMode: Cannot set observe mode during a transaction.");
                 return false;
             }
 
-            int callingUid = Binder.getCallingUid();
-            UserHandle user = Binder.getCallingUserHandle();
-            long token = Binder.clearCallingIdentity();
-            boolean isWalletRoleEnabled = false;
-            String defaultWalletPackage = null;
-            try {
-                if (!android.nfc.Flags.nfcObserveMode()) {
-                    return false;
-                }
-                isWalletRoleEnabled = android.permission.flags.Flags.walletRoleEnabled();
-                if (isWalletRoleEnabled) {
-                    defaultWalletPackage = getWalletRoleHolder(user);
-                }
-            } finally {
-                Binder.restoreCallingIdentity(token);
+            Log.d(TAG, "setObserveMode: package " + packageName + " with UID (" + callingUid
+                    + ") setting observe mode to " + enable);
+
+            long start = SystemClock.elapsedRealtime();
+            boolean result = mDeviceHost.setObserveMode(enable);
+            if (result && mCardEmulationManager != null) {
+                mCardEmulationManager.onObserveModeStateChange(enable);
             }
-            boolean privilegedCaller = false;
-            // Allow non-foreground callers with system uid or default payment service.
-            String packageName = getPackageNameFromUid(callingUid);
-            if (packageName != null) {
-                if (isWalletRoleEnabled) {
-                    privilegedCaller = (isPrivileged(callingUid)
-                            || packageName.equals(defaultWalletPackage));
-                } else {
-                    String defaultPaymentService = Settings.Secure.getString(
-                            mContext.createContextAsUser(user, 0).getContentResolver(),
-                            Constants.SETTINGS_SECURE_NFC_PAYMENT_DEFAULT_COMPONENT);
-                    if (defaultPaymentService != null) {
-                        String defaultPaymentPackage =
-                                ComponentName.unflattenFromString(defaultPaymentService)
-                                        .getPackageName();
-                        privilegedCaller = (callingUid == Process.SYSTEM_UID
-                                || packageName.equals(defaultPaymentPackage));
-                    }
-                }
-            } else {
-                privilegedCaller = isPrivileged(callingUid);
+            int latency = Math.toIntExact(SystemClock.elapsedRealtime() - start);
+            if (mStatsdUtils != null) {
+                mStatsdUtils.logObserveModeStateChanged(enable, triggerSource, latency);
             }
-            if (!privilegedCaller) {
-                NfcPermissions.enforceUserPermissions(mContext);
-                if (!mForegroundUtils.isInForeground(Binder.getCallingUid())) {
-                    Log.e(TAG, "setObserveMode: Caller not in foreground.");
-                    return false;
-                }
-            }
-            return mDeviceHost.setObserveMode(enable);
+            mNfcEventLog.logEvent(
+                    NfcEventProto.EventType.newBuilder()
+                            .setObserveModeChange(NfcEventProto.NfcObserveModeChange.newBuilder()
+                                    .setAppInfo(NfcEventProto.NfcAppInfo.newBuilder()
+                                            .setPackageName(packageName)
+                                            .setUid(callingUid)
+                                            .build())
+                                    .setEnable(enable)
+                                    .setLatencyMs(latency)
+                                    .setResult(result)
+                                    .build())
+                            .build());
+            return result;
         }
 
         private String getWalletRoleHolder(UserHandle user) {
@@ -2076,6 +2314,15 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                 mIsSecureNfcEnabled = enable;
                 mBackupManager.dataChanged();
                 mDeviceHost.setNfcSecure(enable);
+                if (android.nfc.Flags.nfcPersistLog()) {
+                    mNfcEventLog.logEvent(
+                            NfcEventProto.EventType.newBuilder()
+                                    .setSecureChange(
+                                            NfcEventProto.NfcSecureChange.newBuilder()
+                                                    .setEnable(enable)
+                                                    .build())
+                                    .build());
+                }
                 computeAndSetRoutingParameters();
                 if (mIsHceCapable) {
                     // update HCE/HCEF routing and commitRouting if Nfc is enabled
@@ -2101,7 +2348,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
             }
             // Short-cut the disable path
             if (intent == null && filters == null && techListsParcel == null) {
-                mNfcDispatcher.setForegroundDispatch(null, null, null);
+                mNfcDispatcher.resetForegroundDispatch();
                 return;
             }
 
@@ -2220,20 +2467,55 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                 throws RemoteException {
             NfcPermissions.enforceUserPermissions(mContext);
             int callingUid = Binder.getCallingUid();
-            boolean privilegedCaller = false;
+            boolean privilegedCaller = isPrivileged(callingUid)
+                    || NfcPermissions.checkAdminPermissions(mContext);
             // Allow non-foreground callers with system uid or systemui
             String packageName = getPackageNameFromUid(callingUid);
             if (packageName != null) {
-                privilegedCaller = (callingUid == Process.SYSTEM_UID
-                        || packageName.equals(SYSTEM_UI));
-            } else {
-                privilegedCaller = (callingUid == Process.SYSTEM_UID);
+                privilegedCaller |= packageName.equals(SYSTEM_UI);
             }
-            if (!privilegedCaller
-                    && !mForegroundUtils.registerUidToBackgroundCallback(
+            Log.d(TAG, "updateDiscoveryTechnology: uid=" + callingUid +
+                    ", packageName: " + packageName);
+            if (!privilegedCaller) {
+                pollTech &= ~NfcAdapter.FLAG_SET_DEFAULT_TECH;
+                listenTech &= ~NfcAdapter.FLAG_SET_DEFAULT_TECH;
+                if (!mForegroundUtils.registerUidToBackgroundCallback(
                             NfcService.this, callingUid)) {
-                Log.e(TAG,
-                  "updateDiscoveryTechnology: Caller shall be in foreground or a system process.");
+                    Log.e(TAG,
+                          "updateDiscoveryTechnology: Unprivileged caller shall be in foreground");
+                    return;
+                }
+            } else if (((pollTech & NfcAdapter.FLAG_SET_DEFAULT_TECH) != 0
+                        || (listenTech & NfcAdapter.FLAG_SET_DEFAULT_TECH) != 0)) {
+
+                if ((pollTech & NfcAdapter.FLAG_SET_DEFAULT_TECH) != 0) {
+                    if ((pollTech & NfcAdapter.FLAG_READER_KEEP) == 0 &&
+                        (pollTech & NfcAdapter.FLAG_USE_ALL_TECH)
+                            != NfcAdapter.FLAG_USE_ALL_TECH) {
+                        saveNfcPollTech(pollTech & ~NfcAdapter.FLAG_SET_DEFAULT_TECH);
+                        Log.i(TAG, "Default pollTech is set to 0x" +
+                            Integer.toHexString(pollTech));
+                    } else if ((pollTech
+                            & (NfcAdapter.FLAG_READER_KEEP | NfcAdapter.FLAG_USE_ALL_TECH))
+                            == (NfcAdapter.FLAG_READER_KEEP | NfcAdapter.FLAG_USE_ALL_TECH)){
+                        saveNfcPollTech(DEFAULT_POLL_TECH);
+                    }
+                }
+                if ((listenTech & NfcAdapter.FLAG_SET_DEFAULT_TECH) != 0) {
+                    if ((listenTech & NfcAdapter.FLAG_LISTEN_KEEP) == 0 &&
+                        (listenTech & NfcAdapter.FLAG_USE_ALL_TECH)
+                            != NfcAdapter.FLAG_USE_ALL_TECH) {
+                        saveNfcListenTech(listenTech & ~NfcAdapter.FLAG_SET_DEFAULT_TECH);
+                        Log.i(TAG, "Default listenTech is set to 0x" +
+                            Integer.toHexString(listenTech));
+                    } else if ((listenTech
+                            & (NfcAdapter.FLAG_LISTEN_KEEP | NfcAdapter.FLAG_USE_ALL_TECH))
+                            == (NfcAdapter.FLAG_LISTEN_KEEP | NfcAdapter.FLAG_USE_ALL_TECH)) {
+                       saveNfcListenTech(DEFAULT_LISTEN_TECH);
+                   }
+                }
+                mDeviceHost.setDiscoveryTech(pollTech, listenTech);
+                applyRouting(true);
                 return;
             }
             checkAndHandleRemovalDetectionMode(false);
@@ -2265,6 +2547,21 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                         mDiscoveryTechParams.uid = callingUid;
                         mDiscoveryTechParams.binder = binder;
                         binder.linkToDeath(mDiscoveryTechDeathRecipient, 0);
+                        if (android.nfc.Flags.nfcPersistLog()) {
+                            mNfcEventLog.logEvent(
+                                    NfcEventProto.EventType.newBuilder()
+                                            .setDiscoveryTechnologyUpdate(NfcEventProto
+                                                    .NfcDiscoveryTechnologyUpdate.newBuilder()
+                                                    .setAppInfo(NfcEventProto.NfcAppInfo
+                                                            .newBuilder()
+                                                            .setPackageName(packageName)
+                                                            .setUid(callingUid)
+                                                            .build())
+                                                    .setPollTech(pollTech)
+                                                    .setListenTech(listenTech)
+                                                    .build())
+                                            .build());
+                        }
                     } catch (RemoteException e) {
                         Log.e(TAG, "Remote binder has already died.");
                         return;
@@ -2356,6 +2653,16 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                         Log.e(TAG, "Reader mode Binder was never registered.");
                     }
                 }
+                mNfcEventLog.logEvent(
+                        NfcEventProto.EventType.newBuilder()
+                                .setReaderModeChange(NfcEventProto.NfcReaderModeChange.newBuilder()
+                                        .setAppInfo(NfcEventProto.NfcAppInfo.newBuilder()
+                                                .setPackageName(packageName)
+                                                .setUid(callingUid)
+                                                .build())
+                                        .setFlags(flags)
+                                        .build())
+                                .build());
                 if (isNfcEnabled()) {
                     applyRouting(false);
                 }
@@ -2401,13 +2708,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
 
         @Override
         public boolean deviceSupportsNfcSecure() {
-            String skuList[] = mContext.getResources().getStringArray(
-                R.array.config_skuSupportsSecureNfc);
-            String sku = SystemProperties.get("ro.boot.hardware.sku");
-            if (TextUtils.isEmpty(sku) || !Utils.arrayContains(skuList, sku)) {
-                return false;
-            }
-            return true;
+            return mIsSecureNfcCapable;
         }
 
         @Override
@@ -2452,6 +2753,15 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                 mPrefsEditor.apply();
                 mIsWlcEnabled = enable;
                 mBackupManager.dataChanged();
+            }
+            if (android.nfc.Flags.nfcPersistLog()) {
+                mNfcEventLog.logEvent(
+                        NfcEventProto.EventType.newBuilder()
+                                .setWlcStateChange(
+                                        NfcEventProto.NfcWlcStateChange.newBuilder()
+                                                .setEnable(enable)
+                                                .build())
+                                .build());
             }
             return true;
         }
@@ -2650,6 +2960,15 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                 mBackupManager.dataChanged();
             }
             applyRouting(true);
+            if (android.nfc.Flags.nfcPersistLog()) {
+                mNfcEventLog.logEvent(
+                        NfcEventProto.EventType.newBuilder()
+                                .setReaderOptionChange(
+                                        NfcEventProto.NfcReaderOptionChange.newBuilder()
+                                                .setEnable(enable)
+                                                .build())
+                                .build());
+            }
             return true;
         }
 
@@ -2686,14 +3005,58 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         }
 
         @Override
-        public void notifyPollingLoop(Bundle frame) {
+        public void notifyPollingLoop(PollingFrame frame) {
             try {
-                ArrayList<Bundle> frames = new ArrayList<Bundle>();
-                frames.add(frame);
-                onPollingLoopDetected(frames);
+                byte[] data;
+                int type = frame.getType();
+                int gain = frame.getVendorSpecificGain();
+                byte[] frame_data = frame.getData();
+
+                long timestamp = frame.getTimestamp();
+                HexFormat format = HexFormat.ofDelimiter(" ");
+                String timestampBytes = format.formatHex(new byte[] {
+                        (byte) (timestamp >>> 24),
+                        (byte) (timestamp >>> 16),
+                        (byte) (timestamp >>> 8),
+                        (byte) timestamp });
+                int frame_data_length = frame_data == null ? 0 : frame_data.length;
+                String frame_data_str = frame_data_length == 0 ? "" : " " + format.formatHex(frame_data);
+                String type_str = "FF";
+                switch (type) {
+                    case PollingFrame.POLLING_LOOP_TYPE_ON:
+                        type_str = "00";
+                        data = new byte[] { 0x01 };
+                        break;
+                    case PollingFrame.POLLING_LOOP_TYPE_OFF:
+                        type_str = "00";
+                        data = new byte[] { 0x00 };
+                        break;
+                    case PollingFrame.POLLING_LOOP_TYPE_A:
+                        type_str = "01";
+                        break;
+                    case PollingFrame.POLLING_LOOP_TYPE_B:
+                        type_str = "02";
+                        break;
+                    case PollingFrame.POLLING_LOOP_TYPE_F:
+                        type_str = "03";
+                        break;
+                    case PollingFrame.POLLING_LOOP_TYPE_UNKNOWN:
+                        type_str = "07";
+                        break;
+                }
+                data = format.parseHex("6f 0C " + String.format("%02x", 9 + frame_data_length)
+                        + " 03 " + type_str
+                        + " 00 " + String.format("%02x", 5 + frame_data_length) + " "
+                        + timestampBytes + " " + String.format("%02x", gain) + frame_data_str);
+                ((NativeNfcManager) mDeviceHost).injectNtf(data);
             } catch (Exception ex) {
                 Log.e(TAG, "error when notifying polling loop", ex);
             }
+        }
+
+        @Override
+        public void notifyTestHceData(int technology, byte[] data) {
+            onHostCardEmulationData(technology, data);
         }
 
         @Override
@@ -2738,7 +3101,8 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                        NfcVendorNciResponse response =
                                mDeviceHost.sendRawVendorCmd(mt, gid, oid, payload);
                        if (response.status == NCI_STATUS_OK) {
-                           sendVendorNciResponse(response.gid, response.oid, response.payload);
+                           mHandler.post(() -> mNfcAdapter.sendVendorNciResponse(
+                                             response.gid, response.oid, response.payload));
                        }
                        return Integer.valueOf(response.status);
                    }
@@ -2758,19 +3122,21 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         }
 
         @Override
-        public void registerVendorExtensionCallback(INfcVendorNciCallback callbacks)
+        public synchronized void registerVendorExtensionCallback(INfcVendorNciCallback callbacks)
                 throws RemoteException {
             if (DBG) Log.i(TAG, "Register the callback");
             NfcPermissions.enforceAdminPermissions(mContext);
             mNfcVendorNciCallBack = callbacks;
+            mDeviceHost.enableVendorNciNotifications(true);
         }
 
         @Override
-        public void unregisterVendorExtensionCallback(INfcVendorNciCallback callbacks)
+        public synchronized void unregisterVendorExtensionCallback(INfcVendorNciCallback callbacks)
                 throws RemoteException {
             if (DBG) Log.i(TAG, "Unregister the callback");
             NfcPermissions.enforceAdminPermissions(mContext);
             mNfcVendorNciCallBack = null;
+            mDeviceHost.enableVendorNciNotifications(false);
         }
 
         @Override
@@ -2793,11 +3159,43 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         public void clearPreference() throws RemoteException {
             if (DBG) Log.i(TAG, "clearPreference");
             NfcPermissions.enforceAdminPermissions(mContext);
+            if (android.nfc.Flags.nfcPersistLog()) {
+                mNfcEventLog.logEvent(NfcEventProto.EventType.newBuilder()
+                                .setClearPreference(
+                                        NfcEventProto.NfcClearPreference.newBuilder()
+                                                .build())
+                                .build());
+            }
             // TODO: Implement this.
         }
 
+        @Override
+        public void setScreenState() throws RemoteException {
+            if (DBG) Log.i(TAG, "setScreenState");
+            NfcPermissions.enforceAdminPermissions(mContext);
+            applyScreenState(mScreenStateHelper.checkScreenState());
+        }
+
+        @Override
+        public void checkFirmware() throws RemoteException {
+            if (DBG) Log.i(TAG, "checkFirmware");
+            NfcPermissions.enforceAdminPermissions(mContext);
+            mDeviceHost.checkFirmware();
+        }
+
+        // TODO(b/321304762): Add the OEM extension API.
+        public void allowBoot() throws RemoteException {
+            if (DBG) Log.i(TAG, "allowBoot");
+            NfcPermissions.enforceAdminPermissions(mContext);
+            if (mDelayedBootAlarmListenerSet) {
+                Log.i(TAG, "OEM executing delayed boot");
+                mAlarmManager.cancel(mDelayedBootAlarmListener);
+                mDelayedBootAlarmListener.onAlarm();
+            }
+        }
+
         private synchronized void sendVendorNciResponse(int gid, int oid, byte[] payload) {
-            if (DBG) Log.i(TAG, "onVendorNciResponseReceived");
+            if (VDBG) Log.i(TAG, "onVendorNciResponseReceived");
             if (mNfcVendorNciCallBack != null) {
                 try {
                     mNfcVendorNciCallBack.onVendorResponseReceived(gid, oid, payload);
@@ -2808,7 +3206,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         }
 
         private synchronized void sendVendorNciNotification(int gid, int oid, byte[] payload) {
-            if (DBG) Log.i(TAG, "sendVendorNciNotification");
+            if (VDBG) Log.i(TAG, "sendVendorNciNotification");
             if (mNfcVendorNciCallBack != null) {
                 try {
                     mNfcVendorNciCallBack.onVendorNotificationReceived(gid, oid, payload);
@@ -3319,9 +3717,9 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                     mDeviceHost.enableDiscovery(params, shouldRestart);
                 } else if (status == TRANSIT_CONFIG_REQUIRE_NFC_RESET) {
                     mDeviceHost.setTransitConfig(configs);
-                    mNfcAdapter.disable(true);
+                    mNfcAdapter.disable(true, mContext.getPackageName());
                     WaitForAdapterChange(NfcAdapter.STATE_OFF);
-                    mNfcAdapter.enable();
+                    mNfcAdapter.enable(mContext.getPackageName());
                     WaitForAdapterChange(NfcAdapter.STATE_ON);
                 } else {
                     return TRANSIT_SETCONFIG_STAT_FAILED;
@@ -3509,16 +3907,6 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
 
     }
 
-    private void sendVendorNciNotification(int gid, int oid, byte[] payload) {
-        if (DBG) Log.i(TAG, "sendVendorNciNotification");
-        if (mNfcVendorNciCallBack != null) {
-            try {
-                mNfcVendorNciCallBack.onVendorNotificationReceived(gid, oid, payload);
-            } catch (RemoteException e) {
-                Log.e(TAG, "Failed to send vendor notification", e);
-            }
-        }
-    }
 
     final class SeServiceDeathRecipient implements IBinder.DeathRecipient {
         @Override
@@ -4756,6 +5144,10 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
     }
 
     final class NfcServiceHandler extends Handler {
+        public NfcServiceHandler(Looper looper) {
+            super(looper);
+        }
+
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
@@ -5001,6 +5393,9 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                     break;
 
                 case MSG_RF_FIELD_ACTIVATED:
+                    if (mCardEmulationManager != null) {
+                        mCardEmulationManager.onFieldChangeDetected(true);
+                    }
                     Intent fieldOnIntent = new Intent(ACTION_RF_FIELD_ON_DETECTED);
                     sendNfcPermissionProtectedBroadcast(fieldOnIntent);
                     if (mIsSecureNfcEnabled) {
@@ -5008,6 +5403,9 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                     }
                     break;
                 case MSG_RF_FIELD_DEACTIVATED:
+                    if (mCardEmulationManager != null) {
+                        mCardEmulationManager.onFieldChangeDetected(false);
+                    }
                     Intent fieldOffIntent = new Intent(ACTION_RF_FIELD_OFF_DETECTED);
                     sendNfcPermissionProtectedBroadcast(fieldOffIntent);
                     break;
@@ -5786,7 +6184,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         }
     }
 
-    private NfcServiceHandler mHandler = new NfcServiceHandler();
+    private NfcServiceHandler mHandler;
 
     class ApplyRoutingTask extends AsyncTask<Integer, Void, Void> {
         @Override
@@ -5914,6 +6312,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                 int userId = intent.getIntExtra(Intent.EXTRA_USER_HANDLE, 0);
                 mUserId = userId;
                 updatePackageCache();
+                if (DBG) Log.d(TAG, action + " received with UserId: " + userId);
                 if (mIsHceCapable) {
                     mCardEmulationManager.onUserSwitched(getUserId());
                 }
@@ -5958,6 +6357,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                     action.equals(Intent.ACTION_MANAGED_PROFILE_AVAILABLE) ||
                     action.equals(Intent.ACTION_MANAGED_PROFILE_REMOVED) ||
                     action.equals(Intent.ACTION_MANAGED_PROFILE_UNAVAILABLE)) {
+                if (DBG) Log.d(TAG, action + " received with UserId: " + user.getIdentifier());
                 mCardEmulationManager.onManagedProfileChanged();
                 setPaymentForegroundPreference(user.getIdentifier());
             }
@@ -6010,7 +6410,13 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
     }
 
     private void setPaymentForegroundPreference(int user) {
-        Context uc = mContext.createContextAsUser(UserHandle.of(user), 0);
+        Context uc;
+        try {
+            uc = mContext.createContextAsUser(UserHandle.of(user), 0);
+        } catch (IllegalStateException e) {
+            Log.d(TAG, "Fail to get user context for user: " + user);
+            return;
+        }
         try {
             // Check whether the Settings.Secure.NFC_PAYMENT_FOREGROUND exists or not.
             Settings.Secure.getInt(uc.getContentResolver(),
@@ -6178,6 +6584,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                 mRoutingTableParser.dump(mDeviceHost, pw);
             }
             dumpTagAppPreference(pw);
+            mNfcInjector.getNfcEventLog().dump(fd, pw, args);
             copyNativeCrashLogsIfAny(pw);
             pw.flush();
             mDeviceHost.dump(fd);

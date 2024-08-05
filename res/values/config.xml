@@ -22,6 +22,8 @@
 
     <!-- List of SKUs where Secure NFC functionality is supported -->
     <string-array name="config_skuSupportsSecureNfc" translatable="false" />
+    <!-- Set true if Secure NFC functionality supported for all SKUs -->
+    <bool name="enable_secure_nfc_support">false</bool>
     <!-- NFC blocking alert notification link uri string -->
     <string name="antenna_blocked_alert_link" translatable="false" />
     <!-- NFC Antenna Location API -->
@@ -31,4 +33,11 @@
     <integer-array name="antenna_x">0</integer-array>
     <integer-array name="antenna_y">0</integer-array>
     <bool name="nfc_observe_mode_supported">false</bool>
+    <bool name="nfc_proprietary_getcaps_supported">false</bool>
+    <!-- Allow list that contains the package name which are allowed to use NFC -->
+    <string-array name="nfc_allow_list" translatable="false" />
+    <!-- Number of persistent events to store  -->
+    <integer name="max_event_log_num">50</integer>
+    <!-- Overlay to indicate that the OEM plans to use OEM extension -->
+    <bool name="enable_oem_extension">false</bool>
 </resources>

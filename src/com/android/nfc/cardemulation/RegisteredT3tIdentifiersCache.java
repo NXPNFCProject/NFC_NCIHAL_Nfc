@@ -45,6 +45,8 @@ import android.sysprop.NfcProperties;
 import android.util.Log;
 import android.util.proto.ProtoOutputStream;
 
+import androidx.annotation.VisibleForTesting;
+
 import java.io.FileDescriptor;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -108,9 +110,14 @@ public class RegisteredT3tIdentifiersCache {
     boolean mNfcEnabled = false;
 
     public RegisteredT3tIdentifiersCache(Context context) {
+        this(context, new SystemCodeRoutingManager());
+    }
+
+    @VisibleForTesting
+    RegisteredT3tIdentifiersCache(Context context, SystemCodeRoutingManager routingManager) {
         Log.d(TAG, "RegisteredT3tIdentifiersCache");
         mContext = context;
-        mRoutingManager = new SystemCodeRoutingManager();
+        mRoutingManager = routingManager;
     }
 
     public NfcFServiceInfo resolveNfcid2(String nfcid2) {

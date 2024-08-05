@@ -24,7 +24,7 @@ java_library {
         "//apex_available:platform",
         "com.android.nfcservices",
     ],
-    min_sdk_version: "VanillaIceCream",
+    min_sdk_version: "current",
     sdk_version: "module_current",
 }
 
@@ -39,6 +39,7 @@ java_defaults {
         "modules-utils-fastxmlserializer",
         "modules-utils-shell-command-handler",
         "PlatformProperties",
+        "nfc-event-log-proto",
         "nfc_flags_lib",
     ],
     privileged: true,
@@ -57,11 +58,8 @@ android_app {
     certificate: "platform",
     sdk_version: "core_platform",
     srcs: [
-        "src/**/*.java",
+        ":nfc-sources",
         "shim_src/non_apex/**/*.java",
-        "nci/**/*.java",
-        ":framework-nfc-javastream-protos",
-        ":statslog-Nfc-java-gen",
     ],
     uses_libs: ["com.nxp.nfc"],
     libs: [
@@ -75,7 +73,13 @@ android_app {
         "framework-res",
     ],
     jni_libs: ["libnfc_nci_jni"],
+    required: [
+        // Provide a default libnfc-nci.conf in /system/etc for devices that
+        // does not ship one in /product
+        "libnfc-nci.conf-default",
+    ],
     lint: {
+        baseline_filename: "lint-baseline-nfcnci.xml",
         warning_checks: [
             "FlaggedApi",
         ],
@@ -87,15 +91,12 @@ android_app {
 // android_app {
 //     name: "NfcNciApex",
 //     defaults: ["NfcNciDefaults"],
-//     min_sdk_version: "34", // should be 35 (making it 34 for compiling for `-next`)
+//     min_sdk_version: "current",
 //     sdk_version: "module_current",
 //     certificate: "nfc",
 //     srcs: [
-//         "src/**/*.java",
+//         ":nfc-sources",
 //         "shim_src/apex/**/*.java",
-//         "nci/**/*.java",
-//         ":framework-nfc-javastream-protos",
-//         ":statslog-Nfc-java-gen",
 //     ],
 //     uses_libs: ["com.nxp.nfc"],
 //     libs: [
@@ -128,6 +129,8 @@ filegroup {
     name: "nfc-sources",
     srcs: [
         "src/**/*.java",
+        "nci/**/*.java",
+        ":framework-nfc-javastream-protos",
         ":statslog-Nfc-java-gen",
     ],
     visibility: [

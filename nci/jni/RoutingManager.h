@@ -128,6 +128,7 @@ class RoutingManager {
   void updateIsoDepProtocolRoute(int route);
   tNFA_TECHNOLOGY_MASK updateTechnologyABRoute(int route);
   void clearRoutingEntry(int clearFlags);
+  void setEeTechRouteUpdateRequired();
 
   static const int CLEAR_AID_ENTRIES = 0x01;
   static const int CLEAR_PROTOCOL_ENTRIES = 0x02;

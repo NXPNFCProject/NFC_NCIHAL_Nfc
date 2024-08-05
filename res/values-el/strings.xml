@@ -55,4 +55,7 @@
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Πατήστε για να μάθετε πώς μπορείτε να διορθώσετε το πρόβλημα."</string>
     <string name="nfc_logging_alert_title" msgid="5300867034660942987">"Τα δεδομένα NFC εγγράφονται"</string>
     <string name="nfc_logging_alert_message" msgid="1550187184825467942">"Πατήστε για διακοπή της εγγραφής."</string>
+    <string name="title_package_enabling_nfc" msgid="5736481508428918024">"Να επιτρέπεται στο <xliff:g id="PKG">%1$s</xliff:g> να ενεργοποιεί το NFC;"</string>
+    <string name="enable_nfc_yes" msgid="694867197186062792">"Ναι"</string>
+    <string name="enable_nfc_no" msgid="6549033065900624599">"Όχι"</string>
 </resources>

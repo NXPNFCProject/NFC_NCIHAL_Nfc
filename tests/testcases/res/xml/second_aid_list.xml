@@ -1,0 +1,7 @@
+<host-apdu-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/SecondPaymentService">
+    <aid-group android:description="@string/SecondPaymentService" android:category="payment">
+        <aid-filter android:name="A000000004101011"/>
+    </aid-group>
+    <polling-loop-filter android:name="48294018"/>
+</host-apdu-service>

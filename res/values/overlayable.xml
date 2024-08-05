@@ -35,6 +35,7 @@
             <item name="unknown_tag_read_error_count_max" type="integer" />
             <item name="unknown_tag_polling_delay_long" type="integer" />
             <item name="config_skuSupportsSecureNfc" type="array" />
+            <item name="enable_secure_nfc_support" type="bool" />
             <item name="antenna_blocked_alert_link" type="string" />
             <item name="device_width" type="integer" />
             <item name="device_height" type="integer" />
@@ -44,6 +45,9 @@
             <item name="nfc_observe_mode_supported" type="bool" />
             <item name="background_low_power_tag_removal_enable_time" type="integer" />
             <item name="tag_removal_detection_max_wait_time" type="integer" />
+            <item name="nfc_proprietary_getcaps_supported" type="bool" />
+            <item name="max_event_log_num" type="integer" />
+            <item name="enable_oem_extension" type="bool" />
           <!-- Params from config.xml that can be overlaid -->
 
           <!-- Params from strings.xml that can be overlaid -->

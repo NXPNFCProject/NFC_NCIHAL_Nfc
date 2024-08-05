@@ -16,6 +16,8 @@
 
 package com.android.nfc;
 
+import static android.content.pm.PackageManager.MATCH_CLONE_PROFILE;
+import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 import static android.nfc.Flags.enableNfcMainline;
 
 import android.app.Activity;
@@ -152,6 +154,10 @@ class NfcDispatcher {
         super.finalize();
     }
 
+    public synchronized void resetForegroundDispatch() {
+        setForegroundDispatch(null, null, new String[][]{});
+    }
+
     public synchronized void setForegroundDispatch(PendingIntent intent,
             IntentFilter[] filters, String[][] techLists) {
         if (DBG) Log.d(TAG, "Set Foreground Dispatch");
@@ -200,6 +206,14 @@ class NfcDispatcher {
                 Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         return resolverIntent;
     }
+
+    private static List<ResolveInfo> queryNfcIntentActivitiesAsUser(
+            PackageManager packageManager, Intent intent, UserHandle uh) {
+        return packageManager.queryIntentActivitiesAsUser(intent,
+                ResolveInfoFlags.of(MATCH_DEFAULT_ONLY | MATCH_CLONE_PROFILE),
+                uh);
+    }
+
     /**
      * Helper for re-used objects and methods during a single tag dispatch.
      */
@@ -274,8 +288,8 @@ class NfcDispatcher {
             boolean status = false;
             List<UserHandle> luh = getCurrentActiveUserHandles();
             for (UserHandle uh : luh) {
-                List<ResolveInfo> activities = packageManager.queryIntentActivitiesAsUser(intent,
-                        ResolveInfoFlags.of(PackageManager.MATCH_DEFAULT_ONLY), uh);
+                List<ResolveInfo> activities = queryNfcIntentActivitiesAsUser(
+                        packageManager, intent, uh);;
                 activities = activities.stream().filter(activity -> activity.activityInfo.exported)
                         .collect(Collectors.toList());
                 if (activities.size() > 0) {
@@ -351,9 +365,8 @@ class NfcDispatcher {
             // to determine if there is an Activity to handle this intent, and base the
             // result of off that.
             // try current user if there is an Activity to handle this intent
-            List<ResolveInfo> activities = packageManager.queryIntentActivitiesAsUser(intent,
-                    ResolveInfoFlags.of(PackageManager.MATCH_DEFAULT_ONLY),
-                    UserHandle.of(ActivityManager.getCurrentUser()));
+            List<ResolveInfo> activities = queryNfcIntentActivitiesAsUser(
+                    packageManager, intent, UserHandle.of(ActivityManager.getCurrentUser()));
             activities = activities.stream().filter(activity -> activity.activityInfo.exported)
                     .collect(Collectors.toList());
             if (mIsTagAppPrefSupported) {
@@ -382,8 +395,7 @@ class NfcDispatcher {
             List<UserHandle> userHandles = getCurrentActiveUserHandles();
             userHandles.remove(UserHandle.of(ActivityManager.getCurrentUser()));
             for (UserHandle uh : userHandles) {
-                activities = packageManager.queryIntentActivitiesAsUser(intent,
-                        ResolveInfoFlags.of(PackageManager.MATCH_DEFAULT_ONLY), uh);
+                activities = queryNfcIntentActivitiesAsUser(packageManager, intent, uh);
                 activities = activities.stream().filter(activity -> activity.activityInfo.exported)
                         .collect(Collectors.toList());
                 if (mIsTagAppPrefSupported) {
@@ -414,9 +426,8 @@ class NfcDispatcher {
 
         boolean tryStartActivity(Intent intentToStart) {
             // try current user if there is an Activity to handle this intent
-            List<ResolveInfo> activities = packageManager.queryIntentActivitiesAsUser(
-                    intentToStart, ResolveInfoFlags.of(PackageManager.MATCH_DEFAULT_ONLY),
-                    UserHandle.of(ActivityManager.getCurrentUser()));
+            List<ResolveInfo> activities = queryNfcIntentActivitiesAsUser(
+                    packageManager, intentToStart, UserHandle.of(ActivityManager.getCurrentUser()));
             activities = activities.stream().filter(activity -> activity.activityInfo.exported)
                     .collect(Collectors.toList());
             if (activities.size() > 0) {
@@ -440,8 +451,7 @@ class NfcDispatcher {
             List<UserHandle> userHandles = getCurrentActiveUserHandles();
             userHandles.remove(UserHandle.of(ActivityManager.getCurrentUser()));
             for (UserHandle uh : userHandles) {
-                activities = packageManager.queryIntentActivitiesAsUser(intentToStart,
-                        ResolveInfoFlags.of(PackageManager.MATCH_DEFAULT_ONLY), uh);
+                activities = queryNfcIntentActivitiesAsUser(packageManager, intentToStart, uh);
                 activities = activities.stream().filter(activity -> activity.activityInfo.exported)
                         .collect(Collectors.toList());
                 if (mIsTagAppPrefSupported) {

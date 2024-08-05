@@ -55,4 +55,7 @@
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Toca para ver como podes solucionalo."</string>
     <string name="nfc_logging_alert_title" msgid="5300867034660942987">"Estanse gravando os datos de NFC"</string>
     <string name="nfc_logging_alert_message" msgid="1550187184825467942">"Toca para deter a gravación."</string>
+    <string name="title_package_enabling_nfc" msgid="5736481508428918024">"Queres permitir que <xliff:g id="PKG">%1$s</xliff:g> active a NFC?"</string>
+    <string name="enable_nfc_yes" msgid="694867197186062792">"Si"</string>
+    <string name="enable_nfc_no" msgid="6549033065900624599">"Non"</string>
 </resources>

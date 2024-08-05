@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues format="6" by="lint 8.4.0-alpha08" type="baseline" client="" dependencies="true" name="" variant="all" version="8.4.0-alpha08">
+
+    <issue
+        id="FlaggedApi"
+        message="Method `updateForShouldDefaultToObserveMode()` is a flagged API and should be inside an `if (Flags.nfcObserveMode())` check (or annotate the surrounding method `updateForShouldDefaultToObserveMode` with `@FlaggedApi(Flags.FLAG_NFC_OBSERVE_MODE) to transfer requirement to caller`)"
+        errorLine1="            mHostEmulationManager.updateForShouldDefaultToObserveMode(enableObserveMode);"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/cardemulation/CardEmulationManager.java"
+            line="1095"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="FlaggedApi"
+        message="Field `SE_NAME_HCE` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `HostEmulationManager` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="        this(context, looper, aidCache, new StatsdUtils(StatsdUtils.SE_NAME_HCE));"
+        errorLine2="                                                                    ~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostEmulationManager.java"
+            line="200"
+            column="69"/>
+    </issue>
+
+    <issue
+        id="FlaggedApi"
+        message="Method `StatsdUtils()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `HostEmulationManager` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="        this(context, looper, aidCache, new StatsdUtils(StatsdUtils.SE_NAME_HCE));"
+        errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostEmulationManager.java"
+            line="200"
+            column="41"/>
+    </issue>
+
+    <issue
+        id="FlaggedApi"
+        message="Method `tallyPollingFrame()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `onPollingLoopDetected` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="                        mStatsdUtils.tallyPollingFrame(dataStr, pollingFrame);"
+        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostEmulationManager.java"
+            line="412"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="FlaggedApi"
+        message="Method `logPollingFrames()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `onPollingLoopDetected` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="                    mStatsdUtils.logPollingFrames();"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostEmulationManager.java"
+            line="418"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="FlaggedApi"
+        message="Method `setCardEmulationEventCategory()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `onHostEmulationData` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="                        mStatsdUtils.setCardEmulationEventCategory(resolveInfo.category);"
+        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostEmulationManager.java"
+            line="610"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="FlaggedApi"
+        message="Method `setCardEmulationEventUid()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `onHostEmulationData` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="                        mStatsdUtils.setCardEmulationEventUid(defaultServiceInfo.getUid());"
+        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostEmulationManager.java"
+            line="611"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="FlaggedApi"
+        message="Method `logCardEmulationWrongSettingEvent()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `onHostEmulationData` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="                            mStatsdUtils.logCardEmulationWrongSettingEvent();"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostEmulationManager.java"
+            line="621"
+            column="29"/>
+    </issue>
+
+    <issue
+        id="FlaggedApi"
+        message="Method `setCardEmulationEventCategory()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `onHostEmulationData` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="                        mStatsdUtils.setCardEmulationEventCategory(CardEmulation.CATEGORY_OTHER);"
+        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostEmulationManager.java"
+            line="663"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="FlaggedApi"
+        message="Method `logCardEmulationWrongSettingEvent()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `onHostEmulationData` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="                        mStatsdUtils.logCardEmulationWrongSettingEvent();"
+        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostEmulationManager.java"
+            line="664"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="FlaggedApi"
+        message="Method `setCardEmulationEventUid()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `onHostEmulationData` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="                            mStatsdUtils.setCardEmulationEventUid(uid);"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostEmulationManager.java"
+            line="676"
+            column="29"/>
+    </issue>
+
+    <issue
+        id="FlaggedApi"
+        message="Method `setCardEmulationEventCategory()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `onHostEmulationData` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="                            mStatsdUtils.setCardEmulationEventCategory(resolveInfo.category);"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostEmulationManager.java"
+            line="677"
+            column="29"/>
+    </issue>
+
+    <issue
+        id="FlaggedApi"
+        message="Method `notifyCardEmulationEventWaitingForResponse()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `onHostEmulationData` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="                            mStatsdUtils.notifyCardEmulationEventWaitingForResponse();"
+        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostEmulationManager.java"
+            line="694"
+            column="29"/>
+    </issue>
+
+    <issue
+        id="FlaggedApi"
+        message="Method `logCardEmulationDeactivatedEvent()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `onHostEmulationDeactivated` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="                mStatsdUtils.logCardEmulationDeactivatedEvent();"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostEmulationManager.java"
+            line="760"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="FlaggedApi"
+        message="Method `notifyCardEmulationEventWaitingForService()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `bindServiceIfNeededLocked` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="                mStatsdUtils.notifyCardEmulationEventWaitingForService();"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostEmulationManager.java"
+            line="825"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="FlaggedApi"
+        message="Method `notifyCardEmulationEventServiceBound()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `onServiceConnected` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="                        mStatsdUtils.notifyCardEmulationEventServiceBound();"
+        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostEmulationManager.java"
+            line="1065"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="FlaggedApi"
+        message="Method `notifyCardEmulationEventResponseReceived()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `handleMessage` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="                        mStatsdUtils.notifyCardEmulationEventResponseReceived();"
+        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostEmulationManager.java"
+            line="1125"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="FlaggedApi"
+        message="Method `logCardEmulationWrongSettingEvent()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `onHostEmulationData` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="                    mStatsdUtils.logCardEmulationWrongSettingEvent();"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostNfcFEmulationManager.java"
+            line="138"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="FlaggedApi"
+        message="Method `setCardEmulationEventUid()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `onHostEmulationData` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="                        mStatsdUtils.setCardEmulationEventUid(uid);"
+        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostNfcFEmulationManager.java"
+            line="169"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="FlaggedApi"
+        message="Method `notifyCardEmulationEventWaitingForResponse()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `onHostEmulationData` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="                        mStatsdUtils.notifyCardEmulationEventWaitingForResponse();"
+        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostNfcFEmulationManager.java"
+            line="170"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="FlaggedApi"
+        message="Method `logCardEmulationDeactivatedEvent()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `onHostEmulationDeactivated` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="                mStatsdUtils.logCardEmulationDeactivatedEvent();"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostNfcFEmulationManager.java"
+            line="199"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="FlaggedApi"
+        message="Method `notifyCardEmulationEventWaitingForService()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `bindServiceIfNeededLocked` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="                mStatsdUtils.notifyCardEmulationEventWaitingForService();"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostNfcFEmulationManager.java"
+            line="273"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="FlaggedApi"
+        message="Method `notifyCardEmulationEventServiceBound()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `onServiceConnected` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="                        mStatsdUtils.notifyCardEmulationEventServiceBound();"
+        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostNfcFEmulationManager.java"
+            line="327"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="FlaggedApi"
+        message="Method `notifyCardEmulationEventResponseReceived()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `handleMessage` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="                        mStatsdUtils.notifyCardEmulationEventResponseReceived();"
+        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostNfcFEmulationManager.java"
+            line="381"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="FlaggedApi"
+        message="Method `StatsdUtils()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `NfcInjector` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="        mStatsdUtils = mFeatureFlags.statsdCeEventsFlag() ? new StatsdUtils() : null;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/NfcInjector.java"
+            line="102"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="FlaggedApi"
+        message="Method `logFieldChanged()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `onRemoteFieldActivated` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="            mStatsdUtils.logFieldChanged(true, 0);"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/NfcService.java"
+            line="508"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="FlaggedApi"
+        message="Method `logFieldChanged()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `onRemoteFieldDeactivated` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="            mStatsdUtils.logFieldChanged(false, 0);"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/NfcService.java"
+            line="517"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="FlaggedApi"
+        message="Method `logObserveModeStateChanged()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `setObserveMode` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="                mStatsdUtils.logObserveModeStateChanged(enable, triggerSource, latency);"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/NfcService.java"
+            line="1802"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="FlaggedApi"
+        message="Method `setCardEmulationEventCategory()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `sendOffHostTransactionEvent` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="                    mStatsdUtils.setCardEmulationEventCategory(aidCategory);"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/NfcService.java"
+            line="3979"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="FlaggedApi"
+        message="Method `logCardEmulationOffhostEvent()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `sendOffHostTransactionEvent` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="                    mStatsdUtils.logCardEmulationOffhostEvent(reader);"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/NfcService.java"
+            line="4073"
+            column="21"/>
+    </issue>
+
+</issues>

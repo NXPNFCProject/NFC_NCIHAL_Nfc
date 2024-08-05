@@ -1741,12 +1741,67 @@
 
     <issue
         id="FlaggedApi"
+        message="Method `updateForShouldDefaultToObserveMode()` is a flagged API and should be inside an `if (Flags.nfcObserveMode())` check (or annotate the surrounding method `updateForShouldDefaultToObserveMode` with `@FlaggedApi(Flags.FLAG_NFC_OBSERVE_MODE) to transfer requirement to caller`)"
+        errorLine1="            mHostEmulationManager.updateForShouldDefaultToObserveMode(enableObserveMode);"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/cardemulation/CardEmulationManager.java"
+            line="1095"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="FlaggedApi"
+        message="Field `SE_NAME_HCE` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `HostEmulationManager` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="        this(context, looper, aidCache, new StatsdUtils(StatsdUtils.SE_NAME_HCE));"
+        errorLine2="                                                                    ~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostEmulationManager.java"
+            line="200"
+            column="69"/>
+    </issue>
+
+    <issue
+        id="FlaggedApi"
+        message="Method `StatsdUtils()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `HostEmulationManager` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="        this(context, looper, aidCache, new StatsdUtils(StatsdUtils.SE_NAME_HCE));"
+        errorLine2="                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostEmulationManager.java"
+            line="200"
+            column="41"/>
+    </issue>
+
+    <issue
+        id="FlaggedApi"
+        message="Method `tallyPollingFrame()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `onPollingLoopDetected` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="                        mStatsdUtils.tallyPollingFrame(dataStr, pollingFrame);"
+        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostEmulationManager.java"
+            line="412"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="FlaggedApi"
+        message="Method `logPollingFrames()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `onPollingLoopDetected` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="                    mStatsdUtils.logPollingFrames();"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostEmulationManager.java"
+            line="418"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="FlaggedApi"
         message="Method `setCardEmulationEventCategory()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `onHostEmulationData` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
         errorLine1="                        mStatsdUtils.setCardEmulationEventCategory(resolveInfo.category);"
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostEmulationManager.java"
-            line="348"
+            line="610"
             column="25"/>
     </issue>
 
@@ -1757,7 +1812,7 @@
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostEmulationManager.java"
-            line="349"
+            line="611"
             column="25"/>
     </issue>
 
@@ -1768,7 +1823,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostEmulationManager.java"
-            line="359"
+            line="621"
             column="29"/>
     </issue>
 
@@ -1779,7 +1834,7 @@
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostEmulationManager.java"
-            line="401"
+            line="663"
             column="25"/>
     </issue>
 
@@ -1790,7 +1845,7 @@
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostEmulationManager.java"
-            line="402"
+            line="664"
             column="25"/>
     </issue>
 
@@ -1801,7 +1856,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostEmulationManager.java"
-            line="414"
+            line="676"
             column="29"/>
     </issue>
 
@@ -1812,7 +1867,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostEmulationManager.java"
-            line="415"
+            line="677"
             column="29"/>
     </issue>
 
@@ -1823,7 +1878,7 @@
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostEmulationManager.java"
-            line="433"
+            line="694"
             column="29"/>
     </issue>
 
@@ -1834,7 +1889,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostEmulationManager.java"
-            line="501"
+            line="760"
             column="17"/>
     </issue>
 
@@ -1845,7 +1900,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostEmulationManager.java"
-            line="543"
+            line="825"
             column="17"/>
     </issue>
 
@@ -1856,7 +1911,7 @@
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostEmulationManager.java"
-            line="753"
+            line="1065"
             column="25"/>
     </issue>
 
@@ -1867,7 +1922,7 @@
         errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="packages/apps/Nfc/src/com/android/nfc/cardemulation/HostEmulationManager.java"
-            line="808"
+            line="1125"
             column="25"/>
     </issue>
 
@@ -1950,24 +2005,46 @@
 
     <issue
         id="FlaggedApi"
-        message="Method `onPollingLoopDetected()` is a flagged API and should be inside an `if (Flags.nfcReadPollingLoop())` check (or annotate the surrounding method `onPollingLoopDetected` with `@FlaggedApi(Flags.FLAG_NFC_READ_POLLING_LOOP) to transfer requirement to caller`)"
-        errorLine1="            mCardEmulationManager.onPollingLoopDetected(pollingFrame);"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        message="Method `StatsdUtils()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `NfcInjector` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="        mStatsdUtils = mFeatureFlags.statsdCeEventsFlag() ? new StatsdUtils() : null;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/NfcInjector.java"
+            line="102"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="FlaggedApi"
+        message="Method `logFieldChanged()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `onRemoteFieldActivated` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="            mStatsdUtils.logFieldChanged(true, 0);"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="packages/apps/Nfc/src/com/android/nfc/NfcService.java"
-            line="493"
+            line="508"
             column="13"/>
     </issue>
 
     <issue
         id="FlaggedApi"
-        message="Method `StatsdUtils()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `NfcService` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
-        errorLine1="        mStatsdUtils = mFeatureFlags.statsdCeEventsFlag() ? new StatsdUtils() : null;"
-        errorLine2="                                                            ~~~~~~~~~~~~~~~~~">
+        message="Method `logFieldChanged()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `onRemoteFieldDeactivated` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="            mStatsdUtils.logFieldChanged(false, 0);"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="packages/apps/Nfc/src/com/android/nfc/NfcService.java"
-            line="713"
-            column="61"/>
+            line="517"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="FlaggedApi"
+        message="Method `logObserveModeStateChanged()` is a flagged API and should be inside an `if (Flags.statsdCeEventsFlag())` check (or annotate the surrounding method `setObserveMode` with `@FlaggedApi(Flags.FLAG_STATSD_CE_EVENTS_FLAG) to transfer requirement to caller`)"
+        errorLine1="                mStatsdUtils.logObserveModeStateChanged(enable, triggerSource, latency);"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/apps/Nfc/src/com/android/nfc/NfcService.java"
+            line="1802"
+            column="17"/>
     </issue>
 
     <issue
@@ -1977,7 +2054,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="packages/apps/Nfc/src/com/android/nfc/NfcService.java"
-            line="3681"
+            line="3979"
             column="21"/>
     </issue>
 
@@ -1988,7 +2065,7 @@
         errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="packages/apps/Nfc/src/com/android/nfc/NfcService.java"
-            line="3775"
+            line="4073"
             column="21"/>
     </issue>
 

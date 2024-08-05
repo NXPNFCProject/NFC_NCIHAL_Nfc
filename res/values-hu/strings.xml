@@ -55,4 +55,7 @@
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"Koppintással további információkhoz juthat a probléma elhárításáról."</string>
     <string name="nfc_logging_alert_title" msgid="5300867034660942987">"A rendszer rögzíti az NFC-adatokat"</string>
     <string name="nfc_logging_alert_message" msgid="1550187184825467942">"Koppintson a rögzítés leállításához."</string>
+    <string name="title_package_enabling_nfc" msgid="5736481508428918024">"Engedélyezi a(z) <xliff:g id="PKG">%1$s</xliff:g> számára az NFC bekapcsolását?"</string>
+    <string name="enable_nfc_yes" msgid="694867197186062792">"Igen"</string>
+    <string name="enable_nfc_no" msgid="6549033065900624599">"Nem"</string>
 </resources>

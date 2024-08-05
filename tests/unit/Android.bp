@@ -27,13 +27,16 @@ android_test {
         "androidx.annotation_annotation",
         "androidx.appcompat_appcompat",
         "com.google.android.material_material",
+        "nfc-event-log-proto",
         "nfc_flags_lib",
         "flag-junit",
         "platform-test-annotations",
+        "testables",
     ],
 
     jni_libs: [
         // Required for ExtendedMockito
+        "libnfc_nci_jni",
         "libdexmakerjvmtiagent",
         "libstaticjvmtiagent",
     ],

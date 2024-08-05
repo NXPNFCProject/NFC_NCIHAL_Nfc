@@ -142,7 +142,7 @@ public class ForegroundUtilsTest {
         Assert.assertNull(callbacks);
     }
 
-    @Test
+   @Test
     public void testGetForegroundUids() {
         if (!mNfcSupported) return;
 

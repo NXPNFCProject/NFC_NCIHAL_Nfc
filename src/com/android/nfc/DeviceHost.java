@@ -36,6 +36,7 @@ package com.android.nfc;
 
 import android.annotation.Nullable;
 import android.nfc.NdefMessage;
+import android.nfc.cardemulation.PollingFrame;
 import android.os.Bundle;
 
 import java.io.FileDescriptor;
@@ -76,7 +77,7 @@ public interface DeviceHost {
 
         public void onHwErrorReported();
 
-        public void onPollingLoopDetected(List<Bundle> pollingFrames);
+        public void onPollingLoopDetected(List<PollingFrame> pollingFrames);
 
         public void onVendorSpecificEvent(int gid, int oid, byte[] payload);
         /**
@@ -311,6 +312,8 @@ public interface DeviceHost {
     * Sends Vendor NCI command
     */
     NfcVendorNciResponse sendRawVendorCmd(int mt, int gid, int oid, byte[] payload);
+
+    void enableVendorNciNotifications(boolean enabled);
 
     /* NXP extension are here */
     public boolean accessControlForCOSU (int mode);

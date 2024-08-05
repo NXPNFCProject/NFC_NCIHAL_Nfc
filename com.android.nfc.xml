@@ -32,5 +32,8 @@
         <permission name="android.permission.NFC_SET_CONTROLLER_ALWAYS_ON"/>
         <permission name="android.permission.OVERRIDE_WIFI_CONFIG"/>
         <permission name="android.permission.SHOW_CUSTOMIZED_RESOLVER"/>
+        <permission name="android.permission.DUMP"/>
+        <permission name="android.permission.QUERY_CLONED_APPS"/>
+        <permission name="android.permission.READ_PRIVILEGED_PHONE_STATE"/>
     </privapp-permissions>
 </permissions>

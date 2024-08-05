@@ -55,4 +55,7 @@
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"ແຕະເພື່ອສຶກສາວິທີແກ້ໄຂ."</string>
     <string name="nfc_logging_alert_title" msgid="5300867034660942987">"ກຳລັງບັນທຶກຂໍ້ມູນ NFC"</string>
     <string name="nfc_logging_alert_message" msgid="1550187184825467942">"ແຕະເພື່ອຢຸດການບັນທຶກ."</string>
+    <string name="title_package_enabling_nfc" msgid="5736481508428918024">"ອະນຸຍາດໃຫ້ <xliff:g id="PKG">%1$s</xliff:g> ເປີດການນຳໃຊ້ NFC ບໍ?"</string>
+    <string name="enable_nfc_yes" msgid="694867197186062792">"ແມ່ນ"</string>
+    <string name="enable_nfc_no" msgid="6549033065900624599">"ບໍ່"</string>
 </resources>

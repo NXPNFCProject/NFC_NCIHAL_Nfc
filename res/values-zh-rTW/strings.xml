@@ -55,4 +55,7 @@
     <string name="nfc_blocking_alert_message" msgid="7003156052570107490">"輕觸即可瞭解如何修正這個問題。"</string>
     <string name="nfc_logging_alert_title" msgid="5300867034660942987">"正在記錄 NFC 資料"</string>
     <string name="nfc_logging_alert_message" msgid="1550187184825467942">"輕觸即可停止記錄。"</string>
+    <string name="title_package_enabling_nfc" msgid="5736481508428918024">"要允許「<xliff:g id="PKG">%1$s</xliff:g>」啟用 NFC 嗎？"</string>
+    <string name="enable_nfc_yes" msgid="694867197186062792">"是"</string>
+    <string name="enable_nfc_no" msgid="6549033065900624599">"否"</string>
 </resources>

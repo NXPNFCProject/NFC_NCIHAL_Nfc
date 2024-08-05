@@ -18,6 +18,8 @@ package com.android.nfc.cardemulation;
 import android.os.SystemProperties;
 import android.util.Log;
 
+import androidx.annotation.VisibleForTesting;
+
 import com.android.nfc.NfcService;
 
 import java.util.Arrays;
@@ -42,12 +44,18 @@ public class RoutingOptionManager {
 
     boolean mIsRoutingTableOverrided = false;
 
-    private native int doGetDefaultRouteDestination();
-    private native int doGetDefaultIsoDepRouteDestination();
-    private native int doGetDefaultOffHostRouteDestination();
-    private native byte[] doGetOffHostUiccDestination();
-    private native byte[] doGetOffHostEseDestination();
-    private native int doGetAidMatchingMode();
+    @VisibleForTesting
+    native int doGetDefaultRouteDestination();
+    @VisibleForTesting
+    native int doGetDefaultIsoDepRouteDestination();
+    @VisibleForTesting
+    native int doGetDefaultOffHostRouteDestination();
+    @VisibleForTesting
+    native byte[] doGetOffHostUiccDestination();
+    @VisibleForTesting
+    native byte[] doGetOffHostEseDestination();
+    @VisibleForTesting
+    native int doGetAidMatchingMode();
 
     public static RoutingOptionManager getInstance() {
         return RoutingOptionManager.Singleton.INSTANCE;
@@ -57,7 +65,8 @@ public class RoutingOptionManager {
         private static final RoutingOptionManager INSTANCE = new RoutingOptionManager();
     }
 
-    private RoutingOptionManager() {
+    @VisibleForTesting
+    RoutingOptionManager() {
         mDefaultRoute = doGetDefaultRouteDestination();
         if (DBG)
             Log.d(TAG, "mDefaultRoute=0x" + Integer.toHexString(mDefaultRoute));

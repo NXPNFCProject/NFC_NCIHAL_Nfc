@@ -1,0 +1,11 @@
+<offhost-apdu-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/screenOnOnlyOffHostService"
+    android:requireDeviceScreenOn="true"
+    android:requireDeviceUnlock="true"
+    android:secureElementName="eSE">
+    <aid-group
+        android:category="other"
+        android:description="@string/screenOnOnlyOffHostService" >
+        <aid-filter android:name="A000000476416E64726F696443545340"/>
+    </aid-group>
+</offhost-apdu-service>

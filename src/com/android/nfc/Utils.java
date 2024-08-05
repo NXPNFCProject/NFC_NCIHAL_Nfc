@@ -16,23 +16,35 @@
 
 package com.android.nfc;
 
+import static android.Manifest.permission.BIND_NFC_SERVICE;
+import static android.Manifest.permission.NFC;
+
 import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.app.PendingIntent;
 import android.app.PendingIntentProto;
 import android.content.AuthorityEntryProto;
-import android.content.ComponentName;
-import android.content.ComponentNameProto;
+import android.content.Context;
+import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentFilterProto;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.PatternMatcher;
 import android.os.PatternMatcherProto;
+import android.os.UserHandle;
+import android.text.TextUtils;
+import android.util.Log;
 import android.util.proto.ProtoOutputStream;
 
-import java.util.Iterator;
+import androidx.annotation.VisibleForTesting;
+
+import java.util.Arrays;
 import java.util.Objects;
 
 public final class Utils {
+    private static final String TAG = "Utils";
     private Utils() {
     }
 
@@ -139,6 +151,40 @@ public final class Utils {
         // the target info.
         proto.write(PendingIntentProto.TARGET, pendingIntent.toString());
         proto.end(token);
+    }
+
+    @Nullable
+    @VisibleForTesting
+    public static String getPackageNameFromIntent(Intent intent) {
+        Uri uri = intent.getData();
+        if (!Objects.equals(uri.getScheme(), "package")) return null;
+        return uri.getSchemeSpecificPart();
+    }
+
+    public static boolean hasCeServicesWithValidPermissions(
+            Context context, Intent pkgChangeIntent, int userId) {
+        String pkgName = Utils.getPackageNameFromIntent(pkgChangeIntent);
+        if (pkgName == null) return true; // Cannot figure out pkg name, assume it's valid.
+        PackageInfo packageInfo = null;
+        try {
+            PackageManager pm =
+                    context.createPackageContextAsUser("android", 0, UserHandle.of(userId))
+                    .getPackageManager();
+            if (pm.checkPermission(NFC, pkgName) != PackageManager.PERMISSION_GRANTED) {
+                return false;
+            }
+            packageInfo = pm.getPackageInfo(pkgName,
+                    (PackageManager.GET_PERMISSIONS
+                            | PackageManager.GET_SERVICES
+                            | PackageManager.MATCH_DISABLED_COMPONENTS));
+            if (packageInfo == null) return false;
+            return Arrays.stream(packageInfo.services).map(serviceInfo->serviceInfo.permission)
+                    .filter(permission-> TextUtils.equals(permission, BIND_NFC_SERVICE ))
+                    .findFirst().isPresent();
+        } catch (PackageManager.NameNotFoundException | NullPointerException e) {
+            Log.e(TAG, "Could not create user package context" + packageInfo);
+            return false;
+        }
     }
 
     public static String maskSubstring(String original, int start) {
