@@ -1380,7 +1380,7 @@ static jboolean nfcManager_commitRouting(JNIEnv* e, jobject) {
   if (sIsDisabling || !sIsNfaEnabled) {
     return status;
   }
-  if (sRfEnabled) {
+  if (android::isDiscoveryStarted()) {
     /*Stop RF discovery to reconfigure*/
     startRfDiscovery(false);
   }
@@ -1389,7 +1389,7 @@ static jboolean nfcManager_commitRouting(JNIEnv* e, jobject) {
   status = RoutingManager::getInstance().commitRouting();
   NativeJniExtns::getInstance().notifyNfcEvent("checkIsodepRouting");
 
-  if (!sRfEnabled) {
+  if (!android::isDiscoveryStarted()) {
     /*Stop RF discovery to reconfigure*/
     startRfDiscovery(true);
   }
@@ -1566,7 +1566,11 @@ static jboolean nfcManager_setObserveMode(JNIEnv* e, jobject o,
     return true;
   }
   bool reenbleDiscovery = false;
+#if (NXP_EXTNS == TRUE)
+  if (android::isDiscoveryStarted()) {
+#else
   if (sRfEnabled) {
+#endif
     startRfDiscovery(false);
     reenbleDiscovery = true;
   }
