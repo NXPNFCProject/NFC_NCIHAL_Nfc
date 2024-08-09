@@ -3701,6 +3701,10 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
             if (DBG) Log.d(TAG, "Setting configs for Transit" );
             /*Check permissions*/
             NfcPermissions.enforceAdminPermissions(mContext);
+            if (!isNfcEnabled()) {
+                if (DBG) Log.d(TAG, "NFC is not enabled");
+                return TRANSIT_SETCONFIG_STAT_FAILED;
+            }
             /*Check if any NFC transactions are ongoing*/
             if(mDeviceHost.isNfccBusy())
             {
