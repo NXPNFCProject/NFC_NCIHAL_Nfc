@@ -1713,7 +1713,7 @@ static jboolean nfcManager_doInitialize(JNIEnv* e, jobject o) {
 #if (NXP_EXTNS == TRUE)
     mwVer=  NFA_GetMwVersion();
     LOG(ERROR) << StringPrintf(
-        "%s:  MW Version: NFC_AR_%02X_%05X_%02d.%02x.%02x_TC", __func__,
+        "%s:  MW Version: NFC_AR_%02X_%05X_%02d.%02x.%02x", __func__,
         mwVer.cust_id, mwVer.validation, mwVer.android_version,
         mwVer.major_version, mwVer.minor_version);
 
