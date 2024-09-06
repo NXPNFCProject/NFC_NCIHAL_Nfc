@@ -193,9 +193,9 @@ public class HostEmulationManager {
               Log.d(TAG, "re-enabling observe mode after transaction.");
               mEnableObserveModeAfterTransaction = false;
               mEnableObserveModeOnFieldOff = false;
-              NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
-              adapter.setObserveModeEnabled(true);
             }
+            NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+            adapter.setObserveModeEnabled(true);
         }
     };
 
@@ -266,13 +266,13 @@ public class HostEmulationManager {
     @FlaggedApi(android.nfc.Flags.FLAG_NFC_OBSERVE_MODE)
     public void updateForShouldDefaultToObserveMode(boolean enabled) {
         synchronized (mLock) {
-            if (!isHostCardEmulationActivated()) {
-                NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
-                adapter.setObserveModeEnabled(enabled);
-            } else {
+            if (isHostCardEmulationActivated()) {
                 mEnableObserveModeAfterTransaction = enabled;
+                return;
             }
         }
+        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+        adapter.setObserveModeEnabled(enabled);
     }
 
 
