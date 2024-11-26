@@ -9,8 +9,8 @@ android_test {
     platform_apis: true,
 
     libs: [
-        "android.test.runner",
-        "android.test.base",
+        "android.test.runner.stubs.system",
+        "android.test.base.stubs.system",
         "framework-nfc.impl",
         "flag-junit",
         "platform-test-annotations",

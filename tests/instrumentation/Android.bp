@@ -9,9 +9,9 @@ android_test {
     certificate: "platform",
 
     libs: [
-        "android.test.runner",
-        "android.test.base",
-        "android.test.mock",
+        "android.test.runner.stubs.system",
+        "android.test.base.stubs.system",
+        "android.test.mock.stubs.system",
         "framework-nfc.impl",
         "unsupportedappusage",
     ],
