@@ -38,6 +38,7 @@ import android.os.Parcelable;
 import android.os.RemoteException;
 import android.util.Log;
 
+import java.util.Objects;
 import java.util.Set;
 
 public class PeripheralHandoverService extends Service implements BluetoothPeripheralHandover.Callback {
@@ -78,6 +79,7 @@ public class PeripheralHandoverService extends Service implements BluetoothPerip
     Messenger mClient;
     boolean mBluetoothHeadsetConnected;
     boolean mBluetoothEnabledByNfc;
+    Bundle mPendingMsgData = null;
 
     class MessageHandler extends Handler {
         @Override
@@ -111,16 +113,6 @@ public class PeripheralHandoverService extends Service implements BluetoothPerip
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-
-        synchronized (sLock) {
-            if (mStartId != 0) {
-                mStartId = startId;
-                // already running
-                return START_STICKY;
-            }
-            mStartId = startId;
-        }
-
         if (intent == null) {
             if (DBG) Log.e(TAG, "Intent is null, can't do peripheral handover.");
             synchronized (sLock) {
@@ -128,6 +120,26 @@ public class PeripheralHandoverService extends Service implements BluetoothPerip
                 mStartId = 0;
             }
             return START_NOT_STICKY;
+        }
+
+        Bundle msgData = intent.getExtras();
+        BluetoothDevice device = msgData.getParcelable(EXTRA_PERIPHERAL_DEVICE);
+
+        synchronized (sLock) {
+            if (mStartId != 0) {
+                Log.d(TAG, "Ongoing handover to " + mDevice);
+                if (!Objects.equals(mDevice, device)) {
+                    Log.w(TAG, "Cancel ongoing handover");
+                    sendBroadcast(new Intent(ACTION_CANCEL_CONNECT));
+                    // Wait for the previous attempt to be fully cancelled. Store the new pairing
+                    // data to start the pairing after cancellation.
+                    mPendingMsgData = new Bundle(msgData);
+                }
+                mStartId = startId;
+                // already running
+                return START_STICKY;
+            }
+            mStartId = startId;
         }
 
         if (doPeripheralHandover(intent.getExtras())) {
@@ -154,6 +166,7 @@ public class PeripheralHandoverService extends Service implements BluetoothPerip
     }
 
     boolean doPeripheralHandover(Bundle msgData) {
+        Log.d(TAG, "doPeripheralHandover: " + msgData);
         if (mBluetoothPeripheralHandover != null) {
             Log.d(TAG, "Ignoring pairing request, existing handover in progress.");
             return true;
@@ -243,9 +256,15 @@ public class PeripheralHandoverService extends Service implements BluetoothPerip
         disableBluetoothIfNeeded();
         replyToClient(connected);
 
-        synchronized (sLock) {
-            stopSelf(mStartId);
-            mStartId = 0;
+        if (mPendingMsgData != null) {
+            Log.d(TAG, "Resume next handover after cancellation of previous handover");
+            doPeripheralHandover(mPendingMsgData);
+            mPendingMsgData = null;
+        } else {
+            synchronized (sLock) {
+                stopSelf(mStartId);
+                mStartId = 0;
+            }
         }
     }
 
