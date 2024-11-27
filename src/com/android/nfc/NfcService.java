@@ -3155,6 +3155,14 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
             NfcPermissions.enforceAdminPermissions(mContext);
             mNfcOemExtensionCallback = null;
         }
+        //@Override
+        public List<String> fetchActiveNfceeList() throws RemoteException {
+            List<String> list = new ArrayList<String>();
+            if (isNfcEnabled()) {
+                list = mDeviceHost.dofetchActiveNfceeList();
+            }
+            return list;
+        }
 
         @Override
         public void clearPreference() throws RemoteException {

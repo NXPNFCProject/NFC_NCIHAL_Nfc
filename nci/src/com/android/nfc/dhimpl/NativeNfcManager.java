@@ -61,6 +61,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HexFormat;
 import java.util.Iterator;
+import java.util.List;
 
 /** Native interface to the NFC Manager functions */
 public class NativeNfcManager implements DeviceHost {
@@ -518,6 +519,9 @@ public class NativeNfcManager implements DeviceHost {
 
     @Override
     public native int getMaxRoutingTableSize();
+
+    @Override
+    public native List<String> dofetchActiveNfceeList();
 
     private native NfcVendorNciResponse nativeSendRawVendorCmd(
             int mt, int gid, int oid, byte[] payload);

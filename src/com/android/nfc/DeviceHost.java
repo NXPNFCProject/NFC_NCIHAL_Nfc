@@ -314,6 +314,10 @@ public interface DeviceHost {
     NfcVendorNciResponse sendRawVendorCmd(int mt, int gid, int oid, byte[] payload);
 
     void enableVendorNciNotifications(boolean enabled);
+    /**
+     * Get the active NFCEE list
+     */
+    public List<String> dofetchActiveNfceeList();
 
     /* NXP extension are here */
     public boolean accessControlForCOSU (int mode);
