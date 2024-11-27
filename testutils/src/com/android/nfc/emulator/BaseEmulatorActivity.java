@@ -191,8 +191,8 @@ public abstract class BaseEmulatorActivity extends Activity {
         try {
             CommonTestUtils.waitUntil("Observe mode has not been set", 6,
                     () -> mAdapter.isObserveModeEnabled() == enabled);
-        } catch (InterruptedException ie) {
-            Log.w(TAG, "Observe mode not set to " + enabled + ". This may cause tests to fail");
+        } catch (Exception e) {
+            Log.e(TAG, "Observe mode not set to " + enabled + ". This may cause tests to fail", e);
         }
     }
 
