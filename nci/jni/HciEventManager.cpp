@@ -44,7 +44,7 @@
 
 const char* APP_NAME = "NfcNci";
 uint8_t HciEventManager::sEsePipe;
-uint8_t HciEventManager::sSimPipe;
+std::vector<uint8_t> HciEventManager::sSimPipeIds;
 #if(NXP_EXTNS == TRUE)
 uint8_t HciEventManager::sSim2Pipe;
 uint8_t HciEventManager::sESimPipe;
@@ -75,7 +75,13 @@ void HciEventManager::initialize(nfc_jni_native_data* native) {
   sESim2Pipe = NfcConfig::getUnsigned(NAME_OFF_HOST_ESIM2_PIPE_ID, 0x2F);
 #endif
   sEsePipe = NfcConfig::getUnsigned(NAME_OFF_HOST_ESE_PIPE_ID, 0x16);
-  sSimPipe = NfcConfig::getUnsigned(NAME_OFF_HOST_SIM_PIPE_ID, 0x0A);
+  // Backward compatibility or For vendor supporting only single sim pipe ID
+  if (!NfcConfig::hasKey(NAME_OFF_HOST_SIM_PIPE_IDS)) {
+    uint8_t simPipeId = NfcConfig::getUnsigned(NAME_OFF_HOST_SIM_PIPE_ID, 0x0A);
+    sSimPipeIds = {simPipeId};
+  } else {
+    sSimPipeIds = NfcConfig::getBytes(NAME_OFF_HOST_SIM_PIPE_IDS);
+  }
 }
 
 void HciEventManager::notifyTransactionListenersOfAid(std::vector<uint8_t> aid,
@@ -182,8 +188,6 @@ void HciEventManager::nfaHciCallback(tNFA_HCI_EVT event,
   std::string evtSrc;
   if (eventData->rcvd_evt.pipe == sEsePipe) {
     evtSrc = "eSE1";
-  } else if (eventData->rcvd_evt.pipe == sSimPipe) {
-    evtSrc = "SIM1";
 #if(NXP_EXTNS == TRUE)
   } else if (eventData->rcvd_evt.pipe == sSim2Pipe) {
     evtSrc = "SIM2";
@@ -195,6 +199,19 @@ void HciEventManager::nfaHciCallback(tNFA_HCI_EVT event,
   } else {
     LOG(WARNING) << "Incorrect Pipe Id";
     return;
+    bool isSimPipeId = false;
+    for (size_t i = 0; i < (size_t)sSimPipeIds.size(); i++) {
+      if (eventData->rcvd_evt.pipe == sSimPipeIds[i]) {
+        evtSrc = "SIM" + std::to_string(i + 1);
+        isSimPipeId = true;
+        break;
+      }
+    }
+
+    if (!isSimPipeId) {
+      LOG(WARNING) << "Incorrect Pipe Id";
+      return;
+    }
   }
 
   // Check the event and check if it contains the AID

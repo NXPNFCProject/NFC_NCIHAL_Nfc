@@ -47,7 +47,7 @@ class HciEventManager {
  private:
   nfc_jni_native_data* mNativeData;
   static uint8_t sEsePipe;
-  static uint8_t sSimPipe;
+  static std::vector<uint8_t> sSimPipeIds;
 #if(NXP_EXTNS == TRUE)
   static uint8_t sSim2Pipe;
   static uint8_t sESimPipe;
