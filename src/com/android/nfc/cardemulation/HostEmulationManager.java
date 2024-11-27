@@ -195,6 +195,10 @@ public class HostEmulationManager {
               mEnableObserveModeOnFieldOff = false;
             }
             NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+            if (adapter == null) {
+                Log.e(TAG, "adapter is null, returning");
+                return;
+            }
             adapter.setObserveModeEnabled(true);
         }
     };
