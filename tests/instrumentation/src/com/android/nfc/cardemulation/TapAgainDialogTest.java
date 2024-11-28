@@ -65,8 +65,10 @@ public class TapAgainDialogTest {
 
   @Test
   public void testOnClick() throws Exception {
-    ActivityScenario.launch(getStartIntent());
+    ActivityScenario<TapAgainDialog> scenario = ActivityScenario.launch(getStartIntent());
 
+    assertThat(scenario.getState()).isAtLeast(Lifecycle.State.CREATED);
+    scenario.moveToState(Lifecycle.State.RESUMED);
     onView(withId(R.id.tap_again_toolbar)).perform(click());
 
     onView(withId(ALERT_DIALOG_ID)).check(matches(isDisplayed()));

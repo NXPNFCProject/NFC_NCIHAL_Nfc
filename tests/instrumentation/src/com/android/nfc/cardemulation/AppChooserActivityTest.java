@@ -154,6 +154,7 @@ public class AppChooserActivityTest {
                                                     /* withServices = */ true));
 
     assertThat(scenario.getState()).isAtLeast(Lifecycle.State.CREATED);
+    scenario.moveToState(Lifecycle.State.RESUMED);
     String expectedText = context.getString(R.string.appchooser_description);
     onView(withId(R.id.appchooser_text)).check(matches(withText(expectedText)));
     scenario.onActivity(activity -> {
