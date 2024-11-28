@@ -667,6 +667,14 @@ static void nfaConnectionCallback(uint8_t connEvent,
         /*If its multiprotocol tag, deactivate tag with current selected
         protocol to sleep . Select tag with next supported protocol after
         deactivation event is received*/
+        if (((tNFA_INTF_TYPE)eventData->activated.activate_ntf.intf_param
+                 .type == NFA_INTERFACE_FRAME)) {
+          uint8_t RW_TAG_SLP_REQ[] = {0x50, 0x00};
+          SyncEvent waitSome;
+          SyncEventGuard g(waitSome);
+          NFA_SendRawFrame(RW_TAG_SLP_REQ, sizeof(RW_TAG_SLP_REQ), 0);
+          waitSome.wait(4);
+        }
         NFA_Deactivate(true);
       }
       break;
