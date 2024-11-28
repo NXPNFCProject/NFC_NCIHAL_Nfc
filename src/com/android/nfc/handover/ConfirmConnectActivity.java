@@ -20,6 +20,7 @@ import static android.view.WindowManager.LayoutParams.SYSTEM_FLAG_HIDE_NON_SYSTE
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -28,10 +29,12 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.android.nfc.R;
 
 public class ConfirmConnectActivity extends Activity {
+    static final String TAG = "ConfirmConnectActivity";
     BluetoothDevice mDevice;
     AlertDialog mAlert = null;
     @Override
@@ -74,8 +77,10 @@ public class ConfirmConnectActivity extends Activity {
         mAlert = builder.create();
         mAlert.show();
 
-        registerReceiver(mReceiver,
-                new IntentFilter(BluetoothPeripheralHandover.ACTION_TIMEOUT_CONNECT));
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(BluetoothPeripheralHandover.ACTION_TIMEOUT_CONNECT);
+        filter.addAction(BluetoothPeripheralHandover.ACTION_CANCEL_CONNECT);
+        registerReceiver(mReceiver, filter, Context.RECEIVER_EXPORTED);
     }
 
     @Override
@@ -96,6 +101,21 @@ public class ConfirmConnectActivity extends Activity {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (BluetoothPeripheralHandover.ACTION_TIMEOUT_CONNECT.equals(intent.getAction())) {
+                finish();
+            }
+            /*
+              if Bluetooth turned off from Notification Panel, finish this activity.
+              Also, sendBroadcast(ACTION_DENY_CONNECT) because otherwise when Bluetooth
+              is later turned On, headset seen as paired.
+            */
+            else if (BluetoothPeripheralHandover.ACTION_CANCEL_CONNECT
+                    .equals(intent.getAction())) {
+                Log.i(TAG, "Received ACTION_CANCEL_CONNECT action.");
+                Intent denyIntent =
+                        new Intent(BluetoothPeripheralHandover.ACTION_DENY_CONNECT);
+                denyIntent.putExtra(BluetoothDevice.EXTRA_DEVICE, mDevice);
+                denyIntent.setPackage("com.android.nfc");
+                context.sendBroadcast(denyIntent);
                 finish();
             }
         }

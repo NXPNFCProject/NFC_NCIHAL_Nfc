@@ -16,6 +16,8 @@
 
 package com.android.nfc.handover;
 
+import static com.android.nfc.handover.BluetoothPeripheralHandover.ACTION_CANCEL_CONNECT;
+
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothClass;
@@ -204,7 +206,9 @@ public class PeripheralHandoverService extends Service implements BluetoothPerip
     private void handleBluetoothStateChanged(Intent intent) {
         int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE,
                 BluetoothAdapter.ERROR);
-        if (state == BluetoothAdapter.STATE_ON) {
+        if (state == BluetoothAdapter.STATE_OFF) {
+            sendBroadcast(new Intent(ACTION_CANCEL_CONNECT));
+        } else if (state == BluetoothAdapter.STATE_ON) {
             // If there is a pending device pairing, start it
             if (mBluetoothPeripheralHandover != null &&
                     !mBluetoothPeripheralHandover.hasStarted()) {
