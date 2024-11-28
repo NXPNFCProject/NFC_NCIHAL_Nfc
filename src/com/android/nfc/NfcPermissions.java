@@ -5,14 +5,12 @@ import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import android.annotation.Nullable;
 import android.app.ActivityManager;
 import android.app.admin.DevicePolicyManager;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Binder;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.util.Log;
-import android.util.Pair;
 
 import java.util.List;
 
@@ -119,30 +117,6 @@ public class NfcPermissions {
         return devicePolicyManager;
     }
 
-    @Nullable
-    private Pair<UserHandle, ComponentName> getDeviceOwner() {
-        DevicePolicyManager devicePolicyManager =
-                retrieveDevicePolicyManagerFromContext(mContext);
-        if (devicePolicyManager == null) return null;
-        long ident = Binder.clearCallingIdentity();
-        UserHandle deviceOwnerUser = null;
-        ComponentName deviceOwnerComponent = null;
-        try {
-            deviceOwnerUser = devicePolicyManager.getDeviceOwnerUser();
-            deviceOwnerComponent = devicePolicyManager.getDeviceOwnerComponentOnAnyUser();
-        } finally {
-            Binder.restoreCallingIdentity(ident);
-        }
-        if (deviceOwnerUser == null || deviceOwnerComponent == null) return null;
-
-        if (deviceOwnerComponent.getPackageName() == null) {
-            // shouldn't happen
-            Log.wtf(TAG, "no package name on device owner component: " + deviceOwnerComponent);
-            return null;
-        }
-        return new Pair<>(deviceOwnerUser, deviceOwnerComponent);
-    }
-
     /**
      * Returns {@code true} if the calling {@code uid} and {@code packageName} is the device owner.
      */
@@ -153,14 +127,10 @@ public class NfcPermissions {
             Log.e(TAG, "isDeviceOwner: packageName is null, returning false");
             return false;
         }
-        Pair<UserHandle, ComponentName> deviceOwner = getDeviceOwner();
-        Log.v(TAG, "deviceOwner:" + deviceOwner);
-
-        // no device owner
-        if (deviceOwner == null) return false;
-
-        return deviceOwner.first.equals(UserHandle.getUserHandleForUid(uid))
-                && deviceOwner.second.getPackageName().equals(packageName);
+        DevicePolicyManager devicePolicyManager =
+                retrieveDevicePolicyManagerFromUserContext(uid);
+        if (devicePolicyManager == null) return false;
+        return devicePolicyManager.isDeviceOwnerApp(packageName);
     }
 
     @Nullable
