@@ -3228,13 +3228,10 @@ static jobject nfcManager_nativeSendRawVendorCmd(JNIEnv* env, jobject o,
   std::vector<uint8_t> command;
   command.push_back((uint8_t)((mt << NCI_MT_SHIFT) | gid));
   command.push_back((uint8_t)oid);
+  command.push_back((uint8_t)payloaBytes.size());
   if (payloaBytes.size() > 0) {
-    command.push_back((uint8_t)payloaBytes.size());
     command.insert(command.end(), &payloaBytes[0],
                    &payloaBytes[payloaBytes.size()]);
-  } else {
-    return env->NewObject(cls.get(), responseConstructor, mStatus, resGid,
-                          resOid, resPayload);
   }
 
   SyncEventGuard guard(gSendRawVsCmdEvent);
