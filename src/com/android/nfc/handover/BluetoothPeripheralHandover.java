@@ -80,7 +80,7 @@ public class BluetoothPeripheralHandover implements BluetoothProfile.ServiceList
     static final String ACTION_DENY_CONNECT = "com.android.nfc.handover.action.DENY_CONNECT";
     static final String ACTION_TIMEOUT_CONNECT = "com.android.nfc.handover.action.TIMEOUT_CONNECT";
 
-    static final int TIMEOUT_MS = 20000;
+    static final int TIMEOUT_MS = 25000;
     static final int RETRY_PAIRING_WAIT_TIME_MS = 2000;
     static final int RETRY_CONNECT_WAIT_TIME_MS = 5000;
 
