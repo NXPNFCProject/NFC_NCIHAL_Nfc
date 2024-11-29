@@ -311,8 +311,8 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
                         UserHandle.getUserHandleForUid(mForegroundUid).getIdentifier();
             }
             if (preferredService != null && (!preferredService.equals(mForegroundCurrent)
-                      || preferredServiceUserId
-                      != UserHandle.getUserHandleForUid(mForegroundCurrentUid).getIdentifier())) {
+                    || preferredServiceUserId
+                    != UserHandle.getUserHandleForUid(mForegroundCurrentUid).getIdentifier())) {
                 mForegroundCurrent = preferredService;
                 mForegroundCurrentUid = mForegroundUid;
                 changed = true;
@@ -521,7 +521,7 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
                 return true;
             }
             return (mForegroundCurrent != null
-                && packageName.equals(mForegroundCurrent.getPackageName()));
+                    && packageName.equals(mForegroundCurrent.getPackageName()));
         }
     }
 
