@@ -1706,6 +1706,8 @@ static jboolean nfcManager_doInitialize(JNIEnv* e, jobject o) {
   tNFA_STATUS stat = NFA_STATUS_OK;
   sIsRecovering = false;
 
+  struct nfc_jni_native_data* nat = getNative(e, o);
+
   PowerSwitch& powerSwitch = PowerSwitch::getInstance();
 
   if (sIsNfaEnabled) {
@@ -1786,18 +1788,6 @@ static jboolean nfcManager_doInitialize(JNIEnv* e, jobject o) {
         /////////////////////////////////////////////////////////////////////////////////
         // Add extra configuration here (work-arounds, etc.)
 
-        if (gIsDtaEnabled == true) {
-          uint8_t configData = 0;
-          configData = 0x01; /* Poll NFC-DEP : Highest Available Bit Rates */
-          NFA_SetConfig(NCI_PARAM_ID_BITR_NFC_DEP, sizeof(uint8_t),
-                        &configData);
-          configData = 0x0B; /* Listen NFC-DEP : Waiting Time */
-          NFA_SetConfig(NFC_PMID_WT, sizeof(uint8_t), &configData);
-          configData = 0x0F; /* Specific Parameters for NFC-DEP RF Interface */
-          NFA_SetConfig(NCI_PARAM_ID_NFC_DEP_OP, sizeof(uint8_t), &configData);
-        }
-
-        struct nfc_jni_native_data* nat = getNative(e, o);
         if (nat) {
           nat->tech_mask =
               NfcConfig::getUnsigned(NAME_POLLING_TECH_MASK, DEFAULT_TECH_MASK);

@@ -1883,11 +1883,6 @@ bool RoutingManager::setRoutingEntry(int type, int value, int route, int power)
                 protocol_mask = NFA_PROTOCOL_MASK_ISO_DEP;
                 value &= ~(0x01);
             }
-            else if( value & 0x02)
-            {
-                protocol_mask = NFA_PROTOCOL_MASK_NFC_DEP;
-                value &= ~(0x02);
-            }
             else if( value & 0x04)
             {
                 protocol_mask = NFA_PROTOCOL_MASK_T3T;
