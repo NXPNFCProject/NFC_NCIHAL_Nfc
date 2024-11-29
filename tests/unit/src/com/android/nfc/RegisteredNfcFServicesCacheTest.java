@@ -74,7 +74,6 @@ import java.util.List;
 public class RegisteredNfcFServicesCacheTest {
 
     private static String TAG = RegisteredNfcFServicesCacheTest.class.getSimpleName();
-    private boolean mNfcSupported;
     private MockitoSession mStaticMockSession;
     private RegisteredNfcFServicesCache mNfcFServicesCache;
     private int mUserId = -1;
@@ -82,21 +81,12 @@ public class RegisteredNfcFServicesCacheTest {
 
     @Before
     public void setUp() throws Exception {
-
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         mStaticMockSession = ExtendedMockito.mockitoSession()
                 .mockStatic(Xml.class)
                 .mockStatic(NfcStatsLog.class)
                 .strictness(Strictness.LENIENT)
                 .startMocking();
-
-        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        PackageManager pm = context.getPackageManager();
-        if (!pm.hasSystemFeature(PackageManager.FEATURE_NFC_ANY)) {
-            mNfcSupported = false;
-            return;
-        }
-        mNfcSupported = true;
-
         Context mockContext = new ContextWrapper(context) {
             public Intent registerReceiverForAllUsers(@Nullable BroadcastReceiver receiver,
                     @NonNull IntentFilter filter, @Nullable String broadcastPermission,
@@ -183,8 +173,6 @@ public class RegisteredNfcFServicesCacheTest {
 
     @Test
     public void testOnHostEmulationActivated() {
-        if (!mNfcSupported) return;
-
         boolean isActive = mNfcFServicesCache.isActivated();
         Assert.assertFalse(isActive);
         mNfcFServicesCache.onHostEmulationActivated();
@@ -194,8 +182,6 @@ public class RegisteredNfcFServicesCacheTest {
 
     @Test
     public void testOnHostEmulationDeactivated() {
-        if (!mNfcSupported) return;
-
         mNfcFServicesCache.onHostEmulationActivated();
         boolean isActive = mNfcFServicesCache.isActivated();
         Assert.assertTrue(isActive);
@@ -206,8 +192,6 @@ public class RegisteredNfcFServicesCacheTest {
 
     @Test
     public void testOnNfcDisabled() {
-        if (!mNfcSupported) return;
-
         mNfcFServicesCache.onHostEmulationActivated();
         boolean isActive = mNfcFServicesCache.isActivated();
         Assert.assertTrue(isActive);
@@ -218,8 +202,6 @@ public class RegisteredNfcFServicesCacheTest {
 
     @Test
     public void testInvalidateCache() {
-        if (!mNfcSupported) return;
-
         Assert.assertEquals(-1, mUserId);
         mNfcFServicesCache.invalidateCache(1);
         List<NfcFServiceInfo> services = mNfcFServicesCache.getServices(1);
@@ -235,8 +217,6 @@ public class RegisteredNfcFServicesCacheTest {
 
     @Test
     public void testGetService() {
-        if (!mNfcSupported) return;
-
         mNfcFServicesCache.invalidateCache(1);
         List<NfcFServiceInfo> services = mNfcFServicesCache.getServices(1);
         Assert.assertNotNull(services);
@@ -252,8 +232,6 @@ public class RegisteredNfcFServicesCacheTest {
 
     @Test
     public void testGetNfcid2ForService() {
-        if (!mNfcSupported) return;
-
         mNfcFServicesCache.invalidateCache(1);
         List<NfcFServiceInfo> services = mNfcFServicesCache.getServices(1);
         Assert.assertNotNull(services);
@@ -269,8 +247,6 @@ public class RegisteredNfcFServicesCacheTest {
 
     @Test
     public void testSetNfcid2ForService() {
-        if (!mNfcSupported) return;
-
         mNfcFServicesCache.invalidateCache(1);
         List<NfcFServiceInfo> services = mNfcFServicesCache.getServices(1);
         Assert.assertNotNull(services);
@@ -287,8 +263,6 @@ public class RegisteredNfcFServicesCacheTest {
 
     @Test
     public void testRemoveSystemCodeForService() {
-        if (!mNfcSupported) return;
-
         mNfcFServicesCache.invalidateCache(1);
         List<NfcFServiceInfo> services = mNfcFServicesCache.getServices(1);
         Assert.assertNotNull(services);
@@ -305,8 +279,6 @@ public class RegisteredNfcFServicesCacheTest {
 
     @Test
     public void  testHasService() {
-        if (!mNfcSupported) return;
-
         mNfcFServicesCache.invalidateCache(1);
         List<NfcFServiceInfo> services = mNfcFServicesCache.getServices(1);
         Assert.assertNotNull(services);

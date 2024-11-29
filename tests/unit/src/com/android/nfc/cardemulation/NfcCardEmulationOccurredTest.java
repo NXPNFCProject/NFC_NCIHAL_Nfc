@@ -77,8 +77,6 @@ import org.mockito.quality.Strictness;
 public final class NfcCardEmulationOccurredTest {
 
     private static final String TAG = NfcCardEmulationOccurredTest.class.getSimpleName();
-    private boolean mNfcSupported;
-
     private MockitoSession mStaticMockSession;
     private HostEmulationManager mHostEmulation;
     private RegisteredAidCache mockAidCache;
@@ -93,21 +91,13 @@ public final class NfcCardEmulationOccurredTest {
 
     @Before
     public void setUp() {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         mStaticMockSession = ExtendedMockito.mockitoSession()
                 .mockStatic(NfcStatsLog.class)
                 .mockStatic(Flags.class)
                 .mockStatic(NfcService.class)
                 .strictness(Strictness.LENIENT)
                 .startMocking();
-
-        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        packageManager = context.getPackageManager();
-        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_NFC_HOST_CARD_EMULATION)) {
-            mNfcSupported = false;
-            return;
-        }
-        mNfcSupported = true;
-
         initMockContext(context);
 
         mockAidCache = Mockito.mock(RegisteredAidCache.class);
@@ -170,8 +160,6 @@ public final class NfcCardEmulationOccurredTest {
     @RequiresFlagsDisabled(Flags.FLAG_STATSD_CE_EVENTS_FLAG)
     @Test
     public void testHCEOther() {
-        if (!mNfcSupported) return;
-
         byte[] aidBytes = new byte[] {
                 0x00, (byte)0xA4, 0x04, 0x00,  // command
                 0x08,  // data length
@@ -189,8 +177,6 @@ public final class NfcCardEmulationOccurredTest {
 
     @Test
     public void testOnHostEmulationActivated() {
-        if (!mNfcSupported) return;
-
         mHostEmulation.onHostEmulationActivated();
         int value = mHostEmulation.getState();
         Assert.assertEquals(value, STATE_W4_SELECT);
@@ -198,8 +184,6 @@ public final class NfcCardEmulationOccurredTest {
 
     @Test
     public void testOnPollingLoopDetected() {
-        if (!mNfcSupported) return;
-
         PollingFrame pollingFrame = mock(PollingFrame.class);
         ArrayList<PollingFrame> pollingFrames = new ArrayList<PollingFrame>();
         pollingFrames.add(pollingFrame);
@@ -214,8 +198,6 @@ public final class NfcCardEmulationOccurredTest {
 
     @Test
     public void testOnPollingLoopDetectedServiceBound() {
-        if (!mNfcSupported) return;
-
         PollingFrame pollingLoopTypeOnFrame = mock(PollingFrame.class);
         ArrayList<PollingFrame> pollingLoopTypeOnFrames = new ArrayList<PollingFrame>();
         pollingLoopTypeOnFrames.add(pollingLoopTypeOnFrame);
@@ -244,8 +226,6 @@ public final class NfcCardEmulationOccurredTest {
 
     @Test
     public void testOnPollingLoopDetectedSTATE_XFER() {
-        if (!mNfcSupported) return;
-
         ComponentName componentName = mock(ComponentName.class);
         when(componentName.getPackageName()).thenReturn("com.android.nfc");
         IBinder iBinder = new Binder();
@@ -268,8 +248,6 @@ public final class NfcCardEmulationOccurredTest {
 
     @Test
     public void testOnOffHostAidSelected() {
-        if (!mNfcSupported) return;
-
         mHostEmulation.onOffHostAidSelected();
         int state = mHostEmulation.getState();
         assertEquals(state, STATE_W4_SELECT);
@@ -277,8 +255,6 @@ public final class NfcCardEmulationOccurredTest {
 
     @Test
     public void testOnPreferredPaymentServiceChanged() {
-        if (!mNfcSupported) return;
-
         ComponentName componentName = mock(ComponentName.class);
         when(componentName.getPackageName()).thenReturn("com.android.nfc");
         int userId = 0;
@@ -291,8 +267,6 @@ public final class NfcCardEmulationOccurredTest {
 
     @Test
     public void testOnPreferredForegroundServiceChanged() {
-        if (!mNfcSupported) return;
-
         ComponentName componentName = mock(ComponentName.class);
         when(componentName.getPackageName()).thenReturn("com.android.nfc");
         int userId = 0;

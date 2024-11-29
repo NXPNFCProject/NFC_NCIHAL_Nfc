@@ -59,7 +59,6 @@ import java.util.List;
 public class DtaServiceConnectorTest {
 
     private static final String TAG = DtaServiceConnectorTest.class.getSimpleName();
-    private boolean mNfcSupported;
     private MockitoSession mStaticMockSession;
     private Context mockContext;
     private DtaServiceConnector mDtaServiceConnector;
@@ -70,15 +69,7 @@ public class DtaServiceConnectorTest {
         mStaticMockSession = ExtendedMockito.mockitoSession()
                 .strictness(Strictness.LENIENT)
                 .startMocking();
-
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        PackageManager pm = context.getPackageManager();
-        if (!pm.hasSystemFeature(PackageManager.FEATURE_NFC_ANY)) {
-            mNfcSupported = false;
-            return;
-        }
-        mNfcSupported = true;
-
         Resources mockResources = Mockito.mock(Resources.class);
         when(mockResources.getBoolean(eq(R.bool.tag_intent_app_pref_supported)))
                 .thenReturn(false);
@@ -129,8 +120,6 @@ public class DtaServiceConnectorTest {
 
     @Test
     public void testCreateExplicitFromImplicitIntent() {
-        if (!mNfcSupported) return;
-
         Intent intent = DtaServiceConnector.createExplicitFromImplicitIntent(mockContext,
                 implicitIntent);
         Assert.assertNotNull(intent);

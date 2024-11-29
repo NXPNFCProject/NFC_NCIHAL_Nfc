@@ -36,7 +36,6 @@ import com.android.dx.mockito.inline.extended.ExtendedMockito;
 public class NfcDiscoveryParametersTest {
 
     private static final String TAG = NfcDiscoveryParametersTest.class.getSimpleName();
-    private boolean mNfcSupported;
     private MockitoSession mStaticMockSession;
 
     @Before
@@ -44,14 +43,6 @@ public class NfcDiscoveryParametersTest {
         mStaticMockSession = ExtendedMockito.mockitoSession()
                 .strictness(Strictness.LENIENT)
                 .startMocking();
-
-        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        PackageManager pm = context.getPackageManager();
-        if (!pm.hasSystemFeature(PackageManager.FEATURE_NFC_ANY)) {
-            mNfcSupported = false;
-            return;
-        }
-        mNfcSupported = true;
     }
 
     @After
@@ -72,8 +63,6 @@ public class NfcDiscoveryParametersTest {
 
     @Test
     public void testGetTechMask() {
-        if (!mNfcSupported) return;
-
         NfcDiscoveryParameters nfcDiscoveryParameters = computeDiscoveryParameters();
         int techMask = nfcDiscoveryParameters.getTechMask();
         Assert.assertEquals(1, techMask);
@@ -81,8 +70,6 @@ public class NfcDiscoveryParametersTest {
 
     @Test
     public void testDiscoveryParameters() {
-        if (!mNfcSupported) return;
-
         NfcDiscoveryParameters.Builder paramsBuilder = NfcDiscoveryParameters.newBuilder();
         NfcDiscoveryParameters nfcDiscoveryParameters = paramsBuilder.build();
         boolean shouldEnableDiscovery = nfcDiscoveryParameters.shouldEnableDiscovery();

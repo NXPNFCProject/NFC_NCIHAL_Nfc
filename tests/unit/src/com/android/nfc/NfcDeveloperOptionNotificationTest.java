@@ -62,7 +62,6 @@ import androidx.test.platform.app.InstrumentationRegistry;
 public class NfcDeveloperOptionNotificationTest {
 
     private static final String TAG = NfcDeveloperOptionNotificationTest.class.getSimpleName();
-    private boolean mNfcSupported;
     private MockitoSession mStaticMockSession;
     private Context mockContext;
     private NfcDeveloperOptionNotification mNfcDevOptionNoti;
@@ -73,20 +72,12 @@ public class NfcDeveloperOptionNotificationTest {
         mStaticMockSession = ExtendedMockito.mockitoSession()
                 .strictness(Strictness.LENIENT)
                 .startMocking();
-
-        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        PackageManager pm = context.getPackageManager();
-        if (!pm.hasSystemFeature(PackageManager.FEATURE_NFC_ANY)) {
-            mNfcSupported = false;
-            return;
-        }
-        mNfcSupported = true;
-
         mockNotificationManager = Mockito.mock(NotificationManager.class);
         Resources mockResources = Mockito.mock(Resources.class);
         when(mockResources.getBoolean(eq(R.bool.tag_intent_app_pref_supported)))
                 .thenReturn(false);
 
+	Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         mockContext = new ContextWrapper(context) {
             @Override
             public Object getSystemService(String name) {
@@ -124,9 +115,6 @@ public class NfcDeveloperOptionNotificationTest {
 
     @Test
     public void testStartNotification() {
-        if (!mNfcSupported) return;
-
-
         mNfcDevOptionNoti.startNotification();
         verify(mockNotificationManager).createNotificationChannel(any());
     }

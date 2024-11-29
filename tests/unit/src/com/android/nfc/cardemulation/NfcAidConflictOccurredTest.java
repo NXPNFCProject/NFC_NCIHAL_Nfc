@@ -57,8 +57,6 @@ import org.mockito.MockitoSession;
 public final class NfcAidConflictOccurredTest {
 
     private static final String TAG = NfcAidConflictOccurredTest.class.getSimpleName();
-    private boolean mNfcSupported;
-
     private MockitoSession mStaticMockSession;
     private HostEmulationManager mHostEmulation;
     @Rule
@@ -67,18 +65,10 @@ public final class NfcAidConflictOccurredTest {
 
     @Before
     public void setUp() {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         mStaticMockSession = ExtendedMockito.mockitoSession()
                 .mockStatic(NfcStatsLog.class)
                 .startMocking();
-
-        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        PackageManager pm = context.getPackageManager();
-        if (!pm.hasSystemFeature(PackageManager.FEATURE_NFC_HOST_CARD_EMULATION)) {
-            mNfcSupported = false;
-            return;
-        }
-        mNfcSupported = true;
-
         RegisteredAidCache mockAidCache = Mockito.mock(RegisteredAidCache.class);
         ApduServiceInfo apduServiceInfo = Mockito.mock(ApduServiceInfo.class);
         AidResolveInfo aidResolveInfo = mockAidCache.new AidResolveInfo();
@@ -114,8 +104,6 @@ public final class NfcAidConflictOccurredTest {
 
     @Test
     public void testHCEOther() {
-        if (!mNfcSupported) return;
-
         byte[] aidBytes = new byte[] {
             0x00, (byte)0xA4, 0x04, 0x00,  // command
             0x08,  // data length
@@ -132,8 +120,6 @@ public final class NfcAidConflictOccurredTest {
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_TEST_FLAG)
     public void testHCEOtherWithTestFlagEnabled() {
-        if (!mNfcSupported) return;
-
         byte[] aidBytes = new byte[] {
                 0x00, (byte)0xA4, 0x04, 0x00,  // command
                 0x08,  // data length

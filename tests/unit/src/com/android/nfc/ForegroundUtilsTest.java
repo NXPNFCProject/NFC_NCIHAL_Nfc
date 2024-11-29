@@ -43,7 +43,6 @@ import java.util.List;
 @RunWith(AndroidJUnit4.class)
 public class ForegroundUtilsTest {
     private static final String TAG = ForegroundUtilsTest.class.getSimpleName();
-    private boolean mNfcSupported;
     private MockitoSession mStaticMockSession;
     private ForegroundUtils mForegroundUtils;
     private ActivityManager mActivityManager;
@@ -53,15 +52,6 @@ public class ForegroundUtilsTest {
         mStaticMockSession = ExtendedMockito.mockitoSession()
                 .strictness(Strictness.LENIENT)
                 .startMocking();
-
-        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        PackageManager pm = context.getPackageManager();
-        if (!pm.hasSystemFeature(PackageManager.FEATURE_NFC_ANY)) {
-            mNfcSupported = false;
-            return;
-        }
-        mNfcSupported = true;
-
         mActivityManager = mock(ActivityManager.class);
 
         InstrumentationRegistry.getInstrumentation().runOnMainSync(
@@ -76,8 +66,6 @@ public class ForegroundUtilsTest {
 
     @Test
     public void testRegisterUidToBackgroundCallback() {
-        if (!mNfcSupported) return;
-
         ForegroundUtils.Callback callback = uid -> {
             Log.d(TAG, "testRegisterUidToBackgroundCallback callback received");
         };
@@ -89,8 +77,6 @@ public class ForegroundUtilsTest {
 
     @Test
     public void testIsInForeground() {
-        if (!mNfcSupported) return;
-
         when(mActivityManager.getUidImportance(0)).thenReturn(100);
         when(mActivityManager.getUidImportance(10)).thenReturn(1);
         boolean isInForegroundTrue = mForegroundUtils.isInForeground(0);
@@ -101,8 +87,6 @@ public class ForegroundUtilsTest {
 
     @Test
     public void testOnUidImportance() {
-        if (!mNfcSupported) return;
-
         mForegroundUtils.clearForegroundlist();
         mForegroundUtils.onUidImportance(0,
                 ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND);
@@ -118,8 +102,6 @@ public class ForegroundUtilsTest {
 
     @Test
     public void testOnUidImportanceBackground() {
-        if (!mNfcSupported) return;
-
         mForegroundUtils.onUidImportance(0,
                 ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND);
         List<Integer> uids = mForegroundUtils.getForegroundUids();
@@ -144,8 +126,6 @@ public class ForegroundUtilsTest {
 
    @Test
     public void testGetForegroundUids() {
-        if (!mNfcSupported) return;
-
         mForegroundUtils.onUidImportance(0,
                 ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND);
         mForegroundUtils.onUidImportance(1,

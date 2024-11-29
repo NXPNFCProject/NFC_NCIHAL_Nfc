@@ -53,7 +53,6 @@ import org.mockito.quality.Strictness;
 public class NfcBlockedNotificationTest {
 
     private static final String TAG = NfcBlockedNotificationTest.class.getSimpleName();
-    private boolean mNfcSupported;
     private MockitoSession mStaticMockSession;
     private Context mockContext;
     private NfcBlockedNotification mBlockedNotification;
@@ -64,20 +63,12 @@ public class NfcBlockedNotificationTest {
         mStaticMockSession = ExtendedMockito.mockitoSession()
                 .strictness(Strictness.LENIENT)
                 .startMocking();
-
-        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        PackageManager pm = context.getPackageManager();
-        if (!pm.hasSystemFeature(PackageManager.FEATURE_NFC_ANY)) {
-            mNfcSupported = false;
-            return;
-        }
-        mNfcSupported = true;
-
         mockNotificationManager = Mockito.mock(NotificationManager.class);
         Resources mockResources = Mockito.mock(Resources.class);
         when(mockResources.getBoolean(eq(R.bool.tag_intent_app_pref_supported)))
                 .thenReturn(false);
 
+	Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         mockContext = new ContextWrapper(context) {
             @Override
             public Object getSystemService(String name) {
@@ -115,9 +106,6 @@ public class NfcBlockedNotificationTest {
 
     @Test
     public void testStartNotification() {
-        if (!mNfcSupported) return;
-
-
         mBlockedNotification.startNotification();
         verify(mockNotificationManager).createNotificationChannel(any());
     }

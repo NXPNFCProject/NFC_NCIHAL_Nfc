@@ -66,7 +66,6 @@ import java.nio.ByteBuffer;
 public class NfcWifiProtectedSetupTest extends TestCase {
 
     private static final String TAG = NfcWifiProtectedSetupTest.class.getSimpleName();
-    private boolean mNfcSupported;
     private MockitoSession mStaticMockSession;
     private Context mockContext;
     public static final byte[] CREDENTIAL = {0x10, 0x0e};
@@ -88,15 +87,7 @@ public class NfcWifiProtectedSetupTest extends TestCase {
                 .mockStatic(Ndef.class)
                 .strictness(Strictness.LENIENT)
                 .startMocking();
-
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        PackageManager pm = context.getPackageManager();
-        if (!pm.hasSystemFeature(PackageManager.FEATURE_NFC_ANY)) {
-            mNfcSupported = false;
-            return;
-        }
-        mNfcSupported = true;
-
         PowerManager mockPowerManager = Mockito.mock(PowerManager.class);
         when(mockPowerManager.isInteractive()).thenReturn(false);
         Resources mockResources = Mockito.mock(Resources.class);
@@ -136,8 +127,6 @@ public class NfcWifiProtectedSetupTest extends TestCase {
 
     @Test
     public void testTryNfcWifiSetupFailed() {
-        if (!mNfcSupported) return;
-
         Ndef ndef = mock(Ndef.class);
         NdefMessage ndefMessage = mock(NdefMessage.class);
 

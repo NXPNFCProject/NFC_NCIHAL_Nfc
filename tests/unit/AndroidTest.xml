@@ -31,4 +31,8 @@
         <option name="hidden-api-checks" value="false"/>
         <option name="test-filter-dir" value="/data/data/com.android.nfc.tests.unit" />
     </test>
+    <object type="module_controller"
+            class="com.android.tradefed.testtype.suite.module.DeviceFeatureModuleController">
+        <option name="required-feature" value="android.hardware.nfc.any" />
+    </object>
 </configuration>

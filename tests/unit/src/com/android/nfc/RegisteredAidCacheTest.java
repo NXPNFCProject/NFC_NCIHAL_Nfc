@@ -65,7 +65,6 @@ import com.android.nfc.cardemulation.WalletRoleObserver;
 public class RegisteredAidCacheTest {
 
     private static final String TAG = RegisteredAidCacheTest.class.getSimpleName();
-    private boolean mNfcSupported;
     private MockitoSession mStaticMockSession;
     private RegisteredAidCache mRegisteredAidCache;
     private Context mockContext;
@@ -80,13 +79,6 @@ public class RegisteredAidCacheTest {
                 .startMocking();
 
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        PackageManager pm = context.getPackageManager();
-        if (!pm.hasSystemFeature(PackageManager.FEATURE_NFC_ANY)) {
-            mNfcSupported = false;
-            return;
-        }
-        mNfcSupported = true;
-
         mockContext = new ContextWrapper(context) {
 
         };
@@ -107,8 +99,6 @@ public class RegisteredAidCacheTest {
 
     @Test
     public void testOnPreferredForegroundServiceChanged() {
-        if (!mNfcSupported) return;
-
         ComponentName componentName = mRegisteredAidCache.getPreferredService().second;
         Assert.assertNull(componentName);
 

@@ -45,7 +45,6 @@ import com.android.dx.mockito.inline.extended.ExtendedMockito;
 public class DeviceConfigFacadeTest {
 
     private static final String TAG = DeviceConfigFacadeTest.class.getSimpleName();
-    private boolean mNfcSupported;
     private MockitoSession mStaticMockSession;
     private DeviceConfigFacade mDeviceConfigFacade;
     private DeviceConfigFacade mDeviceConfigFacadeFalse;
@@ -55,14 +54,7 @@ public class DeviceConfigFacadeTest {
         mStaticMockSession = ExtendedMockito.mockitoSession()
                 .strictness(Strictness.LENIENT)
                 .startMocking();
-
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        PackageManager pm = context.getPackageManager();
-        if (!pm.hasSystemFeature(PackageManager.FEATURE_NFC_ANY)) {
-            mNfcSupported = false;
-            return;
-        }
-        mNfcSupported = true;
         Handler handler = mock(Handler.class);
         InstrumentationRegistry.getInstrumentation().runOnMainSync(
                 () -> mDeviceConfigFacade = new DeviceConfigFacade(getMockedContext(
@@ -97,8 +89,6 @@ public class DeviceConfigFacadeTest {
 
     @Test
     public void testIsAntennaBlockedAlertEnabled() {
-        if (!mNfcSupported) return;
-
         boolean isAlertEnabled = mDeviceConfigFacade.isAntennaBlockedAlertEnabled();
         Log.d(TAG, "isAlertEnabled -" + isAlertEnabled);
         Assert.assertTrue(isAlertEnabled);
@@ -106,8 +96,6 @@ public class DeviceConfigFacadeTest {
 
     @Test
     public void testIsAntennaBlockedAlertDisabled() {
-        if (!mNfcSupported) return;
-
         boolean isAlertEnabled = mDeviceConfigFacadeFalse.isAntennaBlockedAlertEnabled();
         Log.d(TAG, "isAlertEnabled -" + isAlertEnabled);
         Assert.assertFalse(isAlertEnabled);

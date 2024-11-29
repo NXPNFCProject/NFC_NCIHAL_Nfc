@@ -51,7 +51,6 @@ import org.mockito.quality.Strictness;
 public class EnableNfcFServiceTest {
 
     private static final String TAG = EnableNfcFServiceTest.class.getSimpleName();
-    private boolean mNfcSupported;
     private MockitoSession mStaticMockSession;
     private ComponentName mComponentName;
     private NfcFServiceInfo mNfcFServiceInfo;
@@ -68,17 +67,8 @@ public class EnableNfcFServiceTest {
                 .mockStatic(ForegroundUtils.class)
                 .strictness(Strictness.LENIENT)
                 .startMocking();
-
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        PackageManager pm = context.getPackageManager();
-        if (!pm.hasSystemFeature(PackageManager.FEATURE_NFC_ANY)) {
-            mNfcSupported = false;
-            return;
-        }
-        mNfcSupported = true;
-
         Context mockContext = new ContextWrapper(context) {
-
         };
 
         mForegroundUtils = mock(ForegroundUtils.class);
@@ -112,8 +102,6 @@ public class EnableNfcFServiceTest {
 
     @Test
     public void testOnHostEmulationActivated() {
-        if (!mNfcSupported) return;
-
         boolean isActivated = mEnabledNfcFServices.isActivated();
         Assert.assertFalse(isActivated);
         mEnabledNfcFServices.onHostEmulationActivated();
@@ -123,8 +111,6 @@ public class EnableNfcFServiceTest {
 
     @Test
     public void testOnHostEmulationDeactivated() {
-        if (!mNfcSupported) return;
-
         mEnabledNfcFServices.onHostEmulationActivated();
         boolean isActivated = mEnabledNfcFServices.isActivated();
         Assert.assertTrue(isActivated);
@@ -135,8 +121,6 @@ public class EnableNfcFServiceTest {
 
     @Test
     public void testRegisterEnabledForegroundService() {
-        if (!mNfcSupported) return;
-
         UserHandle userHandle = mock(UserHandle.class);
         when(userHandle.getIdentifier()).thenReturn(1);
         when(UserHandle.getUserHandleForUid(1)).thenReturn(userHandle);
@@ -153,8 +137,6 @@ public class EnableNfcFServiceTest {
 
     @Test
     public void testOnNfcDisabled() {
-        if (!mNfcSupported) return;
-
         mEnabledNfcFServices.onNfcDisabled();
         boolean isNfcDisabled = mEnabledNfcFServices.isNfcDisabled();
         Assert.assertTrue(isNfcDisabled);
@@ -162,8 +144,6 @@ public class EnableNfcFServiceTest {
 
     @Test
     public void testOnUserSwitched() {
-        if (!mNfcSupported) return;
-
         mEnabledNfcFServices.onUserSwitched(0);
         boolean isUserSwitched = mEnabledNfcFServices.isUserSwitched();
         Assert.assertTrue(isUserSwitched);

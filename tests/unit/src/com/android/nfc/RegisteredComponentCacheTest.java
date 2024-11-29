@@ -62,21 +62,12 @@ import java.util.List;
 public final class RegisteredComponentCacheTest {
 
     private RegisteredComponentCache mRegisteredComponentCache;
-    private boolean mNfcSupported;
     private Context mockContext;
     private static final String TAG = RegisteredComponentCacheTest.class.getSimpleName();
 
     @Before
     public void setUp() {
-
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        PackageManager pm = context.getPackageManager();
-        if (!pm.hasSystemFeature(PackageManager.FEATURE_NFC_ANY)) {
-            mNfcSupported = false;
-            return;
-        }
-        mNfcSupported = true;
-
         PowerManager mockPowerManager = mock(PowerManager.class);
         when(mockPowerManager.isInteractive()).thenReturn(false);
         Resources mockResources = mock(Resources.class);
@@ -148,8 +139,6 @@ public final class RegisteredComponentCacheTest {
 
     @Test
     public void testGetComponents() {
-        if (!mNfcSupported) return;
-
         ArrayList<RegisteredComponentCache.ComponentInfo> componentInfos =
                 mRegisteredComponentCache.getComponents();
         Assert.assertNotNull(componentInfos);

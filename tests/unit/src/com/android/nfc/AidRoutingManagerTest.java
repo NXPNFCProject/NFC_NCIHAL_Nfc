@@ -65,7 +65,6 @@ import java.util.Map;
 public class AidRoutingManagerTest {
 
     private static final String TAG = AidRoutingManagerTest.class.getSimpleName();
-    private boolean mNfcSupported;
     private MockitoSession mStaticMockSession;
     private AidRoutingManager mAidRoutingManager;
 
@@ -77,16 +76,6 @@ public class AidRoutingManagerTest {
                 .mockStatic(NfcStatsLog.class)
                 .strictness(Strictness.LENIENT)
                 .startMocking();
-
-        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        PackageManager pm = context.getPackageManager();
-        if (!pm.hasSystemFeature(PackageManager.FEATURE_NFC_ANY)) {
-            mNfcSupported = false;
-            return;
-        }
-        mNfcSupported = true;
-
-        when(NfcService.getInstance()).thenReturn(mock(NfcService.class));
         RoutingOptionManager routingOptionManager = mock(RoutingOptionManager.class);
         when(RoutingOptionManager.getInstance()).thenReturn(routingOptionManager);
         InstrumentationRegistry.getInstrumentation().runOnMainSync(
@@ -101,8 +90,6 @@ public class AidRoutingManagerTest {
 
     @Test
     public void testCalculateAidRouteSize() {
-        if (!mNfcSupported) return;
-
         HashMap<String, AidRoutingManager.AidEntry> aidEntryMap = new HashMap<>();
         int size = mAidRoutingManager.calculateAidRouteSize(aidEntryMap);
         Assert.assertEquals(0, size);
@@ -114,8 +101,6 @@ public class AidRoutingManagerTest {
 
     @Test
     public void testOnNfccRoutingTableCleared() {
-        if (!mNfcSupported) return;
-
         mAidRoutingManager.onNfccRoutingTableCleared();
         boolean isTableCleared = mAidRoutingManager.isRoutingTableCleared();
         Assert.assertTrue(isTableCleared);
@@ -123,24 +108,18 @@ public class AidRoutingManagerTest {
 
     @Test
     public void testSupportsAidPrefixRouting() {
-        if (!mNfcSupported) return;
-
         boolean isSupportPrefixRouting = mAidRoutingManager.supportsAidPrefixRouting();
         Assert.assertFalse(isSupportPrefixRouting);
     }
 
     @Test
     public void testSupportsAidSubsetRouting() {
-        if (!mNfcSupported) return;
-
         boolean isSupportSubsetRouting = mAidRoutingManager.supportsAidSubsetRouting();
         Assert.assertFalse(isSupportSubsetRouting);
     }
 
     @Test
     public void testConfigureRoutingErrorOccurred() {
-        if (!mNfcSupported) return;
-
         NfcService nfcService = mock(NfcService.class);
         when(NfcService.getInstance()).thenReturn(nfcService);
         when(nfcService.getNciVersion()).thenReturn(NfcService.NCI_VERSION_2_0);
@@ -156,8 +135,6 @@ public class AidRoutingManagerTest {
 
     @Test
     public void testConfigureRouting() {
-        if (!mNfcSupported) return;
-
         NfcService nfcService = mock(NfcService.class);
         when(NfcService.getInstance()).thenReturn(nfcService);
         when(nfcService.getNciVersion()).thenReturn(NfcService.NCI_VERSION_2_0);
