@@ -269,8 +269,8 @@ class PN532:
             0x00,
             0x00,
             0xFF,
-            len(data) + 1,
-            (~(len(data) + 1) & 0xFF) + 0x01,
+            (len(data) + 1) & 0xFF,
+            ((~(len(data) + 1) & 0xFF) + 0x01) & 0xFF,
             0xD4,
             ]
         data_sum = 0xD4
@@ -279,9 +279,9 @@ class PN532:
         for b in data:
             data_sum += b
             frame.append(b)
-        frame.append((~data_sum & 0xFF) + 0x01)  # Data checksum
-        frame.append(0x00)  # Postamble
+        frame.append(((~data_sum & 0xFF) + 0x01) & 0xFF)  # Data checksum
 
+        frame.append(0x00)  # Postamble
         self.log.debug("Constructed frame " + hexlify(bytearray(frame)).decode())
 
         return bytearray(frame)

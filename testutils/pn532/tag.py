@@ -25,9 +25,10 @@ class Tag:
         for i in range(len(command_apdus)):
             rsp = self.pn532.transceive(bytearray([self.target_id]) + command_apdus[i])
             if response_apdus[i] != "*" and rsp != response_apdus[i]:
+                received_apdu = hexlify(rsp).decode() if type(rsp) is bytes else "None"
                 self.log.error(
                     "Unexpected APDU: received %s, expected %s",
-                    hexlify(rsp).decode(),
+                    received_apdu,
                     hexlify(response_apdus[i]).decode(),
                 )
                 return False

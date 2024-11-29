@@ -26,7 +26,7 @@ public class SimpleEmulatorActivity extends BaseEmulatorActivity {
     public static final String EXTRA_SERVICES = "EXTRA_SERVICES";
     public static final String EXTRA_IS_PAYMENT_ACTIVITY = "EXTRA_IS_PAYMENT_ACTIVITY";
     public static final String EXTRA_PREFERRED_SERVICE = "EXTRA_PREFERRED_SERVICE";
-    public static final String EXTRA_SERVICE_TEST_PASS = "EXTRA_SERVICE_TEST_PASS";
+    public static final String EXTRA_EXPECTED_SERVICE = "EXTRA_EXPECTED_SERVICE";
 
     private ComponentName mPreferredService = null;
 
@@ -62,7 +62,7 @@ public class SimpleEmulatorActivity extends BaseEmulatorActivity {
     protected void onApduSequenceComplete(ComponentName component, long duration) {
         if (component.equals(
                 Objects.requireNonNull(getIntent().getExtras())
-                        .getParcelable(EXTRA_SERVICE_TEST_PASS, ComponentName.class))) {
+                        .getParcelable(EXTRA_EXPECTED_SERVICE, ComponentName.class))) {
             setTestPassed();
         }
     }
