@@ -943,11 +943,6 @@ tNFA_TECHNOLOGY_MASK RoutingManager::updateEeTechRouteSetting() {
   int handleDefaultOffHost = SecureElement::getInstance().getEseHandleFromGenericId(mDefaultOffHostRoute);
   int handleDefaultFelicaRoute = SecureElement::getInstance().getEseHandleFromGenericId(mDefaultFelicaRoute);
 
-#if(NXP_EXTNS != TRUE)
-  if (mDefaultOffHostRoute == 0 && mDefaultFelicaRoute == 0)
-    return allSeTechMask;
-#endif
-
   LOG(DEBUG) << fn << ": Number of EE is " << (int)mEeInfo.num_ee;
 
   tNFA_STATUS nfaStat;
