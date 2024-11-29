@@ -13,7 +13,7 @@
     <string name="cancel" msgid="61873902552555096">"Скасаваць"</string>
     <string name="beam_tap_to_view" msgid="7430394753262448349">"Краніце для прагляду"</string>
     <string name="beam_handover_not_supported" msgid="4083165921751489015">"Прылада атрымальніка не падтрымлівае перадачу вялікіх файлаў праз Beam."</string>
-    <string name="beam_try_again" msgid="3364677301009783455">"Зноў аб\'яднаць прылады"</string>
+    <string name="beam_try_again" msgid="3364677301009783455">"Зноў аб’яднаць прылады"</string>
     <string name="beam_busy" msgid="5253335587620612576">"Beam зараз заняты. Паспрабуйце яшчэ раз пасля завяршэння папярэдняй перадачы."</string>
     <string name="device" msgid="4459621591392478151">"прылада"</string>
     <string name="connecting_peripheral" msgid="1296182660525660935">"Падлучаецца <xliff:g id="DEVICE_NAME">%1$s</xliff:g>"</string>

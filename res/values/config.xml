@@ -40,4 +40,27 @@
     <integer name="max_event_log_num">50</integer>
     <!-- Overlay to indicate that the OEM plans to use OEM extension -->
     <bool name="enable_oem_extension">false</bool>
+    <string name="nfc_default_route" translatable="false"></string>
+    <!-- Default ISODEP Route value -->
+    <string name="nfc_default_isodep_route" translatable="false"></string>
+    <!-- Default OffHost Route value -->
+    <string name="nfc_default_offhost_route" translatable="false"></string>
+    <!-- Default System Code Route value -->
+    <string name="nfc_default_sc_route" translatable="false"></string>
+    <!-- Overlay to enable NFC developer option notification-->
+    <bool name="enable_developer_option_notification">true</bool>
+    <!-- Whether to enable NFC by default on boot or not. -->
+    <bool name="enable_nfc_default">true</bool>
+    <!-- Reader mode should be ON or OFF if reader_option_capable is enabled -->
+    <bool name="reader_option_default">true</bool>
+    <!-- Secure NFC default value-->
+    <bool name="secure_nfc_default">false</bool>
+    <!-- Block list that contains the package names which are not desired to get tag intents -->
+    <string-array name="tag_intent_blocked_app_list" translatable="false" />
+    <!-- Use display state callbacks along with screen on/off intent in determining SCREEN_STATE -->
+    <bool name="check_display_state_for_screen_state">false</bool>
+    <!-- Enable EUICC support for offhost card emulation -->
+    <bool name="enable_euicc_support">false</bool>
+    <!-- Whether to indicate user activity using PowerManager.userActivity for HCE activation -->
+    <bool name="indicate_user_activity_for_hce">true</bool>
 </resources>

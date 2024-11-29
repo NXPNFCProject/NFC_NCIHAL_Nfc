@@ -15,7 +15,10 @@
 -->
 
 <resources>
-    <style name="DialogAlertDayNight" parent="@android:style/Theme.DeviceDefault.Light.Dialog"/>
+    <style name="DialogAlertDayNight" parent="@android:style/Theme.DeviceDefault.Light.Dialog">
+        <item name="android:windowMinWidthMajor">80%</item>
+        <item name="android:windowMinWidthMinor">80%</item>
+    </style>
 
     <style name="TapAgainDayNight" parent="Theme.AppCompat.DayNight">
         <item name="android:fontFamily">google-sans</item>

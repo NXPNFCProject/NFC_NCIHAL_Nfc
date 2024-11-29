@@ -11,7 +11,7 @@
     <string name="beam_failed" msgid="5116241718189888630">"Ռադիոհաղորդմամբ գործընթացն ավարտված չէ"</string>
     <string name="beam_canceled" msgid="5425192751826544741">"Ռադիոհաղորդմամբ գործընթացը չեղարկված է"</string>
     <string name="cancel" msgid="61873902552555096">"Չեղարկել"</string>
-    <string name="beam_tap_to_view" msgid="7430394753262448349">"Հպեք՝ դիտելու համար"</string>
+    <string name="beam_tap_to_view" msgid="7430394753262448349">"Հպեք դիտելու համար"</string>
     <string name="beam_handover_not_supported" msgid="4083165921751489015">"Ընդունողի սարքը չի աջակցում ռադիոհաղորդմամբ մեծ ֆայլերի փոխանցումը:"</string>
     <string name="beam_try_again" msgid="3364677301009783455">"Սարքերը կրկին միմյանց հետ կցել"</string>
     <string name="beam_busy" msgid="5253335587620612576">"Այս պահին տվյալների փոխանցումը զբաղված է: Փորձեք կրկին նախորդ փոխանցումը ավարտելուց հետո:"</string>

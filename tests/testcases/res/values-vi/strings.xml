@@ -17,6 +17,5 @@
 <resources xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="CustomPaymentService" msgid="8078913594613837603">"Dịch vụ kiểm tra NFC tuỳ chỉnh"</string>
-    <!-- no translation found for SecondPaymentService (1232932903544648990) -->
-    <skip />
+    <string name="SecondPaymentService" msgid="1232932903544648990">"Dịch vụ kiểm tra NFC thứ hai"</string>
 </resources>
