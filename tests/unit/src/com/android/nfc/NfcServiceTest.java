@@ -51,6 +51,8 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerExecutor;
+import android.os.IBinder;
+import android.os.Message;
 import android.os.PowerManager;
 import android.os.UserManager;
 import android.os.test.TestLooper;
@@ -102,6 +104,7 @@ public final class NfcServiceTest {
     @Captor ArgumentCaptor<DeviceHost.DeviceHostListener> mDeviceHostListener;
     @Captor ArgumentCaptor<BroadcastReceiver> mGlobalReceiver;
     @Captor ArgumentCaptor<AlarmManager.OnAlarmListener> mAlarmListener;
+    @Captor ArgumentCaptor<IBinder> mIBinderArgumentCaptor;
     TestLooper mLooper;
     NfcService mNfcService;
     private MockitoSession mStaticMockSession;
@@ -267,5 +270,38 @@ public final class NfcServiceTest {
                 UserManager.DISALLOW_CHANGE_NEAR_FIELD_COMMUNICATION_RADIO)).thenReturn(true);
         mNfcService.mNfcAdapter.disable(true, PKG_NAME);
         assert(mNfcService.mState == NfcAdapter.STATE_ON);
+    }
+
+    @Test
+    public void testHandlerResumePolling() {
+        Handler handler = mNfcService.getHandler();
+        Assert.assertNotNull(handler);
+        handler.handleMessage(handler.obtainMessage(NfcService.MSG_RESUME_POLLING));
+        verify(mNfcManagerRegisterer).register(mIBinderArgumentCaptor.capture());
+        Assert.assertNotNull(mIBinderArgumentCaptor.getValue());
+        Assert.assertFalse(handler.hasMessages(NfcService.MSG_RESUME_POLLING));
+        Assert.assertEquals(mIBinderArgumentCaptor.getValue(), mNfcService.mNfcAdapter);
+    }
+
+    @Test
+    public void testHandlerRoute_Aid() {
+        Handler handler = mNfcService.getHandler();
+        Assert.assertNotNull(handler);
+        Message msg = handler.obtainMessage(NfcService.MSG_ROUTE_AID);
+        msg.arg1 = 1;
+        msg.arg2 = 2;
+        msg.obj = "test";
+        handler.handleMessage(msg);
+        verify(mDeviceHost).routeAid(any(), anyInt(), anyInt(), anyInt());
+    }
+
+    @Test
+    public void testHandlerUnRoute_Aid() {
+        Handler handler = mNfcService.getHandler();
+        Assert.assertNotNull(handler);
+        Message msg = handler.obtainMessage(NfcService.MSG_UNROUTE_AID);
+        msg.obj = "test";
+        handler.handleMessage(msg);
+        verify(mDeviceHost).unrouteAid(any());
     }
 }
