@@ -121,24 +121,30 @@ public class RegisteredNfcFServicesCacheTest {
                 }
                 XmlResourceParser parser = mock(XmlResourceParser.class);
                 AttributeSet attributeSet = mock(AttributeSet.class);
-                TypedArray typedArray = mock(TypedArray.class);
-                when(typedArray.getString(
+
+                TypedArray typedArrayHost = mock(TypedArray.class);
+                when(typedArrayHost.getString(
                         com.android.internal.R.styleable.HostNfcFService_description)).thenReturn(
                         "nfc");
-                when(resources.obtainAttributes(attributeSet,
-                        com.android.internal.R.styleable.HostNfcFService)).thenReturn(typedArray);
-                when(typedArray.getString(
+                TypedArray typedArrayNfcid2 = mock(TypedArray.class);
+                when(typedArrayNfcid2.getString(
                         com.android.internal.R.styleable.Nfcid2Filter_name)).thenReturn(
                         "02FEC1DE32456789");
-                when(resources.obtainAttributes(attributeSet,
-                        com.android.internal.R.styleable.Nfcid2Filter)).thenReturn(typedArray);
+                TypedArray typedArraySystem = mock(TypedArray.class);
+                when(typedArraySystem.getString(
+                        com.android.internal.R.styleable.SystemCodeFilter_name)).thenReturn(
+                        "42BC");
+                when(resources.obtainAttributes(any(), any())).thenReturn(typedArrayHost,
+                        typedArraySystem, typedArrayNfcid2);
+
                 when(Xml.asAttributeSet(parser)).thenReturn(attributeSet);
                 try {
                     when(parser.getEventType()).thenReturn(XmlPullParser.START_TAG,
                             XmlPullParser.END_TAG);
-                    when(parser.next()).thenReturn(XmlPullParser.START_TAG, XmlPullParser.END_TAG);
+                    when(parser.next()).thenReturn(XmlPullParser.START_TAG, XmlPullParser.START_TAG,
+                            XmlPullParser.END_TAG);
                     when(parser.getName()).thenReturn("host-nfcf-service",
-                            "nfcid2-filter");
+                            "system-code-filter", "nfcid2-filter");
                 } catch (XmlPullParserException e) {
                 } catch (IOException e) {
                     throw new RuntimeException(e);
