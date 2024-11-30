@@ -308,6 +308,8 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
 
     static final int MAX_TOAST_DEBOUNCE_TIME = 10000;
 
+    static final int DISABLE_POLLING_FLAGS = 0x1000;
+
     static final int TASK_ENABLE = 1;
     static final int TASK_DISABLE = 2;
     static final int TASK_BOOT = 3;
@@ -4798,9 +4800,11 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
             paramsBuilder.setEnableLowPowerDiscovery(false);
         }
 
-        if (mIsHceCapable && mReaderModeParams == null) {
+        if (mIsHceCapable) {
             // Host routing is always enabled, provided we aren't in reader mode
-            paramsBuilder.setEnableHostRouting(true);
+            if (mReaderModeParams == null || mReaderModeParams.flags == DISABLE_POLLING_FLAGS) {
+                paramsBuilder.setEnableHostRouting(true);
+            }
         }
 
         return paramsBuilder.build();
