@@ -36,10 +36,6 @@ class ScreenStateHelper {
         return display.getState() == Display.STATE_ON;
     }
 
-    int checkScreenState() {
-        return checkScreenState(false /* checkDisplayState */);
-    }
-
     int checkScreenState(boolean checkDisplayState) {
         if (!mPowerManager.isInteractive() || (checkDisplayState && !isDisplayOn())) {
             if (mKeyguardManager.isKeyguardLocked()) {

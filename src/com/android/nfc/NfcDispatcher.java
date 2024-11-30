@@ -545,7 +545,10 @@ class NfcDispatcher {
 
         boolean screenUnlocked = false;
         if (!provisioningOnly &&
-                mScreenStateHelper.checkScreenState() == ScreenStateHelper.SCREEN_STATE_ON_LOCKED) {
+                mScreenStateHelper.checkScreenState(
+                        mContext.getResources().getBoolean(
+                                R.bool.check_display_state_for_screen_state))
+                        == ScreenStateHelper.SCREEN_STATE_ON_LOCKED) {
             screenUnlocked = handleNfcUnlock(tag);
             if (!screenUnlocked)
                 return DISPATCH_FAIL;
