@@ -3,8 +3,22 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
+cc_library_static {
+    name: "libnfc_nci_jni_static",
+    defaults: ["libnfc_nci_jni_defaults"],
+    visibility: [
+        "//packages/apps/Nfc/nci/jni",
+    ],
+}
+
 cc_library_shared {
     name: "libnfc_nci_jni",
+    defaults: ["libnfc_nci_jni_defaults"],
+}
+
+cc_defaults {
+    name: "libnfc_nci_jni_defaults",
+
     cflags:
      ["-DNXP_EXTNS=TRUE",
       "-DNXP_SRD=TRUE",]  + [
@@ -95,14 +109,40 @@ cc_test {
     srcs: ["NfcTagTest.cpp"],
 
     shared_libs: [
-        "libnfc-nci",
-        "libnfc_nci_jni",
-        "libstatslog_nfc",
+        "libnativehelper",
+        "libcutils",
+        "libutils",
+        "liblog",
+        "libbase",
+        // Treble configuration
+        "libhidlbase",
+        "libutils",
+        "libbinder_ndk",
+        "libstatssocket",
+        "libz",
     ],
 
     static_libs: [
         "libgmock",
         "libgtest",
+        "libnfc-nci",
+        "libnfc_nci_jni_static",
+        "android.hardware.nfc@1.0",
+        "android.hardware.nfc@1.1",
+        "android.hardware.nfc@1.2",
+        // Add for AIDL
+        "android.hardware.nfc-V2-ndk",
+        "libnfcutils",
+        "libnfc-nci",
+        "libnfc-nci_flags",
+        "libstatslog_nfc",
+        "android_nfc_flags_aconfig_c_lib",
+        "server_configurable_flags",
+        "libxml2",
+    ],
+
+    defaults: [
+        "aconfig_lib_cc_static_link.defaults",
     ],
 
     header_libs: [
