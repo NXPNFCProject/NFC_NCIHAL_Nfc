@@ -158,4 +158,5 @@ cc_test {
         "system/nfc/src/nfc/include",
         "system/nfc/utils/include",
     ],
+    test_suites: ["general-tests"],
 }

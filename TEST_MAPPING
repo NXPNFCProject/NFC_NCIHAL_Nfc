@@ -21,6 +21,10 @@
     {
       "name": "NfcNciUnitTests",
       "keywords": ["primary-device"]
+    },
+    {
+      "name": "nfc.nci.jni.tests",
+      "keywords": ["primary-device"]
     }
   ],
   "pts-prebuilt": [
