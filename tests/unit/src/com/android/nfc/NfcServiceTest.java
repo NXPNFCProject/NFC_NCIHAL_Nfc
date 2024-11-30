@@ -16,20 +16,26 @@
 package com.android.nfc;
 
 import static com.android.nfc.NfcService.PREF_NFC_ON;
+import static com.android.nfc.NfcService.SOUND_END;
+import static com.android.nfc.NfcService.SOUND_ERROR;
+import static com.android.nfc.NfcService.SOUND_START;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyFloat;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -46,6 +52,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.media.SoundPool;
+import android.nfc.NdefMessage;
 import android.nfc.NfcAdapter;
 import android.nfc.NfcAntennaInfo;
 import android.nfc.NfcServiceManager;
@@ -112,10 +120,12 @@ public final class NfcServiceTest {
     @Mock Bundle mUserRestrictions;
     @Mock BackupManager mBackupManager;
     @Mock AlarmManager mAlarmManager;
+    @Mock SoundPool mSoundPool;
     @Captor ArgumentCaptor<DeviceHost.DeviceHostListener> mDeviceHostListener;
     @Captor ArgumentCaptor<BroadcastReceiver> mGlobalReceiver;
     @Captor ArgumentCaptor<AlarmManager.OnAlarmListener> mAlarmListener;
     @Captor ArgumentCaptor<IBinder> mIBinderArgumentCaptor;
+    @Captor ArgumentCaptor<Integer> mSoundCaptor;
     TestLooper mLooper;
     NfcService mNfcService;
     private MockitoSession mStaticMockSession;
@@ -379,5 +389,91 @@ public final class NfcServiceTest {
                 .isEqualTo(ANTENNA_POS_X[0]);
         assertThat(nfcAntennaInfo.getAvailableNfcAntennas().get(0).getLocationY())
                 .isEqualTo(ANTENNA_POS_Y[0]);
+    }
+
+    @Test
+    public void testHandlerMsgRegisterT3tIdentifier() {
+        Handler handler = mNfcService.getHandler();
+        Assert.assertNotNull(handler);
+        Message msg = handler.obtainMessage(NfcService.MSG_REGISTER_T3T_IDENTIFIER);
+        msg.obj = "test".getBytes();
+        handler.handleMessage(msg);
+        verify(mDeviceHost).disableDiscovery();
+        verify(mDeviceHost).registerT3tIdentifier(any());
+        verify(mDeviceHost).enableDiscovery(any(), anyBoolean());
+        Message msgDeregister = handler.obtainMessage(NfcService.MSG_DEREGISTER_T3T_IDENTIFIER);
+        msgDeregister.obj = "test".getBytes();
+        handler.handleMessage(msgDeregister);
+        verify(mDeviceHost, times(2)).disableDiscovery();
+        verify(mDeviceHost, times(2)).enableDiscovery(any(), anyBoolean());
+    }
+
+    @Test
+    public void testHandlerMsgCommitRouting() {
+        Handler handler = mNfcService.getHandler();
+        Assert.assertNotNull(handler);
+        Message msg = handler.obtainMessage(NfcService.MSG_COMMIT_ROUTING);
+        mNfcService.mState = NfcAdapter.STATE_OFF;
+        handler.handleMessage(msg);
+        verify(mDeviceHost, never()).commitRouting();
+        mNfcService.mState = NfcAdapter.STATE_ON;
+        NfcDiscoveryParameters nfcDiscoveryParameters = mock(NfcDiscoveryParameters.class);
+        when(nfcDiscoveryParameters.shouldEnableDiscovery()).thenReturn(true);
+        mNfcService.mCurrentDiscoveryParameters = nfcDiscoveryParameters;
+        handler.handleMessage(msg);
+        verify(mDeviceHost).commitRouting();
+    }
+
+    @Test
+    public void testHandlerMsgMockNdef() {
+        Handler handler = mNfcService.getHandler();
+        Assert.assertNotNull(handler);
+        Message msg = handler.obtainMessage(NfcService.MSG_MOCK_NDEF);
+        NdefMessage ndefMessage = mock(NdefMessage.class);
+        msg.obj = ndefMessage;
+        handler.handleMessage(msg);
+        verify(mNfcDispatcher).dispatchTag(any());
+    }
+
+    @Test
+    public void testInitSoundPool_Start() {
+        mNfcService.playSound(SOUND_START);
+
+        verify(mSoundPool, never()).play(mSoundCaptor.capture(),
+                anyFloat(), anyFloat(), anyInt(), anyInt(), anyFloat());
+        mNfcService.mSoundPool = mSoundPool;
+        mNfcService.playSound(SOUND_START);
+        verify(mSoundPool, atLeastOnce()).play(mSoundCaptor.capture(),
+                anyFloat(), anyFloat(), anyInt(), anyInt(), anyFloat());
+        Integer value = mSoundCaptor.getValue();
+        Assert.assertEquals(mNfcService.mStartSound, (int) value);
+    }
+
+    @Test
+    public void testInitSoundPool_End() {
+        mNfcService.playSound(SOUND_END);
+
+        verify(mSoundPool, never()).play(mSoundCaptor.capture(),
+                anyFloat(), anyFloat(), anyInt(), anyInt(), anyFloat());
+        mNfcService.mSoundPool = mSoundPool;
+        mNfcService.playSound(SOUND_END);
+        verify(mSoundPool, atLeastOnce()).play(mSoundCaptor.capture(),
+                anyFloat(), anyFloat(), anyInt(), anyInt(), anyFloat());
+        Integer value = mSoundCaptor.getValue();
+        Assert.assertEquals(mNfcService.mEndSound, (int) value);
+    }
+
+    @Test
+    public void testInitSoundPool_Error() {
+        mNfcService.playSound(SOUND_ERROR);
+
+        verify(mSoundPool, never()).play(mSoundCaptor.capture(),
+                anyFloat(), anyFloat(), anyInt(), anyInt(), anyFloat());
+        mNfcService.mSoundPool = mSoundPool;
+        mNfcService.playSound(SOUND_ERROR);
+        verify(mSoundPool, atLeastOnce()).play(mSoundCaptor.capture(),
+                anyFloat(), anyFloat(), anyInt(), anyInt(), anyFloat());
+        Integer value = mSoundCaptor.getValue();
+        Assert.assertEquals(mNfcService.mErrorSound, (int) value);
     }
 }
