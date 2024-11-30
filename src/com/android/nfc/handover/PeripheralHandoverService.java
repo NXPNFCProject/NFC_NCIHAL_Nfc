@@ -36,6 +36,7 @@ import android.os.Messenger;
 import android.os.ParcelUuid;
 import android.os.Parcelable;
 import android.os.RemoteException;
+import android.text.TextUtils;
 import android.util.Log;
 
 import java.util.Objects;
@@ -76,6 +77,7 @@ public class PeripheralHandoverService extends Service implements BluetoothPerip
     Handler mHandler;
     BluetoothPeripheralHandover mBluetoothPeripheralHandover;
     BluetoothDevice mDevice;
+    String mName;
     Messenger mClient;
     boolean mBluetoothHeadsetConnected;
     boolean mBluetoothEnabledByNfc;
@@ -124,11 +126,12 @@ public class PeripheralHandoverService extends Service implements BluetoothPerip
 
         Bundle msgData = intent.getExtras();
         BluetoothDevice device = msgData.getParcelable(EXTRA_PERIPHERAL_DEVICE);
+        String name = msgData.getString(EXTRA_PERIPHERAL_NAME);
 
         synchronized (sLock) {
             if (mStartId != 0) {
                 Log.d(TAG, "Ongoing handover to " + mDevice);
-                if (!Objects.equals(mDevice, device)) {
+                if (!Objects.equals(mDevice, device) || !TextUtils.equals(mName, name)) {
                     Log.w(TAG, "Cancel ongoing handover");
                     sendBroadcast(new Intent(ACTION_CANCEL_CONNECT));
                     // Wait for the previous attempt to be fully cancelled. Store the new pairing
@@ -177,7 +180,7 @@ public class PeripheralHandoverService extends Service implements BluetoothPerip
         }
 
         mDevice = msgData.getParcelable(EXTRA_PERIPHERAL_DEVICE);
-        String name = msgData.getString(EXTRA_PERIPHERAL_NAME);
+        mName = msgData.getString(EXTRA_PERIPHERAL_NAME);
         int transport = msgData.getInt(EXTRA_PERIPHERAL_TRANSPORT);
         OobData oobData = msgData.getParcelable(EXTRA_PERIPHERAL_OOB_DATA);
         Parcelable[] parcelables = msgData.getParcelableArray(EXTRA_PERIPHERAL_UUIDS);
@@ -195,7 +198,7 @@ public class PeripheralHandoverService extends Service implements BluetoothPerip
         mBluetoothEnabledByNfc = msgData.getBoolean(EXTRA_BT_ENABLED);
 
         mBluetoothPeripheralHandover = new BluetoothPeripheralHandover(
-                this, mDevice, name, transport, oobData, uuids, btClass, this);
+                this, mDevice, mName, transport, oobData, uuids, btClass, this);
 
         if (transport == BluetoothDevice.TRANSPORT_LE) {
             mHandler.sendMessageDelayed(
