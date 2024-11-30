@@ -15,12 +15,14 @@ import android.net.wifi.WifiManager;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
 public class ConfirmConnectToWifiNetworkActivity extends Activity
         implements View.OnClickListener, DialogInterface.OnDismissListener {
 
+    static final String TAG = "ConfirmConnectToWifiNetworkActivity";
     public static final int ENABLE_WIFI_TIMEOUT_MILLIS = 5000;
     private WifiConfiguration mCurrentWifiConfiguration;
     private AlertDialog mAlertDialog;
@@ -35,6 +37,11 @@ public class ConfirmConnectToWifiNetworkActivity extends Activity
         mCurrentWifiConfiguration =
                 intent.getParcelableExtra(NfcWifiProtectedSetup.EXTRA_WIFI_CONFIG);
 
+        if (mCurrentWifiConfiguration == null) {
+            Log.e(TAG, "mCurrentWifiConfiguration is null.");
+            finish();
+            return;
+        }
         String printableSsid = mCurrentWifiConfiguration.getPrintableSsid();
         mAlertDialog = new AlertDialog.Builder(this, R.style.DialogAlertDayNight)
                 .setTitle(R.string.title_connect_to_network)
@@ -147,13 +154,11 @@ public class ConfirmConnectToWifiNetworkActivity extends Activity
             String action = intent.getAction();
             if (action.equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
                 int wifiState = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 0);
-                if (mCurrentWifiConfiguration != null
-                        && wifiState == WifiManager.WIFI_STATE_ENABLED) {
-                    if (getAndClearEnableWifiInProgress()) {
-                        doConnect(
-                                ConfirmConnectToWifiNetworkActivity.this
-                                        .getSystemService(WifiManager.class));
-                    }
+                if (wifiState == WifiManager.WIFI_STATE_ENABLED
+                        && getAndClearEnableWifiInProgress()) {
+                    doConnect(
+                            ConfirmConnectToWifiNetworkActivity.this
+                                    .getSystemService(WifiManager.class));
                 }
             }
         }
