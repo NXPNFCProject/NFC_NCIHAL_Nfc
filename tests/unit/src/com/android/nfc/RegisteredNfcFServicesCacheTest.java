@@ -296,4 +296,17 @@ public class RegisteredNfcFServicesCacheTest {
         Assert.assertTrue(hasService);
 
     }
+
+    @Test
+    public void testGetSystemCodeForService() {
+        mNfcFServicesCache.invalidateCache(1);
+        List<NfcFServiceInfo> services = mNfcFServicesCache.getServices(1);
+        Assert.assertNotNull(services);
+        Assert.assertFalse(services.isEmpty());
+        NfcFServiceInfo nfcFServiceInfo = services.get(0);
+        ComponentName cName = nfcFServiceInfo.getComponent();
+        String systemCode = mNfcFServicesCache.getSystemCodeForService(1, 0, cName);
+        Assert.assertNotNull(systemCode);
+        Assert.assertEquals("42BC", systemCode);
+    }
 }

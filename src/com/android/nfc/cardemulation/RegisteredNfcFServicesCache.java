@@ -850,5 +850,4 @@ public class RegisteredNfcFServicesCache {
     public boolean isActivated() {
         return mActivated;
     }
-
 }
