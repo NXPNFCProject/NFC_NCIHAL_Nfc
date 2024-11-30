@@ -2718,11 +2718,25 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                     R.array.antenna_x);
             int positionY[] = mContext.getResources().getIntArray(
                     R.array.antenna_y);
+            int width = mContext.getResources().getInteger(R.integer.device_width);
+            int height = mContext.getResources().getInteger(R.integer.device_height);
+            boolean isFoldable = mContext.getResources().getBoolean(R.bool.device_foldable);
+
+            // If overlays are not set, try reading properties.
+            if (positionX.length == 0 || positionY.length == 0) {
+                positionX = NfcProperties.info_antpos_X().stream()
+                        .mapToInt(Integer::intValue)
+                        .toArray();
+                positionY = NfcProperties.info_antpos_Y().stream()
+                        .mapToInt(Integer::intValue)
+                        .toArray();
+                width = NfcProperties.info_antpos_device_width().orElse(0);
+                height = NfcProperties.info_antpos_device_height().orElse(0);
+                isFoldable = NfcProperties.info_antpos_device_foldable().orElse(false);
+            }
             if(positionX.length != positionY.length){
                 return null;
             }
-            int width = mContext.getResources().getInteger(R.integer.device_width);
-            int height = mContext.getResources().getInteger(R.integer.device_height);
             List<AvailableNfcAntenna> availableNfcAntennas = new ArrayList<>();
             for(int i = 0; i < positionX.length; i++){
                 if(positionX[i] >= width | positionY[i] >= height){
@@ -2733,7 +2747,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
             return new NfcAntennaInfo(
                     width,
                     height,
-                    mContext.getResources().getBoolean(R.bool.device_foldable),
+                    isFoldable,
                     availableNfcAntennas);
         }
 

@@ -17,6 +17,8 @@ package com.android.nfc;
 
 import static com.android.nfc.NfcService.PREF_NFC_ON;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -45,6 +47,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.nfc.NfcAdapter;
+import android.nfc.NfcAntennaInfo;
 import android.nfc.NfcServiceManager;
 import android.nfc.tech.Ndef;
 import android.os.AsyncTask;
@@ -56,6 +59,7 @@ import android.os.Message;
 import android.os.PowerManager;
 import android.os.UserManager;
 import android.os.test.TestLooper;
+import android.sysprop.NfcProperties;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
@@ -74,11 +78,18 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.MockitoSession;
 import org.mockito.quality.Strictness;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 @RunWith(AndroidJUnit4.class)
 public final class NfcServiceTest {
     private static final String PKG_NAME = "com.test";
+    private static final int[] ANTENNA_POS_X = { 5 };
+    private static final int[] ANTENNA_POS_Y = { 6 };
+    private static final int ANTENNA_DEVICE_WIDTH = 9;
+    private static final int ANTENNA_DEVICE_HEIGHT = 10;
+    private static final boolean ANTENNA_DEVICE_FOLDABLE = true;
     @Mock Application mApplication;
     @Mock NfcInjector mNfcInjector;
     @Mock DeviceHost mDeviceHost;
@@ -112,6 +123,10 @@ public final class NfcServiceTest {
     @Before
     public void setUp() {
         mLooper = new TestLooper();
+        mStaticMockSession = ExtendedMockito.mockitoSession()
+                .mockStatic(NfcProperties.class)
+                .strictness(Strictness.LENIENT)
+                .startMocking();
         MockitoAnnotations.initMocks(this);
         AsyncTask.setDefaultExecutor(new HandlerExecutor(new Handler(mLooper.getLooper())));
 
@@ -140,11 +155,16 @@ public final class NfcServiceTest {
         when(mPreferences.edit()).thenReturn(mPreferencesEditor);
         when(mPowerManager.newWakeLock(anyInt(), anyString()))
                 .thenReturn(mock(PowerManager.WakeLock.class));
+        when(mResources.getIntArray(R.array.antenna_x)).thenReturn(new int[0]);
+        when(mResources.getIntArray(R.array.antenna_y)).thenReturn(new int[0]);
+        when(NfcProperties.info_antpos_X()).thenReturn(List.of());
+        when(NfcProperties.info_antpos_Y()).thenReturn(List.of());
         createNfcService();
     }
 
     @After
     public void tearDown() {
+        mStaticMockSession.finishMocking();
     }
 
     private void createNfcService() {
@@ -303,5 +323,61 @@ public final class NfcServiceTest {
         msg.obj = "test";
         handler.handleMessage(msg);
         verify(mDeviceHost).unrouteAid(any());
+    }
+
+    @Test
+    public void testGetAntennaInfo_NoneSet() throws Exception {
+        enableAndVerify();
+        NfcAntennaInfo nfcAntennaInfo = mNfcService.mNfcAdapter.getNfcAntennaInfo();
+        assertThat(nfcAntennaInfo).isNotNull();
+        assertThat(nfcAntennaInfo.getDeviceWidth()).isEqualTo(0);
+        assertThat(nfcAntennaInfo.getDeviceHeight()).isEqualTo(0);
+        assertThat(nfcAntennaInfo.isDeviceFoldable()).isEqualTo(false);
+        assertThat(nfcAntennaInfo.getAvailableNfcAntennas()).isEmpty();
+    }
+
+    @Test
+    public void testGetAntennaInfo_ReadFromResources() throws Exception {
+        enableAndVerify();
+        when(mResources.getIntArray(R.array.antenna_x)).thenReturn(ANTENNA_POS_X);
+        when(mResources.getIntArray(R.array.antenna_y)).thenReturn(ANTENNA_POS_Y);
+        when(mResources.getInteger(R.integer.device_width)).thenReturn(ANTENNA_DEVICE_WIDTH);
+        when(mResources.getInteger(R.integer.device_height)).thenReturn(ANTENNA_DEVICE_HEIGHT);
+        when(mResources.getBoolean(R.bool.device_foldable)).thenReturn(ANTENNA_DEVICE_FOLDABLE);
+        NfcAntennaInfo nfcAntennaInfo = mNfcService.mNfcAdapter.getNfcAntennaInfo();
+        assertThat(nfcAntennaInfo).isNotNull();
+        assertThat(nfcAntennaInfo.getDeviceWidth()).isEqualTo(ANTENNA_DEVICE_WIDTH);
+        assertThat(nfcAntennaInfo.getDeviceHeight()).isEqualTo(ANTENNA_DEVICE_HEIGHT);
+        assertThat(nfcAntennaInfo.isDeviceFoldable()).isEqualTo(ANTENNA_DEVICE_FOLDABLE);
+        assertThat(nfcAntennaInfo.getAvailableNfcAntennas()).isNotEmpty();
+        assertThat(nfcAntennaInfo.getAvailableNfcAntennas().get(0).getLocationX())
+                .isEqualTo(ANTENNA_POS_X[0]);
+        assertThat(nfcAntennaInfo.getAvailableNfcAntennas().get(0).getLocationY())
+                .isEqualTo(ANTENNA_POS_Y[0]);
+    }
+
+    @Test
+    public void testGetAntennaInfo_ReadFromSysProp() throws Exception {
+        enableAndVerify();
+        when(NfcProperties.info_antpos_X())
+                .thenReturn(Arrays.stream(ANTENNA_POS_X).boxed().toList());
+        when(NfcProperties.info_antpos_Y())
+                .thenReturn(Arrays.stream(ANTENNA_POS_Y).boxed().toList());
+        when(NfcProperties.info_antpos_device_width())
+                .thenReturn(Optional.of(ANTENNA_DEVICE_WIDTH));
+        when(NfcProperties.info_antpos_device_height())
+                .thenReturn(Optional.of(ANTENNA_DEVICE_HEIGHT));
+        when(NfcProperties.info_antpos_device_foldable())
+                .thenReturn(Optional.of(ANTENNA_DEVICE_FOLDABLE));
+        NfcAntennaInfo nfcAntennaInfo = mNfcService.mNfcAdapter.getNfcAntennaInfo();
+        assertThat(nfcAntennaInfo).isNotNull();
+        assertThat(nfcAntennaInfo.getDeviceWidth()).isEqualTo(ANTENNA_DEVICE_WIDTH);
+        assertThat(nfcAntennaInfo.getDeviceHeight()).isEqualTo(ANTENNA_DEVICE_HEIGHT);
+        assertThat(nfcAntennaInfo.isDeviceFoldable()).isEqualTo(ANTENNA_DEVICE_FOLDABLE);
+        assertThat(nfcAntennaInfo.getAvailableNfcAntennas()).isNotEmpty();
+        assertThat(nfcAntennaInfo.getAvailableNfcAntennas().get(0).getLocationX())
+                .isEqualTo(ANTENNA_POS_X[0]);
+        assertThat(nfcAntennaInfo.getAvailableNfcAntennas().get(0).getLocationY())
+                .isEqualTo(ANTENNA_POS_Y[0]);
     }
 }
