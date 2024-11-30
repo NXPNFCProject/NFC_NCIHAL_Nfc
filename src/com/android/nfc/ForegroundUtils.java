@@ -114,8 +114,9 @@ public class ForegroundUtils implements ActivityManager.OnUidImportanceListener 
      *         if none are found.
      */
     public List<Integer> getForegroundUids() {
-        ArrayList<Integer> uids = new ArrayList<Integer>(mForegroundUids.size());
+        ArrayList<Integer> uids = null;
         synchronized (mLock) {
+            uids = new ArrayList<Integer>(mForegroundUids.size());
             for (int i = 0; i < mForegroundUids.size(); i++) {
                 if (mForegroundUids.valueAt(i)) {
                     uids.add(mForegroundUids.keyAt(i));
@@ -194,7 +195,9 @@ public class ForegroundUtils implements ActivityManager.OnUidImportanceListener 
 
     @VisibleForTesting
     public void clearForegroundlist() {
-        mForegroundUids.clear();
+        synchronized (mLock) {
+            mForegroundUids.clear();
+        }
     }
 
 }
