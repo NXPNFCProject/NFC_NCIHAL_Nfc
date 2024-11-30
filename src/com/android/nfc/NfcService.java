@@ -4627,8 +4627,13 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         }
         byte[] data = new byte[len / 2];
         for (int i = 0; i < len; i += 2) {
-            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
-                    + Character.digit(s.charAt(i + 1), 16));
+            int high = Character.digit(s.charAt(i), 16);
+            int low = Character.digit(s.charAt(i + 1), 16);
+            if (high == -1 || low == -1) {
+                Log.e(TAG, "Invalid hex character found.");
+                return null;
+            }
+            data[i / 2] = (byte) ((high << 4) + low);
         }
         return data;
     }
