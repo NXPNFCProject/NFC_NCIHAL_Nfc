@@ -18,7 +18,7 @@ package com.android.nfc;
 import static com.android.nfc.NfcService.PREF_NFC_ON;
 import static com.android.nfc.NfcService.SOUND_END;
 import static com.android.nfc.NfcService.SOUND_ERROR;
-import static com.android.nfc.NfcService.SOUND_START;
+import static com.android.nfc.NfcService.SOUND_END;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -437,16 +437,16 @@ public final class NfcServiceTest {
 
     @Test
     public void testInitSoundPool_Start() {
-        mNfcService.playSound(SOUND_START);
+        mNfcService.playSound(SOUND_END);
 
         verify(mSoundPool, never()).play(mSoundCaptor.capture(),
                 anyFloat(), anyFloat(), anyInt(), anyInt(), anyFloat());
         mNfcService.mSoundPool = mSoundPool;
-        mNfcService.playSound(SOUND_START);
+        mNfcService.playSound(SOUND_END);
         verify(mSoundPool, atLeastOnce()).play(mSoundCaptor.capture(),
                 anyFloat(), anyFloat(), anyInt(), anyInt(), anyFloat());
         Integer value = mSoundCaptor.getValue();
-        Assert.assertEquals(mNfcService.mStartSound, (int) value);
+        Assert.assertEquals(mNfcService.mEndSound, (int) value);
     }
 
     @Test
