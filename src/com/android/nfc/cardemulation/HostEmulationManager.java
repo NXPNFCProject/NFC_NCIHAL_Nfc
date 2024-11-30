@@ -175,11 +175,7 @@ public class HostEmulationManager {
         public void run() {
             synchronized (mLock) {
                 Log.d(TAG, "Have been outside field, returning to idle state");
-                mPendingPollingLoopFrames = null;
-                mPollingFramesToSend = null;
-                mPollingLoopState = PollingLoopState.EVALUATING_POLLING_LOOP;
-                resetActiveService();
-                mState = STATE_IDLE;
+                returnToIdleStateLocked();
             }
         }
     };
@@ -825,12 +821,8 @@ public class HostEmulationManager {
                 Log.e(TAG, "Got deactivation event while in idle state");
             }
             sendDeactivateToActiveServiceLocked(HostApduService.DEACTIVATION_LINK_LOSS);
-            resetActiveService();
-            mPendingPollingLoopFrames = null;
-            mPollingFramesToSend = null;
             unbindServiceIfNeededLocked();
-            mState = STATE_IDLE;
-            mPollingLoopState = PollingLoopState.EVALUATING_POLLING_LOOP;
+            returnToIdleStateLocked();
 
             if (mAutoDisableObserveModeRunnable != null) {
                 mHandler.removeCallbacks(mAutoDisableObserveModeRunnable);
@@ -1092,6 +1084,15 @@ public class HostEmulationManager {
             return bytesToString(data, SELECT_APDU_HDR_LENGTH, aidLength);
         }
         return null;
+    }
+
+    private void returnToIdleStateLocked() {
+        mPendingPollingLoopFrames = null;
+        mPollingFramesToSend = null;
+        mUnprocessedPollingFrames = null;
+        resetActiveService();
+        mPollingLoopState = PollingLoopState.EVALUATING_POLLING_LOOP;
+        mState = STATE_IDLE;
     }
 
     private void resetActiveService() {
