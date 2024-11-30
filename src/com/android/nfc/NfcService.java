@@ -2134,7 +2134,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                     Arrays.asList(mContext.getResources().getStringArray(R.array.nfc_allow_list)));
             if (!allowlist.isEmpty() && !allowlist.contains(pkg)) {
                 Intent allowUsingNfcIntent = new Intent()
-                        .putExtra(APP_NAME_ENABLING_NFC, getAppName(pkg, mUserId))
+                        .putExtra(APP_NAME_ENABLING_NFC, getAppName(pkg, getUserId()))
                         .setClass(mContext, NfcEnableAllowlistActivity.class);
 
                 mContext.startActivityAsUser(allowUsingNfcIntent, UserHandle.CURRENT);
