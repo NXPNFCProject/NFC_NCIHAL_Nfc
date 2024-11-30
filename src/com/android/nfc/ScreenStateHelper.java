@@ -2,7 +2,9 @@ package com.android.nfc;
 
 import android.app.KeyguardManager;
 import android.content.Context;
+import android.hardware.display.DisplayManager;
 import android.os.PowerManager;
+import android.view.Display;
 
 /**
  * Helper class for determining the current screen state for NFC activities.
@@ -21,14 +23,25 @@ class ScreenStateHelper {
 
     private final PowerManager mPowerManager;
     private final KeyguardManager mKeyguardManager;
+    private final DisplayManager mDisplayManager;
 
     ScreenStateHelper(Context context) {
         mKeyguardManager = context.getSystemService(KeyguardManager.class);
         mPowerManager = context.getSystemService(PowerManager.class);
+        mDisplayManager = context.getSystemService(DisplayManager.class);
+    }
+
+    private boolean isDisplayOn() {
+        Display display = mDisplayManager.getDisplay(Display.DEFAULT_DISPLAY);
+        return display.getState() == Display.STATE_ON;
     }
 
     int checkScreenState() {
-        if (!mPowerManager.isInteractive()) {
+        return checkScreenState(false /* checkDisplayState */);
+    }
+
+    int checkScreenState(boolean checkDisplayState) {
+        if (!mPowerManager.isInteractive() || (checkDisplayState && !isDisplayOn())) {
             if (mKeyguardManager.isKeyguardLocked()) {
                 return SCREEN_STATE_OFF_LOCKED;
             } else {
