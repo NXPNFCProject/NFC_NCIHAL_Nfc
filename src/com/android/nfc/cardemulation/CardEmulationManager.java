@@ -954,11 +954,6 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
 
             return true;
         }
-
-        @Override
-        public boolean isEuiccSupported() {
-            return mContext.getResources().getBoolean(R.bool.enable_euicc_support);
-        }
     }
 
     final ForegroundUtils.Callback mForegroundCallback = new ForegroundCallbackImpl();
