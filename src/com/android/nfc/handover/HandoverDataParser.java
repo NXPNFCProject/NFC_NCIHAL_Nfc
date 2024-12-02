@@ -341,12 +341,12 @@ public class HandoverDataParser {
         byte[] type = r.getType();
 
         // Check for BT OOB record
-        if (r.getTnf() == NdefRecord.TNF_MIME_MEDIA && Arrays.equals(r.getType(), TYPE_BT_OOB)) {
+        if (tnf == NdefRecord.TNF_MIME_MEDIA && Arrays.equals(type, TYPE_BT_OOB)) {
             return parseBtOob(ByteBuffer.wrap(r.getPayload()));
         }
 
         // Check for BLE OOB record
-        if (r.getTnf() == NdefRecord.TNF_MIME_MEDIA && Arrays.equals(r.getType(), TYPE_BLE_OOB)) {
+        if (tnf == NdefRecord.TNF_MIME_MEDIA && Arrays.equals(type, TYPE_BLE_OOB)) {
             return parseBleOob(ByteBuffer.wrap(r.getPayload()));
         }
 
