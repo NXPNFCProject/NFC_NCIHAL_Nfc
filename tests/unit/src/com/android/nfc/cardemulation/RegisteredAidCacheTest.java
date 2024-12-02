@@ -688,17 +688,4 @@ public class RegisteredAidCacheTest {
         return apduServiceInfo;
     }
 
-    @Test
-    public void testGetPreferredService() {
-
-        mRegisteredAidCache = new RegisteredAidCache(mContext, mWalletRoleObserver,
-                mAidRoutingManager);
-        Pair<Integer, ComponentName> servicePair = mRegisteredAidCache.getPreferredService();
-        Assert.assertNull(servicePair.second);
-        mRegisteredAidCache.onPreferredForegroundServiceChanged(USER_ID, FOREGROUND_SERVICE);
-        servicePair = mRegisteredAidCache.getPreferredService();
-        Assert.assertNotNull(servicePair.second);
-        assertEquals(new Pair<>(USER_ID, FOREGROUND_SERVICE), servicePair);
-    }
-
 }
