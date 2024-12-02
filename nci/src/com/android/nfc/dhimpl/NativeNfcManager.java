@@ -54,6 +54,7 @@ import com.android.nfc.NfcVendorNciResponse;
 import com.android.nfc.NfcProprietaryCaps;
 
 import java.io.FileDescriptor;
+import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
@@ -489,7 +490,8 @@ public class NativeNfcManager implements DeviceHost {
     private native void doDump(FileDescriptor fd);
 
     @Override
-    public void dump(FileDescriptor fd) {
+    public void dump(PrintWriter pw, FileDescriptor fd) {
+        pw.println("Native Proprietary Caps=" + mProprietaryCaps);
         doDump(fd);
     }
 
