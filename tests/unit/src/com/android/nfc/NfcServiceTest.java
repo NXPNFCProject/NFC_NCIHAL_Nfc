@@ -61,7 +61,9 @@ import android.nfc.NdefMessage;
 import android.nfc.NfcAdapter;
 import android.nfc.NfcAntennaInfo;
 import android.nfc.NfcServiceManager;
+import android.nfc.Tag;
 import android.nfc.cardemulation.CardEmulation;
+import android.nfc.tech.Ndef;
 import android.nfc.tech.TagTechnology;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -144,6 +146,7 @@ public final class NfcServiceTest {
         mLooper = new TestLooper();
         mStaticMockSession = ExtendedMockito.mockitoSession()
                 .mockStatic(NfcProperties.class)
+                .mockStatic(android.nfc.Flags.class)
                 .mockStatic(NfcStatsLog.class)
                 .strictness(Strictness.LENIENT)
                 .startMocking();
@@ -189,6 +192,9 @@ public final class NfcServiceTest {
     }
 
     private void createNfcService() {
+        when(android.nfc.Flags.enableNfcCharging()).thenReturn(true);
+        when(mPackageManager.hasSystemFeature(PackageManager.FEATURE_NFC_CHARGING))
+                .thenReturn(true);
         mNfcService = new NfcService(mApplication, mNfcInjector);
         mLooper.dispatchAll();
         verify(mNfcInjector).makeDeviceHost(mDeviceHostListener.capture());
@@ -625,5 +631,48 @@ public final class NfcServiceTest {
                 .sendBroadcastAsUser(mIntentArgumentCaptor.capture(), any());
         Intent intent = mIntentArgumentCaptor.getValue();
         Assert.assertEquals(ACTION_PREFERRED_PAYMENT_CHANGED, intent.getAction());
+    }
+
+    @Test
+    public void testMSG_NDEF_TAG() {
+        Handler handler = mNfcService.getHandler();
+        Assert.assertNotNull(handler);
+        Message msg = handler.obtainMessage(NfcService.MSG_NDEF_TAG);
+        mNfcService.mState = NfcAdapter.STATE_ON;
+        DeviceHost.TagEndpoint tagEndpoint = mock(DeviceHost.TagEndpoint.class);
+        when(tagEndpoint.getConnectedTechnology()).thenReturn(TagTechnology.NDEF);
+        NdefMessage ndefMessage = mock(NdefMessage.class);
+        when(tagEndpoint.findAndReadNdef()).thenReturn(ndefMessage);
+        msg.obj = tagEndpoint;
+        handler.handleMessage(msg);
+        verify(tagEndpoint, atLeastOnce()).startPresenceChecking(anyInt(), any());
+    }
+
+    @Test
+    public void testMsg_Ndef_Tag_Wlc_Enabled() {
+        Handler handler = mNfcService.getHandler();
+        Assert.assertNotNull(handler);
+        Message msg = handler.obtainMessage(NfcService.MSG_NDEF_TAG);
+        mNfcService.mState = NfcAdapter.STATE_ON;
+        DeviceHost.TagEndpoint tagEndpoint = mock(DeviceHost.TagEndpoint.class);
+        when(tagEndpoint.getConnectedTechnology()).thenReturn(TagTechnology.NDEF);
+        when(tagEndpoint.getUid()).thenReturn(NfcService
+                .hexStringToBytes("0x040000010100000000000000"));
+        when(tagEndpoint.getTechList()).thenReturn(new int[]{Ndef.NDEF});
+        when(tagEndpoint.getTechExtras()).thenReturn(new Bundle[]{});
+        when(tagEndpoint.getHandle()).thenReturn(1);
+        NdefMessage ndefMessage = mock(NdefMessage.class);
+        when(tagEndpoint.findAndReadNdef()).thenReturn(ndefMessage);
+        msg.obj = tagEndpoint;
+        mNfcService.mIsWlcEnabled = true;
+        mNfcService.mIsRWCapable = true;
+        handler.handleMessage(msg);
+        verify(tagEndpoint, atLeastOnce()).startPresenceChecking(anyInt(), any());
+        ArgumentCaptor<Tag> tagCaptor = ArgumentCaptor
+                .forClass(Tag.class);
+        verify(mNfcDispatcher).dispatchTag(tagCaptor.capture());
+        Tag tag = tagCaptor.getValue();
+        Assert.assertNotNull(tag);
+        Assert.assertEquals("android.nfc.tech.Ndef", tag.getTechList()[0]);
     }
 }
