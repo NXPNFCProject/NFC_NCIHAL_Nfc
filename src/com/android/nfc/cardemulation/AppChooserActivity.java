@@ -213,7 +213,13 @@ public class AppChooserActivity extends AppCompatActivity
         private List<DisplayAppInfo> mList;
 
         public ListAdapter(Context context, ArrayList<ApduServiceInfo> services) {
-            mInflater = context.getSystemService(LayoutInflater.class);
+            LayoutInflater inflater = null;
+            try {
+                inflater = context.getSystemService(LayoutInflater.class);
+            } catch (Exception e) {
+                Log.e(TAG, "Initiate mInflater failed.", e);
+            }
+            mInflater = inflater;
             // For each component, get the corresponding app name and icon
             PackageManager pm = getPackageManager();
             mList = new ArrayList<DisplayAppInfo>();
@@ -256,7 +262,7 @@ public class AppChooserActivity extends AppCompatActivity
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             View view;
-            if (convertView == null) {
+            if (convertView == null && mInflater != null) {
                 if (mIsPayment) {
                     view = mInflater.inflate(
                             com.android.nfc.R.layout.cardemu_payment_item, parent, false);
