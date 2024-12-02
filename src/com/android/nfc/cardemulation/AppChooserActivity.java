@@ -97,6 +97,11 @@ public class AppChooserActivity extends AppCompatActivity
         boolean isPayment = CardEmulation.CATEGORY_PAYMENT.equals(mCategory);
 
         final NfcAdapter adapter = NfcAdapter.getDefaultAdapter(this);
+        if (adapter == null) {
+            Log.e(TAG, "adapter is null.");
+            finish();
+            return;
+        }
         mCardEmuManager = CardEmulation.getInstance(adapter);
 
         final ActivityManager am = getSystemService(ActivityManager.class);
