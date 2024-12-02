@@ -2534,6 +2534,10 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
             } else if (((pollTech & NfcAdapter.FLAG_SET_DEFAULT_TECH) != 0
                         || (listenTech & NfcAdapter.FLAG_SET_DEFAULT_TECH) != 0)) {
 
+                if (!isNfcEnabled()) {
+                    Log.d(TAG, "updateDiscoveryTechnology: NFC is not enabled.");
+                    return;
+                }
                 if ((pollTech & NfcAdapter.FLAG_SET_DEFAULT_TECH) != 0) {
                     if ((pollTech & NfcAdapter.FLAG_READER_KEEP) == 0 &&
                         (pollTech & NfcAdapter.FLAG_USE_ALL_TECH)
