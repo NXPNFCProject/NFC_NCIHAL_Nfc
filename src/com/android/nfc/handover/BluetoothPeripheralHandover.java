@@ -135,6 +135,7 @@ public class BluetoothPeripheralHandover implements BluetoothProfile.ServiceList
     BluetoothA2dp mA2dp;
     BluetoothHeadset mHeadset;
     BluetoothHidHost mInput;
+    boolean mShouldAbortBroadcast = false;
 
     public interface Callback {
         public void onBluetoothPeripheralHandoverComplete(boolean connected);
@@ -190,6 +191,7 @@ public class BluetoothPeripheralHandover implements BluetoothProfile.ServiceList
         IntentFilter filter = new IntentFilter();
         filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
         filter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
+        filter.addAction(BluetoothDevice.ACTION_PAIRING_REQUEST);
         filter.addAction(BluetoothA2dp.ACTION_CONNECTION_STATE_CHANGED);
         filter.addAction(BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED);
         filter.addAction(BluetoothHidHost.ACTION_CONNECTION_STATE_CHANGED);
@@ -553,6 +555,14 @@ public class BluetoothPeripheralHandover implements BluetoothProfile.ServiceList
                 mHidResult = RESULT_DISCONNECTED;
                 nextStep();
             }
+        } else if (BluetoothDevice.ACTION_PAIRING_REQUEST.equals(action)) {
+            int type = intent.getIntExtra(BluetoothDevice.EXTRA_PAIRING_VARIANT,
+                BluetoothDevice.ERROR);
+            if (type == BluetoothDevice.PAIRING_VARIANT_CONSENT) {
+                mDevice.setPairingConfirmation(true);
+                mShouldAbortBroadcast = true;
+                Log.d(TAG, "PAIRING_REQUEST is Auto Confirmed");
+            }
         }
     }
 
@@ -683,6 +693,10 @@ public class BluetoothPeripheralHandover implements BluetoothProfile.ServiceList
         @Override
         public void onReceive(Context context, Intent intent) {
             handleIntent(intent);
+            if (mShouldAbortBroadcast) {
+                mShouldAbortBroadcast = false;
+                abortBroadcast();
+            }
         }
     };
 
