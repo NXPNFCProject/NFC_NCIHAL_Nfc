@@ -15,6 +15,7 @@
  */
 package com.android.nfc;
 
+import static com.android.nfc.NfcService.INVALID_NATIVE_HANDLE;
 import static com.android.nfc.NfcService.PREF_NFC_ON;
 import static com.android.nfc.NfcService.SOUND_END;
 import static com.android.nfc.NfcService.SOUND_ERROR;
@@ -30,10 +31,8 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.clearInvocations;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -57,7 +56,6 @@ import android.nfc.NdefMessage;
 import android.nfc.NfcAdapter;
 import android.nfc.NfcAntennaInfo;
 import android.nfc.NfcServiceManager;
-import android.nfc.tech.Ndef;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -86,6 +84,7 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.MockitoSession;
 import org.mockito.quality.Strictness;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -126,6 +125,7 @@ public final class NfcServiceTest {
     @Captor ArgumentCaptor<AlarmManager.OnAlarmListener> mAlarmListener;
     @Captor ArgumentCaptor<IBinder> mIBinderArgumentCaptor;
     @Captor ArgumentCaptor<Integer> mSoundCaptor;
+    @Captor ArgumentCaptor<Intent> mIntentArgumentCaptor;
     TestLooper mLooper;
     NfcService mNfcService;
     private MockitoSession mStaticMockSession;
@@ -475,5 +475,50 @@ public final class NfcServiceTest {
                 anyFloat(), anyFloat(), anyInt(), anyInt(), anyFloat());
         Integer value = mSoundCaptor.getValue();
         Assert.assertEquals(mNfcService.mErrorSound, (int) value);
+    }
+
+    @Test
+    public void testMsg_Rf_Field_Activated() {
+        Handler handler = mNfcService.getHandler();
+        Assert.assertNotNull(handler);
+        Message msg = handler.obtainMessage(NfcService.MSG_RF_FIELD_ACTIVATED);
+        List<String> userlist = new ArrayList<>();
+        userlist.add("com.android.nfc");
+        mNfcService.mNfcEventInstalledPackages.put(1, userlist);
+        mNfcService.mIsSecureNfcEnabled = true;
+        mNfcService.mIsRequestUnlockShowed = false;
+        when(mKeyguardManager.isKeyguardLocked()).thenReturn(true);
+        handler.handleMessage(msg);
+        verify(mApplication).sendBroadcastAsUser(mIntentArgumentCaptor.capture(), any());
+        Intent intent = mIntentArgumentCaptor.getValue();
+        Assert.assertNotNull(intent);
+        Assert.assertEquals(NfcService.ACTION_RF_FIELD_ON_DETECTED, intent.getAction());
+        verify(mApplication).sendBroadcast(mIntentArgumentCaptor.capture());
+        intent = mIntentArgumentCaptor.getValue();
+        Assert.assertEquals(NfcAdapter.ACTION_REQUIRE_UNLOCK_FOR_NFC, intent.getAction());
+    }
+
+    @Test
+    public void testMsg_Rf_Field_Deactivated() {
+        Handler handler = mNfcService.getHandler();
+        Assert.assertNotNull(handler);
+        Message msg = handler.obtainMessage(NfcService.MSG_RF_FIELD_DEACTIVATED);
+        List<String> userlist = new ArrayList<>();
+        userlist.add("com.android.nfc");
+        mNfcService.mNfcEventInstalledPackages.put(1, userlist);
+        handler.handleMessage(msg);
+        verify(mApplication).sendBroadcastAsUser(mIntentArgumentCaptor.capture(), any());
+        Intent intent = mIntentArgumentCaptor.getValue();
+        Assert.assertNotNull(intent);
+        Assert.assertEquals(NfcService.ACTION_RF_FIELD_OFF_DETECTED, intent.getAction());
+    }
+
+    @Test
+    public void testMsg_Tag_Debounce() {
+        Handler handler = mNfcService.getHandler();
+        Assert.assertNotNull(handler);
+        Message msg = handler.obtainMessage(NfcService.MSG_TAG_DEBOUNCE);
+        handler.handleMessage(msg);
+        Assert.assertEquals(INVALID_NATIVE_HANDLE, mNfcService.mDebounceTagNativeHandle);
     }
 }
