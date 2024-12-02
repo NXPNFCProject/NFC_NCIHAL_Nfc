@@ -115,6 +115,7 @@ message NfcWlcStateChange {
 
 message NfcReaderOptionChange {
   required bool enable = 1;
+  required NfcAppInfo app_info = 2;
 }
 
 message NfcClearPreference {}

@@ -136,6 +136,7 @@ import com.android.nfc.cardemulation.RegisteredAidCache;
 import com.android.nfc.cardemulation.RoutingOptionManager;
 import com.android.nfc.DeviceHost.DeviceHostListener;
 import com.android.nfc.DeviceHost.TagEndpoint;
+import com.android.nfc.NfcService.EnableDisableTask;
 import com.android.nfc.dhimpl.NativeNfcManager;
 import com.android.nfc.dhimpl.NativeNfcSecureElement;
 import com.android.nfc.flags.FeatureFlags;
@@ -3009,7 +3010,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         }
 
         @Override
-        public boolean enableReaderOption(boolean enable) {
+        public boolean enableReaderOption(boolean enable, String pkg) {
             Log.d(TAG, "enableReaderOption enabled=" + enable);
             if (!mReaderOptionCapable) return false;
             NfcPermissions.enforceAdminPermissions(mContext);
@@ -3027,6 +3028,11 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                                         NfcEventProto.NfcReaderOptionChange.newBuilder()
                                                 .setEnable(enable)
                                                 .build())
+                                                .setAppInfo(
+                                                        NfcEventProto.NfcAppInfo.newBuilder()
+                                                    .setPackageName(pkg)
+                                                    .setUid(Binder.getCallingUid())
+                                                    .build())
                                 .build());
             }
             return true;
