@@ -15,6 +15,8 @@
  */
 package com.android.nfc;
 
+import static android.nfc.NfcAdapter.ACTION_PREFERRED_PAYMENT_CHANGED;
+
 import static com.android.nfc.NfcService.INVALID_NATIVE_HANDLE;
 import static com.android.nfc.NfcService.PREF_NFC_ON;
 import static com.android.nfc.NfcService.SOUND_END;
@@ -31,6 +33,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.mock;
@@ -49,6 +52,8 @@ import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.media.SoundPool;
@@ -57,6 +62,7 @@ import android.nfc.NfcAdapter;
 import android.nfc.NfcAntennaInfo;
 import android.nfc.NfcServiceManager;
 import android.nfc.cardemulation.CardEmulation;
+import android.nfc.tech.TagTechnology;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -586,5 +592,38 @@ public final class NfcServiceTest {
         handler.handleMessage(msg);
         verify(mApplication).sendBroadcastAsUser(mIntentArgumentCaptor.capture(),
                 any(), any(), any());
+    }
+
+    @Test
+    public void testMsg_Preferred_Payment_Changed()
+            throws RemoteException, PackageManager.NameNotFoundException {
+        Handler handler = mNfcService.getHandler();
+        Assert.assertNotNull(handler);
+        Message msg = handler.obtainMessage(NfcService.MSG_PREFERRED_PAYMENT_CHANGED);
+        msg.obj = 1;
+        List<String> packagesList = new ArrayList<>();
+        packagesList.add("com.android.nfc");
+        packagesList.add("com.sample.nfc");
+        mNfcService.mNfcPreferredPaymentChangedInstalledPackages.put(1, packagesList);
+        ISecureElementService iSecureElementService = mock(ISecureElementService.class);
+        IBinder iBinder = mock(IBinder.class);
+        when(iSecureElementService.asBinder()).thenReturn(iBinder);
+        when(iSecureElementService.getReaders()).thenReturn(new String[]{"com.android.nfc"});
+        when(iSecureElementService.isNfcEventAllowed(anyString(), isNull(), any(), anyInt()))
+                .thenReturn(new boolean[]{true});
+        boolean[] nfcAccess = {true};
+        when(iSecureElementService.isNfcEventAllowed(anyString(), any(), any(), anyInt()))
+                .thenReturn(nfcAccess);
+        when(mNfcInjector.connectToSeService()).thenReturn(iSecureElementService);
+        PackageInfo info = mock(PackageInfo.class);
+        ApplicationInfo applicationInfo = mock(ApplicationInfo.class);
+        applicationInfo.flags = 1;
+        info.applicationInfo = applicationInfo;
+        when(mPackageManager.getPackageInfo(anyString(), anyInt())).thenReturn(info);
+        handler.handleMessage(msg);
+        verify(mApplication, times(2))
+                .sendBroadcastAsUser(mIntentArgumentCaptor.capture(), any());
+        Intent intent = mIntentArgumentCaptor.getValue();
+        Assert.assertEquals(ACTION_PREFERRED_PAYMENT_CHANGED, intent.getAction());
     }
 }
