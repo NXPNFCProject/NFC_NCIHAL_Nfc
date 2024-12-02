@@ -898,8 +898,8 @@ void RoutingManager::updateDefaultRoute() {
 #endif
 }
 
-tNFA_TECHNOLOGY_MASK RoutingManager::updateTechnologyABRoute(int route) {
-  static const char fn[] = "RoutingManager::updateTechnologyABRoute";
+tNFA_TECHNOLOGY_MASK RoutingManager::updateTechnologyABFRoute(int route) {
+  static const char fn[] = "RoutingManager::updateTechnologyABFRoute";
 
   tNFA_STATUS nfaStat;
 
@@ -932,6 +932,14 @@ tNFA_TECHNOLOGY_MASK RoutingManager::updateTechnologyABRoute(int route) {
   else
     LOG(ERROR) << fn << "Fail to clear Tech route";
 
+  nfaStat =
+      NFA_EeClearDefaultTechRouting(mDefaultFelicaRoute, NFA_TECHNOLOGY_MASK_F);
+  if (nfaStat == NFA_STATUS_OK)
+    mRoutingEvent.wait();
+  else
+    LOG(ERROR) << fn << "Fail to clear Default Felica route";
+
+  mDefaultFelicaRoute = route;
   mDefaultOffHostRoute = route;
   return updateEeTechRouteSetting();
 }

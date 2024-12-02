@@ -303,7 +303,7 @@ public interface DeviceHost {
     void startStopPolling(boolean enable);
 
     void setIsoDepProtocolRoute(int route);
-    void setTechnologyABRoute(int route);
+    void setTechnologyABFRoute(int route);
     void clearRoutingEntry(int clearFlags);
 
     /**

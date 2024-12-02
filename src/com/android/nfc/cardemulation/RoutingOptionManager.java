@@ -99,12 +99,12 @@ public class RoutingOptionManager {
 
     public void overrideDefaultOffHostRoute(int offHostRoute) {
         mOverrideDefaultOffHostRoute = offHostRoute;
-        NfcService.getInstance().setTechnologyABRoute(offHostRoute);
+        NfcService.getInstance().setTechnologyABFRoute(offHostRoute);
     }
 
     public void recoverOverridedRoutingTable() {
         NfcService.getInstance().setIsoDepProtocolRoute(mDefaultIsoDepRoute);
-        NfcService.getInstance().setTechnologyABRoute(mDefaultOffHostRoute);
+        NfcService.getInstance().setTechnologyABFRoute(mDefaultOffHostRoute);
         mOverrideDefaultRoute = mOverrideDefaultIsoDepRoute = mOverrideDefaultOffHostRoute
             = ROUTE_UNKNOWN;
     }

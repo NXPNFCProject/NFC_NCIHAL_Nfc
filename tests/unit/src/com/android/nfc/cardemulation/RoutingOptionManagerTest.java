@@ -137,7 +137,7 @@ public class RoutingOptionManagerTest {
     manager.overrideDefaultOffHostRoute(OVERRIDDEN_OFF_HOST_ROUTE);
 
     Assert.assertEquals(OVERRIDDEN_OFF_HOST_ROUTE, manager.mOverrideDefaultOffHostRoute);
-    verify(mNfcService).setTechnologyABRoute(routeCaptor.capture());
+    verify(mNfcService).setTechnologyABFRoute(routeCaptor.capture());
     Assert.assertEquals(routeCaptor.getValue(), Integer.valueOf(OVERRIDDEN_OFF_HOST_ROUTE));
   }
 
@@ -148,7 +148,7 @@ public class RoutingOptionManagerTest {
     manager.recoverOverridedRoutingTable();
 
     verify(mNfcService).setIsoDepProtocolRoute(anyInt());
-    verify(mNfcService).setTechnologyABRoute(anyInt());
+    verify(mNfcService).setTechnologyABFRoute(anyInt());
     Assert.assertEquals(RoutingOptionManager.ROUTE_UNKNOWN, manager.mOverrideDefaultRoute);
     Assert.assertEquals(RoutingOptionManager.ROUTE_UNKNOWN, manager.mOverrideDefaultIsoDepRoute);
     Assert.assertEquals(RoutingOptionManager.ROUTE_UNKNOWN, manager.mOverrideDefaultOffHostRoute);

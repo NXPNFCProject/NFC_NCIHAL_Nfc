@@ -262,7 +262,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
     static final int MSG_DELAY_POLLING = 20;
     static final int MSG_CLEAR_ROUTING_TABLE = 21;
     static final int MSG_UPDATE_ISODEP_PROTOCOL_ROUTE = 22;
-    static final int MSG_UPDATE_TECHNOLOGY_AB_ROUTE = 23;
+    static final int MSG_UPDATE_TECHNOLOGY_ABF_ROUTE = 23;
     static final int MSG_CARD_EMULATION = 24;
     static final int MSG_SE_INIT = 59;
     static final int MSG_CLEAR_ROUTING = 62;
@@ -5191,8 +5191,8 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         sendMessage(MSG_UPDATE_ISODEP_PROTOCOL_ROUTE, route);
     }
 
-    public void setTechnologyABRoute(int route) {
-        sendMessage(MSG_UPDATE_TECHNOLOGY_AB_ROUTE, route);
+    public void setTechnologyABFRoute(int route) {
+        sendMessage(MSG_UPDATE_TECHNOLOGY_ABF_ROUTE, route);
     }
 
     void sendMessage(int what, Object obj) {
@@ -5621,9 +5621,9 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                   if (DBG) Log.d(TAG, "Update IsoDep Protocol Route");
                   mDeviceHost.setIsoDepProtocolRoute((Integer)msg.obj);
                   break;
-                case MSG_UPDATE_TECHNOLOGY_AB_ROUTE:
-                  if (DBG) Log.d(TAG, "Update technology A&B route");
-                  mDeviceHost.setTechnologyABRoute((Integer)msg.obj);
+                case MSG_UPDATE_TECHNOLOGY_ABF_ROUTE:
+                  if (DBG) Log.d(TAG, "Update technology A,B&F route");
+                  mDeviceHost.setTechnologyABFRoute((Integer)msg.obj);
                   break;
 
                 case MSG_SE_INIT:
