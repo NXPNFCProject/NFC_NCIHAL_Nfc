@@ -125,6 +125,9 @@ public class RegisteredServicesCache {
     final ServiceParser mServiceParser;
     final RoutingOptionManager mRoutingOptionManager;
 
+    final Intent mHostApduServiceIntent = new Intent(HostApduService.SERVICE_INTERFACE);
+    final Intent mOffHostApduServiceIntent = new Intent(OffHostApduService.SERVICE_INTERFACE);
+
     public interface Callback {
         /**
          * ServicesUpdated for specific userId.
@@ -437,11 +440,11 @@ public class RegisteredServicesCache {
         ArrayList<ApduServiceInfo> validServices = new ArrayList<ApduServiceInfo>();
 
         List<ResolveInfo> resolvedServices = new ArrayList<>(pm.queryIntentServicesAsUser(
-                new Intent(HostApduService.SERVICE_INTERFACE),
+                mHostApduServiceIntent,
                 ResolveInfoFlags.of(PackageManager.GET_META_DATA), UserHandle.of(userId)));
 
         List<ResolveInfo> resolvedOffHostServices = pm.queryIntentServicesAsUser(
-                new Intent(OffHostApduService.SERVICE_INTERFACE),
+                mOffHostApduServiceIntent,
                 ResolveInfoFlags.of(PackageManager.GET_META_DATA), UserHandle.of(userId));
         resolvedServices.addAll(resolvedOffHostServices);
         for (ResolveInfo resolvedService : resolvedServices) {
