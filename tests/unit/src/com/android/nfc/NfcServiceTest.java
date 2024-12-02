@@ -122,7 +122,6 @@ public final class NfcServiceTest {
     @Mock SoundPool mSoundPool;
     @Captor ArgumentCaptor<DeviceHost.DeviceHostListener> mDeviceHostListener;
     @Captor ArgumentCaptor<BroadcastReceiver> mGlobalReceiver;
-    @Captor ArgumentCaptor<AlarmManager.OnAlarmListener> mAlarmListener;
     @Captor ArgumentCaptor<IBinder> mIBinderArgumentCaptor;
     @Captor ArgumentCaptor<Integer> mSoundCaptor;
     @Captor ArgumentCaptor<Intent> mIntentArgumentCaptor;
@@ -169,6 +168,7 @@ public final class NfcServiceTest {
         when(mResources.getIntArray(R.array.antenna_y)).thenReturn(new int[0]);
         when(NfcProperties.info_antpos_X()).thenReturn(List.of());
         when(NfcProperties.info_antpos_Y()).thenReturn(List.of());
+        when(NfcProperties.initialized()).thenReturn(Optional.of(Boolean.TRUE));
         createNfcService();
     }
 
@@ -221,6 +221,21 @@ public final class NfcServiceTest {
     }
 
     @Test
+    public void testEnable_WheOemExtensionEnabledAndNotInitialized() throws Exception {
+        when(mResources.getBoolean(R.bool.enable_oem_extension)).thenReturn(true);
+        when(NfcProperties.initialized()).thenReturn(Optional.of(Boolean.FALSE));
+
+        createNfcService();
+
+        when(mDeviceHost.initialize()).thenReturn(true);
+        when(mPreferences.getBoolean(eq(PREF_NFC_ON), anyBoolean())).thenReturn(true);
+        mNfcService.mNfcAdapter.enable(PKG_NAME);
+        verify(mPreferencesEditor, never()).putBoolean(PREF_NFC_ON, true);
+        mLooper.dispatchAll();
+        verify(mDeviceHost, never()).initialize();
+    }
+
+    @Test
     public void testBootupWithNfcOn() throws Exception {
         when(mPreferences.getBoolean(eq(PREF_NFC_ON), anyBoolean())).thenReturn(true);
         mNfcService = new NfcService(mApplication, mNfcInjector);
@@ -246,20 +261,7 @@ public final class NfcServiceTest {
         when(mResources.getBoolean(R.bool.enable_oem_extension)).thenReturn(true);
         createNfcService();
 
-        mNfcService.mNfcAdapter.allowBoot();
-        mLooper.dispatchAll();
-        verify(mDeviceHost).initialize();
-    }
-
-    @Test
-    public void testBootupWithNfcOn_WhenOemExtensionEnabled_ThenTimeout() throws Exception {
-        when(mPreferences.getBoolean(eq(PREF_NFC_ON), anyBoolean())).thenReturn(true);
-        when(mResources.getBoolean(R.bool.enable_oem_extension)).thenReturn(true);
-        createNfcService();
-        verify(mAlarmManager).setExact(
-                anyInt(), anyLong(), anyString(), mAlarmListener.capture(), any());
-
-        mAlarmListener.getValue().onAlarm();
+        mNfcService.mNfcAdapter.triggerInitialization();
         mLooper.dispatchAll();
         verify(mDeviceHost).initialize();
     }
