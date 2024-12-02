@@ -167,6 +167,7 @@ static int sPresCheckErrCnt = 0;
 static int sPresCheckStatus = 0;
 static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded);
 static bool switchRfInterface(tNFA_INTF_TYPE rfInterface);
+extern bool gIsDtaEnabled;
 
 /*******************************************************************************
 **
@@ -1148,6 +1149,14 @@ static jbyteArray nativeNfcTag_doTransceive(JNIEnv* e, jobject o,
     LOG(DEBUG) << StringPrintf("%s: tag not active", __func__);
     return NULL;
   }
+
+  if (gIsDtaEnabled == true) {
+    LOG(DEBUG) << StringPrintf("%s: DTA; bypass reselection of T2T or T4T tag",
+                               __func__);
+    sRfInterfaceMutex.unlock();
+    return 0;  // success
+  } else
+    LOG(DEBUG) << StringPrintf("%s: DTA; bypass flag not set", __func__);
 
   NfcTag& natTag = NfcTag::getInstance();
   NfcTagExtns& nfcTagExtns = NfcTagExtns::getInstance();
