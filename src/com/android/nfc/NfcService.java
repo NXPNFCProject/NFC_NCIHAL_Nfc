@@ -497,6 +497,9 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
     HashMap<Integer, HashMap<String, Boolean>> mTagAppPrefList =
             new HashMap<Integer, HashMap<String, Boolean>>();
 
+    // Tag app preference blocked list from overlay.
+    List<String> mTagAppDefaultBlockList = new ArrayList<String>();
+
     // cached version of installed packages requesting Android.permission.NFC_TRANSACTION_EVENTS
     // for current user and profiles. The Integer part is the userId.
     HashMap<Integer, List<String>> mNfcEventInstalledPackages =
@@ -1216,6 +1219,12 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
 
         mIsTagAppPrefSupported =
             mContext.getResources().getBoolean(R.bool.tag_intent_app_pref_supported);
+        if (mIsTagAppPrefSupported) {
+            // Get default blocked package list from resource file overlay
+            mTagAppDefaultBlockList = new ArrayList<>(
+                    Arrays.asList(mContext.getResources().getStringArray(
+                            R.array.tag_intent_blocked_app_list)));
+        }
 
         Uri uri = Settings.Global.getUriFor(Constants.SETTINGS_SATELLITE_MODE_ENABLED);
         if (uri == null) {
@@ -1314,6 +1323,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         mTagAppPrefList.clear();
         mTagAppPrefListPrefs = mContext.getSharedPreferences(PREF_TAG_APP_LIST,
                 Context.MODE_PRIVATE);
+        boolean changed = false;
         try {
             if (mTagAppPrefListPrefs != null) {
                 UserManager um = mContext.createContextAsUser(
@@ -1336,6 +1346,13 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                             if (DBG) Log.d(TAG, "uid:" + userId + "key:" + key + ": " + value);
                         }
                     }
+                    // Put default blocked pkgs if not exist in the list
+                    for (String pkg : mTagAppDefaultBlockList) {
+                        if (!map.containsKey(pkg) && isPackageInstalled(pkg, userId)) {
+                            map.put(pkg, false);
+                            changed = true;
+                        }
+                    }
                     mTagAppPrefList.put(userId, map);
                 }
             } else {
@@ -1344,6 +1361,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         } catch (JSONException e) {
             Log.e(TAG, "JSONException: " + e);
         }
+        if (changed) storeTagAppPrefList();
     }
 
     private void storeTagAppPrefList() {
@@ -1385,8 +1403,10 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
     }
     // Remove obsolete entries
     // return true if the preference list changed.
-    private boolean renewTagAppPrefList() {
+    private boolean renewTagAppPrefList(String action) {
         if (!mIsTagAppPrefSupported) return false;
+        if (!action.equals(Intent.ACTION_PACKAGE_ADDED)
+                && !action.equals(Intent.ACTION_PACKAGE_REMOVED)) return false;
         boolean changed = false;
         UserManager um = mContext.createContextAsUser(
                 UserHandle.of(ActivityManager.getCurrentUser()), 0)
@@ -1395,8 +1415,20 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         for (UserHandle uh : luh) {
             int userId = uh.getIdentifier();
             synchronized (NfcService.this) {
-                changed = mTagAppPrefList.getOrDefault(userId, new HashMap<>())
-                        .keySet().removeIf(k2 -> !isPackageInstalled(k2, userId));
+                if (action.equals(Intent.ACTION_PACKAGE_ADDED)) {
+                    HashMap<String, Boolean> map =
+                            mTagAppPrefList.getOrDefault(userId, new HashMap<>());
+                    for (String pkg : mTagAppDefaultBlockList) {
+                        if (!map.containsKey(pkg) && isPackageInstalled(pkg, userId)) {
+                            map.put(pkg, false);
+                            changed = true;
+                            mTagAppPrefList.put(userId, map);
+                        }
+                    }
+                } else if (action.equals(Intent.ACTION_PACKAGE_REMOVED)) {
+                    changed |= mTagAppPrefList.getOrDefault(userId, new HashMap<>())
+                            .keySet().removeIf(k2 -> !isPackageInstalled(k2, userId));
+                }
             }
         }
         if (DBG) Log.d(TAG, "TagAppPreference changed " + changed);
@@ -6476,8 +6508,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                     action.equals(Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE) ||
                     action.equals(Intent.ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE)) {
                 updatePackageCache();
-                if (action.equals(Intent.ACTION_PACKAGE_REMOVED)
-                        && renewTagAppPrefList()) storeTagAppPrefList();
+                if (renewTagAppPrefList(action)) storeTagAppPrefList();
             } else if (action.equals(Intent.ACTION_SHUTDOWN)) {
                 if (DBG) Log.d(TAG, "Shutdown received with UserId: " +
                                  getSendingUser().getIdentifier());
