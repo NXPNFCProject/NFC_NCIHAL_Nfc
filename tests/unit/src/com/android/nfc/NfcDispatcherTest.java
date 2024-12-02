@@ -52,6 +52,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoSession;
 import org.mockito.quality.Strictness;
@@ -62,6 +63,7 @@ import java.nio.charset.StandardCharsets;
 public final class NfcDispatcherTest {
 
     private static final String TAG = NfcDispatcherTest.class.getSimpleName();
+    @Mock private NfcInjector mNfcInjector;
     private MockitoSession mStaticMockSession;
     private NfcDispatcher mNfcDispatcher;
 
@@ -108,7 +110,7 @@ public final class NfcDispatcherTest {
 
         InstrumentationRegistry.getInstrumentation().runOnMainSync(
               () -> mNfcDispatcher = new NfcDispatcher(mockContext,
-                      new HandoverDataParser(), false));
+                      new HandoverDataParser(), mNfcInjector, false));
         Assert.assertNotNull(mNfcDispatcher);
     }
 

@@ -100,6 +100,7 @@ class NfcDispatcher {
     private final ScreenStateHelper mScreenStateHelper;
     private final NfcUnlockManager mNfcUnlockManager;
     private final boolean mDeviceSupportsBluetooth;
+    private final NfcInjector mNfcInjector;
     private final Handler mMessageHandler = new MessageHandler();
     private final Messenger mMessenger = new Messenger(mMessageHandler);
     private AtomicBoolean mBluetoothEnabledByNfc = new AtomicBoolean();
@@ -116,12 +117,14 @@ class NfcDispatcher {
 
     NfcDispatcher(Context context,
                   HandoverDataParser handoverDataParser,
+                  NfcInjector nfcInjector,
                   boolean provisionOnly) {
         mContext = context;
         mTechListFilters = new RegisteredComponentCache(mContext,
                 NfcAdapter.ACTION_TECH_DISCOVERED, NfcAdapter.ACTION_TECH_DISCOVERED);
         mContentResolver = context.getContentResolver();
         mHandoverDataParser = handoverDataParser;
+        mNfcInjector = nfcInjector;
         mScreenStateHelper = new ScreenStateHelper(context);
         mNfcUnlockManager = NfcUnlockManager.getInstance();
         mDeviceSupportsBluetooth = BluetoothAdapter.getDefaultAdapter() != null;
@@ -261,6 +264,20 @@ class NfcDispatcher {
 
         public Intent setNdefIntent() {
             intent.setAction(NfcAdapter.ACTION_NDEF_DISCOVERED);
+            if (ndefUri != null) {
+                intent.setData(ndefUri);
+                return intent;
+            } else if (ndefMimeType != null) {
+                intent.setType(ndefMimeType);
+                return intent;
+            }
+            return null;
+        }
+
+        public Intent setViewIntent() {
+            intent.setAction(Intent.ACTION_VIEW);
+            intent.addCategory(Intent.CATEGORY_DEFAULT);
+            intent.addCategory(Intent.CATEGORY_BROWSABLE);
             if (ndefUri != null) {
                 intent.setData(ndefUri);
                 return intent;
@@ -846,19 +863,25 @@ class NfcDispatcher {
         // regular launch
         dispatch.intent.setPackage(null);
 
-        if (dispatch.isWebIntent() && dispatch.hasIntentReceiver()) {
-            if (showWebLinkConfirmation(dispatch)) {
-                if (DBG) Log.i(TAG, "matched Web link - prompting user");
-                NfcStatsLog.write(
-                        NfcStatsLog.NFC_TAG_OCCURRED,
-                        NfcStatsLog.NFC_TAG_OCCURRED__TYPE__URL,
-                        -1,
-                        dispatch.tag.getTechCodeList(),
-                        BluetoothProtoEnums.MAJOR_CLASS_UNCATEGORIZED,
-                        "");
-                return true;
+        if (dispatch.isWebIntent()) {
+            if (mNfcInjector.getFeatureFlags().sendViewIntentForUrlTagDispatch()) {
+                dispatch.setViewIntent();
+                Log.d(TAG, "Sending VIEW intent instead of NFC specific intent");
             }
-            return false;
+            if (dispatch.hasIntentReceiver()) {
+                if (showWebLinkConfirmation(dispatch)) {
+                    if (DBG) Log.i(TAG, "matched Web link - prompting user");
+                    NfcStatsLog.write(
+                            NfcStatsLog.NFC_TAG_OCCURRED,
+                            NfcStatsLog.NFC_TAG_OCCURRED__TYPE__URL,
+                            -1,
+                            dispatch.tag.getTechCodeList(),
+                            BluetoothProtoEnums.MAJOR_CLASS_UNCATEGORIZED,
+                            "");
+                    return true;
+                }
+                return false;
+            }
         }
 
         for (UserHandle uh : luh) {

@@ -33,3 +33,10 @@ flag {
         purpose: PURPOSE_BUGFIX
   }
 }
+
+flag {
+    name: "send_view_intent_for_url_tag_dispatch"
+    namespace: "nfc"
+    description: "Send VIEW intent instead of NFC_TAG_DISCOVERED for URL tag dispatch"
+    bug: "345570691"
+}

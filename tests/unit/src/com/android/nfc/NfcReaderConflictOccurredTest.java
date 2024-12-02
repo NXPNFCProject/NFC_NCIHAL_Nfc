@@ -57,6 +57,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoSession;
 import org.mockito.quality.Strictness;
@@ -65,6 +66,7 @@ import org.mockito.quality.Strictness;
 public final class NfcReaderConflictOccurredTest {
 
     private static final String TAG = NfcReaderConflictOccurredTest.class.getSimpleName();
+    @Mock private NfcInjector mNfcInjector;
     private MockitoSession mStaticMockSession;
     private NfcDispatcher mNfcDispatcher;
 
@@ -119,7 +121,7 @@ public final class NfcReaderConflictOccurredTest {
 
         InstrumentationRegistry.getInstrumentation().runOnMainSync(
               () -> mNfcDispatcher = new NfcDispatcher(
-                      mockContext, new HandoverDataParser(), false));
+                      mockContext, new HandoverDataParser(), mNfcInjector, false));
         Assert.assertNotNull(mNfcDispatcher);
     }
 
