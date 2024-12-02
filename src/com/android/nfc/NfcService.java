@@ -4728,7 +4728,6 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
             if (mNfcStateCheck && !isNfcEnabledOrShuttingDown()) {
                 return;
             }
-            WatchDogThread watchDog = new WatchDogThread("applyRouting", ROUTING_WATCHDOG_MS);
             if (mInProvisionMode) {
                 mInProvisionMode = Settings.Global.getInt(mContentResolver,
                         Settings.Global.DEVICE_PROVISIONED, 0) == 0;
@@ -4737,6 +4736,10 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                     // and allow handover transfers.
                     mNfcDispatcher.disableProvisioningMode();
                 }
+            }
+            if (mPollingPaused) {
+                Log.d(TAG, "Not updating discovery parameters, polling paused.");
+                return;
             }
             // Special case: if we're transitioning to unlocked state while
             // still talking to a tag, postpone re-configuration.
@@ -4747,6 +4750,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                 return;
             }
 
+            WatchDogThread watchDog = new WatchDogThread("applyRouting", ROUTING_WATCHDOG_MS);
             try {
                 watchDog.start();
                 // Compute new polling parameters
