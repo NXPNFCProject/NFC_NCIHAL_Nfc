@@ -122,11 +122,12 @@ public class WalletRoleObserverTest {
     @Test
     public void testCallbackFiringOnRoleChange_roleWallet() {
         List<String> roleHolders = ImmutableList.of(WALLET_ROLE_HOLDER);
-        when(mRoleManager.getRoleHolders(eq(RoleManager.ROLE_WALLET))).thenReturn(roleHolders);
+        when(mRoleManager.getRoleHoldersAsUser(eq(RoleManager.ROLE_WALLET), eq(USER_HANDLE)))
+                .thenReturn(roleHolders);
         mWalletRoleObserver.mOnRoleHoldersChangedListener
                 .onRoleHoldersChanged(RoleManager.ROLE_WALLET, USER_HANDLE);
 
-        verify(mRoleManager).getRoleHolders(mRoleNameCaptor.capture());
+        verify(mRoleManager).getRoleHoldersAsUser(mRoleNameCaptor.capture(), eq(USER_HANDLE));
         verify(mCallback).onWalletRoleHolderChanged(mRoleHolderCaptor.capture(), eq(USER_ID));
         Assert.assertEquals(RoleManager.ROLE_WALLET, mRoleNameCaptor.getValue());
         Assert.assertEquals(WALLET_ROLE_HOLDER, mRoleHolderCaptor.getValue());

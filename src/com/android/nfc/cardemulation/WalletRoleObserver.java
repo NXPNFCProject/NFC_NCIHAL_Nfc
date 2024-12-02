@@ -54,7 +54,8 @@ public class WalletRoleObserver {
             if (!roleName.equals(RoleManager.ROLE_WALLET)) {
                 return;
             }
-            List<String> roleHolders = roleManager.getRoleHolders(RoleManager.ROLE_WALLET);
+            List<String> roleHolders = roleManager.getRoleHoldersAsUser(RoleManager.ROLE_WALLET,
+                    user);
             String roleHolder = roleHolders.isEmpty() ? null : roleHolders.get(0);
             Log.i(TAG, "Wallet role changed for user " + user.getIdentifier() + " to "
                        + roleHolder);
