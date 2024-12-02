@@ -17,6 +17,7 @@
 package com.android.nfc;
 
 import android.content.Context;
+import android.nfc.INfcDta;
 import android.os.Binder;
 import android.os.Process;
 import android.os.RemoteException;
@@ -115,6 +116,10 @@ public class NfcShellCommand extends BasicShellCommandHandler {
                     mNfcService.mNfcAdapter.updateDiscoveryTechnology(
                             new Binder(), pollTech, listenTech);
                     return 0;
+                case "configure-dta":
+                    boolean enableDta = getNextArgRequiredTrueOrFalse("enable", "disable");
+                    configureDta(enableDta);
+                    return 0;
                 default:
                     return handleDefaultCommands(cmd);
             }
@@ -126,6 +131,25 @@ public class NfcShellCommand extends BasicShellCommandHandler {
             pw.println("Exception while executing nfc shell command" + cmd + ": ");
             e.printStackTrace(pw);
             return -1;
+        }
+    }
+
+    private void configureDta(boolean enable) {
+        final PrintWriter pw = getOutPrintWriter();
+        pw.println("  configure-dta");
+        try {
+            INfcDta dtaService =
+                    mNfcService.mNfcAdapter.getNfcDtaInterface(mContext.getPackageName());
+            if (enable) {
+                pw.println("  enableDta()");
+                dtaService.enableDta();
+            } else {
+                pw.println("  disableDta()");
+                dtaService.disableDta();
+            }
+        } catch (Exception e) {
+            pw.println("Exception while executing nfc shell command configureDta():");
+            e.printStackTrace(pw);
         }
     }
 
@@ -168,6 +192,8 @@ public class NfcShellCommand extends BasicShellCommandHandler {
         pw.println("  set-controller-always-on enable|disable");
         pw.println("    Enable or disable controller always on");
         pw.println("  set-discovery-tech poll-mask|listen-mask");
+        pw.println("  configure-dta enable|disable");
+        pw.println("    Enable or disable DTA");
     }
 
     @Override
