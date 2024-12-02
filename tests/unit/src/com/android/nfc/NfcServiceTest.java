@@ -675,4 +675,43 @@ public final class NfcServiceTest {
         Assert.assertNotNull(tag);
         Assert.assertEquals("android.nfc.tech.Ndef", tag.getTechList()[0]);
     }
+
+    @Test
+    public void testMsg_Clear_Routing_Table() {
+        Handler handler = mNfcService.getHandler();
+        Assert.assertNotNull(handler);
+        Message msg = handler.obtainMessage(NfcService.MSG_CLEAR_ROUTING_TABLE);
+        msg.obj = 1;
+        handler.handleMessage(msg);
+        ArgumentCaptor<Integer> flagCaptor = ArgumentCaptor.forClass(Integer.class);
+        verify(mDeviceHost).clearRoutingEntry(flagCaptor.capture());
+        int flag = flagCaptor.getValue();
+        Assert.assertEquals(1, flag);
+    }
+
+    @Test
+    public void testMsg_Update_Isodep_Protocol_Route() {
+        Handler handler = mNfcService.getHandler();
+        Assert.assertNotNull(handler);
+        Message msg = handler.obtainMessage(NfcService.MSG_UPDATE_ISODEP_PROTOCOL_ROUTE);
+        msg.obj = 1;
+        handler.handleMessage(msg);
+        ArgumentCaptor<Integer> flagCaptor = ArgumentCaptor.forClass(Integer.class);
+        verify(mDeviceHost).setIsoDepProtocolRoute(flagCaptor.capture());
+        int flag = flagCaptor.getValue();
+        Assert.assertEquals(1, flag);
+    }
+
+    @Test
+    public void testMsg_Update_Technology_Abf_Route() {
+        Handler handler = mNfcService.getHandler();
+        Assert.assertNotNull(handler);
+        Message msg = handler.obtainMessage(NfcService.MSG_UPDATE_TECHNOLOGY_ABF_ROUTE);
+        msg.obj = 1;
+        handler.handleMessage(msg);
+        ArgumentCaptor<Integer> flagCaptor = ArgumentCaptor.forClass(Integer.class);
+        verify(mDeviceHost).setTechnologyABFRoute(flagCaptor.capture());
+        int flag = flagCaptor.getValue();
+        Assert.assertEquals(1, flag);
+    }
 }
