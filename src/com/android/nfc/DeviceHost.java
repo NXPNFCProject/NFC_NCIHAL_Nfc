@@ -185,6 +185,8 @@ public interface DeviceHost {
 
     public boolean initialize();
 
+    public void setPartialInitMode(int mode);
+
     public boolean deinitialize();
 
     public String getName();

@@ -151,6 +151,13 @@ public class NativeNfcManager implements DeviceHost {
         return ret;
     }
 
+    private native void doSetPartialInitMode(int mode);
+
+    @Override
+    public void setPartialInitMode(int mode) {
+        doSetPartialInitMode(mode);
+    }
+
     private native void doEnableDtaMode();
 
     @Override
