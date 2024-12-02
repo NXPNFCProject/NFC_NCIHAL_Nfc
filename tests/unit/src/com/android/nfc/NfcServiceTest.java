@@ -56,6 +56,7 @@ import android.nfc.NdefMessage;
 import android.nfc.NfcAdapter;
 import android.nfc.NfcAntennaInfo;
 import android.nfc.NfcServiceManager;
+import android.nfc.cardemulation.CardEmulation;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -63,14 +64,17 @@ import android.os.HandlerExecutor;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.PowerManager;
+import android.os.RemoteException;
 import android.os.UserManager;
 import android.os.test.TestLooper;
+import android.se.omapi.ISecureElementService;
 import android.sysprop.NfcProperties;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 
 import com.android.dx.mockito.inline.extended.ExtendedMockito;
+import com.android.nfc.cardemulation.CardEmulationManager;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -134,6 +138,7 @@ public final class NfcServiceTest {
         mLooper = new TestLooper();
         mStaticMockSession = ExtendedMockito.mockitoSession()
                 .mockStatic(NfcProperties.class)
+                .mockStatic(NfcStatsLog.class)
                 .strictness(Strictness.LENIENT)
                 .startMocking();
         MockitoAnnotations.initMocks(this);
@@ -522,5 +527,64 @@ public final class NfcServiceTest {
         Message msg = handler.obtainMessage(NfcService.MSG_TAG_DEBOUNCE);
         handler.handleMessage(msg);
         Assert.assertEquals(INVALID_NATIVE_HANDLE, mNfcService.mDebounceTagNativeHandle);
+    }
+
+    @Test
+    public void testMsg_Apply_Screen_State() {
+        Handler handler = mNfcService.getHandler();
+        Assert.assertNotNull(handler);
+        Message msg = handler.obtainMessage(NfcService.MSG_APPLY_SCREEN_STATE);
+        msg.obj = ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED;
+        handler.handleMessage(msg);
+      //  verify(mDeviceHost).doSetScreenState(anyInt(), anyBoolean());
+    }
+
+    @Test
+    public void testMsg_Transaction_Event_Cardemulation_Occurred() {
+        CardEmulationManager cardEmulationManager = mock(CardEmulationManager.class);
+        when(cardEmulationManager.getRegisteredAidCategory(anyString())).
+                thenReturn(CardEmulation.CATEGORY_PAYMENT);
+        mNfcService.mCardEmulationManager = cardEmulationManager;
+        Handler handler = mNfcService.getHandler();
+        Assert.assertNotNull(handler);
+        Message msg = handler.obtainMessage(NfcService.MSG_TRANSACTION_EVENT);
+        byte[][] data = {NfcService.hexStringToBytes("F00102030405"),
+                NfcService.hexStringToBytes("02FE00010002"),
+                NfcService.hexStringToBytes("03000000")};
+        msg.obj = data;
+        handler.handleMessage(msg);
+        ExtendedMockito.verify(() -> NfcStatsLog.write(NfcStatsLog.NFC_CARDEMULATION_OCCURRED,
+                NfcStatsLog
+                        .NFC_CARDEMULATION_OCCURRED__CATEGORY__OFFHOST_PAYMENT,
+                new String(NfcService.hexStringToBytes("03000000"), "UTF-8"),
+                -1));
+    }
+
+    @Test
+    public void testMsg_Transaction_Event() throws RemoteException {
+        CardEmulationManager cardEmulationManager = mock(CardEmulationManager.class);
+        when(cardEmulationManager.getRegisteredAidCategory(anyString())).
+                thenReturn(CardEmulation.CATEGORY_PAYMENT);
+        mNfcService.mCardEmulationManager = cardEmulationManager;
+        Handler handler = mNfcService.getHandler();
+        Assert.assertNotNull(handler);
+        Message msg = handler.obtainMessage(NfcService.MSG_TRANSACTION_EVENT);
+        byte[][] data = {NfcService.hexStringToBytes("F00102030405"),
+                NfcService.hexStringToBytes("02FE00010002"),
+                NfcService.hexStringToBytes("03000000")};
+        msg.obj = data;
+        List<String> userlist = new ArrayList<>();
+        userlist.add("com.android.nfc");
+        mNfcService.mNfcEventInstalledPackages.put(1, userlist);
+        ISecureElementService iSecureElementService = mock(ISecureElementService.class);
+        IBinder iBinder = mock(IBinder.class);
+        when(iSecureElementService.asBinder()).thenReturn(iBinder);
+        boolean[] nfcAccess = {true};
+        when(iSecureElementService.isNfcEventAllowed(anyString(), any(), any(), anyInt()))
+                .thenReturn(nfcAccess);
+        when(mNfcInjector.connectToSeService()).thenReturn(iSecureElementService);
+        handler.handleMessage(msg);
+        verify(mApplication).sendBroadcastAsUser(mIntentArgumentCaptor.capture(),
+                any(), any(), any());
     }
 }
