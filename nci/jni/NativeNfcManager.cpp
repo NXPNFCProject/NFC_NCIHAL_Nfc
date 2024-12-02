@@ -318,7 +318,7 @@ uint16_t gCurrentConfigLen;
 uint8_t gConfig[256];
 std::vector<uint8_t> gCaps(0);
 static int NFA_SCREEN_POLLING_TAG_MASK = 0x10;
-static bool gIsDtaEnabled = false;
+bool gIsDtaEnabled = false;
 static bool gObserveModeEnabled = false;
 #if (NXP_EXTNS==TRUE)
 
@@ -1103,6 +1103,12 @@ if (eventData->rf_field.status == NFA_STATUS_OK) {
         PowerSwitch::getInstance().abort();
 
         if (!sIsDisabling && sIsNfaEnabled) {
+          if (gIsDtaEnabled == true) {
+            LOG(DEBUG) << StringPrintf("%s: DTA; unset dta flag in core stack",
+                                       __func__);
+            NFA_DisableDtamode();
+          }
+
           NFA_Disable(FALSE);
           sIsDisabling = true;
         } else {
@@ -1767,6 +1773,14 @@ static jboolean nfcManager_doInitialize(JNIEnv* e, jobject o) {
       NativeJniExtns::getInstance().notifyNfcEvent("nfcManager_setPropertyInfo");
       stat = theInstance.DownloadFirmware(nfcFwUpdateStatusCallback, true);
 #endif
+
+      if (gIsDtaEnabled == true) {
+        // Allows to set appl_dta_mode_flag
+        LOG(DEBUG) << StringPrintf("%s: DTA; set dta flag in core stack",
+                                   __func__);
+        NFA_EnableDtamode((tNFA_eDtaModes)NFA_DTA_APPL_MODE);
+      }
+
       stat = NFA_Enable(nfaDeviceManagementCallback, nfaConnectionCallback);
       if (stat == NFA_STATUS_OK) {
         sNfaEnableEvent.wait();  // wait for NFA command to finish
@@ -1845,6 +1859,12 @@ static jboolean nfcManager_doInitialize(JNIEnv* e, jobject o) {
       }
     }
 
+    if (gIsDtaEnabled == true) {
+      LOG(DEBUG) << StringPrintf("%s: DTA; unset dta flag in core stack",
+                                 __func__);
+      NFA_DisableDtamode();
+    }
+
     LOG(ERROR) << StringPrintf("%s: fail nfa enable; error=0x%X", __func__,
                                stat);
 
@@ -1869,10 +1889,12 @@ TheEnd:
 }
 
 static void nfcManager_doEnableDtaMode(JNIEnv*, jobject) {
+  LOG(DEBUG) << StringPrintf("%s: enter", __func__);
   gIsDtaEnabled = true;
 }
 
 static void nfcManager_doDisableDtaMode(JNIEnv*, jobject) {
+  LOG(DEBUG) << StringPrintf("%s: enter", __func__);
   gIsDtaEnabled = false;
 }
 
@@ -2114,6 +2136,13 @@ static jboolean nfcManager_doDeinitialize(JNIEnv*, jobject) {
   HciEventManager::getInstance().finalize();
   if (sIsNfaEnabled) {
     SyncEventGuard guard(sNfaDisableEvent);
+
+    if (gIsDtaEnabled == true) {
+      LOG(DEBUG) << StringPrintf("%s: DTA; unset dta flag in core stack",
+                                 __func__);
+      NFA_DisableDtamode();
+    }
+
     tNFA_STATUS stat = NFA_Disable(TRUE /* graceful */);
     if (stat == NFA_STATUS_OK) {
       LOG(DEBUG) << StringPrintf("%s: wait for completion", __func__);
