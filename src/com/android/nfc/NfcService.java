@@ -1272,8 +1272,9 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
 
         executeTaskBoot();  // do blocking boot tasks
 
-        if (NFC_SNOOP_LOG_MODE.equals(NfcProperties.snoop_log_mode_values.FULL) ||
-            NFC_VENDOR_DEBUG_ENABLED) {
+        if ((NFC_SNOOP_LOG_MODE.equals(NfcProperties.snoop_log_mode_values.FULL) ||
+            NFC_VENDOR_DEBUG_ENABLED) && mContext.getResources().getBoolean(
+                    R.bool.enable_developer_option_notification)) {
             new NfcDeveloperOptionNotification(mContext).startNotification();
         }
 
@@ -6402,8 +6403,9 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                 }
                 applyScreenState(mScreenStateHelper.checkScreenState(mCheckDisplayStateForScreenState));
 
-                if (NFC_SNOOP_LOG_MODE.equals(NfcProperties.snoop_log_mode_values.FULL) ||
-                        NFC_VENDOR_DEBUG_ENABLED) {
+                if ((NFC_SNOOP_LOG_MODE.equals(NfcProperties.snoop_log_mode_values.FULL) ||
+                        NFC_VENDOR_DEBUG_ENABLED) && mContext.getResources().getBoolean(
+                                R.bool.enable_developer_option_notification)){
                     new NfcDeveloperOptionNotification(mContext.createContextAsUser(
                             UserHandle.of(ActivityManager.getCurrentUser()), /*flags=*/0))
                             .startNotification();
@@ -6412,8 +6414,9 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                 int userId = intent.getIntExtra(Intent.EXTRA_USER_HANDLE, 0);
                 setPaymentForegroundPreference(userId);
 
-                if (NFC_SNOOP_LOG_MODE.equals(NfcProperties.snoop_log_mode_values.FULL) ||
-                        NFC_VENDOR_DEBUG_ENABLED) {
+                if ((NFC_SNOOP_LOG_MODE.equals(NfcProperties.snoop_log_mode_values.FULL) ||
+                        NFC_VENDOR_DEBUG_ENABLED) && mContext.getResources().getBoolean(
+                        R.bool.enable_developer_option_notification)) {
                     new NfcDeveloperOptionNotification(mContext.createContextAsUser(
                             UserHandle.of(ActivityManager.getCurrentUser()), /*flags=*/0))
                             .startNotification();
