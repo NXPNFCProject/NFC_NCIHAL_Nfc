@@ -60,7 +60,7 @@ public class NfcBlockedNotification {
         Notification.Builder builder = new Notification.Builder(mContext, NFC_NOTIFICATION_CHANNEL);
         builder.setContentTitle(mContext.getString(R.string.nfc_blocking_alert_title))
                 .setContentText(mContext.getString(R.string.nfc_blocking_alert_message))
-                .setSmallIcon(android.R.drawable.stat_sys_warning)
+                .setSmallIcon(R.drawable.nfc_icon)
                 .setPriority(NotificationManager.IMPORTANCE_DEFAULT)
                 .setAutoCancel(true)
                 .setContentIntent(PendingIntent.getActivity(mContext, 0, infoIntent,
