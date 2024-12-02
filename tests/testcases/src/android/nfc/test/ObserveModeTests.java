@@ -21,9 +21,15 @@ import static android.nfc.test.TestUtils.createFrame;
 import static android.nfc.test.TestUtils.createFrameWithData;
 import static android.nfc.test.TestUtils.notifyPollingLoopAndWait;
 import static android.nfc.test.TestUtils.supportsHardware;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
+import android.app.Instrumentation;
 import android.content.ComponentName;
 import android.content.Context;
 import android.nfc.NfcAdapter;
@@ -32,10 +38,13 @@ import android.nfc.cardemulation.PollingFrame;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.platform.test.annotations.RequiresFlagsEnabled;
-import androidx.test.InstrumentationRegistry;
+import android.util.Log;
+import androidx.test.platform.app.InstrumentationRegistry;
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.Assert;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -49,22 +58,19 @@ public class ObserveModeTests {
   @Before
   public void setUp() throws NoSuchFieldException, RemoteException {
     assumeTrue(supportsHardware());
-    mContext = InstrumentationRegistry.getContext();
+    mContext = InstrumentationRegistry.getInstrumentation().getContext();
   }
 
   @Test(timeout = 20000)
   @RequiresFlagsEnabled(android.nfc.Flags.FLAG_NFC_OBSERVE_MODE)
   public void testObserveModeStress() throws InterruptedException {
-    Assert.assertNotNull(mContext);
-    final NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
-    Assert.assertNotNull(adapter);
-    assumeTrue(adapter.isObserveModeSupported());
+    final NfcAdapter adapter = initNfcAdapterWithObserveModeOrSkipTest();
     CardEmulation cardEmulation = CardEmulation.getInstance(adapter);
     try {
       Activity activity = createAndResumeActivity();
       cardEmulation.setShouldDefaultToObserveModeForService(
           new ComponentName(mContext, CustomHostApduService.class), true);
-      Assert.assertTrue(
+      assertTrue(
           cardEmulation.setPreferredService(
               activity, new ComponentName(mContext, CustomHostApduService.class)));
       TestUtils.ensurePreferredService(CustomHostApduService.class, mContext);
@@ -74,7 +80,7 @@ public class ObserveModeTests {
             @Override
             public void run() {
               while (System.currentTimeMillis() < stop) {
-                Assert.assertTrue(adapter.setObserveModeEnabled(true));
+                assertTrue(adapter.setObserveModeEnabled(true));
               }
             }
           };
@@ -84,7 +90,7 @@ public class ObserveModeTests {
             @Override
             public void run() {
               while (System.currentTimeMillis() < stop) {
-                Assert.assertTrue(adapter.setObserveModeEnabled(false));
+                assertTrue(adapter.setObserveModeEnabled(false));
               }
             }
           };
@@ -102,18 +108,14 @@ public class ObserveModeTests {
   @Test
   @RequiresFlagsEnabled(android.nfc.Flags.FLAG_NFC_OBSERVE_MODE)
   public void testInterleavePlfAndAid() {
-    Assert.assertNotNull(mContext);
-    final NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
-    Assert.assertNotNull(adapter);
-    assumeTrue(adapter.isObserveModeSupported());
+    final NfcAdapter adapter = initNfcAdapterWithObserveModeOrSkipTest();
     adapter.notifyHceDeactivated();
     CardEmulation cardEmulation = CardEmulation.getInstance(adapter);
     try {
       Activity activity = createAndResumeActivity();
       cardEmulation.setShouldDefaultToObserveModeForService(
           new ComponentName(mContext, CustomHostApduService.class), true);
-      Assert.assertTrue(
-          cardEmulation.setPreferredService(
+      assertTrue(cardEmulation.setPreferredService(
               activity, new ComponentName(mContext, CustomHostApduService.class)));
       TestUtils.ensurePreferredService(CustomHostApduService.class, mContext);
       ArrayList<PollingFrame> frames = new ArrayList<PollingFrame>(6);
@@ -134,8 +136,8 @@ public class ObserveModeTests {
           new TestUtils.CommandApduProcessor() {
             @Override
             public byte[] processCommandApdu(String serviceName, byte[] apdu, Bundle extras) {
-              Assert.assertEquals(serviceName, CustomHostApduService.class.getName());
-              Assert.assertArrayEquals(apdu, selectAidCmd);
+              assertEquals(serviceName, CustomHostApduService.class.getName());
+              assertArrayEquals(apdu, selectAidCmd);
               return new byte[0];
             }
           };
@@ -148,8 +150,8 @@ public class ObserveModeTests {
           new TestUtils.CommandApduProcessor() {
             @Override
             public byte[] processCommandApdu(String serviceName, byte[] apdu, Bundle extras) {
-              Assert.assertEquals(serviceName, CustomHostApduService.class.getName());
-              Assert.assertArrayEquals(apdu, nextCommandApdu);
+              assertEquals(serviceName, CustomHostApduService.class.getName());
+              assertArrayEquals(apdu, nextCommandApdu);
               return new byte[0];
             }
           };
@@ -164,17 +166,14 @@ public class ObserveModeTests {
   @Test
   @RequiresFlagsEnabled(android.nfc.Flags.FLAG_NFC_OBSERVE_MODE)
   public void testInterleavePlfSecondServiceAndAid() {
-    Assert.assertNotNull(mContext);
-    final NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
-    Assert.assertNotNull(adapter);
-    assumeTrue(adapter.isObserveModeSupported());
+    final NfcAdapter adapter = initNfcAdapterWithObserveModeOrSkipTest();
     adapter.notifyHceDeactivated();
     CardEmulation cardEmulation = CardEmulation.getInstance(adapter);
     try {
       Activity activity = createAndResumeActivity();
       cardEmulation.setShouldDefaultToObserveModeForService(
           new ComponentName(mContext, CustomHostApduService.class), true);
-      Assert.assertTrue(
+      assertTrue(
           cardEmulation.setPreferredService(
               activity, new ComponentName(mContext, CustomHostApduService.class)));
       TestUtils.ensurePreferredService(CustomHostApduService.class, mContext);
@@ -196,8 +195,8 @@ public class ObserveModeTests {
           new TestUtils.CommandApduProcessor() {
             @Override
             public byte[] processCommandApdu(String serviceName, byte[] apdu, Bundle extras) {
-              Assert.assertEquals(serviceName, CustomHostApduService.class.getName());
-              Assert.assertArrayEquals(apdu, selectAidCmd);
+              assertEquals(serviceName, CustomHostApduService.class.getName());
+              assertArrayEquals(apdu, selectAidCmd);
               return new byte[0];
             }
           };
@@ -214,8 +213,8 @@ public class ObserveModeTests {
           new TestUtils.CommandApduProcessor() {
             @Override
             public byte[] processCommandApdu(String serviceName, byte[] apdu, Bundle extras) {
-              Assert.assertEquals(serviceName, CustomHostApduService.class.getName());
-              Assert.assertArrayEquals(apdu, nextCommandApdu);
+              assertEquals(serviceName, CustomHostApduService.class.getName());
+              assertArrayEquals(apdu, nextCommandApdu);
               return new byte[0];
             }
           };
@@ -225,6 +224,86 @@ public class ObserveModeTests {
           new ComponentName(mContext, CustomHostApduService.class), false);
       adapter.notifyHceDeactivated();
     }
+  }
+
+  /**
+   * A regression test for a HostEmulationManager deadlock as seen in b/361084133.
+   */
+  @Test
+  @RequiresFlagsEnabled(android.nfc.Flags.FLAG_NFC_OBSERVE_MODE)
+  public void testOnPauseAndOnResume() throws InterruptedException {
+    final NfcAdapter adapter = initNfcAdapterWithObserveModeOrSkipTest();
+    final CardEmulation cardEmulation = CardEmulation.getInstance(adapter);
+    boolean nfcIsProbablyStuck = true;
+
+    try {
+      Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+
+      for (int i = 0; i < 5; i++) {
+        final ForegroundHceActivity activity =
+            (ForegroundHceActivity)createAndResumeActivity(ForegroundHceActivity.class);
+
+        AtomicBoolean setPreferredServiceResult = new AtomicBoolean(false);
+
+        runInAThreadInCaseItLocksUp("could not set preferred service", () -> {
+          setPreferredServiceResult.set(cardEmulation.setPreferredService(
+                  activity, new ComponentName(mContext, CustomHostApduService.class)));
+        });
+        assertTrue("Could not set preferred service", setPreferredServiceResult.get());
+
+        TestUtils.ensurePreferredService(CustomHostApduService.class, mContext);
+
+        AtomicBoolean setObserveModeResult = new AtomicBoolean(false);
+        runInAThreadInCaseItLocksUp("could not enable observe mode", () -> {
+          setObserveModeResult.set(adapter.setObserveModeEnabled(true));
+        });
+        assertTrue("Could not enable observe mode", setObserveModeResult.get());
+
+        CountDownLatch onPauseLatch = new CountDownLatch(1);
+        Thread disableObserveModeThread = new Thread() {
+          @Override
+          public void run() {
+            adapter.setObserveModeEnabled(false);
+          }
+        };
+        activity.mOnPauseRunnable = () -> {
+          disableObserveModeThread.start();
+          onPauseLatch.countDown();
+        };
+
+        instrumentation.runOnMainSync(() -> {
+          activity.finish();
+        });
+
+        assertTrue(onPauseLatch.await(1000, TimeUnit.MILLISECONDS));
+        disableObserveModeThread.interrupt();
+      }
+      nfcIsProbablyStuck = false;
+    } finally {
+      if (nfcIsProbablyStuck) {
+        Log.w("ObserveModeTests", "NFC is probably stuck, restarting...");
+        TestUtils.killNfcService();
+      }
+    }
+  }
+
+  private void runInAThreadInCaseItLocksUp(String message, Runnable runnable)
+      throws InterruptedException {
+    Thread thread = new Thread(runnable);
+    thread.start();
+    thread.join(1000);
+    // if it doesn't finish in 1s, it's probably stuck
+    assertFalse(message, thread.isAlive());
+    thread.interrupt();
+  }
+
+  private NfcAdapter initNfcAdapterWithObserveModeOrSkipTest() {
+    assertNotNull(mContext);
+    final NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+    assertNotNull(adapter);
+    assumeTrue(adapter.isObserveModeSupported());
+
+    return adapter;
   }
 
   List<PollingFrame> notifyPollingLoopAndWait(ArrayList<PollingFrame> frames, String serviceName) {

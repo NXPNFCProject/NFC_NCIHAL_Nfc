@@ -47,6 +47,9 @@
         <activity android:name="android.nfc.test.NfcFCardEmulationActivity"
              android:exported="false">
         </activity>
+        <activity android:name="android.nfc.test.ForegroundHceActivity"
+             android:exported="false">
+        </activity>
         <receiver android:name=".PollingLoopBroadcastReceiver"
             android:enabled="true"
             android:exported="true">
@@ -57,7 +60,7 @@
     </application>
     <!-- This is a self-instrumenting test package. -->
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
-                     android:label="CTS tests for Nfc CardEmulation API"
+                     android:label="Stress and regression tests for NFC CardEmulation API"
                      android:targetPackage="android.nfc.test">
     </instrumentation>
 </manifest>

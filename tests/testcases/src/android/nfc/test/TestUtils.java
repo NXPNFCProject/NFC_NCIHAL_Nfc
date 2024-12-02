@@ -31,9 +31,10 @@ import android.nfc.cardemulation.PollingFrame.PollingFrameType;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.os.UserManager;
+import android.util.Log;
 import android.view.KeyEvent;
-import androidx.test.InstrumentationRegistry;
 import androidx.test.core.app.ApplicationProvider;
+import androidx.test.platform.app.InstrumentationRegistry;
 import com.android.compatibility.common.util.CommonTestUtils;
 import com.android.compatibility.common.util.SystemUtil;
 import java.util.ArrayList;
@@ -42,17 +43,22 @@ import org.junit.Assert;
 
 public class TestUtils {
   static boolean supportsHardware() {
-    final PackageManager pm = InstrumentationRegistry.getContext().getPackageManager();
+    final PackageManager pm = InstrumentationRegistry.getInstrumentation().getContext()
+        .getPackageManager();
     return pm.hasSystemFeature(PackageManager.FEATURE_NFC_HOST_CARD_EMULATION);
   }
 
   static Activity createAndResumeActivity() {
+    return createAndResumeActivity(NfcFCardEmulationActivity.class);
+  }
+
+  static Activity createAndResumeActivity(Class<? extends Activity> activityClass) {
     ensureUnlocked();
-    Intent intent =
-        new Intent(ApplicationProvider.getApplicationContext(), NfcFCardEmulationActivity.class);
+    Intent intent = new Intent(ApplicationProvider.getApplicationContext(), activityClass);
     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
     Activity activity = InstrumentationRegistry.getInstrumentation().startActivitySync(intent);
     InstrumentationRegistry.getInstrumentation().callActivityOnResume(activity);
+
     return activity;
   }
 
@@ -201,4 +207,12 @@ public class TestUtils {
   }
 
   static CommandApduProcessor sCurrentCommandApduProcessor = null;
+
+  public static void killNfcService() {
+    Log.w(TAG, "Attempting to kill the NFC service...");
+
+    SystemUtil.runShellCommand("killall com.android.nfc");
+  }
+
+  private static final String TAG = "TestUtils";
 }
