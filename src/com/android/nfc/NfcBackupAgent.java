@@ -38,25 +38,26 @@ public class NfcBackupAgent extends BackupAgentHelper {
     public void onRestoreFinished() {
         NfcAdapter nfcAdapter = NfcAdapter.getDefaultAdapter(this);
         NfcService.sIsNfcRestore = true;
+        DeviceConfigFacade deviceConfigFacade = NfcInjector.getInstance().getDeviceConfigFacade();
 
         if (nfcAdapter != null) {
             SharedPreferences prefs = getSharedPreferences(NfcService.PREF,
                 Context.MODE_MULTI_PROCESS);
             if (prefs.getBoolean(NfcService.PREF_NFC_ON,
-                    NfcService.NFC_ON_DEFAULT)) {
+                    deviceConfigFacade.getNfcDefaultState())) {
                 nfcAdapter.enable();
             } else {
                 nfcAdapter.disable();
             }
 
             if (prefs.getBoolean(NfcService.PREF_NFC_READER_OPTION_ON,
-                    NfcService.NFC_READER_OPTION_DEFAULT)) {
+                    deviceConfigFacade.getDefaultReaderOption())) {
                 nfcAdapter.enableReaderOption(true);
             } else {
                 nfcAdapter.enableReaderOption(false);
             }
 
-            if (prefs.getBoolean(NfcService.PREF_SECURE_NFC_ON, NfcService.SECURE_NFC_ON_DEFAULT)
+            if (prefs.getBoolean(NfcService.PREF_SECURE_NFC_ON, deviceConfigFacade.getDefaultSecureNfcState())
                     && nfcAdapter.isSecureNfcSupported()) {
                 nfcAdapter.enableSecureNfc(true);
             } else {

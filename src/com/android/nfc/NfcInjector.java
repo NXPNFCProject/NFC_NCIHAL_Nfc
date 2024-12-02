@@ -31,14 +31,12 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.RemoteException;
 import android.os.SystemClock;
-import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.os.VibrationEffect;
 import android.provider.Settings;
 import android.se.omapi.ISecureElementService;
 import android.se.omapi.SeFrameworkInitializer;
 import android.se.omapi.SeServiceManager;
-import android.text.TextUtils;
 import android.util.AtomicFile;
 import android.util.Log;
 
@@ -214,19 +212,6 @@ public class NfcInjector {
         } else {
             return false;
         }
-    }
-
-    public boolean checkIsSecureNfcCapable() {
-        if (mContext.getResources().getBoolean(R.bool.enable_secure_nfc_support)) {
-            return true;
-        }
-        String[] skuList = mContext.getResources().getStringArray(
-                R.array.config_skuSupportsSecureNfc);
-        String sku = SystemProperties.get("ro.boot.hardware.sku");
-        if (TextUtils.isEmpty(sku) || !Utils.arrayContains(skuList, sku)) {
-            return false;
-        }
-        return true;
     }
 
     public ISecureElementService connectToSeService() throws RemoteException {

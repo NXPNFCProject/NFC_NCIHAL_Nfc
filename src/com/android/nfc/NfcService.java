@@ -216,16 +216,13 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
     public static final String PREF_TAG_APP_LIST = "TagIntentAppPreferenceListPrefs";
 
     static final String PREF_NFC_ON = "nfc_on";
-    static final boolean NFC_ON_DEFAULT = true;
 
     static final String PREF_NFC_READER_OPTION_ON = "nfc_reader_on";
-    static final boolean NFC_READER_OPTION_DEFAULT = true;
 
     static final String PREF_NFC_CHARGING_ON = "nfc_charging_on";
     static final boolean NFC_CHARGING_ON_DEFAULT = true;
 
     static final String PREF_SECURE_NFC_ON = "secure_nfc_on";
-    static final boolean SECURE_NFC_ON_DEFAULT = false;
     static final String PREF_FIRST_BOOT = "first_boot";
 
     static final String PREF_ANTENNA_BLOCKED_MESSAGE_SHOWN = "antenna_blocked_message_shown";
@@ -945,7 +942,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
 
     boolean getNfcOnSetting() {
         synchronized (NfcService.this) {
-            return mPrefs.getBoolean(PREF_NFC_ON, NFC_ON_DEFAULT);
+            return mPrefs.getBoolean(PREF_NFC_ON, mDeviceConfigFacade.getNfcDefaultState());
         }
     }
 
@@ -1166,12 +1163,12 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         }
 
         mForegroundUtils = mNfcInjector.getForegroundUtils();
-        mIsSecureNfcCapable = mNfcInjector.checkIsSecureNfcCapable();
+        mIsSecureNfcCapable = mDeviceConfigFacade.isSecureNfcCapable();
         mIsSecureNfcEnabled =
             // To be reverted once device support added for secure NFC.
-            //mPrefs.getBoolean(PREF_SECURE_NFC_ON, SECURE_NFC_ON_DEFAULT) &&
+            //mPrefs.getBoolean(PREF_SECURE_NFC_ON, mDeviceConfigFacade.getDefaultSecureNfcState()) &&
             //mIsSecureNfcCapable;
-            mPrefs.getBoolean(PREF_SECURE_NFC_ON, SECURE_NFC_ON_DEFAULT);
+            mPrefs.getBoolean(PREF_SECURE_NFC_ON, mDeviceConfigFacade.getDefaultSecureNfcState());
         mDeviceHost.setNfcSecure(mIsSecureNfcEnabled);
 
         sToast_debounce_time_ms =
@@ -1243,12 +1240,12 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         }
 
         mNfcPermissions = new NfcPermissions(mContext);
-        mReaderOptionCapable =
-                mContext.getResources().getBoolean(R.bool.enable_reader_option_support);
+        mReaderOptionCapable = mDeviceConfigFacade.isReaderOptionCapable();
 
         if(mReaderOptionCapable) {
             mIsReaderOptionEnabled =
-                mPrefs.getBoolean(PREF_NFC_READER_OPTION_ON, NFC_READER_OPTION_DEFAULT);
+                mPrefs.getBoolean(PREF_NFC_READER_OPTION_ON,
+                    mDeviceConfigFacade.getDefaultReaderOption() || mInProvisionMode);
         }
 
         mIsNfcUserRestricted = isNfcUserRestricted();
