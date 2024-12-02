@@ -155,11 +155,17 @@ public abstract class BaseEmulatorActivity extends Activity {
     void ensurePreferredService(String serviceDesc, Context context, CardEmulation cardEmulation) {
         Log.d(TAG, "ensurePreferredService: " + serviceDesc);
         try {
-            CommonTestUtils.waitUntil("Default service hasn't updated", 6,
-                    () -> serviceDesc.equals(
-                            cardEmulation.getDescriptionForPreferredPaymentService().toString()));
-        } catch (InterruptedException ie) {
-            Log.w(TAG, "Default service not updated. This may cause tests to fail");
+            CommonTestUtils.waitUntil(
+                    "Default service hasn't updated",
+                    6,
+                    () ->
+                            cardEmulation.getDescriptionForPreferredPaymentService() != null
+                                    && serviceDesc.equals(
+                                            cardEmulation
+                                                    .getDescriptionForPreferredPaymentService()
+                                                    .toString()));
+        } catch (Exception e) {
+            Log.e(TAG, "Default service not updated. This may cause tests to fail", e);
         }
     }
 

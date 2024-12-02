@@ -108,6 +108,13 @@ public class PollingLoopEmulatorActivity extends BaseEmulatorActivity {
     }
 
     @Override
+    protected void onApduSequenceComplete(ComponentName component, long duration) {
+        if (component.equals(PollingLoopService.COMPONENT)) {
+            setTestPassed();
+        }
+    }
+
+    @Override
     public ComponentName getPreferredServiceComponent() {
         return PollingLoopService.COMPONENT;
     }
