@@ -748,6 +748,10 @@ public class NativeNfcManager implements DeviceHost {
                 proprietaryCaps.isAutotransactPollingLoopFilterSupported());
     }
 
+    public void notifyObserveModeChanged(boolean enabled) {
+        mListener.onObserveModeStateChanged(enabled);
+    }
+
     private native void doSetNfceePowerAndLinkCtrl(boolean enable);
     @Override
     public void setNfceePowerAndLinkCtrl(boolean enable) {

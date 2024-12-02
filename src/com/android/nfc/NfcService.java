@@ -881,6 +881,13 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         mHandler.post(() -> mNfcAdapter.sendVendorNciNotification(gid, oid, payload));
     }
 
+    @Override
+    public void onObserveModeStateChanged(boolean enable) {
+        if (mCardEmulationManager != null) {
+            mCardEmulationManager.onObserveModeStateChange(enable);
+        }
+    }
+
     /**
      * Enable or Disable PowerSaving Mode based on flag
      */
@@ -2270,9 +2277,6 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
 
             long start = SystemClock.elapsedRealtime();
             boolean result = mDeviceHost.setObserveMode(enable);
-            if (result && mCardEmulationManager != null) {
-                mCardEmulationManager.onObserveModeStateChange(enable);
-            }
             int latency = Math.toIntExact(SystemClock.elapsedRealtime() - start);
             if (mStatsdUtils != null) {
                 mStatsdUtils.logObserveModeStateChanged(enable, triggerSource, latency);

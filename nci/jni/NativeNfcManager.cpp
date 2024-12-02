@@ -169,6 +169,7 @@ jmethodID gCachedNfcManagerNotifyHwErrorReported;
 jmethodID gCachedNfcManagerNotifyPollingLoopFrame;
 jmethodID gCachedNfcManagerNotifyVendorSpecificEvent;
 jmethodID gCachedNfcManagerNotifyCommandTimeout;
+jmethodID gCachedNfcManagerNotifyObserveModeChanged;
 #if(NXP_EXTNS == TRUE)
 jmethodID gCachedNfcManagerNotifyLxDebugInfo;
 jmethodID gCachedNfcManagerNotifyTagAbortListeners;
@@ -894,6 +895,8 @@ static jboolean nfcManager_initNativeStruc(JNIEnv* e, jobject o) {
 
   gCachedNfcManagerNotifyCommandTimeout =
       e->GetMethodID(cls.get(), "notifyCommandTimeout", "()V");
+  gCachedNfcManagerNotifyObserveModeChanged =
+      e->GetMethodID(cls.get(), "notifyObserveModeChanged", "(Z)V");
 #if(NXP_EXTNS == TRUE)
   gCachedNfcManagerNotifyLxDebugInfo =
       e->GetMethodID(cls.get(), "notifyNfcDebugInfo", "(I[B)V");
@@ -1614,7 +1617,13 @@ static jboolean nfcManager_setObserveMode(JNIEnv* e, jobject o,
       "%s: Set observe mode to %s with result %x, observe mode is now %s.",
       __FUNCTION__, (enable != JNI_FALSE ? "TRUE" : "FALSE"), gVSCmdStatus,
       (gObserveModeEnabled ? "enabled" : "disabled"));
-  return gObserveModeEnabled == enable;
+  if (gObserveModeEnabled == enable) {
+    e->CallVoidMethod(o, android::gCachedNfcManagerNotifyObserveModeChanged,
+                      enable);
+    return true;
+  } else {
+    return false;
+  }
 }
 
 /*******************************************************************************

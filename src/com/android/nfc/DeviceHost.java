@@ -80,6 +80,8 @@ public interface DeviceHost {
         public void onPollingLoopDetected(List<PollingFrame> pollingFrames);
 
         public void onVendorSpecificEvent(int gid, int oid, byte[] payload);
+
+        public void onObserveModeStateChanged(boolean enable);
         /**
          * Notifies SWP Reader Events.
          */

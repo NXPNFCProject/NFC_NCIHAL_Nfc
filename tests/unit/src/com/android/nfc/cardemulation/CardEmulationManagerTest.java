@@ -1898,8 +1898,6 @@ public class CardEmulationManagerTest {
                 eq(WALLET_HOLDER_PACKAGE_NAME), eq(USER_ID));
         verify(mHostEmulationManager).onPreferredForegroundServiceChanged(eq(USER_ID),
                 eq(WALLET_PAYMENT_SERVICE));
-        verify(mRegisteredAidCache).onPreferredForegroundServiceChanged(eq(USER_ID),
-                eq(WALLET_PAYMENT_SERVICE));
         verify(mRegisteredServicesCache).initialize();
         verify(mNfcService).onPreferredPaymentChanged(eq(NfcAdapter.PREFERRED_PAYMENT_CHANGED));
     }
@@ -1918,8 +1916,6 @@ public class CardEmulationManagerTest {
                 eq(WALLET_PAYMENT_SERVICE));
         verify(mRegisteredAidCache).onWalletRoleHolderChanged(
                 eq(WALLET_HOLDER_PACKAGE_NAME), eq(USER_ID));
-        verify(mRegisteredAidCache).onPreferredForegroundServiceChanged(eq(USER_ID),
-                eq(WALLET_PAYMENT_SERVICE));
         verify(mRegisteredServicesCache).initialize();
         verify(mNfcService).onPreferredPaymentChanged(eq(NfcAdapter.PREFERRED_PAYMENT_CHANGED));
         assertUpdateForShouldDefaultToObserveMode(false);
