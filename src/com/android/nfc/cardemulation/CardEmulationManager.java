@@ -918,13 +918,21 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
     //}
 
     @Override
-        public boolean overrideRoutingTable(int userHandle, String protocol, String technology) {
+        public void overrideRoutingTable(int userHandle, String protocol, String technology,
+                String pkg) {
 
             int callingUid = Binder.getCallingUid();
+            if (android.nfc.Flags.nfcOverrideRecoverRoutingTable()) {
+                if (!isPreferredServicePackageNameForUser(pkg,
+                        UserHandle.getUserHandleForUid(callingUid).getIdentifier())) {
+                    Log.e(TAG, "overrideRoutingTable: Caller not preferred NFC service.");
+                    throw new SecurityException("Caller not preferred NFC service");
+                }
+            }
             if (!mForegroundUtils
                     .registerUidToBackgroundCallback(mForegroundCallback, callingUid)) {
                 Log.e(TAG, "overrideRoutingTable: Caller is not in foreground.");
-                return false;
+                throw new IllegalArgumentException("Caller is not in foreground.");
             }
             mForegroundUid = callingUid;
 
@@ -938,25 +946,21 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
             mRoutingOptionManager.overrideDefaultOffHostRoute(technologyRoute);
             mAidCache.onRoutingOverridedOrRecovered();
 //            NfcService.getInstance().commitRouting();
-
-            return true;
         }
 
         @Override
-        public boolean recoverRoutingTable(int userHandle) {
+        public void recoverRoutingTable(int userHandle) {
             Log.d(TAG, "recoverRoutingTable. userHandle " + userHandle);
 
             if (!mForegroundUtils.isInForeground(Binder.getCallingUid())) {
                 if (DBG) Log.d(TAG, "recoverRoutingTable : not in foreground.");
-                return false;
+                throw new IllegalArgumentException("Caller is not in foreground.");
             }
             mForegroundUid = Process.INVALID_UID;
 
             mRoutingOptionManager.recoverOverridedRoutingTable();
             mAidCache.onRoutingOverridedOrRecovered();
 //            NfcService.getInstance().commitRouting();
-
-            return true;
         }
 
         @Override

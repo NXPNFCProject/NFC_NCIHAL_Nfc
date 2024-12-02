@@ -1356,8 +1356,9 @@ public class CardEmulationManagerTest {
         String protocol = "DH";
         String technology = "DH";
 
-        Assert.assertFalse(mCardEmulationManager.getNfcCardEmulationInterface()
-                .overrideRoutingTable(USER_ID, protocol, technology));
+        Assert.assertThrows(IllegalArgumentException.class,
+                () -> mCardEmulationManager.getNfcCardEmulationInterface()
+                .overrideRoutingTable(USER_ID, protocol, technology, WALLET_HOLDER_PACKAGE_NAME));
 
         verify(mRegisteredAidCache).onWalletRoleHolderChanged(eq(WALLET_HOLDER_PACKAGE_NAME),
                 eq(USER_ID));
@@ -1373,8 +1374,8 @@ public class CardEmulationManagerTest {
         when(mForegroundUtils.registerUidToBackgroundCallback(any(), anyInt()))
                 .thenReturn(true);
 
-        assertTrue(mCardEmulationManager.getNfcCardEmulationInterface()
-                .overrideRoutingTable(USER_ID, null, null));
+        mCardEmulationManager.getNfcCardEmulationInterface()
+                .overrideRoutingTable(USER_ID, null, null, WALLET_HOLDER_PACKAGE_NAME);
 
         verify(mRegisteredAidCache).onWalletRoleHolderChanged(eq(WALLET_HOLDER_PACKAGE_NAME),
                 eq(USER_ID));
@@ -1395,8 +1396,8 @@ public class CardEmulationManagerTest {
         String protocol = "DH";
         String technology = "DH";
 
-        assertTrue(mCardEmulationManager.getNfcCardEmulationInterface()
-                .overrideRoutingTable(USER_ID, protocol, technology));
+        mCardEmulationManager.getNfcCardEmulationInterface()
+                .overrideRoutingTable(USER_ID, protocol, technology, WALLET_HOLDER_PACKAGE_NAME);
 
         verify(mRegisteredAidCache).onWalletRoleHolderChanged(eq(WALLET_HOLDER_PACKAGE_NAME),
                 eq(USER_ID));
@@ -1417,8 +1418,8 @@ public class CardEmulationManagerTest {
         String protocol = "eSE1";
         String technology = "eSE1";
 
-        assertTrue(mCardEmulationManager.getNfcCardEmulationInterface()
-                .overrideRoutingTable(USER_ID, protocol, technology));
+        mCardEmulationManager.getNfcCardEmulationInterface()
+                .overrideRoutingTable(USER_ID, protocol, technology, WALLET_HOLDER_PACKAGE_NAME);
 
         verify(mRegisteredAidCache).onWalletRoleHolderChanged(eq(WALLET_HOLDER_PACKAGE_NAME),
                 eq(USER_ID));
@@ -1439,8 +1440,8 @@ public class CardEmulationManagerTest {
         String protocol = "SIM1";
         String technology = "SIM1";
 
-        assertTrue(mCardEmulationManager.getNfcCardEmulationInterface()
-                .overrideRoutingTable(USER_ID, protocol, technology));
+        mCardEmulationManager.getNfcCardEmulationInterface()
+                .overrideRoutingTable(USER_ID, protocol, technology, WALLET_HOLDER_PACKAGE_NAME);
 
         verify(mRegisteredAidCache).onWalletRoleHolderChanged(eq(WALLET_HOLDER_PACKAGE_NAME),
                 eq(USER_ID));
@@ -1459,8 +1460,8 @@ public class CardEmulationManagerTest {
         when(mForegroundUtils.isInForeground(anyInt()))
                 .thenReturn(true);
 
-        assertTrue(mCardEmulationManager.getNfcCardEmulationInterface()
-                .recoverRoutingTable(USER_ID));
+        mCardEmulationManager.getNfcCardEmulationInterface()
+                .recoverRoutingTable(USER_ID);
 
         verify(mRegisteredAidCache).onWalletRoleHolderChanged(eq(WALLET_HOLDER_PACKAGE_NAME),
                 eq(USER_ID));
@@ -1478,7 +1479,8 @@ public class CardEmulationManagerTest {
         when(mForegroundUtils.isInForeground(anyInt()))
                 .thenReturn(false);
 
-        Assert.assertFalse(mCardEmulationManager.getNfcCardEmulationInterface()
+        Assert.assertThrows(IllegalArgumentException.class,
+                () -> mCardEmulationManager.getNfcCardEmulationInterface()
                 .recoverRoutingTable(USER_ID));
 
         verify(mRegisteredAidCache).onWalletRoleHolderChanged(eq(WALLET_HOLDER_PACKAGE_NAME),
