@@ -36,5 +36,6 @@
         <permission name="android.permission.QUERY_CLONED_APPS"/>
         <permission name="android.permission.READ_PRIVILEGED_PHONE_STATE"/>
         <permission name="android.permission.MODIFY_PHONE_STATE"/>
+        <permission name="android.permission.WRITE_SECURITY_LOG"/>
     </privapp-permissions>
 </permissions>
