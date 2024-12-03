@@ -3253,7 +3253,8 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
 
         @Override
         public boolean enableReaderOption(boolean enable) {
-            Log.d(TAG, "enableReaderOption enabled=" + enable);
+            Log.d(TAG, "enableReaderOption enabled = " + enable + " calling uid = "
+                    + Binder.getCallingUid());
             if (!mReaderOptionCapable) return false;
             NfcPermissions.enforceAdminPermissions(mContext);
             synchronized (NfcService.this) {
@@ -3263,6 +3264,14 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                 mBackupManager.dataChanged();
             }
             applyRouting(true);
+            if (mNfcOemExtensionCallback != null) {
+                try {
+                    mNfcOemExtensionCallback.onReaderOptionChanged(enable);
+                } catch (RemoteException e) {
+                    Log.e(TAG, "onReaderOptionChanged failed e = " + e.toString());
+                }
+            }
+
             if (android.nfc.Flags.nfcPersistLog()) {
                 mNfcEventLog.logEvent(
                         NfcEventProto.EventType.newBuilder()
@@ -6920,7 +6929,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
     void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
         if (mContext.checkCallingOrSelfPermission(android.Manifest.permission.DUMP)
                 != PackageManager.PERMISSION_GRANTED) {
-            pw.println("Permission Denial: can't dump nfc from from pid="
+            pw.println("Permission Denial: can't dump nfc from pid="
                     + Binder.getCallingPid() + ", uid=" + Binder.getCallingUid()
                     + " without permission " + android.Manifest.permission.DUMP);
             return;
