@@ -156,6 +156,7 @@ public class CardEmulationManagerTest {
                 any(), anyInt())).thenReturn(mContext);
         when(mContext.getResources()).thenReturn(mResources);
         when(mContext.getSystemService(eq(UserManager.class))).thenReturn(mUserManager);
+        when(mResources.getBoolean(R.bool.indicate_user_activity_for_hce)).thenReturn(true);
         mCardEmulationManager = createInstanceWithMockParams();
     }
 

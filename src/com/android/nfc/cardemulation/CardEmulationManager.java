@@ -265,7 +265,8 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
                 Log.e(TAG, "onHceEventReceived failed",e);
             }
         }
-        if (mPowerManager != null) {
+        if (mContext.getResources().getBoolean(R.bool.indicate_user_activity_for_hce)
+                && mPowerManager != null) {
             // Use USER_ACTIVITY_FLAG_INDIRECT to applying power hints without resets
             // the screen timeout
             mPowerManager.userActivity(SystemClock.uptimeMillis(),
