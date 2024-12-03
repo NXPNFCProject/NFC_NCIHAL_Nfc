@@ -41,9 +41,17 @@ flag {
     bug: "345570691"
 }
 
+
 flag {
     name: "enable_direct_boot_aware"
     namespace: "nfc"
     description: "Enable direct boot aware for nfc service"
     bug: "321310938"
+}
+
+flag {
+    name: "observe_mode_without_rf"
+    namespace: "nfc"
+    description: "Enable setting obseve mode state with out deactivating RF"
+    bug: "368655283"
 }
