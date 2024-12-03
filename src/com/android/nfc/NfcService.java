@@ -3438,10 +3438,25 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         }
 
         // TODO(b/321304762): Add the OEM extension API.
+        @Override
         public void triggerInitialization() throws RemoteException {
             if (DBG) Log.i(TAG, "triggerInitialization");
             NfcPermissions.enforceAdminPermissions(mContext);
             new EnableDisableTask().execute(TASK_BOOT);
+        }
+
+        @Override
+        public boolean getSettingStatus() throws RemoteException {
+            if (DBG) Log.i(TAG, "getSettingStatus");
+            NfcPermissions.enforceAdminPermissions(mContext);
+            return getNfcOnSetting();
+        }
+
+        @Override
+        public boolean isTagPresent() throws RemoteException {
+            if (DBG) Log.i(TAG, "isTagPresent");
+            NfcPermissions.enforceAdminPermissions(mContext);
+            return NfcService.this.isTagPresent();
         }
 
         private synchronized void sendVendorNciResponse(int gid, int oid, byte[] payload) {
