@@ -100,7 +100,8 @@ public class NfcShellCommand extends BasicShellCommandHandler {
                     boolean enable_polling =
                             getNextArgRequiredTrueOrFalse("enable-polling", "disable-polling");
                     int flags = enable_polling ? ENABLE_POLLING_FLAGS : DISABLE_POLLING_FLAGS;
-                    mNfcService.mNfcAdapter.setReaderMode(new Binder(), null, flags, null);
+                    mNfcService.mNfcAdapter.setReaderMode(
+                        new Binder(), null, flags, null, mContext.getPackageName());
                     return 0;
                 case "set-observe-mode":
                     boolean enable = getNextArgRequiredTrueOrFalse("enable", "disable");
@@ -114,7 +115,7 @@ public class NfcShellCommand extends BasicShellCommandHandler {
                     int pollTech = Integer.parseInt(getNextArg());
                     int listenTech = Integer.parseInt(getNextArg());
                     mNfcService.mNfcAdapter.updateDiscoveryTechnology(
-                            new Binder(), pollTech, listenTech);
+                            new Binder(), pollTech, listenTech, mContext.getPackageName());
                     return 0;
                 case "configure-dta":
                     boolean enableDta = getNextArgRequiredTrueOrFalse("enable", "disable");
@@ -192,6 +193,7 @@ public class NfcShellCommand extends BasicShellCommandHandler {
         pw.println("  set-controller-always-on <mode>");
         pw.println("    Enable or disable controller always on");
         pw.println("  set-discovery-tech poll-mask|listen-mask");
+        pw.println("    set discovery technology for polling and listening.");
         pw.println("  configure-dta enable|disable");
         pw.println("    Enable or disable DTA");
     }
