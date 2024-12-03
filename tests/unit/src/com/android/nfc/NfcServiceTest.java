@@ -36,6 +36,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -58,6 +59,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.media.SoundPool;
+import android.nfc.INfcOemExtensionCallback;
 import android.nfc.NdefMessage;
 import android.nfc.NfcAdapter;
 import android.nfc.NfcAntennaInfo;
@@ -74,6 +76,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.PowerManager;
 import android.os.RemoteException;
+import android.os.ResultReceiver;
 import android.os.UserManager;
 import android.os.test.TestLooper;
 import android.se.omapi.ISecureElementService;
@@ -97,7 +100,9 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.MockitoSession;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.quality.Strictness;
+import org.mockito.stubbing.Answer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -743,5 +748,96 @@ public final class NfcServiceTest {
         verify(mPreferences).edit();
         verify(mPreferencesEditor).putBoolean(NfcService.PREF_MIGRATE_TO_DE_COMPLETE, true);
         verify(mPreferencesEditor).apply();
+    }
+
+    public void testAllowOemEnable() throws Exception {
+        INfcOemExtensionCallback callback = mock(INfcOemExtensionCallback.class);
+        mNfcService.mNfcAdapter.registerOemExtensionCallback(callback);
+        doAnswer(new Answer() {
+                     @Override
+                     public Void answer(InvocationOnMock invocation) throws Throwable {
+                         ResultReceiver r = invocation.getArgument(0);
+                         r.send(1, null);
+                         return null;
+                     }
+                 }).when(callback).onEnable(any(ResultReceiver.class));
+        enableAndVerify();
+        verify(callback).onEnable(any());
+    }
+
+    @Test
+    public void testAllowOemEnable_Disallowed() throws Exception {
+        INfcOemExtensionCallback callback = mock(INfcOemExtensionCallback.class);
+        mNfcService.mNfcAdapter.registerOemExtensionCallback(callback);
+        doAnswer(new Answer() {
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                ResultReceiver r = invocation.getArgument(0);
+                r.send(0, null);
+                return null;
+            }
+        }).when(callback).onEnable(any(ResultReceiver.class));
+        when(mDeviceHost.initialize()).thenReturn(true);
+        when(mPreferences.getBoolean(eq(PREF_NFC_ON), anyBoolean())).thenReturn(true);
+        mNfcService.mNfcAdapter.enable(PKG_NAME);
+        mLooper.dispatchAll();
+        verify(mDeviceHost, never()).initialize();
+        verify(callback).onEnable(any());
+    }
+
+    @Test
+    public void testAllowOemDisable() throws Exception {
+        INfcOemExtensionCallback callback = mock(INfcOemExtensionCallback.class);
+        mNfcService.mNfcAdapter.registerOemExtensionCallback(callback);
+        doAnswer(new Answer() {
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                ResultReceiver r = invocation.getArgument(0);
+                r.send(1, null);
+                return null;
+            }
+        }).when(callback).onEnable(any(ResultReceiver.class));
+        doAnswer(new Answer() {
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                ResultReceiver r = invocation.getArgument(0);
+                r.send(1, null);
+                return null;
+            }
+        }).when(callback).onDisable(any(ResultReceiver.class));
+        enableAndVerify();
+        disableAndVerify();
+        verify(callback).onEnable(any());
+        verify(callback).onDisable(any());
+    }
+
+    @Test
+    public void testAllowOemDisable_Disallowed() throws Exception {
+        INfcOemExtensionCallback callback = mock(INfcOemExtensionCallback.class);
+        mNfcService.mNfcAdapter.registerOemExtensionCallback(callback);
+        doAnswer(new Answer() {
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                ResultReceiver r = invocation.getArgument(0);
+                r.send(1, null);
+                return null;
+            }
+        }).when(callback).onEnable(any(ResultReceiver.class));
+        doAnswer(new Answer() {
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                ResultReceiver r = invocation.getArgument(0);
+                r.send(0, null);
+                return null;
+            }
+        }).when(callback).onDisable(any(ResultReceiver.class));
+        enableAndVerify();
+        when(mDeviceHost.deinitialize()).thenReturn(true);
+        when(mPreferences.getBoolean(eq(PREF_NFC_ON), anyBoolean())).thenReturn(false);
+        mNfcService.mNfcAdapter.disable(true, PKG_NAME);
+        mLooper.dispatchAll();
+        verify(mDeviceHost, never()).deinitialize();
+        verify(callback).onEnable(any());
+        verify(callback).onDisable(any());
     }
 }
