@@ -274,6 +274,7 @@ public class AidRoutingManagerTest {
     when(mRoutingOptionManager.getOffHostRouteEse()).thenReturn(OFFHOST_ROUTE_ESE);
     when(mRoutingOptionManager.getAidMatchingSupport()).thenReturn(AID_MATCHING_PREFIX_ONLY);
     when(mRoutingOptionManager.getDefaultIsoDepRoute()).thenReturn(ROUTE_HOST);
+    when(mRoutingOptionManager.isAutoChangeEnabled()).thenReturn(true);
     when(mNfcService.getNciVersion()).thenReturn(NfcService.NCI_VERSION_1_0);
     when(mNfcService.getAidRoutingTableSize()).thenReturn(0);
     manager = new AidRoutingManager();
@@ -404,12 +405,12 @@ public class AidRoutingManagerTest {
   @Test
   public void testConfigureRoutingTestCase5_CommitsCache() {
     when(mRoutingOptionManager.isRoutingTableOverrided()).thenReturn(true);
-    when(mRoutingOptionManager.getDefaultOffHostRoute()).thenReturn(DEFAULT_OFFHOST_ROUTE);
     when(mRoutingOptionManager.getOverrideDefaultRoute()).thenReturn(OVERRIDE_DEFAULT_ROUTE);
+    when(mRoutingOptionManager.getOverrideDefaultOffHostRoute()).thenReturn(DEFAULT_OFFHOST_ROUTE);
+    when(mRoutingOptionManager.getOverrideDefaultIsoDepRoute()).thenReturn(ROUTE_HOST);
     when(mRoutingOptionManager.getOffHostRouteUicc()).thenReturn(null);
     when(mRoutingOptionManager.getOffHostRouteEse()).thenReturn(null);
     when(mRoutingOptionManager.getAidMatchingSupport()).thenReturn(AID_MATCHING_EXACT_OR_PREFIX);
-    when(mRoutingOptionManager.getDefaultIsoDepRoute()).thenReturn(ROUTE_HOST);
     when(mNfcService.getNciVersion()).thenReturn(NfcService.NCI_VERSION_2_0);
     when(mNfcService.getAidRoutingTableSize()).thenReturn(0);
     manager = new AidRoutingManager();
@@ -466,13 +467,13 @@ public class AidRoutingManagerTest {
   @Test
   public void testConfigureRoutingTestCase6_CommitsCache() {
     when(mRoutingOptionManager.isRoutingTableOverrided()).thenReturn(true);
-    when(mRoutingOptionManager.getDefaultOffHostRoute()).thenReturn(DEFAULT_OFFHOST_ROUTE);
     when(mRoutingOptionManager.getOverrideDefaultRoute()).thenReturn(OVERRIDE_DEFAULT_ROUTE);
+    when(mRoutingOptionManager.getOverrideDefaultOffHostRoute()).thenReturn(DEFAULT_OFFHOST_ROUTE);
+    when(mRoutingOptionManager.getOverrideDefaultIsoDepRoute()).thenReturn(ROUTE_HOST);
     when(mRoutingOptionManager.getOffHostRouteUicc()).thenReturn(null);
     when(mRoutingOptionManager.getOffHostRouteEse()).thenReturn(null);
     when(mRoutingOptionManager.getAidMatchingSupport())
         .thenReturn(AID_MATCHING_EXACT_OR_SUBSET_OR_PREFIX);
-    when(mRoutingOptionManager.getDefaultIsoDepRoute()).thenReturn(ROUTE_HOST);
     when(mNfcService.getNciVersion()).thenReturn(NfcService.NCI_VERSION_2_0);
     when(mNfcService.getAidRoutingTableSize()).thenReturn(0);
     manager = new AidRoutingManager();

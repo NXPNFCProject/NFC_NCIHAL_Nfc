@@ -77,8 +77,11 @@ import android.util.Log;
 import android.util.proto.ProtoOutputStream;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 import com.android.internal.annotations.VisibleForTesting;
+import com.android.nfc.DeviceConfigFacade;
 import com.android.nfc.ForegroundUtils;
 import com.android.nfc.NfcInjector;
 import com.android.nfc.NfcPermissions;
@@ -144,13 +147,14 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
     final ForegroundUtils mForegroundUtils;
     private int mForegroundUid;
 
-    RoutingOptionManager mRoutingOptionManager;
+    private final RoutingOptionManager mRoutingOptionManager;
     final byte[] mOffHostRouteUicc;
     final byte[] mOffHostRouteEse;
     private INfcOemExtensionCallback mNfcOemExtensionCallback;
 
     // TODO: Move this object instantiation and dependencies to NfcInjector.
-    public CardEmulationManager(Context context, NfcInjector nfcInjector) {
+    public CardEmulationManager(Context context, NfcInjector nfcInjector,
+        DeviceConfigFacade deviceConfigFacade) {
         mContext = context;
         mCardEmulationInterface = new CardEmulationInterface();
         mNfcFCardEmulationInterface = new NfcFCardEmulationInterface();
@@ -158,6 +162,12 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
             context.getSystemService(ActivityManager.class));
         mWalletRoleObserver = new WalletRoleObserver(context,
                 context.getSystemService(RoleManager.class), this, nfcInjector);
+
+        mRoutingOptionManager = RoutingOptionManager.getInstance();
+        mOffHostRouteEse = mRoutingOptionManager.getOffHostRouteEse();
+        mOffHostRouteUicc = mRoutingOptionManager.getOffHostRouteUicc();
+        mRoutingOptionManager.readRoutingOptionsFromPrefs(mContext, deviceConfigFacade);
+
         mAidCache = new RegisteredAidCache(context, mWalletRoleObserver);
         mT3tIdentifiersCache = new RegisteredT3tIdentifiersCache(context);
         mHostEmulationManager =
@@ -170,9 +180,6 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         mEnabledNfcFServices = new EnabledNfcFServices(
                 context, mNfcFServicesCache, mT3tIdentifiersCache, this);
         mPowerManager = context.getSystemService(PowerManager.class);
-        mRoutingOptionManager = RoutingOptionManager.getInstance();
-        mOffHostRouteEse = mRoutingOptionManager.getOffHostRouteEse();
-        mOffHostRouteUicc = mRoutingOptionManager.getOffHostRouteUicc();
         initialize();
     }
 
@@ -950,6 +957,60 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
             mRoutingOptionManager.overrideDefaultOffHostRoute(technologyRoute);
             mAidCache.onRoutingOverridedOrRecovered();
 //            NfcService.getInstance().commitRouting();
+        }
+
+        // TODO: Need corresponding API
+        public void overwriteRoutingTable(int userHandle, String aids,
+            String protocol, String technology) {
+            Log.d(TAG, "overwriteRoutingTable. userHandle " + userHandle
+                + ", emptyAid " + aids + ", protocol " + protocol
+                + ", technology " + technology);
+
+            int aidRoute = mRoutingOptionManager.getRouteForSecureElement(aids);
+            int protocolRoute = mRoutingOptionManager.getRouteForSecureElement(protocol);
+            int technologyRoute = mRoutingOptionManager.getRouteForSecureElement(technology);
+
+            if (DBG) {
+                Log.d(TAG, "aidRoute " + aidRoute + ", protocolRoute "
+                    + protocolRoute + ", technologyRoute " + technologyRoute);
+            }
+            if (aids != null) {
+                mRoutingOptionManager.overrideDefaultRoute(aidRoute);
+                mRoutingOptionManager.overrideDefaultIsoDepRoute(protocolRoute);
+                mRoutingOptionManager.overrideDefaultOffHostRoute(technologyRoute);
+                mRoutingOptionManager.overwriteRoutingTable();
+            }
+            mAidCache.onRoutingOverridedOrRecovered();
+        }
+
+        // TODO: Need corresponding API
+        public List<String> getRoutingStatus() {
+            List<Integer> routingList = new ArrayList<>();
+
+            if (mRoutingOptionManager.isRoutingTableOverrided()) {
+                routingList.add(mRoutingOptionManager.getOverrideDefaultRoute());
+                routingList.add(mRoutingOptionManager.getOverrideDefaultIsoDepRoute());
+                routingList.add(mRoutingOptionManager.getOverrideDefaultOffHostRoute());
+            }
+            else {
+                routingList.add(mRoutingOptionManager.getDefaultRoute());
+                routingList.add(mRoutingOptionManager.getDefaultIsoDepRoute());
+                routingList.add(mRoutingOptionManager.getDefaultOffHostRoute());
+            }
+
+            return routingList.stream()
+                .map(route->mRoutingOptionManager.getSecureElementForRoute(route))
+                .collect(Collectors.toList());
+        }
+
+        // TODO: Need corresponding API
+        public void setAutoChangeStatus(boolean state) {
+            mRoutingOptionManager.setAutoChangeStatus(state);
+        }
+
+        // TODO: Need corresponding API
+        public boolean isAutoChangeEnabled() {
+            return mRoutingOptionManager.isAutoChangeEnabled();
         }
 
         @Override

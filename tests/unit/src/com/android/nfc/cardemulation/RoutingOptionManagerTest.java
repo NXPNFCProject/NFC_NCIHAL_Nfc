@@ -125,8 +125,7 @@ public class RoutingOptionManagerTest {
 
     manager.overrideDefaultIsoDepRoute(OVERRIDDEN_ISO_DEP_ROUTE);
 
-    assertEquals(OVERRIDDEN_ISO_DEP_ROUTE, manager.mOverrideDefaultRoute);
-    assertEquals(OVERRIDDEN_ISO_DEP_ROUTE, manager.mOverrideDefaultIsoDepRoute);
+    assertEquals(OVERRIDDEN_ISO_DEP_ROUTE, manager.getOverrideDefaultIsoDepRoute());
     verify(mNfcService).setIsoDepProtocolRoute(routeCaptor.capture());
     assertEquals(Integer.valueOf(OVERRIDDEN_ISO_DEP_ROUTE), routeCaptor.getValue());
   }
@@ -137,9 +136,18 @@ public class RoutingOptionManagerTest {
 
     manager.overrideDefaultOffHostRoute(OVERRIDDEN_OFF_HOST_ROUTE);
 
-    assertEquals(OVERRIDDEN_OFF_HOST_ROUTE, manager.mOverrideDefaultOffHostRoute);
+    assertEquals(OVERRIDDEN_OFF_HOST_ROUTE, manager.getOverrideDefaultOffHostRoute());
     verify(mNfcService).setTechnologyABFRoute(routeCaptor.capture());
     assertEquals(Integer.valueOf(OVERRIDDEN_OFF_HOST_ROUTE), routeCaptor.getValue());
+  }
+
+  @Test
+  public void testOverrideDefaulttRoute() {
+    manager = new TestRoutingOptionManager();
+
+    manager.overrideDefaultRoute(OVERRIDDEN_OFF_HOST_ROUTE);
+
+    assertEquals(OVERRIDDEN_OFF_HOST_ROUTE, manager.getOverrideDefaultRoute());
   }
 
   @Test

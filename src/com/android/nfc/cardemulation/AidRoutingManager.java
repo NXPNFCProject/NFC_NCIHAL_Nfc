@@ -315,13 +315,17 @@ public class AidRoutingManager {
         boolean aidRouteResolved = false;
         HashMap<String, AidEntry> aidRoutingTableCache = new HashMap<String, AidEntry>(aidMap.size());
         ArrayList<Integer> seList = new ArrayList<Integer>();
+        int prevDefaultRoute = mDefaultRoute;
         mAidRoutingTableSize = NfcService.getInstance().getAidRoutingTableSize();
         if (mRoutingOptionManager.isRoutingTableOverrided()) {
             mDefaultAidRoute = mRoutingOptionManager.getOverrideDefaultRoute();
+            mDefaultIsoDepRoute = mRoutingOptionManager.getOverrideDefaultIsoDepRoute();
+            mDefaultOffHostRoute = mRoutingOptionManager.getOverrideDefaultOffHostRoute();
         } else {
             mDefaultAidRoute = NfcService.getInstance().GetDefaultRouteEntry() >> 0x08;
+            mDefaultIsoDepRoute = mRoutingOptionManager.getDefaultIsoDepRoute();
+            mDefaultOffHostRoute = mRoutingOptionManager.getDefaultOffHostRoute();
         }
-        mDefaultOffHostRoute = mRoutingOptionManager.getDefaultOffHostRoute();
         boolean isPowerStateUpdated = false;
         Log.e(TAG, "Size of routing table"+mAidRoutingTableSize);
         seList.add(mDefaultAidRoute);
@@ -368,6 +372,13 @@ public class AidRoutingManager {
         }
         if (!seList.contains(ROUTE_HOST))
           seList.add(ROUTE_HOST);
+
+        if (!mRoutingOptionManager.isAutoChangeEnabled() && seList.size() >= 2) {
+            Log.d(TAG, "AutoRouting is not enabled, make only one item in list");
+            int firstRoute = seList.get(0);
+            seList.clear();
+            seList.add(firstRoute);
+        }
 
         synchronized (mLock) {
             mLastCommitStatus = false;
@@ -546,9 +557,12 @@ public class AidRoutingManager {
 
             boolean mIsUnrouteRequired = checkUnrouteAid(prevRouteForAid, prevPowerForAid);
             boolean isRouteTableUpdated = checkRouteAid(prevRouteForAid, prevPowerForAid);
+            boolean isRoutingOptionUpdated = (prevDefaultRoute != mDefaultRoute);
 
-            if (isPowerStateUpdated || isRouteTableUpdated || mIsUnrouteRequired || force) {
+            if (isPowerStateUpdated || isRouteTableUpdated || mIsUnrouteRequired
+                    || isRoutingOptionUpdated || force) {
                 if (aidRouteResolved) {
+                    sendRoutingTable(isRoutingOptionUpdated, force);
                     NfcService.getInstance().updateDefaultAidRoute(mDefaultRoute);
                     mLastCommitStatus = true;
                     commit(aidRoutingTableCache);
@@ -595,6 +609,30 @@ public class AidRoutingManager {
         if (NfcService.getInstance().isNfcEnabled())
           NfcService.getInstance().commitRouting();
     }
+
+    private void sendRoutingTable(boolean optionChanged, boolean force) {
+        Log.d(TAG, "sendRoutingTable");
+        if (!mRoutingOptionManager.isRoutingTableOverrided()) {
+            if (mDefaultRoute != ROUTE_HOST) {
+                Log.d(TAG, "Protocol and Technology entries need to sync with"
+                    + " mDefaultRoute: " + mDefaultRoute);
+                mDefaultIsoDepRoute = mDefaultRoute;
+                mDefaultOffHostRoute = mDefaultRoute;
+            }
+            else {
+                Log.d(TAG, "Default route is DeviceHost, use previous protocol, technology");
+            }
+
+            if (force || optionChanged) {
+                NfcService.getInstance().setIsoDepProtocolRoute(mDefaultIsoDepRoute);
+                NfcService.getInstance().setTechnologyABFRoute(mDefaultOffHostRoute);
+            }
+        }
+        else {
+            Log.d(TAG, "Routing table is override, Do not send the protocol, tech");
+        }
+    }
+
     /**
      * This notifies that the AID routing table in the controller
      * has been cleared (usually due to NFC being turned off).
