@@ -15,6 +15,7 @@
  */
 package com.android.nfc.cardemulation;
 
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
@@ -45,7 +46,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -91,7 +91,7 @@ public final class NfcAidConflictOccurredTest {
         InstrumentationRegistry.getInstrumentation().runOnMainSync(
               () -> mHostEmulation = new HostEmulationManager(
                       mockContext, mTestLooper.getLooper(), mockAidCache));
-        Assert.assertNotNull(mHostEmulation);
+        assertNotNull(mHostEmulation);
 
         mHostEmulation.onHostEmulationActivated();
     }

@@ -17,6 +17,7 @@
 package com.android.nfc.cardemulation;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -39,6 +40,7 @@ import android.content.ContentResolver;
 import android.content.ContextWrapper;
 import android.database.ContentObserver;
 import android.nfc.Constants;
+import android.os.Process;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.net.Uri;
@@ -58,7 +60,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -388,8 +389,8 @@ public class PreferredServicesTest {
         services.onServicesUpdated();
 
         assertThat(services.mForegroundRequested).isNull();
-        assertThat(services.mForegroundUid).isEqualTo(-1);
-        assertThat(services.mForegroundCurrentUid).isEqualTo(-1);
+        assertThat(services.mForegroundUid).isEqualTo(Process.INVALID_UID);
+        assertThat(services.mForegroundCurrentUid).isEqualTo(Process.INVALID_UID);
         assertWalletRoleHolderUpdated();
     }
 
@@ -413,8 +414,8 @@ public class PreferredServicesTest {
         services.onServicesUpdated();
 
         assertThat(services.mForegroundRequested).isNull();
-        assertThat(services.mForegroundUid).isEqualTo(-1);
-        assertThat(services.mForegroundCurrentUid).isEqualTo(-1);
+        assertThat(services.mForegroundUid).isEqualTo(Process.INVALID_UID);
+        assertThat(services.mForegroundCurrentUid).isEqualTo(Process.INVALID_UID);
         assertWalletRoleHolderUpdated();
     }
 
@@ -479,7 +480,7 @@ public class PreferredServicesTest {
 
         assertThat(result).isTrue();
         assertThat(services.mForegroundRequested).isNull();
-        assertThat(services.mForegroundUid).isEqualTo(-1);
+        assertThat(services.mForegroundUid).isEqualTo(Process.INVALID_UID);
     }
 
     @Test
@@ -514,7 +515,7 @@ public class PreferredServicesTest {
 
         services.onUidToBackground(FOREGROUND_UID);
 
-        assertThat(services.mForegroundUid).isEqualTo(-1);
+        assertThat(services.mForegroundUid).isEqualTo(Process.INVALID_UID);
     }
 
     @Test
@@ -678,7 +679,7 @@ public class PreferredServicesTest {
                 Constants.SETTINGS_SECURE_NFC_PAYMENT_DEFAULT_COMPONENT);
         mSettingsObserverCaptor.getValue().onChange(true, uri);
         verify(mObserver, atLeast(1)).isWalletRoleFeatureEnabled();
-        Assert.assertTrue(services.mPaymentDefaults.preferForeground);
+        assertTrue(services.mPaymentDefaults.preferForeground);
     }
 
     @Test
@@ -694,7 +695,7 @@ public class PreferredServicesTest {
                 Constants.SETTINGS_SECURE_NFC_PAYMENT_DEFAULT_COMPONENT);
         mSettingsObserverCaptor.getValue().onChange(true, uri);
         verify(mObserver, atLeast(1)).isWalletRoleFeatureEnabled();
-        Assert.assertTrue(services.mPaymentDefaults.preferForeground);
+        assertTrue(services.mPaymentDefaults.preferForeground);
         verify(mCallback).onPreferredForegroundServiceChanged(anyInt(), any());
     }
 }

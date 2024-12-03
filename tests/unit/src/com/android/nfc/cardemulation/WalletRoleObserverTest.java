@@ -16,6 +16,8 @@
 
 package com.android.nfc.cardemulation;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -32,7 +34,6 @@ import com.google.common.collect.ImmutableList;
 import com.android.nfc.NfcEventLog;
 import com.android.nfc.NfcInjector;
 
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -89,8 +90,8 @@ public class WalletRoleObserverTest {
         verify(mContext).getMainExecutor();
         verify(mRoleManager).addOnRoleHoldersChangedListenerAsUser(mExecutorCaptor.capture(),any(),
                 mUserHandlerCaptor.capture());
-        Assert.assertEquals(mExecutor, mExecutorCaptor.getValue());
-        Assert.assertEquals(UserHandle.ALL, mUserHandlerCaptor.getValue());
+        assertEquals(mExecutor, mExecutorCaptor.getValue());
+        assertEquals(UserHandle.ALL, mUserHandlerCaptor.getValue());
     }
 
     @Test
@@ -105,9 +106,9 @@ public class WalletRoleObserverTest {
         verify(mRoleManager).isRoleAvailable(mRoleNameCaptor.capture());
         verify(mRoleManager).getRoleHoldersAsUser(mRoleNameCaptor.capture(),
                 mUserHandlerCaptor.capture());
-        Assert.assertEquals(roleHolder, WALLET_ROLE_HOLDER);
-        Assert.assertEquals(RoleManager.ROLE_WALLET, mRoleNameCaptor.getAllValues().get(0));
-        Assert.assertEquals(RoleManager.ROLE_WALLET, mRoleNameCaptor.getAllValues().get(1));
+        assertEquals(WALLET_ROLE_HOLDER, roleHolder);
+        assertEquals(RoleManager.ROLE_WALLET, mRoleNameCaptor.getAllValues().get(0));
+        assertEquals(RoleManager.ROLE_WALLET, mRoleNameCaptor.getAllValues().get(1));
     }
 
     @Test
@@ -116,7 +117,7 @@ public class WalletRoleObserverTest {
 
         String roleHolder = mWalletRoleObserver.getDefaultWalletRoleHolder(USER_ID);
 
-        Assert.assertNull(roleHolder);
+        assertNull(roleHolder);
     }
 
     @Test
@@ -129,8 +130,8 @@ public class WalletRoleObserverTest {
 
         verify(mRoleManager).getRoleHoldersAsUser(mRoleNameCaptor.capture(), eq(USER_HANDLE));
         verify(mCallback).onWalletRoleHolderChanged(mRoleHolderCaptor.capture(), eq(USER_ID));
-        Assert.assertEquals(RoleManager.ROLE_WALLET, mRoleNameCaptor.getValue());
-        Assert.assertEquals(WALLET_ROLE_HOLDER, mRoleHolderCaptor.getValue());
+        assertEquals(RoleManager.ROLE_WALLET, mRoleNameCaptor.getValue());
+        assertEquals(WALLET_ROLE_HOLDER, mRoleHolderCaptor.getValue());
     }
 
     @Test
@@ -153,9 +154,9 @@ public class WalletRoleObserverTest {
         verify(mRoleManager).getRoleHoldersAsUser(mRoleNameCaptor.capture(),
                 mUserHandlerCaptor.capture());
         verify(mCallback).onWalletRoleHolderChanged(mRoleHolderCaptor.capture(), eq(USER_ID));
-        Assert.assertEquals(WALLET_ROLE_HOLDER, mRoleHolderCaptor.getValue());
-        Assert.assertEquals(RoleManager.ROLE_WALLET, mRoleNameCaptor.getAllValues().get(0));
-        Assert.assertEquals(RoleManager.ROLE_WALLET, mRoleNameCaptor.getAllValues().get(1));
+        assertEquals(WALLET_ROLE_HOLDER, mRoleHolderCaptor.getValue());
+        assertEquals(RoleManager.ROLE_WALLET, mRoleNameCaptor.getAllValues().get(0));
+        assertEquals(RoleManager.ROLE_WALLET, mRoleNameCaptor.getAllValues().get(1));
     }
 
 }

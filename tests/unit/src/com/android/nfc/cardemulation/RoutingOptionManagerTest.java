@@ -15,6 +15,8 @@
  */
 package com.android.nfc.cardemulation;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -25,7 +27,6 @@ import com.android.dx.mockito.inline.extended.ExtendedMockito;
 import com.android.nfc.NfcService;
 
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -110,12 +111,12 @@ public class RoutingOptionManagerTest {
   public void testConstructor() {
     manager = new TestRoutingOptionManager();
 
-    Assert.assertEquals(DEFAULT_ROUTE, manager.mDefaultRoute);
-    Assert.assertEquals(DEFAULT_ISO_DEP_ROUTE, manager.mDefaultIsoDepRoute);
-    Assert.assertEquals(DEFAULT_OFF_HOST_ROUTE, manager.mDefaultOffHostRoute);
-    Assert.assertEquals(OFF_HOST_UICC, manager.mOffHostRouteUicc);
-    Assert.assertEquals(OFF_HOST_ESE, manager.mOffHostRouteEse);
-    Assert.assertEquals(AID_MATCHING_MODE, manager.mAidMatchingSupport);
+    assertEquals(DEFAULT_ROUTE, manager.mDefaultRoute);
+    assertEquals(DEFAULT_ISO_DEP_ROUTE, manager.mDefaultIsoDepRoute);
+    assertEquals(DEFAULT_OFF_HOST_ROUTE, manager.mDefaultOffHostRoute);
+    assertEquals(OFF_HOST_UICC, manager.mOffHostRouteUicc);
+    assertEquals(OFF_HOST_ESE, manager.mOffHostRouteEse);
+    assertEquals(AID_MATCHING_MODE, manager.mAidMatchingSupport);
   }
 
   @Test
@@ -124,10 +125,10 @@ public class RoutingOptionManagerTest {
 
     manager.overrideDefaultIsoDepRoute(OVERRIDDEN_ISO_DEP_ROUTE);
 
-    Assert.assertEquals(OVERRIDDEN_ISO_DEP_ROUTE, manager.mOverrideDefaultRoute);
-    Assert.assertEquals(OVERRIDDEN_ISO_DEP_ROUTE, manager.mOverrideDefaultIsoDepRoute);
+    assertEquals(OVERRIDDEN_ISO_DEP_ROUTE, manager.mOverrideDefaultRoute);
+    assertEquals(OVERRIDDEN_ISO_DEP_ROUTE, manager.mOverrideDefaultIsoDepRoute);
     verify(mNfcService).setIsoDepProtocolRoute(routeCaptor.capture());
-    Assert.assertEquals(routeCaptor.getValue(), Integer.valueOf(OVERRIDDEN_ISO_DEP_ROUTE));
+    assertEquals(Integer.valueOf(OVERRIDDEN_ISO_DEP_ROUTE), routeCaptor.getValue());
   }
 
   @Test
@@ -136,9 +137,9 @@ public class RoutingOptionManagerTest {
 
     manager.overrideDefaultOffHostRoute(OVERRIDDEN_OFF_HOST_ROUTE);
 
-    Assert.assertEquals(OVERRIDDEN_OFF_HOST_ROUTE, manager.mOverrideDefaultOffHostRoute);
+    assertEquals(OVERRIDDEN_OFF_HOST_ROUTE, manager.mOverrideDefaultOffHostRoute);
     verify(mNfcService).setTechnologyABFRoute(routeCaptor.capture());
-    Assert.assertEquals(routeCaptor.getValue(), Integer.valueOf(OVERRIDDEN_OFF_HOST_ROUTE));
+    assertEquals(Integer.valueOf(OVERRIDDEN_OFF_HOST_ROUTE), routeCaptor.getValue());
   }
 
   @Test
@@ -149,9 +150,9 @@ public class RoutingOptionManagerTest {
 
     verify(mNfcService).setIsoDepProtocolRoute(anyInt());
     verify(mNfcService).setTechnologyABFRoute(anyInt());
-    Assert.assertEquals(RoutingOptionManager.ROUTE_UNKNOWN, manager.mOverrideDefaultRoute);
-    Assert.assertEquals(RoutingOptionManager.ROUTE_UNKNOWN, manager.mOverrideDefaultIsoDepRoute);
-    Assert.assertEquals(RoutingOptionManager.ROUTE_UNKNOWN, manager.mOverrideDefaultOffHostRoute);
+    assertEquals(RoutingOptionManager.ROUTE_UNKNOWN, manager.mOverrideDefaultRoute);
+    assertEquals(RoutingOptionManager.ROUTE_UNKNOWN, manager.mOverrideDefaultIsoDepRoute);
+    assertEquals(RoutingOptionManager.ROUTE_UNKNOWN, manager.mOverrideDefaultOffHostRoute);
   }
 
   @Test
@@ -166,13 +167,13 @@ public class RoutingOptionManagerTest {
     byte[] offHostRouteEse = manager.getOffHostRouteEse();
     int aidMatchingSupport = manager.getAidMatchingSupport();
 
-    Assert.assertEquals(-1, overrideDefaultRoute);
-    Assert.assertEquals(DEFAULT_ROUTE, defaultRoute);
-    Assert.assertEquals(DEFAULT_ISO_DEP_ROUTE, defaultIsoDepRoute);
-    Assert.assertEquals(DEFAULT_OFF_HOST_ROUTE, defaultOffHostRoute);
-    Assert.assertEquals(offHostRouteUicc, OFF_HOST_UICC);
-    Assert.assertEquals(offHostRouteEse, OFF_HOST_ESE);
-    Assert.assertEquals(AID_MATCHING_MODE, aidMatchingSupport);
+    assertEquals(-1, overrideDefaultRoute);
+    assertEquals(DEFAULT_ROUTE, defaultRoute);
+    assertEquals(DEFAULT_ISO_DEP_ROUTE, defaultIsoDepRoute);
+    assertEquals(DEFAULT_OFF_HOST_ROUTE, defaultOffHostRoute);
+    assertEquals(OFF_HOST_UICC, offHostRouteUicc);
+    assertEquals(OFF_HOST_ESE, offHostRouteEse);
+    assertEquals(AID_MATCHING_MODE, aidMatchingSupport);
   }
 
   @Test
@@ -181,6 +182,6 @@ public class RoutingOptionManagerTest {
 
     boolean result = manager.isRoutingTableOverrided();
 
-    Assert.assertFalse(result);
+    assertFalse(result);
   }
 }

@@ -16,6 +16,11 @@
 
 package com.android.nfc.cardemulation;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -39,7 +44,6 @@ import java.util.List;
 import java.util.Locale;
 
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -109,8 +113,8 @@ public class RegisteredT3tIdentifiersCacheTest {
   public void testConstructor() {
     cache = new RegisteredT3tIdentifiersCache(mContext);
 
-    Assert.assertEquals(cache.mContext, mContext);
-    Assert.assertNotNull(cache.mRoutingManager);
+    assertEquals(mContext, cache.mContext);
+    assertNotNull(cache.mRoutingManager);
   }
 
   @Test
@@ -122,7 +126,7 @@ public class RegisteredT3tIdentifiersCacheTest {
 
     boolean result = firstIdentifier.equals(secondIdentifier);
 
-    Assert.assertTrue(result);
+    assertTrue(result);
   }
 
   @Test
@@ -133,7 +137,7 @@ public class RegisteredT3tIdentifiersCacheTest {
 
     boolean result = firstIdentifier.equals(secondIdentifier);
 
-    Assert.assertFalse(result);
+    assertFalse(result);
   }
 
   @Test
@@ -143,7 +147,7 @@ public class RegisteredT3tIdentifiersCacheTest {
 
     NfcFServiceInfo result = cache.resolveNfcid2(NFCID2);
 
-    Assert.assertEquals(result, mNfcFServiceInfo);
+    assertEquals(mNfcFServiceInfo, result);
   }
 
   @Test
@@ -167,13 +171,13 @@ public class RegisteredT3tIdentifiersCacheTest {
     verify(mRoutingManager, times(2)).configureRouting(identifiersCaptor.capture());
     List<T3tIdentifier> firstList = identifiersCaptor.getAllValues().get(0);
     List<T3tIdentifier> secondList = identifiersCaptor.getAllValues().get(1);
-    Assert.assertEquals(1, firstList.size());
+    assertEquals(1, firstList.size());
     T3tIdentifier identifier = firstList.get(0);
-    Assert.assertEquals(SYSTEM_CODE, identifier.systemCode);
-    Assert.assertEquals(NFCID2, identifier.nfcid2);
-    Assert.assertEquals(T3TPMM, identifier.t3tPmm);
-    Assert.assertEquals(1, secondList.size());
-    Assert.assertEquals(secondList.get(0), identifier);
+    assertEquals(SYSTEM_CODE, identifier.systemCode);
+    assertEquals(NFCID2, identifier.nfcid2);
+    assertEquals(T3TPMM, identifier.t3tPmm);
+    assertEquals(1, secondList.size());
+    assertEquals(secondList.get(0), identifier);
   }
 
   @Test
@@ -183,8 +187,8 @@ public class RegisteredT3tIdentifiersCacheTest {
 
     cache.onServicesUpdated(USER_ID, serviceList);
 
-    Assert.assertEquals(1, cache.mUserNfcFServiceInfo.size());
-    Assert.assertEquals(serviceList, cache.mUserNfcFServiceInfo.get(USER_ID));
+    assertEquals(1, cache.mUserNfcFServiceInfo.size());
+    assertEquals(serviceList, cache.mUserNfcFServiceInfo.get(USER_ID));
   }
 
   /**
@@ -200,8 +204,8 @@ public class RegisteredT3tIdentifiersCacheTest {
 
     cache.onEnabledForegroundNfcFServiceChanged(USER_ID, /* component = */ null);
 
-    Assert.assertEquals(USER_ID, cache.mEnabledForegroundServiceUserId);
-    Assert.assertNull(cache.mEnabledForegroundService);
+    assertEquals(USER_ID, cache.mEnabledForegroundServiceUserId);
+    assertNull(cache.mEnabledForegroundService);
     verify(mRoutingManager, never()).configureRouting(any());
   }
 
@@ -218,10 +222,10 @@ public class RegisteredT3tIdentifiersCacheTest {
 
     cache.onEnabledForegroundNfcFServiceChanged(USER_ID, /* component = */ null);
 
-    Assert.assertNull(cache.mEnabledForegroundService);
-    Assert.assertEquals(-1, cache.mEnabledForegroundServiceUserId);
+    assertNull(cache.mEnabledForegroundService);
+    assertEquals(-1, cache.mEnabledForegroundServiceUserId);
     verify(mRoutingManager).configureRouting(identifiersCaptor.capture());
-    Assert.assertTrue(identifiersCaptor.getValue().isEmpty());
+    assertTrue(identifiersCaptor.getValue().isEmpty());
   }
 
   /**
@@ -238,14 +242,14 @@ public class RegisteredT3tIdentifiersCacheTest {
 
     cache.onEnabledForegroundNfcFServiceChanged(USER_ID, NON_PAYMENT_SERVICE_COMPONENT);
 
-    Assert.assertEquals(NON_PAYMENT_SERVICE_COMPONENT, cache.mEnabledForegroundService);
-    Assert.assertEquals(USER_ID, cache.mEnabledForegroundServiceUserId);
+    assertEquals(NON_PAYMENT_SERVICE_COMPONENT, cache.mEnabledForegroundService);
+    assertEquals(USER_ID, cache.mEnabledForegroundServiceUserId);
     verify(mRoutingManager).configureRouting(identifiersCaptor.capture());
-    Assert.assertEquals(1, identifiersCaptor.getValue().size());
+    assertEquals(1, identifiersCaptor.getValue().size());
     T3tIdentifier identifier = identifiersCaptor.getValue().get(0);
-    Assert.assertEquals(SYSTEM_CODE, identifier.systemCode);
-    Assert.assertEquals(NFCID2, identifier.nfcid2);
-    Assert.assertEquals(T3TPMM, identifier.t3tPmm);
+    assertEquals(SYSTEM_CODE, identifier.systemCode);
+    assertEquals(NFCID2, identifier.nfcid2);
+    assertEquals(T3TPMM, identifier.t3tPmm);
   }
 
   /**
@@ -261,8 +265,8 @@ public class RegisteredT3tIdentifiersCacheTest {
 
     cache.onEnabledForegroundNfcFServiceChanged(USER_ID, NON_PAYMENT_SERVICE_COMPONENT);
 
-    Assert.assertEquals(WALLET_HOLDER_SERVICE_COMPONENT, cache.mEnabledForegroundService);
-    Assert.assertEquals(USER_ID, cache.mEnabledForegroundServiceUserId);
+    assertEquals(WALLET_HOLDER_SERVICE_COMPONENT, cache.mEnabledForegroundService);
+    assertEquals(USER_ID, cache.mEnabledForegroundServiceUserId);
     verify(mRoutingManager, never()).configureRouting(any());
   }
 
@@ -272,7 +276,7 @@ public class RegisteredT3tIdentifiersCacheTest {
 
     cache.onNfcEnabled();
 
-    Assert.assertTrue(cache.mNfcEnabled);
+    assertTrue(cache.mNfcEnabled);
   }
 
   @Test
@@ -285,10 +289,10 @@ public class RegisteredT3tIdentifiersCacheTest {
 
     cache.onNfcDisabled();
 
-    Assert.assertFalse(cache.mNfcEnabled);
-    Assert.assertTrue(cache.mForegroundT3tIdentifiersCache.isEmpty());
-    Assert.assertNull(cache.mEnabledForegroundService);
-    Assert.assertEquals(-1, cache.mEnabledForegroundServiceUserId);
+    assertFalse(cache.mNfcEnabled);
+    assertTrue(cache.mForegroundT3tIdentifiersCache.isEmpty());
+    assertNull(cache.mEnabledForegroundService);
+    assertEquals(-1, cache.mEnabledForegroundServiceUserId);
     verify(mRoutingManager).onNfccRoutingTableCleared();
   }
 
@@ -302,11 +306,11 @@ public class RegisteredT3tIdentifiersCacheTest {
 
     cache.onUserSwitched();
 
-    Assert.assertTrue(cache.mForegroundT3tIdentifiersCache.isEmpty());
-    Assert.assertNull(cache.mEnabledForegroundService);
-    Assert.assertEquals(-1, cache.mEnabledForegroundServiceUserId);
+    assertTrue(cache.mForegroundT3tIdentifiersCache.isEmpty());
+    assertNull(cache.mEnabledForegroundService);
+    assertEquals(-1, cache.mEnabledForegroundServiceUserId);
     verify(mRoutingManager).configureRouting(identifiersCaptor.capture());
-    Assert.assertTrue(identifiersCaptor.getValue().isEmpty());
+    assertTrue(identifiersCaptor.getValue().isEmpty());
   }
 
   @Test

@@ -16,6 +16,11 @@
 
 package com.android.nfc.cardemulation;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -62,7 +67,6 @@ import java.util.List;
 import java.util.Locale;
 
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -189,32 +193,32 @@ public class RegisteredNfcFServicesCacheTest {
     verify(mContext, times(2))
         .registerReceiverForAllUsers(receiverCaptor.capture(), intentFilterCaptor.capture(),
             broadcastPermissionCaptor.capture(), schedulerCaptor.capture());
-    Assert.assertEquals(receiverCaptor.getAllValues().get(0), cache.mReceiver.get());
-    Assert.assertEquals(receiverCaptor.getAllValues().get(1), cache.mReceiver.get());
-    Assert.assertNotNull(cache.mReceiver.get());
+    assertEquals(cache.mReceiver.get(), receiverCaptor.getAllValues().get(0));
+    assertEquals(cache.mReceiver.get(), receiverCaptor.getAllValues().get(1));
+    assertNotNull(cache.mReceiver.get());
     IntentFilter intentFilter = intentFilterCaptor.getAllValues().get(0);
     IntentFilter sdFilter = intentFilterCaptor.getAllValues().get(1);
-    Assert.assertTrue(intentFilter.hasAction(Intent.ACTION_PACKAGE_ADDED));
-    Assert.assertTrue(intentFilter.hasAction(Intent.ACTION_PACKAGE_CHANGED));
-    Assert.assertTrue(intentFilter.hasAction(Intent.ACTION_PACKAGE_REMOVED));
-    Assert.assertTrue(intentFilter.hasAction(Intent.ACTION_PACKAGE_REPLACED));
-    Assert.assertTrue(intentFilter.hasAction(Intent.ACTION_PACKAGE_FIRST_LAUNCH));
-    Assert.assertTrue(intentFilter.hasAction(Intent.ACTION_PACKAGE_RESTARTED));
-    Assert.assertTrue(intentFilter.hasDataScheme("package"));
-    Assert.assertTrue(sdFilter.hasAction(Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE));
-    Assert.assertTrue(sdFilter.hasAction(Intent.ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE));
-    Assert.assertNull(broadcastPermissionCaptor.getAllValues().get(0));
-    Assert.assertNull(broadcastPermissionCaptor.getAllValues().get(1));
-    Assert.assertNull(schedulerCaptor.getAllValues().get(0));
-    Assert.assertNull(schedulerCaptor.getAllValues().get(1));
+    assertTrue(intentFilter.hasAction(Intent.ACTION_PACKAGE_ADDED));
+    assertTrue(intentFilter.hasAction(Intent.ACTION_PACKAGE_CHANGED));
+    assertTrue(intentFilter.hasAction(Intent.ACTION_PACKAGE_REMOVED));
+    assertTrue(intentFilter.hasAction(Intent.ACTION_PACKAGE_REPLACED));
+    assertTrue(intentFilter.hasAction(Intent.ACTION_PACKAGE_FIRST_LAUNCH));
+    assertTrue(intentFilter.hasAction(Intent.ACTION_PACKAGE_RESTARTED));
+    assertTrue(intentFilter.hasDataScheme("package"));
+    assertTrue(sdFilter.hasAction(Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE));
+    assertTrue(sdFilter.hasAction(Intent.ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE));
+    assertNull(broadcastPermissionCaptor.getAllValues().get(0));
+    assertNull(broadcastPermissionCaptor.getAllValues().get(1));
+    assertNull(schedulerCaptor.getAllValues().get(0));
+    assertNull(schedulerCaptor.getAllValues().get(1));
     synchronized (cache.mLock) {
-      Assert.assertEquals(cache.mUserHandles.get(0), USER_HANDLE);
+      assertEquals(USER_HANDLE, cache.mUserHandles.get(0));
     }
-    Assert.assertEquals(cache.mContext, mContext);
-    Assert.assertEquals(cache.mCallback, mCallback);
-    Assert.assertEquals(cache.mDynamicSystemCodeNfcid2File.getBaseFile().getParentFile(), DIR);
-    Assert.assertEquals(cache.mDynamicSystemCodeNfcid2File.getBaseFile().getAbsolutePath(),
-        DIR + "dynamic_systemcode_nfcid2.xml");
+    assertEquals(mContext, cache.mContext);
+    assertEquals(mCallback, cache.mCallback);
+    assertEquals(DIR, cache.mDynamicSystemCodeNfcid2File.getBaseFile().getParentFile());
+    assertEquals(DIR + "dynamic_systemcode_nfcid2.xml",
+        cache.mDynamicSystemCodeNfcid2File.getBaseFile().getAbsolutePath());
   }
 
   @Test
@@ -239,8 +243,8 @@ public class RegisteredNfcFServicesCacheTest {
     cache.mReceiver.get().onReceive(mContext, getBroadcastReceiverIntent());
 
     verify(mCallback).onNfcFServicesUpdated(userIdCaptor.capture(), servicesCaptor.capture());
-    Assert.assertEquals(userIdCaptor.getValue(), Integer.valueOf(USER_ID));
-    Assert.assertEquals(servicesCaptor.getValue().get(0), mNfcFServiceInfo);
+    assertEquals(Integer.valueOf(USER_ID), userIdCaptor.getValue());
+    assertEquals(mNfcFServiceInfo, servicesCaptor.getValue().get(0));
   }
 
   @Test
@@ -249,7 +253,7 @@ public class RegisteredNfcFServicesCacheTest {
 
     boolean result = cache.hasService(USER_ID, WALLET_COMPONENT);
 
-    Assert.assertFalse(result);
+    assertFalse(result);
   }
 
   @Test
@@ -259,7 +263,7 @@ public class RegisteredNfcFServicesCacheTest {
 
     boolean result = cache.hasService(USER_ID, WALLET_COMPONENT);
 
-    Assert.assertTrue(result);
+    assertTrue(result);
   }
 
   @Test
@@ -268,7 +272,7 @@ public class RegisteredNfcFServicesCacheTest {
 
     NfcFServiceInfo result = cache.getService(USER_ID, WALLET_COMPONENT);
 
-    Assert.assertNull(result);
+    assertNull(result);
   }
 
   @Test
@@ -278,7 +282,7 @@ public class RegisteredNfcFServicesCacheTest {
 
     NfcFServiceInfo result = cache.getService(USER_ID, WALLET_COMPONENT);
 
-    Assert.assertEquals(result, mNfcFServiceInfo);
+    assertEquals(mNfcFServiceInfo, result);
   }
 
   @Test
@@ -288,7 +292,7 @@ public class RegisteredNfcFServicesCacheTest {
 
     List<NfcFServiceInfo> result = cache.getServices(USER_ID);
 
-    Assert.assertEquals(result.get(0), mNfcFServiceInfo);
+    assertEquals(mNfcFServiceInfo, result.get(0));
   }
 
 
@@ -319,12 +323,12 @@ public class RegisteredNfcFServicesCacheTest {
     cache.invalidateCache(USER_ID);
 
     verify(mCallback).onNfcFServicesUpdated(userIdCaptor.capture(), servicesCaptor.capture());
-    Assert.assertEquals(userIdCaptor.getValue(), Integer.valueOf(USER_ID));
-    Assert.assertEquals(servicesCaptor.getValue().get(0), mNfcFServiceInfo);
+    assertEquals(Integer.valueOf(USER_ID), userIdCaptor.getValue());
+    assertEquals(mNfcFServiceInfo, servicesCaptor.getValue().get(0));
     UserServices userServicesResult = cache.mUserServices.get(USER_ID);
-    Assert.assertEquals(userServicesResult.services.get(WALLET_COMPONENT), mNfcFServiceInfo);
-    Assert.assertTrue(userServicesResult.dynamicSystemCode.isEmpty());
-    Assert.assertTrue(userServicesResult.dynamicNfcid2.isEmpty());
+    assertEquals(mNfcFServiceInfo, userServicesResult.services.get(WALLET_COMPONENT));
+    assertTrue(userServicesResult.dynamicSystemCode.isEmpty());
+    assertTrue(userServicesResult.dynamicNfcid2.isEmpty());
     verify(mNfcFServiceInfo, never()).setDynamicSystemCode(anyString());
     verify(mNfcFServiceInfo, never()).setDynamicNfcid2(anyString());
   }
@@ -347,14 +351,14 @@ public class RegisteredNfcFServicesCacheTest {
     cache.invalidateCache(USER_ID);
 
     verify(mCallback).onNfcFServicesUpdated(userIdCaptor.capture(), servicesCaptor.capture());
-    Assert.assertEquals(userIdCaptor.getValue(), Integer.valueOf(USER_ID));
-    Assert.assertEquals(servicesCaptor.getValue().get(0), mNfcFServiceInfo);
+    assertEquals(Integer.valueOf(USER_ID), userIdCaptor.getValue());
+    assertEquals(mNfcFServiceInfo, servicesCaptor.getValue().get(0));
     UserServices userServicesResult = cache.mUserServices.get(USER_ID);
-    Assert.assertEquals(userServicesResult.services.get(WALLET_COMPONENT), mNfcFServiceInfo);
-    Assert.assertEquals(1, userServicesResult.dynamicSystemCode.size());
+    assertEquals(mNfcFServiceInfo, userServicesResult.services.get(WALLET_COMPONENT));
+    assertEquals(1, userServicesResult.dynamicSystemCode.size());
     verify(mNfcFServiceInfo).setDynamicSystemCode(systemCodeCaptor.capture());
-    Assert.assertEquals(SYSTEM_CODE, systemCodeCaptor.getValue());
-    Assert.assertTrue(userServicesResult.dynamicNfcid2.isEmpty());
+    assertEquals(SYSTEM_CODE, systemCodeCaptor.getValue());
+    assertTrue(userServicesResult.dynamicNfcid2.isEmpty());
     verify(mNfcFServiceInfo, never()).setDynamicNfcid2(anyString());
   }
 
@@ -376,15 +380,15 @@ public class RegisteredNfcFServicesCacheTest {
     cache.invalidateCache(USER_ID);
 
     verify(mCallback).onNfcFServicesUpdated(userIdCaptor.capture(), servicesCaptor.capture());
-    Assert.assertEquals(userIdCaptor.getValue(), Integer.valueOf(USER_ID));
-    Assert.assertEquals(servicesCaptor.getValue().get(0), mNfcFServiceInfo);
+    assertEquals(Integer.valueOf(USER_ID), userIdCaptor.getValue());
+    assertEquals(mNfcFServiceInfo, servicesCaptor.getValue().get(0));
     UserServices userServicesResult = cache.mUserServices.get(USER_ID);
-    Assert.assertEquals(userServicesResult.services.get(WALLET_COMPONENT), mNfcFServiceInfo);
-    Assert.assertTrue(userServicesResult.dynamicSystemCode.isEmpty());
+    assertEquals(mNfcFServiceInfo, userServicesResult.services.get(WALLET_COMPONENT));
+    assertTrue(userServicesResult.dynamicSystemCode.isEmpty());
     verify(mNfcFServiceInfo, never()).setDynamicSystemCode(anyString());
-    Assert.assertEquals(1, userServicesResult.dynamicNfcid2.size());
+    assertEquals(1, userServicesResult.dynamicNfcid2.size());
     verify(mNfcFServiceInfo).setDynamicNfcid2(nfcid2Captor.capture());
-    Assert.assertEquals(NFCID2, nfcid2Captor.getValue());
+    assertEquals(NFCID2, nfcid2Captor.getValue());
   }
 
   /**
@@ -405,13 +409,13 @@ public class RegisteredNfcFServicesCacheTest {
     cache.invalidateCache(USER_ID);
 
     verify(mCallback).onNfcFServicesUpdated(userIdCaptor.capture(), servicesCaptor.capture());
-    Assert.assertEquals(userIdCaptor.getValue(), Integer.valueOf(USER_ID));
-    Assert.assertEquals(servicesCaptor.getValue().get(0), mNfcFServiceInfo);
+    assertEquals(Integer.valueOf(USER_ID), userIdCaptor.getValue());
+    assertEquals(mNfcFServiceInfo, servicesCaptor.getValue().get(0));
     UserServices userServicesResult = cache.mUserServices.get(USER_ID);
-    Assert.assertEquals(userServicesResult.services.get(WALLET_COMPONENT), mNfcFServiceInfo);
-    Assert.assertTrue(userServicesResult.dynamicSystemCode.isEmpty());
+    assertEquals(mNfcFServiceInfo, userServicesResult.services.get(WALLET_COMPONENT));
+    assertTrue(userServicesResult.dynamicSystemCode.isEmpty());
     verify(mNfcFServiceInfo, never()).setDynamicSystemCode(anyString());
-    Assert.assertEquals(1, userServicesResult.dynamicNfcid2.size());
+    assertEquals(1, userServicesResult.dynamicNfcid2.size());
     verify(mNfcFServiceInfo).setDynamicNfcid2(anyString());
   }
 
@@ -424,7 +428,7 @@ public class RegisteredNfcFServicesCacheTest {
     boolean result
         = cache.registerSystemCodeForService(USER_ID, SERVICE_UID, WALLET_COMPONENT, SYSTEM_CODE);
 
-    Assert.assertFalse(result);
+    assertFalse(result);
   }
 
   @Test
@@ -435,7 +439,7 @@ public class RegisteredNfcFServicesCacheTest {
     boolean result
         = cache.registerSystemCodeForService(USER_ID, SERVICE_UID, WALLET_COMPONENT, SYSTEM_CODE);
 
-    Assert.assertFalse(result);
+    assertFalse(result);
   }
 
   @Test
@@ -447,7 +451,7 @@ public class RegisteredNfcFServicesCacheTest {
     boolean result
         = cache.registerSystemCodeForService(USER_ID, SERVICE_UID, WALLET_COMPONENT, SYSTEM_CODE);
 
-    Assert.assertFalse(result);
+    assertFalse(result);
   }
 
   @Test
@@ -460,7 +464,7 @@ public class RegisteredNfcFServicesCacheTest {
     boolean result
         = cache.registerSystemCodeForService(USER_ID, SERVICE_UID, WALLET_COMPONENT, SYSTEM_CODE);
 
-    Assert.assertFalse(result);
+    assertFalse(result);
   }
 
   @Test
@@ -473,7 +477,7 @@ public class RegisteredNfcFServicesCacheTest {
     boolean result
         = cache.registerSystemCodeForService(USER_ID, SERVICE_UID, WALLET_COMPONENT, SYSTEM_CODE);
 
-    Assert.assertFalse(result);
+    assertFalse(result);
     verify(mCallback, never()).onNfcFServicesUpdated(anyInt(), any());
   }
 
@@ -487,17 +491,17 @@ public class RegisteredNfcFServicesCacheTest {
     boolean result
         = cache.registerSystemCodeForService(USER_ID, SERVICE_UID, WALLET_COMPONENT, SYSTEM_CODE);
 
-    Assert.assertTrue(result);
+    assertTrue(result);
     verify(mNfcFServiceInfo).setDynamicSystemCode(systemCodeCaptor.capture());
-    Assert.assertEquals(SYSTEM_CODE.toUpperCase(Locale.ROOT), systemCodeCaptor.getValue());
+    assertEquals(SYSTEM_CODE.toUpperCase(Locale.ROOT), systemCodeCaptor.getValue());
     UserServices userServicesResult = cache.mUserServices.get(USER_ID);
-    Assert.assertEquals(1, userServicesResult.dynamicSystemCode.size());
+    assertEquals(1, userServicesResult.dynamicSystemCode.size());
     DynamicSystemCode resultSystemCode = userServicesResult.dynamicSystemCode.get(WALLET_COMPONENT);
-    Assert.assertEquals(SERVICE_UID, resultSystemCode.uid);
-    Assert.assertEquals(SYSTEM_CODE.toUpperCase(Locale.ROOT), resultSystemCode.systemCode);
+    assertEquals(SERVICE_UID, resultSystemCode.uid);
+    assertEquals(SYSTEM_CODE.toUpperCase(Locale.ROOT), resultSystemCode.systemCode);
     verify(mCallback).onNfcFServicesUpdated(userIdCaptor.capture(), servicesCaptor.capture());
-    Assert.assertEquals(userIdCaptor.getValue(), Integer.valueOf(USER_ID));
-    Assert.assertEquals(servicesCaptor.getValue().get(0), mNfcFServiceInfo);
+    assertEquals(Integer.valueOf(USER_ID), userIdCaptor.getValue());
+    assertEquals(mNfcFServiceInfo, servicesCaptor.getValue().get(0));
   }
 
   @Test
@@ -506,7 +510,7 @@ public class RegisteredNfcFServicesCacheTest {
 
     String result = cache.getSystemCodeForService(USER_ID, SERVICE_UID, WALLET_COMPONENT);
 
-    Assert.assertNull(result);
+    assertNull(result);
   }
 
   @Test
@@ -516,7 +520,7 @@ public class RegisteredNfcFServicesCacheTest {
 
     String result = cache.getSystemCodeForService(USER_ID, SERVICE_UID, WALLET_COMPONENT);
 
-    Assert.assertNull(result);
+    assertNull(result);
   }
 
   @Test
@@ -526,7 +530,7 @@ public class RegisteredNfcFServicesCacheTest {
 
     String result = cache.getSystemCodeForService(USER_ID, SERVICE_UID, WALLET_COMPONENT);
 
-    Assert.assertEquals(SYSTEM_CODE, result);
+    assertEquals(SYSTEM_CODE, result);
   }
 
   @Test
@@ -538,16 +542,16 @@ public class RegisteredNfcFServicesCacheTest {
 
     boolean result = cache.removeSystemCodeForService(USER_ID, SERVICE_UID, WALLET_COMPONENT);
 
-    Assert.assertTrue(result);
+    assertTrue(result);
     verify(mNfcFServiceInfo).setDynamicSystemCode(systemCodeCaptor.capture());
-    Assert.assertEquals("NULL", systemCodeCaptor.getValue());
+    assertEquals("NULL", systemCodeCaptor.getValue());
     DynamicSystemCode resultSystemCode
         = cache.mUserServices.get(USER_ID).dynamicSystemCode.get(WALLET_COMPONENT);
-    Assert.assertEquals(SERVICE_UID, resultSystemCode.uid);
-    Assert.assertEquals("NULL", resultSystemCode.systemCode);
+    assertEquals(SERVICE_UID, resultSystemCode.uid);
+    assertEquals("NULL", resultSystemCode.systemCode);
     verify(mCallback).onNfcFServicesUpdated(userIdCaptor.capture(), servicesCaptor.capture());
-    Assert.assertEquals(userIdCaptor.getValue(), Integer.valueOf(USER_ID));
-    Assert.assertEquals(servicesCaptor.getValue().get(0), mNfcFServiceInfo);
+    assertEquals(Integer.valueOf(USER_ID), userIdCaptor.getValue());
+    assertEquals(mNfcFServiceInfo, servicesCaptor.getValue().get(0));
   }
 
 
@@ -559,7 +563,7 @@ public class RegisteredNfcFServicesCacheTest {
 
     boolean result = cache.setNfcid2ForService(USER_ID, SERVICE_UID, WALLET_COMPONENT, NFCID2);
 
-    Assert.assertFalse(result);
+    assertFalse(result);
   }
 
   @Test
@@ -569,7 +573,7 @@ public class RegisteredNfcFServicesCacheTest {
 
     boolean result = cache.setNfcid2ForService(USER_ID, SERVICE_UID, WALLET_COMPONENT, NFCID2);
 
-    Assert.assertFalse(result);
+    assertFalse(result);
   }
 
   @Test
@@ -580,7 +584,7 @@ public class RegisteredNfcFServicesCacheTest {
 
     boolean result = cache.setNfcid2ForService(USER_ID, SERVICE_UID, WALLET_COMPONENT, NFCID2);
 
-    Assert.assertFalse(result);
+    assertFalse(result);
   }
 
   @Test
@@ -592,7 +596,7 @@ public class RegisteredNfcFServicesCacheTest {
 
     boolean result = cache.setNfcid2ForService(USER_ID, SERVICE_UID, WALLET_COMPONENT, NFCID2);
 
-    Assert.assertFalse(result);
+    assertFalse(result);
   }
 
   @Test
@@ -604,7 +608,7 @@ public class RegisteredNfcFServicesCacheTest {
 
     boolean result = cache.setNfcid2ForService(USER_ID, SERVICE_UID, WALLET_COMPONENT, NFCID2);
 
-    Assert.assertFalse(result);
+    assertFalse(result);
     verify(mCallback, never()).onNfcFServicesUpdated(anyInt(), any());
   }
 
@@ -617,16 +621,16 @@ public class RegisteredNfcFServicesCacheTest {
 
     boolean result = cache.setNfcid2ForService(USER_ID, SERVICE_UID, WALLET_COMPONENT, NFCID2);
 
-    Assert.assertTrue(result);
+    assertTrue(result);
     verify(mNfcFServiceInfo).setDynamicNfcid2(nfcid2Captor.capture());
-    Assert.assertEquals(NFCID2.toUpperCase(Locale.ROOT), nfcid2Captor.getValue());
+    assertEquals(NFCID2.toUpperCase(Locale.ROOT), nfcid2Captor.getValue());
     DynamicNfcid2 resultNfcid2
         = cache.mUserServices.get(USER_ID).dynamicNfcid2.get(WALLET_COMPONENT);
-    Assert.assertEquals(SERVICE_UID, resultNfcid2.uid);
-    Assert.assertEquals(NFCID2.toUpperCase(Locale.ROOT), resultNfcid2.nfcid2);
+    assertEquals(SERVICE_UID, resultNfcid2.uid);
+    assertEquals(NFCID2.toUpperCase(Locale.ROOT), resultNfcid2.nfcid2);
     verify(mCallback).onNfcFServicesUpdated(userIdCaptor.capture(), servicesCaptor.capture());
-    Assert.assertEquals(userIdCaptor.getValue(), Integer.valueOf(USER_ID));
-    Assert.assertEquals(servicesCaptor.getValue().get(0), mNfcFServiceInfo);
+    assertEquals(Integer.valueOf(USER_ID), userIdCaptor.getValue());
+    assertEquals(mNfcFServiceInfo, servicesCaptor.getValue().get(0));
   }
 
   @Test
@@ -635,7 +639,7 @@ public class RegisteredNfcFServicesCacheTest {
 
     String result = cache.getNfcid2ForService(USER_ID, SERVICE_UID, WALLET_COMPONENT);
 
-    Assert.assertNull(result);
+    assertNull(result);
   }
 
   @Test
@@ -645,7 +649,7 @@ public class RegisteredNfcFServicesCacheTest {
 
     String result = cache.getNfcid2ForService(USER_ID, SERVICE_UID, WALLET_COMPONENT);
 
-    Assert.assertNull(result);
+    assertNull(result);
   }
 
   @Test
@@ -655,7 +659,7 @@ public class RegisteredNfcFServicesCacheTest {
 
     String result = cache.getNfcid2ForService(USER_ID, SERVICE_UID, WALLET_COMPONENT);
 
-    Assert.assertEquals(NFCID2, result);
+    assertEquals(NFCID2, result);
   }
 
   @Test
@@ -664,7 +668,7 @@ public class RegisteredNfcFServicesCacheTest {
 
     cache.onHostEmulationActivated();
 
-    Assert.assertTrue(cache.mActivated);
+    assertTrue(cache.mActivated);
   }
 
   @Test
@@ -673,7 +677,7 @@ public class RegisteredNfcFServicesCacheTest {
 
     cache.onHostEmulationDeactivated();
 
-    Assert.assertFalse(cache.mActivated);
+    assertFalse(cache.mActivated);
   }
 
   @Test
@@ -682,7 +686,7 @@ public class RegisteredNfcFServicesCacheTest {
 
     cache.onNfcDisabled();
 
-    Assert.assertFalse(cache.mActivated);
+    assertFalse(cache.mActivated);
   }
 
   @Test
@@ -691,9 +695,9 @@ public class RegisteredNfcFServicesCacheTest {
 
     cache.onUserSwitched();
 
-    Assert.assertTrue(cache.mUserSwitched);
+    assertTrue(cache.mUserSwitched);
     synchronized (cache.mLock) {
-      Assert.assertEquals(cache.mUserHandles.get(0), USER_HANDLE);
+      assertEquals(USER_HANDLE, cache.mUserHandles.get(0));
     }
   }
 
@@ -704,7 +708,7 @@ public class RegisteredNfcFServicesCacheTest {
     cache.onManagedProfileChanged();
 
     synchronized (cache.mLock) {
-      Assert.assertEquals(cache.mUserHandles.get(0), USER_HANDLE);
+      assertEquals(USER_HANDLE, cache.mUserHandles.get(0));
     }
   }
 
@@ -727,7 +731,7 @@ public class RegisteredNfcFServicesCacheTest {
 
     boolean result = cache.writeDynamicSystemCodeNfcid2Locked();
 
-    Assert.assertFalse(result);
+    assertFalse(result);
     verify(mAtomicFile, never()).failWrite(any(FileOutputStream.class));
   }
 
@@ -737,7 +741,7 @@ public class RegisteredNfcFServicesCacheTest {
 
     boolean result = cache.writeDynamicSystemCodeNfcid2Locked();
 
-    Assert.assertTrue(result);
+    assertTrue(result);
     verify(mAtomicFile).startWrite();
     verify(mAtomicFile).finishWrite(any(FileOutputStream.class));
     verify(mAtomicFile, never()).failWrite(any(FileOutputStream.class));
@@ -750,7 +754,7 @@ public class RegisteredNfcFServicesCacheTest {
 
     boolean result = cache.writeDynamicSystemCodeNfcid2Locked();
 
-    Assert.assertTrue(result);
+    assertTrue(result);
     verify(mAtomicFile).startWrite();
     verify(mAtomicFile).finishWrite(any(FileOutputStream.class));
     verify(mAtomicFile, never()).failWrite(any(FileOutputStream.class));
@@ -776,8 +780,8 @@ public class RegisteredNfcFServicesCacheTest {
     verify(mAtomicFile, never()).delete();
     verify(mParser, times(2)).next();
     verify(mParser, times(5)).getAttributeValue(any(), anyString());
-    Assert.assertEquals(1, cache.mUserServices.get(USER_ID).dynamicSystemCode.size());
-    Assert.assertEquals(1, cache.mUserServices.get(USER_ID).dynamicNfcid2.size());
+    assertEquals(1, cache.mUserServices.get(USER_ID).dynamicSystemCode.size());
+    assertEquals(1, cache.mUserServices.get(USER_ID).dynamicNfcid2.size());
   }
 
   private void setResolveInfoList() {
