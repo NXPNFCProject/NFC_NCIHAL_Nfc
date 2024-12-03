@@ -709,8 +709,8 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         }
     };
 
-    private static final int STATUS_OK = 0;
-    private static final int STATUS_UNKNOWN_ERROR = 1;
+    private static final int STATUS_OK = NfcOemExtension.STATUS_OK;
+    private static final int STATUS_UNKNOWN_ERROR = NfcOemExtension.STATUS_UNKNOWN_ERROR;
 
     private static final int ACTION_ON_ENABLE = 0;
     private static final int ACTION_ON_DISABLE = 1;
