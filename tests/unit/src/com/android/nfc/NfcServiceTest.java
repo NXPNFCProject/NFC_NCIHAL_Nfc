@@ -691,6 +691,7 @@ public final class NfcServiceTest {
         Handler handler = mNfcService.getHandler();
         Assert.assertNotNull(handler);
         Message msg = handler.obtainMessage(NfcService.MSG_CLEAR_ROUTING_TABLE);
+        mNfcService.mState = NfcAdapter.STATE_ON;
         msg.obj = 1;
         handler.handleMessage(msg);
         ArgumentCaptor<Integer> flagCaptor = ArgumentCaptor.forClass(Integer.class);
