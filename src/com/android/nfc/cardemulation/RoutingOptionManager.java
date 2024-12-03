@@ -18,6 +18,7 @@ package com.android.nfc.cardemulation;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.SystemProperties;
+import android.text.TextUtils;
 import android.util.Log;
 
 import androidx.annotation.VisibleForTesting;
@@ -215,9 +216,9 @@ public class RoutingOptionManager {
 
     boolean isRoutingTableOverwrittenOrOverlaid(
             DeviceConfigFacade deviceConfigFacade, SharedPreferences prefs) {
-        return deviceConfigFacade.getDefaultRoute() != null
-                || deviceConfigFacade.getDefaultIsoDepRoute() != null
-                || deviceConfigFacade.getDefaultOffHostRoute() != null
+        return !TextUtils.isEmpty(deviceConfigFacade.getDefaultRoute())
+                || !TextUtils.isEmpty(deviceConfigFacade.getDefaultIsoDepRoute())
+                || !TextUtils.isEmpty(deviceConfigFacade.getDefaultOffHostRoute())
                 || !prefs.getAll().isEmpty();
     }
 
