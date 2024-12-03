@@ -27,11 +27,10 @@ import android.nfc.NfcFrameworkInitializer;
 import android.nfc.NfcServiceManager;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.os.IBinder;
 import android.os.Looper;
 import android.os.RemoteException;
 import android.os.SystemClock;
-import android.os.UserHandle;
+import android.os.SystemProperties;
 import android.os.VibrationEffect;
 import android.provider.Settings;
 import android.se.omapi.ISecureElementService;
@@ -44,7 +43,6 @@ import com.android.nfc.cardemulation.util.StatsdUtils;
 import com.android.nfc.dhimpl.NativeNfcManager;
 import com.android.nfc.flags.FeatureFlags;
 import com.android.nfc.handover.HandoverDataParser;
-import com.android.nfc.proto.NfcEventProto;
 
 import java.io.File;
 import java.time.LocalDateTime;
@@ -251,6 +249,7 @@ public class NfcInjector {
                 mContext.getContentResolver(), Constants.SETTINGS_SATELLITE_MODE_ENABLED, 0) == 1;
     }
 
+
     /**
      * Get the current time of the clock in milliseconds.
      *
@@ -276,5 +275,18 @@ public class NfcInjector {
      */
     public long getElapsedSinceBootNanos() {
         return SystemClock.elapsedRealtimeNanos();
+    }
+
+    /**
+     * Temporary location to store nfc properties being added in Android 16 for OEM convergence.
+     * Will move all of these together to libsysprop later to avoid multiple rounds of API reviews.
+     */
+    public static final class NfcProperties {
+        private static final String NFC_EUICC_SUPPORTED_PROP_KEY = "ro.nfc.euicc_supported";
+
+        public static boolean isEuiccSupported() {
+            return SystemProperties.getBoolean(NFC_EUICC_SUPPORTED_PROP_KEY, true);
+        }
+
     }
 }
