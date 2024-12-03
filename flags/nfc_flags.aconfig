@@ -40,3 +40,10 @@ flag {
     description: "Send VIEW intent instead of NFC_TAG_DISCOVERED for URL tag dispatch"
     bug: "345570691"
 }
+
+flag {
+    name: "enable_direct_boot_aware"
+    namespace: "nfc"
+    description: "Enable direct boot aware for nfc service"
+    bug: "321310938"
+}

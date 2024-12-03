@@ -122,6 +122,91 @@
                  android:supportsRtl="true"
                  android:hardwareAccelerated="false"
                  android:memtagMode="async"
+                 android:featureFlag="!com.android.nfc.flags.enable_direct_boot_aware"
+    >
+        <meta-data android:name="com.google.android.backup.api_key"
+            android:value="AEdPqrEAAAAIbiKKs0wlimxeJ9y8iRIaBOH6aeb2IurmZyBHvg" />
+
+        <provider android:name="androidx.core.content.FileProvider"
+            android:authorities="com.google.android.nfc.fileprovider"
+            android:grantUriPermissions="true"
+            android:exported="false">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <activity android:name=".TechListChooserActivity"
+            android:theme="@*android:style/Theme.Dialog.Alert"
+            android:finishOnCloseSystemDialogs="true"
+            android:excludeFromRecents="true"
+            android:multiprocess="true"
+        />
+
+        <activity android:name=".cardemulation.AppChooserActivity"
+            android:finishOnCloseSystemDialogs="true"
+            android:excludeFromRecents="true"
+            android:clearTaskOnLaunch="true"
+            android:multiprocess="true"
+            android:theme="@style/BottomSheetDialogStyle"
+        />
+
+        <activity android:name=".cardemulation.TapAgainDialog"
+            android:finishOnCloseSystemDialogs="true"
+            android:excludeFromRecents="true"
+            android:clearTaskOnLaunch="true"
+            android:multiprocess="true"
+        />
+        <activity android:name=".NfcRootActivity"
+            android:theme="@*android:style/Theme.Translucent.NoTitleBar"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+        />
+        <activity android:name=".handover.ConfirmConnectActivity"
+            android:finishOnCloseSystemDialogs="true"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:noHistory="true"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+        />
+        <activity android:name=".ConfirmConnectToWifiNetworkActivity"
+            android:finishOnCloseSystemDialogs="true"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:noHistory="true"
+        />
+        <activity android:name=".NfcEnableAllowlistActivity"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:noHistory="true"
+        />
+
+        <receiver android:name=".NfcBootCompletedReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <service android:name=".handover.PeripheralHandoverService"
+        />
+    </application>
+
+    <application android:name=".NfcApplication"
+                 android:icon="@drawable/icon"
+                 android:label="@string/app_name"
+                 android:theme="@android:style/Theme.Material.Light"
+                 android:persistent="true"
+                 android:persistentWhenFeatureAvailable="android.hardware.nfc.any"
+                 android:restoreAnyVersion="true"
+                 android:backupAgent="com.android.nfc.NfcBackupAgent"
+                 android:killAfterRestore="false"
+                 android:usesCleartextTraffic="false"
+                 android:supportsRtl="true"
+                 android:hardwareAccelerated="false"
+                 android:memtagMode="async"
+                 android:directBootAware="true"
+                 android:defaultToDeviceProtectedStorage="true"
+                 android:featureFlag="com.android.nfc.flags.enable_direct_boot_aware"
     >
         <meta-data android:name="com.google.android.backup.api_key"
             android:value="AEdPqrEAAAAIbiKKs0wlimxeJ9y8iRIaBOH6aeb2IurmZyBHvg" />
