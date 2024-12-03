@@ -170,6 +170,7 @@ jmethodID gCachedNfcManagerNotifyPollingLoopFrame;
 jmethodID gCachedNfcManagerNotifyVendorSpecificEvent;
 jmethodID gCachedNfcManagerNotifyCommandTimeout;
 jmethodID gCachedNfcManagerNotifyObserveModeChanged;
+jmethodID gCachedNfcManagerNotifyRfDiscoveryEvent;
 #if(NXP_EXTNS == TRUE)
 jmethodID gCachedNfcManagerNotifyLxDebugInfo;
 jmethodID gCachedNfcManagerNotifyTagAbortListeners;
@@ -476,6 +477,20 @@ static void nfaConnectionCallback(uint8_t connEvent,
 
       SyncEventGuard guard(sNfaEnableDisablePollingEvent);
       sNfaEnableDisablePollingEvent.notifyOne();
+      struct nfc_jni_native_data* nat = getNative(NULL, NULL);
+      if (!nat) {
+        LOG(ERROR) << StringPrintf("cached nat is null");
+        return;
+      }
+      JNIEnv* e = NULL;
+      ScopedAttach attach(nat->vm, &e);
+      if (e == NULL) {
+        LOG(ERROR) << StringPrintf("jni env is null");
+        return;
+      }
+      e->CallVoidMethod(nat->manager,
+                        android::gCachedNfcManagerNotifyRfDiscoveryEvent,
+                        JNI_TRUE);
     } break;
 
     case NFA_RF_DISCOVERY_STOPPED_EVT:  // RF Discovery stopped event
@@ -493,6 +508,20 @@ static void nfaConnectionCallback(uint8_t connEvent,
 
       SyncEventGuard guard(sNfaEnableDisablePollingEvent);
       sNfaEnableDisablePollingEvent.notifyOne();
+      struct nfc_jni_native_data* nat = getNative(NULL, NULL);
+      if (!nat) {
+        LOG(ERROR) << StringPrintf("cached nat is null");
+        return;
+      }
+      JNIEnv* e = NULL;
+      ScopedAttach attach(nat->vm, &e);
+      if (e == NULL) {
+        LOG(ERROR) << StringPrintf("jni env is null");
+        return;
+      }
+      e->CallVoidMethod(nat->manager,
+                        android::gCachedNfcManagerNotifyRfDiscoveryEvent,
+                        JNI_FALSE);
     } break;
 
     case NFA_DISC_RESULT_EVT:  // NFC link/protocol discovery notificaiton
@@ -586,6 +615,20 @@ static void nfaConnectionCallback(uint8_t connEvent,
       // SE transaction. Send the RF Event.
       if (isListenMode(eventData->activated)) {
         sSeRfActive = true;
+        struct nfc_jni_native_data* nat = getNative(NULL, NULL);
+        if (!nat) {
+          LOG(ERROR) << StringPrintf("cached nat is null");
+          return;
+        }
+        JNIEnv* e = NULL;
+        ScopedAttach attach(nat->vm, &e);
+        if (e == NULL) {
+          LOG(ERROR) << "jni env is null";
+          return;
+        }
+        e->CallVoidMethod(nat->manager,
+                          android::gCachedNfcManagerNotifyHostEmuActivated,
+                          (int)activatedProtocol);
 #if (NXP_EXTNS == TRUE)
         SecureElement::getInstance().notifyListenModeState(true);
 #endif
@@ -682,6 +725,20 @@ static void nfaConnectionCallback(uint8_t connEvent,
           (eventData->deactivated.type == NFA_DEACTIVATE_TYPE_DISCOVERY)) {
         if (sSeRfActive) {
           sSeRfActive = false;
+          struct nfc_jni_native_data* nat = getNative(NULL, NULL);
+          if (!nat) {
+            LOG(ERROR) << StringPrintf("cached nat is null");
+            return;
+          }
+          JNIEnv* e = NULL;
+          ScopedAttach attach(nat->vm, &e);
+          if (e == NULL) {
+            LOG(ERROR) << "jni env is null";
+            return;
+          }
+          e->CallVoidMethod(nat->manager,
+                            android::gCachedNfcManagerNotifyHostEmuDeactivated,
+                            NFA_TECHNOLOGY_MASK_A);
 #if(NXP_EXTNS == TRUE)
           SecureElement::getInstance().notifyListenModeState (false);
 #endif
@@ -898,6 +955,8 @@ static jboolean nfcManager_initNativeStruc(JNIEnv* e, jobject o) {
       e->GetMethodID(cls.get(), "notifyCommandTimeout", "()V");
   gCachedNfcManagerNotifyObserveModeChanged =
       e->GetMethodID(cls.get(), "notifyObserveModeChanged", "(Z)V");
+  gCachedNfcManagerNotifyRfDiscoveryEvent =
+      e->GetMethodID(cls.get(), "notifyRFDiscoveryEvent", "(Z)V");
 #if(NXP_EXTNS == TRUE)
   gCachedNfcManagerNotifyLxDebugInfo =
       e->GetMethodID(cls.get(), "notifyNfcDebugInfo", "(I[B)V");
