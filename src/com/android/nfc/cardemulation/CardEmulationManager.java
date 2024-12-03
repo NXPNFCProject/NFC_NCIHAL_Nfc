@@ -332,6 +332,10 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         mNfcFServicesCache.onUserSwitched();
     }
 
+    public void migrateSettingsFilesFromCe(Context ceContext) {
+        mServiceCache.migrateSettingsFilesFromCe(ceContext);
+    }
+
     public void onManagedProfileChanged() {
         // for HCE
         mServiceCache.onManagedProfileChanged();

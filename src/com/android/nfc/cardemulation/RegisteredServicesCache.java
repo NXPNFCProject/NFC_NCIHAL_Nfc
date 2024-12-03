@@ -120,8 +120,8 @@ public class RegisteredServicesCache {
     // mUserServices holds the card emulation services that are running for each user
     final SparseArray<UserServices> mUserServices = new SparseArray<UserServices>();
     final Callback mCallback;
-    final SettingsFile mDynamicSettingsFile;
-    final SettingsFile mOthersFile;
+    SettingsFile mDynamicSettingsFile;
+    SettingsFile mOthersFile;
     final ServiceParser mServiceParser;
     final RoutingOptionManager mRoutingOptionManager;
 
@@ -354,6 +354,26 @@ public class RegisteredServicesCache {
         synchronized (mLock) {
             refreshUserProfilesLocked(true);
             invalidateCache(ActivityManager.getCurrentUser(), true);
+        }
+    }
+
+    void migrateFromCe(Context ceContext) {
+        File ceFilesDir = ceContext.getFilesDir();
+        File deFilesDir = mContext.getFilesDir();
+        if (!ceFilesDir.renameTo(deFilesDir)) {
+            Log.e(TAG, "Failed to move directory from " + ceFilesDir + " to " + deFilesDir);
+            return;
+        }
+        Log.i(TAG, "Moved directory from " + ceFilesDir + " to " + deFilesDir
+            + ". Reinitializing cache.");
+        mDynamicSettingsFile = new SettingsFile(mContext, AID_XML_PATH);
+        mOthersFile = new SettingsFile(mContext, OTHER_STATUS_PATH);
+    }
+
+    public void migrateSettingsFilesFromCe(Context ceContext) {
+        synchronized (mLock) {
+            migrateFromCe(ceContext);
+            initialize();
         }
     }
 
