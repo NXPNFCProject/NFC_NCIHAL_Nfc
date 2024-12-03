@@ -736,21 +736,15 @@ public class RegisteredAidCache {
     }
 
     static boolean isExact(String aid) {
-        return (!((aid.endsWith("*") || (aid.endsWith("#")))));
+        return aid == null ? false : !(aid.endsWith("*") || aid.endsWith("#"));
     }
 
     static boolean isPrefix(String aid) {
-        if (aid == null) {
-            return false;
-        }
-        return aid.endsWith("*");
+        return aid == null ? false : aid.endsWith("*");
     }
 
     static boolean isSubset(String aid) {
-        if (aid == null) {
-            return false;
-        }
-        return aid.endsWith("#");
+        return aid == null ? false : aid.endsWith("#");
     }
 
     final class ResolvedPrefixConflictAid {
