@@ -75,6 +75,7 @@ public class NfcInjector {
     private final ForegroundUtils mForegroundUtils;
     private final NfcDiagnostics mNfcDiagnostics;
     private final NfcServiceManager.ServiceRegisterer mNfcManagerRegisterer;
+    private final NfcWatchdog mNfcWatchdog;
     private static NfcInjector sInstance;
 
     public static NfcInjector getInstance() {
@@ -115,6 +116,7 @@ public class NfcInjector {
         eventLogThread.start();
         mNfcEventLog = new NfcEventLog(mContext, this, eventLogThread.getLooper(),
                 new AtomicFile(new File(NFC_DATA_DIR, EVENT_LOG_FILE_NAME)));
+        mNfcWatchdog = new NfcWatchdog(mContext);
         sInstance = this;
     }
 
@@ -180,6 +182,10 @@ public class NfcInjector {
 
     public NfcServiceManager.ServiceRegisterer getNfcManagerRegisterer() {
         return mNfcManagerRegisterer;
+    }
+
+    public NfcWatchdog getNfcWatchdog() {
+        return mNfcWatchdog;
     }
 
     public DeviceHost makeDeviceHost(DeviceHost.DeviceHostListener listener) {

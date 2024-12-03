@@ -268,7 +268,8 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
     static final int MSG_CLEAR_ROUTING_TABLE = 21;
     static final int MSG_UPDATE_ISODEP_PROTOCOL_ROUTE = 22;
     static final int MSG_UPDATE_TECHNOLOGY_ABF_ROUTE = 23;
-    static final int MSG_CARD_EMULATION = 24;
+    static final int MSG_WATCHDOG_PING = 24;
+    static final int MSG_CARD_EMULATION = 25;
     static final int MSG_SE_INIT = 59;
     static final int MSG_CLEAR_ROUTING = 62;
     static final int MSG_INIT_WIREDSE = 63;
@@ -1444,9 +1445,9 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
 
     private List<Integer> getEnabledUserIds() {
         List<Integer> userIds = new ArrayList<Integer>();
-        UserManager um = mContext.createContextAsUser(
-                UserHandle.of(ActivityManager.getCurrentUser()), 0)
-                .getSystemService(UserManager.class);
+        UserManager um =
+                mContext.createContextAsUser(UserHandle.of(ActivityManager.getCurrentUser()), 0)
+                        .getSystemService(UserManager.class);
         List<UserHandle> luh = um.getEnabledProfiles();
         for (UserHandle uh : luh) {
             userIds.add(uh.getIdentifier());
@@ -3333,7 +3334,8 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                         (byte) (timestamp >>> 8),
                         (byte) timestamp });
                 int frame_data_length = frame_data == null ? 0 : frame_data.length;
-                String frame_data_str = frame_data_length == 0 ? "" : " " + format.formatHex(frame_data);
+                String frame_data_str =
+                        frame_data_length == 0 ? "" : " " + format.formatHex(frame_data);
                 String type_str = "FF";
                 switch (type) {
                     case PollingFrame.POLLING_LOOP_TYPE_ON:
@@ -5907,6 +5909,10 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                   if (DBG) Log.d(TAG, "Update technology A,B&F route");
                   mDeviceHost.setTechnologyABFRoute((Integer)msg.obj);
                   break;
+                case MSG_WATCHDOG_PING:
+                    NfcWatchdog watchdog = (NfcWatchdog) msg.obj;
+                    watchdog.notifyHasReturned();
+                    break;
 
                 case MSG_SE_INIT:
                   Log.e(TAG, "msg se init");
