@@ -197,8 +197,6 @@ void HciEventManager::nfaHciCallback(tNFA_HCI_EVT event,
     evtSrc = "SIM4";
 #endif
   } else {
-    LOG(WARNING) << "Incorrect Pipe Id";
-    return;
     bool isSimPipeId = false;
     for (size_t i = 0; i < (size_t)sSimPipeIds.size(); i++) {
       if (eventData->rcvd_evt.pipe == sSimPipeIds[i]) {
