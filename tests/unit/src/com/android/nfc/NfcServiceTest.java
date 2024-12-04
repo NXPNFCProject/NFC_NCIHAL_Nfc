@@ -106,6 +106,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.quality.Strictness;
 import org.mockito.stubbing.Answer;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -828,5 +829,61 @@ public final class NfcServiceTest {
         verify(callback).onApplyRouting(receiverArgumentCaptor.capture());
         ResultReceiver resultReceiver = receiverArgumentCaptor.getValue();
         Assert.assertNotNull(resultReceiver);
+    }
+
+    @Test
+    public void testThermalStatusChangeListener() {
+        Assert.assertNotNull(mPowerManager);
+        ArgumentCaptor<PowerManager.OnThermalStatusChangedListener> argumentCaptor =
+                ArgumentCaptor.forClass(PowerManager.OnThermalStatusChangedListener.class);
+        verify(mPowerManager).addThermalStatusListener(any(), argumentCaptor.capture());
+        PowerManager.OnThermalStatusChangedListener changedListener =
+                argumentCaptor.getValue();
+        Assert.assertNotNull(changedListener);
+        changedListener.onThermalStatusChanged(PowerManager.THERMAL_STATUS_MODERATE);
+        changedListener.onThermalStatusChanged(PowerManager.THERMAL_STATUS_SEVERE);
+        changedListener.onThermalStatusChanged(PowerManager.THERMAL_STATUS_CRITICAL);
+        changedListener.onThermalStatusChanged(0);
+    }
+
+    @Test
+    public void testClearRoutingTable() {
+        mNfcService.mState = NfcAdapter.STATE_ON;
+        mNfcService.clearRoutingTable(1);
+        mLooper.dispatchAll();
+        ArgumentCaptor<Integer> captor = ArgumentCaptor.forClass(Integer.class);
+        verify(mDeviceHost).clearRoutingEntry(captor.capture());
+        int flag = captor.getValue();
+        Assert.assertEquals(1, flag);
+    }
+
+    @Test
+    public void testDeregisterT3tIdentifier() {
+        NfcDiscoveryParameters nfcDiscoveryParameters = mock(NfcDiscoveryParameters.class);
+        when(nfcDiscoveryParameters.shouldEnableDiscovery()).thenReturn(true);
+        mNfcService.mCurrentDiscoveryParameters = nfcDiscoveryParameters;
+        mNfcService.deregisterT3tIdentifier("02FE", "02FEC1DE32456789", "F0010203");
+        mLooper.dispatchAll();
+        verify(mDeviceHost).disableDiscovery();
+        ArgumentCaptor<byte[]> t3tIdentifierByteArray = ArgumentCaptor.forClass(byte[].class);
+        verify(mDeviceHost).deregisterT3tIdentifier(t3tIdentifierByteArray.capture());
+        byte[] data = t3tIdentifierByteArray.getValue();
+        Assert.assertNotNull(data);
+        String msg = new String(data, StandardCharsets.UTF_8);
+        Assert.assertNotNull(msg);
+        verify(mDeviceHost).enableDiscovery(any(), anyBoolean());
+    }
+
+    @Test
+    public void testFindAndRemoveObject() {
+        DeviceHost.TagEndpoint tagEndpoint = mock(DeviceHost.TagEndpoint.class);
+        when(tagEndpoint.getHandle()).thenReturn(1);
+        mNfcService.registerTagObject(tagEndpoint);
+        DeviceHost.TagEndpoint device = (DeviceHost.TagEndpoint) mNfcService.mObjectMap.get(1);
+        Assert.assertNotNull(device);
+        Assert.assertEquals(tagEndpoint, device);
+        mNfcService.findAndRemoveObject(1);
+        Object obj = mNfcService.mObjectMap.get(1);
+        Assert.assertNull(obj);
     }
 }
