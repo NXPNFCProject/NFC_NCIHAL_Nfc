@@ -198,11 +198,14 @@ public final class NfcServiceTest {
         when(mApplication.getSystemService(DisplayManager.class)).thenReturn(mDisplayManager);
         when(mUserManager.getUserRestrictions()).thenReturn(mUserRestrictions);
         when(mResources.getStringArray(R.array.nfc_allow_list)).thenReturn(new String[0]);
+        when(mResources.getBoolean(R.bool.tag_intent_app_pref_supported)).thenReturn(true);
         when(mPreferences.edit()).thenReturn(mPreferencesEditor);
         when(mPowerManager.newWakeLock(anyInt(), anyString()))
                 .thenReturn(mock(PowerManager.WakeLock.class));
         when(mResources.getIntArray(R.array.antenna_x)).thenReturn(new int[0]);
         when(mResources.getIntArray(R.array.antenna_y)).thenReturn(new int[0]);
+        when(mResources.getStringArray(R.array.tag_intent_blocked_app_list))
+                .thenReturn(new String[]{});
         when(NfcProperties.info_antpos_X()).thenReturn(List.of());
         when(NfcProperties.info_antpos_Y()).thenReturn(List.of());
         when(NfcProperties.initialized()).thenReturn(Optional.of(Boolean.TRUE));
@@ -944,5 +947,63 @@ public final class NfcServiceTest {
                 any());
         assertThat("com.android.test").isEqualTo(stringArgumentCaptor.getValue());
         verify(mPackageManager, atLeastOnce()).getApplicationLabel(any());
+    }
+
+    @Test
+    public void testFindObject() {
+        DeviceHost.TagEndpoint tagEndpoint = mock(DeviceHost.TagEndpoint.class);
+        when(tagEndpoint.getHandle()).thenReturn(1);
+        mNfcService.registerTagObject(tagEndpoint);
+        DeviceHost.TagEndpoint device = (DeviceHost.TagEndpoint) mNfcService.mObjectMap.get(1);
+        Assert.assertNotNull(device);
+        Assert.assertEquals(tagEndpoint, device);
+        Object obj = mNfcService.findObject(1);
+        Assert.assertNotNull(obj);
+        Object object = mNfcService.mObjectMap.get(1);
+        Assert.assertNotNull(object);
+        assertThat(obj).isEqualTo(object);
+    }
+
+    @Test
+    public void testGetEnabledUserIds() {
+        when(mPreferences.getBoolean(anyString(), anyBoolean())).thenReturn(true);
+        Assert.assertTrue(mNfcService.getNfcOnSetting());
+        when(mNfcInjector.isSatelliteModeOn()).thenReturn(false);
+        when(mUserRestrictions.getBoolean(UserManager.DISALLOW_NEAR_FIELD_COMMUNICATION_RADIO))
+                .thenReturn(false);
+        NfcService.sIsNfcRestore = true;
+        UserHandle uh = mock(UserHandle.class);
+        when(uh.getIdentifier()).thenReturn(1);
+        List<UserHandle> luh = new ArrayList<>();
+        luh.add(uh);
+        when(mUserManager.getEnabledProfiles()).thenReturn(luh);
+        mNfcService.enableNfc();
+        verify(mPreferences).edit();
+        verify(mPreferencesEditor).putBoolean(PREF_NFC_ON, true);
+        verify(mPreferencesEditor).apply();
+        verify(mBackupManager).dataChanged();
+        mLooper.dispatchAll();
+        verify(mUserManager, atLeastOnce()).getEnabledProfiles();
+    }
+
+    @Test
+    public void testGetLfT3tMax() {
+        int lfT3t = mNfcService.getLfT3tMax();
+        assertThat(lfT3t).isEqualTo(0);
+        when(mDeviceHost.getLfT3tMax()).thenReturn(100);
+        lfT3t = mNfcService.getLfT3tMax();
+        assertThat(lfT3t).isEqualTo(100);
+        verify(mDeviceHost, atLeastOnce()).getLfT3tMax();
+    }
+
+    @Test
+    public void testGetNfcPollTech() {
+        int pollTech = mNfcService.getNfcPollTech();
+        assertThat(pollTech).isEqualTo(0);
+        when(mPreferences.getInt(NfcService.PREF_POLL_TECH, NfcService.DEFAULT_POLL_TECH))
+                .thenReturn(NfcService.DEFAULT_LISTEN_TECH);
+        pollTech = mNfcService.getNfcPollTech();
+        assertThat(pollTech).isEqualTo(0xf);
+        verify(mPreferences, atLeastOnce()).getInt(anyString(), anyInt());
     }
 }
