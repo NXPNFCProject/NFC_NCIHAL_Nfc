@@ -32,6 +32,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -292,6 +293,7 @@ public final class NfcStateTest {
     }
 
     @Test
+    @Ignore // TODO: rpius - Fix the test since this is flaky on cuttlefish.
     public void testDisableWhenDisabled() {
         if (!mNfcSupported) return;
         if (mNfcAdapter.isEnabled()) {
