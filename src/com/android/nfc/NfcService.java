@@ -142,6 +142,7 @@ import com.android.nfc.DeviceHost.TagEndpoint;
 import com.android.nfc.dhimpl.NativeNfcManager;
 import com.android.nfc.dhimpl.NativeNfcSecureElement;
 import com.android.nfc.flags.FeatureFlags;
+import com.android.nfc.flags.Flags;
 import com.android.nfc.handover.HandoverDataParser;
 import com.android.nfc.proto.NfcEventProto;
 
@@ -929,8 +930,17 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
 
     @Override
     public void onPollingLoopDetected(List<PollingFrame> frames) {
-        if (mCardEmulationManager != null && android.nfc.Flags.nfcReadPollingLoop()) {
-            mCardEmulationManager.onPollingLoopDetected(frames);
+        if (mCardEmulationManager != null
+                && android.nfc.Flags.nfcReadPollingLoop()) {
+            if (Flags.postCallbacks()) {
+                mHandler.post(() -> {
+                    if (mCardEmulationManager != null) {
+                        mCardEmulationManager.onPollingLoopDetected(frames);
+                    }
+                });
+            } else {
+                mCardEmulationManager.onPollingLoopDetected((frames));
+            }
         }
     }
 
