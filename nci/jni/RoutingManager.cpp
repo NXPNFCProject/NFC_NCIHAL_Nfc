@@ -610,6 +610,93 @@ void RoutingManager::notifyActivated(uint8_t technology) {
   }
 }
 
+bool RoutingManager::getNameOfEe(tNFA_HANDLE ee_handle, std::string& eeName) {
+  if (mOffHostRouteEse.size() == 0) {
+    return false;
+  }
+  ee_handle &= ~NFA_HANDLE_GROUP_EE;
+
+  for (uint8_t i = 0; i < mOffHostRouteEse.size(); i++) {
+    if (ee_handle == mOffHostRouteEse[i]) {
+      eeName = "eSE" + std::to_string(i + 1);
+      return true;
+    }
+  }
+  for (uint8_t i = 0; i < mOffHostRouteUicc.size(); i++) {
+    if (ee_handle == mOffHostRouteUicc[i]) {
+      eeName = "SIM" + std::to_string(i + 1);
+      return true;
+    }
+  }
+
+  LOG(WARNING) << "Incorrect EE Id";
+  return false;
+}
+
+void RoutingManager::notifyEeAidSelected(tNFC_AID& nfcaid,
+                                         tNFA_HANDLE ee_handle) {
+  std::vector<uint8_t> aid(nfcaid.aid, nfcaid.aid + nfcaid.len_aid);
+  if (aid.empty()) {
+    return;
+  }
+
+  JNIEnv* e = NULL;
+  ScopedAttach attach(mNativeData->vm, &e);
+  CHECK(e);
+
+  ScopedLocalRef<jobject> aidJavaArray(e, e->NewByteArray(aid.size()));
+  CHECK(aidJavaArray.get());
+  e->SetByteArrayRegion((jbyteArray)aidJavaArray.get(), 0, aid.size(),
+                        (jbyte*)&aid[0]);
+  CHECK(!e->ExceptionCheck());
+
+  std::string evtSrc;
+  if (!getNameOfEe(ee_handle, evtSrc)) {
+    return;
+  }
+
+  ScopedLocalRef<jobject> srcJavaString(e, e->NewStringUTF(evtSrc.c_str()));
+  CHECK(srcJavaString.get());
+  e->CallVoidMethod(mNativeData->manager,
+                    android::gCachedNfcManagerNotifyEeAidSelected,
+                    aidJavaArray.get(), srcJavaString.get());
+}
+
+void RoutingManager::notifyEeProtocolSelected(uint8_t protocol,
+                                              tNFA_HANDLE ee_handle) {
+  JNIEnv* e = NULL;
+  ScopedAttach attach(mNativeData->vm, &e);
+  CHECK(e);
+
+  std::string evtSrc;
+  if (!getNameOfEe(ee_handle, evtSrc)) {
+    return;
+  }
+
+  ScopedLocalRef<jobject> srcJavaString(e, e->NewStringUTF(evtSrc.c_str()));
+  CHECK(srcJavaString.get());
+  e->CallVoidMethod(mNativeData->manager,
+                    android::gCachedNfcManagerNotifyEeProtocolSelected,
+                    protocol, srcJavaString.get());
+}
+
+void RoutingManager::notifyEeTechSelected(uint8_t tech, tNFA_HANDLE ee_handle) {
+  JNIEnv* e = NULL;
+  ScopedAttach attach(mNativeData->vm, &e);
+  CHECK(e);
+
+  std::string evtSrc;
+  if (!getNameOfEe(ee_handle, evtSrc)) {
+    return;
+  }
+
+  ScopedLocalRef<jobject> srcJavaString(e, e->NewStringUTF(evtSrc.c_str()));
+  CHECK(srcJavaString.get());
+  e->CallVoidMethod(mNativeData->manager,
+                    android::gCachedNfcManagerNotifyEeTechSelected, tech,
+                    srcJavaString.get());
+}
+
 void RoutingManager::notifyDeactivated(uint8_t technology) {
 #if (NXP_EXTNS == TRUE)
   SecureElement::getInstance().notifyListenModeState (false);

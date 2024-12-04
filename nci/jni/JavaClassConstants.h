@@ -47,6 +47,10 @@ extern jmethodID gCachedNfcManagerNotifyHostEmuData;
 extern jmethodID gCachedNfcManagerNotifyHostEmuDeactivated;
 extern jmethodID gCachedNfcManagerNotifyEeUpdated;
 
+extern jmethodID gCachedNfcManagerNotifyEeAidSelected;
+extern jmethodID gCachedNfcManagerNotifyEeProtocolSelected;
+extern jmethodID gCachedNfcManagerNotifyEeTechSelected;
+
 extern const char* gNativeNfcTagClassName;
 extern const char* gNativeNfcManagerClassName;
 #if (NXP_EXTNS == TRUE)

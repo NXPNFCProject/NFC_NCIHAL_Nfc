@@ -129,6 +129,10 @@ class RoutingManager {
   tNFA_TECHNOLOGY_MASK updateTechnologyABFRoute(int route);
   void clearRoutingEntry(int clearFlags);
   void setEeTechRouteUpdateRequired();
+  void notifyEeAidSelected(tNFC_AID& aid, tNFA_HANDLE ee_handle);
+  void notifyEeProtocolSelected(uint8_t protocol, tNFA_HANDLE ee_handle);
+  void notifyEeTechSelected(uint8_t tech, tNFA_HANDLE ee_handle);
+  bool getNameOfEe(tNFA_HANDLE ee_handle, std::string& eeName);
 
   static const int CLEAR_AID_ENTRIES = 0x01;
   static const int CLEAR_PROTOCOL_ENTRIES = 0x02;

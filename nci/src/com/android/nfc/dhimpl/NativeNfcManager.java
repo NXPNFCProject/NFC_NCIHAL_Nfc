@@ -611,6 +611,27 @@ public class NativeNfcManager implements DeviceHost {
         mListener.onHwErrorReported();
     }
 
+    private void notifyEeAidSelected(byte[] aid, String eventSrc) {
+        Log.i(TAG, "AID: " + HexFormat.of().formatHex(aid) + " selected by " + eventSrc);
+        if (com.android.nfc.flags.Flags.eeAidSelect()) {
+            mListener.onSeSelected();
+        }
+    }
+
+    private void notifyEeProtocolSelected(int protocol, String eventSrc) {
+        Log.i(TAG, "Protocol: " + protocol + " selected by " + eventSrc);
+        if (com.android.nfc.flags.Flags.eeAidSelect()) {
+            mListener.onSeSelected();
+        }
+    }
+
+    private void notifyEeTechSelected(int tech, String eventSrc) {
+        Log.i(TAG, "Tech: " + tech + " selected by " + eventSrc);
+        if (com.android.nfc.flags.Flags.eeAidSelect()) {
+            mListener.onSeSelected();
+        }
+    }
+
     private void notifyCoreGenericError(int errorCode) {
         mListener.notifyCoreGenericError(errorCode);
     }

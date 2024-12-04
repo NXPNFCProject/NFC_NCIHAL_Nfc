@@ -62,3 +62,10 @@ flag {
     description: "Post callbacks to CardEmulationManager to handler to get off of NFC callback thread."
     bug: "370015438"
 }
+
+flag {
+    name: "ee_aid_select"
+    namespace: "nfc"
+    description: "Propigate NFA_EE_ACTION_EVT->NFC_EE_TRIG_SELECT up to onOffHostAidSelected()"
+    bug: "323440961"
+}
