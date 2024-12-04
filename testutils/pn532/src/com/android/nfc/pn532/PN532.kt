@@ -128,7 +128,7 @@ class PN532(val device: UsbDevice, val connection: UsbDeviceConnection) {
     /** Send command to PN-532 and receive response. */
     fun transceive(data: ByteArray): ByteArray? {
         Log.d(TAG, "Transceiving: " + data.toHex())
-        var response = sendFrame(constructFrame(byteArrayOf(IN_DATA_EXCHANGE) + data))
+        val response = sendFrame(constructFrame(byteArrayOf(IN_DATA_EXCHANGE) + data))
         if (response == null) return null
         Log.d(TAG, "Response: " + response.toHex())
 
@@ -163,7 +163,7 @@ class PN532(val device: UsbDevice, val connection: UsbDeviceConnection) {
 
     private fun getDeviceResponse(timeoutMs: Long = 500.toLong()): ByteArray? {
         // First response from device should be ACK frame
-        var data = transportLayer.read(timeoutMs, numBytes = 255)
+        val data = transportLayer.read(timeoutMs, numBytes = 255)
         if (data == null || data.size < 6) return null
 
         val firstFrame = data.slice(0..5).toByteArray()
@@ -231,9 +231,9 @@ class PN532(val device: UsbDevice, val connection: UsbDeviceConnection) {
             Log.e(TAG, "Unexpected TFI Byte: Got " + tfi + ", expected 0xD5")
         }
 
-        var dataPacket: ByteArray?
-        var dataCheckSum: Byte
-        var postAmble: Byte
+        val dataPacket: ByteArray?
+        val dataCheckSum: Byte
+        val postAmble: Byte
         if (secondRead) {
             dataPacket = responseFrame.slice(6..responseFrame.size - 3).toByteArray()
             dataCheckSum = responseFrame[responseFrame.size - 2]
@@ -293,7 +293,7 @@ class PN532(val device: UsbDevice, val connection: UsbDeviceConnection) {
     private fun crc16a(data: ByteArray): ByteArray {
         var w_crc = 0x6363
         for (byte in data) {
-            var newByte = byte.toInt() xor (w_crc and 0xFF).toInt()
+            var newByte = byte.toInt() xor (w_crc and 0xFF)
             newByte = (newByte xor newByte shl 4) and 0xFF
             w_crc = ((w_crc shr 8) xor (newByte shl 8) xor (newByte shl 3) xor (newByte shr 4)) and 0xFF
         }
