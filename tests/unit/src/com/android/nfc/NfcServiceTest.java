@@ -43,6 +43,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import android.nfc.INfcUnlockHandler;
 
 import android.app.ActivityManager;
 import android.app.AlarmManager;
@@ -759,4 +760,73 @@ public final class NfcServiceTest {
         verify(mPreferencesEditor).apply();
     }
 
+    @Test
+    public void testAllowOemOnNdefReadCallback() throws Exception {
+        when(mPreferences.getBoolean(eq(PREF_NFC_ON), anyBoolean())).thenReturn(true);
+        INfcOemExtensionCallback callback = mock(INfcOemExtensionCallback.class);
+        mNfcService.mNfcAdapter.registerOemExtensionCallback(callback);
+        Handler handler = mNfcService.getHandler();
+        Assert.assertNotNull(handler);
+        Message msg = handler.obtainMessage(NfcService.MSG_NDEF_TAG);
+        mNfcService.mState = NfcAdapter.STATE_ON;
+        DeviceHost.TagEndpoint tagEndpoint = mock(DeviceHost.TagEndpoint.class);
+        when(tagEndpoint.getConnectedTechnology()).thenReturn(TagTechnology.NDEF);
+        when(tagEndpoint.getUid()).thenReturn(NfcService
+                .hexStringToBytes("0x040000010100000000000000"));
+        when(tagEndpoint.getTechList()).thenReturn(new int[]{Ndef.NDEF});
+        when(tagEndpoint.getTechExtras()).thenReturn(new Bundle[]{});
+        when(tagEndpoint.getHandle()).thenReturn(1);
+        NdefMessage ndefMessage = mock(NdefMessage.class);
+        when(tagEndpoint.findAndReadNdef()).thenReturn(ndefMessage);
+        msg.obj = tagEndpoint;
+        mNfcService.mIsWlcEnabled = true;
+        mNfcService.mIsRWCapable = true;
+        handler.handleMessage(msg);
+        verify(tagEndpoint, atLeastOnce()).startPresenceChecking(anyInt(), any());
+        ArgumentCaptor<Tag> tagCaptor = ArgumentCaptor
+                .forClass(Tag.class);
+        verify(mNfcDispatcher).dispatchTag(tagCaptor.capture());
+        Tag tag = tagCaptor.getValue();
+        Assert.assertNotNull(tag);
+        Assert.assertEquals("android.nfc.tech.Ndef", tag.getTechList()[0]);
+
+        doAnswer(new Answer() {
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                ResultReceiver r = invocation.getArgument(0);
+                r.send(1, null);
+                return null;
+            }
+        }).when(callback).onNdefRead(any(ResultReceiver.class));
+        mContentObserver.onChange(true);
+        ArgumentCaptor<ResultReceiver> receiverArgumentCaptor = ArgumentCaptor
+                .forClass(ResultReceiver.class);
+        verify(callback).onNdefRead(receiverArgumentCaptor.capture());
+        ResultReceiver resultReceiver = receiverArgumentCaptor.getValue();
+        Assert.assertNotNull(resultReceiver);
+    }
+
+    @Test
+    public void testAllowOemOnApplyRoutingCallback() throws Exception {
+        INfcOemExtensionCallback callback = mock(INfcOemExtensionCallback.class);
+        mNfcService.mNfcAdapter.registerOemExtensionCallback(callback);
+        mNfcService.mState = NfcAdapter.STATE_ON;
+        INfcUnlockHandler binder = mock(INfcUnlockHandler.class);
+        mNfcService.mNfcAdapter.removeNfcUnlockHandler(binder);
+
+        doAnswer(new Answer() {
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                ResultReceiver r = invocation.getArgument(0);
+                r.send(1, null);
+                return null;
+            }
+        }).when(callback).onApplyRouting(any(ResultReceiver.class));
+        mContentObserver.onChange(true);
+        ArgumentCaptor<ResultReceiver> receiverArgumentCaptor = ArgumentCaptor
+                .forClass(ResultReceiver.class);
+        verify(callback).onApplyRouting(receiverArgumentCaptor.capture());
+        ResultReceiver resultReceiver = receiverArgumentCaptor.getValue();
+        Assert.assertNotNull(resultReceiver);
+    }
 }
