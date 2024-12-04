@@ -2379,12 +2379,6 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
     }
 
     final class NfcAdapterService extends INfcAdapter.Stub {
-        private boolean isPrivileged(int callingUid) {
-            // Check for root uid to help invoking privileged APIs from rooted shell only.
-            return callingUid == Process.SYSTEM_UID
-                    || callingUid == Process.NFC_UID
-                    || callingUid == Process.ROOT_UID;
-        }
 
         @Override
         public boolean enable(String pkg) throws RemoteException {
@@ -2512,7 +2506,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
             UserHandle callingUser = Binder.getCallingUserHandle();
             int triggerSource =
                     NFC_OBSERVE_MODE_STATE_CHANGED__TRIGGER_SOURCE__TRIGGER_SOURCE_UNKNOWN;
-            if (!isPrivileged(callingUid)) {
+            if (!NfcInjector.isPrivileged(callingUid)) {
                 NfcPermissions.enforceUserPermissions(mContext);
                 if (packageName == null) {
                     Log.e(TAG, "no package name associated with non-privileged calling UID");
@@ -2787,7 +2781,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                 throws RemoteException {
             NfcPermissions.enforceUserPermissions(mContext);
             int callingUid = Binder.getCallingUid();
-            boolean privilegedCaller = isPrivileged(callingUid)
+            boolean privilegedCaller = NfcInjector.isPrivileged(callingUid)
                     || NfcPermissions.checkAdminPermissions(mContext);
             // Allow non-foreground callers with system uid or systemui
             privilegedCaller |= packageName.equals(SYSTEM_UI);
@@ -2903,7 +2897,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                 throws RemoteException {
             int callingUid = Binder.getCallingUid();
             int callingPid = Binder.getCallingPid();
-            boolean privilegedCaller = isPrivileged(callingUid)
+            boolean privilegedCaller = NfcInjector.isPrivileged(callingUid)
                     || NfcPermissions.checkAdminPermissions(mContext);
             // Allow non-foreground callers with system uid or systemui
             privilegedCaller |= packageName.equals(SYSTEM_UI);

@@ -16,8 +16,10 @@
 
 package com.android.nfc;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.nfc.INfcDta;
+import android.nfc.cardemulation.AidGroup;
 import android.os.Binder;
 import android.os.Process;
 import android.os.RemoteException;
@@ -26,6 +28,7 @@ import android.text.TextUtils;
 import com.android.modules.utils.BasicShellCommandHandler;
 
 import java.io.PrintWriter;
+import java.util.Arrays;
 
 /**
  * Interprets and executes 'adb shell cmd nfc [args]'.
@@ -121,6 +124,52 @@ public class NfcShellCommand extends BasicShellCommandHandler {
                     boolean enableDta = getNextArgRequiredTrueOrFalse("enable", "disable");
                     configureDta(enableDta);
                     return 0;
+                case "set-offhost-se": {
+                    int userId = Integer.parseInt(getNextArg());
+                    String packageName = getNextArg();
+                    String serviceClsName = getNextArg();
+                    ComponentName componentName = new ComponentName(packageName, serviceClsName);
+                    String offHostSe = getNextArg();
+                    mNfcService.mCardEmulationManager
+                            .getNfcCardEmulationInterface()
+                            .setOffHostForService(userId, componentName, offHostSe);
+                    return 0;
+                }
+                case "reset-offhost-se": {
+                    int userId = Integer.parseInt(getNextArg());
+                    String packageName = getNextArg();
+                    String serviceClsName = getNextArg();
+                    ComponentName componentName = new ComponentName(packageName, serviceClsName);
+                    mNfcService.mCardEmulationManager
+                            .getNfcCardEmulationInterface()
+                            .unsetOffHostForService(userId, componentName);
+                    return 0;
+                }
+                case "register-aid-group": {
+                    int userId = Integer.parseInt(getNextArg());
+                    String packageName = getNextArg();
+                    String serviceClsName = getNextArg();
+                    ComponentName componentName = new ComponentName(packageName, serviceClsName);
+                    String aids = getNextArg();
+                    String category = getNextArg();
+                    AidGroup aidGroup = new AidGroup(Arrays.asList(aids.split("\\s*,\\s*")),
+                            category);
+                    mNfcService.mCardEmulationManager
+                            .getNfcCardEmulationInterface()
+                            .registerAidGroupForService(userId, componentName, aidGroup);
+                    return 0;
+                }
+                case "remove-aid-group": {
+                    int userId = Integer.parseInt(getNextArg());
+                    String packageName = getNextArg();
+                    String serviceClsName = getNextArg();
+                    ComponentName componentName = new ComponentName(packageName, serviceClsName);
+                    String category = getNextArg();
+                    mNfcService.mCardEmulationManager
+                            .getNfcCardEmulationInterface()
+                            .removeAidGroupForService(userId, componentName, category);
+                    return 0;
+                }
                 default:
                     return handleDefaultCommands(cmd);
             }
@@ -196,6 +245,15 @@ public class NfcShellCommand extends BasicShellCommandHandler {
         pw.println("    set discovery technology for polling and listening.");
         pw.println("  configure-dta enable|disable");
         pw.println("    Enable or disable DTA");
+        pw.println("  set-offhost-se <userId> <package> <service_class> <offhost>");
+        pw.println("    Set offhost SE for a registered service");
+        pw.println("  reset-offhost-se <userId> <package> <service_class>");
+        pw.println("    Reset offhost SE for a registered service");
+        pw.println("  register-aid-group <userId> <package> <service_class> "
+                + "<aids(comma separated> <category>");
+        pw.println("    Register AID group for a registered service");
+        pw.println("  remove-aid-group <userId> <package> <service_class> <category>");
+        pw.println("    Remove AID group for a registered service");
     }
 
     @Override

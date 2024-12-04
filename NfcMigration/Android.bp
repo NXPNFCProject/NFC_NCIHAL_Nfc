@@ -9,7 +9,7 @@ package {
 android_app {
     name: "NfcNciApexMigration",
     min_sdk_version: "current",
-    sdk_version: "current",
+    sdk_version: "system_current",
     certificate: "nfc",
     enabled: select(release_flag("RELEASE_NFC_MAINLINE_MODULE"), {
         true: true,
@@ -19,10 +19,21 @@ android_app {
         "src/**/*.java",
     ],
     libs: [
+        "unsupportedappusage",
     ],
+    optimize: {
+        enabled: false,
+    },
     // prevent NfcNciApex from using product-specific resources
     aaptflags: ["--product default"],
     apex_available: [
         "com.android.nfcservices",
     ],
+    privileged: true,
+    privapp_allowlist: ":privapp_allowlist_com.android.nfc_migration.xml",
+}
+
+filegroup {
+    name: "privapp_allowlist_com.android.nfc_migration.xml",
+    srcs: ["com.android.nfc_migration.xml"],
 }

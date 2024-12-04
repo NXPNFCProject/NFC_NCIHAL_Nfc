@@ -68,6 +68,7 @@ import androidx.annotation.VisibleForTesting;
 
 import com.android.internal.annotations.GuardedBy;
 import com.android.internal.util.FastXmlSerializer;
+import com.android.nfc.NfcInjector;
 import com.android.nfc.Utils;
 import com.android.nfc.cardemulation.util.NfcFileUtils;
 
@@ -1009,7 +1010,7 @@ public class RegisteredServicesCache {
                 Log.e(TAG, "Service " + componentName + " does not exist.");
                 return false;
             }
-            if (serviceInfo.getUid() != uid) {
+            if (!NfcInjector.isPrivileged(uid) && serviceInfo.getUid() != uid) {
                 // This is probably a good indication something is wrong here.
                 // Either newer service installed with different uid (but then
                 // we should have known about it), or somebody calling us from
@@ -1052,7 +1053,7 @@ public class RegisteredServicesCache {
                 Log.e(TAG, "Service " + componentName + " does not exist.");
                 return false;
             }
-            if (serviceInfo.getUid() != uid) {
+            if (!NfcInjector.isPrivileged(uid) && serviceInfo.getUid() != uid) {
                 // This is probably a good indication something is wrong here.
                 // Either newer service installed with different uid (but then
                 // we should have known about it), or somebody calling us from
@@ -1093,7 +1094,7 @@ public class RegisteredServicesCache {
                 Log.e(TAG, "Service " + componentName + " does not exist.");
                 return false;
             }
-            if (serviceInfo.getUid() != uid) {
+            if (!NfcInjector.isPrivileged(uid) && serviceInfo.getUid() != uid) {
                 // This is probably a good indication something is wrong here.
                 // Either newer service installed with different uid (but then
                 // we should have known about it), or somebody calling us from
@@ -1126,7 +1127,7 @@ public class RegisteredServicesCache {
                 Log.e(TAG, "Service " + componentName + " does not exist.");
                 return false;
             }
-            if (serviceInfo.getUid() != uid) {
+            if (!NfcInjector.isPrivileged(uid) && serviceInfo.getUid() != uid) {
                 // This is probably a good indication something is wrong here.
                 // Either newer service installed with different uid (but then
                 // we should have known about it), or somebody calling us from
@@ -1156,7 +1157,7 @@ public class RegisteredServicesCache {
                 Log.e(TAG, "Service " + componentName + " does not exist.");
                 return false;
             }
-            if (serviceInfo.getUid() != uid) {
+            if (!NfcInjector.isPrivileged(uid) && serviceInfo.getUid() != uid) {
                 // This is probably a good indication something is wrong here.
                 // Either newer service installed with different uid (but then
                 // we should have known about it), or somebody calling us from
@@ -1184,7 +1185,7 @@ public class RegisteredServicesCache {
                 Log.e(TAG, "Service " + componentName + " does not exist.");
                 return false;
             }
-            if (serviceInfo.getUid() != uid) {
+            if (!NfcInjector.isPrivileged(uid) && serviceInfo.getUid() != uid) {
                 // This is probably a good indication something is wrong here.
                 // Either newer service installed with different uid (but then
                 // we should have known about it), or somebody calling us from
@@ -1214,7 +1215,7 @@ public class RegisteredServicesCache {
                 Log.e(TAG, "Service " + componentName + " does not exist.");
                 return false;
             }
-            if (serviceInfo.getUid() != uid) {
+            if (!NfcInjector.isPrivileged(uid) && serviceInfo.getUid() != uid) {
                 // This is probably a good indication something is wrong here.
                 // Either newer service installed with different uid (but then
                 // we should have known about it), or somebody calling us from
@@ -1243,7 +1244,7 @@ public class RegisteredServicesCache {
                 Log.e(TAG, "Service " + componentName + " does not exist.");
                 return false;
             }
-            if (serviceInfo.getUid() != uid) {
+            if (!NfcInjector.isPrivileged(uid) && serviceInfo.getUid() != uid) {
                 // This is probably a good indication something is wrong here.
                 // Either newer service installed with different uid (but then
                 // we should have known about it), or somebody calling us from
@@ -1327,7 +1328,7 @@ public class RegisteredServicesCache {
             String category) {
         ApduServiceInfo serviceInfo = getService(userId, componentName);
         if (serviceInfo != null) {
-            if (serviceInfo.getUid() != uid) {
+            if (!NfcInjector.isPrivileged(uid) && serviceInfo.getUid() != uid) {
                 Log.e(TAG, "UID mismatch");
                 return null;
             }
@@ -1346,7 +1347,7 @@ public class RegisteredServicesCache {
             UserServices services = findOrCreateUserLocked(userId);
             ApduServiceInfo serviceInfo = getService(userId, componentName);
             if (serviceInfo != null) {
-                if (serviceInfo.getUid() != uid) {
+                if (!NfcInjector.isPrivileged(uid) && serviceInfo.getUid() != uid) {
                     // Calling from different uid
                     Log.e(TAG, "UID mismatch");
                     return false;
