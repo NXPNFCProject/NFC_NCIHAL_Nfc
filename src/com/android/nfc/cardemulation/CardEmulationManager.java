@@ -933,6 +933,14 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
         public void overrideRoutingTable(int userHandle, String protocol, String technology,
                 String pkg) {
 
+            NfcPermissions.enforceAdminPermissions(mContext);
+
+            if ((protocol != null && protocol.equals("default"))
+                    || (technology != null && technology.equals("default"))) {
+                Log.e(TAG, "overrideRoutingTable: override value cannot be set to default");
+                throw new IllegalArgumentException("default value is not allowed.");
+            }
+
             int callingUid = Binder.getCallingUid();
             if (android.nfc.Flags.nfcOverrideRecoverRoutingTable()) {
                 if (!isPreferredServicePackageNameForUser(pkg,
@@ -960,12 +968,15 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
 //            NfcService.getInstance().commitRouting();
         }
 
-        // TODO: Need corresponding API
+        @Override
         public void overwriteRoutingTable(int userHandle, String aids,
             String protocol, String technology) {
             Log.d(TAG, "overwriteRoutingTable. userHandle " + userHandle
                 + ", emptyAid " + aids + ", protocol " + protocol
                 + ", technology " + technology);
+
+            NfcPermissions.enforceAdminPermissions(mContext);
+
 
             int aidRoute = mRoutingOptionManager.getRouteForSecureElement(aids);
             int protocolRoute = mRoutingOptionManager.getRouteForSecureElement(protocol);
@@ -984,8 +995,9 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
             mAidCache.onRoutingOverridedOrRecovered();
         }
 
-        // TODO: Need corresponding API
+        @Override
         public List<String> getRoutingStatus() {
+            NfcPermissions.enforceAdminPermissions(mContext);
             List<Integer> routingList = new ArrayList<>();
 
             if (mRoutingOptionManager.isRoutingTableOverrided()) {
@@ -1004,19 +1016,23 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
                 .collect(Collectors.toList());
         }
 
-        // TODO: Need corresponding API
+        @Override
         public void setAutoChangeStatus(boolean state) {
+            NfcPermissions.enforceAdminPermissions(mContext);
             mRoutingOptionManager.setAutoChangeStatus(state);
         }
 
-        // TODO: Need corresponding API
+        @Override
         public boolean isAutoChangeEnabled() {
+            NfcPermissions.enforceAdminPermissions(mContext);
             return mRoutingOptionManager.isAutoChangeEnabled();
         }
 
         @Override
         public void recoverRoutingTable(int userHandle) {
             Log.d(TAG, "recoverRoutingTable. userHandle " + userHandle);
+
+            NfcPermissions.enforceAdminPermissions(mContext);
 
             if (!mForegroundUtils.isInForeground(Binder.getCallingUid())) {
                 if (DBG) Log.d(TAG, "recoverRoutingTable : not in foreground.");

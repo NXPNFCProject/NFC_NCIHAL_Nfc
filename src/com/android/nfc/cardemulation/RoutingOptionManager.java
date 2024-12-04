@@ -37,6 +37,8 @@ public class RoutingOptionManager {
 
     static final int ROUTE_UNKNOWN = -1;
 
+    static final int ROUTE_DEFAULT = -2;
+
     public static final String DEVICE_HOST = "DH";
     public static final String SE_PREFIX_SIM = "SIM";
     public static final String SE_PREFIX_ESE = "eSE";
@@ -120,21 +122,36 @@ public class RoutingOptionManager {
     public void overwriteRoutingTable() {
         Log.e(TAG, "overwriteRoutingTable");
         if (mOverrideDefaultRoute != ROUTE_UNKNOWN) {
-            Log.e(TAG, "overwrite mDefaultRoute : " + mOverrideDefaultRoute);
-            mDefaultRoute = mOverrideDefaultRoute;
+            if (mOverrideDefaultRoute == ROUTE_DEFAULT) {
+                Log.i(TAG, "overwrite mDefaultRoute with default config value");
+                mDefaultRoute = doGetDefaultRouteDestination();
+            } else {
+                Log.e(TAG, "overwrite mDefaultRoute : " + mOverrideDefaultRoute);
+                mDefaultRoute = mOverrideDefaultRoute;
+            }
             writeRoutingOption(KEY_DEFAULT_ROUTE, getSecureElementForRoute(mDefaultRoute));
         }
 
         if (mOverrideDefaultIsoDepRoute != ROUTE_UNKNOWN) {
-            Log.e(TAG, "overwrite mDefaultIsoDepRoute : " + mOverrideDefaultIsoDepRoute);
-            mDefaultIsoDepRoute = mOverrideDefaultIsoDepRoute;
+            if (mOverrideDefaultIsoDepRoute == ROUTE_DEFAULT) {
+                Log.i(TAG, "overwrite mDefaultIsoDepRoute with default config value");
+                mDefaultIsoDepRoute = doGetDefaultIsoDepRouteDestination();
+            } else {
+                Log.e(TAG, "overwrite mDefaultIsoDepRoute : " + mOverrideDefaultIsoDepRoute);
+                mDefaultIsoDepRoute = mOverrideDefaultIsoDepRoute;
+            }
             writeRoutingOption(
                 KEY_DEFAULT_ISO_DEP_ROUTE, getSecureElementForRoute(mDefaultIsoDepRoute));
         }
 
         if (mOverrideDefaultOffHostRoute != ROUTE_UNKNOWN) {
-            Log.e(TAG, "overwrite mDefaultOffHostRoute : " + mOverrideDefaultOffHostRoute);
-            mDefaultOffHostRoute = mOverrideDefaultOffHostRoute;
+            if (mOverrideDefaultOffHostRoute == ROUTE_DEFAULT) {
+                Log.i(TAG, "overwrite mDefaultOffHostRoute with default config value");
+                mDefaultOffHostRoute = doGetDefaultOffHostRouteDestination();
+            } else {
+                Log.e(TAG, "overwrite mDefaultOffHostRoute : " + mOverrideDefaultOffHostRoute);
+                mDefaultOffHostRoute = mOverrideDefaultOffHostRoute;
+            }
             writeRoutingOption(
                 KEY_DEFAULT_OFFHOST_ROUTE, getSecureElementForRoute(mDefaultOffHostRoute));
         }
@@ -209,6 +226,9 @@ public class RoutingOptionManager {
 
         mRouteForSecureElement.putIfAbsent("UNKNOWN", ROUTE_UNKNOWN);
         mSecureElementForRoute.put(ROUTE_UNKNOWN, "UNKNOWN");
+
+        mRouteForSecureElement.putIfAbsent("default", ROUTE_DEFAULT);
+        mSecureElementForRoute.put(ROUTE_DEFAULT, "default");
 
         addOrUpdateTableItems(SE_PREFIX_SIM, mOffHostRouteUicc);
         addOrUpdateTableItems(SE_PREFIX_ESE, mOffHostRouteEse);
