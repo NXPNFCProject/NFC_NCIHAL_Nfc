@@ -18,6 +18,7 @@ package com.android.nfc.pn532
 import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbDeviceConnection
 import android.util.Log
+import com.google.errorprone.annotations.CanIgnoreReturnValue
 
 /**
  * Handles communication with PN532 given a UsbDevice and UsbDeviceConnection object. Relevant
@@ -31,9 +32,18 @@ class PN532(val device: UsbDevice, val connection: UsbDeviceConnection) {
         transportLayer = TransportLayer(device, connection)
 
         // Wake up device and send initial configs
-        transportLayer.write(LONG_PREAMBLE + ACK)
-        sendFrame(constructFrame(byteArrayOf(SAM_CONFIGURATION, 0x01, 0x00)))
-        sendFrame(constructFrame(byteArrayOf(RF_CONFIGURATION, 0x05, 0x01, 0x00, 0x01)))
+        val rsp = transportLayer.write(LONG_PREAMBLE + ACK)
+        if (!rsp) {
+            Log.e(TAG, "Got error while waking device up.")
+        }
+        val samRsp = sendFrame(constructFrame(byteArrayOf(SAM_CONFIGURATION, 0x01, 0x00)))
+        if (samRsp == null) {
+            Log.e(TAG, "Did not get a response after sending SAM config command")
+        }
+        val rfRsp = sendFrame(constructFrame(byteArrayOf(RF_CONFIGURATION, 0x05, 0x01, 0x00, 0x01)))
+        if (rfRsp == null) {
+            Log.e(TAG, "Did not get a response after sending RF config command")
+        }
     }
 
     /** Polls for NFC Type-A. Returns tag if discovered. */
@@ -95,14 +105,24 @@ class PN532(val device: UsbDevice, val connection: UsbDeviceConnection) {
     /** Polls for NFC Type-B */
     fun pollB() {
         Log.d(TAG, "Polling B")
-        sendFrame(constructFrame(byteArrayOf(IN_LIST_PASSIVE_TARGET, 0x01, 0x03, 0x00)))
+        val rsp = sendFrame(constructFrame(byteArrayOf(IN_LIST_PASSIVE_TARGET, 0x01, 0x03, 0x00)))
+        if (rsp == null) {
+            Log.e(TAG, "Did not get a  response after sending polling command.")
+        }
     }
 
     /** Emits broadcast frame with CRC. Call this after pollA() to send a custom frame */
     fun sendBroadcast(broadcast: ByteArray) {
         Log.d(TAG, "sendBroadcast: " + broadcast.toHex())
-        sendFrame(constructFrame(byteArrayOf(WRITE_REGISTER, 0X63, 0X3D, 0X00)))
-        sendFrame(constructFrame(byteArrayOf(IN_COMMUNICATE_THRU) + withCrc16a(broadcast)))
+        val writeRsp = sendFrame(constructFrame(byteArrayOf(WRITE_REGISTER, 0X63, 0X3D, 0X00)))
+        if (writeRsp == null) {
+            Log.e(TAG, "Did not get valid response after sending WRITE_REGISTER command")
+        }
+        val broadcastRsp = sendFrame(constructFrame(byteArrayOf(IN_COMMUNICATE_THRU) +
+                withCrc16a(broadcast)))
+        if (broadcastRsp == null) {
+            Log.e(TAG, "Did not get valid response after sending broadcast")
+        }
     }
 
     /** Send command to PN-532 and receive response. */
@@ -125,9 +145,13 @@ class PN532(val device: UsbDevice, val connection: UsbDeviceConnection) {
     /** Mute reader. Should be called after each polling loop. */
     fun mute() {
         Log.d(TAG, "Muting PN532")
-        sendFrame(constructFrame(byteArrayOf(RF_CONFIGURATION, 0x01, 0x02)))
+        val rsp = sendFrame(constructFrame(byteArrayOf(RF_CONFIGURATION, 0x01, 0x02)))
+        if (rsp == null) {
+            Log.e(TAG, "Did not get valid response after muting.")
+        }
     }
 
+    @CanIgnoreReturnValue
     private fun sendFrame(frame: ByteArray, timeout: Long = 500.toLong()): ByteArray? {
         transportLayer.write(frame)
         return getDeviceResponse(timeout)

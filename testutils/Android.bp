@@ -67,5 +67,7 @@ android_library {
     ],
     manifest: "src/com/android/nfc/utils/AndroidManifest.xml",
     sdk_version: "test_current",
-
+    static_libs: [
+        "error_prone_annotations",
+    ],
 }
