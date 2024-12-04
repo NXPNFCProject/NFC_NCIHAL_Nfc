@@ -699,7 +699,8 @@ static int reSelect(tNFA_INTF_TYPE rfInterface, bool fSwitchIfNeeded) {
                                      __func__);
         }
 #else
-        if(sCurrentConnectedTargetProtocol == NFA_PROTOCOL_T2T) {
+        if ((sCurrentActivatedProtocl == NFA_PROTOCOL_T2T) ||
+            (sCurrentActivatedProtocl == NFC_PROTOCOL_MIFARE)) {
           status = NFA_SendRawFrame(RW_TAG_SLP_REQ, sizeof(RW_TAG_SLP_REQ), 0);
         } else if (sCurrentConnectedTargetProtocol == NFA_PROTOCOL_ISO_DEP) {
           status = NFA_SendRawFrame(RW_DESELECT_REQ,
