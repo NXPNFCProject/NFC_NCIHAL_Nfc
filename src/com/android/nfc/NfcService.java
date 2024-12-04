@@ -979,8 +979,16 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
 
     @Override
     public void onObserveModeStateChanged(boolean enable) {
-        if (mCardEmulationManager != null) {
-            mCardEmulationManager.onObserveModeStateChange(enable);
+        if (Flags.postCallbacks()) {
+            mHandler.post(() -> {
+                if (mCardEmulationManager != null) {
+                    mCardEmulationManager.onObserveModeStateChange(enable);
+                }
+            });
+        } else {
+            if (mCardEmulationManager != null) {
+                mCardEmulationManager.onObserveModeStateChange(enable);
+            }
         }
     }
 
