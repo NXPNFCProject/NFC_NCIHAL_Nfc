@@ -23,7 +23,7 @@
       "keywords": ["primary-device"]
     },
     {
-      "name": "nfc.nci.jni.tests",
+      "name": "libnfc-nci-jni-tests",
       "keywords": ["primary-device"]
     }
   ],

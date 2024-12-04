@@ -104,7 +104,7 @@ cc_defaults {
 }
 
 cc_test {
-    name: "nfc.nci.jni.tests",
+    name: "libnfc-nci-jni-tests",
 
     srcs: ["NfcTagTest.cpp"],
 
