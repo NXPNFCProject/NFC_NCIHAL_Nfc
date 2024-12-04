@@ -1,0 +1,9 @@
+package: "com.android.nfc.flags"
+container: "system"
+
+flag {
+    name: "allow_multiple_hce_bindings"
+    namespace: "nfc"
+    description: "Allow HostEmulationManager to bind to multiple non-payment services at a time"
+    bug: "365533082"
+}

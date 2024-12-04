@@ -23,7 +23,7 @@ aconfig_declarations {
     name: "nfc_aconfig_flags",
     package: "com.android.nfc.flags",
     container: "system",
-    srcs: ["nfc_flags.aconfig"],
+    srcs: ["*_flags.aconfig"],
 }
 
 java_aconfig_library {

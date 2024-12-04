@@ -27,21 +27,17 @@ import static org.mockito.Mockito.when;
 
 import android.annotation.NonNull;
 import android.annotation.RequiresPermission;
-import android.bluetooth.BluetoothProtoEnums;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.nfc.cardemulation.ApduServiceInfo;
 import android.nfc.cardemulation.CardEmulation;
 import android.nfc.cardemulation.PollingFrame;
 import android.os.Binder;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Looper;
 import android.os.UserHandle;
 import android.os.test.TestLooper;
 import android.platform.test.annotations.RequiresFlagsDisabled;
@@ -54,10 +50,10 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.dx.mockito.inline.extended.ExtendedMockito;
-import com.android.nfc.flags.Flags;
 import com.android.nfc.NfcService;
 import com.android.nfc.cardemulation.RegisteredAidCache.AidResolveInfo;
 import com.android.nfc.NfcStatsLog;
+import com.android.nfc.flags.Flags;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -71,6 +67,8 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoSession;
 import org.mockito.quality.Strictness;
+
+import java.util.ArrayList;
 
 @RunWith(AndroidJUnit4.class)
 public final class NfcCardEmulationOccurredTest {
@@ -270,7 +268,7 @@ public final class NfcCardEmulationOccurredTest {
         when(componentName.getPackageName()).thenReturn("com.android.nfc");
         int userId = 0;
         mHostEmulation.onPreferredForegroundServiceChanged(userId, componentName);
-        Boolean isServiceBounded = mHostEmulation.isServiceBounded();
+        Boolean isServiceBounded = mHostEmulation.isServiceBounded(userId, componentName);
         assertNotNull(isServiceBounded);
         assertTrue(isServiceBounded);
     }
