@@ -43,6 +43,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+
+import android.hardware.display.DisplayManager;
 import android.nfc.INfcUnlockHandler;
 
 import android.app.ActivityManager;
@@ -78,11 +80,13 @@ import android.os.Message;
 import android.os.PowerManager;
 import android.os.RemoteException;
 import android.os.ResultReceiver;
+import android.os.UserHandle;
 import android.os.UserManager;
 import android.os.test.TestLooper;
 import android.se.omapi.ISecureElementService;
 import android.sysprop.NfcProperties;
 import android.nfc.INfcOemExtensionCallback;
+import android.view.Display;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
@@ -144,6 +148,7 @@ public final class NfcServiceTest {
     @Mock AlarmManager mAlarmManager;
     @Mock SoundPool mSoundPool;
     @Mock FeatureFlags mFeatureFlags;
+    @Mock DisplayManager mDisplayManager;
     @Captor ArgumentCaptor<DeviceHost.DeviceHostListener> mDeviceHostListener;
     @Captor ArgumentCaptor<BroadcastReceiver> mGlobalReceiver;
     @Captor ArgumentCaptor<IBinder> mIBinderArgumentCaptor;
@@ -186,9 +191,11 @@ public final class NfcServiceTest {
         when(mApplication.getSystemService(KeyguardManager.class)).thenReturn(mKeyguardManager);
         when(mApplication.getSystemService(AlarmManager.class)).thenReturn(mAlarmManager);
         when(mApplication.getPackageManager()).thenReturn(mPackageManager);
+        when(mResources.getBoolean(R.bool.check_display_state_for_screen_state)).thenReturn(true);
         when(mApplication.getResources()).thenReturn(mResources);
         when(mApplication.createContextAsUser(any(), anyInt())).thenReturn(mApplication);
         when(mApplication.getContentResolver()).thenReturn(mContentResolver);
+        when(mApplication.getSystemService(DisplayManager.class)).thenReturn(mDisplayManager);
         when(mUserManager.getUserRestrictions()).thenReturn(mUserRestrictions);
         when(mResources.getStringArray(R.array.nfc_allow_list)).thenReturn(new String[0]);
         when(mPreferences.edit()).thenReturn(mPreferencesEditor);
@@ -885,5 +892,57 @@ public final class NfcServiceTest {
         mNfcService.findAndRemoveObject(1);
         Object obj = mNfcService.mObjectMap.get(1);
         Assert.assertNull(obj);
+    }
+
+    @Test
+    public void testDisplayManagerCallback() {
+        ArgumentCaptor<DisplayManager.DisplayListener> displayListenerArgumentCaptor =
+                ArgumentCaptor.forClass(DisplayManager.DisplayListener.class);
+        ArgumentCaptor<NfcService.NfcServiceHandler> nfcServiceHandlerArgumentCaptor =
+                ArgumentCaptor.forClass(NfcService.NfcServiceHandler.class);
+        verify(mDisplayManager).registerDisplayListener(displayListenerArgumentCaptor.capture(),
+                nfcServiceHandlerArgumentCaptor.capture());
+        DisplayManager.DisplayListener displayListener = displayListenerArgumentCaptor.getValue();
+        Assert.assertNotNull(displayListener);
+        NfcService.NfcServiceHandler handler = nfcServiceHandlerArgumentCaptor.getValue();
+        Assert.assertNotNull(handler);
+        displayListener.onDisplayAdded(Display.DEFAULT_DISPLAY);
+        displayListener.onDisplayRemoved(Display.DEFAULT_DISPLAY);
+        mNfcService.mIsWlcCapable = false;
+        when(mScreenStateHelper.checkScreenState(anyBoolean()))
+                .thenReturn(ScreenStateHelper.SCREEN_STATE_ON_LOCKED);
+        mNfcService.mScreenState = ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED;
+        displayListener.onDisplayChanged(Display.DEFAULT_DISPLAY);
+        mLooper.dispatchAll();
+        Assert.assertFalse(handler.hasMessages(NfcService.MSG_DELAY_POLLING));
+        Assert.assertFalse(mNfcService.mIsRequestUnlockShowed);
+        // verify(mDeviceHost).doSetScreenState(anyInt(), anyBoolean());
+    }
+
+    @Test
+    public void testThermalStatusListener() {
+        Assert.assertNotNull(mPowerManager);
+        ArgumentCaptor<PowerManager.OnThermalStatusChangedListener> argumentCaptor =
+                ArgumentCaptor.forClass(PowerManager.OnThermalStatusChangedListener.class);
+        verify(mPowerManager).addThermalStatusListener(any(), argumentCaptor.capture());
+        PowerManager.OnThermalStatusChangedListener thermalStatusChangedListener =
+                argumentCaptor.getValue();
+        Assert.assertNotNull(thermalStatusChangedListener);
+        thermalStatusChangedListener.onThermalStatusChanged(PowerManager.THERMAL_STATUS_MODERATE);
+        thermalStatusChangedListener.onThermalStatusChanged(PowerManager.THERMAL_STATUS_SEVERE);
+        thermalStatusChangedListener.onThermalStatusChanged(PowerManager.THERMAL_STATUS_CRITICAL);
+        thermalStatusChangedListener.onThermalStatusChanged(PowerManager.THERMAL_STATUS_SHUTDOWN);
+    }
+
+    @Test
+    public void testGetAppName() throws RemoteException, PackageManager.NameNotFoundException {
+        String[] packages = {"com.android.test1"};
+        when(mResources.getStringArray(R.array.nfc_allow_list)).thenReturn(packages);
+        mNfcService.mNfcAdapter.enable("com.android.test");
+        ArgumentCaptor<String> stringArgumentCaptor = ArgumentCaptor.forClass(String.class);
+        verify(mPackageManager).getApplicationInfoAsUser(stringArgumentCaptor.capture(), anyInt(),
+                any());
+        assertThat("com.android.test").isEqualTo(stringArgumentCaptor.getValue());
+        verify(mPackageManager, atLeastOnce()).getApplicationLabel(any());
     }
 }
