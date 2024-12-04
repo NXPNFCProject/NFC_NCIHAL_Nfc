@@ -611,10 +611,10 @@ static jint nativeNfcTag_doConnect(JNIEnv*, jobject, jint targetHandle) {
 #endif
 
   if (sCurrentConnectedTargetProtocol != NFC_PROTOCOL_ISO_DEP &&
-      sCurrentConnectedTargetProtocol != NFC_PROTOCOL_MIFARE
-    ) {
+      sCurrentConnectedTargetProtocol != NFC_PROTOCOL_MIFARE &&
+      sCurrentConnectedTargetProtocol == sCurrentActivatedProtocl) {
     LOG(DEBUG) << StringPrintf(
-        "%s() Nfc type = %d, do nothing for non ISO_DEP here", __func__,
+        "%s() Nfc type = 0x%x, do nothing for non ISO_DEP and non Mifare ", __func__,
         sCurrentConnectedTargetProtocol);
     retCode = NFCSTATUS_SUCCESS;
     goto TheEnd;
