@@ -37,6 +37,7 @@ import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import com.android.dx.mockito.inline.extended.ExtendedMockito;
 import com.android.nfc.cardemulation.RegisteredAidCache.AidResolveInfo;
+import com.android.nfc.NfcInjector;
 import com.android.nfc.NfcStatsLog;
 import com.android.nfc.flags.Flags;
 
@@ -50,8 +51,10 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoSession;
+import org.mockito.quality.Strictness;
 
 @RunWith(AndroidJUnit4.class)
 public final class NfcAidConflictOccurredTest {
@@ -68,6 +71,8 @@ public final class NfcAidConflictOccurredTest {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         mStaticMockSession = ExtendedMockito.mockitoSession()
                 .mockStatic(NfcStatsLog.class)
+                .mockStatic(NfcInjector.class)
+                .strictness(Strictness.LENIENT)
                 .startMocking();
         RegisteredAidCache mockAidCache = Mockito.mock(RegisteredAidCache.class);
         ApduServiceInfo apduServiceInfo = Mockito.mock(ApduServiceInfo.class);
@@ -76,6 +81,7 @@ public final class NfcAidConflictOccurredTest {
         aidResolveInfo.services = new ArrayList<ApduServiceInfo>();
         aidResolveInfo.services.add(apduServiceInfo);
         when(mockAidCache.resolveAid(anyString())).thenReturn(aidResolveInfo);
+	when(NfcInjector.getInstance()).thenReturn(Mockito.mock(NfcInjector.class));
 
         Context mockContext = new ContextWrapper(context) {
             @Override

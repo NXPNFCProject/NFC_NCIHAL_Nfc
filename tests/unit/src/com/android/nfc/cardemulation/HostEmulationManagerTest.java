@@ -86,6 +86,7 @@ import java.util.regex.Pattern;
 public class HostEmulationManagerTest {
 
     private static final String WALLET_HOLDER_PACKAGE_NAME = "com.android.test.walletroleholder";
+    private static final String NFC_PACKAGE= "com.android.nfc";
     private static final ComponentName WALLET_PAYMENT_SERVICE
             = new ComponentName(WALLET_HOLDER_PACKAGE_NAME,
             "com.android.test.walletroleholder.WalletRoleHolderApduService");
@@ -155,6 +156,7 @@ public class HostEmulationManagerTest {
         when(NfcService.getInstance()).thenReturn(mNfcService);
         when(NfcInjector.getInstance()).thenReturn(mNfcInjector);
         when(mNfcInjector.getNfcEventLog()).thenReturn(mNfcEventLog);
+        when(mNfcInjector.getNfcPackageName()).thenReturn(NFC_PACKAGE);
         when(com.android.nfc.flags.Flags.statsdCeEventsFlag()).thenReturn(true);
         when(mContext.getSystemService(eq(PowerManager.class))).thenReturn(mPowerManager);
         when(mContext.getSystemService(eq(KeyguardManager.class))).thenReturn(mKeyguardManager);
@@ -457,7 +459,7 @@ public class HostEmulationManagerTest {
         verifyNoMoreInteractions(mContext);
         Intent intent = mIntentArgumentCaptor.getValue();
         assertEquals(TapAgainDialog.ACTION_CLOSE, intent.getAction());
-        assertEquals(HostEmulationManager.NFC_PACKAGE, intent.getPackage());
+        assertEquals(NFC_PACKAGE, intent.getPackage());
         assertEquals(HostEmulationManager.STATE_W4_SELECT, mHostEmulationManager.getState());
     }
 
@@ -1016,7 +1018,7 @@ public class HostEmulationManagerTest {
         assertEquals(HostEmulationManager.STATE_W4_SELECT, mHostEmulationManager.getState());
         Intent intent = mIntentArgumentCaptor.getValue();
         assertEquals(TapAgainDialog.ACTION_CLOSE, intent.getAction());
-        assertEquals(HostEmulationManager.NFC_PACKAGE, intent.getPackage());
+        assertEquals(NFC_PACKAGE, intent.getPackage());
         verifyNoMoreInteractions(mContext);
     }
 
@@ -1039,7 +1041,7 @@ public class HostEmulationManagerTest {
         assertEquals(HostEmulationManager.STATE_W4_SELECT, mHostEmulationManager.getState());
         Intent intent = mIntentArgumentCaptor.getValue();
         assertEquals(TapAgainDialog.ACTION_CLOSE, intent.getAction());
-        assertEquals(HostEmulationManager.NFC_PACKAGE, intent.getPackage());
+        assertEquals(NFC_PACKAGE, intent.getPackage());
         verify(mMessenger).send(mMessageArgumentCaptor.capture());
         Message message = mMessageArgumentCaptor.getValue();
         assertEquals(HostApduService.MSG_DEACTIVATED, message.what);
@@ -1066,7 +1068,7 @@ public class HostEmulationManagerTest {
         assertEquals(HostEmulationManager.STATE_W4_SELECT, mHostEmulationManager.getState());
         Intent intent = mIntentArgumentCaptor.getValue();
         assertEquals(TapAgainDialog.ACTION_CLOSE, intent.getAction());
-        assertEquals(HostEmulationManager.NFC_PACKAGE, intent.getPackage());
+        assertEquals(NFC_PACKAGE, intent.getPackage());
         verifyZeroInteractions(mMessenger);
         verifyNoMoreInteractions(mContext);
     }

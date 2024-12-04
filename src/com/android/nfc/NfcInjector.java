@@ -202,6 +202,10 @@ public class NfcInjector {
         return LocalDateTime.now();
     }
 
+    public String getNfcPackageName() {
+        return mContext.getPackageName();
+    }
+
     public boolean isInProvisionMode() {
         boolean isNfcProvisioningEnabled = false;
         try {

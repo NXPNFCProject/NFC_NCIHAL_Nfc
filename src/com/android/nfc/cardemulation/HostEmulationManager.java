@@ -101,7 +101,6 @@ public class HostEmulationManager {
             NfcStatsLog.NFC_CARDEMULATION_OCCURRED__CATEGORY__HCE_PAYMENT;
     static final int CE_HCE_OTHER =
             NfcStatsLog.NFC_CARDEMULATION_OCCURRED__CATEGORY__HCE_OTHER;
-    static final String NFC_PACKAGE = "com.android.nfc";
     static final String DATA_KEY = "data";
     static final int FIELD_OFF_IDLE_DELAY_MS = 2000;
     static final int RE_ENABLE_OBSERVE_MODE_DELAY_MS = 2000;
@@ -737,7 +736,7 @@ public class HostEmulationManager {
             // Regardless of what happens, if we're having a tap again
             // activity up, close it
             Intent intent = new Intent(TapAgainDialog.ACTION_CLOSE);
-            intent.setPackage(NFC_PACKAGE);
+            intent.setPackage(NfcInjector.getInstance().getNfcPackageName());
             mContext.sendBroadcastAsUser(intent, UserHandle.ALL);
             if (mState != STATE_IDLE && mState != STATE_POLLING_LOOP) {
                 Log.e(TAG, "Got activation event in non-idle state");
@@ -1012,7 +1011,7 @@ public class HostEmulationManager {
 
             //close the TapAgainDialog
             Intent intent = new Intent(TapAgainDialog.ACTION_CLOSE);
-            intent.setPackage(NFC_PACKAGE);
+            intent.setPackage(NfcInjector.getInstance().getNfcPackageName());
             mContext.sendBroadcastAsUser(intent, UserHandle.ALL);
         }
     }
