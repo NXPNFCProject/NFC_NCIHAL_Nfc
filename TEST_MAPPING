@@ -1,6 +1,9 @@
 {
   "presubmit": [
     {
+      "name": "NfcTestCases"
+    },
+    {
       "name": "CtsNfcTestCases"
     },
     {
@@ -11,9 +14,6 @@
     }
   ],
   "postsubmit": [
-    {
-      "name": "NfcTestCases"
-    },
     {
       "name": "NfcNciInstrumentationTests",
       "keywords": ["primary-device"]
