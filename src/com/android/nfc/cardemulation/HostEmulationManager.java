@@ -228,7 +228,12 @@ public class HostEmulationManager {
                             HostEmulationConnection connection =
                                 mComponentNameToConnectionsMap.get(key);
                             if (connection.mMessenger != null) {
-                                mContext.unbindService(connection.mServiceConnection);
+                                try {
+                                    mContext.unbindService(connection.mServiceConnection);
+                                } catch (IllegalArgumentException iae) {
+                                    Log.wtf(TAG, "Exception while unbinding "
+                                        + key.getComponentName() + " service connection", iae);
+                                }
                             }
                         } else {
                             retainedConnections.put(key, mComponentNameToConnectionsMap.get(key));
