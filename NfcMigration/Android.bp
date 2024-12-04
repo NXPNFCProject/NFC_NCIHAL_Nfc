@@ -1,0 +1,28 @@
+package {
+    default_team: "trendy_team_fwk_nfc",
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+// NFC apk left behind for migrating persistent
+// data from old APK - com.android.nfc to the mainline module
+// APK - com.google.android.nfc
+android_app {
+    name: "NfcNciApexMigration",
+    min_sdk_version: "current",
+    sdk_version: "current",
+    certificate: "nfc",
+    enabled: select(release_flag("RELEASE_NFC_MAINLINE_MODULE"), {
+        true: true,
+        default: false,
+    }),
+    srcs: [
+        "src/**/*.java",
+    ],
+    libs: [
+    ],
+    // prevent NfcNciApex from using product-specific resources
+    aaptflags: ["--product default"],
+    apex_available: [
+        "com.android.nfcservices",
+    ],
+}
