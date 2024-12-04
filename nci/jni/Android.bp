@@ -31,7 +31,10 @@ cc_defaults {
         "-fexceptions",
     ],
     srcs: ["**/*.cpp"],
-    exclude_srcs: ["NfcTagTest.cpp"],
+    exclude_srcs: [
+        "NfcTagTest.cpp",
+        "DataQueueTest.cpp",
+    ],
 
     include_dirs: [
         "external/libxml2/include",
@@ -106,7 +109,10 @@ cc_defaults {
 cc_test {
     name: "libnfc-nci-jni-tests",
 
-    srcs: ["NfcTagTest.cpp"],
+    srcs: [
+        "NfcTagTest.cpp",
+        "DataQueueTest.cpp",
+    ],
 
     shared_libs: [
         "libnativehelper",
