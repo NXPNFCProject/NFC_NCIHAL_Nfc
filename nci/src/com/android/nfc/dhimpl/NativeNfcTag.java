@@ -196,50 +196,48 @@ public class NativeNfcTag implements TagEndpoint {
         int status = -1;
         for (int i = 0; i < mTechList.length; i++) {
             if (mTechList[i] == technology) {
-                // Get the handle and connect, if not already connected
-                if (mConnectedHandle != mTechHandles[i]) {
-                    // We're not yet connected to this handle, there are
-                    // a few scenario's here:
-                    // 1) We are not connected to anything yet - allow
-                    // 2) We are connected to a technology which has
-                    //    a different handle (multi-protocol tag); we support
-                    //    switching to that.
-                    if (mConnectedHandle == -1) {
-                        // Not connected yet
-                        // status = doConnect(mTechHandles[i]);
-                        status = doConnect(i);
-                    } else {
-                        // Connect to a tech with a different handle
-                        Log.d(TAG, "Connect to a tech with a different handle");
-                        // status = reconnectWithStatus(mTechHandles[i]);
-                        status = reconnectWithStatus(i);
-                    }
-                    if (status == 0) {
-                        mConnectedHandle = mTechHandles[i];
-                        mConnectedTechIndex = i;
-                    }
-                } else {
-                    // 1) We are connected to a technology which has the same
-                    //    handle; we do not support connecting at a different
-                    //    level (libnfc auto-activates to the max level on
-                    //    any handle).
-                    // 2) We are connecting to the ndef technology - always
-                    //    allowed.
-                    if ((technology == TagTechnology.NDEF)
-                            || (technology == TagTechnology.NDEF_FORMATABLE)) {
-                        // special case for NDEF, this will cause switch to ISO_DEP frame intf
-                        i = 0;
-                        // status = 0;
-                    }
-                    status = reconnectWithStatus(i);
-                    if (status == 0) {
-                        mConnectedTechIndex = i;
-                        // Handle was already identical
-                    }
+                if ((technology == TagTechnology.NDEF)
+                        || (technology == TagTechnology.NDEF_FORMATABLE)) {
+                    // special case for NDEF, this will cause switch to ISO_DEP frame intf
+                    i = 0;
+                }
+
+                status = doConnect(i);
+
+                if (status == 0) {
+                    mConnectedHandle = mTechHandles[i];
+                    mConnectedTechIndex = i;
                 }
                 break;
             }
         }
+        if (mWatchdog != null) {
+            mWatchdog.doResume();
+        }
+        return status;
+    }
+
+    /**
+     * connectWithIdx() is use by findAndReadNdef()
+     * Update of variables mConnectedTechIndex and mConnectedHandle when
+     * performing reconnect().
+     */
+    public synchronized int connectWithIdx(int idx) {
+        if (DBG) Log.d(TAG, "connectWithIdx() - idx: " + idx);
+        if (mWatchdog != null) {
+            mWatchdog.pause();
+        }
+        int status = -1;
+
+        // Not connected yet
+        // status = doConnect(mTechHandles[i]);
+        status = doConnect(idx);
+
+        if (status == 0) {
+            mConnectedHandle = mTechHandles[idx];
+            mConnectedTechIndex = idx;
+        }
+
         if (mWatchdog != null) {
             mWatchdog.doResume();
         }
@@ -348,33 +346,31 @@ public class NativeNfcTag implements TagEndpoint {
 
     native int doReconnect();
 
-    public synchronized int reconnectWithStatus() {
+    @Override
+    public synchronized boolean reconnect() {
+        if (DBG) Log.d(TAG, "reconnect() ");
         if (mWatchdog != null) {
             mWatchdog.pause();
         }
         int status = doReconnect();
+        if (status == 0x00) {
+            // Reconnection might change the current connected target idx
+            // If connected to frame RF/ISO-DEP it will got back to
+            // ISO-DEP/ISO-DEP
+            // If connected to frame RF/MIFARE it will got back to
+            // MIFARE/MIFARE
+            for (int i = 0; i < mTechLibNfcTypes.length; i++) {
+                if (mTechLibNfcTypes[mConnectedTechIndex] == mTechLibNfcTypes[i]) {
+                    mConnectedTechIndex = i;
+                    mConnectedHandle = mTechHandles[i];
+                    break;
+                }
+            }
+        }
         if (mWatchdog != null) {
             mWatchdog.doResume();
         }
-        return status;
-    }
-
-    @Override
-    public synchronized boolean reconnect() {
-        return reconnectWithStatus() == 0;
-    }
-
-    native int doHandleReconnect(int handle);
-
-    public synchronized int reconnectWithStatus(int handle) {
-        if (mWatchdog != null) {
-            mWatchdog.pause();
-        }
-        int status = doHandleReconnect(handle);
-        if (mWatchdog != null) {
-            mWatchdog.doResume();
-        }
-        return status;
+        return (status == 0);
     }
 
     private native byte[] doTransceive(byte[] data, boolean raw, int[] returnCode);
@@ -860,22 +856,19 @@ public class NativeNfcTag implements TagEndpoint {
     public NdefMessage findAndReadNdef() {
         // Try to find NDEF on any of the technologies.
         int[] technologies = getTechList();
-        int[] handles = mTechHandles;
         NdefMessage ndefMsg = null;
         boolean foundFormattable = false;
         int formattableHandle = 0;
         int formattableLibNfcType = 0;
         int status;
+        int currentTargetTech = 0;
 
         for (int techIndex = 0; techIndex < technologies.length; techIndex++) {
-            // have we seen this handle before?
-            for (int i = 0; i < techIndex; i++) {
-                if (handles[i] == handles[techIndex]) {
-                    continue; // don't check duplicate handles
-                }
+            if (currentTargetTech == technologies[techIndex]) {
+                continue;
             }
-
-            status = connectWithStatus(technologies[techIndex]);
+            currentTargetTech = technologies[techIndex];
+            status = connectWithIdx(techIndex);
             if (status != 0) {
                 Log.d(TAG, "Connect Failed - status = " + status);
                 if (status == STATUS_CODE_TARGET_LOST) {
@@ -893,7 +886,7 @@ public class NativeNfcTag implements TagEndpoint {
                     // found - this is because libNFC refuses to format
                     // an already NDEF formatted tag.
                 }
-                reconnect();
+                // reconnect();
             }
 
             int[] ndefinfo = new int[2];
@@ -922,7 +915,6 @@ public class NativeNfcTag implements TagEndpoint {
                             getConnectedTechnology(),
                             supportedNdefLength,
                             cardState);
-                    reconnect();
                 } catch (FormatException e) {
                     // Create an intent anyway, without NDEF messages
                     generateEmptyNdef = true;
@@ -942,7 +934,6 @@ public class NativeNfcTag implements TagEndpoint {
                         supportedNdefLength,
                         cardState);
                 foundFormattable = false;
-                reconnect();
             }
             break;
         }
