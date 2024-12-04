@@ -116,6 +116,7 @@ public class PreferredServicesTest {
             = new ComponentName(WALLET_HOLDER_PACKAGE_NAME,
             "com.android.test.walletroleholder.WalletRoleHolderApduService");
     private static final int USER_ID = 1;
+    private static final int USER_ID_2 = 2;
     private static final int FOREGROUND_UID = 7;
 
     @Before
@@ -228,6 +229,8 @@ public class PreferredServicesTest {
     @Test
     public void testOnWalletRoleHolderChangedWithNullPackageName() {
         services = new PreferredServices(mContext, mServicesCache, mAidCache, mObserver, mCallback);
+        services.mUserIdDefaultWalletHolder = 42;
+        services.mDefaultWalletHolderPaymentService = TEST_COMPONENT;
 
         services.onWalletRoleHolderChanged(null, USER_ID);
 
@@ -241,6 +244,7 @@ public class PreferredServicesTest {
         assertThat(candidates.get(0)).isNull();
         assertThat(candidates.get(1)).isNull();
         assertThat(services.mDefaultWalletHolderPaymentService).isNull();
+        assertThat(services.mUserIdDefaultWalletHolder).isEqualTo(USER_ID);
     }
 
     @Test
@@ -286,6 +290,32 @@ public class PreferredServicesTest {
         assertThat(services.mUserIdDefaultWalletHolder).isEqualTo(USER_ID);
         verify(mCallback).onPreferredPaymentServiceChanged(anyInt(), any());
         assertThat(services.mDefaultWalletHolderPaymentService).isNull();
+    }
+
+    @Test
+    public void testOnWalletRoleHolderChangedSamePackageDifferentUser() {
+        when(mServicesCache.getInstalledServices(eq(USER_ID))).thenReturn(getPaymentServices());
+        when(mServicesCache.getInstalledServices(eq(USER_ID_2))).thenReturn(getPaymentServices());
+
+        services = new PreferredServices(mContext, mServicesCache, mAidCache, mObserver, mCallback);
+
+        services.onWalletRoleHolderChanged(WALLET_HOLDER_PACKAGE_NAME, USER_ID);
+        services.onWalletRoleHolderChanged(WALLET_HOLDER_PACKAGE_NAME, USER_ID_2);
+
+        assertThat(services.mUserIdDefaultWalletHolder).isEqualTo(USER_ID_2);
+
+        verify(mCallback, times(3))
+                .onPreferredPaymentServiceChanged(userIdCaptor.capture(),
+                        candidateCaptor.capture());
+        List<Integer> userIds = userIdCaptor.getAllValues();
+        assertThat(userIds.get(0)).isEqualTo(USER_ID);
+        assertThat(userIds.get(1)).isEqualTo(USER_ID);
+        assertThat(userIds.get(2)).isEqualTo(USER_ID_2);
+        List<ComponentName> candidates = candidateCaptor.getAllValues();
+        assertThat(candidates.get(0)).isNull();
+        assertThat(candidates.get(1)).isEqualTo(TEST_COMPONENT);
+        assertThat(candidates.get(2)).isEqualTo(TEST_COMPONENT);
+        assertThat(services.mDefaultWalletHolderPaymentService).isEqualTo(TEST_COMPONENT);
     }
 
     @Test

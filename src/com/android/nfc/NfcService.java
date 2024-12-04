@@ -2504,6 +2504,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                 return false;
             }
             int callingUid = Binder.getCallingUid();
+            UserHandle callingUser = Binder.getCallingUserHandle();
             int triggerSource =
                     NFC_OBSERVE_MODE_STATE_CHANGED__TRIGGER_SOURCE__TRIGGER_SOURCE_UNKNOWN;
             if (!isPrivileged(callingUid)) {
@@ -2512,11 +2513,10 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                     Log.e(TAG, "no package name associated with non-privileged calling UID");
                 }
                 if (mCardEmulationManager.isPreferredServicePackageNameForUser(packageName,
-                        UserHandle.getUserHandleForUid(callingUid).getIdentifier())) {
+                        callingUser.getIdentifier())) {
                     if (android.permission.flags.Flags.walletRoleEnabled()) {
-                        UserHandle user = Binder.getCallingUserHandle();
                         if (packageName != null) {
-                            triggerSource = packageName.equals(getWalletRoleHolder(user))
+                            triggerSource = packageName.equals(getWalletRoleHolder(callingUser))
                                 ? NFC_OBSERVE_MODE_STATE_CHANGED__TRIGGER_SOURCE__WALLET_ROLE_HOLDER
                                 : NFC_OBSERVE_MODE_STATE_CHANGED__TRIGGER_SOURCE__FOREGROUND_APP;
                         }
