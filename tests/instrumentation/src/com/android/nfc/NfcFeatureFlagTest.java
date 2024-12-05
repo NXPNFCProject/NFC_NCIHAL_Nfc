@@ -65,6 +65,12 @@ public final class NfcFeatureFlagTest {
     @Test
     public void testIsSecureNfcSupported() {
         if (!mNfcSupported) return;
+        boolean allSupport = mContext.getResources().getBoolean(
+                R.bool.enable_secure_nfc_support);
+        if (allSupport) {
+            assertTrue(mNfcAdapter.isSecureNfcSupported());
+            return;
+        }
         String[] skuList = mContext.getResources().getStringArray(
                 R.array.config_skuSupportsSecureNfc);
         String sku = SystemProperties.get("ro.boot.hardware.sku");
