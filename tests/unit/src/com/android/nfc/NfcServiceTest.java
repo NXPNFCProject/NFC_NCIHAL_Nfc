@@ -21,7 +21,6 @@ import static com.android.nfc.NfcService.INVALID_NATIVE_HANDLE;
 import static com.android.nfc.NfcService.PREF_NFC_ON;
 import static com.android.nfc.NfcService.SOUND_END;
 import static com.android.nfc.NfcService.SOUND_ERROR;
-import static com.android.nfc.NfcService.SOUND_END;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -29,7 +28,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyFloat;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -69,6 +67,7 @@ import android.nfc.NfcAntennaInfo;
 import android.nfc.NfcServiceManager;
 import android.nfc.Tag;
 import android.nfc.cardemulation.CardEmulation;
+import android.nfc.cardemulation.PollingFrame;
 import android.nfc.tech.Ndef;
 import android.nfc.tech.TagTechnology;
 import android.os.AsyncTask;
@@ -94,6 +93,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.android.dx.mockito.inline.extended.ExtendedMockito;
 import com.android.nfc.cardemulation.CardEmulationManager;
 import com.android.nfc.flags.FeatureFlags;
+import com.android.nfc.flags.Flags;
+import android.nfc.INfcVendorNciCallback;
 
 
 import org.junit.After;
@@ -149,6 +150,7 @@ public final class NfcServiceTest {
     @Mock SoundPool mSoundPool;
     @Mock FeatureFlags mFeatureFlags;
     @Mock DisplayManager mDisplayManager;
+    @Mock CardEmulationManager mCardEmulationManager;
     @Captor ArgumentCaptor<DeviceHost.DeviceHostListener> mDeviceHostListener;
     @Captor ArgumentCaptor<BroadcastReceiver> mGlobalReceiver;
     @Captor ArgumentCaptor<IBinder> mIBinderArgumentCaptor;
@@ -166,12 +168,15 @@ public final class NfcServiceTest {
         mStaticMockSession = ExtendedMockito.mockitoSession()
                 .mockStatic(NfcProperties.class)
                 .mockStatic(android.nfc.Flags.class)
+                .mockStatic(com.android.nfc.flags.Flags.class)
                 .mockStatic(NfcStatsLog.class)
                 .strictness(Strictness.LENIENT)
                 .startMocking();
         MockitoAnnotations.initMocks(this);
         AsyncTask.setDefaultExecutor(new HandlerExecutor(new Handler(mLooper.getLooper())));
 
+        when(mPackageManager.hasSystemFeature(PackageManager.FEATURE_NFC_HOST_CARD_EMULATION))
+                .thenReturn(true);
         when(mNfcInjector.getMainLooper()).thenReturn(mLooper.getLooper());
         when(mNfcInjector.getNfcEventLog()).thenReturn(mNfcEventLog);
         when(mNfcInjector.makeDeviceHost(any())).thenReturn(mDeviceHost);
@@ -184,6 +189,7 @@ public final class NfcServiceTest {
         when(mNfcInjector.getNfcUnlockManager()).thenReturn(mNfcUnlockManager);
         when(mNfcInjector.getFeatureFlags()).thenReturn(mFeatureFlags);
         when(mNfcInjector.isSatelliteModeSensitive()).thenReturn(true);
+        when(mNfcInjector.getCardEmulationManager()).thenReturn(mCardEmulationManager);
         when(mApplication.getSharedPreferences(anyString(), anyInt())).thenReturn(mPreferences);
         when(mApplication.getSystemService(PowerManager.class)).thenReturn(mPowerManager);
         when(mApplication.getSystemService(UserManager.class)).thenReturn(mUserManager);
@@ -1053,5 +1059,68 @@ public final class NfcServiceTest {
         isTagPresent = mNfcService.mNfcAdapter.isTagPresent();
         assertThat(isTagPresent).isTrue();
 
+    }
+
+    @Test
+    public void testOnObserveModeStateChanged() {
+        when(com.android.nfc.flags.Flags.postCallbacks()).thenReturn(true);
+        mNfcService.onObserveModeStateChanged(true);
+        mLooper.dispatchAll();
+        verify(mCardEmulationManager, atLeastOnce()).onObserveModeStateChange(anyBoolean());
+        when(com.android.nfc.flags.Flags.postCallbacks()).thenReturn(false);
+        mNfcService.onObserveModeStateChanged(false);
+        verify(mCardEmulationManager, atLeastOnce()).onObserveModeStateChange(anyBoolean());
+    }
+
+    @Test
+    public void testOnPollingLoopDetected() {
+        PollingFrame pollingFrame = mock(PollingFrame.class);
+        List<PollingFrame> frames = new ArrayList<>();
+        frames.add(pollingFrame);
+        when(android.nfc.Flags.nfcReadPollingLoop()).thenReturn(true);
+        when(com.android.nfc.flags.Flags.postCallbacks()).thenReturn(true);
+        mNfcService.onPollingLoopDetected(frames);
+        mLooper.dispatchAll();
+        ArgumentCaptor<List<PollingFrame>> listArgumentCaptor = ArgumentCaptor.forClass(List.class);
+        verify(mCardEmulationManager).onPollingLoopDetected(listArgumentCaptor.capture());
+        assertThat(frames).isEqualTo(listArgumentCaptor.getValue());
+        when(com.android.nfc.flags.Flags.postCallbacks()).thenReturn(false);
+        mNfcService.onPollingLoopDetected(frames);
+        verify(mCardEmulationManager, atLeastOnce()).onPollingLoopDetected(listArgumentCaptor.capture());
+        assertThat(frames).isEqualTo(listArgumentCaptor.getValue());
+    }
+
+    @Test
+    public void testOnVendorSpecificEvent() throws RemoteException {
+        INfcVendorNciCallback callback = mock(INfcVendorNciCallback.class);
+        mNfcService.mNfcAdapter.registerVendorExtensionCallback(callback);
+        verify(mDeviceHost).enableVendorNciNotifications(true);
+        mNfcService.onVendorSpecificEvent(1, 2, "test".getBytes());
+        mLooper.dispatchAll();
+        verify(callback).onVendorNotificationReceived(anyInt(), anyInt(), any());
+    }
+
+    @Test
+    public void testOnHostCardEmulationActivated() throws RemoteException {
+        when(mPreferences.getBoolean(eq(PREF_NFC_ON), anyBoolean())).thenReturn(true);
+        INfcOemExtensionCallback callback = mock(INfcOemExtensionCallback.class);
+        mNfcService.mNfcAdapter.registerOemExtensionCallback(callback);
+        verify(callback).onCardEmulationActivated(anyBoolean());
+        when(android.nfc.Flags.nfcPersistLog()).thenReturn(true);
+        mNfcService.onHostCardEmulationActivated(1);
+        verify(mCardEmulationManager).onHostCardEmulationActivated(anyInt());
+        verify(mNfcEventLog, times(2)).logEvent(any());
+    }
+
+    @Test
+    public void testOnHostCardEmulationDeactivated()  throws RemoteException {
+        when(mPreferences.getBoolean(eq(PREF_NFC_ON), anyBoolean())).thenReturn(true);
+        INfcOemExtensionCallback callback = mock(INfcOemExtensionCallback.class);
+        mNfcService.mNfcAdapter.registerOemExtensionCallback(callback);
+        verify(callback).onCardEmulationActivated(false);
+        when(android.nfc.Flags.nfcPersistLog()).thenReturn(true);
+        mNfcService.onHostCardEmulationDeactivated(1);
+        verify(mCardEmulationManager).onHostCardEmulationDeactivated(anyInt());
+        verify(mNfcEventLog, times(2)).logEvent(any());
     }
 }

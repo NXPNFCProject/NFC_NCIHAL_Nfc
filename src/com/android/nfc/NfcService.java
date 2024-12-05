@@ -1332,8 +1332,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                 pm.hasSystemFeature(PackageManager.FEATURE_NFC_HOST_CARD_EMULATION_NFCF);
         if (mIsHceCapable) {
             mAidRoutingManager = new AidRoutingManager();
-            mCardEmulationManager =
-                new CardEmulationManager(mContext, mNfcInjector, mDeviceConfigFacade);
+            mCardEmulationManager = mNfcInjector.getCardEmulationManager();
             mAidCache = mCardEmulationManager.getRegisteredAidCache();
         }
 
