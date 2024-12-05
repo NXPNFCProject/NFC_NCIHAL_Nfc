@@ -64,6 +64,7 @@ import android.media.SoundPool;
 import android.nfc.NdefMessage;
 import android.nfc.NfcAdapter;
 import android.nfc.NfcAntennaInfo;
+import android.nfc.NfcOemExtension;
 import android.nfc.NfcServiceManager;
 import android.nfc.Tag;
 import android.nfc.cardemulation.CardEmulation;
@@ -160,6 +161,7 @@ public final class NfcServiceTest {
     @Captor ArgumentCaptor<Integer> mSoundCaptor;
     @Captor ArgumentCaptor<Intent> mIntentArgumentCaptor;
     @Captor ArgumentCaptor<ContentObserver> mContentObserverArgumentCaptor;
+    @Captor ArgumentCaptor<BroadcastReceiver> mBroadcastReceiverArgumentCaptor;
     TestLooper mLooper;
     NfcService mNfcService;
     private MockitoSession mStaticMockSession;
@@ -208,6 +210,7 @@ public final class NfcServiceTest {
         when(mUserManager.getUserRestrictions()).thenReturn(mUserRestrictions);
         when(mResources.getStringArray(R.array.nfc_allow_list)).thenReturn(new String[0]);
         when(mResources.getBoolean(R.bool.tag_intent_app_pref_supported)).thenReturn(true);
+        when(mResources.getBoolean(R.bool.nfcc_always_on_allowed)).thenReturn(true);
         when(mPreferences.edit()).thenReturn(mPreferencesEditor);
         when(mPowerManager.newWakeLock(anyInt(), anyString()))
                 .thenReturn(mock(PowerManager.WakeLock.class));
@@ -240,6 +243,8 @@ public final class NfcServiceTest {
         verify(mApplication).registerReceiverForAllUsers(
                 mGlobalReceiver.capture(),
                 argThat(intent -> intent.hasAction(Intent.ACTION_SCREEN_ON)), any(), any());
+        verify(mApplication).registerReceiver(mBroadcastReceiverArgumentCaptor.capture(),
+                argThat(intent -> intent.hasAction(UserManager.ACTION_USER_RESTRICTIONS_CHANGED)));
         clearInvocations(mDeviceHost, mNfcInjector, mApplication);
     }
 
@@ -1263,4 +1268,78 @@ public final class NfcServiceTest {
         verify(mDeviceHost).resetDiscoveryTech();
         Assert.assertNull(mNfcService.mDiscoveryTechParams);
     }
+
+    @Test
+    public void testStateToProtoEnum() {
+        int result = NfcService.stateToProtoEnum(NfcAdapter.STATE_OFF);
+        assertThat(result).isEqualTo(NfcServiceDumpProto.STATE_OFF);
+        result = NfcService.stateToProtoEnum(NfcAdapter.STATE_TURNING_ON);
+        assertThat(result).isEqualTo(NfcServiceDumpProto.STATE_TURNING_ON);
+        result = NfcService.stateToProtoEnum(NfcAdapter.STATE_ON);
+        assertThat(result).isEqualTo(NfcServiceDumpProto.STATE_ON);
+        result = NfcService.stateToProtoEnum(NfcAdapter.STATE_TURNING_OFF);
+        assertThat(result).isEqualTo(NfcServiceDumpProto.STATE_TURNING_OFF);
+        result = NfcService.stateToProtoEnum(0);
+        assertThat(result).isEqualTo(NfcServiceDumpProto.STATE_UNKNOWN);
+    }
+    @Test
+    public void testUnregisterObject() {
+        DeviceHost.TagEndpoint tagEndpoint = mock(DeviceHost.TagEndpoint.class);
+        when(tagEndpoint.getHandle()).thenReturn(1);
+        mNfcService.registerTagObject(tagEndpoint);
+        mNfcService.unregisterObject(1);
+        assertThat(mNfcService.mObjectMap.get(1)).isNull();
+    }
+
+    @Test
+    public void testNfcServiceOnReceive() {
+        BroadcastReceiver receiver = mBroadcastReceiverArgumentCaptor.getValue();
+        Bundle bundle = new Bundle();
+        bundle.putBoolean(UserManager.DISALLOW_NEAR_FIELD_COMMUNICATION_RADIO, true);
+        when(mUserManager.getUserRestrictions()).thenReturn(bundle);
+        Assert.assertNotNull(receiver);
+        mNfcService.mIsNfcUserRestricted = false;
+        when(mPreferences.getBoolean(anyString(), anyBoolean())).thenReturn(true);
+        when(mNfcInjector.isSatelliteModeOn()).thenReturn(false);
+        receiver.onReceive(mApplication, new Intent(UserManager.ACTION_USER_RESTRICTIONS_CHANGED));
+        verify(mUserManager, atLeastOnce()).getUserRestrictions();
+
+    }
+
+    @Test
+    public void testDiscoveryTechDeathRecipient_BinderDied() {
+        mNfcService.mState = NfcAdapter.STATE_ON;
+        mNfcService.mDiscoveryTechParams = mock(NfcService.DiscoveryTechParams.class);
+        NfcService.DiscoveryTechDeathRecipient discoveryTechDeathRecipient = mNfcService
+                .new DiscoveryTechDeathRecipient();
+        discoveryTechDeathRecipient.binderDied();
+        verify(mDeviceHost).resetDiscoveryTech();
+        assertThat(mNfcService.mDiscoveryTechParams).isNull();
+    }
+
+    @Test
+    public void testDisableAlwaysOnInternal() throws RemoteException {
+        mNfcService.mAlwaysOnState = NfcAdapter.STATE_OFF;
+        mNfcService.mNfcAdapter.setControllerAlwaysOn(NfcOemExtension.DISABLE);
+        mLooper.dispatchAll();
+
+        mNfcService.mAlwaysOnState = NfcAdapter.STATE_TURNING_OFF;
+        mNfcService.mAlwaysOnMode = NfcOemExtension.DISABLE;
+        mNfcService.mNfcAdapter.setControllerAlwaysOn(NfcOemExtension.DISABLE);
+        mLooper.dispatchAll();
+        assertThat(mNfcService.mAlwaysOnMode).isEqualTo(NfcOemExtension.DISABLE);
+
+        mNfcService.mState = NfcAdapter.STATE_ON;
+        mNfcService.mAlwaysOnState = NfcAdapter.STATE_TURNING_ON;
+        mNfcService.mNfcAdapter.setControllerAlwaysOn(NfcOemExtension.DISABLE);
+        mLooper.dispatchAll();
+        verify(mDeviceHost).setNfceePowerAndLinkCtrl(false);
+
+        mNfcService.mState = NfcAdapter.STATE_OFF;
+        mNfcService.mNfcAdapter.setControllerAlwaysOn(NfcOemExtension.DISABLE);
+        mLooper.dispatchAll();
+        verify(mDeviceHost).setNfceePowerAndLinkCtrl(false);
+
+    }
+
 }
