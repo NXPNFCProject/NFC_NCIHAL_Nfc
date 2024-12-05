@@ -50,7 +50,7 @@ def parse_protocol_params(sak, ats):
     """
     Helper function to check whether protocol parameters are properly set.
     :param sak: SAK byte
-    :param ats: ATS byte
+    :param ats: ATS bytearray
     :return: whether bits are set correctly, message to print
     """
     msg = ""
@@ -140,7 +140,8 @@ def parse_protocol_params(sak, ats):
             msg += "        (OK) NAD bit is not set.\n"
         atsIndex += 1
         if atsIndex + 1 < len(ats):
-            historical_bytes = len(ats) - atsIndex
+            bytes_to_copy = len(ats) - atsIndex
+            historical_bytes = bytearray(ats[atsIndex:atsIndex + bytes_to_copy])
             msg +=  "\n(OK) Historical bytes: " + hexlify(historical_bytes).decode()
     return success, msg
 
