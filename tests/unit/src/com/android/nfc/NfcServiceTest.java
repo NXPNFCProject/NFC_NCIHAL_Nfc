@@ -92,6 +92,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.android.dx.mockito.inline.extended.ExtendedMockito;
 import com.android.nfc.cardemulation.CardEmulationManager;
+import com.android.nfc.cardemulation.util.StatsdUtils;
 import com.android.nfc.flags.FeatureFlags;
 import com.android.nfc.flags.Flags;
 import android.nfc.INfcVendorNciCallback;
@@ -103,6 +104,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -151,6 +153,7 @@ public final class NfcServiceTest {
     @Mock FeatureFlags mFeatureFlags;
     @Mock DisplayManager mDisplayManager;
     @Mock CardEmulationManager mCardEmulationManager;
+    @Mock StatsdUtils mStatsdUtils;
     @Captor ArgumentCaptor<DeviceHost.DeviceHostListener> mDeviceHostListener;
     @Captor ArgumentCaptor<BroadcastReceiver> mGlobalReceiver;
     @Captor ArgumentCaptor<IBinder> mIBinderArgumentCaptor;
@@ -238,6 +241,11 @@ public final class NfcServiceTest {
                 mGlobalReceiver.capture(),
                 argThat(intent -> intent.hasAction(Intent.ACTION_SCREEN_ON)), any(), any());
         clearInvocations(mDeviceHost, mNfcInjector, mApplication);
+    }
+
+    private void createNfcServiceWithoutStatsdUtils() {
+        when(mNfcInjector.getStatsdUtils()).thenReturn(mStatsdUtils);
+        createNfcService();
     }
 
     private void enableAndVerify() throws Exception {
@@ -1145,5 +1153,84 @@ public final class NfcServiceTest {
         assertThat(mNfcService.mIsRecovering).isTrue();
         mLooper.dispatchAll();
         verify(mUserManager, atLeastOnce()).getEnabledProfiles();
+    }
+
+    @Test
+    public void testOnNfcTransactionEvent() throws RemoteException {
+        ISecureElementService iSecureElementService = mock(ISecureElementService.class);
+        IBinder iBinder = mock(IBinder.class);
+        when(iSecureElementService.asBinder()).thenReturn(iBinder);
+        boolean[] nfcAccess = {true};
+        when(iSecureElementService.isNfcEventAllowed(anyString(), any(), any(), anyInt()))
+                .thenReturn(nfcAccess);
+        when(mNfcInjector.connectToSeService()).thenReturn(iSecureElementService);
+        List<String> packages = new ArrayList<>();
+        packages.add("com.android.test");
+        mNfcService.mNfcEventInstalledPackages.put(1, packages);
+        when(mCardEmulationManager.getRegisteredAidCategory(anyString()))
+                .thenReturn(CardEmulation.CATEGORY_PAYMENT);
+        byte[] aid = { 0x0A, 0x00, 0x00, 0x00 };
+        byte[] data = { 0x12, 0x34, 0x56, 0x78, 0x78 };
+        mNfcService.onNfcTransactionEvent(aid, data, "SecureElement1");
+        mLooper.dispatchAll();
+        verify(mCardEmulationManager).onOffHostAidSelected();
+        verify(mPackageManager).queryBroadcastReceiversAsUser(any(), anyInt(), any());
+        verify(mApplication).sendBroadcastAsUser(any(), any(), ArgumentMatchers.isNull(), any());
+    }
+
+    @Test
+    public void testOnRemoteEndpointDiscovered() {
+        mNfcService.mState = NfcAdapter.STATE_ON;
+        NfcService.ReaderModeParams readerModeParams = mock(NfcService.ReaderModeParams.class);
+        readerModeParams.presenceCheckDelay = 1;
+        readerModeParams.flags = 129;
+        mNfcService.mReaderModeParams = readerModeParams;
+        DeviceHost.TagEndpoint tagEndpoint = mock(DeviceHost.TagEndpoint.class);
+        mNfcService.onRemoteEndpointDiscovered(tagEndpoint);
+        mLooper.dispatchAll();
+        verify(tagEndpoint).startPresenceChecking(anyInt(), any());
+    }
+
+    @Test
+    public void testOnRemoteFieldActivated() throws RemoteException {
+        createNfcServiceWithoutStatsdUtils();
+        List<String> userlist = new ArrayList<>();
+        userlist.add("com.android.nfc");
+        mNfcService.mIsSecureNfcEnabled = true;
+        mNfcService.mIsRequestUnlockShowed = false;
+        when(mKeyguardManager.isKeyguardLocked()).thenReturn(true);
+        mNfcService.mNfcEventInstalledPackages.put(1, userlist);
+        INfcOemExtensionCallback callback = mock(INfcOemExtensionCallback.class);
+        mNfcService.mNfcAdapter.registerOemExtensionCallback(callback);
+        when(android.nfc.Flags.nfcPersistLog()).thenReturn(true);
+        mNfcService.onRemoteFieldActivated();
+        verify(callback, atLeastOnce()).onRfFieldActivated(anyBoolean());
+        mLooper.dispatchAll();
+        verify(mCardEmulationManager).onFieldChangeDetected(anyBoolean());
+        verify(mApplication).sendBroadcastAsUser(any(), any());
+        verify(mApplication).sendBroadcast(any());
+        verify(mStatsdUtils).logFieldChanged(anyBoolean(), anyInt());
+        verify(mNfcEventLog, times(3)).logEvent(any());
+    }
+
+    @Test
+    public void testOnRemoteFieldDeactivated() throws RemoteException {
+        createNfcServiceWithoutStatsdUtils();
+        List<String> userlist = new ArrayList<>();
+        userlist.add("com.android.nfc");
+        mNfcService.mIsSecureNfcEnabled = true;
+        mNfcService.mIsRequestUnlockShowed = false;
+        when(mKeyguardManager.isKeyguardLocked()).thenReturn(true);
+        mNfcService.mNfcEventInstalledPackages.put(1, userlist);
+        INfcOemExtensionCallback callback = mock(INfcOemExtensionCallback.class);
+        mNfcService.mNfcAdapter.registerOemExtensionCallback(callback);
+        when(android.nfc.Flags.nfcPersistLog()).thenReturn(true);
+        mNfcService.onRemoteFieldDeactivated();
+        verify(callback, atLeastOnce()).onRfFieldActivated(anyBoolean());
+        mLooper.dispatchAll();
+        verify(mCardEmulationManager).onFieldChangeDetected(anyBoolean());
+        verify(mApplication).sendBroadcastAsUser(any(), any());
+        verify(mStatsdUtils).logFieldChanged(anyBoolean(), anyInt());
+        verify(mNfcEventLog, times(3)).logEvent(any());
     }
 }
