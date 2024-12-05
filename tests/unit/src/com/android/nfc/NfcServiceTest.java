@@ -1123,4 +1123,27 @@ public final class NfcServiceTest {
         verify(mCardEmulationManager).onHostCardEmulationDeactivated(anyInt());
         verify(mNfcEventLog, times(2)).logEvent(any());
     }
+
+    @Test
+    public void testOnEeUpdated() {
+        mNfcService.onEeUpdated();
+        mLooper.dispatchAll();
+        Assert.assertEquals(0, mNfcService.mScreenState);
+    }
+
+    @Test
+    public void testOnHwErrorReported() {
+        when(mPreferences.getBoolean(anyString(), anyBoolean())).thenReturn(true);
+        Assert.assertTrue(mNfcService.getNfcOnSetting());
+        when(mNfcInjector.isSatelliteModeOn()).thenReturn(false);
+        when(mUserRestrictions.getBoolean(UserManager.DISALLOW_NEAR_FIELD_COMMUNICATION_RADIO))
+                .thenReturn(false);
+        NfcService.sIsNfcRestore = true;
+        mNfcService.mState = NfcAdapter.STATE_OFF;
+        mNfcService.onHwErrorReported();
+        verify(mApplication).unregisterReceiver(any());
+        assertThat(mNfcService.mIsRecovering).isTrue();
+        mLooper.dispatchAll();
+        verify(mUserManager, atLeastOnce()).getEnabledProfiles();
+    }
 }
