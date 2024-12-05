@@ -163,7 +163,7 @@ public class RegisteredServicesCacheMigration {
         SettingsFile dynamicSettingsFile = new SettingsFile(context, AID_XML_PATH);
         SettingsFile othersFile = new SettingsFile(context, OTHER_STATUS_PATH);
         // Check both CE & DE directory for migration.
-        if (!dynamicSettingsFile.exists() && !dynamicSettingsFile.exists()) {
+        if (!dynamicSettingsFile.exists() && !othersFile.exists()) {
             Log.d(TAG, "Searching for NFC service info in CE directory");
             Context ceContext = context.createCredentialProtectedStorageContext();
             dynamicSettingsFile = new SettingsFile(ceContext, AID_XML_PATH);
