@@ -51,8 +51,12 @@ android_test {
     uses_libs: ["com.nxp.nfc"],
 
     platform_apis: true,
+    min_sdk_version: "current",
 
-    test_suites: ["device-tests"],
+    test_suites: [
+        "device-tests",
+        "mts-nfc",
+    ],
 
     instrumentation_for: "NfcNci",
 }

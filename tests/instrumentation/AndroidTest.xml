@@ -25,10 +25,15 @@
     </target_preparer>
 
     <option name="test-tag" value="NfcNciInstrumentationTests" />
+    <option name="config-descriptor:metadata" key="mainline-param" value="com.google.android.nfc.apex" />
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="com.android.nfc.tests.instrumentation" />
         <option name="runner" value="androidx.test.runner.AndroidJUnitRunner" />
         <option name="hidden-api-checks" value="false"/>
         <option name="test-filter-dir" value="/data/data/com.android.nfc" />
     </test>
+    <object type="module_controller"
+            class="com.android.tradefed.testtype.suite.module.MainlineTestModuleController">
+        <option name="mainline-module-package-name" value="com.google.android.nfc" />
+    </object>
 </configuration>

@@ -46,6 +46,10 @@ android_test {
         ":framework-nfc-updatable-sources",
     ],
 
-    test_suites: ["general-tests"],
+    min_sdk_version: "current",
+    test_suites: [
+        "general-tests",
+        "mts-nfc",
+    ],
 
 }

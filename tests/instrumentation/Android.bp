@@ -35,10 +35,12 @@ android_test {
     platform_apis: true,
 
     test_suites: [
-        "device-tests",
+        "general-tests",
         "device-pixel-tests",
         "device-platinum-tests",
+        "mts-nfc",
     ],
+    min_sdk_version: "current",
 
     instrumentation_for: "NfcNci",
 }
