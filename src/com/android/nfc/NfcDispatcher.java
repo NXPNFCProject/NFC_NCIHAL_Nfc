@@ -1030,7 +1030,8 @@ class NfcDispatcher {
         }
         intent.putExtra(PeripheralHandoverService.EXTRA_BT_ENABLED, mBluetoothEnabledByNfc.get());
         intent.putExtra(PeripheralHandoverService.EXTRA_CLIENT, mMessenger);
-        Context contextAsUser = mContext.createContextAsUser(UserHandle.CURRENT, /* flags= */ 0);
+        Context contextAsUser = mContext.createContextAsUser(
+            UserHandle.of(ActivityManager.getCurrentUser()), /* flags= */ 0);
         contextAsUser.startService(intent);
 
         int btClass = BluetoothProtoEnums.MAJOR_CLASS_UNCATEGORIZED;
