@@ -1006,4 +1006,52 @@ public final class NfcServiceTest {
         assertThat(pollTech).isEqualTo(0xf);
         verify(mPreferences, atLeastOnce()).getInt(anyString(), anyInt());
     }
+
+    @Test
+    public void testIsPackageInstalled() {
+        when(mPreferences.getBoolean(anyString(), anyBoolean())).thenReturn(true);
+        String jsonString = "{}";
+        when(mPreferences.getString(anyString(), anyString())).thenReturn(jsonString);
+        Assert.assertTrue(mNfcService.getNfcOnSetting());
+        when(mNfcInjector.isSatelliteModeOn()).thenReturn(false);
+        when(mUserRestrictions.getBoolean(UserManager.DISALLOW_NEAR_FIELD_COMMUNICATION_RADIO))
+                .thenReturn(false);
+        NfcService.sIsNfcRestore = true;
+        UserHandle uh = mock(UserHandle.class);
+        when(uh.getIdentifier()).thenReturn(1);
+        List<UserHandle> luh = new ArrayList<>();
+        luh.add(uh);
+        when(mUserManager.getEnabledProfiles()).thenReturn(luh);
+        mNfcService.mTagAppDefaultBlockList.add("com.android.test");
+        mNfcService.enableNfc();
+        verify(mPreferences).edit();
+        verify(mPreferencesEditor).putBoolean(PREF_NFC_ON, true);
+        verify(mPreferencesEditor).apply();
+        verify(mBackupManager).dataChanged();
+        mLooper.dispatchAll();
+        verify(mUserManager, atLeastOnce()).getEnabledProfiles();
+        verify(mApplication, atLeastOnce()).createContextAsUser(any(), anyInt());
+    }
+
+    @Test
+    public void testIsSecureNfcEnabled() {
+        mNfcService.mIsSecureNfcEnabled = true;
+        boolean isSecureNfcEnabled = mNfcService.isSecureNfcEnabled();
+        assertThat(isSecureNfcEnabled).isTrue();
+        mNfcService.mIsSecureNfcEnabled = false;
+        isSecureNfcEnabled = mNfcService.isSecureNfcEnabled();
+        assertThat(isSecureNfcEnabled).isFalse();
+    }
+
+    @Test
+    public void testIsTagPresent() throws RemoteException {
+        boolean isTagPresent = mNfcService.mNfcAdapter.isTagPresent();
+        assertThat(isTagPresent).isFalse();
+        DeviceHost.TagEndpoint tagEndpoint = mock(DeviceHost.TagEndpoint.class);
+        when(tagEndpoint.isPresent()).thenReturn(true);
+        mNfcService.mObjectMap.put(1, tagEndpoint);
+        isTagPresent = mNfcService.mNfcAdapter.isTagPresent();
+        assertThat(isTagPresent).isTrue();
+
+    }
 }
