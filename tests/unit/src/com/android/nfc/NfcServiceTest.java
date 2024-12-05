@@ -1233,4 +1233,34 @@ public final class NfcServiceTest {
         verify(mStatsdUtils).logFieldChanged(anyBoolean(), anyInt());
         verify(mNfcEventLog, times(3)).logEvent(any());
     }
+
+    @Test
+    public void testOnSeSelected() {
+        mNfcService.onSeSelected();
+        mLooper.dispatchAll();
+        verify(mCardEmulationManager).onOffHostAidSelected();
+    }
+
+    @Test
+    public void testOnUidToBackground() throws RemoteException {
+        mNfcService.mState = NfcAdapter.STATE_ON;
+        mNfcService.mNfcAdapter.disable(false, "com.android.test");
+        mLooper.dispatchAll();
+        NfcService.ReaderModeParams readerModeParams = mock(NfcService.ReaderModeParams.class);
+        mNfcService.mReaderModeParams = readerModeParams;
+        readerModeParams.uid = 1;
+        IBinder binder = mock(IBinder.class);
+        readerModeParams.binder = binder;
+        NfcService.DiscoveryTechParams discoveryTechParams =
+                mock(NfcService.DiscoveryTechParams.class);
+        discoveryTechParams.uid = 1;
+        discoveryTechParams.binder = binder;
+        mNfcService.mDiscoveryTechParams = discoveryTechParams;
+        mNfcService.onUidToBackground(1);
+        verify(binder, times(2)).unlinkToDeath(any(), anyInt());
+        Assert.assertNull(mNfcService.mReaderModeParams);
+        verify(binder, times(2)).unlinkToDeath(any(), anyInt());
+        verify(mDeviceHost).resetDiscoveryTech();
+        Assert.assertNull(mNfcService.mDiscoveryTechParams);
+    }
 }
