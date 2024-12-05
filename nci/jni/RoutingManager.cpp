@@ -85,7 +85,10 @@ const JNINativeMethod RoutingManager::sMethods[] = {
          RoutingManager::com_android_nfc_cardemulation_doGetAidMatchingMode},
     {"doGetDefaultIsoDepRouteDestination", "()I",
      (void*)RoutingManager::
-         com_android_nfc_cardemulation_doGetDefaultIsoDepRouteDestination}};
+         com_android_nfc_cardemulation_doGetDefaultIsoDepRouteDestination},
+    {"doGetDefaultScRouteDestination", "()I",
+     (void*)RoutingManager::
+         com_android_nfc_cardemulation_doGetDefaultScRouteDestination}};
 
 static const int MAX_NUM_EE = 6;
 // SCBR from host works only when App is in foreground
@@ -851,6 +854,26 @@ void RoutingManager::updateIsoDepProtocolRoute(int route) {
 
   mDefaultIsoDepRoute = route;
   updateDefaultProtocolRoute();
+}
+
+/*******************************************************************************
+**
+** Function:        updateSystemCodeRoute
+**
+** Description:     Updates the route for System Code
+**
+** Returns:         None
+**
+*******************************************************************************/
+void RoutingManager::updateSystemCodeRoute(int route) {
+  static const char fn[] = "RoutingManager::updateSystemCodeRoute";
+  LOG(DEBUG) << StringPrintf("%s; New default SC route: 0x%x", fn,
+                             route);
+#if (NXP_EXTNS != TRUE)
+  mEeInfoChanged = true;
+#endif
+  mDefaultSysCodeRoute = route;
+  updateDefaultRoute();
 }
 
 void RoutingManager::updateDefaultProtocolRoute() {
@@ -1681,6 +1704,20 @@ int RoutingManager::com_android_nfc_cardemulation_doGetAidMatchingMode(
 int RoutingManager::
     com_android_nfc_cardemulation_doGetDefaultIsoDepRouteDestination(JNIEnv*) {
   return getInstance().mDefaultIsoDepRoute;
+}
+
+/*******************************************************************************
+**
+** Function:        com_android_nfc_cardemulation_doGetDefaultScRouteDestination
+**
+** Description:     Retrieves the default NFCEE route
+**
+** Returns:         default NFCEE route
+**
+*******************************************************************************/
+int RoutingManager::com_android_nfc_cardemulation_doGetDefaultScRouteDestination(
+    JNIEnv*) {
+  return getInstance().mDefaultSysCodeRoute;
 }
 
 #if(NXP_EXTNS == TRUE)

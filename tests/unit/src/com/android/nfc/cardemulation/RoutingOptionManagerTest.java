@@ -52,6 +52,7 @@ public class RoutingOptionManagerTest {
   private static final int OVERRIDDEN_ISO_DEP_ROUTE = 10;
   private static final int OVERRIDDEN_OFF_HOST_ROUTE = 20;
   private static final int DEFAULT_OFF_HOST_ROUTE = 2;
+  private static final int DEFAULT_SC_ROUTE = 2;
   private static final byte[] OFF_HOST_UICC = new byte[] {1, 2};
   private static final byte[] OFF_HOST_ESE = new byte[] {3, 4};
   private static final int AID_MATCHING_MODE = 3;
@@ -70,6 +71,11 @@ public class RoutingOptionManagerTest {
     @Override
     int doGetDefaultOffHostRouteDestination() {
       return DEFAULT_OFF_HOST_ROUTE;
+    }
+
+    @Override
+    int doGetDefaultScRouteDestination() {
+      return DEFAULT_SC_ROUTE;
     }
 
     @Override

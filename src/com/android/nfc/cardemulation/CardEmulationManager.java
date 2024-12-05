@@ -970,10 +970,10 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
 
         @Override
         public void overwriteRoutingTable(int userHandle, String aids,
-            String protocol, String technology) {
-            Log.d(TAG, "overwriteRoutingTable. userHandle " + userHandle
-                + ", emptyAid " + aids + ", protocol " + protocol
-                + ", technology " + technology);
+            String protocol, String technology, String sc) {
+            Log.d(TAG, "overwriteRoutingTable() - userHandle: " + userHandle
+                + ", emptyAid: " + aids + ", protocol: " + protocol
+                + ", technology: " + technology + ", systemCode: " + sc);
 
             NfcPermissions.enforceAdminPermissions(mContext);
 
@@ -981,15 +981,19 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
             int aidRoute = mRoutingOptionManager.getRouteForSecureElement(aids);
             int protocolRoute = mRoutingOptionManager.getRouteForSecureElement(protocol);
             int technologyRoute = mRoutingOptionManager.getRouteForSecureElement(technology);
+            int scRoute = mRoutingOptionManager.getRouteForSecureElement(sc);
 
             if (DBG) {
-                Log.d(TAG, "aidRoute " + aidRoute + ", protocolRoute "
-                    + protocolRoute + ", technologyRoute " + technologyRoute);
+                Log.d(TAG, "overwriteRoutingTable() - aidRoute: " + Integer.toHexString(aidRoute)
+                        + ", protocolRoute: " + Integer.toHexString(protocolRoute)
+                        + ", technologyRoute: " + Integer.toHexString(technologyRoute)
+                        + ", scRoute: " + Integer.toHexString(scRoute));
             }
             if (aids != null) {
                 mRoutingOptionManager.overrideDefaultRoute(aidRoute);
                 mRoutingOptionManager.overrideDefaultIsoDepRoute(protocolRoute);
                 mRoutingOptionManager.overrideDefaultOffHostRoute(technologyRoute);
+                mRoutingOptionManager.overrideDefaultScRoute(scRoute);
                 mRoutingOptionManager.overwriteRoutingTable();
             }
             mAidCache.onRoutingOverridedOrRecovered();

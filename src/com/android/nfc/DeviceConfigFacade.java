@@ -50,6 +50,7 @@ public class DeviceConfigFacade {
     private String mDefaultRoute;
     private String mDefaultIsoDepRoute;
     private String mDefaultOffHostRoute;
+    private String mDefaultScRoute;
 
     private static DeviceConfigFacade sInstance;
     public static DeviceConfigFacade getInstance(Context context, Handler handler) {
@@ -108,6 +109,10 @@ public class DeviceConfigFacade {
         mDefaultOffHostRoute = DeviceConfig.getString(DEVICE_CONFIG_NAMESPACE_NFC,
                 "nfc_default_offhost_route",
                 mContext.getResources().getString(R.string.nfc_default_offhost_route));
+
+        mDefaultScRoute = DeviceConfig.getString(DEVICE_CONFIG_NAMESPACE_NFC,
+                "nfc_default_sc_route",
+                mContext.getResources().getString(R.string.nfc_default_sc_route));
     }
 
     private boolean isSecureNfcCapableDefault() {
@@ -138,4 +143,5 @@ public class DeviceConfigFacade {
     public String getDefaultRoute() { return mDefaultRoute; }
     public String getDefaultIsoDepRoute() { return mDefaultIsoDepRoute; }
     public String getDefaultOffHostRoute() { return mDefaultOffHostRoute; }
+    public String getDefaultScRoute() { return mDefaultScRoute; }
 }

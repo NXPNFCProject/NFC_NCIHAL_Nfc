@@ -310,6 +310,7 @@ public interface DeviceHost {
 
     void setIsoDepProtocolRoute(int route);
     void setTechnologyABFRoute(int route);
+    void setSystemCodeRoute(int route);
     void clearRoutingEntry(int clearFlags);
 
     /**

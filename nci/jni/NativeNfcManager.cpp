@@ -3316,14 +3316,20 @@ static void nfcManager_clearRoutingEntry(JNIEnv* e, jobject o,
 
 static void nfcManager_updateIsoDepProtocolRoute(JNIEnv* e, jobject o,
                                                  jint route) {
-  LOG(DEBUG) << StringPrintf("%s: clearFlags=0x%X", __func__, route);
+  LOG(DEBUG) << StringPrintf("%s: route=0x%X", __func__, route);
   RoutingManager::getInstance().updateIsoDepProtocolRoute(route);
 }
 
 static void nfcManager_updateTechnologyABFRoute(JNIEnv* e, jobject o,
                                                 jint route) {
-  LOG(DEBUG) << StringPrintf("%s: clearFlags=0x%X", __func__, route);
+  LOG(DEBUG) << StringPrintf("%s: route=0x%X", __func__, route);
   RoutingManager::getInstance().updateTechnologyABFRoute(route);
+}
+
+static void nfcManager_updateSystemCodeRoute(JNIEnv* e, jobject o,
+                                                jint route) {
+  LOG(DEBUG) << StringPrintf("%s: route=0x%X", __func__, route);
+  RoutingManager::getInstance().updateSystemCodeRoute(route);
 }
 
 /*******************************************************************************
@@ -3621,6 +3627,9 @@ static JNINativeMethod gMethods[] = {
 
     {"setTechnologyABFRoute", "(I)V",
      (void*)nfcManager_updateTechnologyABFRoute},
+
+    {"setSystemCodeRoute", "(I)V",
+     (void*)nfcManager_updateSystemCodeRoute},
 
     {"setDiscoveryTech", "(II)V", (void*)nfcManager_setDiscoveryTech},
 
