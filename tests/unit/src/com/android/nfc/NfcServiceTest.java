@@ -74,6 +74,7 @@ import android.nfc.cardemulation.PollingFrame;
 import android.nfc.tech.Ndef;
 import android.nfc.tech.TagTechnology;
 import android.os.AsyncTask;
+import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerExecutor;
@@ -165,7 +166,7 @@ public final class NfcServiceTest {
     private ContentObserver mContentObserver;
 
     @Before
-    public void setUp() {
+    public void setUp() throws PackageManager.NameNotFoundException {
         mLooper = new TestLooper();
         mStaticMockSession = ExtendedMockito.mockitoSession()
                 .mockStatic(NfcProperties.class)
@@ -218,6 +219,7 @@ public final class NfcServiceTest {
         when(NfcProperties.info_antpos_X()).thenReturn(List.of());
         when(NfcProperties.info_antpos_Y()).thenReturn(List.of());
         when(NfcProperties.initialized()).thenReturn(Optional.of(Boolean.TRUE));
+        when(mPackageManager.getPackageUid(PKG_NAME, 0)).thenReturn(Binder.getCallingUid());
         createNfcService();
     }
 
@@ -333,7 +335,7 @@ public final class NfcServiceTest {
     public void testSetObserveMode_nfcDisabled() throws Exception {
         mNfcService.mNfcAdapter.disable(true, PKG_NAME);
 
-        Assert.assertFalse(mNfcService.mNfcAdapter.setObserveMode(true, null));
+        Assert.assertFalse(mNfcService.mNfcAdapter.setObserveMode(true, PKG_NAME));
     }
 
     @Test
@@ -959,11 +961,11 @@ public final class NfcServiceTest {
     public void testGetAppName() throws RemoteException, PackageManager.NameNotFoundException {
         String[] packages = {"com.android.test1"};
         when(mResources.getStringArray(R.array.nfc_allow_list)).thenReturn(packages);
-        mNfcService.mNfcAdapter.enable("com.android.test");
+        mNfcService.mNfcAdapter.enable(PKG_NAME);
         ArgumentCaptor<String> stringArgumentCaptor = ArgumentCaptor.forClass(String.class);
         verify(mPackageManager).getApplicationInfoAsUser(stringArgumentCaptor.capture(), anyInt(),
                 any());
-        assertThat("com.android.test").isEqualTo(stringArgumentCaptor.getValue());
+        assertThat(PKG_NAME).isEqualTo(stringArgumentCaptor.getValue());
         verify(mPackageManager, atLeastOnce()).getApplicationLabel(any());
     }
 
@@ -1248,7 +1250,7 @@ public final class NfcServiceTest {
     @Test
     public void testOnUidToBackground() throws RemoteException {
         mNfcService.mState = NfcAdapter.STATE_ON;
-        mNfcService.mNfcAdapter.disable(false, "com.android.test");
+        mNfcService.mNfcAdapter.disable(false, PKG_NAME);
         mLooper.dispatchAll();
         NfcService.ReaderModeParams readerModeParams = mock(NfcService.ReaderModeParams.class);
         mNfcService.mReaderModeParams = readerModeParams;
