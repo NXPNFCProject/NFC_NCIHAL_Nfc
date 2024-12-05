@@ -42,8 +42,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import android.hardware.display.DisplayManager;
-import android.nfc.INfcUnlockHandler;
 
 import android.app.ActivityManager;
 import android.app.AlarmManager;
@@ -60,7 +58,11 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.database.ContentObserver;
+import android.hardware.display.DisplayManager;
 import android.media.SoundPool;
+import android.nfc.INfcOemExtensionCallback;
+import android.nfc.INfcUnlockHandler;
+import android.nfc.INfcVendorNciCallback;
 import android.nfc.NdefMessage;
 import android.nfc.NfcAdapter;
 import android.nfc.NfcAntennaInfo;
@@ -85,19 +87,14 @@ import android.os.UserManager;
 import android.os.test.TestLooper;
 import android.se.omapi.ISecureElementService;
 import android.sysprop.NfcProperties;
-import android.nfc.INfcOemExtensionCallback;
 import android.view.Display;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-
 
 import com.android.dx.mockito.inline.extended.ExtendedMockito;
 import com.android.nfc.cardemulation.CardEmulationManager;
 import com.android.nfc.cardemulation.util.StatsdUtils;
 import com.android.nfc.flags.FeatureFlags;
-import com.android.nfc.flags.Flags;
-import android.nfc.INfcVendorNciCallback;
-
 
 import org.junit.After;
 import org.junit.Assert;

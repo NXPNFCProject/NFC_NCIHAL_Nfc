@@ -28,8 +28,8 @@ import com.android.nfc.NfcService;
 
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Optional;
 import java.util.Map;
+import java.util.Optional;
 
 public class RoutingOptionManager {
     public final String TAG = "RoutingOptionManager";
@@ -105,26 +105,19 @@ public class RoutingOptionManager {
     @VisibleForTesting
     RoutingOptionManager() {
         mDefaultRoute = doGetDefaultRouteDestination();
-        if (DBG)
-            Log.d(TAG, "mDefaultRoute=0x" + Integer.toHexString(mDefaultRoute));
+        if (DBG) Log.d(TAG, "mDefaultRoute=0x" + Integer.toHexString(mDefaultRoute));
         mDefaultIsoDepRoute = doGetDefaultIsoDepRouteDestination();
-        if (DBG)
-            Log.d(TAG, "mDefaultIsoDepRoute=0x" + Integer.toHexString(mDefaultIsoDepRoute));
+        if (DBG) Log.d(TAG, "mDefaultIsoDepRoute=0x" + Integer.toHexString(mDefaultIsoDepRoute));
         mDefaultOffHostRoute = doGetDefaultOffHostRouteDestination();
-        if (DBG)
-            Log.d(TAG, "mDefaultOffHostRoute=0x" + Integer.toHexString(mDefaultOffHostRoute));
+        if (DBG) Log.d(TAG, "mDefaultOffHostRoute=0x" + Integer.toHexString(mDefaultOffHostRoute));
         mDefaultScRoute = doGetDefaultScRouteDestination();
-        if (DBG)
-            Log.d(TAG, "mDefaultScRoute=0x" + Integer.toHexString(mDefaultScRoute));
+        if (DBG) Log.d(TAG, "mDefaultScRoute=0x" + Integer.toHexString(mDefaultScRoute));
         mOffHostRouteUicc = doGetOffHostUiccDestination();
-        if (DBG)
-            Log.d(TAG, "mOffHostRouteUicc=" + Arrays.toString(mOffHostRouteUicc));
+        if (DBG) Log.d(TAG, "mOffHostRouteUicc=" + Arrays.toString(mOffHostRouteUicc));
         mOffHostRouteEse = doGetOffHostEseDestination();
-        if (DBG)
-            Log.d(TAG, "mOffHostRouteEse=" + Arrays.toString(mOffHostRouteEse));
+        if (DBG) Log.d(TAG, "mOffHostRouteEse=" + Arrays.toString(mOffHostRouteEse));
         mAidMatchingSupport = doGetAidMatchingMode();
-        if (DBG)
-            Log.d(TAG, "mAidMatchingSupport=0x" + Integer.toHexString(mAidMatchingSupport));
+        if (DBG) Log.d(TAG, "mAidMatchingSupport=0x" + Integer.toHexString(mAidMatchingSupport));
 
         createLookUpTable();
     }

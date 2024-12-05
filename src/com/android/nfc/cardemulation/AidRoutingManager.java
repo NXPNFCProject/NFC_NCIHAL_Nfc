@@ -37,6 +37,7 @@ package com.android.nfc.cardemulation;
 import android.sysprop.NfcProperties;
 import android.util.Log;
 import android.util.SparseArray;
+import androidx.annotation.VisibleForTesting;
 import android.content.Context;
 import android.app.ActivityThread;
 import android.app.ActivityManager;
@@ -60,7 +61,6 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Hashtable;
-import androidx.annotation.VisibleForTesting;
 
 public class AidRoutingManager {
 
@@ -128,22 +128,17 @@ public class AidRoutingManager {
 
     public AidRoutingManager() {
         mDefaultRoute = mRoutingOptionManager.getDefaultRoute();
-        if (DBG)
-          Log.d(TAG, "mDefaultRoute=0x" + Integer.toHexString(mDefaultRoute));
+        if (DBG) Log.d(TAG, "mDefaultRoute=0x" + Integer.toHexString(mDefaultRoute));
         mDefaultOffHostRoute = mRoutingOptionManager.getDefaultOffHostRoute();
-        if (DBG)
-          Log.d(TAG, "mDefaultOffHostRoute=0x" + Integer.toHexString(mDefaultOffHostRoute));
+        if (DBG) Log.d(TAG, "mDefaultOffHostRoute=0x" + Integer.toHexString(mDefaultOffHostRoute));
         mOffHostRouteUicc = mRoutingOptionManager.getOffHostRouteUicc();
-        if (DBG)
-            Log.d(TAG, "mOffHostRouteUicc=" + Arrays.toString(mOffHostRouteUicc));
+        if (DBG) Log.d(TAG, "mOffHostRouteUicc=" + Arrays.toString(mOffHostRouteUicc));
         mOffHostRouteEse = mRoutingOptionManager.getOffHostRouteEse();
-        if (DBG)
-          Log.d(TAG, "mOffHostRouteEse=" + Arrays.toString(mOffHostRouteEse));
+        if (DBG) Log.d(TAG, "mOffHostRouteEse=" + Arrays.toString(mOffHostRouteEse));
         mAidMatchingSupport = mRoutingOptionManager.getAidMatchingSupport();
         if (DBG) Log.d(TAG, "mAidMatchingSupport=0x" + Integer.toHexString(mAidMatchingSupport));
         mDefaultAidRoute =   NfcService.getInstance().GetDefaultRouteEntry() >> 0x08;
-        if (DBG)
-          Log.d(TAG, "mDefaultAidRoute=0x" + Integer.toHexString(mDefaultAidRoute));
+        if (DBG) Log.d(TAG, "mDefaultAidRoute=0x" + Integer.toHexString(mDefaultAidRoute));
         mDefaultIsoDepRoute = mRoutingOptionManager.getDefaultIsoDepRoute();
         if (DBG) Log.d(TAG, "mDefaultIsoDepRoute=0x" + Integer.toHexString(mDefaultIsoDepRoute));
         mLastCommitStatus = false;
@@ -618,8 +613,7 @@ public class AidRoutingManager {
                     + " mDefaultRoute: " + mDefaultRoute);
                 mDefaultIsoDepRoute = mDefaultRoute;
                 mDefaultOffHostRoute = mDefaultRoute;
-            }
-            else {
+            } else {
                 Log.d(TAG, "Default route is DeviceHost, use previous protocol, technology");
             }
 
@@ -627,8 +621,7 @@ public class AidRoutingManager {
                 NfcService.getInstance().setIsoDepProtocolRoute(mDefaultIsoDepRoute);
                 NfcService.getInstance().setTechnologyABFRoute(mDefaultOffHostRoute);
             }
-        }
-        else {
+        } else {
             Log.d(TAG, "Routing table is override, Do not send the protocol, tech");
         }
     }

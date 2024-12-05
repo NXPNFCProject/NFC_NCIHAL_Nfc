@@ -3628,8 +3628,7 @@ static JNINativeMethod gMethods[] = {
     {"setTechnologyABFRoute", "(I)V",
      (void*)nfcManager_updateTechnologyABFRoute},
 
-    {"setSystemCodeRoute", "(I)V",
-     (void*)nfcManager_updateSystemCodeRoute},
+    {"setSystemCodeRoute", "(I)V", (void*)nfcManager_updateSystemCodeRoute},
 
     {"setDiscoveryTech", "(II)V", (void*)nfcManager_setDiscoveryTech},
 
