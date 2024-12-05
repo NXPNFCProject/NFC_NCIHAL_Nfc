@@ -24,13 +24,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
-import static org.mockito.ArgumentMatchers.eq;
 
 import android.app.KeyguardManager;
 import android.content.ComponentName;
@@ -54,7 +54,6 @@ import android.os.RemoteException;
 import android.os.UserHandle;
 import android.testing.AndroidTestingRunner;
 import android.testing.TestableLooper;
-import android.util.Pair;
 
 import com.android.dx.mockito.inline.extended.ExtendedMockito;
 import com.android.nfc.NfcEventLog;
@@ -86,52 +85,38 @@ import java.util.regex.Pattern;
 public class HostEmulationManagerTest {
 
     private static final String WALLET_HOLDER_PACKAGE_NAME = "com.android.test.walletroleholder";
-    private static final String NFC_PACKAGE= "com.android.nfc";
-    private static final ComponentName WALLET_PAYMENT_SERVICE
-            = new ComponentName(WALLET_HOLDER_PACKAGE_NAME,
-            "com.android.test.walletroleholder.WalletRoleHolderApduService");
-    private static final ComponentName ANOTHER_WALLET_SERVICE
-            = new ComponentName(WALLET_HOLDER_PACKAGE_NAME,
-            "com.android.test.walletroleholder.XRoleHolderApduService");
+    private static final String NFC_PACKAGE = "com.android.nfc";
+    private static final ComponentName WALLET_PAYMENT_SERVICE =
+            new ComponentName(
+                    WALLET_HOLDER_PACKAGE_NAME,
+                    "com.android.test.walletroleholder.WalletRoleHolderApduService");
+    private static final ComponentName ANOTHER_WALLET_SERVICE =
+            new ComponentName(
+                    WALLET_HOLDER_PACKAGE_NAME,
+                    "com.android.test.walletroleholder.XRoleHolderApduService");
     private static final int USER_ID = 0;
     private static final UserHandle USER_HANDLE = UserHandle.of(USER_ID);
     private static final String PL_FILTER = "66696C746572";
     private static final Pattern PL_PATTERN = Pattern.compile("66696C*46572");
     private static final List<String> POLLING_LOOP_FILTER = List.of(PL_FILTER);
-    private static final List<Pattern> POLLING_LOOP_PATTEN_FILTER
-            = List.of(PL_PATTERN);
+    private static final List<Pattern> POLLING_LOOP_PATTEN_FILTER = List.of(PL_PATTERN);
     private static final String MOCK_AID = "A000000476416E64726F6964484340";
 
-    @Mock
-    private Context mContext;
-    @Mock
-    private RegisteredAidCache mRegisteredAidCache;
-    @Mock
-    private PowerManager mPowerManager;
-    @Mock
-    private KeyguardManager mKeyguardManager;
-    @Mock
-    private PackageManager mPackageManager;
-    @Mock
-    private NfcAdapter mNfcAdapter;
-    @Mock
-    private Messenger mMessenger;
-    @Mock
-    private NfcService mNfcService;
-    @Mock
-    private NfcInjector mNfcInjector;
-    @Mock
-    private NfcEventLog mNfcEventLog;
-    @Mock
-    private StatsdUtils mStatsUtils;
-    @Captor
-    private ArgumentCaptor<Intent> mIntentArgumentCaptor;
-    @Captor
-    private ArgumentCaptor<ServiceConnection> mServiceConnectionArgumentCaptor;
-    @Captor
-    private ArgumentCaptor<List<ApduServiceInfo>> mServiceListArgumentCaptor;
-    @Captor
-    private ArgumentCaptor<Message> mMessageArgumentCaptor;
+    @Mock private Context mContext;
+    @Mock private RegisteredAidCache mRegisteredAidCache;
+    @Mock private PowerManager mPowerManager;
+    @Mock private KeyguardManager mKeyguardManager;
+    @Mock private PackageManager mPackageManager;
+    @Mock private NfcAdapter mNfcAdapter;
+    @Mock private Messenger mMessenger;
+    @Mock private NfcService mNfcService;
+    @Mock private NfcInjector mNfcInjector;
+    @Mock private NfcEventLog mNfcEventLog;
+    @Mock private StatsdUtils mStatsUtils;
+    @Captor private ArgumentCaptor<Intent> mIntentArgumentCaptor;
+    @Captor private ArgumentCaptor<ServiceConnection> mServiceConnectionArgumentCaptor;
+    @Captor private ArgumentCaptor<List<ApduServiceInfo>> mServiceListArgumentCaptor;
+    @Captor private ArgumentCaptor<Message> mMessageArgumentCaptor;
 
     private MockitoSession mStaticMockSession;
     private TestableLooper mTestableLooper;
@@ -139,15 +124,16 @@ public class HostEmulationManagerTest {
 
     @Before
     public void setUp() {
-        mStaticMockSession = ExtendedMockito.mockitoSession()
-                .mockStatic(com.android.nfc.flags.Flags.class)
-                .mockStatic(NfcStatsLog.class)
-                .mockStatic(UserHandle.class)
-                .mockStatic(NfcAdapter.class)
-                .mockStatic(NfcService.class)
-                .mockStatic(NfcInjector.class)
-                .strictness(Strictness.LENIENT)
-                .startMocking();
+        mStaticMockSession =
+                ExtendedMockito.mockitoSession()
+                        .mockStatic(com.android.nfc.flags.Flags.class)
+                        .mockStatic(NfcStatsLog.class)
+                        .mockStatic(UserHandle.class)
+                        .mockStatic(NfcAdapter.class)
+                        .mockStatic(NfcService.class)
+                        .mockStatic(NfcInjector.class)
+                        .strictness(Strictness.LENIENT)
+                        .startMocking();
         MockitoAnnotations.initMocks(this);
         mTestableLooper = TestableLooper.get(this);
         when(NfcAdapter.getDefaultAdapter(mContext)).thenReturn(mNfcAdapter);
@@ -160,9 +146,11 @@ public class HostEmulationManagerTest {
         when(com.android.nfc.flags.Flags.statsdCeEventsFlag()).thenReturn(true);
         when(mContext.getSystemService(eq(PowerManager.class))).thenReturn(mPowerManager);
         when(mContext.getSystemService(eq(KeyguardManager.class))).thenReturn(mKeyguardManager);
-        when(mRegisteredAidCache.getPreferredPaymentService()).thenReturn(new Pair<>(null, null));
-        mHostEmulationManager = new HostEmulationManager(mContext, mTestableLooper.getLooper(),
-                mRegisteredAidCache, mStatsUtils);
+        when(mRegisteredAidCache.getPreferredPaymentService())
+                .thenReturn(new ComponentNameAndUser(0, null));
+        mHostEmulationManager =
+                new HostEmulationManager(
+                        mContext, mTestableLooper.getLooper(), mRegisteredAidCache, mStatsUtils);
     }
 
     @After
@@ -181,7 +169,8 @@ public class HostEmulationManagerTest {
     public void testOnPreferredPaymentServiceChanged_nullService() {
         mHostEmulationManager.mPaymentServiceBound = true;
 
-        mHostEmulationManager.onPreferredPaymentServiceChanged(USER_ID, null);
+        mHostEmulationManager.onPreferredPaymentServiceChanged(
+                new ComponentNameAndUser(USER_ID, null));
         mTestableLooper.processAllMessages();
 
         verify(mContext).getSystemService(eq(PowerManager.class));
@@ -195,15 +184,20 @@ public class HostEmulationManagerTest {
         when(mContext.bindServiceAsUser(any(), any(), anyInt(), any())).thenReturn(true);
         UserHandle userHandle = UserHandle.of(USER_ID);
 
-        mHostEmulationManager.onPreferredPaymentServiceChanged(USER_ID, WALLET_PAYMENT_SERVICE);
+        mHostEmulationManager.onPreferredPaymentServiceChanged(
+                new ComponentNameAndUser(USER_ID, WALLET_PAYMENT_SERVICE));
         mTestableLooper.processAllMessages();
 
         verify(mContext).getSystemService(eq(PowerManager.class));
         verify(mContext).getSystemService(eq(KeyguardManager.class));
-        verify(mContext).bindServiceAsUser(mIntentArgumentCaptor.capture(),
-                mServiceConnectionArgumentCaptor.capture(),
-                eq(Context.BIND_AUTO_CREATE | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
-                eq(userHandle));
+        verify(mContext)
+                .bindServiceAsUser(
+                        mIntentArgumentCaptor.capture(),
+                        mServiceConnectionArgumentCaptor.capture(),
+                        eq(
+                                Context.BIND_AUTO_CREATE
+                                        | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
+                        eq(userHandle));
         verifyNoMoreInteractions(mContext);
         Intent intent = mIntentArgumentCaptor.getValue();
         assertEquals(HostApduService.SERVICE_INTERFACE, intent.getAction());
@@ -219,16 +213,21 @@ public class HostEmulationManagerTest {
         UserHandle userHandle = UserHandle.of(USER_ID);
         mHostEmulationManager.mPaymentServiceBound = true;
 
-        mHostEmulationManager.onPreferredPaymentServiceChanged(USER_ID, WALLET_PAYMENT_SERVICE);
+        mHostEmulationManager.onPreferredPaymentServiceChanged(
+                new ComponentNameAndUser(USER_ID, WALLET_PAYMENT_SERVICE));
         mTestableLooper.processAllMessages();
 
         verify(mContext).getSystemService(eq(PowerManager.class));
         verify(mContext).getSystemService(eq(KeyguardManager.class));
         verify(mContext).unbindService(eq(mHostEmulationManager.getPaymentConnection()));
-        verify(mContext).bindServiceAsUser(mIntentArgumentCaptor.capture(),
-                mServiceConnectionArgumentCaptor.capture(),
-                eq(Context.BIND_AUTO_CREATE | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
-                eq(userHandle));
+        verify(mContext)
+                .bindServiceAsUser(
+                        mIntentArgumentCaptor.capture(),
+                        mServiceConnectionArgumentCaptor.capture(),
+                        eq(
+                                Context.BIND_AUTO_CREATE
+                                        | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
+                        eq(userHandle));
         verifyNoMoreInteractions(mContext);
         Intent intent = mIntentArgumentCaptor.getValue();
         assertEquals(HostApduService.SERVICE_INTERFACE, intent.getAction());
@@ -249,18 +248,18 @@ public class HostEmulationManagerTest {
         when(serviceWithPatternFilter.getPollingLoopPatternFilters())
                 .thenReturn(POLLING_LOOP_PATTEN_FILTER);
 
-        mHostEmulationManager.updatePollingLoopFilters(USER_ID, List.of(serviceWithFilter,
-                serviceWithPatternFilter));
+        mHostEmulationManager.updatePollingLoopFilters(
+                USER_ID, List.of(serviceWithFilter, serviceWithPatternFilter));
 
-        Map<Integer, Map<String, List<ApduServiceInfo>>> pollingLoopFilters
-                = mHostEmulationManager.getPollingLoopFilters();
-        Map<Integer, Map<Pattern, List<ApduServiceInfo>>> pollingLoopPatternFilters
-                = mHostEmulationManager.getPollingLoopPatternFilters();
+        Map<Integer, Map<String, List<ApduServiceInfo>>> pollingLoopFilters =
+                mHostEmulationManager.getPollingLoopFilters();
+        Map<Integer, Map<Pattern, List<ApduServiceInfo>>> pollingLoopPatternFilters =
+                mHostEmulationManager.getPollingLoopPatternFilters();
         assertTrue(pollingLoopFilters.containsKey(USER_ID));
         assertTrue(pollingLoopPatternFilters.containsKey(USER_ID));
         Map<String, List<ApduServiceInfo>> filtersForUser = pollingLoopFilters.get(USER_ID);
-        Map<Pattern, List<ApduServiceInfo>> patternFiltersForUser = pollingLoopPatternFilters
-                .get(USER_ID);
+        Map<Pattern, List<ApduServiceInfo>> patternFiltersForUser =
+                pollingLoopPatternFilters.get(USER_ID);
         assertTrue(filtersForUser.containsKey(PL_FILTER));
         assertTrue(patternFiltersForUser.containsKey(PL_PATTERN));
         assertTrue(filtersForUser.get(PL_FILTER).contains(serviceWithFilter));
@@ -285,21 +284,23 @@ public class HostEmulationManagerTest {
                 .thenReturn(POLLING_LOOP_PATTEN_FILTER);
         when(mRegisteredAidCache.resolvePollingLoopFilterConflict(anyList()))
                 .thenReturn(serviceWithFilter);
-        mHostEmulationManager.updatePollingLoopFilters(USER_ID, List.of(serviceWithFilter,
-                serviceWithPatternFilter, overlappingServiceWithFilter));
+        mHostEmulationManager.updatePollingLoopFilters(
+                USER_ID,
+                List.of(serviceWithFilter, serviceWithPatternFilter, overlappingServiceWithFilter));
         when(mContext.getPackageManager()).thenReturn(mPackageManager);
         when(mRegisteredAidCache.getPreferredService())
-                .thenReturn(new Pair<>(USER_ID, WALLET_PAYMENT_SERVICE));
+                .thenReturn(new ComponentNameAndUser(USER_ID, WALLET_PAYMENT_SERVICE));
         ApplicationInfo applicationInfo = new ApplicationInfo();
         applicationInfo.uid = USER_ID;
         mHostEmulationManager.mPaymentServiceName = WALLET_PAYMENT_SERVICE;
         when(mPackageManager.getApplicationInfo(eq(WALLET_HOLDER_PACKAGE_NAME), eq(0)))
                 .thenReturn(applicationInfo);
         String data = "filter";
-        PollingFrame frame1 = new PollingFrame(PollingFrame.POLLING_LOOP_TYPE_UNKNOWN,
-                data.getBytes(), 0, 0, false);
-        PollingFrame frame2 = new PollingFrame(PollingFrame.POLLING_LOOP_TYPE_OFF,
-                null, 0, 0, false);
+        PollingFrame frame1 =
+                new PollingFrame(
+                        PollingFrame.POLLING_LOOP_TYPE_UNKNOWN, data.getBytes(), 0, 0, false);
+        PollingFrame frame2 =
+                new PollingFrame(PollingFrame.POLLING_LOOP_TYPE_OFF, null, 0, 0, false);
 
         mHostEmulationManager.mActiveService = mMessenger;
 
@@ -330,19 +331,19 @@ public class HostEmulationManagerTest {
         mHostEmulationManager.updatePollingLoopFilters(USER_ID, List.of(serviceWithFilter));
         when(mContext.getPackageManager()).thenReturn(mPackageManager);
         when(mRegisteredAidCache.getPreferredService())
-                .thenReturn(new Pair<>(USER_ID, WALLET_PAYMENT_SERVICE));
+                .thenReturn(new ComponentNameAndUser(USER_ID, WALLET_PAYMENT_SERVICE));
         ApplicationInfo applicationInfo = new ApplicationInfo();
         applicationInfo.uid = USER_ID;
         when(mPackageManager.getApplicationInfo(eq(WALLET_HOLDER_PACKAGE_NAME), eq(0)))
                 .thenReturn(applicationInfo);
-        PollingFrame frame1 = new PollingFrame(PollingFrame.POLLING_LOOP_TYPE_ON,
-                null, 0, 0, false);
-        PollingFrame frame2 = new PollingFrame(PollingFrame.POLLING_LOOP_TYPE_ON,
-                null, 0, 0, false);
-        PollingFrame frame3 = new PollingFrame(PollingFrame.POLLING_LOOP_TYPE_OFF,
-                null, 0, 0, false);
-        PollingFrame frame4 = new PollingFrame(PollingFrame.POLLING_LOOP_TYPE_OFF,
-                null, 0, 0, false);
+        PollingFrame frame1 =
+                new PollingFrame(PollingFrame.POLLING_LOOP_TYPE_ON, null, 0, 0, false);
+        PollingFrame frame2 =
+                new PollingFrame(PollingFrame.POLLING_LOOP_TYPE_ON, null, 0, 0, false);
+        PollingFrame frame3 =
+                new PollingFrame(PollingFrame.POLLING_LOOP_TYPE_OFF, null, 0, 0, false);
+        PollingFrame frame4 =
+                new PollingFrame(PollingFrame.POLLING_LOOP_TYPE_OFF, null, 0, 0, false);
         mHostEmulationManager.mPaymentService = mMessenger;
         mHostEmulationManager.mPaymentServiceName = WALLET_PAYMENT_SERVICE;
 
@@ -355,8 +356,8 @@ public class HostEmulationManagerTest {
         Bundle bundle = message.getData();
         assertEquals(HostApduService.MSG_POLLING_LOOP, message.what);
         assertTrue(bundle.containsKey(HostApduService.KEY_POLLING_LOOP_FRAMES_BUNDLE));
-        ArrayList<PollingFrame> sentFrames = bundle
-                .getParcelableArrayList(HostApduService.KEY_POLLING_LOOP_FRAMES_BUNDLE);
+        ArrayList<PollingFrame> sentFrames =
+                bundle.getParcelableArrayList(HostApduService.KEY_POLLING_LOOP_FRAMES_BUNDLE);
         assertTrue(sentFrames.contains(frame1));
         assertTrue(sentFrames.contains(frame2));
         assertTrue(sentFrames.contains(frame3));
@@ -369,14 +370,19 @@ public class HostEmulationManagerTest {
         when(mContext.bindServiceAsUser(any(), any(), anyInt(), any())).thenReturn(true);
         UserHandle userHandle = UserHandle.of(USER_ID);
 
-        mHostEmulationManager.onPreferredForegroundServiceChanged(USER_ID, WALLET_PAYMENT_SERVICE);
+        mHostEmulationManager.onPreferredForegroundServiceChanged(
+                new ComponentNameAndUser(USER_ID, WALLET_PAYMENT_SERVICE));
 
         verify(mContext).getSystemService(eq(PowerManager.class));
         verify(mContext).getSystemService(eq(KeyguardManager.class));
-        verify(mContext).bindServiceAsUser(mIntentArgumentCaptor.capture(),
-                mServiceConnectionArgumentCaptor.capture(),
-                eq(Context.BIND_AUTO_CREATE | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
-                eq(userHandle));
+        verify(mContext)
+                .bindServiceAsUser(
+                        mIntentArgumentCaptor.capture(),
+                        mServiceConnectionArgumentCaptor.capture(),
+                        eq(
+                                Context.BIND_AUTO_CREATE
+                                        | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
+                        eq(userHandle));
         verifyNoMoreInteractions(mContext);
         Intent intent = mIntentArgumentCaptor.getValue();
         assertEquals(HostApduService.SERVICE_INTERFACE, intent.getAction());
@@ -389,7 +395,8 @@ public class HostEmulationManagerTest {
     public void testOnPreferredForegroundServiceChanged_nullService() {
         mHostEmulationManager.mServiceBound = true;
 
-        mHostEmulationManager.onPreferredForegroundServiceChanged(USER_ID, null);
+        mHostEmulationManager.onPreferredForegroundServiceChanged(
+                new ComponentNameAndUser(USER_ID, null));
 
         verify(mContext).getSystemService(eq(PowerManager.class));
         verify(mContext).getSystemService(eq(KeyguardManager.class));
@@ -403,15 +410,20 @@ public class HostEmulationManagerTest {
         UserHandle userHandle = UserHandle.of(USER_ID);
         mHostEmulationManager.mServiceBound = true;
 
-        mHostEmulationManager.onPreferredForegroundServiceChanged(USER_ID, WALLET_PAYMENT_SERVICE);
+        mHostEmulationManager.onPreferredForegroundServiceChanged(
+                new ComponentNameAndUser(USER_ID, WALLET_PAYMENT_SERVICE));
 
         verify(mContext).getSystemService(eq(PowerManager.class));
         verify(mContext).getSystemService(eq(KeyguardManager.class));
         verify(mContext).unbindService(eq(mHostEmulationManager.getServiceConnection()));
-        verify(mContext).bindServiceAsUser(mIntentArgumentCaptor.capture(),
-                mServiceConnectionArgumentCaptor.capture(),
-                eq(Context.BIND_AUTO_CREATE | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
-                eq(userHandle));
+        verify(mContext)
+                .bindServiceAsUser(
+                        mIntentArgumentCaptor.capture(),
+                        mServiceConnectionArgumentCaptor.capture(),
+                        eq(
+                                Context.BIND_AUTO_CREATE
+                                        | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
+                        eq(userHandle));
         verifyNoMoreInteractions(mContext);
         Intent intent = mIntentArgumentCaptor.getValue();
         assertEquals(HostApduService.SERVICE_INTERFACE, intent.getAction());
@@ -436,10 +448,10 @@ public class HostEmulationManagerTest {
 
     @Test
     public void testOnPollingLoopDetected_fieldOff_returnToIdle() {
-        PollingFrame frame1 = new PollingFrame(PollingFrame.POLLING_LOOP_TYPE_ON,
-                null, 0, 0, false);
-        PollingFrame frame2 = new PollingFrame(PollingFrame.POLLING_LOOP_TYPE_OFF,
-                null, 0, 0, false);
+        PollingFrame frame1 =
+                new PollingFrame(PollingFrame.POLLING_LOOP_TYPE_ON, null, 0, 0, false);
+        PollingFrame frame2 =
+                new PollingFrame(PollingFrame.POLLING_LOOP_TYPE_OFF, null, 0, 0, false);
         mHostEmulationManager.onPollingLoopDetected(List.of(frame1, frame2));
         assertEquals(HostEmulationManager.STATE_POLLING_LOOP, mHostEmulationManager.getState());
 
@@ -454,8 +466,7 @@ public class HostEmulationManagerTest {
 
         verify(mContext).getSystemService(eq(PowerManager.class));
         verify(mContext).getSystemService(eq(KeyguardManager.class));
-        verify(mContext).sendBroadcastAsUser(mIntentArgumentCaptor.capture(),
-                eq(UserHandle.ALL));
+        verify(mContext).sendBroadcastAsUser(mIntentArgumentCaptor.capture(), eq(UserHandle.ALL));
         verifyNoMoreInteractions(mContext);
         Intent intent = mIntentArgumentCaptor.getValue();
         assertEquals(TapAgainDialog.ACTION_CLOSE, intent.getAction());
@@ -680,17 +691,18 @@ public class HostEmulationManagerTest {
 
         mHostEmulationManager.onHostEmulationData(mockAidData);
 
-        ExtendedMockito.verify(() -> {
-            NfcStatsLog.write(NfcStatsLog.NFC_AID_CONFLICT_OCCURRED, MOCK_AID);
-        });
+        ExtendedMockito.verify(
+                () -> {
+                    NfcStatsLog.write(NfcStatsLog.NFC_AID_CONFLICT_OCCURRED, MOCK_AID);
+                });
         verify(mStatsUtils).setCardEmulationEventCategory(eq(CardEmulation.CATEGORY_OTHER));
         verify(mStatsUtils).logCardEmulationWrongSettingEvent();
         assertEquals(HostEmulationManager.STATE_W4_DEACTIVATE, mHostEmulationManager.getState());
         verify(mRegisteredAidCache).resolveAid(eq(MOCK_AID));
         verify(mContext).getSystemService(eq(PowerManager.class));
         verify(mContext).getSystemService(eq(KeyguardManager.class));
-        verifyResolverLaunched((ArrayList)aidResolveInfo.services, null,
-                CardEmulation.CATEGORY_PAYMENT);
+        verifyResolverLaunched(
+                (ArrayList) aidResolveInfo.services, null, CardEmulation.CATEGORY_PAYMENT);
         verifyNoMoreInteractions(mContext);
     }
 
@@ -774,14 +786,19 @@ public class HostEmulationManagerTest {
         verify(mRegisteredAidCache).resolveAid(eq(MOCK_AID));
         verify(mContext).getSystemService(eq(PowerManager.class));
         verify(mContext).getSystemService(eq(KeyguardManager.class));
-        verify(mContext).bindServiceAsUser(mIntentArgumentCaptor.capture(),
-                mServiceConnectionArgumentCaptor.capture(),
-                eq(Context.BIND_AUTO_CREATE | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
-                eq(USER_HANDLE));
+        verify(mContext)
+                .bindServiceAsUser(
+                        mIntentArgumentCaptor.capture(),
+                        mServiceConnectionArgumentCaptor.capture(),
+                        eq(
+                                Context.BIND_AUTO_CREATE
+                                        | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
+                        eq(USER_HANDLE));
         Intent intent = mIntentArgumentCaptor.getValue();
         assertEquals(HostApduService.SERVICE_INTERFACE, intent.getAction());
         assertEquals(WALLET_PAYMENT_SERVICE, intent.getComponent());
-        assertEquals(mHostEmulationManager.getServiceConnection(),
+        assertEquals(
+                mHostEmulationManager.getServiceConnection(),
                 mServiceConnectionArgumentCaptor.getValue());
         assertTrue(mHostEmulationManager.mServiceBound);
         assertEquals(USER_ID, mHostEmulationManager.mServiceUserId);
@@ -879,7 +896,8 @@ public class HostEmulationManagerTest {
     }
 
     @Test
-    public void testOnHostEmulationData_stateXfer_selectAid_noActiveService() throws RemoteException {
+    public void testOnHostEmulationData_stateXfer_selectAid_noActiveService()
+            throws RemoteException {
         when(mContext.bindServiceAsUser(any(), any(), anyInt(), any())).thenReturn(true);
         byte[] mockAidData = createSelectAidData(MOCK_AID);
         mHostEmulationManager.mState = HostEmulationManager.STATE_XFER;
@@ -906,14 +924,19 @@ public class HostEmulationManagerTest {
         assertEquals(HostEmulationManager.STATE_W4_SERVICE, mHostEmulationManager.getState());
         verify(mContext).getSystemService(eq(PowerManager.class));
         verify(mContext).getSystemService(eq(KeyguardManager.class));
-        verify(mContext).bindServiceAsUser(mIntentArgumentCaptor.capture(),
-                mServiceConnectionArgumentCaptor.capture(),
-                eq(Context.BIND_AUTO_CREATE | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
-                eq(USER_HANDLE));
+        verify(mContext)
+                .bindServiceAsUser(
+                        mIntentArgumentCaptor.capture(),
+                        mServiceConnectionArgumentCaptor.capture(),
+                        eq(
+                                Context.BIND_AUTO_CREATE
+                                        | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
+                        eq(USER_HANDLE));
         Intent intent = mIntentArgumentCaptor.getValue();
         assertEquals(HostApduService.SERVICE_INTERFACE, intent.getAction());
         assertEquals(WALLET_PAYMENT_SERVICE, intent.getComponent());
-        assertEquals(mHostEmulationManager.getServiceConnection(),
+        assertEquals(
+                mHostEmulationManager.getServiceConnection(),
                 mServiceConnectionArgumentCaptor.getValue());
         assertTrue(mHostEmulationManager.mServiceBound);
         assertEquals(USER_ID, mHostEmulationManager.mServiceUserId);
@@ -961,7 +984,8 @@ public class HostEmulationManagerTest {
         verify(mContext).getSystemService(eq(PowerManager.class));
         verify(mContext).getSystemService(eq(KeyguardManager.class));
         verify(mContext).unbindService(mServiceConnectionArgumentCaptor.capture());
-        assertEquals(mHostEmulationManager.getServiceConnection(),
+        assertEquals(
+                mHostEmulationManager.getServiceConnection(),
                 mServiceConnectionArgumentCaptor.getValue());
         verify(mStatsUtils).logCardEmulationDeactivatedEvent();
 
@@ -1080,8 +1104,9 @@ public class HostEmulationManagerTest {
         mHostEmulationManager.mState = HostEmulationManager.STATE_W4_SELECT;
         mHostEmulationManager.mSelectApdu = new byte[3];
 
-        mHostEmulationManager.getServiceConnection().onServiceConnected(WALLET_PAYMENT_SERVICE,
-                service);
+        mHostEmulationManager
+                .getServiceConnection()
+                .onServiceConnected(WALLET_PAYMENT_SERVICE, service);
 
         assertEquals(WALLET_PAYMENT_SERVICE, mHostEmulationManager.mServiceName);
         assertNotNull(mHostEmulationManager.mService);
@@ -1099,11 +1124,12 @@ public class HostEmulationManagerTest {
         mHostEmulationManager.mState = HostEmulationManager.STATE_W4_SELECT;
         mHostEmulationManager.mSelectApdu = null;
         mHostEmulationManager.mPollingFramesToSend = new HashMap();
-        mHostEmulationManager.mPollingFramesToSend.put(WALLET_PAYMENT_SERVICE,
-                new ArrayList<>(List.of()));
+        mHostEmulationManager.mPollingFramesToSend.put(
+                WALLET_PAYMENT_SERVICE, new ArrayList<>(List.of()));
 
-        mHostEmulationManager.getServiceConnection().onServiceConnected(WALLET_PAYMENT_SERVICE,
-                service);
+        mHostEmulationManager
+                .getServiceConnection()
+                .onServiceConnected(WALLET_PAYMENT_SERVICE, service);
 
         assertEquals(WALLET_PAYMENT_SERVICE, mHostEmulationManager.mServiceName);
         assertNotNull(mHostEmulationManager.mService);
@@ -1118,8 +1144,9 @@ public class HostEmulationManagerTest {
         IBinder service = mock(IBinder.class);
         mHostEmulationManager.mState = HostEmulationManager.STATE_IDLE;
 
-        mHostEmulationManager.getServiceConnection().onServiceConnected(WALLET_PAYMENT_SERVICE,
-                service);
+        mHostEmulationManager
+                .getServiceConnection()
+                .onServiceConnected(WALLET_PAYMENT_SERVICE, service);
 
         verifyZeroInteractions(service);
     }
@@ -1142,8 +1169,9 @@ public class HostEmulationManagerTest {
         IBinder service = mock(IBinder.class);
         mHostEmulationManager.mLastBoundPaymentServiceName = WALLET_PAYMENT_SERVICE;
 
-        mHostEmulationManager.getPaymentConnection().onServiceConnected(WALLET_PAYMENT_SERVICE,
-                service);
+        mHostEmulationManager
+                .getPaymentConnection()
+                .onServiceConnected(WALLET_PAYMENT_SERVICE, service);
 
         assertNotNull(mHostEmulationManager.mPaymentServiceName);
         assertEquals(WALLET_PAYMENT_SERVICE, mHostEmulationManager.mPaymentServiceName);
@@ -1178,10 +1206,14 @@ public class HostEmulationManagerTest {
         mHostEmulationManager.getPaymentConnection().onBindingDied(WALLET_PAYMENT_SERVICE);
 
         verify(mContext).unbindService(eq(mHostEmulationManager.getPaymentConnection()));
-        verify(mContext).bindServiceAsUser(mIntentArgumentCaptor.capture(),
-                mServiceConnectionArgumentCaptor.capture(),
-                eq(Context.BIND_AUTO_CREATE | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
-                eq(userHandle));
+        verify(mContext)
+                .bindServiceAsUser(
+                        mIntentArgumentCaptor.capture(),
+                        mServiceConnectionArgumentCaptor.capture(),
+                        eq(
+                                Context.BIND_AUTO_CREATE
+                                        | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
+                        eq(userHandle));
 
         assertEquals(USER_ID, mHostEmulationManager.mPaymentServiceUserId);
         assertTrue(mHostEmulationManager.mPaymentServiceBound);
@@ -1190,8 +1222,8 @@ public class HostEmulationManagerTest {
     @Test
     public void testPaymentServiceConnectionOnBindingDied_rebindOnTap() {
         when(mContext.bindServiceAsUser(any(), any(), anyInt(), any())).thenReturn(false);
-        when(mRegisteredAidCache.getPreferredPaymentService()).
-                thenReturn(new Pair<>(USER_ID, WALLET_PAYMENT_SERVICE));
+        when(mRegisteredAidCache.getPreferredPaymentService())
+                .thenReturn(new ComponentNameAndUser(USER_ID, WALLET_PAYMENT_SERVICE));
 
         UserHandle userHandle = UserHandle.of(USER_ID);
 
@@ -1206,10 +1238,15 @@ public class HostEmulationManagerTest {
         mHostEmulationManager.getPaymentConnection().onBindingDied(WALLET_PAYMENT_SERVICE);
 
         verify(mContext).unbindService(eq(mHostEmulationManager.getPaymentConnection()));
-        assertFalse(verify(mContext).bindServiceAsUser(mIntentArgumentCaptor.capture(),
-                mServiceConnectionArgumentCaptor.capture(),
-                eq(Context.BIND_AUTO_CREATE | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
-                eq(userHandle)));
+        assertFalse(
+                verify(mContext)
+                        .bindServiceAsUser(
+                                mIntentArgumentCaptor.capture(),
+                                mServiceConnectionArgumentCaptor.capture(),
+                                eq(
+                                        Context.BIND_AUTO_CREATE
+                                                | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
+                                eq(userHandle)));
 
         assertFalse(mHostEmulationManager.mPaymentServiceBound);
 
@@ -1217,10 +1254,14 @@ public class HostEmulationManagerTest {
 
         mHostEmulationManager.bindServiceIfNeededLocked(USER_ID, WALLET_PAYMENT_SERVICE);
 
-        verify(mContext, times(2)).bindServiceAsUser(mIntentArgumentCaptor.capture(),
-                mServiceConnectionArgumentCaptor.capture(),
-                eq(Context.BIND_AUTO_CREATE | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
-                eq(userHandle));
+        verify(mContext, times(2))
+                .bindServiceAsUser(
+                        mIntentArgumentCaptor.capture(),
+                        mServiceConnectionArgumentCaptor.capture(),
+                        eq(
+                                Context.BIND_AUTO_CREATE
+                                        | Context.BIND_ALLOW_BACKGROUND_ACTIVITY_STARTS),
+                        eq(userHandle));
 
         assertEquals(USER_ID, mHostEmulationManager.mPaymentServiceUserId);
         assertTrue(mHostEmulationManager.mPaymentServiceBound);
@@ -1254,8 +1295,11 @@ public class HostEmulationManagerTest {
     @Test
     public void testFindSelectAid_longAidLength() {
         final byte[] aidData = createSelectAidData(MOCK_AID);
-        aidData[4] = (byte)(HostEmulationManager.SELECT_APDU_HDR_LENGTH
-                + HexFormat.of().parseHex(MOCK_AID).length + 1);
+        aidData[4] =
+                (byte)
+                        (HostEmulationManager.SELECT_APDU_HDR_LENGTH
+                                + HexFormat.of().parseHex(MOCK_AID).length
+                                + 1);
 
         String aidString = mHostEmulationManager.findSelectAid(aidData);
 
@@ -1271,17 +1315,22 @@ public class HostEmulationManagerTest {
 
         // Preferred payment service is defined, but not bound
         when(mRegisteredAidCache.getPreferredService())
-                .thenReturn(new Pair<>(USER_ID, WALLET_PAYMENT_SERVICE));
+                .thenReturn(new ComponentNameAndUser(USER_ID, WALLET_PAYMENT_SERVICE));
         when(mRegisteredAidCache.getPreferredPaymentService())
-            .thenReturn(new Pair<>(USER_ID, WALLET_PAYMENT_SERVICE));
+                .thenReturn(new ComponentNameAndUser(USER_ID, WALLET_PAYMENT_SERVICE));
         mHostEmulationManager.mPaymentServiceName = WALLET_PAYMENT_SERVICE;
         assertNull(mHostEmulationManager.mPaymentService);
         assertFalse(mHostEmulationManager.mPaymentServiceBound);
 
-        PollingFrame frame1 = new PollingFrame(PollingFrame.POLLING_LOOP_TYPE_UNKNOWN,
-                HexFormat.of().parseHex("42"), 0, 0, false);
-        PollingFrame offFrame = new PollingFrame(PollingFrame.POLLING_LOOP_TYPE_OFF,
-                null, 0, 0, false);
+        PollingFrame frame1 =
+                new PollingFrame(
+                        PollingFrame.POLLING_LOOP_TYPE_UNKNOWN,
+                        HexFormat.of().parseHex("42"),
+                        0,
+                        0,
+                        false);
+        PollingFrame offFrame =
+                new PollingFrame(PollingFrame.POLLING_LOOP_TYPE_OFF, null, 0, 0, false);
 
         mHostEmulationManager.onPollingLoopDetected(List.of(frame1, offFrame));
 
@@ -1306,40 +1355,45 @@ public class HostEmulationManagerTest {
         assertEquals(service, intent.getParcelableExtra(TapAgainDialog.EXTRA_APDU_SERVICE));
         int flags = Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK;
         assertEquals(flags, intent.getFlags());
-        assertEquals(TapAgainDialog.class.getCanonicalName(),
-                intent.getComponent().getClassName());
+        assertEquals(TapAgainDialog.class.getCanonicalName(), intent.getComponent().getClassName());
     }
 
-    private void verifyResolverLaunched(ArrayList<ApduServiceInfo> services,
-                                        ComponentName failedComponent, String category) {
+    private void verifyResolverLaunched(
+            ArrayList<ApduServiceInfo> services, ComponentName failedComponent, String category) {
         verify(mContext).getPackageName();
-        verify(mContext).startActivityAsUser(mIntentArgumentCaptor.capture(), eq(UserHandle.CURRENT));
+        verify(mContext)
+                .startActivityAsUser(mIntentArgumentCaptor.capture(), eq(UserHandle.CURRENT));
         Intent intent = mIntentArgumentCaptor.getValue();
         assertEquals(category, intent.getStringExtra(AppChooserActivity.EXTRA_CATEGORY));
-        assertEquals(services,
+        assertEquals(
+                services,
                 intent.getParcelableArrayListExtra(AppChooserActivity.EXTRA_APDU_SERVICES));
         if (failedComponent != null) {
-            assertEquals(failedComponent,
+            assertEquals(
+                    failedComponent,
                     intent.getParcelableExtra(AppChooserActivity.EXTRA_FAILED_COMPONENT));
         }
         int flags = Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK;
         assertEquals(flags, intent.getFlags());
-        assertEquals(AppChooserActivity.class.getCanonicalName(),
-                intent.getComponent().getClassName());
+        assertEquals(
+                AppChooserActivity.class.getCanonicalName(), intent.getComponent().getClassName());
     }
 
     private static byte[] createSelectAidData(String aid) {
         byte[] aidStringData = HexFormat.of().parseHex(aid);
-        byte[] aidData = new byte[HostEmulationManager.SELECT_APDU_HDR_LENGTH
-                + aidStringData.length];
+        byte[] aidData =
+                new byte[HostEmulationManager.SELECT_APDU_HDR_LENGTH + aidStringData.length];
         aidData[0] = 0x00;
         aidData[1] = HostEmulationManager.INSTR_SELECT;
         aidData[2] = 0x04;
         aidData[3] = 0x00;
-        aidData[4] = (byte)aidStringData.length;
-        System.arraycopy(aidStringData, 0, aidData, HostEmulationManager.SELECT_APDU_HDR_LENGTH,
+        aidData[4] = (byte) aidStringData.length;
+        System.arraycopy(
+                aidStringData,
+                0,
+                aidData,
+                HostEmulationManager.SELECT_APDU_HDR_LENGTH,
                 aidData.length - HostEmulationManager.SELECT_APDU_HDR_LENGTH);
         return aidData;
     }
-
 }

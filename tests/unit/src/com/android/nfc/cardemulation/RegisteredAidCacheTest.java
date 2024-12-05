@@ -49,7 +49,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 import org.mockito.MockitoSession;
 import org.mockito.quality.Strictness;
 
@@ -72,37 +71,38 @@ public class RegisteredAidCacheTest {
     private static final String WALLET_HOLDER_PACKAGE_NAME = "com.android.test.walletroleholder";
     private static final String WALLET_HOLDER_2_PACKAGE_NAME = "com.android.test.walletroleholder2";
 
-    private static final ComponentName WALLET_PAYMENT_SERVICE
-            = new ComponentName(WALLET_HOLDER_PACKAGE_NAME,
-            "com.android.test.walletroleholder.WalletRoleHolderApduService");
+    private static final ComponentName WALLET_PAYMENT_SERVICE =
+            new ComponentName(
+                    WALLET_HOLDER_PACKAGE_NAME,
+                    "com.android.test.walletroleholder.WalletRoleHolderApduService");
 
-    private static final ComponentName WALLET_PAYMENT_SERVICE_2
-            = new ComponentName(WALLET_HOLDER_PACKAGE_NAME,
-            "com.android.test.walletroleholder.XWalletRoleHolderApduService");
-    private static final ComponentName FOREGROUND_SERVICE
-            = new ComponentName(NFC_FOREGROUND_PACKAGE_NAME,
-            "com.android.test.foregroundnfc.ForegroundApduService");
+    private static final ComponentName WALLET_PAYMENT_SERVICE_2 =
+            new ComponentName(
+                    WALLET_HOLDER_PACKAGE_NAME,
+                    "com.android.test.walletroleholder.XWalletRoleHolderApduService");
+    private static final ComponentName FOREGROUND_SERVICE =
+            new ComponentName(
+                    NFC_FOREGROUND_PACKAGE_NAME,
+                    "com.android.test.foregroundnfc.ForegroundApduService");
     private static final ComponentName NON_PAYMENT_SERVICE =
-            new ComponentName(NON_PAYMENT_NFC_PACKAGE_NAME,
+            new ComponentName(
+                    NON_PAYMENT_NFC_PACKAGE_NAME,
                     "com.android.test.nonpaymentnfc.NonPaymentApduService");
 
     private static final ComponentName PAYMENT_SERVICE =
-            new ComponentName(WALLET_HOLDER_2_PACKAGE_NAME,
+            new ComponentName(
+                    WALLET_HOLDER_2_PACKAGE_NAME,
                     "com.android.test.walletroleholder.WalletRoleHolderXApduService");
 
     private static final int USER_ID = 0;
     private static final UserHandle USER_HANDLE = UserHandle.of(USER_ID);
 
-    @Mock
-    private Context mContext;
-    @Mock
-    private WalletRoleObserver mWalletRoleObserver;
-    @Mock
-    private AidRoutingManager mAidRoutingManager;
-    @Mock
-    private UserManager mUserManager;
-    @Mock
-    private NfcService mNfcService;
+    @Mock private Context mContext;
+    @Mock private WalletRoleObserver mWalletRoleObserver;
+    @Mock private AidRoutingManager mAidRoutingManager;
+    @Mock private UserManager mUserManager;
+    @Mock private NfcService mNfcService;
+
     @Captor
     private ArgumentCaptor<HashMap<String, AidRoutingManager.AidEntry>> mRoutingEntryMapCaptor;
 
@@ -112,18 +112,18 @@ public class RegisteredAidCacheTest {
 
     @Before
     public void setUp() {
-        mStaticMockSession = ExtendedMockito.mockitoSession()
-                .mockStatic(ActivityManager.class)
-                .mockStatic(NfcService.class)
-                .strictness(Strictness.LENIENT)
-                .initMocks(this)
-                .startMocking();
+        mStaticMockSession =
+                ExtendedMockito.mockitoSession()
+                        .mockStatic(ActivityManager.class)
+                        .mockStatic(NfcService.class)
+                        .strictness(Strictness.LENIENT)
+                        .initMocks(this)
+                        .startMocking();
         when(ActivityManager.getCurrentUser()).thenReturn(USER_ID);
         when(NfcService.getInstance()).thenReturn(mNfcService);
         when(mNfcService.getNciVersion()).thenReturn(NfcService.NCI_VERSION_1_0);
         when(mUserManager.getProfileParent(eq(USER_HANDLE))).thenReturn(USER_HANDLE);
-        when(mContext.createContextAsUser(
-                any(), anyInt())).thenReturn(mContext);
+        when(mContext.createContextAsUser(any(), anyInt())).thenReturn(mContext);
         when(mContext.getSystemService(eq(UserManager.class))).thenReturn(mUserManager);
     }
 
@@ -135,8 +135,8 @@ public class RegisteredAidCacheTest {
     @Test
     public void testConstructor_supportsPrefixAndSubset() {
         supportPrefixAndSubset(true);
-        mRegisteredAidCache = new RegisteredAidCache(mContext, mWalletRoleObserver,
-                mAidRoutingManager);
+        mRegisteredAidCache =
+                new RegisteredAidCache(mContext, mWalletRoleObserver, mAidRoutingManager);
 
         verify(mAidRoutingManager).supportsAidPrefixRouting();
         verify(mAidRoutingManager).supportsAidSubsetRouting();
@@ -147,8 +147,8 @@ public class RegisteredAidCacheTest {
     @Test
     public void testConstructor_doesNotSupportsPrefixAndSubset() {
         supportPrefixAndSubset(false);
-        mRegisteredAidCache = new RegisteredAidCache(mContext, mWalletRoleObserver,
-                mAidRoutingManager);
+        mRegisteredAidCache =
+                new RegisteredAidCache(mContext, mWalletRoleObserver, mAidRoutingManager);
 
         verify(mAidRoutingManager).supportsAidPrefixRouting();
         verify(mAidRoutingManager).supportsAidSubsetRouting();
@@ -176,50 +176,54 @@ public class RegisteredAidCacheTest {
     public void testAidConflictResolution_walletRoleEnabledNfcDisabled_foregroundWins() {
         setWalletRoleFlag(true);
         supportPrefixAndSubset(false);
-        mRegisteredAidCache = new RegisteredAidCache(mContext, mWalletRoleObserver,
-                mAidRoutingManager);
+        mRegisteredAidCache =
+                new RegisteredAidCache(mContext, mWalletRoleObserver, mAidRoutingManager);
         mRegisteredAidCache.mNfcEnabled = false;
 
         List<ApduServiceInfo> apduServiceInfos = new ArrayList<>();
-        apduServiceInfos.add(createServiceInfoForAidRouting(
-                WALLET_PAYMENT_SERVICE,
-                true,
-                List.of(PAYMENT_AID_1, NON_PAYMENT_AID_1),
-                List.of(CardEmulation.CATEGORY_PAYMENT, CardEmulation.CATEGORY_OTHER),
-                false,
-                false,
-                USER_ID,
-                true));
-        apduServiceInfos.add(createServiceInfoForAidRouting(
-                FOREGROUND_SERVICE,
-                true,
-                List.of(PAYMENT_AID_1, NON_PAYMENT_AID_1),
-                List.of(CardEmulation.CATEGORY_PAYMENT, CardEmulation.CATEGORY_OTHER),
-                false,
-                false,
-                USER_ID,
-                true));
-        apduServiceInfos.add(createServiceInfoForAidRouting(
-                NON_PAYMENT_SERVICE,
-                true,
-                List.of(NON_PAYMENT_AID_1),
-                List.of(CardEmulation.CATEGORY_OTHER),
-                false,
-                false,
-                USER_ID,
-                true));
+        apduServiceInfos.add(
+                createServiceInfoForAidRouting(
+                        WALLET_PAYMENT_SERVICE,
+                        true,
+                        List.of(PAYMENT_AID_1, NON_PAYMENT_AID_1),
+                        List.of(CardEmulation.CATEGORY_PAYMENT, CardEmulation.CATEGORY_OTHER),
+                        false,
+                        false,
+                        USER_ID,
+                        true));
+        apduServiceInfos.add(
+                createServiceInfoForAidRouting(
+                        FOREGROUND_SERVICE,
+                        true,
+                        List.of(PAYMENT_AID_1, NON_PAYMENT_AID_1),
+                        List.of(CardEmulation.CATEGORY_PAYMENT, CardEmulation.CATEGORY_OTHER),
+                        false,
+                        false,
+                        USER_ID,
+                        true));
+        apduServiceInfos.add(
+                createServiceInfoForAidRouting(
+                        NON_PAYMENT_SERVICE,
+                        true,
+                        List.of(NON_PAYMENT_AID_1),
+                        List.of(CardEmulation.CATEGORY_OTHER),
+                        false,
+                        false,
+                        USER_ID,
+                        true));
 
         mRegisteredAidCache.generateUserApduServiceInfoLocked(USER_ID, apduServiceInfos);
         mRegisteredAidCache.generateServiceMapLocked(apduServiceInfos);
-        mRegisteredAidCache.onPreferredForegroundServiceChanged(USER_ID, FOREGROUND_SERVICE);
-        RegisteredAidCache.AidResolveInfo resolveInfo
-                = mRegisteredAidCache.resolveAid(PAYMENT_AID_1);
+        mRegisteredAidCache.onPreferredForegroundServiceChanged(
+                new ComponentNameAndUser(USER_ID, FOREGROUND_SERVICE));
+        RegisteredAidCache.AidResolveInfo resolveInfo =
+                mRegisteredAidCache.resolveAid(PAYMENT_AID_1);
 
         verify(mAidRoutingManager).supportsAidPrefixRouting();
         verify(mAidRoutingManager).supportsAidSubsetRouting();
         assertEquals(FOREGROUND_SERVICE, resolveInfo.defaultService.getComponent());
-        assertEquals(new Pair<>(USER_ID, FOREGROUND_SERVICE),
-                mRegisteredAidCache.getPreferredService());
+        assertEquals(
+                new Pair<>(USER_ID, FOREGROUND_SERVICE), mRegisteredAidCache.getPreferredService());
         assertEquals(1, resolveInfo.services.size());
         assertEquals(CardEmulation.CATEGORY_PAYMENT, resolveInfo.category);
         verifyNoMoreInteractions(mAidRoutingManager);
@@ -229,46 +233,49 @@ public class RegisteredAidCacheTest {
     public void testAidConflictResolution_walletRoleEnabledNfcEnabled_walletWins() {
         setWalletRoleFlag(true);
         supportPrefixAndSubset(false);
-        mRegisteredAidCache = new RegisteredAidCache(mContext, mWalletRoleObserver,
-                mAidRoutingManager);
+        mRegisteredAidCache =
+                new RegisteredAidCache(mContext, mWalletRoleObserver, mAidRoutingManager);
         mRegisteredAidCache.mNfcEnabled = true;
 
         List<ApduServiceInfo> apduServiceInfos = new ArrayList<>();
-        apduServiceInfos.add(createServiceInfoForAidRouting(
-                WALLET_PAYMENT_SERVICE,
-                true,
-                List.of(PAYMENT_AID_1),
-                List.of(CardEmulation.CATEGORY_PAYMENT),
-                false,
-                true,
-                USER_ID,
-                true));
-        apduServiceInfos.add(createServiceInfoForAidRouting(
-                PAYMENT_SERVICE,
-                true,
-                List.of(PAYMENT_AID_1),
-                List.of(CardEmulation.CATEGORY_PAYMENT),
-                false,
-                true,
-                USER_ID,
-                true));
-        apduServiceInfos.add(createServiceInfoForAidRouting(
-                NON_PAYMENT_SERVICE,
-                true,
-                List.of(NON_PAYMENT_AID_1),
-                List.of(CardEmulation.CATEGORY_OTHER),
-                false,
-                false,
-                USER_ID,
-                true));
+        apduServiceInfos.add(
+                createServiceInfoForAidRouting(
+                        WALLET_PAYMENT_SERVICE,
+                        true,
+                        List.of(PAYMENT_AID_1),
+                        List.of(CardEmulation.CATEGORY_PAYMENT),
+                        false,
+                        true,
+                        USER_ID,
+                        true));
+        apduServiceInfos.add(
+                createServiceInfoForAidRouting(
+                        PAYMENT_SERVICE,
+                        true,
+                        List.of(PAYMENT_AID_1),
+                        List.of(CardEmulation.CATEGORY_PAYMENT),
+                        false,
+                        true,
+                        USER_ID,
+                        true));
+        apduServiceInfos.add(
+                createServiceInfoForAidRouting(
+                        NON_PAYMENT_SERVICE,
+                        true,
+                        List.of(NON_PAYMENT_AID_1),
+                        List.of(CardEmulation.CATEGORY_OTHER),
+                        false,
+                        false,
+                        USER_ID,
+                        true));
 
         mRegisteredAidCache.generateUserApduServiceInfoLocked(USER_ID, apduServiceInfos);
         mRegisteredAidCache.generateServiceMapLocked(apduServiceInfos);
         mRegisteredAidCache.onWalletRoleHolderChanged(WALLET_HOLDER_PACKAGE_NAME, USER_ID);
-        RegisteredAidCache.AidResolveInfo paymentResolveInfo
-                = mRegisteredAidCache.resolveAid(PAYMENT_AID_1);
-        RegisteredAidCache.AidResolveInfo nonPaymentResolveInfo
-                = mRegisteredAidCache.resolveAid(NON_PAYMENT_AID_1);
+        RegisteredAidCache.AidResolveInfo paymentResolveInfo =
+                mRegisteredAidCache.resolveAid(PAYMENT_AID_1);
+        RegisteredAidCache.AidResolveInfo nonPaymentResolveInfo =
+                mRegisteredAidCache.resolveAid(NON_PAYMENT_AID_1);
 
         assertEquals(WALLET_PAYMENT_SERVICE, paymentResolveInfo.defaultService.getComponent());
         assertEquals(1, paymentResolveInfo.services.size());
@@ -276,8 +283,7 @@ public class RegisteredAidCacheTest {
         assertEquals(NON_PAYMENT_SERVICE, nonPaymentResolveInfo.defaultService.getComponent());
         assertEquals(1, nonPaymentResolveInfo.services.size());
         assertEquals(CardEmulation.CATEGORY_OTHER, nonPaymentResolveInfo.category);
-        verify(mAidRoutingManager).configureRouting(mRoutingEntryMapCaptor.capture(),
-                eq(false));
+        verify(mAidRoutingManager).configureRouting(mRoutingEntryMapCaptor.capture(), eq(false));
         HashMap<String, AidRoutingManager.AidEntry> routingEntries =
                 mRoutingEntryMapCaptor.getValue();
         assertTrue(routingEntries.containsKey(PAYMENT_AID_1));
@@ -293,46 +299,49 @@ public class RegisteredAidCacheTest {
     public void testAidConflictResolution_walletRoleEnabledNfcEnabledPreFixAid_walletWins() {
         setWalletRoleFlag(true);
         supportPrefixAndSubset(true);
-        mRegisteredAidCache = new RegisteredAidCache(mContext, mWalletRoleObserver,
-                mAidRoutingManager);
+        mRegisteredAidCache =
+                new RegisteredAidCache(mContext, mWalletRoleObserver, mAidRoutingManager);
         mRegisteredAidCache.mNfcEnabled = true;
 
         List<ApduServiceInfo> apduServiceInfos = new ArrayList<>();
-        apduServiceInfos.add(createServiceInfoForAidRouting(
-                WALLET_PAYMENT_SERVICE,
-                true,
-                List.of(PREFIX_PAYMENT_AID),
-                List.of(CardEmulation.CATEGORY_PAYMENT),
-                false,
-                true,
-                USER_ID,
-                true));
-        apduServiceInfos.add(createServiceInfoForAidRouting(
-                PAYMENT_SERVICE,
-                true,
-                List.of(PAYMENT_AID_1),
-                List.of(CardEmulation.CATEGORY_PAYMENT),
-                false,
-                true,
-                USER_ID,
-                true));
-        apduServiceInfos.add(createServiceInfoForAidRouting(
-                NON_PAYMENT_SERVICE,
-                true,
-                List.of(NON_PAYMENT_AID_1),
-                List.of(CardEmulation.CATEGORY_OTHER),
-                false,
-                false,
-                USER_ID,
-                true));
+        apduServiceInfos.add(
+                createServiceInfoForAidRouting(
+                        WALLET_PAYMENT_SERVICE,
+                        true,
+                        List.of(PREFIX_PAYMENT_AID),
+                        List.of(CardEmulation.CATEGORY_PAYMENT),
+                        false,
+                        true,
+                        USER_ID,
+                        true));
+        apduServiceInfos.add(
+                createServiceInfoForAidRouting(
+                        PAYMENT_SERVICE,
+                        true,
+                        List.of(PAYMENT_AID_1),
+                        List.of(CardEmulation.CATEGORY_PAYMENT),
+                        false,
+                        true,
+                        USER_ID,
+                        true));
+        apduServiceInfos.add(
+                createServiceInfoForAidRouting(
+                        NON_PAYMENT_SERVICE,
+                        true,
+                        List.of(NON_PAYMENT_AID_1),
+                        List.of(CardEmulation.CATEGORY_OTHER),
+                        false,
+                        false,
+                        USER_ID,
+                        true));
 
         mRegisteredAidCache.generateUserApduServiceInfoLocked(USER_ID, apduServiceInfos);
         mRegisteredAidCache.generateServiceMapLocked(apduServiceInfos);
         mRegisteredAidCache.onWalletRoleHolderChanged(WALLET_HOLDER_PACKAGE_NAME, USER_ID);
-        RegisteredAidCache.AidResolveInfo paymentResolveInfo
-                = mRegisteredAidCache.resolveAid(PAYMENT_AID_1);
-        RegisteredAidCache.AidResolveInfo nonPaymentResolveInfo
-                = mRegisteredAidCache.resolveAid(NON_PAYMENT_AID_1);
+        RegisteredAidCache.AidResolveInfo paymentResolveInfo =
+                mRegisteredAidCache.resolveAid(PAYMENT_AID_1);
+        RegisteredAidCache.AidResolveInfo nonPaymentResolveInfo =
+                mRegisteredAidCache.resolveAid(NON_PAYMENT_AID_1);
 
         assertEquals(WALLET_PAYMENT_SERVICE, paymentResolveInfo.defaultService.getComponent());
         assertEquals(1, paymentResolveInfo.services.size());
@@ -346,43 +355,46 @@ public class RegisteredAidCacheTest {
     public void testAidConflictResolution_walletRoleEnabled_twoServicesOnWallet_firstServiceWins() {
         setWalletRoleFlag(true);
         supportPrefixAndSubset(false);
-        mRegisteredAidCache = new RegisteredAidCache(mContext, mWalletRoleObserver,
-                mAidRoutingManager);
+        mRegisteredAidCache =
+                new RegisteredAidCache(mContext, mWalletRoleObserver, mAidRoutingManager);
 
         List<ApduServiceInfo> apduServiceInfos = new ArrayList<>();
-        apduServiceInfos.add(createServiceInfoForAidRouting(
-                WALLET_PAYMENT_SERVICE,
-                true,
-                List.of(PAYMENT_AID_1, NON_PAYMENT_AID_1),
-                List.of(CardEmulation.CATEGORY_PAYMENT, CardEmulation.CATEGORY_OTHER),
-                false,
-                false,
-                USER_ID,
-                true));
-        apduServiceInfos.add(createServiceInfoForAidRouting(
-                WALLET_PAYMENT_SERVICE_2,
-                true,
-                List.of(PAYMENT_AID_1),
-                List.of(CardEmulation.CATEGORY_PAYMENT),
-                false,
-                false,
-                USER_ID,
-                true));
-        apduServiceInfos.add(createServiceInfoForAidRouting(
-                PAYMENT_SERVICE,
-                true,
-                List.of(PAYMENT_AID_1),
-                List.of(CardEmulation.CATEGORY_PAYMENT),
-                false,
-                false,
-                USER_ID,
-                true));
+        apduServiceInfos.add(
+                createServiceInfoForAidRouting(
+                        WALLET_PAYMENT_SERVICE,
+                        true,
+                        List.of(PAYMENT_AID_1, NON_PAYMENT_AID_1),
+                        List.of(CardEmulation.CATEGORY_PAYMENT, CardEmulation.CATEGORY_OTHER),
+                        false,
+                        false,
+                        USER_ID,
+                        true));
+        apduServiceInfos.add(
+                createServiceInfoForAidRouting(
+                        WALLET_PAYMENT_SERVICE_2,
+                        true,
+                        List.of(PAYMENT_AID_1),
+                        List.of(CardEmulation.CATEGORY_PAYMENT),
+                        false,
+                        false,
+                        USER_ID,
+                        true));
+        apduServiceInfos.add(
+                createServiceInfoForAidRouting(
+                        PAYMENT_SERVICE,
+                        true,
+                        List.of(PAYMENT_AID_1),
+                        List.of(CardEmulation.CATEGORY_PAYMENT),
+                        false,
+                        false,
+                        USER_ID,
+                        true));
 
         mRegisteredAidCache.generateUserApduServiceInfoLocked(USER_ID, apduServiceInfos);
         mRegisteredAidCache.generateServiceMapLocked(apduServiceInfos);
         mRegisteredAidCache.onWalletRoleHolderChanged(WALLET_HOLDER_PACKAGE_NAME, USER_ID);
-        RegisteredAidCache.AidResolveInfo resolveInfo
-                = mRegisteredAidCache.resolveAid(PAYMENT_AID_1);
+        RegisteredAidCache.AidResolveInfo resolveInfo =
+                mRegisteredAidCache.resolveAid(PAYMENT_AID_1);
         assertEquals(WALLET_PAYMENT_SERVICE, resolveInfo.defaultService.getComponent());
         assertEquals(2, resolveInfo.services.size());
         assertEquals(CardEmulation.CATEGORY_PAYMENT, resolveInfo.category);
@@ -392,34 +404,36 @@ public class RegisteredAidCacheTest {
     public void testAidConflictResolution_walletOtherServiceDisabled_nonDefaultServiceWins() {
         setWalletRoleFlag(true);
         supportPrefixAndSubset(false);
-        mRegisteredAidCache = new RegisteredAidCache(mContext, mWalletRoleObserver,
-                mAidRoutingManager);
+        mRegisteredAidCache =
+                new RegisteredAidCache(mContext, mWalletRoleObserver, mAidRoutingManager);
 
         List<ApduServiceInfo> apduServiceInfos = new ArrayList<>();
-        apduServiceInfos.add(createServiceInfoForAidRouting(
-                WALLET_PAYMENT_SERVICE,
-                true,
-                List.of(PAYMENT_AID_1, NON_PAYMENT_AID_1),
-                List.of(CardEmulation.CATEGORY_PAYMENT, CardEmulation.CATEGORY_OTHER),
-                false,
-                false,
-                USER_ID,
-                false));
-        apduServiceInfos.add(createServiceInfoForAidRouting(
-                PAYMENT_SERVICE,
-                true,
-                List.of(PAYMENT_AID_1, NON_PAYMENT_AID_1),
-                List.of(CardEmulation.CATEGORY_PAYMENT, CardEmulation.CATEGORY_OTHER),
-                false,
-                false,
-                USER_ID,
-                true));
+        apduServiceInfos.add(
+                createServiceInfoForAidRouting(
+                        WALLET_PAYMENT_SERVICE,
+                        true,
+                        List.of(PAYMENT_AID_1, NON_PAYMENT_AID_1),
+                        List.of(CardEmulation.CATEGORY_PAYMENT, CardEmulation.CATEGORY_OTHER),
+                        false,
+                        false,
+                        USER_ID,
+                        false));
+        apduServiceInfos.add(
+                createServiceInfoForAidRouting(
+                        PAYMENT_SERVICE,
+                        true,
+                        List.of(PAYMENT_AID_1, NON_PAYMENT_AID_1),
+                        List.of(CardEmulation.CATEGORY_PAYMENT, CardEmulation.CATEGORY_OTHER),
+                        false,
+                        false,
+                        USER_ID,
+                        true));
 
         mRegisteredAidCache.generateUserApduServiceInfoLocked(USER_ID, apduServiceInfos);
         mRegisteredAidCache.generateServiceMapLocked(apduServiceInfos);
         mRegisteredAidCache.onWalletRoleHolderChanged(WALLET_HOLDER_PACKAGE_NAME, USER_ID);
-        RegisteredAidCache.AidResolveInfo resolveInfo
-                = mRegisteredAidCache.resolveAid(NON_PAYMENT_AID_1);
+        RegisteredAidCache.AidResolveInfo resolveInfo =
+                mRegisteredAidCache.resolveAid(NON_PAYMENT_AID_1);
         assertEquals(PAYMENT_SERVICE, resolveInfo.defaultService.getComponent());
         assertEquals(1, resolveInfo.services.size());
     }
@@ -428,25 +442,26 @@ public class RegisteredAidCacheTest {
     public void testAidConflictResolution_walletOtherServiceDisabled_emptyServices() {
         setWalletRoleFlag(true);
         supportPrefixAndSubset(false);
-        mRegisteredAidCache = new RegisteredAidCache(mContext, mWalletRoleObserver,
-                mAidRoutingManager);
+        mRegisteredAidCache =
+                new RegisteredAidCache(mContext, mWalletRoleObserver, mAidRoutingManager);
 
         List<ApduServiceInfo> apduServiceInfos = new ArrayList<>();
-        apduServiceInfos.add(createServiceInfoForAidRouting(
-                WALLET_PAYMENT_SERVICE,
-                true,
-                List.of(PAYMENT_AID_1, NON_PAYMENT_AID_1),
-                List.of(CardEmulation.CATEGORY_PAYMENT, CardEmulation.CATEGORY_OTHER),
-                false,
-                false,
-                USER_ID,
-                false));
+        apduServiceInfos.add(
+                createServiceInfoForAidRouting(
+                        WALLET_PAYMENT_SERVICE,
+                        true,
+                        List.of(PAYMENT_AID_1, NON_PAYMENT_AID_1),
+                        List.of(CardEmulation.CATEGORY_PAYMENT, CardEmulation.CATEGORY_OTHER),
+                        false,
+                        false,
+                        USER_ID,
+                        false));
 
         mRegisteredAidCache.generateUserApduServiceInfoLocked(USER_ID, apduServiceInfos);
         mRegisteredAidCache.generateServiceMapLocked(apduServiceInfos);
         mRegisteredAidCache.onWalletRoleHolderChanged(WALLET_HOLDER_PACKAGE_NAME, USER_ID);
-        RegisteredAidCache.AidResolveInfo resolveInfo
-                = mRegisteredAidCache.resolveAid(NON_PAYMENT_AID_1);
+        RegisteredAidCache.AidResolveInfo resolveInfo =
+                mRegisteredAidCache.resolveAid(NON_PAYMENT_AID_1);
         assertNull(resolveInfo.defaultService);
         assertTrue(resolveInfo.services.isEmpty());
     }
@@ -455,38 +470,41 @@ public class RegisteredAidCacheTest {
     public void testOnServicesUpdated_walletRoleEnabled() {
         setWalletRoleFlag(true);
         supportPrefixAndSubset(false);
-        mRegisteredAidCache = new RegisteredAidCache(mContext, mWalletRoleObserver,
-                mAidRoutingManager);
+        mRegisteredAidCache =
+                new RegisteredAidCache(mContext, mWalletRoleObserver, mAidRoutingManager);
         mRegisteredAidCache.mNfcEnabled = true;
 
         List<ApduServiceInfo> apduServiceInfos = new ArrayList<>();
-        apduServiceInfos.add(createServiceInfoForAidRouting(
-                WALLET_PAYMENT_SERVICE,
-                true,
-                List.of(PAYMENT_AID_1),
-                List.of(CardEmulation.CATEGORY_PAYMENT),
-                false,
-                true,
-                USER_ID,
-                true));
-        apduServiceInfos.add(createServiceInfoForAidRouting(
-                PAYMENT_SERVICE,
-                true,
-                List.of(PAYMENT_AID_1),
-                List.of(CardEmulation.CATEGORY_PAYMENT),
-                false,
-                true,
-                USER_ID,
-                true));
-        apduServiceInfos.add(createServiceInfoForAidRouting(
-                NON_PAYMENT_SERVICE,
-                true,
-                List.of(NON_PAYMENT_AID_1),
-                List.of(CardEmulation.CATEGORY_OTHER),
-                false,
-                true,
-                USER_ID,
-                true));
+        apduServiceInfos.add(
+                createServiceInfoForAidRouting(
+                        WALLET_PAYMENT_SERVICE,
+                        true,
+                        List.of(PAYMENT_AID_1),
+                        List.of(CardEmulation.CATEGORY_PAYMENT),
+                        false,
+                        true,
+                        USER_ID,
+                        true));
+        apduServiceInfos.add(
+                createServiceInfoForAidRouting(
+                        PAYMENT_SERVICE,
+                        true,
+                        List.of(PAYMENT_AID_1),
+                        List.of(CardEmulation.CATEGORY_PAYMENT),
+                        false,
+                        true,
+                        USER_ID,
+                        true));
+        apduServiceInfos.add(
+                createServiceInfoForAidRouting(
+                        NON_PAYMENT_SERVICE,
+                        true,
+                        List.of(NON_PAYMENT_AID_1),
+                        List.of(CardEmulation.CATEGORY_OTHER),
+                        false,
+                        true,
+                        USER_ID,
+                        true));
 
         mRegisteredAidCache.onServicesUpdated(USER_ID, apduServiceInfos);
 
@@ -496,12 +514,13 @@ public class RegisteredAidCacheTest {
         assertTrue(mRegisteredAidCache.mAidServices.containsKey(NON_PAYMENT_AID_1));
         assertEquals(2, mRegisteredAidCache.mAidServices.get(PAYMENT_AID_1).size());
         assertEquals(1, mRegisteredAidCache.mAidServices.get(NON_PAYMENT_AID_1).size());
-        assertEquals(WALLET_PAYMENT_SERVICE,
-            mRegisteredAidCache.mAidServices.get(PAYMENT_AID_1).get(0).service.getComponent());
-        assertEquals(PAYMENT_SERVICE,
-            mRegisteredAidCache.mAidServices.get(PAYMENT_AID_1).get(1).service.getComponent());
-        verify(mAidRoutingManager).configureRouting(mRoutingEntryMapCaptor.capture(),
-                eq(false));
+        assertEquals(
+                WALLET_PAYMENT_SERVICE,
+                mRegisteredAidCache.mAidServices.get(PAYMENT_AID_1).get(0).service.getComponent());
+        assertEquals(
+                PAYMENT_SERVICE,
+                mRegisteredAidCache.mAidServices.get(PAYMENT_AID_1).get(1).service.getComponent());
+        verify(mAidRoutingManager).configureRouting(mRoutingEntryMapCaptor.capture(), eq(false));
         HashMap<String, AidRoutingManager.AidEntry> routingEntries =
                 mRoutingEntryMapCaptor.getValue();
         assertTrue(routingEntries.containsKey(NON_PAYMENT_AID_1));
@@ -514,37 +533,40 @@ public class RegisteredAidCacheTest {
     public void testOnNfcEnabled() {
         setWalletRoleFlag(true);
         supportPrefixAndSubset(false);
-        mRegisteredAidCache = new RegisteredAidCache(mContext, mWalletRoleObserver,
-                mAidRoutingManager);
+        mRegisteredAidCache =
+                new RegisteredAidCache(mContext, mWalletRoleObserver, mAidRoutingManager);
 
         List<ApduServiceInfo> apduServiceInfos = new ArrayList<>();
-        apduServiceInfos.add(createServiceInfoForAidRouting(
-                WALLET_PAYMENT_SERVICE,
-                true,
-                List.of(PAYMENT_AID_1),
-                List.of(CardEmulation.CATEGORY_PAYMENT),
-                false,
-                false,
-                USER_ID,
-                true));
-        apduServiceInfos.add(createServiceInfoForAidRouting(
-                PAYMENT_SERVICE,
-                true,
-                List.of(PAYMENT_AID_1),
-                List.of(CardEmulation.CATEGORY_PAYMENT),
-                false,
-                false,
-                USER_ID,
-                true));
-        apduServiceInfos.add(createServiceInfoForAidRouting(
-                NON_PAYMENT_SERVICE,
-                true,
-                List.of(NON_PAYMENT_AID_1),
-                List.of(CardEmulation.CATEGORY_OTHER),
-                false,
-                false,
-                USER_ID,
-                true));
+        apduServiceInfos.add(
+                createServiceInfoForAidRouting(
+                        WALLET_PAYMENT_SERVICE,
+                        true,
+                        List.of(PAYMENT_AID_1),
+                        List.of(CardEmulation.CATEGORY_PAYMENT),
+                        false,
+                        false,
+                        USER_ID,
+                        true));
+        apduServiceInfos.add(
+                createServiceInfoForAidRouting(
+                        PAYMENT_SERVICE,
+                        true,
+                        List.of(PAYMENT_AID_1),
+                        List.of(CardEmulation.CATEGORY_PAYMENT),
+                        false,
+                        false,
+                        USER_ID,
+                        true));
+        apduServiceInfos.add(
+                createServiceInfoForAidRouting(
+                        NON_PAYMENT_SERVICE,
+                        true,
+                        List.of(NON_PAYMENT_AID_1),
+                        List.of(CardEmulation.CATEGORY_OTHER),
+                        false,
+                        false,
+                        USER_ID,
+                        true));
 
         mRegisteredAidCache.generateUserApduServiceInfoLocked(USER_ID, apduServiceInfos);
         mRegisteredAidCache.generateServiceMapLocked(apduServiceInfos);
@@ -552,8 +574,7 @@ public class RegisteredAidCacheTest {
 
         verify(mAidRoutingManager).supportsAidPrefixRouting();
         verify(mAidRoutingManager).supportsAidSubsetRouting();
-        verify(mAidRoutingManager).configureRouting(mRoutingEntryMapCaptor.capture(),
-                eq(false));
+        verify(mAidRoutingManager).configureRouting(mRoutingEntryMapCaptor.capture(), eq(false));
         assertFalse(mRegisteredAidCache.isRequiresScreenOnServiceExist());
     }
 
@@ -561,8 +582,8 @@ public class RegisteredAidCacheTest {
     public void testOnNfcDisabled() {
         setWalletRoleFlag(true);
         supportPrefixAndSubset(false);
-        mRegisteredAidCache = new RegisteredAidCache(mContext, mWalletRoleObserver,
-                mAidRoutingManager);
+        mRegisteredAidCache =
+                new RegisteredAidCache(mContext, mWalletRoleObserver, mAidRoutingManager);
         mRegisteredAidCache.onNfcDisabled();
 
         verify(mAidRoutingManager).supportsAidPrefixRouting();
@@ -574,41 +595,45 @@ public class RegisteredAidCacheTest {
     public void testPollingLoopFilterToForeground_walletRoleEnabled_walletSet() {
         setWalletRoleFlag(true);
         supportPrefixAndSubset(false);
-        mRegisteredAidCache = new RegisteredAidCache(mContext, mWalletRoleObserver,
-                mAidRoutingManager);
+        mRegisteredAidCache =
+                new RegisteredAidCache(mContext, mWalletRoleObserver, mAidRoutingManager);
         mRegisteredAidCache.mNfcEnabled = true;
 
         List<ApduServiceInfo> apduServiceInfos = new ArrayList<>();
-        apduServiceInfos.add(createServiceInfoForAidRouting(
-                WALLET_PAYMENT_SERVICE,
-                true,
-                List.of(PAYMENT_AID_1, NON_PAYMENT_AID_1),
-                List.of(CardEmulation.CATEGORY_PAYMENT, CardEmulation.CATEGORY_OTHER),
-                false,
-                false,
-                USER_ID,
-                true));
-        apduServiceInfos.add(createServiceInfoForAidRouting(
-                FOREGROUND_SERVICE,
-                true,
-                List.of(PAYMENT_AID_1, NON_PAYMENT_AID_1),
-                List.of(CardEmulation.CATEGORY_PAYMENT, CardEmulation.CATEGORY_OTHER),
-                false,
-                false,
-                USER_ID,
-                true));
-        apduServiceInfos.add(createServiceInfoForAidRouting(
-                NON_PAYMENT_SERVICE,
-                true,
-                List.of(NON_PAYMENT_AID_1),
-                List.of(CardEmulation.CATEGORY_OTHER),
-                false,
-                false,
-                USER_ID,
-                true));
+        apduServiceInfos.add(
+                createServiceInfoForAidRouting(
+                        WALLET_PAYMENT_SERVICE,
+                        true,
+                        List.of(PAYMENT_AID_1, NON_PAYMENT_AID_1),
+                        List.of(CardEmulation.CATEGORY_PAYMENT, CardEmulation.CATEGORY_OTHER),
+                        false,
+                        false,
+                        USER_ID,
+                        true));
+        apduServiceInfos.add(
+                createServiceInfoForAidRouting(
+                        FOREGROUND_SERVICE,
+                        true,
+                        List.of(PAYMENT_AID_1, NON_PAYMENT_AID_1),
+                        List.of(CardEmulation.CATEGORY_PAYMENT, CardEmulation.CATEGORY_OTHER),
+                        false,
+                        false,
+                        USER_ID,
+                        true));
+        apduServiceInfos.add(
+                createServiceInfoForAidRouting(
+                        NON_PAYMENT_SERVICE,
+                        true,
+                        List.of(NON_PAYMENT_AID_1),
+                        List.of(CardEmulation.CATEGORY_OTHER),
+                        false,
+                        false,
+                        USER_ID,
+                        true));
 
         mRegisteredAidCache.onWalletRoleHolderChanged(WALLET_HOLDER_PACKAGE_NAME, USER_ID);
-        mRegisteredAidCache.onPreferredForegroundServiceChanged(USER_ID, FOREGROUND_SERVICE);
+        mRegisteredAidCache.onPreferredForegroundServiceChanged(
+                new ComponentNameAndUser(USER_ID, FOREGROUND_SERVICE));
 
         ApduServiceInfo resolvedApdu =
                 mRegisteredAidCache.resolvePollingLoopFilterConflict(apduServiceInfos);
@@ -620,38 +645,41 @@ public class RegisteredAidCacheTest {
     public void testPollingLoopFilterToWallet_walletRoleEnabled_walletSet() {
         setWalletRoleFlag(true);
         supportPrefixAndSubset(false);
-        mRegisteredAidCache = new RegisteredAidCache(mContext, mWalletRoleObserver,
-                mAidRoutingManager);
+        mRegisteredAidCache =
+                new RegisteredAidCache(mContext, mWalletRoleObserver, mAidRoutingManager);
         mRegisteredAidCache.mNfcEnabled = true;
 
         List<ApduServiceInfo> apduServiceInfos = new ArrayList<>();
-        apduServiceInfos.add(createServiceInfoForAidRouting(
-                WALLET_PAYMENT_SERVICE,
-                true,
-                List.of(PAYMENT_AID_1, NON_PAYMENT_AID_1),
-                List.of(CardEmulation.CATEGORY_PAYMENT, CardEmulation.CATEGORY_OTHER),
-                false,
-                false,
-                USER_ID,
-                true));
-        apduServiceInfos.add(createServiceInfoForAidRouting(
-                FOREGROUND_SERVICE,
-                true,
-                List.of(PAYMENT_AID_1, NON_PAYMENT_AID_1),
-                List.of(CardEmulation.CATEGORY_PAYMENT, CardEmulation.CATEGORY_OTHER),
-                false,
-                false,
-                USER_ID,
-                true));
-        apduServiceInfos.add(createServiceInfoForAidRouting(
-                NON_PAYMENT_SERVICE,
-                true,
-                List.of(NON_PAYMENT_AID_1),
-                List.of(CardEmulation.CATEGORY_OTHER),
-                false,
-                false,
-                USER_ID,
-                true));
+        apduServiceInfos.add(
+                createServiceInfoForAidRouting(
+                        WALLET_PAYMENT_SERVICE,
+                        true,
+                        List.of(PAYMENT_AID_1, NON_PAYMENT_AID_1),
+                        List.of(CardEmulation.CATEGORY_PAYMENT, CardEmulation.CATEGORY_OTHER),
+                        false,
+                        false,
+                        USER_ID,
+                        true));
+        apduServiceInfos.add(
+                createServiceInfoForAidRouting(
+                        FOREGROUND_SERVICE,
+                        true,
+                        List.of(PAYMENT_AID_1, NON_PAYMENT_AID_1),
+                        List.of(CardEmulation.CATEGORY_PAYMENT, CardEmulation.CATEGORY_OTHER),
+                        false,
+                        false,
+                        USER_ID,
+                        true));
+        apduServiceInfos.add(
+                createServiceInfoForAidRouting(
+                        NON_PAYMENT_SERVICE,
+                        true,
+                        List.of(NON_PAYMENT_AID_1),
+                        List.of(CardEmulation.CATEGORY_OTHER),
+                        false,
+                        false,
+                        USER_ID,
+                        true));
 
         mRegisteredAidCache.mDefaultWalletHolderPackageName = WALLET_HOLDER_PACKAGE_NAME;
 
@@ -670,10 +698,15 @@ public class RegisteredAidCacheTest {
         when(mAidRoutingManager.supportsAidSubsetRouting()).thenReturn(support);
     }
 
-    private static ApduServiceInfo createServiceInfoForAidRouting(ComponentName componentName,
+    private static ApduServiceInfo createServiceInfoForAidRouting(
+            ComponentName componentName,
             boolean onHost,
-            List<String> aids,List<String> categories, boolean requiresUnlock, boolean requiresScreenOn,
-            int uid, boolean isCategoryOtherServiceEnabled) {
+            List<String> aids,
+            List<String> categories,
+            boolean requiresUnlock,
+            boolean requiresScreenOn,
+            int uid,
+            boolean isCategoryOtherServiceEnabled) {
         ApduServiceInfo apduServiceInfo = Mockito.mock(ApduServiceInfo.class);
         when(apduServiceInfo.isOnHost()).thenReturn(onHost);
         when(apduServiceInfo.getAids()).thenReturn(aids);
@@ -689,6 +722,20 @@ public class RegisteredAidCacheTest {
             when(apduServiceInfo.getCategoryForAid(eq(aid))).thenReturn(category);
         }
         return apduServiceInfo;
+    }
+
+    @Test
+    public void testGetPreferredService() {
+
+        mRegisteredAidCache =
+                new RegisteredAidCache(mContext, mWalletRoleObserver, mAidRoutingManager);
+        Pair<Integer, ComponentName> servicePair = mRegisteredAidCache.getPreferredService();
+        Assert.assertNull(servicePair.second);
+        mRegisteredAidCache.onPreferredForegroundServiceChanged(
+                new ComponentNameAndUser(USER_ID, FOREGROUND_SERVICE));
+        servicePair = mRegisteredAidCache.getPreferredService();
+        Assert.assertNotNull(servicePair.second);
+        assertEquals(new Pair<>(USER_ID, FOREGROUND_SERVICE), servicePair);
     }
 
 }

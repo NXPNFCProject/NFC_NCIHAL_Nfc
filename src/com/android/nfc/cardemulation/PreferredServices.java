@@ -127,11 +127,11 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
         /**
          * Notify when preferred payment service is changed
          */
-        void onPreferredPaymentServiceChanged(int userId, ComponentName service);
+        void onPreferredPaymentServiceChanged(ComponentNameAndUser service);
         /**
          * Notify when preferred foreground service is changed
          */
-        void onPreferredForegroundServiceChanged(int userId, ComponentName service);
+        void onPreferredForegroundServiceChanged(ComponentNameAndUser service);
     }
 
     public PreferredServices(Context context, RegisteredServicesCache serviceCache,
@@ -185,7 +185,7 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
         if (defaultWalletHolderPackageName == null) {
             mDefaultWalletHolderPaymentService = null;
             mUserIdDefaultWalletHolder = userId;
-            mCallback.onPreferredPaymentServiceChanged(userId, null);
+            mCallback.onPreferredPaymentServiceChanged(new ComponentNameAndUser(userId, null));
             return;
         }
         List<ApduServiceInfo> serviceInfos = mServiceCache.getInstalledServices(userId);
@@ -214,7 +214,7 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
                 userId != mUserIdDefaultWalletHolder) {
             mDefaultWalletHolderPaymentService = candidate;
             mUserIdDefaultWalletHolder = userId;
-            mCallback.onPreferredPaymentServiceChanged(userId, candidate);
+            mCallback.onPreferredPaymentServiceChanged(new ComponentNameAndUser(userId, candidate));
         }
     }
 
@@ -291,7 +291,8 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
         // Notify if anything changed
         if (newUser!=null && !mWalletRoleObserver.isWalletRoleFeatureEnabled()
             && (paymentDefaultChanged || force)) {
-            mCallback.onPreferredPaymentServiceChanged(newUser.getIdentifier(), newDefault);
+            mCallback.onPreferredPaymentServiceChanged(
+                    new ComponentNameAndUser(newUser.getIdentifier(), newDefault));
         }
         if (paymentPreferForegroundChanged || force) {
             computePreferredForegroundService();
@@ -326,7 +327,8 @@ public class PreferredServices implements com.android.nfc.ForegroundUtils.Callba
         }
         // Notify if anything changed
         if (changed) {
-            mCallback.onPreferredForegroundServiceChanged(preferredServiceUserId, preferredService);
+            mCallback.onPreferredForegroundServiceChanged(
+                    new ComponentNameAndUser(preferredServiceUserId, preferredService));
         }
     }
 

@@ -116,27 +116,6 @@ public class HostEmulationManager {
 
     private final StatsdUtils mStatsdUtils;
 
-    static class ComponentNameAndUser extends Pair<Integer, ComponentName> {
-        ComponentNameAndUser(int userId, ComponentName componentName) {
-            super(userId, componentName);
-        }
-
-        static ComponentNameAndUser create(Pair<Integer, ComponentName> pair) {
-            if (pair == null) {
-                return null;
-            }
-            return new ComponentNameAndUser(pair.first == null ? -1 : pair.first, pair.second);
-        }
-
-        int getUserId() {
-            return first;
-        }
-
-        ComponentName getComponentName() {
-            return second;
-        }
-    }
-
     // All variables below protected by mLock
 
     // Variables below are for a non-payment service,
@@ -305,15 +284,16 @@ public class HostEmulationManager {
     /**
      *  Preferred payment service changed
      */
-    public void onPreferredPaymentServiceChanged(int userId, final ComponentName service) {
+    public void onPreferredPaymentServiceChanged(final ComponentNameAndUser service) {
         mHandler.post(() -> {
             synchronized (mLock) {
                 if (!isHostCardEmulationActivated()) {
                     Log.d(TAG, "onPreferredPaymentServiceChanged, resetting active service");
                     resetActiveService();
                 }
-                if (service != null) {
-                    bindPaymentServiceLocked(userId, service);
+
+                if (service != null && service.getComponentName() != null) {
+                    bindPaymentServiceLocked(service.getUserId(), service.getComponentName());
                 } else {
                     unbindPaymentServiceLocked();
                 }
@@ -661,8 +641,10 @@ public class HostEmulationManager {
     /**
      *  Preferred foreground service changed
      */
-    public void onPreferredForegroundServiceChanged(int userId, ComponentName service) {
+    public void onPreferredForegroundServiceChanged(ComponentNameAndUser serviceAndUser) {
         synchronized (mLock) {
+            int userId = serviceAndUser.getUserId();
+            ComponentName service = serviceAndUser.getComponentName();
             if (android.nfc.Flags.nfcEventListener()) {
                 ComponentNameAndUser oldServiceAndUser =
                         ComponentNameAndUser.create(mAidCache.getPreferredService());
@@ -703,7 +685,7 @@ public class HostEmulationManager {
                 }
             }
 
-            mAidCache.onPreferredForegroundServiceChanged(userId, service);
+            mAidCache.onPreferredForegroundServiceChanged(serviceAndUser);
 
             if (!isHostCardEmulationActivated()) {
                 Log.d(TAG, "onPreferredForegroundServiceChanged, resetting active service");

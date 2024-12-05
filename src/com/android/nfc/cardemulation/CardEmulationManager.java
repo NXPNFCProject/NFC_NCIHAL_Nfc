@@ -1206,31 +1206,31 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
     }
 
     @Override
-    public void onPreferredPaymentServiceChanged(int userId, ComponentName service) {
+    public void onPreferredPaymentServiceChanged(ComponentNameAndUser service) {
         Log.i(TAG, "onPreferredPaymentServiceChanged");
         ComponentName oldPreferredService = mAidCache.getPreferredService().second;
-        mAidCache.onPreferredPaymentServiceChanged(userId, service);
-        mHostEmulationManager.onPreferredPaymentServiceChanged(userId, service);
+        mAidCache.onPreferredPaymentServiceChanged(service);
+        mHostEmulationManager.onPreferredPaymentServiceChanged(service);
         ComponentName newPreferredService = mAidCache.getPreferredService().second;
 
         NfcService.getInstance().onPreferredPaymentChanged(
                     NfcAdapter.PREFERRED_PAYMENT_CHANGED);
         if (!Objects.equals(oldPreferredService, newPreferredService)) {
-            updateForShouldDefaultToObserveMode(userId);
+            updateForShouldDefaultToObserveMode(service.getUserId());
         }
     }
 
     @Override
-    public void onPreferredForegroundServiceChanged(int userId, ComponentName service) {
+    public void onPreferredForegroundServiceChanged(ComponentNameAndUser service) {
         Log.i(TAG, "onPreferredForegroundServiceChanged");
         ComponentName oldPreferredService = mAidCache.getPreferredService().second;
-        mHostEmulationManager.onPreferredForegroundServiceChanged(userId, service);
+        mHostEmulationManager.onPreferredForegroundServiceChanged(service);
         ComponentName newPreferredService = mAidCache.getPreferredService().second;
 
         NfcService.getInstance().onPreferredPaymentChanged(
                 NfcAdapter.PREFERRED_PAYMENT_CHANGED);
         if (!Objects.equals(oldPreferredService, newPreferredService)) {
-            updateForShouldDefaultToObserveMode(userId);
+            updateForShouldDefaultToObserveMode(service.getUserId());
         }
     }
 
