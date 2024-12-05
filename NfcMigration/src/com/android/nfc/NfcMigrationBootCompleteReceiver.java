@@ -51,11 +51,9 @@ public class NfcMigrationBootCompleteReceiver extends BroadcastReceiver {
                        RegisteredServicesCacheMigration cacheMigration =
                                new RegisteredServicesCacheMigration(context);
                        cacheMigration.handleMigration();
-                       /**
-                        pm.setComponentEnabledSetting(new ComponentName(context, this.getClass()),
-                        PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                        PackageManager.DONT_KILL_APP);
-                        */
+                       pm.setComponentEnabledSetting(new ComponentName(context, this.getClass()),
+                           PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                           PackageManager.DONT_KILL_APP);
                    }, 1_000);
                }
             }

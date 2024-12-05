@@ -43,10 +43,11 @@ soong_config_module_type {
 custom_apex {
     name: "com.android.nfcservices",
     manifest: "manifest.json",
-    //apps: select(release_flag("RELEASE_NFC_MAINLINE_MODULE"), {
-    //    true: ["NfcNciApex", "NfcNciApexMigration"],
-    //    default: ["NfcNciApex"],
-    //}),
+    // apps: select(release_flag("RELEASE_NFC_MAINLINE_MODULE"), {
+        // TODO(rpius): Remove this migration APK once Android 16 is released.
+        // true: ["NfcNciApex", "NfcNciApexMigration"],
+        // default: ["NfcNciApex"],
+    // }),
     multilib: {
         first: {
             // Extractor process runs only with the primary ABI.
