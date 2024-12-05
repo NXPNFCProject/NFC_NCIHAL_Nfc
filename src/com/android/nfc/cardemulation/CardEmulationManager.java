@@ -991,9 +991,17 @@ public class CardEmulationManager implements RegisteredServicesCache.Callback,
             }
             if (aids != null) {
                 mRoutingOptionManager.overrideDefaultRoute(aidRoute);
+            }
+            if (protocol != null) {
                 mRoutingOptionManager.overrideDefaultIsoDepRoute(protocolRoute);
+            }
+            if (technology != null) {
                 mRoutingOptionManager.overrideDefaultOffHostRoute(technologyRoute);
+            }
+            if (sc != null) {
                 mRoutingOptionManager.overrideDefaultScRoute(scRoute);
+            }
+            if (aids != null || protocol != null || technology != null || sc != null) {
                 mRoutingOptionManager.overwriteRoutingTable();
             }
             mAidCache.onRoutingOverridedOrRecovered();
