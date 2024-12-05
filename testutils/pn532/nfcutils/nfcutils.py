@@ -14,6 +14,8 @@
 
 # Lint as: python3
 
+from binascii import hexlify
+
 _NUM_POLLING_LOOPS = 50
 
 def create_select_apdu(aid_hex):
