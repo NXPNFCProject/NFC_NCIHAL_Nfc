@@ -163,7 +163,7 @@ class PN532(val device: UsbDevice, val connection: UsbDeviceConnection) {
 
     private fun getDeviceResponse(timeoutMs: Long = 500.toLong()): ByteArray? {
         // First response from device should be ACK frame
-        val data = transportLayer.read(timeoutMs, numBytes = 255)
+        val data = transportLayer.read(timeoutMs, numBytes = MAX_READ_BUFFER_SIZE)
         if (data == null || data.size < 6) return null
 
         val firstFrame = data.slice(0..5).toByteArray()
@@ -180,7 +180,7 @@ class PN532(val device: UsbDevice, val connection: UsbDeviceConnection) {
         // Some instances require a second read of data
         var secondRead = false
         if (responseFrame?.size == 0) {
-            responseFrame = transportLayer.read(timeoutMs, numBytes = 255)
+            responseFrame = transportLayer.read(timeoutMs, numBytes = MAX_READ_BUFFER_SIZE)
             secondRead = true
         }
         if (responseFrame == null || responseFrame.size == 0) {
@@ -209,24 +209,71 @@ class PN532(val device: UsbDevice, val connection: UsbDeviceConnection) {
             Log.d(TAG, "Correct start to frame")
         }
 
-        val dataLength = responseFrame[3]
-        val lengthChecksum = responseFrame[4]
-
-        if ((lengthChecksum + dataLength) and 0xFF != 0) {
-            Log.e(
+        val isExtendedFrame = responseFrame.slice(3..4).toByteArray().toHex().contentEquals("ffff")
+        val expectedDataLength: UInt
+        if (isExtendedFrame) {
+            if (responseFrame.size < EXTENDED_FRAME_MIN_SIZE) {
+                Log.e(
                 TAG,
-                "Frame failed length checksum. lengthChecksum: " +
-                        lengthChecksum +
-                        ", dataLength: " +
-                        dataLength +
-                        ", responseFrame: " +
-                        responseFrame.toHex() +
-                        ", data: " +
-                        data,
-            )
+                "Expected at least " +
+                    EXTENDED_FRAME_MIN_SIZE +
+                    " bytes of response data for extended frame. Got " +
+                    responseFrame.size,
+                )
+                return null
+            }
+            val dataLengthM = responseFrame[5]
+            val dataLengthL = responseFrame[6]
+            val lengthChecksum = responseFrame[7]
+            expectedDataLength = (dataLengthM.toUInt() shl 8) + dataLengthL.toUInt()
+
+            if ((lengthChecksum + dataLengthM + dataLengthL) and 0xFF != 0) {
+                Log.e(
+                TAG,
+                "Extended Frame failed length checksum. lengthChecksum: " +
+                    lengthChecksum +
+                    ", dataLengthM: " +
+                    dataLengthM +
+                    ", dataLengthL: " +
+                    dataLengthL +
+                    ", responseFrame: " +
+                    responseFrame.toHex() +
+                    ", data: " +
+                    data,
+                )
+            }
+        } else {
+            if (responseFrame.size < NORMAL_FRAME_MIN_SIZE) {
+                Log.e(
+                TAG,
+                "Expected at least " +
+                    NORMAL_FRAME_MIN_SIZE +
+                    " bytes of response data for normal frame. Got " +
+                    responseFrame.size,
+                )
+                return null
+            }
+
+            val dataLength = responseFrame[3]
+            val lengthChecksum = responseFrame[4]
+            expectedDataLength = dataLength.toUByte().toUInt()
+
+            if ((lengthChecksum + dataLength) and 0xFF != 0) {
+                Log.e(
+                TAG,
+                "Normal Frame failed length checksum. lengthChecksum: " +
+                    lengthChecksum +
+                    ", dataLength: " +
+                    dataLength +
+                    ", responseFrame: " +
+                    responseFrame.toHex() +
+                    ", data: " +
+                    data,
+                )
+            }
         }
 
-        val tfi = responseFrame[5]
+        val tfi = if (isExtendedFrame) responseFrame[8] else responseFrame[5]
         if (tfi != 0xD5.toByte()) {
             Log.e(TAG, "Unexpected TFI Byte: Got " + tfi + ", expected 0xD5")
         }
@@ -235,22 +282,32 @@ class PN532(val device: UsbDevice, val connection: UsbDeviceConnection) {
         val dataCheckSum: Byte
         val postAmble: Byte
         if (secondRead) {
-            dataPacket = responseFrame.slice(6..responseFrame.size - 3).toByteArray()
+            dataPacket =
+                if (isExtendedFrame) {
+                responseFrame.slice(9..responseFrame.size - 3).toByteArray()
+                } else {
+                responseFrame.slice(6..responseFrame.size - 3).toByteArray()
+                }
             dataCheckSum = responseFrame[responseFrame.size - 2]
             postAmble = responseFrame[responseFrame.size - 1]
         } else {
-            dataPacket = data.slice(12..data.size - 3).toByteArray()
+            dataPacket =
+                if (isExtendedFrame) {
+                data.slice(15..data.size - 3).toByteArray()
+                } else {
+                data.slice(12..data.size - 3).toByteArray()
+                }
             dataCheckSum = data[data.size - 2]
             postAmble = data[data.size - 1]
         }
 
-        if (dataPacket.size != 0 && dataPacket.size != dataLength.toInt() - 1) {
+        if (dataPacket.size != 0 && dataPacket.size.toUInt() != expectedDataLength - 1.toUInt()) {
             Log.e(
                 TAG,
                 "Unexpected data packet size: Got " +
-                        dataPacket.size +
+                        dataPacket.size.toUInt() +
                         ", expected " +
-                        (dataLength.toInt() - 1).toString() +
+                        (expectedDataLength - 1.toUInt()).toString() +
                         ",",
             )
         }
@@ -306,15 +363,30 @@ class PN532(val device: UsbDevice, val connection: UsbDeviceConnection) {
     }
 
     private fun constructFrame(data: ByteArray): ByteArray {
+        val isExtendedFrame = data.size > NORMAL_FRAME_DATA_SIZE
         var frame: ByteArray =
-            byteArrayOf(
+            if (isExtendedFrame) {
+                byteArrayOf(
+                0x00,
+                0x00,
+                0xFF.toByte(),
+                0xFF.toByte(),
+                0xFF.toByte(),
+                (data.size / 256).toByte(),
+                (data.size % 256 + 1).toByte(),
+                ((data.size / 256 + data.size % 256 + 1 and 0xFF).inv() + 0x01).toByte(),
+                0xD4.toByte(),
+                )
+            } else {
+                byteArrayOf(
                 0x00,
                 0x00,
                 0xFF.toByte(),
                 (data.size + 1).toByte(),
                 ((data.size + 1 and 0xFF).inv() + 0x01).toByte(),
                 0xD4.toByte(),
-            )
+                )
+            }
         var sum = 0xD4
         for (byte in data) {
             sum += byte
@@ -322,6 +394,7 @@ class PN532(val device: UsbDevice, val connection: UsbDeviceConnection) {
         frame += (data)
         frame += ((sum.inv() and 0xFF) + 0x01).toByte()
         frame += (0x00).toByte()
+        Log.d(TAG, "constructFrame::isExtendedFrame: " + isExtendedFrame + " Frame: " + frame.toHex())
 
         return frame
     }
@@ -352,5 +425,10 @@ class PN532(val device: UsbDevice, val connection: UsbDeviceConnection) {
         private const val IN_COMMUNICATE_THRU = 0x42.toByte()
         private const val IN_DATA_EXCHANGE = 0x40.toByte()
         private val LONG_PREAMBLE = ByteArray(20)
+        private const val MAX_READ_BUFFER_SIZE = 288
+        private const val NORMAL_FRAME_MIN_SIZE = 8
+        private const val NORMAL_FRAME_DATA_SIZE = 255
+        private const val EXTENDED_FRAME_MIN_SIZE = 11
+        private const val ACK_FRAME_SIZE = 6
     }
 }
