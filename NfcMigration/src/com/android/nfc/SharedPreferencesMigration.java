@@ -41,7 +41,7 @@ import java.util.List;
 public class SharedPreferencesMigration {
     private static final String TAG = "SharedPreferencesMigration";
     private static final String PREF = "NfcServicePrefs";
-    private static final String PREF_TAG_APP_LIST = "TagIntentAppPreferenceListPreferences";
+    public static final String PREF_TAG_APP_LIST = "TagIntentAppPreferenceListPrefs";
     private static final String PREF_NFC_ON = "nfc_on";
     private static final String PREF_SECURE_NFC_ON = "secure_nfc_on";
     private static final String PREF_NFC_READER_OPTION_ON = "nfc_reader_on";

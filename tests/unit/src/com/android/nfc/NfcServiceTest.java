@@ -782,6 +782,8 @@ public final class NfcServiceTest {
         when(mApplication.createCredentialProtectedStorageContext()).thenReturn(ceContext);
         when(ceContext.getSharedPreferences(anyString(), anyInt())).thenReturn(mPreferences);
         when(mApplication.moveSharedPreferencesFrom(ceContext, NfcService.PREF)).thenReturn(true);
+        when(mApplication.moveSharedPreferencesFrom(ceContext, NfcService.PREF_TAG_APP_LIST))
+            .thenReturn(true);
         mGlobalReceiver.getValue().onReceive(mApplication, new Intent(Intent.ACTION_USER_UNLOCKED));
         verify(mApplication).moveSharedPreferencesFrom(ceContext, NfcService.PREF);
         verify(mApplication).getSharedPreferences(eq(NfcService.PREF), anyInt());
