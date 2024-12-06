@@ -5546,8 +5546,15 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
         sendMessage(MSG_UPDATE_ISODEP_PROTOCOL_ROUTE, route);
     }
 
-    public void setTechnologyABFRoute(int route) {
-        sendMessage(MSG_UPDATE_TECHNOLOGY_ABF_ROUTE, route);
+    /**
+     * Set NFCC technology routing for ABF listening
+     */
+    public void setTechnologyABFRoute(int route, int felicaRoute) {
+        Message msg = mHandler.obtainMessage();
+        msg.what = MSG_UPDATE_TECHNOLOGY_ABF_ROUTE;
+        msg.arg1 = route;
+        msg.arg2 = felicaRoute;
+        mHandler.sendMessage(msg);
     }
 
     public void setSystemCodeRoute(int route) {
@@ -5995,7 +6002,9 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback 
                   break;
                 case MSG_UPDATE_TECHNOLOGY_ABF_ROUTE:
                   if (DBG) Log.d(TAG, "Update technology A,B&F route");
-                  mDeviceHost.setTechnologyABFRoute((Integer)msg.obj);
+                  int msgRoute = msg.arg1;
+                  int felicaRoute = msg.arg2;
+                  mDeviceHost.setTechnologyABFRoute(msgRoute, felicaRoute);
                   break;
                 case MSG_WATCHDOG_PING:
                     NfcWatchdog watchdog = (NfcWatchdog) msg.obj;

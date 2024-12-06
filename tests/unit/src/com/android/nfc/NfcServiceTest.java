@@ -756,12 +756,16 @@ public final class NfcServiceTest {
         Handler handler = mNfcService.getHandler();
         Assert.assertNotNull(handler);
         Message msg = handler.obtainMessage(NfcService.MSG_UPDATE_TECHNOLOGY_ABF_ROUTE);
-        msg.obj = 1;
+        msg.arg1 = 1;
+        msg.arg2 = 2;
         handler.handleMessage(msg);
         ArgumentCaptor<Integer> flagCaptor = ArgumentCaptor.forClass(Integer.class);
-        verify(mDeviceHost).setTechnologyABFRoute(flagCaptor.capture());
+        ArgumentCaptor<Integer> flagCaptor2 = ArgumentCaptor.forClass(Integer.class);
+        verify(mDeviceHost).setTechnologyABFRoute(flagCaptor.capture(), flagCaptor2.capture());
         int flag = flagCaptor.getValue();
         Assert.assertEquals(1, flag);
+        int flag2 = flagCaptor2.getValue();
+        Assert.assertEquals(2, flag2);
     }
 
     @Test

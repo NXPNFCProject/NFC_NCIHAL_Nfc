@@ -3321,9 +3321,9 @@ static void nfcManager_updateIsoDepProtocolRoute(JNIEnv* e, jobject o,
 }
 
 static void nfcManager_updateTechnologyABFRoute(JNIEnv* e, jobject o,
-                                                jint route) {
+                                                jint route, jint felicaRoute) {
   LOG(DEBUG) << StringPrintf("%s: route=0x%X", __func__, route);
-  RoutingManager::getInstance().updateTechnologyABFRoute(route);
+  RoutingManager::getInstance().updateTechnologyABFRoute(route, felicaRoute);
 }
 
 static void nfcManager_updateSystemCodeRoute(JNIEnv* e, jobject o,
@@ -3625,7 +3625,7 @@ static JNINativeMethod gMethods[] = {
     {"setIsoDepProtocolRoute", "(I)V",
      (void*)nfcManager_updateIsoDepProtocolRoute},
 
-    {"setTechnologyABFRoute", "(I)V",
+    {"setTechnologyABFRoute", "(II)V",
      (void*)nfcManager_updateTechnologyABFRoute},
 
     {"setSystemCodeRoute", "(I)V", (void*)nfcManager_updateSystemCodeRoute},

@@ -91,6 +91,8 @@ public class AidRoutingManager {
     // SE
     int mDefaultOffHostRoute;
 
+    int mDefaultFelicaRoute;
+
     // How the NFC controller can match AIDs in the routing table;
     // see AID_MATCHING constants
     final int mAidMatchingSupport;
@@ -131,6 +133,8 @@ public class AidRoutingManager {
         if (DBG) Log.d(TAG, "mDefaultRoute=0x" + Integer.toHexString(mDefaultRoute));
         mDefaultOffHostRoute = mRoutingOptionManager.getDefaultOffHostRoute();
         if (DBG) Log.d(TAG, "mDefaultOffHostRoute=0x" + Integer.toHexString(mDefaultOffHostRoute));
+        mDefaultFelicaRoute = mRoutingOptionManager.getDefaultFelicaRoute();
+        if (DBG) Log.d(TAG, "mDefaultFelicaRoute=0x" + Integer.toHexString(mDefaultFelicaRoute));
         mOffHostRouteUicc = mRoutingOptionManager.getOffHostRouteUicc();
         if (DBG) Log.d(TAG, "mOffHostRouteUicc=" + Arrays.toString(mOffHostRouteUicc));
         mOffHostRouteEse = mRoutingOptionManager.getOffHostRouteEse();
@@ -316,10 +320,12 @@ public class AidRoutingManager {
             mDefaultAidRoute = mRoutingOptionManager.getOverrideDefaultRoute();
             mDefaultIsoDepRoute = mRoutingOptionManager.getOverrideDefaultIsoDepRoute();
             mDefaultOffHostRoute = mRoutingOptionManager.getOverrideDefaultOffHostRoute();
+            mDefaultFelicaRoute = mRoutingOptionManager.getOverrideDefaultFelicaRoute();
         } else {
             mDefaultAidRoute = NfcService.getInstance().GetDefaultRouteEntry() >> 0x08;
             mDefaultIsoDepRoute = mRoutingOptionManager.getDefaultIsoDepRoute();
             mDefaultOffHostRoute = mRoutingOptionManager.getDefaultOffHostRoute();
+            mDefaultFelicaRoute = mRoutingOptionManager.getDefaultFelicaRoute();
         }
         boolean isPowerStateUpdated = false;
         Log.e(TAG, "Size of routing table"+mAidRoutingTableSize);
@@ -613,13 +619,15 @@ public class AidRoutingManager {
                     + " mDefaultRoute: " + mDefaultRoute);
                 mDefaultIsoDepRoute = mDefaultRoute;
                 mDefaultOffHostRoute = mDefaultRoute;
+                mDefaultFelicaRoute = mDefaultRoute;
             } else {
                 Log.d(TAG, "Default route is DeviceHost, use previous protocol, technology");
             }
 
             if (force || optionChanged) {
                 NfcService.getInstance().setIsoDepProtocolRoute(mDefaultIsoDepRoute);
-                NfcService.getInstance().setTechnologyABFRoute(mDefaultOffHostRoute);
+                NfcService.getInstance().setTechnologyABFRoute(mDefaultOffHostRoute,
+                        mDefaultFelicaRoute);
             }
         } else {
             Log.d(TAG, "Routing table is override, Do not send the protocol, tech");

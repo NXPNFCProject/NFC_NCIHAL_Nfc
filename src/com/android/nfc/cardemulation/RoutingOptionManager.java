@@ -57,6 +57,7 @@ public class RoutingOptionManager {
     int mDefaultRoute;
     int mDefaultIsoDepRoute;
     int mDefaultOffHostRoute;
+    int mDefaultFelicaRoute;
     int mDefaultScRoute;
     final byte[] mOffHostRouteUicc;
     final byte[] mOffHostRouteEse;
@@ -65,10 +66,10 @@ public class RoutingOptionManager {
     int mOverrideDefaultRoute = ROUTE_UNKNOWN;
     int mOverrideDefaultIsoDepRoute = ROUTE_UNKNOWN;
     int mOverrideDefaultOffHostRoute = ROUTE_UNKNOWN;
+    int mOverrideDefaultFelicaRoute = ROUTE_UNKNOWN;
     int mOverrideDefaultScRoute = ROUTE_UNKNOWN;
 
     boolean mIsRoutingTableOverrided = false;
-
 
     boolean mIsAutoChangeCapable = true;
 
@@ -85,6 +86,8 @@ public class RoutingOptionManager {
     native int doGetDefaultIsoDepRouteDestination();
     @VisibleForTesting
     native int doGetDefaultOffHostRouteDestination();
+    @VisibleForTesting
+    native int doGetDefaultFelicaRouteDestination();
     @VisibleForTesting
     native int doGetDefaultScRouteDestination();
     @VisibleForTesting
@@ -110,6 +113,8 @@ public class RoutingOptionManager {
         if (DBG) Log.d(TAG, "mDefaultIsoDepRoute=0x" + Integer.toHexString(mDefaultIsoDepRoute));
         mDefaultOffHostRoute = doGetDefaultOffHostRouteDestination();
         if (DBG) Log.d(TAG, "mDefaultOffHostRoute=0x" + Integer.toHexString(mDefaultOffHostRoute));
+        mDefaultFelicaRoute = doGetDefaultFelicaRouteDestination();
+        if (DBG) Log.d(TAG, "mDefaultFelicaRoute=0x" + Integer.toHexString(mDefaultFelicaRoute));
         mDefaultScRoute = doGetDefaultScRouteDestination();
         if (DBG) Log.d(TAG, "mDefaultScRoute=0x" + Integer.toHexString(mDefaultScRoute));
         mOffHostRouteUicc = doGetOffHostUiccDestination();
@@ -191,7 +196,8 @@ public class RoutingOptionManager {
 
     public void overrideDefaultOffHostRoute(int offHostRoute) {
         mOverrideDefaultOffHostRoute = offHostRoute;
-        NfcService.getInstance().setTechnologyABFRoute(offHostRoute);
+        mOverrideDefaultFelicaRoute = offHostRoute;
+        NfcService.getInstance().setTechnologyABFRoute(offHostRoute, offHostRoute);
     }
 
     public void overrideDefaultScRoute(int scRoute) {
@@ -201,8 +207,9 @@ public class RoutingOptionManager {
 
     public void recoverOverridedRoutingTable() {
         NfcService.getInstance().setIsoDepProtocolRoute(mDefaultIsoDepRoute);
-        NfcService.getInstance().setTechnologyABFRoute(mDefaultOffHostRoute);
-        mOverrideDefaultRoute = mOverrideDefaultIsoDepRoute = mOverrideDefaultOffHostRoute;
+        NfcService.getInstance().setTechnologyABFRoute(mDefaultOffHostRoute, mDefaultFelicaRoute);
+        mOverrideDefaultRoute = mOverrideDefaultIsoDepRoute = mOverrideDefaultOffHostRoute =
+            mOverrideDefaultFelicaRoute = ROUTE_UNKNOWN;
     }
 
     public int getOverrideDefaultRoute() {
@@ -226,6 +233,13 @@ public class RoutingOptionManager {
         return mDefaultOffHostRoute;
     }
 
+    public int getDefaultFelicaRoute() {
+        return mDefaultFelicaRoute;
+    }
+
+    public int getOverrideDefaultFelicaRoute() {
+        return mOverrideDefaultFelicaRoute;
+    }
     public int getOverrideDefaultScRoute() {
         return mOverrideDefaultScRoute;
     }
@@ -249,7 +263,8 @@ public class RoutingOptionManager {
         return mOverrideDefaultRoute != ROUTE_UNKNOWN
             || mOverrideDefaultIsoDepRoute != ROUTE_UNKNOWN
             || mOverrideDefaultOffHostRoute != ROUTE_UNKNOWN
-            || mOverrideDefaultScRoute != ROUTE_UNKNOWN            ;
+            || mOverrideDefaultFelicaRoute != ROUTE_UNKNOWN
+            || mOverrideDefaultScRoute != ROUTE_UNKNOWN;
     }
 
     private void createLookUpTable() {

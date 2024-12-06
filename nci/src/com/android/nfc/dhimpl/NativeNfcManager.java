@@ -753,7 +753,7 @@ public class NativeNfcManager implements DeviceHost {
     public native void setIsoDepProtocolRoute(int route);
 
     @Override
-    public native void setTechnologyABFRoute(int route);
+    public native void setTechnologyABFRoute(int route, int felicaRoute);
 
     @Override
     public native void setSystemCodeRoute(int route);

@@ -51,6 +51,7 @@ public class RoutingOptionManagerTest {
     private static final int OVERRIDDEN_ISO_DEP_ROUTE = 10;
     private static final int OVERRIDDEN_OFF_HOST_ROUTE = 20;
     private static final int DEFAULT_OFF_HOST_ROUTE = 2;
+    private static final int DEFAULT_FELICA_ROUTE = 3;
     private static final int DEFAULT_SC_ROUTE = 2;
     private static final byte[] OFF_HOST_UICC = new byte[] {1, 2};
     private static final byte[] OFF_HOST_ESE = new byte[] {3, 4};
@@ -70,6 +71,11 @@ public class RoutingOptionManagerTest {
         @Override
         int doGetDefaultOffHostRouteDestination() {
             return DEFAULT_OFF_HOST_ROUTE;
+        }
+
+        @Override
+        int doGetDefaultFelicaRouteDestination() {
+            return DEFAULT_FELICA_ROUTE;
         }
 
         @Override
@@ -119,6 +125,7 @@ public class RoutingOptionManagerTest {
         assertEquals(DEFAULT_ROUTE, mManager.mDefaultRoute);
         assertEquals(DEFAULT_ISO_DEP_ROUTE, mManager.mDefaultIsoDepRoute);
         assertEquals(DEFAULT_OFF_HOST_ROUTE, mManager.mDefaultOffHostRoute);
+        assertEquals(DEFAULT_FELICA_ROUTE, mManager.mDefaultFelicaRoute);
         assertEquals(OFF_HOST_UICC, mManager.mOffHostRouteUicc);
         assertEquals(OFF_HOST_ESE, mManager.mOffHostRouteEse);
         assertEquals(AID_MATCHING_MODE, mManager.mAidMatchingSupport);
@@ -142,7 +149,7 @@ public class RoutingOptionManagerTest {
         mManager.overrideDefaultOffHostRoute(OVERRIDDEN_OFF_HOST_ROUTE);
 
         assertEquals(OVERRIDDEN_OFF_HOST_ROUTE, mManager.getOverrideDefaultOffHostRoute());
-        verify(mNfcService).setTechnologyABFRoute(mRouteCaptor.capture());
+        verify(mNfcService).setTechnologyABFRoute(mRouteCaptor.capture(), mRouteCaptor.capture());
         assertEquals(Integer.valueOf(OVERRIDDEN_OFF_HOST_ROUTE), mRouteCaptor.getValue());
     }
 
@@ -162,7 +169,7 @@ public class RoutingOptionManagerTest {
         mManager.recoverOverridedRoutingTable();
 
         verify(mNfcService).setIsoDepProtocolRoute(anyInt());
-        verify(mNfcService).setTechnologyABFRoute(anyInt());
+        verify(mNfcService).setTechnologyABFRoute(anyInt(), anyInt());
         assertEquals(RoutingOptionManager.ROUTE_UNKNOWN, mManager.mOverrideDefaultRoute);
         assertEquals(RoutingOptionManager.ROUTE_UNKNOWN, mManager.mOverrideDefaultIsoDepRoute);
         assertEquals(RoutingOptionManager.ROUTE_UNKNOWN, mManager.mOverrideDefaultOffHostRoute);
@@ -176,6 +183,7 @@ public class RoutingOptionManagerTest {
         int defaultRoute = mManager.getDefaultRoute();
         int defaultIsoDepRoute = mManager.getDefaultIsoDepRoute();
         int defaultOffHostRoute = mManager.getDefaultOffHostRoute();
+        int defaultFelicaRoute = mManager.getDefaultFelicaRoute();
         byte[] offHostRouteUicc = mManager.getOffHostRouteUicc();
         byte[] offHostRouteEse = mManager.getOffHostRouteEse();
         int aidMatchingSupport = mManager.getAidMatchingSupport();
@@ -184,6 +192,7 @@ public class RoutingOptionManagerTest {
         assertEquals(DEFAULT_ROUTE, defaultRoute);
         assertEquals(DEFAULT_ISO_DEP_ROUTE, defaultIsoDepRoute);
         assertEquals(DEFAULT_OFF_HOST_ROUTE, defaultOffHostRoute);
+        assertEquals(DEFAULT_FELICA_ROUTE, defaultFelicaRoute);
         assertEquals(OFF_HOST_UICC, offHostRouteUicc);
         assertEquals(OFF_HOST_ESE, offHostRouteEse);
         assertEquals(AID_MATCHING_MODE, aidMatchingSupport);
