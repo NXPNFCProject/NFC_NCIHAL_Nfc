@@ -1062,8 +1062,10 @@ tNFA_TECHNOLOGY_MASK RoutingManager::updateEeTechRouteSetting() {
   static const char fn[] = "RoutingManager::updateEeTechRouteSetting";
   tNFA_TECHNOLOGY_MASK allSeTechMask = 0x00;
 
+#if(NXP_EXTNS == TRUE)
   int handleDefaultOffHost = SecureElement::getInstance().getEseHandleFromGenericId(mDefaultOffHostRoute);
   int handleDefaultFelicaRoute = SecureElement::getInstance().getEseHandleFromGenericId(mDefaultFelicaRoute);
+#endif
 
   LOG(DEBUG) << fn << ": Number of EE is " << (int)mEeInfo.num_ee;
 
@@ -1094,20 +1096,20 @@ tNFA_TECHNOLOGY_MASK RoutingManager::updateEeTechRouteSetting() {
         seTechMask |= NFA_TECHNOLOGY_MASK_A;
       if (mEeInfo.ee_disc_info[i].lb_protocol != 0)
         seTechMask |= NFA_TECHNOLOGY_MASK_B;
-      if (mEeInfo.ee_disc_info[i].lf_protocol != 0)
-        seTechMask |= NFA_TECHNOLOGY_MASK_F;
     }
 
-#if(NXP_EXTNS != TRUE)
     if ((mDefaultFelicaRoute != 0) &&
+#if(NXP_EXTNS != TRUE)
         (eeHandle == (mDefaultFelicaRoute | NFA_HANDLE_GROUP_EE))) {
+#else
+        (eeHandle == handleDefaultFelicaRoute)) {
+#endif
       felicaRouteFound = true;
       if (mEeInfo.ee_disc_info[i].lf_protocol != 0)
         seTechMask |= NFA_TECHNOLOGY_MASK_F;
       else
         mDefaultFelicaRoute = NFC_DH_ID;
     }
-#endif
 
     // If OFFHOST_LISTEN_TECH_MASK exists,
     // filter out the unspecified technologies
@@ -1124,13 +1126,7 @@ tNFA_TECHNOLOGY_MASK RoutingManager::updateEeTechRouteSetting() {
         LOG(ERROR) << fn << "Failed to configure UICC listen technologies.";
 
       // clear previous before setting new power state
-#if (NXP_EXTNS != TRUE)
       nfaStat = NFA_EeClearDefaultTechRouting(eeHandle, seTechMask);
-#else
-      nfaStat = NFA_EeClearDefaultTechRouting(
-          eeHandle, NFA_TECHNOLOGY_MASK_A | NFA_TECHNOLOGY_MASK_B |
-                        NFA_TECHNOLOGY_MASK_F);
-#endif
       if (nfaStat != NFA_STATUS_OK)
         LOG(ERROR) << fn << "Failed to clear EE technology routing.";
 
