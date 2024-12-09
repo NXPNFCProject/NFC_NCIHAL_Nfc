@@ -917,6 +917,9 @@ void RoutingManager::updateDefaultProtocolRoute() {
     nfaStat = NFA_EeClearDefaultProtoRouting(NFC_DH_ID, protoMask);
     nfaStat = NFA_EeSetDefaultProtoRouting(
         NFC_DH_ID, protoMask, 0, 0, mSecureNfcEnabled ? 0 : protoMask, 0, 0);
+#if (NXP_EXTNS == TRUE)
+    mDefaultIsoDepRoute = NFC_DH_ID;
+#endif
   }
   if (nfaStat == NFA_STATUS_OK)
     LOG(DEBUG) << fn << ": Succeed to register default ISO-DEP route";
