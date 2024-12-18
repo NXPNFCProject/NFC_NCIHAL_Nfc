@@ -9,7 +9,7 @@
 #### Supported Version on "br_android_ncihalx_comm_16" branch
 | Android Version        | NXP Release          | NXP Tag  |
 | :-------------: |:---------------------:| :-----:|
-
+| aosp-main      |  16.02.00 (PN557/PN560/SN100/SN110/SN220/SN300) |  NFC_AR_00_7E800_16.02.00_OpnSrc |
 
 
 
