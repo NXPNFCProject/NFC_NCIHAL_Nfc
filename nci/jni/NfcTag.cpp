@@ -29,7 +29,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  *
- *  Copyright 2018-2024 NXP
+ *  Copyright 2018-2025 NXP
  *
  ******************************************************************************/
 
@@ -1631,7 +1631,9 @@ void NfcTag::connectionEventHandler(uint8_t event, tNFA_CONN_EVT_DATA* data) {
       mProtocol = NFC_PROTOCOL_UNKNOWN;
       resetTechnologies();
 #if (NXP_EXTNS == TRUE)
-      notifyNfcAbortTagops(data->deactivated.reason);
+      notifyNfcAbortTagops((data != NULL)
+                               ? data->deactivated.reason
+                               : NCI_DEACTIVATE_REASON_DH_REQ_FAILED);
 #endif
       break;
 
